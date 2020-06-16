@@ -1,4 +1,5 @@
-import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn,} from "typeorm";
+import {Entity, PrimaryGeneratedColumn, Column,} from "typeorm";
+import {DbAwareColumn, DbAwareCreateDateColumn, DbAwareUpdateDateColumn} from './dbaware';
 
 @Entity()
 export class Player {
@@ -19,12 +20,12 @@ export class Player {
     /**
      * DB insert time.
      */
-    @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
+    @DbAwareCreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
     public createdAt: Date;
 
     /**
      * DB last update time.
      */
-    @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)", onUpdate: "CURRENT_TIMESTAMP(6)" })
+    @DbAwareUpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP", onUpdate: "CURRENT_TIMESTAMP" })
     public updatedAt: Date;  
 }

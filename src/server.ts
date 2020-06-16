@@ -1,5 +1,5 @@
 import{ ApolloServer } from 'apollo-server-express';
-import { initializeDB } from './initdb';
+import { pgConnection } from './initdb';
 import { fileLoader, mergeTypes } from 'merge-graphql-schemas';
 import { merge } from 'lodash';
 import { authorize } from '@src/middlewares/authorization';
@@ -13,7 +13,9 @@ const requestContext = async ({ req }) => {
   return ctx;
 };
 
-export async function start() {
+let app: any = null;
+
+export async function start(dbConnection?: any): Promise<[any, any]> {
     console.log("In start method")
     const schemaDir = __dirname + '/' + '../../src/graphql/*.graphql';
     const typesArray = fileLoader(schemaDir, { recursive: true });
@@ -34,19 +36,24 @@ export async function start() {
       context: requestContext,
     });
 
-    await initializeDB();
+    if(!dbConnection) {
+      dbConnection = await pgConnection();
+    }
 
+    //await initializeDB(dbConnection);
 
     const express = require("express");
-    const app = express();
+    app = express();
     app.use(authorize);
 
     server.applyMiddleware({ app, path: '/' });
-    app.listen({
+
+    const httpServer = app.listen({
       port: 9501
     },
     async () => {
-        console.log(`🚀 Server ready at http://localhost:${GQL_PORT}}`);
+        console.log(`🚀 Server ready at http://0.0.0.0:${GQL_PORT}}`);
       }
     );
+    return [app, httpServer];
 }

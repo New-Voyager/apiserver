@@ -1,6 +1,7 @@
-import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, Index, JoinColumn} from "typeorm";
+import {Entity, PrimaryGeneratedColumn, Column, ManyToOne, Index, JoinColumn} from "typeorm";
 import {Club} from './club';
 import {Player} from './player';
+import {DbAwareColumn, DbAwareCreateDateColumn, DbAwareUpdateDateColumn} from './dbaware';
 
 export enum GameType {
   UNKNOWN,
@@ -98,19 +99,19 @@ export class PokerGame {
     @Column({name: "wait_for_bigblind", default: true})
     waitForBigBlind: boolean;
 
-    @Column({name: "started_at", type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)"})
+    @DbAwareColumn({name: "started_at", type: "timestamp", default: () => "CURRENT_TIMESTAMP"})
     startedAt: Date;
 
     /**
      * DB insert time.
      */
-    @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
+    @DbAwareCreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
     public createdAt: Date;
 
     /**
      * DB last update time.
      */
-    @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)", onUpdate: "CURRENT_TIMESTAMP(6)" })
+    @DbAwareUpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP", onUpdate: "CURRENT_TIMESTAMP" })
     public updatedAt: Date;  
 }
 
@@ -132,22 +133,22 @@ export class PokerGamePlayers {
     @Column({name: "balance", type: "decimal", precision: 2, scale: 2, nullable: false})
     balance: number
 
-    @Column({name: "joined_at", type: "timestamp"})
+    @DbAwareColumn({name: "joined_at", type: "timestamp"})
     joinedAt: Date;
 
-    @Column({name: "left_at", type: "timestamp"})
+    @DbAwareColumn({name: "left_at", type: "timestamp"})
     leftAt: Date;
 
     /**
      * DB insert time.
      */
-    @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
+    @DbAwareCreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
     public createdAt: Date;
 
     /**
      * DB last update time.
      */
-    @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)", onUpdate: "CURRENT_TIMESTAMP(6)" })
+    @DbAwareUpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP", onUpdate: "CURRENT_TIMESTAMP" })
     public updatedAt: Date;  
 }
 
@@ -159,10 +160,10 @@ export class PokerHand {
     @ManyToOne(type => PokerGame)
     game: PokerGame;
 
-    @Column({name: "started_at", type: "timestamp"})
+    @DbAwareColumn({name: "started_at", type: "timestamp"})
     startedAt: Date;
 
-    @Column({name: "ended_at", type: "timestamp"})
+    @DbAwareColumn({name: "ended_at", type: "timestamp"})
     endedAt: Date;
 
     @Column({type: "int8"})
@@ -174,7 +175,7 @@ export class PokerHand {
     @Column({type: "int8", name: "low_winners", array: true})
     lowWinners: number[]
 
-    @Column({type: "json", name: "hand_log"})
+    @DbAwareColumn({type: "json", name: "hand_log"})
     handLog: any
 }
 

@@ -7,9 +7,11 @@
   "private": true,
   "scripts": {
     "watch-debug": "tsc-watch --noClear --onSuccess 'node --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
-    "debug": "node --inspect=0.0.0.0:9228 ./build/index.js"
+    "debug": "node --inspect=0.0.0.0:9228 ./build/index.js",
+    "test": "jest"
   },
   "dependencies": {
+    "@types/jest": "^26.0.0",
     "@types/lodash": "^4.14.155",
     "@types/node": "^14.0.13",
     "apollo-graphql": "^0.4.5",
@@ -23,6 +25,7 @@
     "module-alias": "^2.2.2",
     "pg": "^8.2.1",
     "reflect-metadata": "^0.1.13",
+    "sqlite3": "^4.2.0",
     "tsc-watch": "^4.2.8",
     "typeorm": "^0.2.25",
     "uuid": "^8.1.0",
@@ -30,11 +33,17 @@
     "zipkin": "^0.22.0"
   },
   "devDependencies": {
+    "apollo-boost": "^0.4.9",
     "copyfiles": "^2.3.0",
+    "jest": "^26.0.1",
+    "node-fetch": "^2.6.0",
+    "supertest": "^4.0.2",
+    "ts-jest": "^26.1.0",
     "typescript": "^3.9.5"
   },
   "_moduleAliases": {
     "@src": "build/src/",
-    "@test": "build/test/"
+    "@test": "build/test/",
+    "@": "build/"
   }
 }

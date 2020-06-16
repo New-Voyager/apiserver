@@ -11,9 +11,3 @@ const resolvers: any = {
 export function getResolvers() {
   return resolvers;
 }
-
-const i = 10;
-
-export {
-  i,
-}

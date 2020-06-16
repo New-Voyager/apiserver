@@ -1,8 +1,8 @@
 import {Entity, PrimaryGeneratedColumn, Column, 
   OneToMany, 
   JoinColumn, ManyToOne,
-  CreateDateColumn, UpdateDateColumn,
   Index} from "typeorm";
+import {DbAwareColumn, DbAwareCreateDateColumn, DbAwareUpdateDateColumn} from './dbaware';
 import  {Player} from "./player";
 
 @Entity()
@@ -60,13 +60,13 @@ export class ClubMember {
     @Column({name: "is_owner", default: false})
     isOwner: boolean
 
-    @CreateDateColumn({ name: "last_played_date", type: "timestamp", nullable: true })
+    @DbAwareColumn({ name: "last_played_date", type: "timestamp", nullable: true })
     lastGamePlayedDate: Date
 
-    @CreateDateColumn({ name: "join_date", type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
+    @DbAwareColumn({ name: "join_date", type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
     joinedDate: Date
 
-    @CreateDateColumn({ name: "left_date", type: "timestamp", nullable: true})
+    @DbAwareColumn({ name: "left_date", type: "timestamp", nullable: true})
     leftDate: Date
 
     @Column({name: "view_allowed", default: true})
@@ -78,12 +78,12 @@ export class ClubMember {
     /**
      * DB insert time.
      */
-    @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
+    @DbAwareCreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
     public createdAt: Date;
 
     /**
      * DB last update time.
      */
-    @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)", onUpdate: "CURRENT_TIMESTAMP(6)" })
+    @DbAwareUpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP", onUpdate: "CURRENT_TIMESTAMP" })
     public updatedAt: Date;  
 }

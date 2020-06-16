@@ -3,27 +3,31 @@ import {Player} from "./entity/player";
 import {Club, ClubMember} from "./entity/club";
 import {PokerGame, PokerGamePlayers, PokerHand} from "./entity/game";
 
-export async function initializeDB() {
+export async function pgConnection() {
+  await createConnection({
+    type: "postgres",
+    host: "10.2.4.4",
+    port: 5436,
+    username: "game",
+    password: "game",
+    database: "game",
+    entities: [
+      Player,
+      Club,
+      ClubMember,
+      PokerGame,
+      PokerHand,
+      PokerGamePlayers
+    ],
+    synchronize: true,
+    logging: false
+  });
+}
+
+export async function initializeDB(connectionDB: any) {
   try{
     console.log("Initializing database");
-    await createConnection({
-              type: "postgres",
-              host: "10.2.4.4",
-              port: 5436,
-              username: "game",
-              password: "game",
-              database: "game",
-              entities: [
-                Player,
-                Club,
-                ClubMember,
-                PokerGame,
-                PokerHand,
-                PokerGamePlayers
-              ],
-              synchronize: true,
-              logging: false
-          });
+    await connectionDB();
     console.log("Database is initialized")
   } catch (err) {
     console.log(err)
