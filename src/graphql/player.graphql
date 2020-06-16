@@ -1,0 +1,20 @@
+input PlayerCreateInput {
+  name: String!
+  deviceId: String!
+}
+
+type Mutation {
+  createPlayer(player: PlayerCreateInput!): String!,
+  authenticatePlayer(name: String!, uuid: String!, deviceId: String!): Boolean
+}
+
+type PlayerClub {
+  name: String
+  memberCount: Int
+  imageId: String
+  private: Boolean
+}
+
+type Query {
+  myClubs: [PlayerClub!]
+}

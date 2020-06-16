@@ -1,0 +1,40 @@
+scalar DateTime
+enum ClubMemberStatus {
+  UNKNOWNN,
+  INVITED,
+  PENDING,
+  DENIED,
+  APPROVED,
+  LEFT,
+  KICKEDOUT,
+}
+
+
+input ClubCreateInput {
+  name: String!
+  description: String!
+  ownerUuid: String!
+}
+
+type Mutation {
+  createClub(club: ClubCreateInput!): String!,
+  joinClub(clubId: String!, playerUuid: String!): ClubMemberStatus,
+  approveMember(clubId: String!, playerUuid: String!): ClubMemberStatus,
+  rejectMember(clubId: String!, playerUuid: String!): ClubMemberStatus,
+  kickMember(clubId: String!, playerUuid: String!): ClubMemberStatus,
+}
+
+type ClubMember {
+  name: String!
+  joinedDate: DateTime!
+  status: ClubMemberStatus!
+  lastGamePlayedDate: String
+  imageId: String
+  isOwner: Boolean
+  isManager: Boolean
+  playerId: String
+}
+
+type Query {
+  clubMembers(clubId: String!): [ClubMember!]
+}
