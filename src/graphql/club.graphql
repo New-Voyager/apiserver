@@ -13,12 +13,17 @@ enum ClubMemberStatus {
 input ClubCreateInput {
   name: String!
   description: String!
-  ownerUuid: String!
+}
+
+input ClubUpdateInput {
+  name: String
+  description: String
 }
 
 type Mutation {
   createClub(club: ClubCreateInput!): String!,
-  joinClub(clubId: String!, playerUuid: String!): ClubMemberStatus,
+  updateClub(clubId: String!, club: ClubUpdateInput!): Boolean!,
+  joinClub(clubId: String!): ClubMemberStatus,
   approveMember(clubId: String!, playerUuid: String!): ClubMemberStatus,
   rejectMember(clubId: String!, playerUuid: String!): ClubMemberStatus,
   kickMember(clubId: String!, playerUuid: String!): ClubMemberStatus,

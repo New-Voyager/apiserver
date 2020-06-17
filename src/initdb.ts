@@ -4,7 +4,7 @@ import {Club, ClubMember} from "./entity/club";
 import {PokerGame, PokerGamePlayers, PokerHand} from "./entity/game";
 
 export async function pgConnection() {
-  await createConnection({
+  const connection = await createConnection({
     type: "postgres",
     host: "10.2.4.4",
     port: 5436,
@@ -22,6 +22,7 @@ export async function pgConnection() {
     synchronize: true,
     logging: false
   });
+  return connection;
 }
 
 export async function initializeDB(connectionDB: any) {

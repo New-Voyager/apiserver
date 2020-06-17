@@ -1,5 +1,5 @@
-import {Entity, PrimaryGeneratedColumn, Column,} from "typeorm";
-import {DbAwareColumn, DbAwareCreateDateColumn, DbAwareUpdateDateColumn} from './dbaware';
+import {Entity, PrimaryGeneratedColumn, Column, Index,} from "typeorm";
+import {DbAwareCreateDateColumn, DbAwareUpdateDateColumn} from './dbaware';
 
 @Entity()
 export class Player {
@@ -12,7 +12,8 @@ export class Player {
     @Column()
     name: string;
 
-    @Column({name: "device_id"})
+    @Index()
+    @Column({name: "device_id", unique: true})
     deviceId: string;
 
     @Column({name: "is_active"})

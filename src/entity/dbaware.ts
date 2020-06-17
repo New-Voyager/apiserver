@@ -8,7 +8,7 @@ const mysqlSqliteTypeMapping: { [key: string]: ColumnType } = {
 };
 
 export function setAppropriateColumnType(mySqlType: ColumnType): ColumnType {
-  const isTestEnv = process.env.NODE_ENV === 'test';
+  const isTestEnv = process.env.DB_USED === 'sqllite';
   if (isTestEnv && mySqlType in mysqlSqliteTypeMapping) {
     return mysqlSqliteTypeMapping[mySqlType.toString()];
   }

@@ -19,9 +19,9 @@ export class Club {
     @Column()
     description: string;
 
-    @ManyToOne(type => Player)
+    @ManyToOne(type => Player, {nullable: false, eager: true})
     @JoinColumn()
-    owner: Promise<Player|undefined>;
+    owner: Player|Promise<Player|undefined>;
 
     @OneToMany(type => ClubMember, clubMember => clubMember.club)
     @JoinColumn()
@@ -45,10 +45,12 @@ export class ClubMember {
 
     @Index("club-idx")
     @ManyToOne(type => Club)
+    @JoinColumn({name: "club_id"})
     club: Club;
 
     @Index("player-idx")
     @ManyToOne(type => Player, {eager: true})
+    @JoinColumn({name: "player_id"})
     player: Player;
 
     @Column('int')

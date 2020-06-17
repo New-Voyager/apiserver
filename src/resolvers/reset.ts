@@ -17,6 +17,7 @@ const resolvers: any = {
           await deleteAll("PokerGame");
           await deleteAll("ClubMember");
           await deleteAll("Club");
+          await deleteAll("Player");
         });
 
         return true;

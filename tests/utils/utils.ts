@@ -1,16 +1,17 @@
-import {createConnection, getConnection} from "typeorm";
+import {createConnection} from "typeorm";
 import {start} from '../../src/server';
 import {Player} from "../../src/entity/player";
 import {Club, ClubMember} from "../../src/entity/club";
 import {PokerGame, PokerGamePlayers, PokerHand} from "../../src/entity/game";
-import { Server } from "http";
 import {default as ApolloClient, gql} from 'apollo-boost';
-import fetch from 'node-fetch';
-process.env.NODE_ENV = 'test';
+const fetch=require('node-fetch');
 const PORT_NUMBER = 9501;
 
+/*
 async function sqlliteDBConnection() {
-    return createConnection({
+  process.env.NODE_ENV = 'test';
+  process.env.DB_TEST="sqllite"
+  const connection = await createConnection({
       type: "sqlite",
       database: ":memory:",
       dropSchema: true,
@@ -25,17 +26,47 @@ async function sqlliteDBConnection() {
       synchronize: true,
       logging: true
   });
+  return connection;
 }
+*/
 
+export async function pgConnection() {
+  const connection = await createConnection({
+    type: "postgres",
+    host: "10.2.4.4",
+    port: 5436,
+    username: "game",
+    password: "game",
+    database: "game",
+    entities: [
+      Player,
+      Club,
+      ClubMember,
+      PokerGame,
+      PokerHand,
+      PokerGamePlayers
+    ],
+    synchronize: true,
+    logging: false
+  });
+  return connection;
+}
 
 
 export class TestServer {
   connection: any;
   app: any;
   httpServer: any;
+  alreadyStarted: boolean;
   public async start() {
-    this.connection = await sqlliteDBConnection();
+    if(this.alreadyStarted) {
+      return;
+    }
+    this.alreadyStarted = true;
+    //this.connection = await sqlliteDBConnection();
+    this.connection = await pgConnection();
     [this.app, this.httpServer] = await start(this.connection);
+    //[this.app, this.httpServer] = await start();
     console.log("Server is started");
   }
 
@@ -47,7 +78,7 @@ export class TestServer {
 }
 
 
-export function getClient(token: string): any {
+export function getClient(token?: string, test?: string): any {
     return new ApolloClient({
     fetch: fetch,
     uri: `http://localhost:${PORT_NUMBER}/`,
@@ -68,6 +99,8 @@ export async function resetDatabase() {
   const client = getClient("TEST_USER");
   const resetDB = gql`mutation { resetDB }`;
   await client.mutate({
-    mutation: resetDB
+    mutation: resetDB,
   });
 }
+
+export const server = new TestServer();
