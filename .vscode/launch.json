@@ -38,7 +38,7 @@
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
         "--testNamePattern",
-        "get my clubs"
+        "create a club"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",

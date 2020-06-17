@@ -1,4 +1,4 @@
-import {server, resetDatabase, getClient} from './utils/utils';
+import {resetDatabase, getClient} from './utils/utils';
 import {gql} from 'apollo-boost';
 import {createClub, createPlayer, playerJoinsClub} from './club.test';
 
@@ -17,22 +17,16 @@ async function getMyClubs(playerId: string): Promise<Array<any>> {
   return resp.data.clubs;
 }
 
-//let server: TestServer;
-//let client: any;
-
 
 beforeAll(async (done) => {
-  //server = new TestServer();
-  await server.start();
   await resetDatabase();
-//  client = getClient();
   done();
 });
 
 afterAll(async (done) => {
-  await server.stop();
   done();
 });
+
 
 describe('Player APIs', () => {
 

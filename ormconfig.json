@@ -1,0 +1,48 @@
+[
+  {
+    "name": "dev",
+    "type": "postgres",
+    "host": "localhost",
+    "port": 5436,
+    "username": "game",
+    "password": "game",
+    "database": "game",
+    "logging": true,
+    "synchronize": true,
+    "entities": ["build/src/entity/**/*.js"]
+},  
+  {
+    "name": "default",
+    "type": "postgres",
+    "host": "localhost",
+    "port": 5436,
+    "username": "game",
+    "password": "game",
+    "database": "game",
+    "logging": true,
+    "synchronize": true,
+    "entities": ["build/src/entity/**/*.js"]
+  }, 
+  {
+    "name": "test",
+    "type": "sqlite",
+    "database": ":memory:",
+    "dropSchema": true,
+    "synchronize": true,
+    "logging": true,
+    "entities": ["build/src/entity/**/*.js"]
+  },
+  {
+    "name": "pgtest",
+    "type": "postgres",
+    "host": "localhost",
+    "port": 5436,
+    "username": "game",
+    "password": "game",
+    "database": "game",
+    "logging": true,
+    "synchronize": true,
+    "dropSchema": true,
+    "entities": ["build/src/entity/**/*.js"]
+  }
+]

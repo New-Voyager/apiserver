@@ -1,4 +1,4 @@
-import {server, resetDatabase, getClient} from './utils/utils';
+import {resetDatabase, getClient} from './utils/utils';
 import {gql} from 'apollo-boost';
 const createPlayerQuery = gql`mutation($input: PlayerCreateInput!) { playerId: createPlayer(player: $input) }`;
 const createClubQuery = gql`mutation($input: ClubCreateInput!) { clubId: createClub(club: $input) }`;
@@ -18,14 +18,14 @@ const rejectClubQuery = gql`mutation($clubId: String!, $playerUuid: String!) { s
 
 beforeAll(async (done) => {
   //server = new TestServer();
-  await server.start();
+  //await server.start();
   await resetDatabase();
 //  client = getClient();
   done();
 });
 
 afterAll(async (done) => {
-  await server.stop();
+  //await server.stop();
   done();
 });
 
@@ -104,49 +104,13 @@ async function getClubMembers(playerId: string, clubId: string): Promise<Array<a
 }
 
 describe('Club APIs', () => {
-
-  /*
-  let server: TestServer;
-
-  beforeAll(async (done) => {
-    server = new TestServer();
-    await server.start();
-    await resetDatabase();
-    done();
-  });
-
-  afterAll(async (done) => {
-    await server.stop();
-    done();
-  });
-*/
   test("create a club", async () => {
-    const ownerInput = {
-      input: {
-        name: "test",
-        deviceId: "abc123",
-      }
-    };
-    const playerInput = {
-      input: {
-        name: "player",
-        deviceId: "xyz123",
-      }
-    };
-    let client = getClient();
-    let resp = await client.mutate({
-      variables: ownerInput,
-      mutation: createPlayerQuery,
-    });
-    let ownerId = resp.data.playerId;
+    const ownerId = await createPlayer("owner", "abc123");
+    const player1Id = await createPlayer("player1", "test123");
     expect(ownerId).not.toBeNull();
-
-    resp = await client.mutate({
-      variables: playerInput,
-      mutation: createPlayerQuery,
-    });
-    let playerId = resp.data.playerId;
-    expect(playerId).not.toBeNull();
+    expect(player1Id).not.toBeNull();
+    expect(ownerId).not.toBeUndefined();
+    expect(player1Id).not.toBeUndefined();
 
     const clubInput = {
       input: {
@@ -154,6 +118,8 @@ describe('Club APIs', () => {
         description: "poker players gather",
       }
     };
+    
+    const client = getClient();
     try {
       // use the TEST client
       await client.mutate({
@@ -164,12 +130,13 @@ describe('Club APIs', () => {
     } catch(error) {
       expect(error.toString()).toContain('Unauthorized');
     }
-    // create a club using the owner account
-    const ownerClient = getClient(ownerId);
+
+    console.log(`Owner id before using in getClient ${ownerId}`);
+    const ownerClient = await getClient(ownerId);
     // use the player in the auth header
-    resp = await ownerClient.mutate({
+    let resp = await ownerClient.mutate({
       variables: clubInput,
-      mutation: createClub,
+      mutation: createClubQuery,
     });
     expect(resp.errors).toBeUndefined();
     expect(resp.data).not.toBeUndefined();
@@ -177,7 +144,7 @@ describe('Club APIs', () => {
     expect(clubId).not.toBeNull();
 
     // update the club name using the player token
-    const playerClient = getClient(playerId);
+    const playerClient = getClient(player1Id);
     const clubUpdateInput = {
       clubId: clubId,
       input: clubInput["input"],

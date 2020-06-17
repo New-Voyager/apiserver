@@ -1,8 +1,8 @@
-import {createConnection} from "typeorm";
-import {start} from '../../src/server';
-import {Player} from "../../src/entity/player";
-import {Club, ClubMember} from "../../src/entity/club";
-import {PokerGame, PokerGamePlayers, PokerHand} from "../../src/entity/game";
+// import {createConnection} from "typeorm";
+// import {start} from '../../src/server';
+// import {Player} from "../../src/entity/player";
+// import {Club, ClubMember} from "../../src/entity/club";
+// import {PokerGame, PokerGamePlayers, PokerHand} from "../../src/entity/game";
 import {default as ApolloClient, gql} from 'apollo-boost';
 const fetch=require('node-fetch');
 const PORT_NUMBER = 9501;
@@ -28,7 +28,6 @@ async function sqlliteDBConnection() {
   });
   return connection;
 }
-*/
 
 export async function pgConnection() {
   const connection = await createConnection({
@@ -77,12 +76,14 @@ export class TestServer {
   }
 }
 
+*/
 
 export function getClient(token?: string, test?: string): any {
     return new ApolloClient({
     fetch: fetch,
     uri: `http://localhost:${PORT_NUMBER}/`,
     request: (operation) => {
+      console.log(`Auth header: ${token}`);
       if(token) {
         operation.setContext({
           headers: {
@@ -103,4 +104,4 @@ export async function resetDatabase() {
   });
 }
 
-export const server = new TestServer();
+//export const server = new TestServer();

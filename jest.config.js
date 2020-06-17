@@ -36,5 +36,5 @@ module.exports = {
   transformIgnorePatterns: [
     "<rootDir>/node_modules/(?!@foo)"
   ],
-  testTimeout: 1000
+  testTimeout: 5000
 };

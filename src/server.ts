@@ -1,8 +1,8 @@
 import{ ApolloServer } from 'apollo-server-express';
-import { pgConnection } from './initdb';
 import { fileLoader, mergeTypes } from 'merge-graphql-schemas';
 import { merge } from 'lodash';
 import { authorize } from '@src/middlewares/authorization';
+import {createConnection, getConnectionOptions} from "typeorm";
 
 const GQL_PORT = 9501;
 
@@ -17,9 +17,10 @@ let app: any = null;
 
 export async function start(dbConnection?: any): Promise<[any, any]> {
     console.log("In start method")
-    const schemaDir = __dirname + '/' + '../../src/graphql/*.graphql';
-    const typesArray = fileLoader(schemaDir, { recursive: true });
+    const typesArray = fileLoader(__dirname + '/' + '../../src/graphql/*.graphql', { recursive: true });
     const typeDefs1 = mergeTypes(typesArray, { all: true });
+
+
     const resolversDir = __dirname + '/' + './resolvers/';
     let resolversFiles = fileLoader(resolversDir, {
       recursive: true,
@@ -36,11 +37,14 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
       context: requestContext,
     });
 
-    if(!dbConnection) {
-      dbConnection = await pgConnection();
+    if(process.env.NODE_ENV != "test") {
+      const options = await getConnectionOptions("default");
+      await createConnection(options);
+    } else {
+      process.env.DB_USED="sqllite";
+      const options = await getConnectionOptions("test");
+      await createConnection({...options, name: "default"});
     }
-
-    //await initializeDB(dbConnection);
 
     const express = require("express");
     app = express();
