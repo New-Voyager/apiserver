@@ -1,28 +1,41 @@
-import {ClubRepository, ClubCreateInput, ClubUpdateInput} from "@src/repositories/club";
-import {ClubMemberStatus} from "@src/entity/club";
-import {Player} from "@src/entity/player";
+import {
+  ClubRepository,
+  ClubCreateInput,
+  ClubUpdateInput,
+} from '@src/repositories/club';
+import {ClubMemberStatus} from '@src/entity/club';
+import {Player} from '@src/entity/player';
 
 const resolvers: any = {
-    Query: {
-      clubMembers: async (parent, args, ctx, info) => {
-        if(!ctx.req.playerId) {
-          throw new Error(`Unauthorized`);
-        }
-        const clubMembers1 = await ClubRepository.getMembers(args.clubId);
-        const clubMember = await ClubRepository.isClubMember(args.clubId, ctx.req.playerId);
-        if(!clubMember) {
-          console.log(`The user ${ctx.req.playerId} is not a member of ${args.clubId}, ${JSON.stringify(clubMembers1)}`);
-          throw new Error(`Unauthorized`);
-        }
+  Query: {
+    clubMembers: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+      const clubMembers1 = await ClubRepository.getMembers(args.clubId);
+      const clubMember = await ClubRepository.isClubMember(
+        args.clubId,
+        ctx.req.playerId
+      );
+      if (!clubMember) {
+        console.log(
+          `The user ${ctx.req.playerId} is not a member of ${
+            args.clubId
+          }, ${JSON.stringify(clubMembers1)}`
+        );
+        throw new Error('Unauthorized');
+      }
 
-        if(clubMember.status == ClubMemberStatus.KICKEDOUT) {
-          console.log(`The user ${ctx.req.playerId} is kicked out of ${args.clubId}`);
-          throw new Error(`Unauthorized`);
-        }
+      if (clubMember.status == ClubMemberStatus.KICKEDOUT) {
+        console.log(
+          `The user ${ctx.req.playerId} is kicked out of ${args.clubId}`
+        );
+        throw new Error('Unauthorized');
+      }
 
-        const clubMembers = await ClubRepository.getMembers(args.clubId);
-        const members = new Array<any>();
-          /*
+      const clubMembers = await ClubRepository.getMembers(args.clubId);
+      const members = new Array<any>();
+      /*
           type ClubMember {
           name: String!
           joinedDate: String!
@@ -30,173 +43,190 @@ const resolvers: any = {
           lastGamePlayedDate: DateTime
           imageId: String
         }*/
-        for(const member of clubMembers) {
-          members.push({
-            name: member.player.name,
-            joinedDate: member.joinedDate,
-            status: ClubMemberStatus[member.status],
-            lastGamePlayedDate: null,
-            imageId: "",
-            isOwner: member.isOwner,
-            isManager: member.isManager,
-            playerId: member.player.uuid,
-          });
-        }
+      for (const member of clubMembers) {
+        members.push({
+          name: member.player.name,
+          joinedDate: member.joinedDate,
+          status: ClubMemberStatus[member.status],
+          lastGamePlayedDate: null,
+          imageId: '',
+          isOwner: member.isOwner,
+          isManager: member.isManager,
+          playerId: member.player.uuid,
+        });
+      }
 
-        return members;
+      return members;
+    },
+  },
+  Mutation: {
+    createClub: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+
+      const errors = new Array<string>();
+      if (!args.club) {
+        errors.push('club object not found');
+      }
+      if (args.club.name === '') {
+        errors.push('name is a required field');
+      }
+      if (args.club.description === '') {
+        errors.push('description is a required field');
+      }
+
+      if (errors.length > 0) {
+        throw new Error(errors.join('\n'));
+      }
+
+      try {
+        const input = args.club as ClubCreateInput;
+        input.ownerUuid = ctx.req.playerId;
+        return ClubRepository.createClub(input);
+      } catch (err) {
+        console.log(err);
+        throw new Error('Failed to create the club');
       }
     },
-    Mutation: {
-        createClub: async (parent, args, ctx, info) => {
-          if(!ctx.req.playerId) {
-            throw new Error(`Unauthorized`);
-          }
+    updateClub: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
 
-          let errors = new Array<string>();
-          if(!args.club) {
-            errors.push("club object not found");
-          }
-          if(args.club.name === "") {
-            errors.push("name is a required field");
-          }
-          if(args.club.description === "") {
-            errors.push("description is a required field");
-          }
-         
-          if(errors.length > 0) {
-            throw new Error(errors.join("\n"));
-          }
+      const errors = new Array<string>();
+      if (!args.club) {
+        errors.push('club object not found');
+      }
+      if (args.club.name && args.club.name === '') {
+        errors.push('name is a required field');
+      }
+      if (args.club.description && args.club.description === '') {
+        errors.push('description is a required field');
+      }
+      if (errors.length > 0) {
+        throw new Error(errors.join('\n'));
+      }
 
-          try {
-            const input = args.club as ClubCreateInput;
-            input.ownerUuid = ctx.req.playerId;
-            return ClubRepository.createClub(input);
-          } catch(err) {
-            console.log(err);
-            throw new Error("Failed to create the club");
-          }
-        },
-        updateClub: async (parent, args, ctx, info) => {
-          if(!ctx.req.playerId) {
-            throw new Error(`Unauthorized`);
-          }
-
-          let errors = new Array<string>();
-          if(!args.club) {
-            errors.push("club object not found");
-          }
-          if(args.club.name && args.club.name === "") {
-            errors.push("name is a required field");
-          }
-          if(args.club.description && args.club.description === "") {
-            errors.push("description is a required field");
-          }
-          if(errors.length > 0) {
-            throw new Error(errors.join("\n"));
-          }
-
-          try {
-            const club = await ClubRepository.getClub(args.clubId);
-            if(!club) {
-              throw new Error(`Club ${args.clubId} is not found`);
-            }
-            const owner: Player|undefined = await Promise.resolve(club.owner);
-            if(!owner) {
-              throw new Error(`Club ${args.clubId} does not have a owner`);
-            }            
-            if(ctx.req.playerId != owner.uuid) {
-              throw new Error(`Unauthorized. ${ctx.req.playerId} is not the owner of the club ${args.clubId}`);
-            }
-            const input = args.club as ClubUpdateInput;
-            return ClubRepository.updateClub(args.clubId, input);
-          } catch(err) {
-            console.log(err);
-            throw err;
-          }
-        },        
-        joinClub: async (parent, args, ctx, info) => {
-          if(!ctx.req.playerId) {
-            throw new Error(`Unauthorized`);
-          }
-
-          let errors = new Array<string>();
-          if(args.clubId === "") {
-            errors.push("clubId is a required field");
-          }
-          if(errors.length > 0) {
-            throw new Error(errors.join("\n"));
-          }
-
-          // TODO: We need to get owner id from the JWT
-          const status = await ClubRepository.joinClub(args.clubId, ctx.req.playerId);
-          return ClubMemberStatus[status];
-        },
-
-        approveMember: async (parent, args, ctx, info) => {
-          if(!ctx.req.playerId) {
-            throw new Error(`Unauthorized`);
-          }
-
-          let errors = new Array<string>();
-          if(args.clubId === "") {
-            errors.push("clubId is a required field");
-          }
-          if(args.playerUuid === "") {
-            errors.push("playerUuid is a required field");
-          }
-          if(errors.length > 0) {
-            throw new Error(errors.join("\n"));
-          }
-
-          // TODO: We need to get owner id from the JWT
-          const ownerId = ctx.req.playerId;
-          const status = await ClubRepository.approveMember(ownerId, args.clubId, args.playerUuid);
-          return ClubMemberStatus[status];
-        },
-        rejectMember: async (parent, args, ctx, info) => {
-          if(!ctx.req.playerId) {
-            throw new Error(`Unauthorized`);
-          }
-
-          let errors = new Array<string>();
-          if(args.clubId === "") {
-            errors.push("clubId is a required field");
-          }
-          if(args.playerUuid === "") {
-            errors.push("playerUuid is a required field");
-          }
-          if(errors.length > 0) {
-            throw new Error(errors.join("\n"));
-          }
-
-          // TODO: We need to get owner id from the JWT
-          const ownerId = ctx.req.playerId;
-          const status = await ClubRepository.rejectMember(ownerId, args.clubId, args.playerUuid);
-          return ClubMemberStatus[status];
-        },
-        kickMember: async (parent, args, ctx, info) => {
-          if(!ctx.req.playerId) {
-            throw new Error(`Unauthorized`);
-          }          
-          let errors = new Array<string>();
-          if(args.clubId === "") {
-            errors.push("clubId is a required field");
-          }
-          if(args.playerUuid === "") {
-            errors.push("playerUuid is a required field");
-          }
-          if(errors.length > 0) {
-            throw new Error(errors.join("\n"));
-          }
-
-          // TODO: We need to get owner id from the JWT
-          const ownerId = ctx.req.playerId;
-          const status = await ClubRepository.kickMember(ownerId, args.clubId, args.playerUuid);
-          return ClubMemberStatus[status];
-        }                     
+      try {
+        const club = await ClubRepository.getClub(args.clubId);
+        if (!club) {
+          throw new Error(`Club ${args.clubId} is not found`);
+        }
+        const owner: Player | undefined = await Promise.resolve(club.owner);
+        if (!owner) {
+          throw new Error(`Club ${args.clubId} does not have a owner`);
+        }
+        if (ctx.req.playerId != owner.uuid) {
+          throw new Error(
+            `Unauthorized. ${ctx.req.playerId} is not the owner of the club ${args.clubId}`
+          );
+        }
+        const input = args.club as ClubUpdateInput;
+        return ClubRepository.updateClub(args.clubId, input);
+      } catch (err) {
+        console.log(err);
+        throw err;
+      }
     },
+    joinClub: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+
+      const errors = new Array<string>();
+      if (args.clubId === '') {
+        errors.push('clubId is a required field');
+      }
+      if (errors.length > 0) {
+        throw new Error(errors.join('\n'));
+      }
+
+      // TODO: We need to get owner id from the JWT
+      const status = await ClubRepository.joinClub(
+        args.clubId,
+        ctx.req.playerId
+      );
+      return ClubMemberStatus[status];
+    },
+
+    approveMember: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+
+      const errors = new Array<string>();
+      if (args.clubId === '') {
+        errors.push('clubId is a required field');
+      }
+      if (args.playerUuid === '') {
+        errors.push('playerUuid is a required field');
+      }
+      if (errors.length > 0) {
+        throw new Error(errors.join('\n'));
+      }
+
+      // TODO: We need to get owner id from the JWT
+      const ownerId = ctx.req.playerId;
+      const status = await ClubRepository.approveMember(
+        ownerId,
+        args.clubId,
+        args.playerUuid
+      );
+      return ClubMemberStatus[status];
+    },
+    rejectMember: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+
+      const errors = new Array<string>();
+      if (args.clubId === '') {
+        errors.push('clubId is a required field');
+      }
+      if (args.playerUuid === '') {
+        errors.push('playerUuid is a required field');
+      }
+      if (errors.length > 0) {
+        throw new Error(errors.join('\n'));
+      }
+
+      // TODO: We need to get owner id from the JWT
+      const ownerId = ctx.req.playerId;
+      const status = await ClubRepository.rejectMember(
+        ownerId,
+        args.clubId,
+        args.playerUuid
+      );
+      return ClubMemberStatus[status];
+    },
+    kickMember: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+      const errors = new Array<string>();
+      if (args.clubId === '') {
+        errors.push('clubId is a required field');
+      }
+      if (args.playerUuid === '') {
+        errors.push('playerUuid is a required field');
+      }
+      if (errors.length > 0) {
+        throw new Error(errors.join('\n'));
+      }
+
+      // TODO: We need to get owner id from the JWT
+      const ownerId = ctx.req.playerId;
+      const status = await ClubRepository.kickMember(
+        ownerId,
+        args.clubId,
+        args.playerUuid
+      );
+      return ClubMemberStatus[status];
+    },
+  },
 };
 
 export function getResolvers() {
-    return resolvers;
+  return resolvers;
 }

@@ -6,6 +6,7 @@ input PlayerCreateInput {
 type Mutation {
   createPlayer(player: PlayerCreateInput!): String!,
   authenticatePlayer(name: String!, uuid: String!, deviceId: String!): Boolean
+  leaveClub(clubId: String!): ClubMemberStatus
 }
 
 type PlayerClub {

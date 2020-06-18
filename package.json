@@ -9,7 +9,15 @@
     "watch-debug": "tsc-watch --noClear --onSuccess 'node --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
     "debug": "NODE_ENV=dev node --inspect=0.0.0.0:9228 ./build/index.js",
     "test": "NODE_ENV=test jest --runInBand",
-    "test-server": "NODE_ENV=test DB_USED=sqllite node build/index.js"
+    "test-server-watch": "tsc-watch --noClear --onSuccess './debug.sh' --onFailure 'echo Beep! Compilation Failed'",
+    "test-server": "NODE_ENV=test DB_USED=sqllite node build/index.js",
+    "check": "gts check",
+    "clean": "gts clean",
+    "compile": "tsc",
+    "fix": "gts fix",
+    "prepare": "npm run compile",
+    "pretest": "npm run compile",
+    "posttest": "npm run check"
   },
   "dependencies": {
     "@types/jest": "^26.0.0",
@@ -41,7 +49,9 @@
     "supertest": "^4.0.2",
     "ts-jest": "^26.1.0",
     "ts-node": "^8.10.2",
-    "typescript": "^3.9.5"
+    "typescript": "^3.8.3",
+    "gts": "^2.0.2",
+    "@types/node": "^13.11.1"
   },
   "_moduleAliases": {
     "@src": "./build/src/",

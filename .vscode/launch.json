@@ -38,8 +38,12 @@
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
         "--testNamePattern",
-        "create a club"
+        "player leaves a club"
       ],
+      "env": {
+        "NODE_ENV": "test",
+        "DB_USED": "sqllite"
+      },
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "port": 9229

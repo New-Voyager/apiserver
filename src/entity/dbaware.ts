@@ -1,10 +1,16 @@
-import { Column, ColumnOptions, ColumnType, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Column,
+  ColumnOptions,
+  ColumnType,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
-const mysqlSqliteTypeMapping: { [key: string]: ColumnType } = {
-  'mediumtext': 'text',
-  'timestamp': 'datetime',
-  'mediumblob': 'blob',
-  'json': 'text',
+const mysqlSqliteTypeMapping: {[key: string]: ColumnType} = {
+  mediumtext: 'text',
+  timestamp: 'datetime',
+  mediumblob: 'blob',
+  json: 'text',
 };
 
 export function setAppropriateColumnType(mySqlType: ColumnType): ColumnType {
@@ -35,4 +41,3 @@ export function DbAwareUpdateDateColumn(columnOptions: ColumnOptions) {
   }
   return UpdateDateColumn(columnOptions);
 }
-
