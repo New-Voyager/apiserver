@@ -17,24 +17,24 @@ import {Player} from './player';
 @Entity()
 export class Club {
   @PrimaryGeneratedColumn()
-  id: number;
+  public id!: number;
 
   @Column()
-  name: string;
+  public name!: string;
 
   @Column({name: 'display_id'})
-  displayId: string;
+  public displayId!: string;
 
   @Column()
-  description: string;
+  public description!: string;
 
   @ManyToOne(type => Player, {nullable: false, eager: true})
   @JoinColumn()
-  owner: Player | Promise<Player | undefined>;
+  public owner!: Player | Promise<Player | undefined>;
 
   @OneToMany(type => ClubMember, clubMember => clubMember.club)
   @JoinColumn()
-  members: Array<ClubMember>;
+  public members!: Array<ClubMember>;
 }
 
 export enum ClubMemberStatus {
@@ -50,45 +50,45 @@ export enum ClubMemberStatus {
 @Entity()
 export class ClubMember {
   @PrimaryGeneratedColumn()
-  id: number;
+  public id!: number;
 
   @Index('club-idx')
   @ManyToOne(type => Club)
   @JoinColumn({name: 'club_id'})
-  club: Club;
+  public club!: Club;
 
   @Index('player-idx')
   @ManyToOne(type => Player, {eager: true})
   @JoinColumn({name: 'player_id'})
-  player: Player;
+  public player!: Player;
 
   @Column('int')
-  status: ClubMemberStatus;
+  public status!: ClubMemberStatus;
 
   @Column({name: 'is_manager', default: false})
-  isManager: boolean;
+  public isManager!: boolean;
 
   @Column({name: 'is_owner', default: false})
-  isOwner: boolean;
+  public isOwner!: boolean;
 
   @DbAwareColumn({name: 'last_played_date', type: 'timestamp', nullable: true})
-  lastGamePlayedDate: Date;
+  public lastGamePlayedDate!: Date;
 
   @DbAwareColumn({
     name: 'join_date',
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
   })
-  joinedDate: Date;
+  public joinedDate!: Date;
 
   @DbAwareColumn({name: 'left_date', type: 'timestamp', nullable: true})
-  leftDate: Date;
+  public leftDate!: Date;
 
   @Column({name: 'view_allowed', default: true})
-  viewAllowed: boolean;
+  public viewAllowed!: boolean;
 
   @Column({name: 'play_allowed', default: true})
-  playAllowed: boolean;
+  public playAllowed!: boolean;
 
   /**
    * DB insert time.
@@ -97,7 +97,7 @@ export class ClubMember {
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
   })
-  public createdAt: Date;
+  public createdAt!: Date;
 
   /**
    * DB last update time.
@@ -107,5 +107,5 @@ export class ClubMember {
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
   })
-  public updatedAt: Date;
+  public updatedAt!: Date;
 }

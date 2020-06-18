@@ -4,20 +4,20 @@ import {DbAwareCreateDateColumn, DbAwareUpdateDateColumn} from './dbaware';
 @Entity()
 export class Player {
   @PrimaryGeneratedColumn()
-  id: number;
+  public id!: number;
 
   @Column({unique: true})
-  uuid: string;
+  public uuid!: string;
 
   @Column()
-  name: string;
+  public name!: string;
 
   @Index()
   @Column({name: 'device_id', unique: true})
-  deviceId: string;
+  public deviceId!: string;
 
   @Column({name: 'is_active'})
-  isActive: boolean;
+  public isActive!: boolean;
   /**
    * DB insert time.
    */
@@ -25,7 +25,7 @@ export class Player {
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
   })
-  public createdAt: Date;
+  public createdAt!: Date;
 
   /**
    * DB last update time.
@@ -35,5 +35,5 @@ export class Player {
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
   })
-  public updatedAt: Date;
+  public updatedAt!: Date;
 }

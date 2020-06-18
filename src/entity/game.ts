@@ -24,28 +24,28 @@ export enum GameType {
 @Entity({name: 'poker_game'})
 export class PokerGame {
   @PrimaryGeneratedColumn()
-  id: number;
+  public id!: number;
 
   @Index()
   @Column({unique: true})
-  gameId: string;
+  public gameId!: string;
 
   @Index('game-club-idx')
   @ManyToOne(type => Club)
   @JoinColumn({name: 'club_id'})
-  club: Club;
+  public club!: Club;
 
   @Column()
-  privateGame: boolean;
+  public privateGame!: boolean;
 
   @Column({name: 'is_template'})
-  isTemplate: boolean;
+  public isTemplate!: boolean;
 
   @Column({name: 'game_type'})
-  gameType: GameType;
+  public gameType!: GameType;
 
   @Column({name: 'title'})
-  title: string;
+  public title!: string;
 
   @Column({
     name: 'small_blind',
@@ -54,7 +54,7 @@ export class PokerGame {
     scale: 2,
     nullable: false,
   })
-  smallBlind: number;
+  public smallBlind!: number;
 
   @Column({
     name: 'big_blind',
@@ -63,7 +63,7 @@ export class PokerGame {
     scale: 2,
     nullable: false,
   })
-  bigBlind: number;
+  public bigBlind!: number;
 
   @Column({
     name: 'straddle_bet',
@@ -72,40 +72,40 @@ export class PokerGame {
     scale: 2,
     nullable: true,
   })
-  straddleBet: number;
+  public straddleBet!: number;
 
   @Column({name: 'utg_straddle', nullable: true})
-  utgStraddle: boolean;
+  public utgStraddle!: boolean;
 
   @Column({name: 'button_straddle', nullable: true})
-  buttonStraddle: boolean;
+  public buttonStraddle!: boolean;
 
   @Column({name: 'max_players', type: 'int'})
-  maxPlayers: number;
+  public maxPlayers!: number;
 
   @Column({name: 'is_active', nullable: true})
-  isActive: boolean;
+  public isActive!: boolean;
 
   @Column({name: 'game_length', type: 'int'})
-  gameLength: number;
+  public gameLength!: number;
 
   @Column({name: 'buy_in_approval', default: true})
-  buyInApproval: boolean;
+  public buyInApproval!: boolean;
 
   @Column({name: 'sit_in_approval', default: true})
-  sitInApproval: boolean;
+  public sitInApproval!: boolean;
 
   @Column({name: 'break_length', default: 15})
-  breakLength: number;
+  public breakLength!: number;
 
   @Column({name: 'auto_kick_after_break', default: true})
-  autoKickAfterBreak: boolean;
+  public autoKickAfterBreak!: boolean;
 
   @Column({name: 'waitlist_supported', default: true})
-  waitlistSupported: boolean;
+  public waitlistSupported!: boolean;
 
   @Column({name: 'max_waitlist', type: 'int', default: 20})
-  maxWaitlist: number;
+  public maxWaitlist!: number;
 
   @Column({
     name: 'rake_percentage',
@@ -114,7 +114,7 @@ export class PokerGame {
     scale: 2,
     default: 0,
   })
-  rakePercentage: number;
+  public rakePercentage!: number;
 
   @Column({
     name: 'rake_cap',
@@ -123,7 +123,7 @@ export class PokerGame {
     scale: 2,
     default: 0,
   })
-  rakeCap: number;
+  public rakeCap!: number;
 
   @Column({
     name: 'buy_in_min',
@@ -132,7 +132,7 @@ export class PokerGame {
     scale: 2,
     nullable: false,
   })
-  buyInMin: number;
+  public buyInMin!: number;
 
   @Column({
     name: 'buy_in_max',
@@ -141,23 +141,23 @@ export class PokerGame {
     scale: 2,
     nullable: false,
   })
-  buyInMax: number;
+  public buyInMax!: number;
 
   @Column({name: 'action_time', type: 'int', default: 20})
-  actionTime: number;
+  public actionTime!: number;
 
   @Column({name: 'muck_losing_hand', default: true})
-  muckLosingHand: boolean;
+  public muckLosingHand!: boolean;
 
   @Column({name: 'wait_for_bigblind', default: true})
-  waitForBigBlind: boolean;
+  public waitForBigBlind!: boolean;
 
   @DbAwareColumn({
     name: 'started_at',
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
   })
-  startedAt: Date;
+  public startedAt!: Date;
 
   /**
    * DB insert time.
@@ -166,7 +166,7 @@ export class PokerGame {
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
   })
-  public createdAt: Date;
+  public createdAt!: Date;
 
   /**
    * DB last update time.
@@ -176,19 +176,19 @@ export class PokerGame {
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
   })
-  public updatedAt: Date;
+  public updatedAt!: Date;
 }
 
 @Entity({name: 'poker_game_players'})
 export class PokerGamePlayers {
   @PrimaryGeneratedColumn()
-  id: number;
+  public id!: number;
 
   @ManyToOne(type => PokerGame)
-  game: PokerGame;
+  public game!: PokerGame;
 
   @ManyToOne(type => Player)
-  player: Player;
+  public player!: Player;
 
   @Column({
     name: 'total_buy_in',
@@ -197,7 +197,7 @@ export class PokerGamePlayers {
     scale: 2,
     nullable: false,
   })
-  totalBuyIn: number;
+  public totalBuyIn!: number;
 
   @Column({
     name: 'balance',
@@ -206,13 +206,13 @@ export class PokerGamePlayers {
     scale: 2,
     nullable: false,
   })
-  balance: number;
+  public balance!: number;
 
   @DbAwareColumn({name: 'joined_at', type: 'timestamp'})
-  joinedAt: Date;
+  public joinedAt!: Date;
 
   @DbAwareColumn({name: 'left_at', type: 'timestamp'})
-  leftAt: Date;
+  public leftAt!: Date;
 
   /**
    * DB insert time.
@@ -221,7 +221,7 @@ export class PokerGamePlayers {
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
   })
-  public createdAt: Date;
+  public createdAt!: Date;
 
   /**
    * DB last update time.
@@ -231,34 +231,34 @@ export class PokerGamePlayers {
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
   })
-  public updatedAt: Date;
+  public updatedAt!: Date;
 }
 
 @Entity({name: 'poker_hand'})
 export class PokerHand {
   @PrimaryGeneratedColumn()
-  id: number;
+  public id!: number;
 
   @ManyToOne(type => PokerGame)
-  game: PokerGame;
+  public game!: PokerGame;
 
   @DbAwareColumn({name: 'started_at', type: 'timestamp'})
-  startedAt: Date;
+  public startedAt!: Date;
 
   @DbAwareColumn({name: 'ended_at', type: 'timestamp'})
-  endedAt: Date;
+  public endedAt!: Date;
 
   @Column({type: 'int8'})
-  handNum: number;
+  public handNum!: number;
 
   @Column({type: 'int8', name: 'hi_winners', array: true})
-  hiWinners: number[];
+  public hiWinners!: number[];
 
   @Column({type: 'int8', name: 'low_winners', array: true})
-  lowWinners: number[];
+  public lowWinners!: number[];
 
   @DbAwareColumn({type: 'json', name: 'hand_log'})
-  handLog: any;
+  public handLog!: any;
 }
 
 /*
