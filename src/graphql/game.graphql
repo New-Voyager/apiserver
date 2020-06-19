@@ -62,7 +62,7 @@ type GameInfo {
 type Mutation {
   startGameFromTemplate(clubId: String!, templateId: Int!): GameInfo!,
   startGame(clubId: String!, game: GameCreateInput!): GameInfo!,
-  saveGameTemplate(clubId: String!, gameInput: GameCreateInput!): Int!
+  saveGameTemplate(clubId: String!, templateName: String!, gameInput: GameCreateInput!): Int!
 }
 
 type Query {

@@ -20,6 +20,13 @@ class PlayerRepositoryImpl {
     await repository.save(player);
     return player.uuid;
   }
+
+  public async getPlayers(): Promise<Array<any>> {
+    const repository = getRepository(Player);
+    // get all players (testing only)
+    const players = await repository.find();
+    return players;
+  }
 }
 
 export const PlayerRepository = new PlayerRepositoryImpl();

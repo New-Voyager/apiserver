@@ -3,6 +3,13 @@ input PlayerCreateInput {
   deviceId: String!
 }
 
+type Player {
+  name: String!
+  playerId: String!
+  lastActiveTime: DateTime
+  clubs: [PlayerClub!]
+}
+
 type Mutation {
   createPlayer(player: PlayerCreateInput!): String!,
   authenticatePlayer(name: String!, uuid: String!, deviceId: String!): Boolean
@@ -11,6 +18,7 @@ type Mutation {
 
 type PlayerClub {
   name: String
+  clubId: String
   memberCount: Int
   imageId: String
   private: Boolean
@@ -18,4 +26,5 @@ type PlayerClub {
 
 type Query {
   myClubs: [PlayerClub!]
+  allPlayers: [Player!]
 }

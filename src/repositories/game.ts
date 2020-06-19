@@ -68,6 +68,10 @@ class GameRepositoryImpl {
       const timeInMS = new Date().getTime();
       game.gameId = `${timeInMS}`;
       game.privateGame = true;
+
+      game.startedAt = new Date();
+      game.startedBy = player;
+
       try {
         savedGame = await gameRespository.save(game);
         break;
