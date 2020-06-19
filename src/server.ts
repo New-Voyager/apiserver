@@ -3,7 +3,8 @@ import {fileLoader, mergeTypes} from 'merge-graphql-schemas';
 import {merge} from 'lodash';
 import {authorize} from '@src/middlewares/authorization';
 import {createConnection, getConnectionOptions} from 'typeorm';
-
+import { GameServerAPI } from './internal/gameserver';
+var bodyParser = require('body-parser')
 const GQL_PORT = 9501;
 
 const requestContext = async ({req}) => {
@@ -53,16 +54,24 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
   const express = require('express');
   app = express();
   app.use(authorize);
-
-  server.applyMiddleware({app, path: '/'});
+  app.use(bodyParser.json())
+  server.applyMiddleware({app});
 
   const httpServer = app.listen(
     {
       port: 9501,
     },
     async () => {
-      console.log(`🚀 Server ready at http://0.0.0.0:${GQL_PORT}}`);
+      console.log(`🚀 Server ready at http://0.0.0.0:${GQL_PORT}/graphql}`);
     }
   );
+
+  addInternalRoutes(app);
   return [app, httpServer];
+}
+
+function addInternalRoutes(app: any) {
+  app.post("/internal/register-game-server", GameServerAPI.registerGameServer);
+  app.post("/internal/update-game-server", GameServerAPI.updateGameServer);
+  app.get("/internal/game-servers", GameServerAPI.getGameServers);
 }
