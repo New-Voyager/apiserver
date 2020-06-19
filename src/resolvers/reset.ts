@@ -20,7 +20,7 @@ const resolvers: any = {
         await deleteAll('Player');
         await deleteAll('GameServer');
       });
-      console.log("Database reset is complete");
+      console.log('Database reset is complete');
 
       return true;
     },

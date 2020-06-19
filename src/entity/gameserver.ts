@@ -13,7 +13,6 @@ import {
   DbAwareUpdateDateColumn,
 } from './dbaware';
 
-
 export enum GameServerStatus {
   UNKNOWNN,
   ACTIVE,
@@ -26,7 +25,7 @@ export class GameServer {
   public id!: number;
 
   @Index()
-  @Column({unique: true, name: "ip_address"})
+  @Column({unique: true, name: 'ip_address'})
   public ipAddress!: string;
 
   @DbAwareColumn({
@@ -35,7 +34,7 @@ export class GameServer {
     default: () => 'CURRENT_TIMESTAMP',
   })
   public startedAt!: Date;
-  
+
   @DbAwareColumn({
     name: 'last_heartbeat_time',
     type: 'timestamp',
@@ -47,11 +46,11 @@ export class GameServer {
   public status!: GameServerStatus;
 
   @Column({name: 'no_games_handled', type: 'int'})
-  public noGamesHandled!: number
+  public noGamesHandled!: number;
 
   @Column({name: 'no_active_games', type: 'int'})
   public noActiveGames!: number;
-  
+
   @Column({name: 'no_active_players', type: 'int'})
   public noActivePlayers!: number;
 
@@ -60,7 +59,7 @@ export class GameServer {
 
   @Column({name: 'starting_memory', type: 'int'})
   public startingMemory!: number;
-  
+
   @Column({name: 'current_memory', type: 'int'})
   public currentMemory!: number;
 }

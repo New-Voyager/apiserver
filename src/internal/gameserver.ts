@@ -1,10 +1,8 @@
 import {getRepository} from 'typeorm';
 import {GameServer, GameServerStatus} from '@src/entity/gameserver';
-import { STATUS_CODES } from 'http';
-
+import {STATUS_CODES} from 'http';
 
 class GameServerAPIs {
-
   /**
    * {
    *  "ip_address": "ip",
@@ -17,36 +15,40 @@ class GameServerAPIs {
   public async registerGameServer(req: any, resp: any) {
     const registerPayload = req.body;
 
-    let errors = new Array<string>();
+    const errors = new Array<string>();
     try {
-      if(!registerPayload.ipAddress) {
-        errors.push(`ipAddress is missing`);
+      if (!registerPayload.ipAddress) {
+        errors.push('ipAddress is missing');
       }
-      if(!registerPayload.currentMemory) {
-        errors.push('currentMemory field is missing')
+      if (!registerPayload.currentMemory) {
+        errors.push('currentMemory field is missing');
       }
-      if(!registerPayload.status) {
+      if (!registerPayload.status) {
         errors.push('status is missing');
       } else {
-        if(registerPayload.status != GameServerStatus[GameServerStatus.ACTIVE] &&
-          registerPayload.status != GameServerStatus[GameServerStatus.DOWN]) {
-            errors.push('invalid status field')
-          }
+        if (
+          registerPayload.status != GameServerStatus[GameServerStatus.ACTIVE] &&
+          registerPayload.status != GameServerStatus[GameServerStatus.DOWN]
+        ) {
+          errors.push('invalid status field');
+        }
       }
-    } catch(err) {
-      resp.status(500).send("Internal service error");
+    } catch (err) {
+      resp.status(500).send('Internal service error');
       return;
     }
 
-    if(errors.length) {
+    if (errors.length) {
       resp.status(500).send(JSON.stringify(errors));
       return;
     }
 
     try {
       const gameServerRepository = getRepository(GameServer);
-      let gameServer = await gameServerRepository.findOne({ipAddress: registerPayload.ip_address});
-      if(!gameServer) {
+      let gameServer = await gameServerRepository.findOne({
+        ipAddress: registerPayload.ip_address,
+      });
+      if (!gameServer) {
         gameServer = new GameServer();
         gameServer.noGamesHandled = 0;
         gameServer.noPlayersHandled = 0;
@@ -60,9 +62,9 @@ class GameServerAPIs {
       gameServer.lastHeartBeatTime = new Date();
       gameServer.noActiveGames = 0;
       gameServer.noActivePlayers = 0;
-      await gameServerRepository.save(gameServer)
-      resp.status(200).send(JSON.stringify({status: "OK"}));
-    } catch(err) {
+      await gameServerRepository.save(gameServer);
+      resp.status(200).send(JSON.stringify({status: 'OK'}));
+    } catch (err) {
       resp.status(500);
       return;
     }
@@ -74,48 +76,52 @@ class GameServerAPIs {
    *  status: "",
    *  memory: "",
    *  no_games_handled: ""
-   *  no_active_games: 
-   *  no_active_players: 
+   *  no_active_games:
+   *  no_active_players:
    *  no_players_handled:
    * }
-   * @param req 
-   * @param resp 
+   * @param req
+   * @param resp
    */
   public async updateGameServer(req: any, resp: any) {
     const gameServerPayload = req.body;
     const gameServerRepository = getRepository(GameServer);
-    let gameServer = await gameServerRepository.findOne({where: {ipAddress: gameServerPayload.ipAddress}});
-    if(!gameServer) {
-      resp.status(500).send(`gameserver ${gameServerPayload.ipAddress} is not found`);
+    const gameServer = await gameServerRepository.findOne({
+      where: {ipAddress: gameServerPayload.ipAddress},
+    });
+    if (!gameServer) {
+      resp
+        .status(500)
+        .send(`gameserver ${gameServerPayload.ipAddress} is not found`);
       return;
     }
-    if(gameServerPayload.status) {
+    if (gameServerPayload.status) {
       gameServer.status = gameServerPayload.status;
     }
-    if(gameServerPayload.status) {
+    if (gameServerPayload.status) {
       const gameServerStatus: string = gameServerPayload.status;
       gameServer.status = GameServerStatus[gameServerStatus];
     }
-    if(gameServerPayload.noGamesHandled) {
+    if (gameServerPayload.noGamesHandled) {
       gameServer.noGamesHandled += gameServerPayload.noGamesHandled;
     }
-    if(gameServerPayload.noActiveGames) {
+    if (gameServerPayload.noActiveGames) {
       gameServer.noActiveGames = gameServerPayload.noActiveGames;
     }
-    if(gameServerPayload.noActivePlayers) {
+    if (gameServerPayload.noActivePlayers) {
       gameServer.noActivePlayers = gameServerPayload.noActivePlayers;
     }
-    if(gameServerPayload.noPlayersHandled) {
+    if (gameServerPayload.noPlayersHandled) {
       gameServer.noPlayersHandled += gameServerPayload.noPlayersHandled;
     }
     gameServer.lastHeartBeatTime = new Date();
-    await gameServerRepository.update({id: gameServer.id}, gameServer)
-    resp.status(200).send(JSON.stringify({status: "OK"}));
+    await gameServerRepository.update({id: gameServer.id}, gameServer);
+    resp.status(200).send(JSON.stringify({status: 'OK'}));
   }
 
   public async getGameServers(req: any, resp: any) {
     const gameServerRepository = getRepository(GameServer);
-    let gameServers = await gameServerRepository.find();
+    const gameServers = await gameServerRepository.find();
     resp.status(200).send(JSON.stringify({servers: gameServers}));
   }
 }
