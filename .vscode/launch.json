@@ -14,8 +14,17 @@
       "program": "${workspaceFolder}/build/index.js",
       "outFiles": [
         "${workspaceFolder}/**/*.js"
-      ]
+      ],
     },
+    {
+      "name": "Launch via npm",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "debug-break"],
+      "port": 9235
+    },      
     {
       "name": "Debug Jest Tests",
       "type": "node",

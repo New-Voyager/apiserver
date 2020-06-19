@@ -1,6 +1,24 @@
+import * as _ from 'lodash';
 import {PlayerRepository} from '@src/repositories/player';
 import {ClubRepository} from '@src/repositories/club';
 import {ClubMemberStatus} from '@src/entity/club';
+
+async function getClubs(playerId: string): Promise<Array<any>> {
+  const clubMembers = await ClubRepository.getPlayerClubs(playerId);
+  if (!clubMembers) {
+    return [];
+  }
+  const clubs = _.map(clubMembers, x => {
+    return {
+      name: x.name,
+      private: true,
+      imageId: '',
+      clubId: x.clubid,
+      memberCount: x.memberCount,
+    };
+  });
+  return clubs;
+}
 
 const resolvers: any = {
   Query: {
@@ -8,28 +26,20 @@ const resolvers: any = {
       if (!ctx.req.playerId) {
         throw new Error('Unauthorized');
       }
-      const clubMembers = await ClubRepository.getPlayerClubs(ctx.req.playerId);
-      if (!clubMembers) {
-        return [];
-      }
-      const clubs = new Array<any>();
-      /*
-        type PlayerClub {
-          name: String
-          memberCount: Int
-          imageId: String
-          private: Boolean
-        }*/
-
-      for (const clubMember of clubMembers) {
-        clubs.push({
-          name: clubMember.name,
-          private: true,
-          imageId: '',
-          memberCount: clubMember.memberCount,
-        });
-      }
-      return clubs;
+      return getClubs(ctx.req.playerId);
+    },
+    allPlayers: async (parent, args, ctx, info) => {
+      //if (!ctx.req.playerId) {
+      //  throw new Error('Unauthorized');
+      //}
+      const players = await PlayerRepository.getPlayers();
+      return _.map(players, x => {
+        return {
+          playerId: x.uuid,
+          name: x.name,
+          lastActiveTime: x.updatedAt,
+        };
+      });
     },
   },
   Mutation: {
@@ -73,6 +83,14 @@ const resolvers: any = {
       }
       await ClubRepository.leaveClub(args.clubId, ctx.req.playerId);
       return ClubMemberStatus[ClubMemberStatus.LEFT];
+    },
+  },
+  Player: {
+    clubs: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+      return getClubs(parent.playerId);
     },
   },
 };

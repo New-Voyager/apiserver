@@ -75,10 +75,10 @@ export class PokerGame {
   public straddleBet!: number;
 
   @Column({name: 'utg_straddle', nullable: true})
-  public utgStraddle!: boolean;
+  public utgStraddleAllowed!: boolean;
 
   @Column({name: 'button_straddle', nullable: true})
-  public buttonStraddle!: boolean;
+  public buttonStraddleAllowed!: boolean;
 
   @Column({name: 'max_players', type: 'int'})
   public maxPlayers!: number;
@@ -158,6 +158,21 @@ export class PokerGame {
     default: () => 'CURRENT_TIMESTAMP',
   })
   public startedAt!: Date;
+
+  @ManyToOne(type => Player, {nullable: false, eager: true})
+  @JoinColumn({name: 'started_by'})
+  public startedBy!: Player;
+
+  @DbAwareColumn({
+    name: 'ended_at',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  public endedAt!: Date;
+
+  @ManyToOne(type => Player, {nullable: false, eager: true})
+  @JoinColumn({name: 'ended_by'})
+  public endedBy!: Player;
 
   /**
    * DB insert time.

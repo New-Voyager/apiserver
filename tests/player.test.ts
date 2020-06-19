@@ -1,24 +1,6 @@
 import {resetDatabase, getClient} from './utils/utils';
 import {gql} from 'apollo-boost';
-import {createClub, createPlayer, playerJoinsClub} from './club.test';
-
-const myClubsQuery = gql`
-  query {
-    clubs: myClubs {
-      name
-      private
-    }
-  }
-`;
-
-async function getMyClubs(playerId: string): Promise<Array<any>> {
-  const playerClient = getClient(playerId);
-  const resp = await playerClient.query({
-    query: myClubsQuery,
-  });
-
-  return resp.data.clubs;
-}
+import * as clubutils from './utils/club.testutils';
 
 beforeAll(async done => {
   await resetDatabase();
@@ -85,16 +67,19 @@ describe('Player APIs', () => {
   });
 
   test('get my clubs', async () => {
-    const [club1Id] = await createClub();
-    const [club2Id] = await createClub();
-    const player1 = await createPlayer('player1', 'ABCDE');
-    await playerJoinsClub(club1Id, player1);
-    await playerJoinsClub(club2Id, player1);
-    const player2 = await createPlayer('player2', '12345');
-    await playerJoinsClub(club2Id, player2);
-    const player1Clubs = await getMyClubs(player1);
+    const [club1Id] = await clubutils.createClub();
+    const [club2Id] = await clubutils.createClub();
+    const player1 = await clubutils.createPlayer('player1', 'ABCDE');
+    await clubutils.playerJoinsClub(club1Id, player1);
+    await clubutils.playerJoinsClub(club2Id, player1);
+    const player2 = await clubutils.createPlayer('player2', '12345');
+    await clubutils.playerJoinsClub(club2Id, player2);
+    const player1Clubs = await clubutils.getMyClubs(player1);
     expect(player1Clubs).toHaveLength(2);
-    const player2Clubs = await getMyClubs(player2);
+    const player2Clubs = await clubutils.getMyClubs(player2);
     expect(player2Clubs).toHaveLength(1);
+    const club2 = player2Clubs[0];
+    expect(club2.name).not.toBeNull();
+    expect(club2.clubId).toEqual(club2Id);
   });
 });
