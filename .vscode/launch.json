@@ -17,12 +17,12 @@
       ],
     },
     {
-      "name": "Launch via npm",
+      "name": "Watch debug",
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run-script", "debug-break"],
+      "runtimeArgs": ["run-script", "watch-debug"],
       "port": 9235
     },      
     {
@@ -47,7 +47,7 @@
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
         "--testNamePattern",
-        "player leaves a club"
+        "start a new game"
       ],
       "env": {
         "NODE_ENV": "test",

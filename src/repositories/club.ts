@@ -1,7 +1,16 @@
-import {getConnection, getRepository, getManager, Not} from 'typeorm';
 import {v4 as uuidv4} from 'uuid';
 import {Club, ClubMember, ClubMemberStatus} from '@src/entity/club';
 import {Player} from '@src/entity/player';
+import {
+  getConnection,
+  getRepository,
+  getManager,
+  Not,
+  LessThan,
+  MoreThan,
+} from 'typeorm';
+import {PokerGame, GameType, PlayerGame} from '@src/entity/game';
+import {PageOptions} from '@src/types';
 
 export interface ClubCreateInput {
   ownerUuid: string;
@@ -366,6 +375,64 @@ class ClubRepositoryImpl {
     clubMember.status = ClubMemberStatus.LEFT;
     await clubMemberRepository.save(clubMember);
     return clubMember.status;
+  }
+
+  public async getClubGames(
+    clubId: string,
+    pageOptions?: PageOptions
+  ): Promise<Array<any>> {
+    if (!pageOptions) {
+      pageOptions = {
+        count: 20,
+        prev: 0x7fffffff,
+      };
+    }
+
+    let order: any = {
+      id: 'ASC',
+    };
+
+    let pageWhere: any;
+    if (pageOptions.next) {
+      order = {
+        id: 'DESC',
+      };
+      pageWhere = MoreThan(pageOptions.next);
+    } else {
+      if (pageOptions.prev) {
+        order = {
+          id: 'DESC',
+        };
+        pageWhere = LessThan(pageOptions.prev);
+      }
+    }
+
+    console.log(`pageOptions count: ${pageOptions.count}`);
+    let take = pageOptions.count;
+    if (!take || take > 20) {
+      take = 20;
+    }
+    const clubRepository = getRepository(Club);
+    const club = await clubRepository.findOne({where: {displayId: clubId}});
+    if (!club) {
+      throw new Error(`Club ${clubId} is not found`);
+    }
+
+    const findOptions: any = {
+      where: {
+        club: {id: club.id},
+      },
+      order: order,
+      take: take,
+    };
+
+    if (pageWhere) {
+      findOptions['where']['id'] = pageWhere;
+    }
+
+    const gameRespository = getRepository(PokerGame);
+    const games = await gameRespository.find(findOptions);
+    return games;
   }
 }
 

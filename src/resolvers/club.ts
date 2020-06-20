@@ -5,6 +5,40 @@ import {
 } from '@src/repositories/club';
 import {ClubMemberStatus} from '@src/entity/club';
 import {Player} from '@src/entity/player';
+import {PageOptions} from '@src/types';
+import * as _ from 'lodash';
+import {GameStatus} from '@src/entity/game';
+
+async function getClubGames(
+  clubId: string,
+  pageOptions?: PageOptions
+): Promise<Array<any>> {
+  const clubGames = await ClubRepository.getClubGames(clubId, pageOptions);
+  const ret = _.map(clubGames, x => {
+    let endedAt;
+    let endedBy;
+    if (x.endedAt) {
+      endedAt = x.endedAt;
+      if (x.endedBy) {
+        endedBy = x.endedBy.name;
+      }
+    }
+
+    return {
+      pageId: x.id,
+      title: x.title,
+      type: x.gameType,
+      gameId: x.gameId,
+      startedBy: x.startedBy.name,
+      startedAt: x.startedAt,
+      status: GameStatus[x.status],
+      endedAt: endedAt,
+      endedBy: endedBy,
+    };
+  });
+  // convert club games to PlayerClubGame
+  return ret;
+}
 
 const resolvers: any = {
   Query: {
@@ -57,6 +91,25 @@ const resolvers: any = {
       }
 
       return members;
+    },
+
+    clubGames: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+      const clubMember = await ClubRepository.isClubMember(
+        args.clubId,
+        ctx.req.playerId
+      );
+      if (!clubMember) {
+        console.log(
+          `The user ${ctx.req.playerId} is not a member of ${args.clubId}`
+        );
+        throw new Error('Unauthorized');
+      }
+      console.log(`args in clubGames: ${JSON.stringify(args)}`);
+      const clubGames = getClubGames(args.clubId, args.page);
+      return clubGames;
     },
   },
   Mutation: {

@@ -40,6 +40,30 @@ type ClubMember {
   playerId: String
 }
 
+type ClubGameInfo {
+  title: String
+  type: GameType
+  pageId: Int!
+  gameId: String!
+  startedBy: String
+  startedAt: DateTime
+  endedBy: String
+  endedAt: String
+  status: GameStatus
+}
+
+input PageInput {
+  prev: Int
+  next: Int
+  count: Int
+}
+
 type Query {
   clubMembers(clubId: String!): [ClubMember!]
+
+  # returns 'last' number of games 'from' in reverse order
+  # by default, this call returns only last 20 games
+  # the caller can paginate with pageId
+  # clubGames(clubId: "", prev: 20, from: 10000001)
+  clubGames(clubId: String!, page: PageInput): [ClubGameInfo!]
 }

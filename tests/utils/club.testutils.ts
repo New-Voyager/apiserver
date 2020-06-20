@@ -71,10 +71,20 @@ const myClubsQuery = gql`
 /**
  * Creates a club and returns clubId and owner id
  */
-export async function createClub(): Promise<[string, string]> {
+export async function createClub(
+  owner?: string,
+  club?: string
+): Promise<[string, string]> {
+  if (!owner) {
+    owner = 'owner';
+  }
+
+  if (!club) {
+    club = 'bbc';
+  }
   const ownerInput = {
     input: {
-      name: 'owner',
+      name: owner,
       deviceId: 'abc123',
     },
   };
@@ -86,7 +96,7 @@ export async function createClub(): Promise<[string, string]> {
   const ownerId = resp.data.playerId;
   const clubInput = {
     input: {
-      name: 'bbc',
+      name: club,
       description: 'poker players gather',
     },
   };

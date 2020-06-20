@@ -1,5 +1,5 @@
-import {getRepository} from 'typeorm';
-import {PokerGame, GameType} from '@src/entity/game';
+import {getConnection, getRepository, getManager, LessThan} from 'typeorm';
+import {PokerGame, GameType, PlayerGame, GameStatus} from '@src/entity/game';
 import {Club, ClubMember, ClubMemberStatus} from '@src/entity/club';
 import {Player} from '@src/entity/player';
 
@@ -55,34 +55,32 @@ class GameRepositoryImpl {
     const gameType: GameType = GameType[gameTypeStr];
     game.gameType = gameType;
     game.isTemplate = template;
+    game.status = GameStatus.WAITING;
     if (club) {
       game.club = club;
     }
-    let attempt = 10;
-    const gameRespository = getRepository(PokerGame);
     let savedGame;
-
     // use current time as the game id for now
-    while (attempt != 0) {
-      attempt--;
-      const timeInMS = new Date().getTime();
-      game.gameId = `${timeInMS}`;
-      game.privateGame = true;
+    const timeInMS = new Date().getTime();
+    game.gameId = `${timeInMS}`;
+    game.privateGame = true;
 
-      game.startedAt = new Date();
-      game.startedBy = player;
-
-      try {
+    game.startedAt = new Date();
+    game.startedBy = player;
+    try {
+      const gameRespository = getRepository(PokerGame);
+      const playerGameRespository = getRepository(PlayerGame);
+      await getManager().transaction(async transactionalEntityManager => {
         savedGame = await gameRespository.save(game);
-        break;
-      } catch (err) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        console.log("Couldn't create game");
-      }
-    }
-
-    if (!savedGame) {
-      throw new Error('Cannot create game');
+        const playerGame = new PlayerGame();
+        playerGame.club = club;
+        playerGame.game = savedGame;
+        playerGame.player = player;
+        await playerGameRespository.save(playerGame);
+      });
+    } catch (err) {
+      console.log("Couldn't create game and retry again");
+      throw new Error("Couldn't create the game, please retry again");
     }
     return savedGame;
   }

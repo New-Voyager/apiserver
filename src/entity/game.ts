@@ -21,6 +21,14 @@ export enum GameType {
   OMAHA_HILO,
 }
 
+export enum GameStatus {
+  UNKNOWN,
+  WAITING,
+  NOTENOUGH_PLAYERS,
+  RUNNING,
+  ENDED,
+}
+
 @Entity({name: 'poker_game'})
 export class PokerGame {
   @PrimaryGeneratedColumn()
@@ -85,6 +93,9 @@ export class PokerGame {
 
   @Column({name: 'is_active', nullable: true})
   public isActive!: boolean;
+
+  @Column({name: 'game_status', nullable: true})
+  public status!: GameStatus;
 
   @Column({name: 'game_length', type: 'int'})
   public gameLength!: number;
@@ -166,11 +177,11 @@ export class PokerGame {
   @DbAwareColumn({
     name: 'ended_at',
     type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
+    nullable: true,
   })
   public endedAt!: Date;
 
-  @ManyToOne(type => Player, {nullable: false, eager: true})
+  @ManyToOne(type => Player, {nullable: true, eager: true})
   @JoinColumn({name: 'ended_by'})
   public endedBy!: Player;
 
@@ -314,3 +325,34 @@ export class PokerHand {
             pot: value
         },
 */
+
+/**
+ * Quick way to get list of games the user is part of.
+ */
+@Entity({name: 'player_games'})
+export class PlayerGame {
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @Index()
+  @ManyToOne(type => PokerGame, {nullable: false, eager: true})
+  public game!: PokerGame;
+
+  @Index()
+  @ManyToOne(type => Player, {nullable: false, eager: true})
+  public player!: Player;
+
+  @Index()
+  @ManyToOne(type => Club, {nullable: false, eager: true})
+  public club!: Club;
+
+  @DbAwareColumn({
+    name: 'started_playing_at',
+    type: 'timestamp',
+    nullable: true,
+  })
+  public startedPlayingAt!: Date;
+
+  @DbAwareColumn({name: 'left_playing_at', type: 'timestamp', nullable: true})
+  public leftPlayingAt!: Date;
+}

@@ -4,6 +4,15 @@ enum GameType {
   HILO,
 }
 
+
+enum GameStatus {
+  UNKNOWN,
+  WAITING,
+  NOTENOUGH_PLAYERS,
+  RUNNING,
+  ENDED,
+}
+
 input GameCreateInput {
   gameType: GameType!
   title: String
@@ -55,12 +64,26 @@ type GameInfo {
   actionTime: Int
   muckLosingHand: Boolean
   waitForBigBlind: Boolean
+  startedBy: String
+  startedAt: DateTime
+  endedBy: String
+  endedAt: String
   template: Boolean
+  status: GameStatus
 }
 
+input GameUpdateInput {
+  status: GameStatus
+  muckLosingHand: Boolean
+  waitForBigBlind: Boolean
+  buyInMin: Float
+  buyInMax: Float
+  title: String
+}
 
 type Mutation {
   startGameFromTemplate(clubId: String!, templateId: Int!): GameInfo!,
+  updateGame(clubId: String!, gameId: String!, update: GameUpdateInput): GameInfo!
   startGame(clubId: String!, game: GameCreateInput!): GameInfo!,
   saveGameTemplate(clubId: String!, templateName: String!, gameInput: GameCreateInput!): Int!
 }

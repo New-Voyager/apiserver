@@ -7,12 +7,13 @@ const resolvers: any = {
       if (!ctx.req.playerId) {
         throw new Error('Unauthorized');
       }
-      if (ctx.req.playerId !== 'TEST_USER') {
-        throw new Error('Unauthorized');
-      }
+      //if (ctx.req.playerId !== 'TEST_USER') {
+      //  throw new Error('Unauthorized');
+      //}
       // delete all the entries
       await getManager().transaction(async transactionalEntityManager => {
         await deleteAll('PokerGamePlayers');
+        await deleteAll('PlayerGame');
         await deleteAll('PokerHand');
         await deleteAll('PokerGame');
         await deleteAll('ClubMember');
