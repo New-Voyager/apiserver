@@ -3,15 +3,17 @@ orbs:
   node: circleci/node@3.0.0
 jobs:
   build-and-test:
-    executor:
-      name: node/default
+    executor: node/default
     steps:
       - checkout
-      - node/with-cache:
-          steps:
-            - run: make install_deps
-            - run: make build
-            - run: make test
+      - node/install-packages:
+          pkg-manager: yarn
+      - run: 
+          name: Compile TS
+          command: make build
+      - run:
+          name: Run tests
+          command: make test
 workflows:
     build-and-test:
       jobs:
