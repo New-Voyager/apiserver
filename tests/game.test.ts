@@ -1,0 +1,116 @@
+import {resetDatabase, getClient} from './utils/utils';
+import * as clubutils from './utils/club.testutils';
+import * as gameutils from './utils/game.testutils';
+
+beforeAll(async done => {
+  await resetDatabase();
+  done();
+});
+
+afterAll(async done => {
+  //await server.stop();
+  done();
+});
+
+const holdemGameInput = {
+  gameType: 'HOLDEM',
+  title: 'Friday game',
+  smallBlind: 1.0,
+  bigBlind: 2.0,
+  straddleBet: 4.0,
+  utgStraddleAllowed: true,
+  buttonStraddleAllowed: false,
+  minPlayers: 3,
+  maxPlayers: 9,
+  gameLength: 60,
+  buyInApproval: true,
+  breakLength: 20,
+  autoKickAfterBreak: true,
+  waitForBigBlind: true,
+  waitlistSupported: true,
+  maxWaitList: 10,
+  sitInApproval: true,
+  rakePercentage: 5.0,
+  rakeCap: 5.0,
+  buyInMin: 100,
+  buyInMax: 600,
+  actionTime: 30,
+  muckLosingHand: true,
+};
+
+describe('Game APIs', () => {
+  test('start a new game', async () => {
+    const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
+
+    const resp = await getClient(playerId).mutate({
+      variables: {
+        clubId: clubId,
+        gameInput: holdemGameInput,
+      },
+      mutation: gameutils.startGameQuery,
+    });
+    expect(resp.errors).toBeUndefined();
+    expect(resp.data).not.toBeNull();
+    const startedGame = resp.data.startedGame;
+    expect(startedGame).not.toBeNull();
+    expect(startedGame.gameType).toEqual('HOLDEM');
+    expect(startedGame.title).toEqual('Friday game');
+    expect(startedGame.smallBlind).toEqual(1.0);
+    expect(startedGame.bigBlind).toEqual(2.0);
+    expect(startedGame.straddleBet).toEqual(4.0);
+    expect(startedGame.utgStraddleAllowed).toEqual(true);
+    expect(startedGame.buttonStraddleAllowed).toEqual(false);
+    expect(startedGame.minPlayers).toEqual(3);
+    expect(startedGame.maxPlayers).toEqual(9);
+    expect(startedGame.gameLength).toEqual(60);
+    expect(startedGame.buyInApproval).toEqual(true);
+    expect(startedGame.breakLength).toEqual(20);
+    expect(startedGame.autoKickAfterBreak).toEqual(true);
+    expect(startedGame.waitForBigBlind).toEqual(true);
+    expect(startedGame.sitInApproval).toEqual(true);
+    expect(startedGame.rakePercentage).toEqual(5.0);
+    expect(startedGame.rakeCap).toEqual(5.0);
+    expect(startedGame.buyInMin).toEqual(100);
+    expect(startedGame.buyInMax).toEqual(600);
+    expect(startedGame.actionTime).toEqual(30);
+    expect(startedGame.muckLosingHand).toEqual(true);
+  });
+
+  test('get club games', async () => {
+    const [clubId, playerId] = await clubutils.createClub('brady1', 'yatzee2');
+    const game1 = await gameutils.startGame(playerId, clubId, holdemGameInput);
+    const game2 = await gameutils.startGame(playerId, clubId, holdemGameInput);
+    // get number of club games
+    const clubGames = await gameutils.getClubGames(playerId, clubId);
+    expect(clubGames).toHaveLength(2);
+
+    const [clubId2, playerId2] = await clubutils.createClub(
+      'brady1',
+      'yatzee2'
+    );
+    // get number of club games
+    const club2Games = await gameutils.getClubGames(playerId2, clubId2);
+    expect(club2Games).toHaveLength(0);
+  });
+
+  test('get club games pagination', async () => {
+    const [clubId, playerId] = await clubutils.createClub('brady3', 'yatzee3');
+    const numGames = 100;
+
+    for (let i = 0; i < numGames; i++) {
+      await gameutils.startGame(playerId, clubId, holdemGameInput);
+    }
+    let clubGames = await gameutils.getClubGames(playerId, clubId);
+    // we can get only 20 games
+    expect(clubGames).toHaveLength(20);
+    const firstGame = clubGames[0];
+    const lastGame = clubGames[19];
+    console.log(JSON.stringify(firstGame));
+    console.log(JSON.stringify(lastGame));
+    clubGames = await gameutils.getClubGames(playerId, clubId, {
+      prev: lastGame.pageId,
+      count: 5,
+    });
+    expect(clubGames).toHaveLength(5);
+  });
+});
