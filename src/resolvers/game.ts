@@ -13,14 +13,13 @@ const resolvers: any = {
         throw new Error(errors.join('\n'));
       }
       try {
-        args.game.gameType = GameType[args.game.gameType];
         const gameInfo = await GameRepository.createPrivateGame(
           args.clubId,
           ctx.req.playerId,
           args.game
         );
         const ret: any = gameInfo as any;
-        //ret.gameType = GameType[gameInfo.gameType];
+        ret.gameType = GameType[gameInfo.gameType];
         console.log(JSON.stringify(ret));
         return ret;
       } catch (err) {
