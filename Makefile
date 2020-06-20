@@ -12,4 +12,4 @@ clean:
 
 .PHONY: test
 test:
-	yarn test
+	./run_system_tests.sh
