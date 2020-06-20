@@ -1,0 +1,20 @@
+version: 2.1
+orbs:
+  node: circleci/node@3.0.0
+jobs:
+  build-and-test:
+    executor: node/default
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: yarn
+      - run: 
+          name: Compile TS
+          command: make build
+      - run:
+          name: Run tests
+          command: make test
+workflows:
+    build-and-test:
+      jobs:
+        - build-and-test
