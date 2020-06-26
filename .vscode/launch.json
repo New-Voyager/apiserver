@@ -24,7 +24,16 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run-script", "watch-debug"],
       "port": 9235
-    },      
+    },
+    {
+      "name": "Watch debug windows",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "debug-windows"],
+      "port": 9235
+    },           
     {
       "name": "Debug Jest Tests",
       "type": "node",
