@@ -8,6 +8,7 @@
   "scripts": {
     "watch-debug": "tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
     "debug": "NODE_ENV=dev node --inspect=0.0.0.0:9228 ./build/index.js",
+    "debug-windows": "set NODE_ENV=dev && tsc-watch.bat",
     "debug-break": "node --nolazy --inspect-brk=9235 ./build/index.js",
     "test": "NODE_ENV=test jest --runInBand",
     "test-specific": "NODE_ENV=test jest --runInBand \"--testNamePattern\" \"start a new game\"",
@@ -43,6 +44,7 @@
     "typeorm": "^0.2.25",
     "uuid": "^8.1.0",
     "winston": "^3.2.1",
+    "yarn": "^1.22.4",
     "zipkin": "^0.22.0"
   },
   "devDependencies": {
