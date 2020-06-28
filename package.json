@@ -22,7 +22,8 @@
     "fix": "gts fix",
     "prepare": "npm run compile",
     "pretest-disabled": "npm run compile",
-    "posttest-disabled": "npm run check"
+    "posttest-disabled": "npm run check",
+    "run-pg": "docker-compose -f docker-compose-pg.yaml up"
   },
   "dependencies": {
     "@types/jest": "^26.0.0",
