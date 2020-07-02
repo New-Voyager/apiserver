@@ -1,0 +1,140 @@
+{
+	"ClubId": 1,
+	"GameNum": 1,
+	"HandNum": 2,
+	"Players": [1000, 1001, 20001, 30001, 40001],
+	"GameType": "HOLDEM",
+	"StartedAt": "20200630T00:02:10",
+	"EndedAt": "20200630T00:04:00",
+	"PREFLOP": {
+		"actions": [{
+				"player": 1001,
+				"action": "SB",
+				"amount": 1.0,
+				"balance": 97.0
+			},
+			{
+				"player": 20001,
+				"action": "BB",
+				"amount": 2.0,
+				"balance": 98.0
+			},
+			{
+				"player": 30001,
+				"action": "FOLD",
+				"balance": 132.0
+			},
+			{
+				"player": 40001,
+				"action": "RAISE",
+				"amount": 15.0,
+				"balance": 70.0
+			},
+			{
+				"player": 1000,
+				"action": "FOLD",
+				"balance": 85.0
+			},
+			{
+				"player": 1001,
+				"action": "CALL",
+				"amount": 15.0,
+				"balance": 83.0
+
+			},
+			{
+				"player": 20001,
+				"action": "RAISE",
+				"amount": 30.0,
+				"balance": 70.0
+			},
+			{
+				"player": 40001,
+				"action": "ALLIN",
+				"amount": 85.0,
+				"balance": 0.0
+			},
+			{
+				"player": 1001,
+				"action": "FOLD",
+				"balance": 83.0
+			},
+			{
+				"player": 20001,
+				"action": "ALL-IN",
+				"amount": 98.0,
+				"balance": 0.0
+			}
+		],
+		"pot": 201.0
+	},
+	"FLOP": {
+		"cards": ["Ac", "8d", "4s"],
+		"actions": [],
+		"pot": 201.0
+	},
+	"TURN": {
+		"cards": ["Ac", "8d", "4s", "Qh"],
+		"actions": [],
+		"pot": 201.0
+	},
+	"RIVER": {
+		"cards": ["Ac", "8d", "4s", "Qh", "Ad"],
+		"actions": [],
+		"pot": 201.0
+	},
+	"SHOWDOWN": {
+		"cards": ["Ac", "8d", "4s", "Qh", "Ad"],
+		"player_cards": [{
+				"player": 40001,
+				"cards": ["Kh", "Ks"]
+			},
+			{
+				"player": 20001,
+				"cards": ["Kd", "Qc"]
+			}
+		]
+	},
+	"Result": {
+		"winners_count": 2,
+		"winners": [{
+			"player": 40001,
+			"received": 83.5,
+			"rank": "TWO PAIR",
+			"rank_num": 1203
+		},
+		{
+			"player": 20001,
+			"received": 83.5,
+			"rank": "TWO PAIR",
+			"rank_num": 1203
+		}],
+		"won_at": "SHOWDOWN",
+		"summary": [{
+				"player": 1000,
+				"balance": 85.0,
+				"change": 0.0
+			},
+			{
+				"player": 1001,
+				"balance": 83.0,
+				"change": -15.0
+			},
+			{
+				"player": 20001,
+				"balance": 98.5,
+				"change": 0.5
+			},
+			{
+				"player": 30001,
+				"balance": 132.0,
+				"change": 0.0
+			},
+			{
+				"player": 40001,
+				"balance": 85.5,
+				"change": 0.5
+			}
+		]
+	}
+}
