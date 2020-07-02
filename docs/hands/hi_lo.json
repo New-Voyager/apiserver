@@ -151,21 +151,73 @@
 		]
 	},
 	"Result": {
-		"hi_winners_count": 2,
-		"winners": [{
-				"player": 40001,
-				"received": 83.5,
-				"rank": "TWO PAIR",
-				"rank_num": 1203
+		"pot_winners": [{
+				"pot": 0,
+				"amount": 255.0,
+				"hi_winners": [{
+						"player": 40001,
+						"received": 83.5,
+						"rank": "TWO PAIR",
+						"rank_num": 1203,
+						"winning_cards": ["Ac", "Ad", "Kd", "Kc", "Qh"]
+					},
+					{
+						"player": 20001,
+						"received": 83.5,
+						"rank": "TWO PAIR",
+						"rank_num": 1203,
+						"winning_cards": ["Ac", "Ad", "Kh", "Ks", "Qh"]
+					}
+				],
+				"lo_winners": [{
+						"player": 20001,
+						"received": 83.5,
+						"rank_num": 1203,
+						"winning_cards": ["8d", "4s", "5d", "2s", "Ac"]
+					},
+					{
+						"player": 1001,
+						"received": 83.5,
+						"rank_num": 1203,
+						"winning_cards": ["8d", "4s", "5c", "2d", "Ac"]
+					}
+				]
 			},
 			{
-				"player": 20001,
-				"received": 83.5,
-				"rank": "TWO PAIR",
-				"rank_num": 1203
+				"pot": 1,
+				"amount": 6.5,
+				"hi_winners": [{
+						"player": 40001,
+						"received": 6.5,
+						"rank": "TWO PAIR",
+						"rank_num": 1203,
+						"winning_cards": ["Ac", "Ad", "Kd", "Kc", "Qh"]
+					},
+					{
+						"player": 20001,
+						"received": 13.0,
+						"rank": "TWO PAIR",
+						"rank_num": 1203,
+						"winning_cards": ["Ac", "Ad", "Kh", "Ks", "Qh"]
+					}
+				],
+				"lo_winners": [{
+					"player": 20001,
+					"received": 13.0,
+					"rank": "TWO PAIR",
+					"rank_num": 1203,
+					"winning_cards": ["8d", "4s", "5d", "2s", "Ac"]
+				}]
 			}
 		],
+
 		"won_at": "SHOW_DOWN",
+		"showdown": true,
+		"hi_winning_cards": ["Ac", "Ad", "Kd", "Kc", "Qh"],
+		"hi_winning_rank": 1203,
+		"lo_winning_cards":  ["8d", "4s", "5d", "2s", "Ac"],
+		"lo_winning_rank": 5882,
+		"total_pot": 255.0,
 		"summary": [{
 				"player": 1000,
 				"balance": 85.0,

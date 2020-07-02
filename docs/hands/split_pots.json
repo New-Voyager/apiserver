@@ -40,7 +40,6 @@
 				"action": "CALL",
 				"amount": 15.0,
 				"balance": 83.0
-
 			},
 			{
 				"player": 20001,
@@ -61,55 +60,88 @@
 			},
 			{
 				"player": 20001,
-				"action": "ALL-IN",
-				"amount": 98.0,
+				"action": "CALL",
+				"amount": 85.0,
 				"balance": 0.0
 			}
 		],
-		"pot": 201.0
+		"pots": [{
+			"no": 0,
+			"amount": 186.0,
+			"players": [40001, 20001]
+		}]
 	},
 	"FLOP": {
 		"cards": ["Ac", "8d", "4s"],
 		"actions": [],
-		"pot": 201.0
+		"pots": [{
+			"no": 0,
+			"amount": 186.0,
+			"players": [40001, 20001]
+		}]
 	},
 	"TURN": {
 		"cards": ["Ac", "8d", "4s", "Qh"],
 		"actions": [],
-		"pot": 201.0
+		"pots": [{
+			"no": 0,
+			"amount": 186.0,
+			"players": [40001, 20001]
+		}]
 	},
 	"RIVER": {
 		"cards": ["Ac", "8d", "4s", "Qh", "Ad"],
 		"actions": [],
-		"pot": 201.0
+		"pots": [{
+			"no": 0,
+			"amount": 186.0,
+			"players": [40001, 20001]
+		}]
 	},
 	"SHOWDOWN": {
 		"cards": ["Ac", "8d", "4s", "Qh", "Ad"],
+		"pots": [{
+			"no": 0,
+			"amount": 186.0,
+			"players": [40001, 20001]
+		}],
 		"player_cards": [{
 				"player": 40001,
 				"cards": ["Kh", "Ks"]
 			},
 			{
 				"player": 20001,
-				"cards": ["Kd", "Qc"]
+				"cards": ["Kd", "Kc"]
 			}
 		]
 	},
 	"Result": {
-		"winners_count": 2,
-		"winners": [{
-			"player": 40001,
-			"received": 83.5,
-			"rank": "TWO PAIR",
-			"rank_num": 1203
-		},
-		{
-			"player": 20001,
-			"received": 83.5,
-			"rank": "TWO PAIR",
-			"rank_num": 1203
+		"pot_winners": [{
+			"pot": 0,
+			"amount": 186.0,
+			"winners": [{
+					"player": 40001,
+					"received": 93.0,
+					"rank": "TWO PAIR",
+					"rank_num": 1203,
+					"winning_cards": ["Ah", "As", "Kh", "Ks", "Qh"]
+
+				},
+				{
+					"player": 20001,
+					"received": 93.0,
+					"rank": "TWO PAIR",
+					"rank_num": 1203,
+					"winning_cards": ["Ah", "As", "Kd", "Ks", "Qh"]
+				}
+			]
 		}],
 		"won_at": "SHOWDOWN",
+		"showdown": true,
+		"winning_rank": "TWO PAIR",
+		"rank_num": 1023,
+		"winning_cards": ["Ah", "As", "Kh", "Kc", "Qh"],
+		"total_pot": 186.0,
 		"summary": [{
 				"player": 1000,
 				"balance": 85.0,

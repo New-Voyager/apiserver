@@ -1,4 +1,4 @@
-What is hand?
+What is a hand?
 A game hand contains a list of player actions and winners/winning money of a poker deal.
 After the cards are dealt, the player makes preflop actions. If only one player hand is alive
 after the actions, then the player is a winner at preflop. This evaulation goes for flop cards,

@@ -52,7 +52,10 @@
 
 			}
 		],
-		"pot": 47.0
+		"pots": [{
+			"no": 0,
+			"amount": 47.0
+		}]
 	},
 	"FLOP": {
 		"cards": ["Ac", "8d", "4s"],
@@ -82,15 +85,22 @@
 
 			}
 		],
-		"pot": 62.0
+		"pots": [{
+			"no": 0,
+			"amount": 47.0
+		}]
 	},
 	"Result": {
-		"winners_count": 1,
-		"winners": [{
-			"player": 30001,
-			"received": 62.0
+		"pot_winners": [{
+			"pot": 0,
+			"amount": 47.0,
+			"winners": [{
+				"player": 30001,
+				"received": 62.0
+			}]
 		}],
 		"won_at": "FLOP",
+		"showdown": false,
 		"summary": [{
 				"player": 1000,
 				"balance": 85.0,
