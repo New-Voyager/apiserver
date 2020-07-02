@@ -1,3 +1,3 @@
-set NODE_ENV="test"
-set DB_USED="sqllite"
+set NODE_ENV=test
+set DB_USED=sqllite
 node build/index.js
