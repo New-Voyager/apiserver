@@ -1,12 +1,10 @@
+pot1: 26.0
 hi winning cards: 
   20001: [Ac, Ad, Kd, Kc, Qh]
   40001: [Ac, Ad, Kh, Ks, Qh]
-
 lo winning cards:
   20001: [8d, 4s, 5d, 2s, Ac]
-  1001:  [8d, 4s, 5c, 2d, Ac]
 
-pot1: 26.0
 hi winners: 20001, 40001
 lo winners: 20001
 hi share: 13, lo share 13
@@ -15,6 +13,13 @@ hi share: 13, lo share 13
 40001: 6.5 
 
 pot0: 255.0
+hi winning cards: 
+  20001: [Ac, Ad, Kd, Kc, Qh]
+  40001: [Ac, Ad, Kh, Ks, Qh]
+lo winning cards:
+  20001: [8d, 4s, 5d, 2s, Ac]
+  1001:  [8d, 4s, 5c, 2d, Ac]
+
 hi share: 127.5
 lo share: 127.5
 
