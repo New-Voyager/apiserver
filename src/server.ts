@@ -4,6 +4,7 @@ import {merge} from 'lodash';
 import {authorize} from '@src/middlewares/authorization';
 import {createConnection, getConnectionOptions} from 'typeorm';
 import {GameServerAPI} from './internal/gameserver';
+import {HandServerAPI} from './internal/hand';
 const bodyParser = require('body-parser');
 const GQL_PORT = 9501;
 
@@ -74,4 +75,5 @@ function addInternalRoutes(app: any) {
   app.post('/internal/register-game-server', GameServerAPI.registerGameServer);
   app.post('/internal/update-game-server', GameServerAPI.updateGameServer);
   app.get('/internal/game-servers', GameServerAPI.getGameServers);
+  app.post('/internal/save-hand', HandServerAPI.saveHand);
 }
