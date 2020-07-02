@@ -66,22 +66,30 @@
 				"balance": 0.0
 			}
 		],
-		"pot": 201.0
+		"pots": [
+			{"no": 0, "amount": 47.0}
+		]
 	},
 	"FLOP": {
 		"cards": ["Ac", "8d", "4s"],
 		"actions": [],
-		"pot": 201.0
+		"pots": [
+			{"no": 0, "amount": 47.0}
+		]
 	},
 	"TURN": {
 		"cards": ["Ac", "8d", "4s", "Qh"],
 		"actions": [],
-		"pot": 201.0
+		"pots": [
+			{"no": 0, "amount": 47.0}
+		]
 	},
 	"RIVER": {
 		"cards": ["Ac", "8d", "4s", "Qh", "Ad"],
 		"actions": [],
-		"pot": 201.0
+		"pots": [
+			{"no": 0, "amount": 47.0}
+		]
 	},
 	"SHOWDOWN": {
 		"cards": ["Ac", "8d", "4s", "Qh", "Ad"],
@@ -93,6 +101,9 @@
 				"player": 20001,
 				"cards": ["Qd", "Qs"]
 			}
+    ],
+		"pots": [
+			{"no": 0, "amount": 47.0}
 		]
 	},
 	"Result": {

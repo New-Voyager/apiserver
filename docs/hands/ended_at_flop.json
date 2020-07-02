@@ -52,7 +52,9 @@
 
 			}
 		],
-		"pot": 47.0
+		"pots": [
+			{"no": 1, "amount": 47.0}
+		]
 	},
 	"FLOP": {
 		"cards": ["Ac", "8d", "4s"],
@@ -82,7 +84,9 @@
 
 			}
 		],
-		"pot": 62.0
+		"pots": [
+			{"no": 0, "amount": 47.0}
+		]
 	},
 	"Result": {
 		"winners_count": 1,

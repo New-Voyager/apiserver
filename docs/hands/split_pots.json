@@ -40,7 +40,6 @@
 				"action": "CALL",
 				"amount": 15.0,
 				"balance": 83.0
-
 			},
 			{
 				"player": 20001,
@@ -61,30 +60,41 @@
 			},
 			{
 				"player": 20001,
-				"action": "ALL-IN",
+				"action": "ALLIN",
 				"amount": 98.0,
 				"balance": 0.0
 			}
 		],
-		"pot": 201.0
+		"pots": [
+      {"no": 0, "amount": 186.0, "players": [40001, 20001]}
+		]
 	},
 	"FLOP": {
 		"cards": ["Ac", "8d", "4s"],
 		"actions": [],
-		"pot": 201.0
+		"pots": [
+      {"no": 0, "amount": 186.0, "players": [40001, 20001]}
+		]
 	},
 	"TURN": {
 		"cards": ["Ac", "8d", "4s", "Qh"],
 		"actions": [],
-		"pot": 201.0
+    "pots": [
+      {"no": 0, "amount": 186.0, "players": [40001, 20001]}
+    ]
 	},
 	"RIVER": {
 		"cards": ["Ac", "8d", "4s", "Qh", "Ad"],
 		"actions": [],
-		"pot": 201.0
-	},
+    "pots": [
+      {"no": 0, "amount": 186.0, "players": [40001, 20001]}
+    ]
+  },
 	"SHOWDOWN": {
-		"cards": ["Ac", "8d", "4s", "Qh", "Ad"],
+    "cards": ["Ac", "8d", "4s", "Qh", "Ad"],
+    "pots": [
+      {"no": 0, "amount": 186.0, "players": [40001, 20001]}
+		],    
 		"player_cards": [{
 				"player": 40001,
 				"cards": ["Kh", "Ks"]
@@ -99,7 +109,7 @@
 		"winners_count": 2,
 		"winners": [{
 			"player": 40001,
-			"received": 83.5,
+			"received": 93.5,
 			"rank": "TWO PAIR",
 			"rank_num": 1203
 		},
