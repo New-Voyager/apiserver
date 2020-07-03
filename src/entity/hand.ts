@@ -96,15 +96,15 @@ export class HandHistory {
     public loWinningRank!: number;
   
     @Index()
-    @DbAwareColumn({name: 'time_started', type: 'timestamp', nullable: true})
+    @DbAwareColumn({name: 'time_started', type: 'timestamp'})
     public timeStarted!: Date;
   
     @Index()
-    @DbAwareColumn({name: 'time_ended', type: 'timestamp', nullable: true})
+    @DbAwareColumn({name: 'time_ended', type: 'timestamp'})
     public timeEnded!: Date;
   
-    @Column({name: 'data'})
-    public data!: String;
+    @DbAwareColumn({name: 'data', type: 'text'})
+    public data!: string;
   
     @Column({name: 'total_pot', type: 'float', default: 0})
     public totalPot!: number;

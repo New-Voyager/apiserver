@@ -9,7 +9,7 @@ let hand4 = require('../docs/hands/split_pots.json');
 
 const HANDSERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
-describe('start a new game', () => {
+describe('Hand Server', () => {
     beforeEach(async done => {
       await resetDatabase();
       done();

@@ -1,7 +1,7 @@
 {
 	"ClubId": 1,
 	"GameNum": 1,
-	"HandNum": 2,
+	"HandNum": 4,
 	"Players": [1000, 1001, 20001, 30001, 40001],
 	"GameType": "HOLDEM",
 	"StartedAt": "2020-06-30T00:02:10",
