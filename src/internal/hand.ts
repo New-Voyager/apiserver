@@ -146,7 +146,7 @@ class HandServerAPIs{
             }
             handHistory.timeStarted = registerPayload.StartedAt;
             handHistory.timeEnded = registerPayload.EndedAt;
-            handHistory.data = registerPayload;
+            handHistory.data = JSON.stringify(registerPayload);
             await handHistoryRepository.save(handHistory);
 
             /**

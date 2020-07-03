@@ -103,8 +103,8 @@ export class HandHistory {
     @DbAwareColumn({name: 'time_ended', type: 'timestamp', nullable: true})
     public timeEnded!: Date;
   
-    @DbAwareColumn({type: 'json', name: 'data'})
-    public data!: any;
+    @Column({name: 'data'})
+    public data!: String;
   
     @Column({name: 'total_pot', type: 'float', default: 0})
     public totalPot!: number;
