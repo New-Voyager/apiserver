@@ -21,6 +21,11 @@ To run in windows, use debug-windows script.
 yarn debug-windows 
 ```
 
+To debug in Mac or Linux, you need to install typescript and tsc-watch globaly.
+npm install -g typescript
+npm install -g tsc-watch
+
+
 The hit the playground using http://<your host/ip>:9501/graphql.
 
 Use the following sample graphql to verify the system is setup for development.
