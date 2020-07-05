@@ -1,7 +1,10 @@
 import {createConnection} from 'typeorm';
 import {Player} from './entity/player';
 import {Club, ClubMember} from './entity/club';
+<<<<<<< HEAD
 import {ClubMessageInput} from './entity/clubmessage'
+=======
+>>>>>>> 0c66e557c93820068a0bf60b82753f15a8e9224c
 import {PokerGame, PokerGamePlayers, PokerHand} from './entity/game';
 
 export async function pgConnection() {
@@ -16,7 +19,10 @@ export async function pgConnection() {
       Player,
       Club,
       ClubMember,
+<<<<<<< HEAD
       ClubMessageInput,
+=======
+>>>>>>> 0c66e557c93820068a0bf60b82753f15a8e9224c
       PokerGame,
       PokerHand,
       PokerGamePlayers,

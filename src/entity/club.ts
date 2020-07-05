@@ -12,6 +12,7 @@ import {
   DbAwareCreateDateColumn,
   DbAwareUpdateDateColumn,
 } from './dbaware';
+<<<<<<< HEAD
 
 import {Player} from './player';
   
@@ -19,6 +20,13 @@ import {Player} from './player';
 @Entity()
 export class Club {
   @PrimaryGeneratedColumn("uuid")
+=======
+import {Player} from './player';
+
+@Entity()
+export class Club {
+  @PrimaryGeneratedColumn()
+>>>>>>> 0c66e557c93820068a0bf60b82753f15a8e9224c
   public id!: number;
 
   @Column()

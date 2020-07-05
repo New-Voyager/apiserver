@@ -295,7 +295,10 @@ class ClubRepositoryImpl {
     }
 
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+<<<<<<< HEAD
     
+=======
+>>>>>>> 0c66e557c93820068a0bf60b82753f15a8e9224c
     // see whehter the player is already a member
     const clubMembers = await clubMemberRepository.find({
       where: {
