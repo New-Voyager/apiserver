@@ -9,10 +9,6 @@ enum ClubMemberStatus {
   KICKEDOUT,
 }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 0c66e557c93820068a0bf60b82753f15a8e9224c
 input ClubCreateInput {
   name: String!
   description: String!
