@@ -12,7 +12,7 @@ export interface  ClubMessageInputFormat {
     gameNum: number;
     handNum: number
     giphyLink: string;
-    playerTags: [number];
+    playerTags: string;
 }
 
 function isPostgres() {

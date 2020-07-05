@@ -26,14 +26,14 @@ export enum ClubMessageType {
     @Column({name: 'game-number'})
     public gameNum!: number;
   
-    @Column({name: 'hand-number'})
+    @Column({name: 'hand-number', type: 'int'})
     public handNum!: number;
 
     @Column({name: 'giphy-link'})
     public giphyLink!: string;
 
-    @Column("int", { array: true })
-    public playerTags!: number[];
+    @Column({name: 'player-tags'})
+    public playerTags!: string;
 }
   
   

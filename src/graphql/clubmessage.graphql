@@ -10,7 +10,7 @@ text: String
 gameNum: Int
 handNum: Int
 giphyLink: String
-playerTags: [Int!]
+playerTags: String
 }
 
 type ClubMessage {

@@ -19,7 +19,7 @@ const resolvers: any = {
           if (args.message.gameNum === '') {
             errors.push('Game Number is a required field');
           }
-          if (args.message.playerTags.length === 0) {
+          if (args.message.playerTags === '') {
             errors.push('Player Tags is a required field');
           }
     
