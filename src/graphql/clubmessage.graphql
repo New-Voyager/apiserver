@@ -1,0 +1,32 @@
+enum ClubMessageType {
+TEXT,
+HAND,
+GIPHY,
+}
+
+input ClubMessageInput {
+messageType: ClubMessageType!
+text: String
+gameNum: Int
+handNum: Int
+giphyLink: String
+playerTags: [Int!]
+}
+
+type ClubMessage {
+id: Int!               
+messageType: ClubMessageType!
+text: String
+gameNum: Int
+handNum: Int
+giphyLink: String
+playerTags: [Int!]
+}
+
+type Mutation {
+sendClubMessage(clubId: String!, message: ClubMessageInput!): String!
+}
+
+type Query {
+clubMessages(clubId: String!): ClubMessage  
+}

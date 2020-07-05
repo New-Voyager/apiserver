@@ -1,0 +1,163 @@
+{
+	"ClubId": 1,
+	"GameNum": 1,
+	"HandNum": 2,
+	"Players": [1000, 1001, 20001, 30001, 40001],
+	"GameType": "HOLDEM",
+	"StartedAt": "20200630T00:02:10",
+	"EndedAt": "20200630T00:04:00",
+	"PREFLOP": {
+		"actions": [{
+				"player": 1001,
+				"action": "SB",
+				"amount": 1.0,
+				"balance": 97.0
+			},
+			{
+				"player": 20001,
+				"action": "BB",
+				"amount": 2.0,
+				"balance": 98.0
+			},
+			{
+				"player": 30001,
+				"action": "FOLD",
+				"balance": 132.0
+			},
+			{
+				"player": 40001,
+				"action": "RAISE",
+				"amount": 15.0,
+				"balance": 70.0
+			},
+			{
+				"player": 1000,
+				"action": "FOLD",
+				"balance": 85.0
+			},
+			{
+				"player": 1001,
+				"action": "CALL",
+				"amount": 15.0,
+				"balance": 83.0
+			},
+			{
+				"player": 20001,
+				"action": "RAISE",
+				"amount": 30.0,
+				"balance": 70.0
+			},
+			{
+				"player": 40001,
+				"action": "ALLIN",
+				"amount": 85.0,
+				"balance": 0.0
+			},
+			{
+				"player": 1001,
+				"action": "FOLD",
+				"balance": 83.0
+			},
+			{
+				"player": 20001,
+				"action": "CALL",
+				"amount": 85.0,
+				"balance": 0.0
+			}
+		],
+		"pots": [{
+			"no": 0,
+			"amount": 186.0,
+			"players": [40001, 20001]
+		}]
+	},
+	"FLOP": {
+		"cards": ["Ac", "8d", "4s"],
+		"actions": [],
+		"pots": [{
+			"no": 0,
+			"amount": 186.0,
+			"players": [40001, 20001]
+		}]
+	},
+	"TURN": {
+		"cards": ["Ac", "8d", "4s", "Qh"],
+		"actions": [],
+		"pots": [{
+			"no": 0,
+			"amount": 186.0,
+			"players": [40001, 20001]
+		}]
+	},
+	"RIVER": {
+		"cards": ["Ac", "8d", "4s", "Qh", "Ad"],
+		"actions": [],
+		"pots": [{
+			"no": 0,
+			"amount": 186.0,
+			"players": [40001, 20001]
+		}]
+	},
+	"SHOWDOWN": {
+		"cards": ["Ac", "8d", "4s", "Qh", "Ad"],
+		"pots": [{
+			"no": 0,
+			"amount": 186.0,
+			"players": [40001, 20001]
+		}],
+		"player_cards": [{
+				"player": 40001,
+				"cards": ["Kh", "Ks"]
+			},
+			{
+				"player": 20001,
+				"cards": ["Kd", "Qc"]
+			}
+		]
+	},
+	"Result": {
+		"pot_winners": [{
+			"pot": 0,
+			"amount": 186.0,
+			"winners": [{
+				"player": 20001,
+				"received": 186.0,
+				"rank": "TWO PAIR",
+				"rank_num": 1203,
+				"winning_cards": ["Ah", "As", "Kh", "Ks", "Qh"]
+			}]
+		}],
+		"won_at": "SHOWDOWN",
+		"showdown": true,
+		"winning_rank": "TWO PAIR",
+		"rank_num": 1023,
+		"winning_cards": ["Ah", "As", "Kh", "Kc", "Qh"],
+		"total_pot": 186.0,
+		"summary": [{
+				"player": 1000,
+				"balance": 85.0,
+				"change": 0.0
+			},
+			{
+				"player": 1001,
+				"balance": 83.0,
+				"change": -15.0
+			},
+			{
+				"player": 20001,
+				"balance": 98.5,
+				"change": 0.5
+			},
+			{
+				"player": 30001,
+				"balance": 132.0,
+				"change": 0.0
+			},
+			{
+				"player": 40001,
+				"balance": 85.5,
+				"change": 0.5
+			}
+		]
+	}
+}

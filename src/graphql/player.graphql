@@ -1,0 +1,30 @@
+input PlayerCreateInput {
+  name: String!
+  deviceId: String!
+}
+
+type Player {
+  name: String!
+  playerId: String!
+  lastActiveTime: DateTime
+  clubs: [PlayerClub!]
+}
+
+type Mutation {
+  createPlayer(player: PlayerCreateInput!): String!,
+  authenticatePlayer(name: String!, uuid: String!, deviceId: String!): Boolean
+  leaveClub(clubId: String!): ClubMemberStatus
+}
+
+type PlayerClub {
+  name: String
+  clubId: String
+  memberCount: Int
+  imageId: String
+  private: Boolean
+}
+
+type Query {
+  myClubs: [PlayerClub!]
+  allPlayers: [Player!]
+}

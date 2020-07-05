@@ -1,0 +1,68 @@
+scalar DateTime
+enum ClubMemberStatus {
+  UNKNOWNN,
+  INVITED,
+  PENDING,
+  DENIED,
+  APPROVED,
+  LEFT,
+  KICKEDOUT,
+}
+
+input ClubCreateInput {
+  name: String!
+  description: String!
+}
+
+input ClubUpdateInput {
+  name: String
+  description: String
+}
+
+type Mutation {
+  createClub(club: ClubCreateInput!): String!,
+  updateClub(clubId: String!, club: ClubUpdateInput!): Boolean!,
+  joinClub(clubId: String!): ClubMemberStatus,
+  approveMember(clubId: String!, playerUuid: String!): ClubMemberStatus,
+  rejectMember(clubId: String!, playerUuid: String!): ClubMemberStatus,
+  kickMember(clubId: String!, playerUuid: String!): ClubMemberStatus,
+}
+
+type ClubMember {
+  name: String!
+  joinedDate: DateTime!
+  status: ClubMemberStatus!
+  lastGamePlayedDate: String
+  imageId: String
+  isOwner: Boolean
+  isManager: Boolean
+  playerId: String
+}
+
+type ClubGameInfo {
+  title: String
+  type: GameType
+  pageId: Int!
+  gameId: String!
+  startedBy: String
+  startedAt: DateTime
+  endedBy: String
+  endedAt: String
+  status: GameStatus
+}
+
+input PageInput {
+  prev: Int
+  next: Int
+  count: Int
+}
+
+type Query {
+  clubMembers(clubId: String!): [ClubMember!]
+
+  # returns 'last' number of games 'from' in reverse order
+  # by default, this call returns only last 20 games
+  # the caller can paginate with pageId
+  # clubGames(clubId: "", prev: 20, from: 10000001)
+  clubGames(clubId: String!, page: PageInput): [ClubGameInfo!]
+}

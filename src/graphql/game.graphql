@@ -1,0 +1,93 @@
+enum GameType {
+  HOLDEM,
+  OMAHA,
+  HILO,
+}
+
+
+enum GameStatus {
+  UNKNOWN,
+  WAITING,
+  NOTENOUGH_PLAYERS,
+  RUNNING,
+  ENDED,
+}
+
+input GameCreateInput {
+  gameType: GameType!
+  title: String
+  smallBlind: Float!
+  bigBlind: Float!
+  straddleBet: Float
+  utgStraddleAllowed: Boolean
+  buttonStraddleAllowed: Boolean
+  minPlayers: Int!    # 2
+  maxPlayers: Int!    # 2-9
+  gameLength: Int!    # in minutes
+  buyInApproval: Boolean
+  breakLength: Int    # in minutes (default 15 mins)
+  autoKickAfterBreak: Boolean
+  waitlistSupported: Boolean
+  sitInApproval: Boolean
+  maxWaitList: Int
+  rakePercentage: Float
+  rakeCap: Float
+  buyInMin: Float!
+  buyInMax: Float!
+  actionTime: Int!   # default 20 secs
+  muckLosingHand: Boolean
+  waitForBigBlind: Boolean
+}
+
+type GameInfo {
+  gameId: String!
+  gameType: GameType
+  title: String
+  smallBlind: Float
+  bigBlind: Float
+  straddleBet: Float
+  utgStraddleAllowed: Boolean
+  buttonStraddleAllowed: Boolean
+  minPlayers: Int
+  maxPlayers: Int
+  gameLength: Int
+  buyInApproval: Boolean
+  breakLength: Int    
+  autoKickAfterBreak: Boolean
+  waitlistSupported: Boolean
+  sitInApproval: Boolean
+  maxWaitList: Int
+  rakePercentage: Float
+  rakeCap: Float
+  buyInMin: Float
+  buyInMax: Float
+  actionTime: Int
+  muckLosingHand: Boolean
+  waitForBigBlind: Boolean
+  startedBy: String
+  startedAt: DateTime
+  endedBy: String
+  endedAt: String
+  template: Boolean
+  status: GameStatus
+}
+
+input GameUpdateInput {
+  status: GameStatus
+  muckLosingHand: Boolean
+  waitForBigBlind: Boolean
+  buyInMin: Float
+  buyInMax: Float
+  title: String
+}
+
+type Mutation {
+  startGameFromTemplate(clubId: String!, templateId: Int!): GameInfo!,
+  updateGame(clubId: String!, gameId: String!, update: GameUpdateInput): GameInfo!
+  startGame(clubId: String!, game: GameCreateInput!): GameInfo!,
+  saveGameTemplate(clubId: String!, templateName: String!, gameInput: GameCreateInput!): Int!
+}
+
+type Query {
+  getGameTemplates(clubId: String!): [GameInfo!]
+}
