@@ -112,7 +112,7 @@ describe('Hand Server', () => {
   test('get all hand history pagination', async () => {
     let data = hand1;
     for (let i = 5; i < 17; i++) {
-      data.handNum = i;
+      data.HandNum = i;
       await axios.post(
         `${HANDSERVER_API}/save-hand`,
         data

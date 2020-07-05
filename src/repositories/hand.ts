@@ -18,15 +18,15 @@ function isPostgres() {
 }
 
 class HandRepositoryImpl {
-    public async getSpecificHandHistory(club_id: number, game_num: number, hand_num: number): Promise< HandHistory | undefined> {
+    public async getSpecificHandHistory(clubId: number, gameNum: number, handNum: number): Promise< HandHistory | undefined> {
         const handHistoryRepository = getRepository(HandHistory);
-        const handHistory = await handHistoryRepository.findOne({where: {clubId: club_id, gameNum: game_num, handNum: hand_num}});
+        const handHistory = await handHistoryRepository.findOne({where: {clubId: clubId, gameNum: gameNum, handNum: handNum}});
         return handHistory;
     }
 
-    public async getLastHandHistory(club_id: number, game_num: number): Promise< HandHistory | undefined> {
+    public async getLastHandHistory(clubId: number, gameNum: number): Promise< HandHistory | undefined> {
         const handHistoryRepository = getRepository(HandHistory);
-        const hands = await handHistoryRepository.find({where: {clubId: club_id, gameNum: game_num}});
+        const hands = await handHistoryRepository.find({where: {clubId: clubId, gameNum: gameNum}});
         var sortedHands = hands.sort(function mySort(b, a) {
             return b.handNum < a.handNum ?  1
             : b.handNum > a.handNum ? -1
@@ -35,7 +35,7 @@ class HandRepositoryImpl {
         return sortedHands[0];
     }
 
-    public async getAllHandHistory(club_id: number, game_num: number, pageOptions?: PageOptions): Promise< Array<HandHistory> > {
+    public async getAllHandHistory(clubId: number, gameNum: number, pageOptions?: PageOptions): Promise< Array<HandHistory> > {
         if (!pageOptions) {
             pageOptions = {
                 count: 10,
@@ -70,8 +70,8 @@ class HandRepositoryImpl {
 
         const findOptions: any = {
             where: {
-                clubId: club_id, 
-                gameNum: game_num
+                clubId: clubId, 
+                gameNum: gameNum
             },
             order: order,
             take: take,

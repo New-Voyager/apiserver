@@ -51,7 +51,7 @@ input PageInput {
 }
 
 type Query {
-    lastHandHistory(club_id: Int!, game_num: Int!): HandHistory!
-    specificHandHistory(club_id: Int!, game_num: Int!, hand_num: Int!): HandHistory!
-    allHandHistory(club_id: Int!, game_num: Int!, page: PageInput): [HandHistory!]
+    lastHandHistory(clubId: Int!, gameNum: Int!): HandHistory!
+    specificHandHistory(clubId: Int!, gameNum: Int!, handNum: Int!): HandHistory!
+    allHandHistory(clubId: Int!, gameNum: Int!, page: PageInput): [HandHistory!]
 }

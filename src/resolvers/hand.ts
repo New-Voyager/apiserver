@@ -6,7 +6,7 @@ import { HandRepository} from '@src/repositories/hand';
   const resolvers: any = {
     Query: {
         lastHandHistory: async (parent, args, ctx, info) => {
-            const handHistory = await HandRepository.getLastHandHistory(args.club_id, args.game_num);
+            const handHistory = await HandRepository.getLastHandHistory(args.clubId, args.gameNum);
             let hand: any;
             if(handHistory){
                 hand = {
@@ -29,7 +29,7 @@ import { HandRepository} from '@src/repositories/hand';
             return hand;
         },
         specificHandHistory: async (parent, args, ctx, info) => {
-            const handHistory = await HandRepository.getSpecificHandHistory(args.club_id, args.game_num, args.hand_num);
+            const handHistory = await HandRepository.getSpecificHandHistory(args.clubId, args.gameNum, args.handNum);
             let hand: any;
             if(handHistory){
                 hand = {
@@ -52,7 +52,7 @@ import { HandRepository} from '@src/repositories/hand';
             return hand;
         },
         allHandHistory: async (parent, args, ctx, info) => {
-            const handHistory = await HandRepository.getAllHandHistory(args.club_id, args.game_num, args.page);
+            const handHistory = await HandRepository.getAllHandHistory(args.clubId, args.gameNum, args.page);
             let hands = new Array<any>();
 
             for (const hand of handHistory) {

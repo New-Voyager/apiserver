@@ -3,7 +3,7 @@ import {gql} from 'apollo-boost';
 
 export const getSpecificHandHistoryQuery = gql`
   query($clubId: Int!, $gameNum: Int!, $handNum: Int!) {
-    handHistory: specificHandHistory(club_id: $clubId, game_num: $gameNum, hand_num: $handNum) {
+    handHistory: specificHandHistory(clubId: $clubId, gameNum: $gameNum, handNum: $handNum) {
         pageId,
         clubId,
         gameNum,
@@ -25,7 +25,7 @@ export const getSpecificHandHistoryQuery = gql`
 
 export const getLastHandHistoryQuery = gql`
   query($clubId: Int!, $gameNum: Int!) {
-    handHistory: lastHandHistory(club_id: $clubId, game_num: $gameNum) {
+    handHistory: lastHandHistory(clubId: $clubId, gameNum: $gameNum) {
         pageId,
         clubId,
         gameNum,
@@ -47,7 +47,7 @@ export const getLastHandHistoryQuery = gql`
 
 export const getAllHandHistoryQuery = gql`
   query($clubId: Int!, $gameNum: Int!, $page: PageInput) {
-    handHistory: allHandHistory(club_id: $clubId, game_num: $gameNum, page: $page) {
+    handHistory: allHandHistory(clubId: $clubId, gameNum: $gameNum, page: $page) {
         pageId,
         clubId,
         gameNum,
