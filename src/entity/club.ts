@@ -12,7 +12,6 @@ import {
   DbAwareCreateDateColumn,
   DbAwareUpdateDateColumn,
 } from './dbaware';
-
 import {Player} from './player';
 
 @Entity()

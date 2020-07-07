@@ -1,11 +1,11 @@
 {
 	"ClubId": 1,
 	"GameNum": 1,
-	"HandNum": 2,
+	"HandNum": 3,
 	"Players": [1000, 1001, 20001, 30001, 40001],
 	"GameType": "OMAHA_HILO",
-	"StartedAt": "20200630T00:02:10",
-	"EndedAt": "20200630T00:04:00",
+	"StartedAt": "2020-06-30T00:02:10",
+	"EndedAt": "2020-06-30T00:04:00",
 	"PREFLOP": {
 		"actions": [{
 				"player": 1001,
@@ -211,7 +211,7 @@
 			}
 		],
 
-		"won_at": "SHOW_DOWN",
+		"won_at": "SHOWDOWN",
 		"showdown": true,
 		"hi_winning_cards": ["Ac", "Ad", "Kd", "Kc", "Qh"],
 		"hi_winning_rank": 1203,

@@ -11,7 +11,7 @@
     "debug-windows": "set NODE_ENV=dev && tsc-watch.bat",
     "debug-break": "node --nolazy --inspect-brk=9235 ./build/index.js",
     "test": "NODE_ENV=test jest --runInBand",
-    "test-specific": "NODE_ENV=test jest --runInBand \"--testNamePattern\" \"start a new game\"",
+    "test-specific": "NODE_ENV=test jest --runInBand \"--testNamePattern\" ",
     "test-server-watch": "tsc-watch --noClear --onSuccess './debug.sh' --onFailure 'echo Beep! Compilation Failed'",
     "test-server": "NODE_ENV=test DB_USED=sqllite node build/index.js",
     "test-server-windows": "test-server.bat",
@@ -23,9 +23,7 @@
     "prepare": "npm run compile",
     "pretest-disabled": "npm run compile",
     "posttest-disabled": "npm run check",
-    "run-pg": "docker-compose -f docker-compose-pg.yaml up",
-    "pretest": "npm run compile",
-    "posttest": "npm run check"
+    "run-pg": "docker-compose -f docker-compose-pg.yaml up"
   },
   "dependencies": {
     "@types/jest": "^26.0.0",
@@ -56,7 +54,7 @@
     "@types/node": "^14.0.13",
     "apollo-boost": "^0.4.9",
     "copyfiles": "^2.3.0",
-    "gts": "^2.0.0-alpha.9",
+    "gts": "^2.0.2",
     "jest": "^26.0.1",
     "node-fetch": "^2.6.0",
     "supertest": "^4.0.2",

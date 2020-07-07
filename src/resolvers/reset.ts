@@ -17,6 +17,8 @@ const resolvers: any = {
         await deleteAll('Club');
         await deleteAll('Player');
         await deleteAll('GameServer');
+        await deleteAll('hand_winners');
+        await deleteAll('hand_history');
       });
       console.log('Database reset is complete');
 

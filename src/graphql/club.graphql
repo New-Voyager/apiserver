@@ -9,6 +9,7 @@ enum ClubMemberStatus {
   KICKEDOUT,
 }
 
+
 input ClubCreateInput {
   name: String!
   description: String!

@@ -1,0 +1,57 @@
+scalar DateTime
+
+enum WonAtStatus {
+    PREFLOP,
+    FLOP,
+    TURN,
+    RIVER,
+    SHOWDOWN,
+}
+  
+enum GameType {
+    UNKNOWN,
+    HOLDEM,
+    OMAHA,
+    OMAHA_HILO,
+}
+
+type HandHistory {
+    pageId: Int
+    clubId: String!
+    gameNum: String!
+    handNum: String!
+    gameType:  GameType!
+    wonAt: WonAtStatus!
+    showDown: Boolean!
+    winningCards: String
+    winningRank: Int
+    loWinningCards: String
+    loWinningRank: Int
+    timeStarted: DateTime!
+    timeEnded: DateTime!
+    data: String!
+    totalPot: Float!
+}
+
+type HandWinners {
+    clubId: String!
+    gameNum: String!
+    handNum: String!
+    isHigh: Boolean!
+    winningCards: String
+    winningRank: Int
+    playerId: String!
+    pot: Float!
+}
+
+input PageInput {
+  prev: Int
+  next: Int
+  count: Int
+}
+
+type Query {
+    lastHandHistory(clubId: String!, gameNum: String!): HandHistory!
+    specificHandHistory(clubId: String!, gameNum: String!, handNum: String!): HandHistory!
+    allHandHistory(clubId: String!, gameNum: String!, page: PageInput): [HandHistory!]
+}

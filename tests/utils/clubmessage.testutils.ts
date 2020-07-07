@@ -18,7 +18,6 @@ export const getClubMessageQuery = gql`
       giphyLink
       playerTags
       messageType
-
     }
   }
 `;
