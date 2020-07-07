@@ -10,17 +10,18 @@ text: String
 gameNum: Int
 handNum: Int
 giphyLink: String
-playerTags: String
+playerTags: String!
 }
 
 type ClubMessage {
 id: Int!               
 messageType: ClubMessageType!
+clubId: String!
 text: String
 gameNum: Int
 handNum: Int
 giphyLink: String
-playerTags: [Int!]
+playerTags: String!
 }
 
 type Mutation {
@@ -28,5 +29,5 @@ sendClubMessage(clubId: String!, message: ClubMessageInput!): String!
 }
 
 type Query {
-clubMessages(clubId: String!): ClubMessage  
+clubMessages(clubId: String!): [ClubMessage]  
 }

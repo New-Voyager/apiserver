@@ -14,7 +14,6 @@ import {
 } from './dbaware';
 
 import {Player} from './player';
-  
 
 @Entity()
 export class Club {
