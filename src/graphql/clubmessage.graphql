@@ -29,5 +29,5 @@ sendClubMessage(clubId: String!, message: ClubMessageInput!): String!
 }
 
 type Query {
-clubMessages(clubId: String!): [ClubMessage]  
+clubMessages(clubId: String!, pageOptions: PageInput): [ClubMessage]  
 }

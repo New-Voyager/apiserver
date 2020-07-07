@@ -1,8 +1,9 @@
 import {ClubMessageInput} from '@src/entity/clubmessage';
 import {Club} from '@src/entity/club';
-import {getRepository} from 'typeorm';
+import {getRepository, MoreThan, LessThan} from 'typeorm';
 import {ClubMessageType} from '../entity/clubmessage';
 import {Player} from '@src/entity/player';
+import {PageOptions} from '@src/types';
 
 export interface ClubMessageInputFormat {
   messageType: ClubMessageType;
@@ -80,21 +81,62 @@ class ClubMessageRepositoryImpl {
     return response.id;
   }
 
-  public async getClubMessage(clubId: string): Promise<Array<any>> {
+  public async getClubMessage(clubId: string, pageOptions: PageOptions): Promise<Array<any>> {
     try {
       const clubRepository = getRepository(Club);
       const club = await clubRepository.findOne({where: {displayId: clubId}});
       if (!club) {
         throw new Error(`Club ${clubId} is not found`);
       } else {
-        const clubMessageRepository = getRepository(ClubMessageInput);
-        const clubMessages = await clubMessageRepository.find({
+        if (!pageOptions) {
+          pageOptions = {
+            count: 50,  
+            prev: 0x7fffffff,
+          };
+        }
+    
+        let order: any = {
+          id: 'ASC',
+        };
+    
+        let pageWhere: any;
+        if (pageOptions.next) {
+          order = {
+            id: 'DESC',
+          };
+          pageWhere = MoreThan(pageOptions.next);
+        } else {
+          if (pageOptions.prev) {
+            order = {
+              id: 'DESC',
+            };
+            pageWhere = LessThan(pageOptions.prev);
+          }
+        }
+    
+        console.log(`pageOptions count: ${pageOptions.count}`);
+        let take = pageOptions.count;
+        if (!take || take > 50) {
+          take = 50;
+        }
+        const clubRepository = getRepository(Club);
+        const club = await clubRepository.findOne({where: {displayId: clubId}});
+        if (!club) {
+          throw new Error(`Club ${clubId} is not found`);
+        }
+    
+        const findOptions: any = {
           where: {
             clubId: clubId,
           },
-          order: {id: 'DESC'},
-          take: 50,
-        });
+          order: order,
+          take: take,
+        };
+        if (pageWhere) {
+          findOptions['where']['id'] = pageWhere;
+        }
+        const clubMessageRepository = getRepository(ClubMessageInput);
+        const clubMessages = await clubMessageRepository.find(findOptions);
         return clubMessages;
       }
     } catch (e) {

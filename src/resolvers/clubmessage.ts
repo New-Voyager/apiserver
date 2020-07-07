@@ -30,7 +30,7 @@ const resolvers: any = {
         );
         throw new Error('Unauthorized');
       }
-      const messages = await ClubMessageRepository.getClubMessage(args.clubId);
+      const messages = await ClubMessageRepository.getClubMessage(args.clubId,  args.pageOptions );
       return _.map(messages, x => {
         return {
           id: x.id,

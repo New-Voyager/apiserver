@@ -8,8 +8,8 @@ export const sendMessageQuery = gql`
 `;
 
 export const getClubMessageQuery = gql`
-  query($clubId: String!) {
-    clubMessage: clubMessages(clubId: $clubId) {
+  query($clubId: String!, , $page: PageInput) {
+    clubMessage: clubMessages(clubId: $clubId, pageOptions: $page) {
       id
       gameNum
       handNum
@@ -39,11 +39,24 @@ interface ClubMessageInputFormat {
 
 export async function getClubMessage(
   clubId: string,
-  playerId: string
+  playerId: string,
+  page?: {prev?: number; next?: number; count?: number} 
 ): Promise<Array<any>> {
   const variables: any = {
     clubId: clubId,
   };
+  if (page) {
+    variables.page = {};
+    if (page.prev) {
+      variables['page']['prev'] = page.prev;
+    }
+    if (page.next) {
+      variables['page']['next'] = page.next;
+    }
+    if (page.count) {
+      variables['page']['count'] = page.count;
+    }
+  }
   const resp = await getClient(playerId).query({
     variables: variables,
     query: getClubMessageQuery,

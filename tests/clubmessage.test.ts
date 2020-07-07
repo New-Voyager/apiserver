@@ -122,7 +122,16 @@ describe('Club APIs', () => {
         mutation: clubmessageutils.sendMessageQuery,
       });
     }
-    const result = await clubmessageutils.getClubMessage(clubId, playerId);
+    let result = await clubmessageutils.getClubMessage(clubId, playerId);
     expect(result).toHaveLength(50);
+    const firstGame = result[0];
+    const lastGame = result[49];
+    console.log(JSON.stringify(firstGame));
+    console.log(JSON.stringify(lastGame));
+    result = await clubmessageutils.getClubMessage(clubId, playerId, {
+      prev: lastGame.pageId,
+      count: 5,
+    });
+    expect(result).toHaveLength(5);
   });
 });
