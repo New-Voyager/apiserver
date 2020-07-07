@@ -2,7 +2,7 @@ import {createConnection} from 'typeorm';
 import {Player} from './entity/player';
 import {Club, ClubMember} from './entity/club';
 import {PokerGame, PokerGamePlayers, PokerHand} from './entity/game';
-import {HandWinners, HandHistory} from './entity/hand'
+import {HandWinners, HandHistory} from './entity/hand';
 
 export async function pgConnection() {
   const connection = await createConnection({

@@ -17,9 +17,9 @@ enum GameType {
 
 type HandHistory {
     pageId: Int
-    clubId: Int!
-    gameNum: Int!
-    handNum: Int!
+    clubId: String!
+    gameNum: String!
+    handNum: String!
     gameType:  GameType!
     wonAt: WonAtStatus!
     showDown: Boolean!
@@ -34,13 +34,13 @@ type HandHistory {
 }
 
 type HandWinners {
-    clubId: Int!
-    gameNum: Int!
-    handNum: Int!
+    clubId: String!
+    gameNum: String!
+    handNum: String!
     isHigh: Boolean!
     winningCards: String
     winningRank: Int
-    playerId: Int!
+    playerId: String!
     pot: Float!
 }
 
@@ -51,7 +51,7 @@ input PageInput {
 }
 
 type Query {
-    lastHandHistory(clubId: Int!, gameNum: Int!): HandHistory!
-    specificHandHistory(clubId: Int!, gameNum: Int!, handNum: Int!): HandHistory!
-    allHandHistory(clubId: Int!, gameNum: Int!, page: PageInput): [HandHistory!]
+    lastHandHistory(clubId: String!, gameNum: String!): HandHistory!
+    specificHandHistory(clubId: String!, gameNum: String!, handNum: String!): HandHistory!
+    allHandHistory(clubId: String!, gameNum: String!, page: PageInput): [HandHistory!]
 }

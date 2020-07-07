@@ -1,82 +1,90 @@
-import {resetDatabase, getClient} from './utils';
+import {getClient} from './utils';
 import {gql} from 'apollo-boost';
 
 export const getSpecificHandHistoryQuery = gql`
-  query($clubId: Int!, $gameNum: Int!, $handNum: Int!) {
-    handHistory: specificHandHistory(clubId: $clubId, gameNum: $gameNum, handNum: $handNum) {
-        pageId,
-        clubId,
-        gameNum,
-        handNum,
-        gameType,
-        wonAt,
-        showDown,
-        winningCards,
-        winningRank,
-        loWinningCards,
-        loWinningRank,
-        timeStarted,
-        timeEnded,
-        data,
-        totalPot
+  query($clubId: String!, $gameNum: String!, $handNum: String!) {
+    handHistory: specificHandHistory(
+      clubId: $clubId
+      gameNum: $gameNum
+      handNum: $handNum
+    ) {
+      pageId
+      clubId
+      gameNum
+      handNum
+      gameType
+      wonAt
+      showDown
+      winningCards
+      winningRank
+      loWinningCards
+      loWinningRank
+      timeStarted
+      timeEnded
+      data
+      totalPot
     }
   }
 `;
 
 export const getLastHandHistoryQuery = gql`
-  query($clubId: Int!, $gameNum: Int!) {
+  query($clubId: String!, $gameNum: String!) {
     handHistory: lastHandHistory(clubId: $clubId, gameNum: $gameNum) {
-        pageId,
-        clubId,
-        gameNum,
-        handNum,
-        gameType,
-        wonAt,
-        showDown,
-        winningCards,
-        winningRank,
-        loWinningCards,
-        loWinningRank,
-        timeStarted,
-        timeEnded,
-        data,
-        totalPot
+      pageId
+      clubId
+      gameNum
+      handNum
+      gameType
+      wonAt
+      showDown
+      winningCards
+      winningRank
+      loWinningCards
+      loWinningRank
+      timeStarted
+      timeEnded
+      data
+      totalPot
     }
   }
 `;
 
 export const getAllHandHistoryQuery = gql`
-  query($clubId: Int!, $gameNum: Int!, $page: PageInput) {
-    handHistory: allHandHistory(clubId: $clubId, gameNum: $gameNum, page: $page) {
-        pageId,
-        clubId,
-        gameNum,
-        handNum,
-        gameType,
-        wonAt,
-        showDown,
-        winningCards,
-        winningRank,
-        loWinningCards,
-        loWinningRank,
-        timeStarted,
-        timeEnded,
-        data,
-        totalPot
+  query($clubId: String!, $gameNum: String!, $page: PageInput) {
+    handHistory: allHandHistory(
+      clubId: $clubId
+      gameNum: $gameNum
+      page: $page
+    ) {
+      pageId
+      clubId
+      gameNum
+      handNum
+      gameType
+      wonAt
+      showDown
+      winningCards
+      winningRank
+      loWinningCards
+      loWinningRank
+      timeStarted
+      timeEnded
+      data
+      totalPot
     }
   }
 `;
 
 export async function getSpecificHandHistory(
   playerId: string,
-  clubId: number,
-  gameNum: number,
-  handNum: number
+  clubId: string,
+  gameNum: string,
+  handNum: string
 ): Promise<any> {
   const variables: any = {
     clubId: clubId,
     gameNum: gameNum,
-    handNum: handNum
+    handNum: handNum,
   };
 
   const resp = await getClient(playerId).query({
@@ -90,12 +98,12 @@ export async function getSpecificHandHistory(
 
 export async function getLastHandHistory(
   playerId: string,
-  clubId: number,
-  gameNum: number
+  clubId: string,
+  gameNum: string
 ): Promise<any> {
   const variables: any = {
     clubId: clubId,
-    gameNum: gameNum
+    gameNum: gameNum,
   };
 
   const resp = await getClient(playerId).query({
@@ -109,13 +117,13 @@ export async function getLastHandHistory(
 
 export async function getAllHandHistory(
   playerId: string,
-  clubId: number,
-  gameNum: number,
+  clubId: string,
+  gameNum: string,
   page?: {prev?: number; next?: number; count?: number}
 ): Promise<any> {
   const variables: any = {
     clubId: clubId,
-    gameNum: gameNum
+    gameNum: gameNum,
   };
 
   if (page) {
