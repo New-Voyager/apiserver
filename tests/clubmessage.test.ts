@@ -104,4 +104,25 @@ describe('Club APIs', () => {
     const messageID = response.data.id;
     expect(messageID).not.toBeNull();
   });
+
+  test('get message', async () => {
+    const [clubId, playerId] = await clubutils.createClub('brady3', 'yatzee3');
+    const messageCount = 100;
+    const messageInput = {
+      messageType: 'GIPHY',
+      giphyLink: 'test.com',
+      playerTags: playerId,
+    };
+    for (let i = 0; i < messageCount; i++) {
+      await getClient(playerId).mutate({
+        variables: {
+          clubId: clubId,
+          input: messageInput,
+        },
+        mutation: clubmessageutils.sendMessageQuery,
+      });
+    }
+    const result = await clubmessageutils.getClubMessage(clubId, playerId);
+    expect(result).toHaveLength(50);
+  });
 });

@@ -7,6 +7,22 @@ export const sendMessageQuery = gql`
   }
 `;
 
+export const getClubMessageQuery = gql`
+  query($clubId: String!) {
+    clubMessage: clubMessages(clubId: $clubId) {
+      id
+      gameNum
+      handNum
+      text
+      clubId
+      giphyLink
+      playerTags
+      messageType
+
+    }
+  }
+`;
+
 enum ClubMessageType {
   TEXT,
   HAND,
@@ -22,19 +38,19 @@ interface ClubMessageInputFormat {
   playerTags: string;
 }
 
-export async function sendClubMessage(
+export async function getClubMessage(
   clubId: string,
-  message: ClubMessageInputFormat
-) {
-  const response = await getClient(
-    '3e15e3c2-f14e-43d1-8362-f22e27798706'
-  ).mutate({
-    variables: {
-      clubId: clubId,
-      input: message,
-    },
-    mutation: sendMessageQuery,
+  playerId: string
+): Promise<Array<any>> {
+  const variables: any = {
+    clubId: clubId,
+  };
+  const resp = await getClient(playerId).query({
+    variables: variables,
+    query: getClubMessageQuery,
   });
-
-  return response.data.id;
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  console.log(resp.data);
+  return resp.data.clubMessage;
 }
