@@ -81,7 +81,10 @@ class ClubMessageRepositoryImpl {
     return response.id;
   }
 
-  public async getClubMessage(clubId: string, pageOptions: PageOptions): Promise<Array<any>> {
+  public async getClubMessage(
+    clubId: string,
+    pageOptions: PageOptions
+  ): Promise<Array<any>> {
     try {
       const clubRepository = getRepository(Club);
       const club = await clubRepository.findOne({where: {displayId: clubId}});
@@ -90,15 +93,15 @@ class ClubMessageRepositoryImpl {
       } else {
         if (!pageOptions) {
           pageOptions = {
-            count: 50,  
+            count: 50,
             prev: 0x7fffffff,
           };
         }
-    
+
         let order: any = {
           id: 'ASC',
         };
-    
+
         let pageWhere: any;
         if (pageOptions.next) {
           order = {
@@ -113,7 +116,7 @@ class ClubMessageRepositoryImpl {
             pageWhere = LessThan(pageOptions.prev);
           }
         }
-    
+
         console.log(`pageOptions count: ${pageOptions.count}`);
         let take = pageOptions.count;
         if (!take || take > 50) {
@@ -124,7 +127,7 @@ class ClubMessageRepositoryImpl {
         if (!club) {
           throw new Error(`Club ${clubId} is not found`);
         }
-    
+
         const findOptions: any = {
           where: {
             clubId: clubId,

@@ -8,7 +8,7 @@ export const sendMessageQuery = gql`
 `;
 
 export const getClubMessageQuery = gql`
-  query($clubId: String!, , $page: PageInput) {
+  query($clubId: String!, $page: PageInput) {
     clubMessage: clubMessages(clubId: $clubId, pageOptions: $page) {
       id
       gameNum
@@ -40,7 +40,7 @@ interface ClubMessageInputFormat {
 export async function getClubMessage(
   clubId: string,
   playerId: string,
-  page?: {prev?: number; next?: number; count?: number} 
+  page?: {prev?: number; next?: number; count?: number}
 ): Promise<Array<any>> {
   const variables: any = {
     clubId: clubId,

@@ -1,33 +1,33 @@
 enum ClubMessageType {
-TEXT,
-HAND,
-GIPHY,
+  TEXT,
+  HAND,
+  GIPHY,
 }
 
 input ClubMessageInput {
-messageType: ClubMessageType!
-text: String
-gameNum: Int
-handNum: Int
-giphyLink: String
-playerTags: String!
+  messageType: ClubMessageType!
+  text: String
+  gameNum: Int
+  handNum: Int
+  giphyLink: String
+  playerTags: String!
 }
 
 type ClubMessage {
-id: Int!               
-messageType: ClubMessageType!
-clubId: String!
-text: String
-gameNum: Int
-handNum: Int
-giphyLink: String
-playerTags: String!
+  id: Int!               
+  messageType: ClubMessageType!
+  clubId: String!
+  text: String
+  gameNum: Int
+  handNum: Int
+  giphyLink: String
+  playerTags: String!
 }
 
 type Mutation {
-sendClubMessage(clubId: String!, message: ClubMessageInput!): String!
+  sendClubMessage(clubId: String!, message: ClubMessageInput!): String!
 }
 
 type Query {
-clubMessages(clubId: String!, pageOptions: PageInput): [ClubMessage]  
+  clubMessages(clubId: String!, pageOptions: PageInput): [ClubMessage]  
 }
