@@ -75,6 +75,26 @@ export const getAllHandHistoryQuery = gql`
   }
 `;
 
+export const getMyWinningHandsQuery = gql`
+  query($clubId: String!, $gameNum: String!, $page: PageInput) {
+    handWinners: myWinningHands(
+      clubId: $clubId
+      gameNum: $gameNum
+      page: $page
+    ) {
+      pageId
+      clubId
+      gameNum
+      handNum
+      winningCards
+      winningRank
+      pot
+      isHigh
+      playerId
+    }
+  }
+`;
+
 export async function getSpecificHandHistory(
   playerId: string,
   clubId: string,
@@ -146,4 +166,37 @@ export async function getAllHandHistory(
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
   return resp.data.handHistory;
+}
+
+export async function getMyWinningHands(
+  playerId: string,
+  clubId: string,
+  gameNum: string,
+  page?: {prev?: number; next?: number; count?: number}
+): Promise<any> {
+  const variables: any = {
+    clubId: clubId,
+    gameNum: gameNum,
+  };
+
+  if (page) {
+    variables.page = {};
+    if (page.prev) {
+      variables['page']['prev'] = page.prev;
+    }
+    if (page.next) {
+      variables['page']['next'] = page.next;
+    }
+    if (page.count) {
+      variables['page']['count'] = page.count;
+    }
+  }
+
+  const resp = await getClient(playerId).query({
+    variables: variables,
+    query: getMyWinningHandsQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.handWinners;
 }

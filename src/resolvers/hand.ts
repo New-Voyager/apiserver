@@ -1,13 +1,12 @@
 import {HandRepository} from '@src/repositories/hand';
 import {WonAtStatus, GameType} from '@src/entity/hand';
-import { ClubRepository } from '@src/repositories/club';
+import {ClubRepository} from '@src/repositories/club';
 import {ClubMemberStatus} from '@src/entity/club';
-import { PlayerRepository } from '@src/repositories/player';
+import {PlayerRepository} from '@src/repositories/player';
 
 const resolvers: any = {
   Query: {
     lastHandHistory: async (parent, args, ctx, info) => {
-
       if (!ctx.req.playerId) {
         throw new Error('Unauthorized');
       }
@@ -17,9 +16,9 @@ const resolvers: any = {
         args.clubId,
         ctx.req.playerId
       );
-      
+
       const player = await PlayerRepository.getPlayerById(ctx.req.playerId);
-      if(!player){
+      if (!player) {
         throw new Error(`Player ${ctx.req.playerId} is not found`);
       }
 
@@ -61,19 +60,18 @@ const resolvers: any = {
           winningRank: handHistory.winningRank,
           wonAt: WonAtStatus[handHistory.wonAt],
         };
-      }else{
+      } else {
         throw new Error('No hand found');
       }
       return hand;
     },
     specificHandHistory: async (parent, args, ctx, info) => {
-
       if (!ctx.req.playerId) {
         throw new Error('Unauthorized');
       }
-      
+
       const player = await PlayerRepository.getPlayerById(ctx.req.playerId);
-      if(!player){
+      if (!player) {
         throw new Error(`Player ${ctx.req.playerId} is not found`);
       }
 
@@ -122,19 +120,18 @@ const resolvers: any = {
           winningRank: handHistory.winningRank,
           wonAt: WonAtStatus[handHistory.wonAt],
         };
-      }else{
+      } else {
         throw new Error('No hand found');
       }
       return hand;
     },
     allHandHistory: async (parent, args, ctx, info) => {
-
       if (!ctx.req.playerId) {
         throw new Error('Unauthorized');
       }
 
       const player = await PlayerRepository.getPlayerById(ctx.req.playerId);
-      if(!player){
+      if (!player) {
         throw new Error(`Player ${ctx.req.playerId} is not found`);
       }
 
@@ -184,6 +181,61 @@ const resolvers: any = {
           winningCards: hand.winningCards,
           winningRank: hand.winningRank,
           wonAt: WonAtStatus[hand.wonAt],
+        });
+      }
+      return hands;
+    },
+    myWinningHands: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+
+      const player = await PlayerRepository.getPlayerById(ctx.req.playerId);
+      if (!player) {
+        throw new Error(`Player ${ctx.req.playerId} is not found`);
+      }
+
+      const clubMembers1 = await ClubRepository.getMembers(args.clubId);
+      const clubMember = await ClubRepository.isClubMember(
+        args.clubId,
+        ctx.req.playerId
+      );
+
+      if (!clubMember) {
+        console.log(
+          `The user ${ctx.req.playerId} is not a member of ${
+            args.clubId
+          }, ${JSON.stringify(clubMembers1)}`
+        );
+        throw new Error('Unauthorized');
+      }
+
+      if (clubMember.status == ClubMemberStatus.KICKEDOUT) {
+        console.log(
+          `The user ${ctx.req.playerId} is kicked out of ${args.clubId}`
+        );
+        throw new Error('Unauthorized');
+      }
+
+      const handwinners = await HandRepository.getMyWinningHands(
+        args.clubId,
+        args.gameNum,
+        ctx.req.playerId,
+        args.page
+      );
+      const hands = new Array<any>();
+
+      for (const hand of handwinners) {
+        hands.push({
+          pageId: hand.id,
+          clubId: hand.clubId,
+          gameNum: hand.gameNum,
+          handNum: hand.handNum,
+          playerId: hand.playerId,
+          isHigh: hand.isHigh,
+          winningCards: hand.winningCards,
+          winningRank: hand.winningRank,
+          pot: hand.received,
         });
       }
       return hands;

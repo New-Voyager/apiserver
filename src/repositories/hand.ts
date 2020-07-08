@@ -1,4 +1,4 @@
-import {HandHistory} from '@src/entity/hand';
+import {HandHistory, HandWinners} from '@src/entity/hand';
 import {getRepository, LessThan, MoreThan} from 'typeorm';
 import {PageOptions} from '@src/types';
 
@@ -22,11 +22,12 @@ class HandRepositoryImpl {
     const handHistoryRepository = getRepository(HandHistory);
     const hands = await handHistoryRepository.find({
       where: {clubId: clubId, gameNum: gameNum},
+      order: {handNum: 'DESC'},
     });
-    const sortedHands = hands.sort((b, a) => {
-      return b.handNum < a.handNum ? 1 : b.handNum > a.handNum ? -1 : 0;
-    });
-    return sortedHands[0];
+    // const sortedHands = hands.sort((b, a) => {
+    //   return b.handNum < a.handNum ? 1 : b.handNum > a.handNum ? -1 : 0;
+    // });
+    return hands[0];
   }
 
   public async getAllHandHistory(
@@ -42,7 +43,7 @@ class HandRepositoryImpl {
     }
 
     let order: any = {
-      id: 'ASC',
+      id: 'DESC',
     };
 
     let pageWhere: any;
@@ -81,6 +82,62 @@ class HandRepositoryImpl {
     const handHistoryRepository = getRepository(HandHistory);
     const handHistory = await handHistoryRepository.find(findOptions);
     return handHistory;
+  }
+
+  public async getMyWinningHands(
+    clubId: string,
+    gameNum: string,
+    playerId: string,
+    pageOptions?: PageOptions
+  ): Promise<Array<HandWinners>> {
+    if (!pageOptions) {
+      pageOptions = {
+        count: 10,
+        prev: 0x7fffffff,
+      };
+    }
+
+    let order: any = {
+      id: 'DESC',
+    };
+
+    let pageWhere: any;
+    if (pageOptions.next) {
+      order = {
+        id: 'DESC',
+      };
+      pageWhere = MoreThan(pageOptions.next);
+    } else {
+      if (pageOptions.prev) {
+        order = {
+          id: 'DESC',
+        };
+        pageWhere = LessThan(pageOptions.prev);
+      }
+    }
+
+    console.log(`pageOptions count: ${pageOptions.count}`);
+    let take = pageOptions.count;
+    if (!take || take > 10) {
+      take = 10;
+    }
+
+    const findOptions: any = {
+      where: {
+        clubId: clubId,
+        gameNum: gameNum,
+        playerId: playerId,
+      },
+      order: order,
+      take: take,
+    };
+
+    if (pageWhere) {
+      findOptions['where']['id'] = pageWhere;
+    }
+    const handWinnersRepository = getRepository(HandWinners);
+    const handWinners = await handWinnersRepository.find(findOptions);
+    return handWinners;
   }
 }
 
