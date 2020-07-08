@@ -6,10 +6,6 @@
 To run the project with postgres database, you need to run the postgres in docker.
 ```
 docker-compose -f docker-compose-pg.yaml up
-
-or
-
-yarn run-pg
 ```
 
 Then, run the server using either yarn and npm command.
@@ -19,113 +15,6 @@ yarn debug
 To run in windows, use debug-windows script.
 ```
 yarn debug-windows 
-```
-
-To debug in Mac or Linux, you need to install typescript and tsc-watch globaly.
-npm install -g typescript
-npm install -g tsc-watch
-
-
-The hit the playground using http://<your host/ip>:9501/graphql.
-
-Use the following sample graphql to verify the system is setup for development.
-```
-mutation resetData{
-	status: resetDB  
-}
-
-mutation createPlayers {
- owner:createPlayer(player:{
-  name:"owner"
-  deviceId: "xyz"
- })
- player1:createPlayer(player:{
-  name:"player1"
-  deviceId: "player1"
- })
- player2: createPlayer(player:{
-  name:"player2"
-  deviceId: "player2"
- })
-}
-
-query allPlayers {
-  allPlayers {
-    name
-    playerId
-  }
-}
-
-# user player id (uuid) in the auth header from this point.See HTTP Headers in the playground
-# {"Authorization": "Bearer <playerid>"}
-# use the player id of the user called owner
-mutation createClub {
-  clubId: createClub(club:{
-    name: "test"
-    description:"for fun"
-  })
-}
-
-query myClubs {
-  myClubs {
-    name
-    memberCount
-    private
-    clubId
-  }
-}
-
-# start a game in the club
-# change the clubid with the clubid you created in the previous step
-mutation startGame {
-  game: startGame(clubId: "B6691CBFFA81", game:{
-    gameType: HOLDEM
-    title:"Friday game"
-    smallBlind: 1.0
-    bigBlind: 2.0
-    straddleBet:4.0
-    utgStraddleAllowed:true
-    buttonStraddleAllowed:false
-    minPlayers: 3
-    maxPlayers:9
-    gameLength: 60
-    buyInApproval:true
-    breakLength:20
-    autoKickAfterBreak:true
-    waitForBigBlind:true
-    waitlistSupported:true
-    maxWaitList:10
-    sitInApproval:true
-    rakePercentage: 5.00,
-    rakeCap: 5.00,
-    buyInMin: 100,
-    buyInMax: 600,
-    actionTime:30,
-    muckLosingHand:true
-  }){
-    gameId
-    bigBlind
-    smallBlind
-    maxWaitList
-    maxPlayers
-    minPlayers
-    buyInMin
-    buyInMax
-    
-  }
-}
-
-query mygames {
-  mygames: clubGames(clubId: "EF3A662107CD", page:{prev: 34, count: 1}) {
-    pageId
-    gameId
-    status
-    startedAt
-    startedBy
-    endedBy
-    endedAt
-  }
-}
 ```
 
 ## Testing
