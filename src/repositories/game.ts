@@ -42,7 +42,7 @@ class GameRepositoryImpl {
 
     if (
       clubMember.isManager &&
-      clubMember.status == ClubMemberStatus.APPROVED
+      clubMember.status == ClubMemberStatus.ACTIVE
     ) {
       throw new Error(
         `The player ${playerId} is not an approved manager to create a game`
