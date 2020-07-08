@@ -27,6 +27,13 @@ class PlayerRepositoryImpl {
     const players = await repository.find();
     return players;
   }
+
+  public async getPlayerById(playerId: string): Promise<Player | undefined> {
+    const repository = getRepository(Player);
+    // get player by id (testing only)
+    const player = await repository.findOne({where: {uuid: playerId}});
+    return player;
+  }
 }
 
 export const PlayerRepository = new PlayerRepositoryImpl();

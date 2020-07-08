@@ -11,7 +11,7 @@ type Player {
 }
 
 type Mutation {
-  createPlayer(player: PlayerCreateInput!): String!,
+  createPlayer(player: PlayerCreateInput!): String!
   authenticatePlayer(name: String!, uuid: String!, deviceId: String!): Boolean
   leaveClub(clubId: String!): ClubMemberStatus
 }

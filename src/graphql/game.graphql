@@ -1,16 +1,15 @@
 enum GameType {
-  HOLDEM,
-  OMAHA,
-  HILO,
+  HOLDEM
+  OMAHA
+  HILO
 }
 
-
 enum GameStatus {
-  UNKNOWN,
-  WAITING,
-  NOTENOUGH_PLAYERS,
-  RUNNING,
-  ENDED,
+  UNKNOWN
+  WAITING
+  NOTENOUGH_PLAYERS
+  RUNNING
+  ENDED
 }
 
 input GameCreateInput {
@@ -21,11 +20,11 @@ input GameCreateInput {
   straddleBet: Float
   utgStraddleAllowed: Boolean
   buttonStraddleAllowed: Boolean
-  minPlayers: Int!    # 2
-  maxPlayers: Int!    # 2-9
-  gameLength: Int!    # in minutes
+  minPlayers: Int! # 2
+  maxPlayers: Int! # 2-9
+  gameLength: Int! # in minutes
   buyInApproval: Boolean
-  breakLength: Int    # in minutes (default 15 mins)
+  breakLength: Int # in minutes (default 15 mins)
   autoKickAfterBreak: Boolean
   waitlistSupported: Boolean
   sitInApproval: Boolean
@@ -34,7 +33,7 @@ input GameCreateInput {
   rakeCap: Float
   buyInMin: Float!
   buyInMax: Float!
-  actionTime: Int!   # default 20 secs
+  actionTime: Int! # default 20 secs
   muckLosingHand: Boolean
   waitForBigBlind: Boolean
 }
@@ -52,7 +51,7 @@ type GameInfo {
   maxPlayers: Int
   gameLength: Int
   buyInApproval: Boolean
-  breakLength: Int    
+  breakLength: Int
   autoKickAfterBreak: Boolean
   waitlistSupported: Boolean
   sitInApproval: Boolean
@@ -82,10 +81,18 @@ input GameUpdateInput {
 }
 
 type Mutation {
-  startGameFromTemplate(clubId: String!, templateId: Int!): GameInfo!,
-  updateGame(clubId: String!, gameId: String!, update: GameUpdateInput): GameInfo!
-  startGame(clubId: String!, game: GameCreateInput!): GameInfo!,
-  saveGameTemplate(clubId: String!, templateName: String!, gameInput: GameCreateInput!): Int!
+  startGameFromTemplate(clubId: String!, templateId: Int!): GameInfo!
+  updateGame(
+    clubId: String!
+    gameId: String!
+    update: GameUpdateInput
+  ): GameInfo!
+  startGame(clubId: String!, game: GameCreateInput!): GameInfo!
+  saveGameTemplate(
+    clubId: String!
+    templateName: String!
+    gameInput: GameCreateInput!
+  ): Int!
 }
 
 type Query {

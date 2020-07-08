@@ -149,7 +149,7 @@ describe('Club APIs', () => {
       variables: variables,
       mutation: clubutils.approveClubQuery,
     });
-    expect(resp.data.status).toBe('APPROVED');
+    expect(resp.data.status).toBe('ACTIVE');
     variables = {
       clubId: clubId,
       playerUuid: player2Id,
@@ -158,13 +158,13 @@ describe('Club APIs', () => {
       variables: variables,
       mutation: clubutils.approveClubQuery,
     });
-    expect(resp.data.status).toBe('APPROVED');
+    expect(resp.data.status).toBe('ACTIVE');
 
     const clubMembers = await clubutils.getClubMembers(ownerId, clubId);
     // owner + 2 players
     expect(clubMembers).toHaveLength(3);
     for (const member of clubMembers) {
-      expect(member.status).toBe('APPROVED');
+      expect(member.status).toBe('ACTIVE');
     }
   });
 
@@ -181,7 +181,7 @@ describe('Club APIs', () => {
     expect(clubMembers).toHaveLength(3);
     for (const member of clubMembers) {
       if (member.playerId === ownerId) {
-        expect(member.status).toBe('APPROVED');
+        expect(member.status).toBe('ACTIVE');
       } else {
         expect(member.status).toBe('PENDING');
       }
@@ -206,7 +206,7 @@ describe('Club APIs', () => {
       variables: variables,
       mutation: clubutils.approveClubQuery,
     });
-    expect(resp.data.status).toBe('APPROVED');
+    expect(resp.data.status).toBe('ACTIVE');
 
     clubMembers = await clubutils.getClubMembers(ownerId, clubId);
     // owner + 2 players
@@ -215,7 +215,7 @@ describe('Club APIs', () => {
       if (member.playerId === player1Id) {
         expect(member.status).toBe('DENIED');
       } else {
-        expect(member.status).toBe('APPROVED');
+        expect(member.status).toBe('ACTIVE');
       }
     }
   });
@@ -251,7 +251,7 @@ describe('Club APIs', () => {
     // owner + 2 players
     expect(clubMembers).toHaveLength(3);
     for (const member of clubMembers) {
-      expect(member.status).toBe('APPROVED');
+      expect(member.status).toBe('ACTIVE');
     }
 
     // kick player1, he should not be able to access the club
@@ -272,7 +272,7 @@ describe('Club APIs', () => {
       if (member.playerId === player1Id) {
         expect(member.status).toBe('KICKEDOUT');
       } else {
-        expect(member.status).toBe('APPROVED');
+        expect(member.status).toBe('ACTIVE');
       }
     }
 
