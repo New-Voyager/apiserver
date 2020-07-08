@@ -62,6 +62,7 @@ club_id int
 game_num int
 hand_num int
 game_type  GameType
+hand_players: comma separated playerIds (string)
 won_at: int 0: preflop, 1: flop, 2: turn, 3: river, 4: showdown
 show_down boolean
 winning_cards: comma separated cards (string) 

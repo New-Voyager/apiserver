@@ -42,7 +42,7 @@ export enum ClubMemberStatus {
   INVITED,
   PENDING,
   DENIED,
-  APPROVED,
+  ACTIVE,
   LEFT,
   KICKEDOUT,
 }

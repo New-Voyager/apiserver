@@ -169,7 +169,7 @@ export async function approvePlayer(
     variables: variables,
     mutation: approveClubQuery,
   });
-  expect(resp.data.status).toBe('APPROVED');
+  expect(resp.data.status).toBe('ACTIVE');
 }
 
 export async function getMyClubs(playerId: string): Promise<Array<any>> {

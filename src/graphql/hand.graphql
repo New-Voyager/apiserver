@@ -1,18 +1,18 @@
 scalar DateTime
 
 enum WonAtStatus {
-  PREFLOP,
-  FLOP,
-  TURN,
-  RIVER,
-  SHOWDOWN,
+  PREFLOP
+  FLOP
+  TURN
+  RIVER
+  SHOWDOWN
 }
-  
+
 enum GameType {
-  UNKNOWN,
-  HOLDEM,
-  OMAHA,
-  OMAHA_HILO,
+  UNKNOWN
+  HOLDEM
+  OMAHA
+  OMAHA_HILO
 }
 
 type HandHistory {
@@ -20,7 +20,7 @@ type HandHistory {
   clubId: String!
   gameNum: String!
   handNum: String!
-  gameType:  GameType!
+  gameType: GameType!
   wonAt: WonAtStatus!
   showDown: Boolean!
   winningCards: String
@@ -34,6 +34,7 @@ type HandHistory {
 }
 
 type HandWinners {
+  pageId: Int
   clubId: String!
   gameNum: String!
   handNum: String!
@@ -51,7 +52,27 @@ input PageInput {
 }
 
 type Query {
+  # To get the last hand history for a given gameNum and clubId
   lastHandHistory(clubId: String!, gameNum: String!): HandHistory!
-  specificHandHistory(clubId: String!, gameNum: String!, handNum: String!): HandHistory!
-  allHandHistory(clubId: String!, gameNum: String!, page: PageInput): [HandHistory!]
+
+  # To get specific hand history for a given gameNum, clubId and handNum
+  specificHandHistory(
+    clubId: String!
+    gameNum: String!
+    handNum: String!
+  ): HandHistory!
+
+  # To get all hand history for a given gameNum and clubId
+  allHandHistory(
+    clubId: String!
+    gameNum: String!
+    page: PageInput
+  ): [HandHistory!]
+
+  # To get a specific user's last 10 winning hands for a given gameNum and clubId
+  myWinningHands(
+    clubId: String!
+    gameNum: String!
+    page: PageInput
+  ): [HandWinners!]
 }

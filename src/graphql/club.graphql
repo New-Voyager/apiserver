@@ -1,14 +1,13 @@
 scalar DateTime
 enum ClubMemberStatus {
-  UNKNOWNN,
-  INVITED,
-  PENDING,
-  DENIED,
-  APPROVED,
-  LEFT,
-  KICKEDOUT,
+  UNKNOWNN
+  INVITED
+  PENDING
+  DENIED
+  ACTIVE
+  LEFT
+  KICKEDOUT
 }
-
 
 input ClubCreateInput {
   name: String!
@@ -21,12 +20,12 @@ input ClubUpdateInput {
 }
 
 type Mutation {
-  createClub(club: ClubCreateInput!): String!,
-  updateClub(clubId: String!, club: ClubUpdateInput!): Boolean!,
-  joinClub(clubId: String!): ClubMemberStatus,
-  approveMember(clubId: String!, playerUuid: String!): ClubMemberStatus,
-  rejectMember(clubId: String!, playerUuid: String!): ClubMemberStatus,
-  kickMember(clubId: String!, playerUuid: String!): ClubMemberStatus,
+  createClub(club: ClubCreateInput!): String!
+  updateClub(clubId: String!, club: ClubUpdateInput!): Boolean!
+  joinClub(clubId: String!): ClubMemberStatus
+  approveMember(clubId: String!, playerUuid: String!): ClubMemberStatus
+  rejectMember(clubId: String!, playerUuid: String!): ClubMemberStatus
+  kickMember(clubId: String!, playerUuid: String!): ClubMemberStatus
 }
 
 type ClubMember {

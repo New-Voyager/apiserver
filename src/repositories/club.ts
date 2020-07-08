@@ -102,7 +102,7 @@ class ClubRepositoryImpl {
     clubMember.player = owner;
     clubMember.isOwner = true;
     clubMember.joinedDate = new Date();
-    clubMember.status = ClubMemberStatus.APPROVED;
+    clubMember.status = ClubMemberStatus.ACTIVE;
 
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);
     await getManager().transaction(async transactionalEntityManager => {
@@ -170,13 +170,13 @@ class ClubRepositoryImpl {
       throw new Error(`The player ${player.name} is not in the club`);
     }
 
-    if (clubMember.status == ClubMemberStatus.APPROVED) {
+    if (clubMember.status == ClubMemberStatus.ACTIVE) {
       return clubMember.status;
     }
 
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);
     // create a new membership
-    clubMember.status = ClubMemberStatus.APPROVED;
+    clubMember.status = ClubMemberStatus.ACTIVE;
     await clubMemberRepository.save(clubMember);
     return clubMember.status;
   }

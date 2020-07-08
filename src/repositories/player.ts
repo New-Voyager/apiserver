@@ -30,7 +30,7 @@ class PlayerRepositoryImpl {
 
   public async getPlayerById(playerId: string): Promise<Player | undefined> {
     const repository = getRepository(Player);
-    // get all players (testing only)
+    // get player by id (testing only)
     const player = await repository.findOne({where: {uuid: playerId}});
     return player;
   }
