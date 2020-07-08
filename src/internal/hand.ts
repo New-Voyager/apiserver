@@ -5,6 +5,7 @@ import {
   WonAtStatus,
   GameType,
 } from '@src/entity/hand';
+import { HandRepository } from '@src/repositories/hand';
 
 function validateHandData(handData: any): Array<string>{
   const errors = new Array<string>();
@@ -129,129 +130,13 @@ class HandServerAPIs {
     }
 
     /**
-     * Working on the data
+     * Saving the data
      */
-    try {
-      const handHistoryRepository = getRepository(HandHistory);
-      const handWinnersRepository = getRepository(HandWinners);
-
-      const handHistory = new HandHistory();
-      const wonAt: string = handData.Result.won_at;
-      const gameType: string = handData.GameType;
-
-      /**
-       * Assigning values and saving hand history
-       */
-      handHistory.clubId = handData.ClubId;
-      handHistory.gameNum = handData.GameNum;
-      handHistory.handNum = handData.HandNum;
-      handHistory.gameType = GameType[gameType];
-      handHistory.wonAt = WonAtStatus[wonAt];
-      handHistory.showDown = handData.Result.showdown;
-      if (handData.Result.showdown) {
-        if (handData.GameType === GameType[GameType.OMAHA_HILO]) {
-          handHistory.winningCards = handData.Result.hi_winning_cards.join(
-            ', '
-          );
-          handHistory.winningRank = handData.Result.hi_winning_rank;
-          handHistory.loWinningCards = handData.Result.lo_winning_cards.join(
-            ', '
-          );
-          handHistory.loWinningRank = handData.Result.lo_winning_rank;
-        } else {
-          handHistory.winningCards = handData.Result.winning_cards.join(
-            ', '
-          );
-          handHistory.winningRank = handData.Result.rank_num;
-        }
-        handHistory.totalPot = handData.Result.total_pot;
-      }
-      handHistory.timeStarted = handData.StartedAt;
-      handHistory.timeEnded = handData.EndedAt;
-      handHistory.data = JSON.stringify(handData);
-      await handHistoryRepository.save(handHistory);
-
-      /**
-       * Assigning values and saving hand winners
-       */
-      if (handData.Result.showdown) {
-        if (handData.GameType === GameType[GameType.OMAHA_HILO]) {
-          await handData.Result.pot_winners[0].hi_winners.forEach(
-            async (winner: {
-              winning_cards: Array<string>;
-              rank_num: number;
-              player: string;
-              received: number;
-            }) => {
-              const handWinners = new HandWinners();
-              handWinners.clubId = handData.ClubId;
-              handWinners.gameNum = handData.GameNum;
-              handWinners.handNum = handData.HandNum;
-              handWinners.winningCards = winner.winning_cards.join(', ');
-              handWinners.winningRank = winner.rank_num;
-              handWinners.playerId = winner.player;
-              handWinners.received = winner.received;
-              await handWinnersRepository.save(handWinners);
-            }
-          );
-
-          await handData.Result.pot_winners[0].lo_winners.forEach(
-            async (winner: {
-              winning_cards: Array<string>;
-              rank_num: number;
-              player: string;
-              received: number;
-            }) => {
-              const handWinners = new HandWinners();
-              handWinners.clubId = handData.ClubId;
-              handWinners.gameNum = handData.GameNum;
-              handWinners.handNum = handData.HandNum;
-              handWinners.winningCards = winner.winning_cards.join(', ');
-              handWinners.winningRank = winner.rank_num;
-              handWinners.playerId = winner.player;
-              handWinners.received = winner.received;
-              handWinners.isHigh = false;
-              await handWinnersRepository.save(handWinners);
-            }
-          );
-        } else {
-          await handData.Result.pot_winners[0].winners.forEach(
-            async (winner: {
-              winning_cards: Array<string>;
-              rank_num: number;
-              player: string;
-              received: number;
-            }) => {
-              const handWinners = new HandWinners();
-              handWinners.clubId = handData.ClubId;
-              handWinners.gameNum = handData.GameNum;
-              handWinners.handNum = handData.HandNum;
-              handWinners.winningCards = winner.winning_cards.join(', ');
-              handWinners.winningRank = winner.rank_num;
-              handWinners.playerId = winner.player;
-              handWinners.received = winner.received;
-              await handWinnersRepository.save(handWinners);
-            }
-          );
-        }
-      } else {
-        await handData.Result.pot_winners[0].winners.forEach(
-          async (winner: {player: string; received: number}) => {
-            const handWinners = new HandWinners();
-            handWinners.clubId = handData.ClubId;
-            handWinners.gameNum = handData.GameNum;
-            handWinners.handNum = handData.HandNum;
-            handWinners.playerId = winner.player;
-            handWinners.received = winner.received;
-            await handWinnersRepository.save(handWinners);
-          }
-        );
-      }
-
+    const res = await HandRepository.saveHand(handData);
+    if(res === true){
       resp.status(200).send(JSON.stringify({status: 'OK'}));
-    } catch (err) {
-      resp.status(500).send('Internal service error');
-      return;
+    }else{
+      resp.status(500).send(JSON.stringify(res));
     }
   }
 }
