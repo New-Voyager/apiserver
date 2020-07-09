@@ -1,5 +1,9 @@
 import {getRepository} from 'typeorm';
-import {GameServer, GameServerStatus} from '@src/entity/gameserver';
+import {
+  GameServer,
+  GameServerStatus,
+  TrackGameServer,
+} from '@src/entity/gameserver';
 import {STATUS_CODES} from 'http';
 
 class GameServerAPIs {
@@ -123,6 +127,35 @@ class GameServerAPIs {
     const gameServerRepository = getRepository(GameServer);
     const gameServers = await gameServerRepository.find();
     resp.status(200).send(JSON.stringify({servers: gameServers}));
+  }
+
+  public async getSpecificGameServer(req: any, resp: any) {
+    const clubId = req.params.clubId;
+    const gameNum = req.params.gameNum;
+    const errors = new Array<string>();
+    try {
+      if (!clubId) {
+        errors.push('clubId is missing');
+      }
+      if (!gameNum) {
+        errors.push('gameNum is missing');
+      }
+    } catch (err) {
+      resp.status(500).send('Internal service error');
+      return;
+    }
+
+    if (errors.length) {
+      resp.status(500).send(JSON.stringify(errors));
+      return;
+    }
+
+    const trackGameServerRepository = getRepository(TrackGameServer);
+    const trackGameServer = await trackGameServerRepository.findOne({
+      relations: ['gameServerId'],
+      where: {clubId: clubId, gameNum: gameNum},
+    });
+    resp.status(200).send(JSON.stringify({server: trackGameServer}));
   }
 }
 

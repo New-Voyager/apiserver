@@ -2,6 +2,7 @@ import {getConnection, getRepository, getManager, LessThan} from 'typeorm';
 import {PokerGame, GameType, PlayerGame, GameStatus} from '@src/entity/game';
 import {Club, ClubMember, ClubMemberStatus} from '@src/entity/club';
 import {Player} from '@src/entity/player';
+import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 
 class GameRepositoryImpl {
   public async createPrivateGame(
@@ -46,6 +47,12 @@ class GameRepositoryImpl {
       );
     }
 
+    const gameServerRepository = getRepository(GameServer);
+    const gameServers = await gameServerRepository.find();
+    if (gameServers.length === 0) {
+      throw new Error('No game server is availabe');
+    }
+
     // create the game
     const game: PokerGame = {...input} as PokerGame;
     const gameTypeStr: string = input['gameType'];
@@ -69,6 +76,16 @@ class GameRepositoryImpl {
       const playerGameRespository = getRepository(PlayerGame);
       await getManager().transaction(async transactionalEntityManager => {
         savedGame = await gameRespository.save(game);
+
+        const pick = Number.parseInt(savedGame.gameId) % gameServers.length;
+        console.log(pick);
+        const trackgameServerRepository = getRepository(TrackGameServer);
+        const trackServer = new TrackGameServer();
+        trackServer.clubId = clubId;
+        trackServer.gameNum = savedGame.gameId;
+        trackServer.gameServerId = gameServers[pick];
+        await trackgameServerRepository.save(trackServer);
+
         const playerGame = new PlayerGame();
         playerGame.club = club;
         playerGame.game = savedGame;

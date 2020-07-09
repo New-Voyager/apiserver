@@ -63,3 +63,18 @@ export class GameServer {
   @Column({name: 'current_memory', type: 'int'})
   public currentMemory!: number;
 }
+
+@Entity({name: 'game_gameserver'})
+export class TrackGameServer {
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @ManyToOne(type => GameServer)
+  public gameServerId!: GameServer;
+
+  @Column({name: 'game_num'})
+  public gameNum!: string;
+
+  @Column({name: 'club_id'})
+  public clubId!: string;
+}

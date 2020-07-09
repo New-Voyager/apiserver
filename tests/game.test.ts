@@ -1,6 +1,7 @@
-import {resetDatabase, getClient} from './utils/utils';
+import {resetDatabase, getClient, PORT_NUMBER} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
+import {default as axios} from 'axios';
 
 beforeAll(async done => {
   await resetDatabase();
@@ -38,10 +39,26 @@ const holdemGameInput = {
   muckLosingHand: true,
 };
 
+async function createGameServer(ipAddress: string) {
+  const gameServer1 = {
+    ipAddress: ipAddress,
+    currentMemory: 100,
+    status: 'ACTIVE',
+  };
+  try {
+    await axios.post(`${GAMESERVER_API}/register-game-server`, gameServer1);
+  } catch (err) {
+    console.error(JSON.stringify(err));
+    expect(true).toBeFalsy();
+  }
+}
+
+const GAMESERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
+
 describe('Game APIs', () => {
   test('start a new game', async () => {
     const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
-
+    await createGameServer('1.2.0.1');
     const resp = await getClient(playerId).mutate({
       variables: {
         clubId: clubId,
@@ -49,6 +66,7 @@ describe('Game APIs', () => {
       },
       mutation: gameutils.startGameQuery,
     });
+    console.log(resp, clubId);
     expect(resp.errors).toBeUndefined();
     expect(resp.data).not.toBeNull();
     const startedGame = resp.data.startedGame;
@@ -78,6 +96,7 @@ describe('Game APIs', () => {
 
   test('get club games', async () => {
     const [clubId, playerId] = await clubutils.createClub('brady1', 'yatzee2');
+    await createGameServer('1.2.0.2');
     const game1 = await gameutils.startGame(playerId, clubId, holdemGameInput);
     const game2 = await gameutils.startGame(playerId, clubId, holdemGameInput);
     // get number of club games
@@ -96,7 +115,8 @@ describe('Game APIs', () => {
   test('get club games pagination', async () => {
     const [clubId, playerId] = await clubutils.createClub('brady3', 'yatzee3');
     const numGames = 100;
-
+    await createGameServer('1.2.0.3');
+    await createGameServer('1.2.0.4');
     for (let i = 0; i < numGames; i++) {
       await gameutils.startGame(playerId, clubId, holdemGameInput);
     }
