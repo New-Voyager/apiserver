@@ -1,5 +1,5 @@
 import {getRepository} from 'typeorm';
-import {GameServer, GameServerStatus} from '@src/entity/gameserver';
+import {GameServer, GameServerStatus, TrackGameServer} from '@src/entity/gameserver';
 import {STATUS_CODES} from 'http';
 
 class GameServerAPIs {
@@ -123,6 +123,40 @@ class GameServerAPIs {
     const gameServerRepository = getRepository(GameServer);
     const gameServers = await gameServerRepository.find();
     resp.status(200).send(JSON.stringify({servers: gameServers}));
+  }
+
+  public async getSpecificGameServer(req: any, resp: any) {
+    const clubId = req.params.clubId;
+    const gameNum = req.params.gameNum;
+    const errors = new Array<string>();
+    try {
+      if (!clubId) {
+        errors.push('clubId is missing');
+      }
+      if (!gameNum) {
+        errors.push('gameNum is missing');
+      }
+    } catch (err) {
+      resp.status(500).send('Internal service error');
+      return;
+    }
+
+    if (errors.length) {
+      resp.status(500).send(JSON.stringify(errors));
+      return;
+    }
+    
+    const trackGameServerRepository = getRepository(TrackGameServer);
+    const gameServerRepository = getRepository(GameServer);
+    let gameServer;
+    const trackGameServer = await trackGameServerRepository.findOne({where:{clubId: clubId, gameNum: gameNum}});
+    if(!trackGameServer){
+      resp.status(500).send("Game server not found");
+      return;
+    }
+    console.log(trackGameServer.gameServerId);
+    gameServer = await gameServerRepository.findOne({where:{id: trackGameServer.gameServerId}})
+    resp.status(200).send(JSON.stringify({server: gameServer}));
   }
 }
 
