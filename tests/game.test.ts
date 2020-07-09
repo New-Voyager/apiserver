@@ -39,7 +39,7 @@ const holdemGameInput = {
   muckLosingHand: true,
 };
 
-async function createGameServer(ipAddress: string){
+async function createGameServer(ipAddress: string) {
   const gameServer1 = {
     ipAddress: ipAddress,
     currentMemory: 100,
@@ -58,7 +58,7 @@ const GAMESERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 describe('Game APIs', () => {
   test('start a new game', async () => {
     const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
-    await createGameServer('1.2.0.1')
+    await createGameServer('1.2.0.1');
     const resp = await getClient(playerId).mutate({
       variables: {
         clubId: clubId,
@@ -96,7 +96,7 @@ describe('Game APIs', () => {
 
   test('get club games', async () => {
     const [clubId, playerId] = await clubutils.createClub('brady1', 'yatzee2');
-    await createGameServer('1.2.0.2')
+    await createGameServer('1.2.0.2');
     const game1 = await gameutils.startGame(playerId, clubId, holdemGameInput);
     const game2 = await gameutils.startGame(playerId, clubId, holdemGameInput);
     // get number of club games
@@ -115,8 +115,8 @@ describe('Game APIs', () => {
   test('get club games pagination', async () => {
     const [clubId, playerId] = await clubutils.createClub('brady3', 'yatzee3');
     const numGames = 100;
-    await createGameServer('1.2.0.3')
-    await createGameServer('1.2.0.4')
+    await createGameServer('1.2.0.3');
+    await createGameServer('1.2.0.4');
     for (let i = 0; i < numGames; i++) {
       await gameutils.startGame(playerId, clubId, holdemGameInput);
     }

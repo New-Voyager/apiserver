@@ -221,7 +221,7 @@ const holdemGameInput = {
 
 const HANDSERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
-async function createGameServer(ipAddress: string){
+async function createGameServer(ipAddress: string) {
   const gameServer1 = {
     ipAddress: ipAddress,
     currentMemory: 100,
@@ -247,7 +247,7 @@ afterAll(async done => {
 describe('Hand Server', () => {
   test('Save hand data', async () => {
     const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
-    await createGameServer('1.2.0.1')
+    await createGameServer('1.2.0.1');
     const game1 = await gameutils.startGame(playerId, clubId, holdemGameInput);
     handData.HandNum = '1';
     handData.GameNum = game1.gameId;
@@ -264,7 +264,7 @@ describe('Hand Server', () => {
 
   test('Get specific hand history', async () => {
     const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
-    await createGameServer('1.2.0.2')
+    await createGameServer('1.2.0.2');
     const game1 = await gameutils.startGame(playerId, clubId, holdemGameInput);
     handData.HandNum = '1';
     handData.GameNum = game1.gameId;
@@ -283,7 +283,7 @@ describe('Hand Server', () => {
 
   test('Get latest hand history', async () => {
     const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
-    await createGameServer('1.2.0.3')
+    await createGameServer('1.2.0.3');
     const game1 = await gameutils.startGame(playerId, clubId, holdemGameInput);
     handData.GameNum = game1.gameId;
     handData.ClubId = clubId;
@@ -309,7 +309,7 @@ describe('Hand Server', () => {
 
   test('Get all hand history', async () => {
     const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
-    await createGameServer('1.2.0.4')
+    await createGameServer('1.2.0.4');
     const game1 = await gameutils.startGame(playerId, clubId, holdemGameInput);
     handData.GameNum = game1.gameId;
     handData.ClubId = clubId;
@@ -333,7 +333,7 @@ describe('Hand Server', () => {
 
   test('Get all hand history pagination', async () => {
     const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
-    await createGameServer('1.2.0.5')
+    await createGameServer('1.2.0.5');
     const game1 = await gameutils.startGame(playerId, clubId, holdemGameInput);
     handData.GameNum = game1.gameId;
     handData.ClubId = clubId;
@@ -364,7 +364,7 @@ describe('Hand Server', () => {
 
   test('Get my winning hands', async () => {
     const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
-    await createGameServer('1.2.0.6')
+    await createGameServer('1.2.0.6');
     const game1 = await gameutils.startGame(playerId, clubId, holdemGameInput);
     handData.GameNum = game1.gameId;
     handData.ClubId = clubId;
@@ -391,7 +391,7 @@ describe('Hand Server', () => {
 
   test('Get my winning hands pagination', async () => {
     const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
-    await createGameServer('1.2.0.7')
+    await createGameServer('1.2.0.7');
     const game1 = await gameutils.startGame(playerId, clubId, holdemGameInput);
     handData.GameNum = game1.gameId;
     handData.ClubId = clubId;

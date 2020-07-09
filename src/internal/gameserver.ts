@@ -1,5 +1,9 @@
 import {getRepository} from 'typeorm';
-import {GameServer, GameServerStatus, TrackGameServer} from '@src/entity/gameserver';
+import {
+  GameServer,
+  GameServerStatus,
+  TrackGameServer,
+} from '@src/entity/gameserver';
 import {STATUS_CODES} from 'http';
 
 class GameServerAPIs {
@@ -145,9 +149,12 @@ class GameServerAPIs {
       resp.status(500).send(JSON.stringify(errors));
       return;
     }
-    
+
     const trackGameServerRepository = getRepository(TrackGameServer);
-    const trackGameServer = await trackGameServerRepository.findOne({relations: ["gameServerId"], where:{clubId: clubId, gameNum: gameNum}});
+    const trackGameServer = await trackGameServerRepository.findOne({
+      relations: ['gameServerId'],
+      where: {clubId: clubId, gameNum: gameNum},
+    });
     resp.status(200).send(JSON.stringify({server: trackGameServer}));
   }
 }

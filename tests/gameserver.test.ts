@@ -156,11 +156,17 @@ describe('Game server APIs', () => {
     const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
 
     for (let i = 0; i < 3; i++) {
-      const game1 = await gameutils.startGame(playerId, clubId, holdemGameInput);
+      const game1 = await gameutils.startGame(
+        playerId,
+        clubId,
+        holdemGameInput
+      );
 
       let resp;
       try {
-        resp = await axios.get(`${GAMESERVER_API}/get-game-server/club_id/${clubId}/game_num/${game1.gameId}`);
+        resp = await axios.get(
+          `${GAMESERVER_API}/get-game-server/club_id/${clubId}/game_num/${game1.gameId}`
+        );
       } catch (err) {
         console.error(JSON.stringify(err));
       }
@@ -168,7 +174,6 @@ describe('Game server APIs', () => {
       const server = resp.data.server;
       expect(server).not.toBe(null);
       expect(server.ipAddress).not.toBe(null);
-      
     }
   });
 });

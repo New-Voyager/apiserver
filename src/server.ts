@@ -76,5 +76,8 @@ function addInternalRoutes(app: any) {
   app.post('/internal/update-game-server', GameServerAPI.updateGameServer);
   app.get('/internal/game-servers', GameServerAPI.getGameServers);
   app.post('/internal/save-hand', HandServerAPI.saveHand);
-  app.get('/internal/get-game-server/club_id/:clubId/game_num/:gameNum', GameServerAPI.getSpecificGameServer);
+  app.get(
+    '/internal/get-game-server/club_id/:clubId/game_num/:gameNum',
+    GameServerAPI.getSpecificGameServer
+  );
 }
