@@ -85,7 +85,7 @@ class GameRepositoryImpl {
         const trackServer = new TrackGameServer();
         trackServer.clubId = clubId;
         trackServer.gameNum = savedGame.gameId;
-        trackServer.gameServerId = gameServers[pick].id;
+        trackServer.gameServerId = gameServers[pick];
         await trackgameServerRepository.save(trackServer);
 
         const playerGame = new PlayerGame();

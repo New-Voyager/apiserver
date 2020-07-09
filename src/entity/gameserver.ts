@@ -69,8 +69,8 @@ export class TrackGameServer {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @Column({name: "gameserver_id"})
-  public gameServerId!: number;
+  @ManyToOne(type => GameServer)
+  public gameServerId!: GameServer;
 
   @Column({name: "game_num"})
   public gameNum!: string;

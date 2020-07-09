@@ -16,6 +16,7 @@ const resolvers: any = {
         await deleteAll('ClubMember');
         await deleteAll('Club');
         await deleteAll('Player');
+        await deleteAll('game_gameserver');
         await deleteAll('GameServer');
         await deleteAll('hand_winners');
         await deleteAll('hand_history');

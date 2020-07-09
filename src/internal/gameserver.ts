@@ -147,16 +147,8 @@ class GameServerAPIs {
     }
     
     const trackGameServerRepository = getRepository(TrackGameServer);
-    const gameServerRepository = getRepository(GameServer);
-    let gameServer;
-    const trackGameServer = await trackGameServerRepository.findOne({where:{clubId: clubId, gameNum: gameNum}});
-    if(!trackGameServer){
-      resp.status(500).send("Game server not found");
-      return;
-    }
-    console.log(trackGameServer.gameServerId);
-    gameServer = await gameServerRepository.findOne({where:{id: trackGameServer.gameServerId}})
-    resp.status(200).send(JSON.stringify({server: gameServer}));
+    const trackGameServer = await trackGameServerRepository.findOne({relations: ["gameServerId"], where:{clubId: clubId, gameNum: gameNum}});
+    resp.status(200).send(JSON.stringify({server: trackGameServer}));
   }
 }
 
