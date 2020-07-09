@@ -1,0 +1,24 @@
+input FavouriteMessageInput {
+  clubId: String!
+  playerId: String!
+  text: String
+  audioLink: String
+  imageLink: String
+}
+
+type FavouriteMessage {
+  id: Int!               
+  clubId: String!
+  playerId: String!
+  text: String
+  audioLink: String
+  imageLink: String
+}
+
+type Mutation {
+  saveFreqMessage(message: FavouriteMessageInput!): String!
+}
+
+type Query {
+  getFreqMessages(clubId: String!, playerId: String!): [FavouriteMessage]  
+}
