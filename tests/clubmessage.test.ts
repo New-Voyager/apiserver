@@ -1,6 +1,8 @@
 import {resetDatabase, getClient} from './utils/utils';
 import * as clubmessageutils from './utils/clubmessage.testutils';
 import * as clubutils from './utils/club.testutils';
+import {getLogger} from '../src/utils/log';
+const logger = getLogger("clubmessage");
 
 beforeAll(async done => {
   //server = new TestServer();
@@ -126,8 +128,8 @@ describe('Club APIs', () => {
     expect(result).toHaveLength(50);
     const firstGame = result[0];
     const lastGame = result[49];
-    console.log(JSON.stringify(firstGame));
-    console.log(JSON.stringify(lastGame));
+    logger.debug(JSON.stringify(firstGame));
+    logger.debug(JSON.stringify(lastGame));
     result = await clubmessageutils.getClubMessage(clubId, playerId, {
       prev: lastGame.pageId,
       count: 5,

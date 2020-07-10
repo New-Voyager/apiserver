@@ -11,6 +11,8 @@ import {
 } from 'typeorm';
 import {PokerGame, GameType, PlayerGame} from '@src/entity/game';
 import {PageOptions} from '@src/types';
+import {getLogger} from '@src/utils/log';
+const logger = getLogger("club");
 
 export interface ClubCreateInput {
   ownerUuid: string;
@@ -406,8 +408,7 @@ class ClubRepositoryImpl {
         pageWhere = LessThan(pageOptions.prev);
       }
     }
-
-    console.log(`pageOptions count: ${pageOptions.count}`);
+    logger.info(`pageOptions count: ${pageOptions.count}`);
     let take = pageOptions.count;
     if (!take || take > 20) {
       take = 20;

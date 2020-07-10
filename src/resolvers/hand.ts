@@ -3,6 +3,8 @@ import {WonAtStatus, GameType} from '@src/entity/hand';
 import {ClubRepository} from '@src/repositories/club';
 import {ClubMemberStatus} from '@src/entity/club';
 import {PlayerRepository} from '@src/repositories/player';
+import {getLogger} from '@src/utils/log';
+const logger = getLogger("hand");
 
 const resolvers: any = {
   Query: {
@@ -23,7 +25,7 @@ const resolvers: any = {
       }
 
       if (!clubMember) {
-        console.log(
+        logger.error(
           `The user ${ctx.req.playerId} is not a member of ${
             args.clubId
           }, ${JSON.stringify(clubMembers1)}`
@@ -32,7 +34,7 @@ const resolvers: any = {
       }
 
       if (clubMember.status == ClubMemberStatus.KICKEDOUT) {
-        console.log(
+        logger.error(
           `The user ${ctx.req.playerId} is kicked out of ${args.clubId}`
         );
         throw new Error('Unauthorized');
@@ -82,7 +84,7 @@ const resolvers: any = {
       );
 
       if (!clubMember) {
-        console.log(
+        logger.error(
           `The user ${ctx.req.playerId} is not a member of ${
             args.clubId
           }, ${JSON.stringify(clubMembers1)}`
@@ -91,7 +93,7 @@ const resolvers: any = {
       }
 
       if (clubMember.status == ClubMemberStatus.KICKEDOUT) {
-        console.log(
+        logger.error(
           `The user ${ctx.req.playerId} is kicked out of ${args.clubId}`
         );
         throw new Error('Unauthorized');
@@ -142,7 +144,7 @@ const resolvers: any = {
       );
 
       if (!clubMember) {
-        console.log(
+        logger.error(
           `The user ${ctx.req.playerId} is not a member of ${
             args.clubId
           }, ${JSON.stringify(clubMembers1)}`
@@ -151,7 +153,7 @@ const resolvers: any = {
       }
 
       if (clubMember.status == ClubMemberStatus.KICKEDOUT) {
-        console.log(
+        logger.error(
           `The user ${ctx.req.playerId} is kicked out of ${args.clubId}`
         );
         throw new Error('Unauthorized');
@@ -202,7 +204,7 @@ const resolvers: any = {
       );
 
       if (!clubMember) {
-        console.log(
+        logger.error(
           `The user ${ctx.req.playerId} is not a member of ${
             args.clubId
           }, ${JSON.stringify(clubMembers1)}`
@@ -211,7 +213,7 @@ const resolvers: any = {
       }
 
       if (clubMember.status == ClubMemberStatus.KICKEDOUT) {
-        console.log(
+        logger.error(
           `The user ${ctx.req.playerId} is kicked out of ${args.clubId}`
         );
         throw new Error('Unauthorized');

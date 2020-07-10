@@ -2,6 +2,8 @@ import * as _ from 'lodash';
 import {PlayerRepository} from '@src/repositories/player';
 import {ClubRepository} from '@src/repositories/club';
 import {ClubMemberStatus} from '@src/entity/club';
+import {getLogger} from '@src/utils/log';
+const logger = getLogger("player");
 
 async function getClubs(playerId: string): Promise<Array<any>> {
   const clubMembers = await ClubRepository.getPlayerClubs(playerId);
@@ -65,7 +67,7 @@ const resolvers: any = {
           playerInput.deviceId
         );
       } catch (err) {
-        console.log(err);
+        logger.error(err);
         throw new Error('Failed to register Player');
       }
     },

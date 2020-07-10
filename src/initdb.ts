@@ -3,6 +3,8 @@ import {Player} from './entity/player';
 import {Club, ClubMember} from './entity/club';
 import {PokerGame, PokerGamePlayers, PokerHand} from './entity/game';
 import {HandWinners, HandHistory} from './entity/hand';
+import {getLogger} from '@src/utils/log';
+const logger = getLogger("initdb");
 
 export async function pgConnection() {
   const connection = await createConnection({
@@ -30,11 +32,11 @@ export async function pgConnection() {
 
 export async function initializeDB(connectionDB: any) {
   try {
-    console.log('Initializing database');
+    logger.debug('Initializing database');
     await connectionDB();
-    console.log('Database is initialized');
+    logger.debug('Database is initialized');
   } catch (err) {
-    console.log(err);
+    logger.error(err);
     process.exit(1);
   }
 }

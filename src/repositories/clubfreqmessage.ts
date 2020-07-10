@@ -10,6 +10,8 @@ export interface FavouriteMessageInputFormat {
   audioLink: string;
   imageLink: string;
 }
+import {getLogger} from '@src/utils/log';
+const logger = getLogger("clubfreqmessage");
 
 class ClubFreqMessageRepositoryImpl {
   public async saveFreqMessage(message: FavouriteMessageInputFormat) {
@@ -107,7 +109,7 @@ class ClubFreqMessageRepositoryImpl {
   }
 
   public async clubFavoriteMessage(clubId: string): Promise<Array<any>> {
-    console.log(clubId);
+    logger.debug(clubId);
     try {
       const clubRepository = getRepository(Club);
       const club = await clubRepository.findOne({where: {displayId: clubId}});

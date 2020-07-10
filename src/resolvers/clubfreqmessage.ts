@@ -3,6 +3,8 @@ import {ClubFreqMessageRepository} from '@src/repositories/clubfreqmessage';
 import {ClubRepository} from '@src/repositories/club';
 import {ClubMemberStatus} from '@src/entity/club';
 import {ClubMessageType} from '@src/entity/clubmessage';
+import {getLogger} from '@src/utils/log';
+const logger = getLogger("clubfreqmessage");
 
 const resolvers: any = {
   Query: {
@@ -13,7 +15,7 @@ const resolvers: any = {
       const messages = await ClubFreqMessageRepository.clubFavoriteMessage(
         args.clubId
       );
-      console.log(messages);
+      logger.debug(messages);
       return _.map(messages, x => {
         return {
           id: x.id,
@@ -62,7 +64,7 @@ const resolvers: any = {
       try {
         return ClubFreqMessageRepository.saveFreqMessage(args.message);
       } catch (err) {
-        console.log(err);
+        logger.error(err);
         throw new Error('Failed to send the message');
       }
     },

@@ -1,5 +1,7 @@
 import {GameRepository} from '@src/repositories/game';
 import {GameType} from '@src/entity/game';
+import {getLogger} from '@src/utils/log';
+const logger = getLogger("game");
 
 const resolvers: any = {
   Mutation: {
@@ -20,10 +22,10 @@ const resolvers: any = {
         );
         const ret: any = gameInfo as any;
         ret.gameType = GameType[gameInfo.gameType];
-        console.log(JSON.stringify(ret));
+        logger.debug(JSON.stringify(ret));
         return ret;
       } catch (err) {
-        console.log(err);
+        logger.error(err);
         throw new Error(`Failed to create a new game. ${JSON.stringify(err)}`);
       }
     },

@@ -2,6 +2,8 @@ import {HandHistory, HandWinners, WonAtStatus} from '@src/entity/hand';
 import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {GameType} from '@src/entity/game';
+import {getLogger} from '@src/utils/log';
+const logger = getLogger("hand");
 
 class HandRepositoryImpl {
   public async saveHand(handData: any) {
@@ -186,7 +188,7 @@ class HandRepositoryImpl {
       }
     }
 
-    console.log(`pageOptions count: ${pageOptions.count}`);
+    logger.info(`pageOptions count: ${pageOptions.count}`);
     let take = pageOptions.count;
     if (!take || take > 10) {
       take = 10;
@@ -241,7 +243,7 @@ class HandRepositoryImpl {
       }
     }
 
-    console.log(`pageOptions count: ${pageOptions.count}`);
+    logger.info(`pageOptions count: ${pageOptions.count}`);
     let take = pageOptions.count;
     if (!take || take > 10) {
       take = 10;

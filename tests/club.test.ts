@@ -1,5 +1,7 @@
 import {resetDatabase, getClient} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
+import {getLogger} from '../src/utils/log';
+const logger = getLogger("club");
 
 beforeAll(async done => {
   //server = new TestServer();
@@ -42,7 +44,7 @@ describe('Club APIs', () => {
       expect(error.toString()).toContain('Unauthorized');
     }
 
-    console.log(`Owner id before using in getClient ${ownerId}`);
+    logger.debug(`Owner id before using in getClient ${ownerId}`);
     const ownerClient = await getClient(ownerId);
     // use the player in the auth header
     let resp = await ownerClient.mutate({
