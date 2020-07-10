@@ -26,7 +26,9 @@ class ClubFreqMessageRepositoryImpl {
     ) {
       return this.savePlayerMessage(message);
     } else {
-      return 'Bad parameters';
+      throw new Error(
+        'Invalid parameters. Either clubId or playerId must be specified'
+      );
     }
   }
 
@@ -56,7 +58,7 @@ class ClubFreqMessageRepositoryImpl {
         return this.saveMessage(message, 0);
       }
     } catch (e) {
-      throw new Error(e.message);
+      throw e;
     }
   }
 
@@ -86,7 +88,7 @@ class ClubFreqMessageRepositoryImpl {
         return this.saveMessage(message, 1);
       }
     } catch (e) {
-      throw new Error(e.message);
+      throw e;
     }
   }
 
@@ -125,7 +127,7 @@ class ClubFreqMessageRepositoryImpl {
         return clubFreqMessages;
       }
     } catch (e) {
-      throw new Error(e.message);
+      throw e;
     }
   }
 
@@ -152,7 +154,7 @@ class ClubFreqMessageRepositoryImpl {
         return clubFreqMessages;
       }
     } catch (e) {
-      throw new Error(e.message);
+      throw e;
     }
   }
 }
