@@ -1,4 +1,9 @@
-import {HandHistory, HandWinners, WonAtStatus} from '@src/entity/hand';
+import {
+  HandHistory,
+  HandWinners,
+  WonAtStatus,
+  StarredHands,
+} from '@src/entity/hand';
 import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {GameType} from '@src/entity/game';
@@ -54,7 +59,7 @@ class HandRepositoryImpl {
               async (winner: {
                 winning_cards: Array<string>;
                 rank_num: number;
-                player: string;
+                player: number;
                 received: number;
               }) => {
                 const handWinners = new HandWinners();
@@ -73,7 +78,7 @@ class HandRepositoryImpl {
               async (winner: {
                 winning_cards: Array<string>;
                 rank_num: number;
-                player: string;
+                player: number;
                 received: number;
               }) => {
                 const handWinners = new HandWinners();
@@ -93,7 +98,7 @@ class HandRepositoryImpl {
               async (winner: {
                 winning_cards: Array<string>;
                 rank_num: number;
-                player: string;
+                player: number;
                 received: number;
               }) => {
                 const handWinners = new HandWinners();
@@ -110,7 +115,7 @@ class HandRepositoryImpl {
           }
         } else {
           await handData.Result.pot_winners[0].winners.forEach(
-            async (winner: {player: string; received: number}) => {
+            async (winner: {player: number; received: number}) => {
               const handWinners = new HandWinners();
               handWinners.clubId = handData.ClubId;
               handWinners.gameNum = handData.GameNum;
@@ -212,7 +217,7 @@ class HandRepositoryImpl {
   public async getMyWinningHands(
     clubId: string,
     gameNum: string,
-    playerId: string,
+    playerId: number,
     pageOptions?: PageOptions
   ): Promise<Array<HandWinners>> {
     if (!pageOptions) {
@@ -263,6 +268,68 @@ class HandRepositoryImpl {
     const handWinnersRepository = getRepository(HandWinners);
     const handWinners = await handWinnersRepository.find(findOptions);
     return handWinners;
+  }
+
+  public async saveStarredHand(
+    clubId: string,
+    gameNum: string,
+    handNum: string,
+    playerId: number
+  ) {
+    try {
+      const starredHandsRepository = getRepository(StarredHands);
+
+      const findOptions: any = {
+        where: {
+          playerId: playerId,
+        },
+        order: {id: 'ASC'},
+      };
+      const previousHands = await starredHandsRepository.find({
+        where: {playerId: playerId},
+      });
+      if (previousHands.length >= 25) {
+        await starredHandsRepository.delete(previousHands[0].id);
+      }
+      const starredHand = new StarredHands();
+      starredHand.clubId = clubId;
+      starredHand.gameNum = gameNum;
+      starredHand.handNum = handNum;
+      starredHand.playerId = playerId;
+      await getManager().transaction(async transactionalEntityManager => {
+        await starredHandsRepository.save(starredHand);
+      });
+      return true;
+    } catch (error) {
+      return error;
+    }
+  }
+
+  public async getStarredHands(playerId: number): Promise<Array<HandHistory>> {
+    const starredHandsRepository = getRepository(StarredHands);
+    const handHistoryRepository = getRepository(HandHistory);
+
+    const findOptions: any = {
+      where: {
+        playerId: playerId,
+      },
+      order: {id: 'DESC'},
+    };
+    const starredHands = await starredHandsRepository.find(findOptions);
+    const handHistory = new Array<HandHistory>();
+    for await (const hand of starredHands) {
+      const resp = await handHistoryRepository.findOne({
+        where: {
+          clubId: hand.clubId,
+          gameNum: hand.gameNum,
+          handNum: hand.handNum,
+        },
+      });
+      if (resp) {
+        handHistory.push(resp);
+      }
+    }
+    return handHistory;
   }
 }
 

@@ -24,7 +24,14 @@ type PlayerClub {
   private: Boolean
 }
 
+type playerId{
+  id: Int!
+  name: String!
+  lastActiveTime: DateTime
+}
+
 type Query {
   myClubs: [PlayerClub!]
   allPlayers: [Player!]
+  playerById: playerId!
 }

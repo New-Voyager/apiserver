@@ -31,7 +31,7 @@ const resolvers: any = {
         throw new Error('Unauthorized');
       }
 
-      if (clubMember.status == ClubMemberStatus.KICKEDOUT) {
+      if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
         console.log(
           `The user ${ctx.req.playerId} is kicked out of ${args.clubId}`
         );
@@ -90,7 +90,7 @@ const resolvers: any = {
         throw new Error('Unauthorized');
       }
 
-      if (clubMember.status == ClubMemberStatus.KICKEDOUT) {
+      if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
         console.log(
           `The user ${ctx.req.playerId} is kicked out of ${args.clubId}`
         );
@@ -150,7 +150,7 @@ const resolvers: any = {
         throw new Error('Unauthorized');
       }
 
-      if (clubMember.status == ClubMemberStatus.KICKEDOUT) {
+      if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
         console.log(
           `The user ${ctx.req.playerId} is kicked out of ${args.clubId}`
         );
@@ -210,7 +210,7 @@ const resolvers: any = {
         throw new Error('Unauthorized');
       }
 
-      if (clubMember.status == ClubMemberStatus.KICKEDOUT) {
+      if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
         console.log(
           `The user ${ctx.req.playerId} is kicked out of ${args.clubId}`
         );
@@ -220,7 +220,7 @@ const resolvers: any = {
       const handwinners = await HandRepository.getMyWinningHands(
         args.clubId,
         args.gameNum,
-        ctx.req.playerId,
+        player.id,
         args.page
       );
       const hands = new Array<any>();
@@ -240,8 +240,115 @@ const resolvers: any = {
       }
       return hands;
     },
+    allStarredHands: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+      const player = await PlayerRepository.getPlayerById(ctx.req.playerId);
+      if (!player) {
+        throw new Error(`Player ${ctx.req.playerId} is not found`);
+      }
+      // console.log(player.id);
+      const handHistory = await HandRepository.getStarredHands(player.id);
+      const hands = new Array<any>();
+
+      for (const hand of handHistory) {
+        hands.push({
+          pageId: hand.id,
+          clubId: hand.clubId,
+          data: hand.data,
+          gameNum: hand.gameNum,
+          gameType: GameType[hand.gameType],
+          handNum: hand.handNum,
+          loWinningCards: hand.loWinningCards,
+          loWinningRank: hand.loWinningRank,
+          showDown: hand.showDown,
+          timeEnded: hand.timeEnded,
+          timeStarted: hand.timeStarted,
+          totalPot: hand.totalPot,
+          winningCards: hand.winningCards,
+          winningRank: hand.winningRank,
+          wonAt: WonAtStatus[hand.wonAt],
+        });
+      }
+      return hands;
+    },
   },
-  Mutation: {},
+  Mutation: {
+    saveStarredHand: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+
+      const errors = new Array<string>();
+      try {
+        if (!args.clubId) {
+          errors.push('ClubId is missing');
+        }
+        if (!args.gameNum) {
+          errors.push('GameNum is missing');
+        }
+        if (!args.handNum) {
+          errors.push('HandNum is missing');
+        }
+      } catch (err) {
+        throw new Error('Internal server error');
+      }
+
+      if (errors.length) {
+        throw new Error(JSON.stringify(errors));
+      }
+
+      const clubMembers1 = await ClubRepository.getMembers(args.clubId);
+      const clubMember = await ClubRepository.isClubMember(
+        args.clubId,
+        ctx.req.playerId
+      );
+
+      const player = await PlayerRepository.getPlayerById(ctx.req.playerId);
+      if (!player) {
+        throw new Error(`Player ${ctx.req.playerId} is not found`);
+      }
+
+      if (!clubMember) {
+        console.log(
+          `The user ${ctx.req.playerId} is not a member of ${
+            args.clubId
+          }, ${JSON.stringify(clubMembers1)}`
+        );
+        throw new Error('Unauthorized');
+      }
+
+      if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
+        console.log(
+          `The user ${ctx.req.playerId} is kicked out of ${args.clubId}`
+        );
+        throw new Error('Unauthorized');
+      }
+
+      const hand = await HandRepository.getSpecificHandHistory(
+        args.clubId,
+        args.gameNum,
+        args.handNum
+      );
+      if (!hand) {
+        console.log(`The hand ${args.handNum} is not found`);
+        throw new Error('Hand not found');
+      }
+
+      const resp = await HandRepository.saveStarredHand(
+        args.clubId,
+        args.gameNum,
+        args.handNum,
+        player.id
+      );
+      if (resp === true) {
+        return true;
+      } else {
+        throw new Error(resp);
+      }
+    },
+  },
 };
 
 export function getResolvers() {

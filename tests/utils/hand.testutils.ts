@@ -95,6 +95,47 @@ export const getMyWinningHandsQuery = gql`
   }
 `;
 
+export const playerByIdQuery = gql`
+  query {
+    player: playerById {
+      id
+      name
+      lastActiveTime
+    }
+  }
+`;
+
+export const getStarredHandsQuery = gql`
+  query {
+    hands: allStarredHands {
+      clubId
+      gameNum
+      handNum
+      gameType
+      wonAt
+      showDown
+      winningCards
+      winningRank
+      loWinningCards
+      loWinningRank
+      timeStarted
+      timeEnded
+      data
+      totalPot
+    }
+  }
+`;
+
+export const saveStarredHandMutation = gql`
+  mutation($clubId: String!, $gameNum: String!, $handNum: String!) {
+    saved: saveStarredHand(
+      clubId: $clubId
+      gameNum: $gameNum
+      handNum: $handNum
+    )
+  }
+`;
+
 export async function getSpecificHandHistory(
   playerId: string,
   clubId: string,
@@ -199,4 +240,39 @@ export async function getMyWinningHands(
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
   return resp.data.handWinners;
+}
+
+export async function getPlayerById(playerId: string): Promise<number> {
+  const playerClient = getClient(playerId);
+  const resp = await playerClient.query({
+    query: playerByIdQuery,
+  });
+  return resp.data.player.id;
+}
+
+export async function saveStarredHand(
+  clubId: string,
+  gameNum: string,
+  playerId: string,
+  handNum: string
+) {
+  const client = getClient(playerId);
+  const variables = {
+    clubId: clubId,
+    gameNum: gameNum,
+    handNum: handNum,
+  };
+  const resp = await client.mutate({
+    variables: variables,
+    mutation: saveStarredHandMutation,
+  });
+  return resp.data.saved;
+}
+
+export async function getStarredHands(playerId: string): Promise<Array<any>> {
+  const playerClient = getClient(playerId);
+  const resp = await playerClient.query({
+    query: getStarredHandsQuery,
+  });
+  return resp.data.hands;
 }
