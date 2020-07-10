@@ -71,7 +71,6 @@ class ClubMessageRepositoryImpl {
     sendMessage.text = message.text;
     sendMessage.messageType = messageType;
     sendMessage.clubId = clubId;
-    5;
     sendMessage.gameNum = message.gameNum;
     sendMessage.handNum = message.handNum;
     sendMessage.giphyLink = message.giphyLink;
