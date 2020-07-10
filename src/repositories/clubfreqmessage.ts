@@ -58,7 +58,7 @@ class ClubFreqMessageRepositoryImpl {
         return this.saveMessage(message, 0);
       }
     } catch (e) {
-      throw e;
+      throw new Error(e);
     }
   }
 
@@ -88,7 +88,7 @@ class ClubFreqMessageRepositoryImpl {
         return this.saveMessage(message, 1);
       }
     } catch (e) {
-      throw e;
+      throw new Error(e);
     }
   }
 
@@ -127,7 +127,7 @@ class ClubFreqMessageRepositoryImpl {
         return clubFreqMessages;
       }
     } catch (e) {
-      throw e;
+      throw new Error(e);
     }
   }
 
@@ -154,7 +154,7 @@ class ClubFreqMessageRepositoryImpl {
         return clubFreqMessages;
       }
     } catch (e) {
-      throw e;
+      throw new Error(e);
     }
   }
 }
