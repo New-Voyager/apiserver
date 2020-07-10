@@ -38,24 +38,44 @@ describe('Club APIs', () => {
     expect(messageID).not.toBeNull();
   });
 
-  test('get message', async () => {
+  test('get club message', async () => {
     const [clubId, playerId] = await clubutils.createClub('brady3', 'yatzee3');
     const messageCount = 50;
     const messageInput = {
       audioLink: 'test.com',
       clubId: clubId,
-      playerId: playerId,
     };
     for (let i = 0; i < messageCount; i++) {
       await getClient(playerId).mutate({
         variables: {
-          clubId: clubId,
           input: messageInput,
         },
         mutation: clubfreqmessageutils.saveFreqMessage,
       });
     }
-    const result = await clubfreqmessageutils.getFreqMessages(clubId, playerId);
+    const result = await clubfreqmessageutils.getClubFavMessages(
+      playerId,
+      clubId
+    );
+    expect(result).toHaveLength(20);
+  });
+
+  test('get player message', async () => {
+    const [playerId] = await clubutils.createClub('brady3', 'yatzee3');
+    const messageCount = 50;
+    const messageInput = {
+      audioLink: 'test.com',
+      playerId: playerId,
+    };
+    for (let i = 0; i < messageCount; i++) {
+      await getClient(playerId).mutate({
+        variables: {
+          input: messageInput,
+        },
+        mutation: clubfreqmessageutils.saveFreqMessage,
+      });
+    }
+    const result = await clubfreqmessageutils.getPlayerFavMessages(playerId);
     expect(result).toHaveLength(20);
   });
 });

@@ -5,10 +5,10 @@ export class FavouriteMessage {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @Column({name: 'club_id', nullable: false})
+  @Column({name: 'club_id', nullable: true})
   public clubId!: string;
 
-  @Column({name: 'player_id', nullable: false})
+  @Column({name: 'player_id', nullable: true})
   public playerId!: string;
 
   @Column({name: 'text', nullable: true})
