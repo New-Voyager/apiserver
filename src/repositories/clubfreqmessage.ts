@@ -58,7 +58,7 @@ class ClubFreqMessageRepositoryImpl {
         return this.saveMessage(message, 0);
       }
     } catch (e) {
-      throw new Error(e);
+      throw e;
     }
   }
 
@@ -88,7 +88,7 @@ class ClubFreqMessageRepositoryImpl {
         return this.saveMessage(message, 1);
       }
     } catch (e) {
-      throw new Error(e);
+      throw e;
     }
   }
 
@@ -127,12 +127,11 @@ class ClubFreqMessageRepositoryImpl {
         return clubFreqMessages;
       }
     } catch (e) {
-      throw new Error(e);
+      throw e;
     }
   }
 
   public async playerFavoriteMessage(playerId: string): Promise<Array<any>> {
-    console.log(playerId);
     try {
       const playerRepository = getRepository<Player>(Player);
       const player = playerRepository.findOne({
@@ -154,7 +153,7 @@ class ClubFreqMessageRepositoryImpl {
         return clubFreqMessages;
       }
     } catch (e) {
-      throw new Error(e);
+      throw e;
     }
   }
 }

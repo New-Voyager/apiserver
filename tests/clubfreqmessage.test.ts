@@ -22,7 +22,6 @@ describe('Club APIs', () => {
 
     const messageInput = {
       text: 'Hi buddy',
-      playerId: playerId,
       clubId: clubId,
     };
 
