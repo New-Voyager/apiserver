@@ -8,6 +8,8 @@ import {Player} from '@src/entity/player';
 import {PageOptions} from '@src/types';
 import * as _ from 'lodash';
 import {GameStatus} from '@src/entity/game';
+import {getLogger} from '@src/utils/log';
+const logger = getLogger("club");
 
 async function getClubGames(
   clubId: string,
@@ -52,7 +54,7 @@ const resolvers: any = {
         ctx.req.playerId
       );
       if (!clubMember) {
-        console.log(
+        logger.error(
           `The user ${ctx.req.playerId} is not a member of ${
             args.clubId
           }, ${JSON.stringify(clubMembers1)}`
@@ -61,7 +63,7 @@ const resolvers: any = {
       }
 
       if (clubMember.status == ClubMemberStatus.KICKEDOUT) {
-        console.log(
+        logger.error(
           `The user ${ctx.req.playerId} is kicked out of ${args.clubId}`
         );
         throw new Error('Unauthorized');
@@ -102,12 +104,12 @@ const resolvers: any = {
         ctx.req.playerId
       );
       if (!clubMember) {
-        console.log(
+        logger.error(
           `The user ${ctx.req.playerId} is not a member of ${args.clubId}`
         );
         throw new Error('Unauthorized');
       }
-      console.log(`args in clubGames: ${JSON.stringify(args)}`);
+      logger.debug(`args in clubGames: ${JSON.stringify(args)}`);
       const clubGames = getClubGames(args.clubId, args.page);
       return clubGames;
     },
@@ -138,7 +140,7 @@ const resolvers: any = {
         input.ownerUuid = ctx.req.playerId;
         return ClubRepository.createClub(input);
       } catch (err) {
-        console.log(err);
+        logger.error(err);
         throw new Error('Failed to create the club');
       }
     },
@@ -178,7 +180,7 @@ const resolvers: any = {
         const input = args.club as ClubUpdateInput;
         return ClubRepository.updateClub(args.clubId, input);
       } catch (err) {
-        console.log(err);
+        logger.error(err);
         throw err;
       }
     },

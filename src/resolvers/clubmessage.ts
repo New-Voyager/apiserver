@@ -3,6 +3,8 @@ import {ClubMessageRepository} from '@src/repositories/clubmessage';
 import {ClubRepository} from '@src/repositories/club';
 import {ClubMemberStatus} from '@src/entity/club';
 import {ClubMessageType} from '@src/entity/clubmessage';
+import {getLogger} from '@src/utils/log';
+const logger = getLogger("clubmessage");
 
 const resolvers: any = {
   Query: {
@@ -16,7 +18,7 @@ const resolvers: any = {
         ctx.req.playerId
       );
       if (!clubMember) {
-        console.log(
+        logger.error(
           `The user ${ctx.req.playerId} is not a member of ${
             args.clubId
           }, ${JSON.stringify(clubMembers1)}`
@@ -25,7 +27,7 @@ const resolvers: any = {
       }
 
       if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
-        console.log(
+        logger.error(
           `The user ${ctx.req.playerId} is kicked out of ${args.clubId}`
         );
         throw new Error('Unauthorized');
@@ -74,7 +76,7 @@ const resolvers: any = {
       try {
         return ClubMessageRepository.sendClubMessage(args.clubId, args.message);
       } catch (err) {
-        console.log(err);
+        logger.error(err);
         throw new Error('Failed to send the message');
       }
     },

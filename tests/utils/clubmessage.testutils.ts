@@ -1,7 +1,10 @@
 import {getClient} from './utils';
 import {gql} from 'apollo-boost';
+import {getLogger} from '../../src/utils/log';
+const logger = getLogger("clubmessage");
 
 export const sendMessageQuery = gql`
+
   mutation($clubId: String!, $input: ClubMessageInput!) {
     messageId: sendClubMessage(clubId: $clubId, message: $input)
   }
@@ -63,6 +66,6 @@ export async function getClubMessage(
   });
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
-  console.log(resp.data);
+  logger.debug(resp.data);
   return resp.data.clubMessage;
 }

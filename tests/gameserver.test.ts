@@ -3,6 +3,8 @@ import {default as axios} from 'axios';
 import {resetDatabase} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
+import {getLogger} from '../src/utils/log';
+const logger = getLogger("gameserver");
 
 const GAMESERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
@@ -43,7 +45,7 @@ describe('Game server APIs', () => {
   });
 
   test('create a game server', async () => {
-    console.log('Creating a game server');
+    logger.debug('Creating a game server');
     const gameServer = {
       ipAddress: '10.1.1.1',
       currentMemory: 100,
@@ -63,7 +65,7 @@ describe('Game server APIs', () => {
   });
 
   test('update a game server', async () => {
-    console.log('update a game server');
+    logger.debug('update a game server');
     const gameServer = {
       ipAddress: '10.1.1.2',
       currentMemory: 100,
@@ -94,7 +96,7 @@ describe('Game server APIs', () => {
   });
 
   test('get game servers', async () => {
-    console.log('Getting game server');
+    logger.debug('Getting game server');
     const gameServer1 = {
       ipAddress: '10.1.1.3',
       currentMemory: 100,
@@ -129,7 +131,7 @@ describe('Game server APIs', () => {
   });
 
   test('get specific game server', async () => {
-    console.log('Getting game server');
+    logger.debug('Getting game server');
     const gameServer1 = {
       ipAddress: '10.1.1.3',
       currentMemory: 100,

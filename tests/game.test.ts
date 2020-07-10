@@ -2,6 +2,8 @@ import {resetDatabase, getClient, PORT_NUMBER} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
 import {default as axios} from 'axios';
+import {getLogger} from '../src/utils/log';
+const logger = getLogger("game");
 
 beforeAll(async done => {
   await resetDatabase();
@@ -66,7 +68,7 @@ describe('Game APIs', () => {
       },
       mutation: gameutils.startGameQuery,
     });
-    console.log(resp, clubId);
+    logger.debug(resp, clubId);
     expect(resp.errors).toBeUndefined();
     expect(resp.data).not.toBeNull();
     const startedGame = resp.data.startedGame;
@@ -125,8 +127,8 @@ describe('Game APIs', () => {
     expect(clubGames).toHaveLength(20);
     const firstGame = clubGames[0];
     const lastGame = clubGames[19];
-    console.log(JSON.stringify(firstGame));
-    console.log(JSON.stringify(lastGame));
+    logger.debug(JSON.stringify(firstGame));
+    logger.debug(JSON.stringify(lastGame));
     clubGames = await gameutils.getClubGames(playerId, clubId, {
       prev: lastGame.pageId,
       count: 5,
