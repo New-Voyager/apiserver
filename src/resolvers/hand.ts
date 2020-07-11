@@ -359,11 +359,7 @@ const resolvers: any = {
         player.id,
         handHistory
       );
-      if (resp === true) {
-        return true;
-      } else {
-        throw new Error(resp);
-      }
+      return resp;
     },
   },
 };
