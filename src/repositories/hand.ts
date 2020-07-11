@@ -13,7 +13,7 @@ const logger = getLogger('hand');
 const MAX_STARRED_HAND = 25;
 
 class HandRepositoryImpl {
-  public async saveHand(handData: any): Promise<Boolean>{
+  public async saveHand(handData: any): Promise<any>{
     try {
       const handHistoryRepository = getRepository(HandHistory);
       const handWinnersRepository = getRepository(HandWinners);
