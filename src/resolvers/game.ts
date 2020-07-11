@@ -1,7 +1,7 @@
 import {GameRepository} from '@src/repositories/game';
 import {GameType} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger("game");
+const logger = getLogger('game');
 
 const resolvers: any = {
   Mutation: {

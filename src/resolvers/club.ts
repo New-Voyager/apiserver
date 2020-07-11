@@ -9,7 +9,7 @@ import {PageOptions} from '@src/types';
 import * as _ from 'lodash';
 import {GameStatus} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger("club");
+const logger = getLogger('club');
 
 async function getClubGames(
   clubId: string,

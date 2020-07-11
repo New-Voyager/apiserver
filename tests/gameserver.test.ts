@@ -4,7 +4,7 @@ import {resetDatabase} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
 import {getLogger} from '../src/utils/log';
-const logger = getLogger("gameserver");
+const logger = getLogger('gameserver');
 
 const GAMESERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 

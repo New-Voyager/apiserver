@@ -4,7 +4,7 @@ import {Club, ClubMember, ClubMemberStatus} from '@src/entity/club';
 import {Player} from '@src/entity/player';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger("game");
+const logger = getLogger('game');
 
 class GameRepositoryImpl {
   public async createPrivateGame(
@@ -80,7 +80,7 @@ class GameRepositoryImpl {
         savedGame = await gameRespository.save(game);
 
         const pick = Number.parseInt(savedGame.gameId) % gameServers.length;
-        logger.debug(pick);
+        logger.debug(pick.toString());
         const trackgameServerRepository = getRepository(TrackGameServer);
         const trackServer = new TrackGameServer();
         trackServer.clubId = clubId;

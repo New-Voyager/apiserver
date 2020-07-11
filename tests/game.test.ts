@@ -3,7 +3,7 @@ import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
 import {default as axios} from 'axios';
 import {getLogger} from '../src/utils/log';
-const logger = getLogger("game");
+const logger = getLogger('game');
 
 beforeAll(async done => {
   await resetDatabase();

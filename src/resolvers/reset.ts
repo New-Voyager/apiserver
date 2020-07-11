@@ -1,7 +1,7 @@
 import {getConnection} from 'typeorm';
 import {getManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger("reset");
+const logger = getLogger('reset');
 
 const resolvers: any = {
   Mutation: {

@@ -1,10 +1,9 @@
 import {getClient} from './utils';
 import {gql} from 'apollo-boost';
 import {getLogger} from '../../src/utils/log';
-const logger = getLogger("clubmessage");
+const logger = getLogger('clubmessage');
 
 export const sendMessageQuery = gql`
-
   mutation($clubId: String!, $input: ClubMessageInput!) {
     messageId: sendClubMessage(clubId: $clubId, message: $input)
   }

@@ -4,7 +4,7 @@ import {ClubRepository} from '@src/repositories/club';
 import {ClubMemberStatus} from '@src/entity/club';
 import {PlayerRepository} from '@src/repositories/player';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger("hand");
+const logger = getLogger('hand');
 
 const resolvers: any = {
   Query: {

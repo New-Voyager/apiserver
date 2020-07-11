@@ -8,7 +8,7 @@ import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {GameType} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger("hand");
+const logger = getLogger('hand');
 
 const MAX_STARRED_HAND = 25;
 

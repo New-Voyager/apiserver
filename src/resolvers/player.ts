@@ -3,7 +3,7 @@ import {PlayerRepository} from '@src/repositories/player';
 import {ClubRepository} from '@src/repositories/club';
 import {ClubMemberStatus} from '@src/entity/club';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger("player");
+const logger = getLogger('player');
 
 async function getClubs(playerId: string): Promise<Array<any>> {
   const clubMembers = await ClubRepository.getPlayerClubs(playerId);
