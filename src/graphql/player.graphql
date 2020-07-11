@@ -25,6 +25,7 @@ type PlayerClub {
 }
 
 type playerId{
+  uuid: String!
   id: Int!
   name: String!
   lastActiveTime: DateTime

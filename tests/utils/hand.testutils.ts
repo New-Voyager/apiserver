@@ -111,17 +111,10 @@ export const getStarredHandsQuery = gql`
       clubId
       gameNum
       handNum
-      gameType
-      wonAt
-      showDown
-      winningCards
-      winningRank
-      loWinningCards
-      loWinningRank
-      timeStarted
-      timeEnded
-      data
-      totalPot
+      playerId
+      handHistory {
+        data
+      }
     }
   }
 `;

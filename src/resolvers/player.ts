@@ -42,14 +42,18 @@ const resolvers: any = {
       });
     },
     playerById: async (parent, args, ctx, info) => {
-      //if (!ctx.req.playerId) {
-      //  throw new Error('Unauthorized');
-      //}
-      const players = await PlayerRepository.getPlayerById(ctx.req.playerId);
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+      const player = await PlayerRepository.getPlayerById(ctx.req.playerId);
+      if (!player) {
+        throw new Error('Player not found');
+      }
       return {
-        id: players.id,
-        name: players.name,
-        lastActiveTime: players.updatedAt,
+        uuid: player.uuid,
+        id: player.id,
+        name: player.name,
+        lastActiveTime: player.updatedAt,
       };
     },
   },

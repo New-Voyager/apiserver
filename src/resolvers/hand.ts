@@ -250,28 +250,7 @@ const resolvers: any = {
       }
       // console.log(player.id);
       const handHistory = await HandRepository.getStarredHands(player.id);
-      const hands = new Array<any>();
-
-      for (const hand of handHistory) {
-        hands.push({
-          pageId: hand.id,
-          clubId: hand.clubId,
-          data: hand.data,
-          gameNum: hand.gameNum,
-          gameType: GameType[hand.gameType],
-          handNum: hand.handNum,
-          loWinningCards: hand.loWinningCards,
-          loWinningRank: hand.loWinningRank,
-          showDown: hand.showDown,
-          timeEnded: hand.timeEnded,
-          timeStarted: hand.timeStarted,
-          totalPot: hand.totalPot,
-          winningCards: hand.winningCards,
-          winningRank: hand.winningRank,
-          wonAt: WonAtStatus[hand.wonAt],
-        });
-      }
-      return hands;
+      return handHistory;
     },
   },
   Mutation: {
@@ -326,12 +305,12 @@ const resolvers: any = {
         throw new Error('Unauthorized');
       }
 
-      const hand = await HandRepository.getSpecificHandHistory(
+      const handHistory = await HandRepository.getSpecificHandHistory(
         args.clubId,
         args.gameNum,
         args.handNum
       );
-      if (!hand) {
+      if (!handHistory) {
         console.log(`The hand ${args.handNum} is not found`);
         throw new Error('Hand not found');
       }
@@ -340,7 +319,8 @@ const resolvers: any = {
         args.clubId,
         args.gameNum,
         args.handNum,
-        player.id
+        player.id,
+        handHistory
       );
       if (resp === true) {
         return true;

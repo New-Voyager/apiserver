@@ -8,6 +8,8 @@ import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {GameType} from '@src/entity/game';
 
+const MAX_STARRED_HAND = 25;
+
 class HandRepositoryImpl {
   public async saveHand(handData: any) {
     try {
@@ -274,7 +276,8 @@ class HandRepositoryImpl {
     clubId: string,
     gameNum: string,
     handNum: string,
-    playerId: number
+    playerId: number,
+    handHistory: HandHistory
   ) {
     try {
       const starredHandsRepository = getRepository(StarredHands);
@@ -285,10 +288,8 @@ class HandRepositoryImpl {
         },
         order: {id: 'ASC'},
       };
-      const previousHands = await starredHandsRepository.find({
-        where: {playerId: playerId},
-      });
-      if (previousHands.length >= 25) {
+      const previousHands = await starredHandsRepository.find(findOptions);
+      if (previousHands.length >= MAX_STARRED_HAND) {
         await starredHandsRepository.delete(previousHands[0].id);
       }
       const starredHand = new StarredHands();
@@ -296,6 +297,7 @@ class HandRepositoryImpl {
       starredHand.gameNum = gameNum;
       starredHand.handNum = handNum;
       starredHand.playerId = playerId;
+      starredHand.handHistory = handHistory;
       await getManager().transaction(async transactionalEntityManager => {
         await starredHandsRepository.save(starredHand);
       });
@@ -305,31 +307,19 @@ class HandRepositoryImpl {
     }
   }
 
-  public async getStarredHands(playerId: number): Promise<Array<HandHistory>> {
+  public async getStarredHands(playerId: number): Promise<Array<StarredHands>> {
     const starredHandsRepository = getRepository(StarredHands);
-    const handHistoryRepository = getRepository(HandHistory);
 
     const findOptions: any = {
+      relations: ['handHistory'],
       where: {
         playerId: playerId,
       },
       order: {id: 'DESC'},
     };
+
     const starredHands = await starredHandsRepository.find(findOptions);
-    const handHistory = new Array<HandHistory>();
-    for await (const hand of starredHands) {
-      const resp = await handHistoryRepository.findOne({
-        where: {
-          clubId: hand.clubId,
-          gameNum: hand.gameNum,
-          handNum: hand.handNum,
-        },
-      });
-      if (resp) {
-        handHistory.push(resp);
-      }
-    }
-    return handHistory;
+    return starredHands;
   }
 }
 

@@ -1,4 +1,11 @@
-import {Entity, PrimaryGeneratedColumn, Column, Index} from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  Index,
+  JoinColumn,
+  ManyToOne,
+} from 'typeorm';
 
 import {DbAwareColumn} from './dbaware';
 
@@ -115,4 +122,7 @@ export class StarredHands {
 
   @Column({name: 'hand_num'})
   public handNum!: string;
+
+  @ManyToOne(type => HandHistory)
+  public handHistory!: HandHistory;
 }

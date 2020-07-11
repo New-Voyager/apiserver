@@ -18,6 +18,7 @@ const resolvers: any = {
         await deleteAll('Player');
         await deleteAll('game_gameserver');
         await deleteAll('GameServer');
+        await deleteAll('starred_hands');
         await deleteAll('hand_winners');
         await deleteAll('hand_history');
       });
