@@ -1,4 +1,11 @@
-import {Entity, PrimaryGeneratedColumn, Column, Index} from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  Index,
+  JoinColumn,
+  ManyToOne,
+} from 'typeorm';
 
 import {DbAwareColumn} from './dbaware';
 
@@ -27,7 +34,7 @@ export class HandWinners {
 
   @Index()
   @Column({name: 'player_id'})
-  public playerId!: string;
+  public playerId!: number;
 
   @Column({name: 'received', type: 'float'})
   public received!: number;
@@ -96,4 +103,26 @@ export class HandHistory {
 
   @Column({name: 'total_pot', type: 'float', default: 0})
   public totalPot!: number;
+}
+
+@Entity({name: 'starred_hands'})
+export class StarredHands {
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @Index()
+  @Column({name: 'player_id'})
+  public playerId!: number;
+
+  @Column({name: 'club_id'})
+  public clubId!: string;
+
+  @Column({name: 'game_num'})
+  public gameNum!: string;
+
+  @Column({name: 'hand_num'})
+  public handNum!: string;
+
+  @ManyToOne(type => HandHistory)
+  public handHistory!: HandHistory;
 }

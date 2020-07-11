@@ -3,7 +3,7 @@ import {PlayerRepository} from '@src/repositories/player';
 import {ClubRepository} from '@src/repositories/club';
 import {ClubMemberStatus} from '@src/entity/club';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger("player");
+const logger = getLogger('player');
 
 async function getClubs(playerId: string): Promise<Array<any>> {
   const clubMembers = await ClubRepository.getPlayerClubs(playerId);
@@ -42,6 +42,21 @@ const resolvers: any = {
           lastActiveTime: x.updatedAt,
         };
       });
+    },
+    playerById: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+      const player = await PlayerRepository.getPlayerById(ctx.req.playerId);
+      if (!player) {
+        throw new Error('Player not found');
+      }
+      return {
+        uuid: player.uuid,
+        id: player.id,
+        name: player.name,
+        lastActiveTime: player.updatedAt,
+      };
     },
   },
   Mutation: {

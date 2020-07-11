@@ -8,7 +8,7 @@ import {HandServerAPI} from './internal/hand';
 const bodyParser = require('body-parser');
 const GQL_PORT = 9501;
 import {getLogger} from '@src/utils/log';
-const logger = getLogger("server");
+const logger = getLogger('server');
 
 const requestContext = async ({req}) => {
   const ctx = {

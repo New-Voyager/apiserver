@@ -11,7 +11,7 @@ export interface FavouriteMessageInputFormat {
   imageLink: string;
 }
 import {getLogger} from '@src/utils/log';
-const logger = getLogger("clubfreqmessage");
+const logger = getLogger('clubfreqmessage');
 
 class ClubFreqMessageRepositoryImpl {
   public async saveFreqMessage(message: FavouriteMessageInputFormat) {

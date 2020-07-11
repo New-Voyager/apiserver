@@ -5,7 +5,7 @@ import {ClubMessageType} from '../entity/clubmessage';
 import {Player} from '@src/entity/player';
 import {PageOptions} from '@src/types';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger("clubmessage");
+const logger = getLogger('clubmessage');
 
 export interface ClubMessageInputFormat {
   messageType: ClubMessageType;

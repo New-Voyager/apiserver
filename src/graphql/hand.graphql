@@ -41,14 +41,30 @@ type HandWinners {
   isHigh: Boolean!
   winningCards: String
   winningRank: Int
-  playerId: String!
+  playerId: Int!
   pot: Float!
+}
+
+type StarredHands {
+  playerId: Int!
+  clubId: String!
+  gameNum: String!
+  handNum: String!
+  handHistory: HandHistory!
 }
 
 input PageInput {
   prev: Int
   next: Int
   count: Int
+}
+
+type Mutation {
+  saveStarredHand(
+    clubId: String!
+    gameNum: String!
+    handNum: String!
+  ): String!
 }
 
 type Query {
@@ -75,4 +91,7 @@ type Query {
     gameNum: String!
     page: PageInput
   ): [HandWinners!]
+
+  # To get all starred message for a user (default count 25)
+  allStarredHands: [StarredHands!]
 }

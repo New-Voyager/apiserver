@@ -12,7 +12,7 @@ import {
 import {PokerGame, GameType, PlayerGame} from '@src/entity/game';
 import {PageOptions} from '@src/types';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger("club");
+const logger = getLogger('club');
 
 export interface ClubCreateInput {
   ownerUuid: string;

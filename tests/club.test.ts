@@ -1,7 +1,7 @@
 import {resetDatabase, getClient} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import {getLogger} from '../src/utils/log';
-const logger = getLogger("club");
+const logger = getLogger('club');
 
 beforeAll(async done => {
   //server = new TestServer();

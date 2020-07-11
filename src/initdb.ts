@@ -4,7 +4,7 @@ import {Club, ClubMember} from './entity/club';
 import {PokerGame, PokerGamePlayers, PokerHand} from './entity/game';
 import {HandWinners, HandHistory} from './entity/hand';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger("initdb");
+const logger = getLogger('initdb');
 
 export async function pgConnection() {
   const connection = await createConnection({

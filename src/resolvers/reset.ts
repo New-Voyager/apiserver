@@ -1,7 +1,7 @@
 import {getConnection} from 'typeorm';
 import {getManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger("reset");
+const logger = getLogger('reset');
 
 const resolvers: any = {
   Mutation: {
@@ -20,6 +20,7 @@ const resolvers: any = {
         await deleteAll('Player');
         await deleteAll('game_gameserver');
         await deleteAll('GameServer');
+        await deleteAll('starred_hands');
         await deleteAll('hand_winners');
         await deleteAll('hand_history');
       });
