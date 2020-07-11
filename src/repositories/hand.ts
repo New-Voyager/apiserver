@@ -13,7 +13,7 @@ const logger = getLogger('hand');
 const MAX_STARRED_HAND = 25;
 
 class HandRepositoryImpl {
-  public async saveHand(handData: any) {
+  public async saveHand(handData: any): Promise<any>{
     try {
       const handHistoryRepository = getRepository(HandHistory);
       const handWinnersRepository = getRepository(HandWinners);
@@ -133,6 +133,7 @@ class HandRepositoryImpl {
       });
       return true;
     } catch (err) {
+      logger.error(`Error when trying to save starred hands: ${err.toString}`);
       return err;
     }
   }
@@ -280,7 +281,7 @@ class HandRepositoryImpl {
     handNum: string,
     playerId: number,
     handHistory: HandHistory
-  ) {
+  ): Promise<any> {
     try {
       const starredHandsRepository = getRepository(StarredHands);
 
@@ -305,6 +306,7 @@ class HandRepositoryImpl {
       });
       return true;
     } catch (error) {
+      logger.error(`Error when trying to save starred hands: ${error.toString}`);
       return error;
     }
   }
