@@ -4,6 +4,8 @@ import {getRepository, MoreThan, LessThan} from 'typeorm';
 import {ClubMessageType} from '../entity/clubmessage';
 import {Player} from '@src/entity/player';
 import {PageOptions} from '@src/types';
+import {getLogger} from '@src/utils/log';
+const logger = getLogger("clubmessage");
 
 export interface ClubMessageInputFormat {
   messageType: ClubMessageType;
@@ -71,7 +73,6 @@ class ClubMessageRepositoryImpl {
     sendMessage.text = message.text;
     sendMessage.messageType = messageType;
     sendMessage.clubId = clubId;
-    5;
     sendMessage.gameNum = message.gameNum;
     sendMessage.handNum = message.handNum;
     sendMessage.giphyLink = message.giphyLink;
@@ -117,7 +118,7 @@ class ClubMessageRepositoryImpl {
           }
         }
 
-        console.log(`pageOptions count: ${pageOptions.count}`);
+        logger.info(`pageOptions count: ${pageOptions.count}`);
         let take = pageOptions.count;
         if (!take || take > 50) {
           take = 50;

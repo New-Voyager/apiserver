@@ -7,6 +7,8 @@ import {
 import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {GameType} from '@src/entity/game';
+import {getLogger} from '@src/utils/log';
+const logger = getLogger("hand");
 
 const MAX_STARRED_HAND = 25;
 
@@ -193,7 +195,7 @@ class HandRepositoryImpl {
       }
     }
 
-    console.log(`pageOptions count: ${pageOptions.count}`);
+    logger.info(`pageOptions count: ${pageOptions.count}`);
     let take = pageOptions.count;
     if (!take || take > 10) {
       take = 10;
@@ -248,7 +250,7 @@ class HandRepositoryImpl {
       }
     }
 
-    console.log(`pageOptions count: ${pageOptions.count}`);
+    logger.info(`pageOptions count: ${pageOptions.count}`);
     let take = pageOptions.count;
     if (!take || take > 10) {
       take = 10;

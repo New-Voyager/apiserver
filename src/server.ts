@@ -7,6 +7,8 @@ import {GameServerAPI} from './internal/gameserver';
 import {HandServerAPI} from './internal/hand';
 const bodyParser = require('body-parser');
 const GQL_PORT = 9501;
+import {getLogger} from '@src/utils/log';
+const logger = getLogger("server");
 
 const requestContext = async ({req}) => {
   const ctx = {
@@ -18,7 +20,7 @@ const requestContext = async ({req}) => {
 let app: any = null;
 
 export async function start(dbConnection?: any): Promise<[any, any]> {
-  console.log('In start method');
+  logger.debug('In start method');
   const typesArray = fileLoader(
     __dirname + '/' + '../../src/graphql/*.graphql',
     {recursive: true}
@@ -42,11 +44,11 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
   });
 
   if (process.env.NODE_ENV != 'test') {
-    console.log('Running in dev/prod mode');
+    logger.debug('Running in dev/prod mode');
     const options = await getConnectionOptions('default');
     await createConnection(options);
   } else {
-    console.log('Running in TEST mode');
+    logger.debug('Running in TEST mode');
     process.env.DB_USED = 'sqllite';
     const options = await getConnectionOptions('test');
     await createConnection({...options, name: 'default'});
@@ -63,7 +65,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
       port: 9501,
     },
     async () => {
-      console.log(`🚀 Server ready at http://0.0.0.0:${GQL_PORT}/graphql}`);
+      logger.error(`🚀 Server ready at http://0.0.0.0:${GQL_PORT}/graphql}`);
     }
   );
 

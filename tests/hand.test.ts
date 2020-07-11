@@ -224,7 +224,6 @@ async function createGameServer(ipAddress: string) {
   try {
     await axios.post(`${HANDSERVER_API}/register-game-server`, gameServer1);
   } catch (err) {
-    console.error(JSON.stringify(err));
     expect(true).toBeFalsy();
   }
 }

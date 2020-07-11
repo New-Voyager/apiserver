@@ -3,6 +3,8 @@ import {PokerGame, GameType, PlayerGame, GameStatus} from '@src/entity/game';
 import {Club, ClubMember, ClubMemberStatus} from '@src/entity/club';
 import {Player} from '@src/entity/player';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
+import {getLogger} from '@src/utils/log';
+const logger = getLogger("game");
 
 class GameRepositoryImpl {
   public async createPrivateGame(
@@ -78,7 +80,7 @@ class GameRepositoryImpl {
         savedGame = await gameRespository.save(game);
 
         const pick = Number.parseInt(savedGame.gameId) % gameServers.length;
-        console.log(pick);
+        logger.debug(pick);
         const trackgameServerRepository = getRepository(TrackGameServer);
         const trackServer = new TrackGameServer();
         trackServer.clubId = clubId;
@@ -93,7 +95,7 @@ class GameRepositoryImpl {
         await playerGameRespository.save(playerGame);
       });
     } catch (err) {
-      console.log("Couldn't create game and retry again");
+      logger.error("Couldn't create game and retry again");
       throw new Error("Couldn't create the game, please retry again");
     }
     return savedGame;
