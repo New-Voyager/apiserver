@@ -38,6 +38,13 @@ const resolvers: any = {
         throw new Error('Unauthorized');
       }
 
+      if (clubMember.status !== ClubMemberStatus.ACTIVE) {
+        console.log(
+          `The user ${ctx.req.playerId} is not Active in ${args.clubId}`
+        );
+        throw new Error('Unauthorized');
+      }
+
       const handHistory = await HandRepository.getLastHandHistory(
         args.clubId,
         args.gameNum
@@ -93,6 +100,13 @@ const resolvers: any = {
       if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
         console.log(
           `The user ${ctx.req.playerId} is kicked out of ${args.clubId}`
+        );
+        throw new Error('Unauthorized');
+      }
+
+      if (clubMember.status !== ClubMemberStatus.ACTIVE) {
+        console.log(
+          `The user ${ctx.req.playerId} is not Active in ${args.clubId}`
         );
         throw new Error('Unauthorized');
       }
@@ -157,6 +171,13 @@ const resolvers: any = {
         throw new Error('Unauthorized');
       }
 
+      if (clubMember.status !== ClubMemberStatus.ACTIVE) {
+        console.log(
+          `The user ${ctx.req.playerId} is not Active in ${args.clubId}`
+        );
+        throw new Error('Unauthorized');
+      }
+
       const handHistory = await HandRepository.getAllHandHistory(
         args.clubId,
         args.gameNum,
@@ -213,6 +234,13 @@ const resolvers: any = {
       if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
         console.log(
           `The user ${ctx.req.playerId} is kicked out of ${args.clubId}`
+        );
+        throw new Error('Unauthorized');
+      }
+
+      if (clubMember.status !== ClubMemberStatus.ACTIVE) {
+        console.log(
+          `The user ${ctx.req.playerId} is not Active in ${args.clubId}`
         );
         throw new Error('Unauthorized');
       }
@@ -301,6 +329,13 @@ const resolvers: any = {
       if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
         console.log(
           `The user ${ctx.req.playerId} is kicked out of ${args.clubId}`
+        );
+        throw new Error('Unauthorized');
+      }
+
+      if (clubMember.status !== ClubMemberStatus.ACTIVE) {
+        console.log(
+          `The user ${ctx.req.playerId} is not Active in ${args.clubId}`
         );
         throw new Error('Unauthorized');
       }
