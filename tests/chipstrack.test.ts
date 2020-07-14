@@ -59,13 +59,9 @@ describe('Player Chips tracking APIs', () => {
       expect(true).toBeFalsy();
     }
     const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
-    var game, resp;
-    
-       game = await gameutils.startGame(
-        playerId,
-        clubId,
-        holdemGameInput
-      );
+    let game, resp;
+
+    game = await gameutils.startGame(playerId, clubId, holdemGameInput);
 
     const playerID = await handutils.getPlayerById(playerId);
     const clubID = await clubutils.getClubById(clubId);
@@ -75,22 +71,19 @@ describe('Player Chips tracking APIs', () => {
       clubId: clubID,
       playerId: playerID,
       gameId: gameID,
-      buyIn: 100.00,
-      status: "PLAYING",
-      seatNo: 5
-      }
+      buyIn: 100.0,
+      status: 'PLAYING',
+      seatNo: 5,
+    };
 
-      try {
-        resp = await axios.post(
-          `${SERVER_API}/player-sit-in`, messageInput
-        );
-      } catch (err) {
-        console.error(JSON.stringify(err));
-      }
-      expect(resp.status).toBe(200);
-      const id = resp.data.id;
-      expect(id).not.toBe(null);
-      expect(id).not.toBe(undefined);
+    try {
+      resp = await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
+    } catch (err) {
+      console.error(JSON.stringify(err));
+    }
+    expect(resp.status).toBe(200);
+    const id = resp.data.id;
+    expect(id).not.toBe(null);
+    expect(id).not.toBe(undefined);
   });
-
-})
+});

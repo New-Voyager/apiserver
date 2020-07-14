@@ -69,7 +69,7 @@ const myClubsQuery = gql`
 `;
 
 export const clubByIdQuery = gql`
-  query($clubId : String!) {
+  query($clubId: String!) {
     club: clubById(clubId: $clubId) {
       id
     }

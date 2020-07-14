@@ -8,15 +8,21 @@ import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {GameType} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
+import {PlayerChipsTrack, ClubGameRake} from '@src/entity/chipstrack';
+import {GameRepository} from './game';
+import {ClubRepository} from './club';
+
 const logger = getLogger('hand');
 
 const MAX_STARRED_HAND = 25;
 
 class HandRepositoryImpl {
-  public async saveHand(handData: any): Promise<any>{
+  public async saveHand(handData: any): Promise<any> {
     try {
       const handHistoryRepository = getRepository(HandHistory);
       const handWinnersRepository = getRepository(HandWinners);
+      const playersChipsRepository = getRepository(PlayerChipsTrack);
+      const clubGameRakeRepository = getRepository(ClubGameRake);
 
       const handHistory = new HandHistory();
       const wonAt: string = handData.Result.won_at;
@@ -50,6 +56,18 @@ class HandRepositoryImpl {
       handHistory.timeStarted = handData.StartedAt;
       handHistory.timeEnded = handData.EndedAt;
       handHistory.data = JSON.stringify(handData);
+
+      const gameId = await GameRepository.getGameById(handData.GameNum);
+      const clubId = await ClubRepository.getClubById(handData.ClubId);
+
+      if (!gameId) {
+        logger.error(`Game ID ${gameId} not found`);
+        throw new Error(`Game ID ${gameId} not found`);
+      }
+      if (!clubId) {
+        logger.error(`Club ID ${clubId} not found`);
+        throw new Error(`Club ID ${clubId} not found`);
+      }
 
       await getManager().transaction(async transactionalEntityManager => {
         await handHistoryRepository.save(handHistory);
@@ -129,6 +147,51 @@ class HandRepositoryImpl {
               await handWinnersRepository.save(handWinners);
             }
           );
+        }
+
+        await handData.Result.summary.forEach(
+          async (playerData: {player: number; balance: number}) => {
+            const playerChips = await playersChipsRepository.findOne({
+              where: {
+                clubId: clubId,
+                gameId: gameId,
+                playerId: playerData.player,
+              },
+            });
+            if (!playerChips) {
+              logger.error(
+                `Player ID ${playerData.player} not found in chips table`
+              );
+              throw new Error(
+                `Player ID ${playerData.player} not found in chips table`
+              );
+            }
+            playerChips.stack = playerData.balance;
+            await playersChipsRepository.save(playerChips);
+          }
+        );
+
+        if (Number.parseInt(handData.HandNum) === 1) {
+          const clubRake = new ClubGameRake();
+          clubRake.clubId = clubId;
+          clubRake.gameId = gameId;
+          clubRake.lastHandNum = 1;
+          clubRake.promotion = 0;
+          clubRake.rake = Number.parseFloat(handData.Result.rake);
+          await clubGameRakeRepository.save(clubRake);
+        } else {
+          const clubRake = await clubGameRakeRepository.findOne({
+            where: {clubId: clubId, gameId: gameId},
+          });
+          if (!clubRake) {
+            logger.error(`Club ID ${handData.ClubId} not found in rake table`);
+            throw new Error(
+              `Club ID ${handData.ClubId} not found in rake table`
+            );
+          }
+          clubRake.rake += Number.parseFloat(handData.Result.rake);
+          clubRake.lastHandNum = Number.parseInt(handData.HandNum);
+          await clubGameRakeRepository.save(clubRake);
         }
       });
       return true;
@@ -281,7 +344,7 @@ class HandRepositoryImpl {
     handNum: string,
     playerId: number,
     handHistory: HandHistory
-  ): Promise<Boolean> {
+  ): Promise<boolean> {
     try {
       const starredHandsRepository = getRepository(StarredHands);
 
@@ -306,7 +369,9 @@ class HandRepositoryImpl {
       });
       return true;
     } catch (error) {
-      logger.error(`Error when trying to save starred hands: ${error.toString}`);
+      logger.error(
+        `Error when trying to save starred hands: ${error.toString}`
+      );
       throw error;
     }
   }

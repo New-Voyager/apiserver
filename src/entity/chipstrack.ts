@@ -1,10 +1,17 @@
-import {Entity, PrimaryGeneratedColumn, Column, Index,ManyToOne,   OneToOne, JoinColumn} from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  Index,
+  ManyToOne,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
 import {Player} from './player';
 import {Club} from './club';
-import {PokerGame} from './game'
+import {PokerGame} from './game';
 
 export enum PlayerStatus {
-
   PLAYING,
   IN_QUEUE,
   BREAK,
@@ -14,28 +21,31 @@ export enum PlayerStatus {
   BLOCKED,
   WAIT_FOR_SITTING_APPROVAL,
   LOST_CONNECTION,
-  WAIT_FOR_BUYIN_APPROVAL
-  }
+  WAIT_FOR_BUYIN_APPROVAL,
+}
 
 @Entity()
 export class PlayerChipsTrack {
   @PrimaryGeneratedColumn()
-  public id!: number
+  public id!: number;
 
-  @OneToOne(type => Player)
+  @ManyToOne(type => Player)
+  @JoinColumn({name: 'player_id'})
   public playerId!: Player;
 
-  @OneToOne(type => Club)
+  @ManyToOne(type => Club)
+  @JoinColumn({name: 'club_id'})
   public clubId!: Club;
 
-  @OneToOne(type => PokerGame)
+  @ManyToOne(type => PokerGame)
+  @JoinColumn({name: 'game_id'})
   public gameId!: PokerGame;
 
-  @Column({name:'buy_in', type: 'decimal'})
-  public buyIn! : number
+  @Column({name: 'buy_in', type: 'decimal'})
+  public buyIn!: number;
 
   @Column({name: 'stack', type: 'decimal'})
-  public stack! : number
+  public stack!: number;
 
   @Column({name: 'status', nullable: false, type: 'int'})
   public status!: PlayerStatus;
@@ -44,29 +54,28 @@ export class PlayerChipsTrack {
   public seatNo!: number;
 
   @Column({name: 'no_of_buyings'})
-  public noOfBuyins! : number;
-  
+  public noOfBuyins!: number;
 }
-
 
 @Entity()
 export class ClubGameRake {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @OneToOne(type => Club)
+  @ManyToOne(type => Club)
+  @JoinColumn({name: 'club_id'})
   public clubId!: Club;
 
-  @OneToOne(type => PokerGame)
+  @ManyToOne(type => PokerGame)
+  @JoinColumn({name: 'game_id'})
   public gameId!: PokerGame;
 
-  @Column({name:'rake', type: 'decimal', nullable: false})
-  public rake! : number
+  @Column({name: 'rake', type: 'decimal', nullable: false})
+  public rake!: number;
 
-  @Column({type:'decimal', name:'promotion'})
-  public promotion!: number
+  @Column({type: 'decimal', name: 'promotion'})
+  public promotion!: number;
 
   @Column({name: 'last_hand_num', nullable: false})
   public lastHandNum!: number;
-  
 }
