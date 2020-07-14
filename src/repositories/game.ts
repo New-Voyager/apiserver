@@ -4,6 +4,7 @@ import {Club, ClubMember, ClubMemberStatus} from '@src/entity/club';
 import {Player} from '@src/entity/player';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {getLogger} from '@src/utils/log';
+import {ClubGameRake} from '@src/entity/chipstrack';
 const logger = getLogger('game');
 
 class GameRepositoryImpl {
@@ -48,7 +49,7 @@ class GameRepositoryImpl {
         `The player ${playerId} is not an approved manager to create a game`
       );
     }
-
+    const clubGameRakeRepository = getRepository(ClubGameRake);
     const gameServerRepository = getRepository(GameServer);
     const gameServers = await gameServerRepository.find();
     if (gameServers.length === 0) {
@@ -93,12 +94,27 @@ class GameRepositoryImpl {
         playerGame.game = savedGame;
         playerGame.player = player;
         await playerGameRespository.save(playerGame);
+
+        const clubRake = new ClubGameRake();
+        clubRake.club = club;
+        clubRake.game = savedGame;
+        clubRake.lastHandNum = 0;
+        clubRake.promotion = 0;
+        clubRake.rake = 0;
+        await clubGameRakeRepository.save(clubRake);
       });
     } catch (err) {
       logger.error("Couldn't create game and retry again");
       throw new Error("Couldn't create the game, please retry again");
     }
     return savedGame;
+  }
+
+  public async getGameById(gameId: string): Promise<PokerGame | undefined> {
+    const repository = getRepository(PokerGame);
+    // get game by id (testing only)
+    const game = await repository.findOne({where: {gameId: gameId}});
+    return game;
   }
 }
 

@@ -9,7 +9,7 @@ import {PageOptions} from '@src/types';
 import * as _ from 'lodash';
 import {GameStatus} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger('club');
+const logger = getLogger('clubresolvers');
 
 async function getClubGames(
   clubId: string,
@@ -112,6 +112,20 @@ const resolvers: any = {
       logger.debug(`args in clubGames: ${JSON.stringify(args)}`);
       const clubGames = getClubGames(args.clubId, args.page);
       return clubGames;
+    },
+
+    clubById: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+      logger.debug(args);
+      const club = await ClubRepository.getClubById(args.clubId);
+      if (!club) {
+        throw new Error('Club not found');
+      }
+      return {
+        id: club.id,
+      };
     },
   },
   Mutation: {

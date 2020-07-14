@@ -68,6 +68,14 @@ const myClubsQuery = gql`
   }
 `;
 
+export const clubByIdQuery = gql`
+  query($clubId: String!) {
+    club: clubById(clubId: $clubId) {
+      id
+    }
+  }
+`;
+
 /**
  * Creates a club and returns clubId and owner id
  */
@@ -124,6 +132,15 @@ export async function createPlayer(name: string, deviceId: string) {
     mutation: createPlayerQuery,
   });
   return resp.data.playerId;
+}
+
+export async function getClubById(clubId: string): Promise<number> {
+  const clubClient = getClient(clubId);
+  const resp = await clubClient.query({
+    variables: {clubId: clubId},
+    query: clubByIdQuery,
+  });
+  return resp.data.club.id;
 }
 
 export async function playerJoinsClub(clubId: string, playerId: string) {

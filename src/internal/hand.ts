@@ -90,6 +90,12 @@ function validateHandData(handData: any): Array<string> {
         }
       }
     }
+    if (!handData.Result.summary || handData.Result.summary.length === 0) {
+      errors.push('summary field is missing');
+    }
+    if (!handData.Result.rake) {
+      errors.push('rake field is missing');
+    }
   } catch (err) {
     errors.push('INTERNAL');
     return errors;
