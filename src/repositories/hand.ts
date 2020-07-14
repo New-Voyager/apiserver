@@ -171,28 +171,16 @@ class HandRepositoryImpl {
           }
         );
 
-        if (Number.parseInt(handData.HandNum) === 1) {
-          const clubRake = new ClubGameRake();
-          clubRake.clubId = clubId;
-          clubRake.gameId = gameId;
-          clubRake.lastHandNum = 1;
-          clubRake.promotion = 0;
-          clubRake.rake = Number.parseFloat(handData.Result.rake);
-          await clubGameRakeRepository.save(clubRake);
-        } else {
-          const clubRake = await clubGameRakeRepository.findOne({
-            where: {clubId: clubId, gameId: gameId},
-          });
-          if (!clubRake) {
-            logger.error(`Club ID ${handData.ClubId} not found in rake table`);
-            throw new Error(
-              `Club ID ${handData.ClubId} not found in rake table`
-            );
-          }
-          clubRake.rake += Number.parseFloat(handData.Result.rake);
-          clubRake.lastHandNum = Number.parseInt(handData.HandNum);
-          await clubGameRakeRepository.save(clubRake);
+        const clubRake = await clubGameRakeRepository.findOne({
+          where: {clubId: clubId, gameId: gameId},
+        });
+        if (!clubRake) {
+          logger.error(`Club ID ${handData.ClubId} not found in rake table`);
+          throw new Error(`Club ID ${handData.ClubId} not found in rake table`);
         }
+        clubRake.rake += Number.parseFloat(handData.Result.rake);
+        clubRake.lastHandNum = Number.parseInt(handData.HandNum);
+        await clubGameRakeRepository.save(clubRake);
       });
       return true;
     } catch (err) {
