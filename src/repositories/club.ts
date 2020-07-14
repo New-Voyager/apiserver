@@ -435,6 +435,14 @@ class ClubRepositoryImpl {
     const games = await gameRespository.find(findOptions);
     return games;
   }
+
+  public async getClubById(clubId: string): Promise<Club | undefined> {
+    console.log(clubId);
+    const repository = getRepository(Club);
+    // get club by id (testing only)
+    const club = await repository.findOne({where: {displayId: clubId}});
+    return club;
+  }
 }
 
 export const ClubRepository = new ClubRepositoryImpl();

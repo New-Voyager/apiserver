@@ -95,6 +95,11 @@ type Mutation {
   ): Int!
 }
 
+type gameId{
+  id: Int!
+}
+
 type Query {
   getGameTemplates(clubId: String!): [GameInfo!]
+    gameById(gameId: String!): gameId!
 }

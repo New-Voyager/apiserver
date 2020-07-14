@@ -57,8 +57,13 @@ input PageInput {
   count: Int
 }
 
+type clubId{
+  id: Int!
+}
+
 type Query {
   clubMembers(clubId: String!): [ClubMember!]
+  clubById(clubId: String!): clubId!
 
   # returns 'last' number of games 'from' in reverse order
   # by default, this call returns only last 20 games
