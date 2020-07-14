@@ -1,3 +1,6 @@
+import {Player} from './player';
+import {Club} from './club';
+import {PokerGame} from './game'
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -7,9 +10,6 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
-import {Player} from './player';
-import {Club} from './club';
-import {PokerGame} from './game';
 
 export enum PlayerStatus {
   PLAYING,
@@ -21,7 +21,7 @@ export enum PlayerStatus {
   BLOCKED,
   WAIT_FOR_SITTING_APPROVAL,
   LOST_CONNECTION,
-  WAIT_FOR_BUYIN_APPROVAL,
+  WAIT_FOR_BUYIN_APPROVAL
 }
 
 @Entity()
