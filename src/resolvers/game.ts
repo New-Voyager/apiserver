@@ -4,6 +4,20 @@ import {getLogger} from '@src/utils/log';
 const logger = getLogger('game');
 
 const resolvers: any = {
+  Query:{
+    gameById: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+      const game = await GameRepository.getGameById(args.gameId);
+      if (!game) {
+        throw new Error('Game not found');
+      }
+      return {
+        id: game.id,
+      };
+    },
+  },
   Mutation: {
     startGame: async (parent, args, ctx, info) => {
       if (!ctx.req.playerId) {

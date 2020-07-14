@@ -48,6 +48,14 @@ export const getClubGamesQuery = gql`
   }
 `;
 
+export const gameByIdQuery = gql`
+  query($gameId: String!) {
+    game: gameById(gameId: $gameId) {
+      id
+    }
+  }
+`;
+
 export interface GameInput {
   title: string;
   gameType: string;
@@ -94,6 +102,16 @@ export async function startGame(
   expect(startedGame).not.toBeNull();
   return startedGame;
 }
+
+export async function getGameById(gameId: string): Promise<number> {
+  const gameClient = getClient(gameId);
+  const resp = await gameClient.query({
+    variables: {gameId: gameId},
+    query: gameByIdQuery,
+  });
+  return resp.data.game.id;
+}
+
 export async function getClubGames(
   playerId: string,
   clubId: string,

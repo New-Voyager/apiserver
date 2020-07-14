@@ -100,6 +100,13 @@ class GameRepositoryImpl {
     }
     return savedGame;
   }
+
+  public async getGameById(gameId: string): Promise<PokerGame | undefined> {
+    const repository = getRepository(PokerGame);
+    // get game by id (testing only)
+    const game = await repository.findOne({where: {gameId: gameId}});
+    return game;
+  }
 }
 
 export const GameRepository = new GameRepositoryImpl();
