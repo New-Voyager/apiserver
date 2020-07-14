@@ -437,7 +437,6 @@ class ClubRepositoryImpl {
   }
 
   public async getClubById(clubId: string): Promise<Club | undefined> {
-    console.log(clubId);
     const repository = getRepository(Club);
     // get club by id (testing only)
     const club = await repository.findOne({where: {displayId: clubId}});

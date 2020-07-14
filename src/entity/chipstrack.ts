@@ -32,10 +32,10 @@ export class PlayerChipsTrack {
   public gameId!: PokerGame;
 
   @Column({name:'buy_in', type: 'decimal'})
-  public buyIn
+  public buyIn! : number
 
   @Column({name: 'stack', type: 'decimal'})
-  public stack
+  public stack! : number
 
   @Column({name: 'status', nullable: false, type: 'int'})
   public status!: PlayerStatus;
@@ -61,10 +61,10 @@ export class ClubGameRake {
   public gameId!: PokerGame;
 
   @Column({name:'rake', type: 'decimal', nullable: false})
-  public rake
+  public rake! : number
 
   @Column({type:'decimal', name:'promotion'})
-  public promotion
+  public promotion! : number
 
   @Column({name: 'last_hand_num', nullable: false})
   public lastHandNum!: number;
