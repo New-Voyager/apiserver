@@ -31,15 +31,15 @@ export class PlayerChipsTrack {
 
   @ManyToOne(type => Player)
   @JoinColumn({name: 'player_id'})
-  public playerId!: Player;
+  public player!: Player;
 
   @ManyToOne(type => Club)
   @JoinColumn({name: 'club_id'})
-  public clubId!: Club;
+  public club!: Club;
 
   @ManyToOne(type => PokerGame)
   @JoinColumn({name: 'game_id'})
-  public gameId!: PokerGame;
+  public game!: PokerGame;
 
   @Column({name: 'buy_in', type: 'decimal'})
   public buyIn!: number;
@@ -53,7 +53,7 @@ export class PlayerChipsTrack {
   @Column({name: 'seat_no', nullable: false})
   public seatNo!: number;
 
-  @Column({name: 'no_of_buyings'})
+  @Column({name: 'no_of_buyins'})
   public noOfBuyins!: number;
 }
 
@@ -64,11 +64,11 @@ export class ClubGameRake {
 
   @ManyToOne(type => Club)
   @JoinColumn({name: 'club_id'})
-  public clubId!: Club;
+  public club!: Club;
 
   @ManyToOne(type => PokerGame)
   @JoinColumn({name: 'game_id'})
-  public gameId!: PokerGame;
+  public game!: PokerGame;
 
   @Column({name: 'rake', type: 'decimal', nullable: false})
   public rake!: number;

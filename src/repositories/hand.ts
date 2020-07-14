@@ -153,9 +153,9 @@ class HandRepositoryImpl {
           async (playerData: {player: number; balance: number}) => {
             const playerChips = await playersChipsRepository.findOne({
               where: {
-                clubId: clubId,
-                gameId: gameId,
-                playerId: playerData.player,
+                club: clubId,
+                game: gameId,
+                player: playerData.player,
               },
             });
             if (!playerChips) {
@@ -172,7 +172,7 @@ class HandRepositoryImpl {
         );
 
         const clubRake = await clubGameRakeRepository.findOne({
-          where: {clubId: clubId, gameId: gameId},
+          where: {club: clubId, game: gameId},
         });
         if (!clubRake) {
           logger.error(`Club ID ${handData.ClubId} not found in rake table`);

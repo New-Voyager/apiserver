@@ -96,8 +96,8 @@ class GameRepositoryImpl {
         await playerGameRespository.save(playerGame);
 
         const clubRake = new ClubGameRake();
-        clubRake.clubId = club;
-        clubRake.gameId = savedGame;
+        clubRake.club = club;
+        clubRake.game = savedGame;
         clubRake.lastHandNum = 0;
         clubRake.promotion = 0;
         clubRake.rake = 0;
