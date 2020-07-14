@@ -179,7 +179,6 @@ class HandRepositoryImpl {
           throw new Error(`Club ID ${handData.ClubId} not found in rake table`);
         }
         clubRake.rake += Number.parseFloat(handData.Result.rake);
-        clubRake.lastHandNum = Number.parseInt(handData.HandNum);
         await clubGameRakeRepository.save(clubRake);
       });
       return true;
