@@ -4,7 +4,7 @@ import {getLogger} from '@src/utils/log';
 const logger = getLogger('game');
 
 const resolvers: any = {
-  Query:{
+  Query: {
     gameById: async (parent, args, ctx, info) => {
       if (!ctx.req.playerId) {
         throw new Error('Unauthorized');

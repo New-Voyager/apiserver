@@ -118,7 +118,7 @@ const resolvers: any = {
       if (!ctx.req.playerId) {
         throw new Error('Unauthorized');
       }
-      logger.debug(args)
+      logger.debug(JSON.stringify(args));
       const club = await ClubRepository.getClubById(args.clubId);
       if (!club) {
         throw new Error('Club not found');
