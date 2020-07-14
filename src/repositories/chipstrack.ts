@@ -3,10 +3,11 @@ import {PlayerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger('chipstrack');
-const INITIAL_BUYIN_COUNT = 1;
 import {PlayerStatus, PlayerChipsTrack} from '@src/entity/chipstrack';
 import {identity} from 'lodash';
+
+const logger = getLogger('chipstrack');
+const INITIAL_BUYIN_COUNT = 1;
 
 class ChipsTrackRepositoryImpl {
   public async saveChips(playerChipsData: any) {

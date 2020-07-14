@@ -1,4 +1,3 @@
-import {Entity, PrimaryGeneratedColumn, Column, Index,ManyToOne,   OneToOne, JoinColumn} from 'typeorm';
 import {Player} from './player';
 import {Club} from './club';
 import {PokerGame} from './game'
@@ -11,9 +10,6 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
-import {Player} from './player';
-import {Club} from './club';
-import {PokerGame} from './game';
 
 export enum PlayerStatus {
   PLAYING,
