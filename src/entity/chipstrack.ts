@@ -2,9 +2,20 @@ import {Entity, PrimaryGeneratedColumn, Column, Index,ManyToOne,   OneToOne, Joi
 import {Player} from './player';
 import {Club} from './club';
 import {PokerGame} from './game'
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  Index,
+  ManyToOne,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
+import {Player} from './player';
+import {Club} from './club';
+import {PokerGame} from './game';
 
 export enum PlayerStatus {
-
   PLAYING,
   IN_QUEUE,
   BREAK,
@@ -15,27 +26,30 @@ export enum PlayerStatus {
   WAIT_FOR_SITTING_APPROVAL,
   LOST_CONNECTION,
   WAIT_FOR_BUYIN_APPROVAL
-  }
+}
 
 @Entity()
 export class PlayerChipsTrack {
   @PrimaryGeneratedColumn()
-  public id!: number
+  public id!: number;
 
-  @OneToOne(type => Player)
-  public playerId!: Player;
+  @ManyToOne(type => Player)
+  @JoinColumn({name: 'player_id'})
+  public player!: Player;
 
-  @OneToOne(type => Club)
-  public clubId!: Club;
+  @ManyToOne(type => Club)
+  @JoinColumn({name: 'club_id'})
+  public club!: Club;
 
-  @OneToOne(type => PokerGame)
-  public gameId!: PokerGame;
+  @ManyToOne(type => PokerGame)
+  @JoinColumn({name: 'game_id'})
+  public game!: PokerGame;
 
-  @Column({name:'buy_in', type: 'decimal'})
-  public buyIn! : number
+  @Column({name: 'buy_in', type: 'decimal'})
+  public buyIn!: number;
 
   @Column({name: 'stack', type: 'decimal'})
-  public stack! : number
+  public stack!: number;
 
   @Column({name: 'status', nullable: false, type: 'int'})
   public status!: PlayerStatus;
@@ -43,30 +57,29 @@ export class PlayerChipsTrack {
   @Column({name: 'seat_no', nullable: false})
   public seatNo!: number;
 
-  @Column({name: 'no_of_buyings'})
-  public noOfBuyins! : number;
-  
+  @Column({name: 'no_of_buyins'})
+  public noOfBuyins!: number;
 }
-
 
 @Entity()
 export class ClubGameRake {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @OneToOne(type => Club)
-  public clubId!: Club;
+  @ManyToOne(type => Club)
+  @JoinColumn({name: 'club_id'})
+  public club!: Club;
 
-  @OneToOne(type => PokerGame)
-  public gameId!: PokerGame;
+  @ManyToOne(type => PokerGame)
+  @JoinColumn({name: 'game_id'})
+  public game!: PokerGame;
 
-  @Column({name:'rake', type: 'decimal', nullable: false})
-  public rake! : number
+  @Column({name: 'rake', type: 'decimal', nullable: false})
+  public rake!: number;
 
-  @Column({type:'decimal', name:'promotion'})
-  public promotion! : number
+  @Column({type: 'decimal', name: 'promotion'})
+  public promotion!: number;
 
   @Column({name: 'last_hand_num', nullable: false})
   public lastHandNum!: number;
-  
 }

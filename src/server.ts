@@ -5,6 +5,7 @@ import {authorize} from '@src/middlewares/authorization';
 import {createConnection, getConnectionOptions} from 'typeorm';
 import {GameServerAPI} from './internal/gameserver';
 import {HandServerAPI} from './internal/hand';
+import {ChipsTrackSeverAPI} from './internal/chipstrack';
 const bodyParser = require('body-parser');
 const GQL_PORT = 9501;
 import {getLogger} from '@src/utils/log';
@@ -78,6 +79,7 @@ function addInternalRoutes(app: any) {
   app.post('/internal/update-game-server', GameServerAPI.updateGameServer);
   app.get('/internal/game-servers', GameServerAPI.getGameServers);
   app.post('/internal/save-hand', HandServerAPI.saveHand);
+  app.post('/internal/player-sit-in', ChipsTrackSeverAPI.playerSitsIn);
   app.get(
     '/internal/get-game-server/club_id/:clubId/game_num/:gameNum',
     GameServerAPI.getSpecificGameServer
