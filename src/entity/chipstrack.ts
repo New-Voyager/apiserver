@@ -1,6 +1,3 @@
-import {Player} from './player';
-import {Club} from './club';
-import {PokerGame} from './game';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -9,8 +6,12 @@ import {
   ManyToOne,
   OneToOne,
   JoinColumn,
+  PrimaryColumn,
 } from 'typeorm';
-import {DbAwareUpdateDateColumn} from './dbaware';
+import {Player} from './player';
+import {Club} from './club';
+import {PokerGame} from './game';
+import { DbAwareUpdateDateColumn } from './dbaware';
 
 export enum PlayerStatus {
   PLAYING,
@@ -25,20 +26,17 @@ export enum PlayerStatus {
   WAIT_FOR_BUYIN_APPROVAL,
 }
 
-@Entity()
-export class PlayerChipsTrack {
-  @PrimaryGeneratedColumn()
-  public id!: number;
-
-  @ManyToOne(type => Player)
+@Entity({name: 'player_game_tracker'})
+export class PlayerGameTracker {
+  @ManyToOne(() => Player, player => player.id, {primary: true})
   @JoinColumn({name: 'player_id'})
   public player!: Player;
 
-  @ManyToOne(type => Club)
+  @ManyToOne(() => Club, club => club.id, {primary: true})
   @JoinColumn({name: 'club_id'})
   public club!: Club;
 
-  @ManyToOne(type => PokerGame)
+  @ManyToOne(() => PokerGame, game => game.id, {primary: true})
   @JoinColumn({name: 'game_id'})
   public game!: PokerGame;
 
@@ -56,18 +54,21 @@ export class PlayerChipsTrack {
 
   @Column({name: 'no_of_buyins'})
   public noOfBuyins!: number;
+
+  @Column({name: 'hh_rank'})
+  public hhRank!: number;
+
+  @Column({name: 'hh_hand_num'})
+  public hhHandNum!: number;
 }
 
-@Entity()
+@Entity({name: 'club_game_rake'})
 export class ClubGameRake {
-  @PrimaryGeneratedColumn()
-  public id!: number;
-
-  @ManyToOne(type => Club)
+  @ManyToOne(() => Club, club => club.id, {primary: true})
   @JoinColumn({name: 'club_id'})
   public club!: Club;
 
-  @ManyToOne(type => PokerGame)
+  @ManyToOne(() => PokerGame, game => game.id, {primary: true})
   @JoinColumn({name: 'game_id'})
   public game!: PokerGame;
 

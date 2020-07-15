@@ -81,6 +81,7 @@ function addInternalRoutes(app: any) {
   app.post('/internal/save-hand', HandServerAPI.saveHand);
   app.post('/internal/player-sit-in', ChipsTrackSeverAPI.playerSitsIn);
   app.post('/internal/game-ended', ChipsTrackSeverAPI.endGame);
+  app.post('/internal/buy-chips', ChipsTrackSeverAPI.buyChips);
   app.get(
     '/internal/get-game-server/club_id/:clubId/game_num/:gameNum',
     GameServerAPI.getSpecificGameServer

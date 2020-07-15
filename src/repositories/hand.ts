@@ -8,7 +8,7 @@ import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {GameType} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
-import {PlayerChipsTrack, ClubGameRake} from '@src/entity/chipstrack';
+import {PlayerGameTracker, ClubGameRake} from '@src/entity/chipstrack';
 import {GameRepository} from './game';
 import {ClubRepository} from './club';
 
@@ -21,7 +21,7 @@ class HandRepositoryImpl {
     try {
       const handHistoryRepository = getRepository(HandHistory);
       const handWinnersRepository = getRepository(HandWinners);
-      const playersChipsRepository = getRepository(PlayerChipsTrack);
+      const playersChipsRepository = getRepository(PlayerGameTracker);
       const clubGameRakeRepository = getRepository(ClubGameRake);
 
       const handHistory = new HandHistory();
@@ -152,6 +152,7 @@ class HandRepositoryImpl {
         await handData.Result.summary.forEach(
           async (playerData: {player: number; balance: number}) => {
             const playerChips = await playersChipsRepository.findOne({
+              relations: ['club', 'game', 'player'],
               where: {
                 club: clubId,
                 game: gameId,
@@ -172,6 +173,7 @@ class HandRepositoryImpl {
         );
 
         const clubRake = await clubGameRakeRepository.findOne({
+          relations: ['club', 'game'],
           where: {club: clubId, game: gameId},
         });
         if (!clubRake) {
