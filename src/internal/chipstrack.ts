@@ -1,5 +1,5 @@
 import {getRepository} from 'typeorm';
-import {PlayerStatus, PlayerChipsTrack} from '@src/entity/chipstrack';
+import {PlayerStatus, PlayerGameTracker} from '@src/entity/chipstrack';
 import {ChipsTrackRepository} from '@src/repositories/chipstrack';
 import {STATUS_CODES} from 'http';
 import {getLogger} from '@src/utils/log';
@@ -53,5 +53,4 @@ class ChipsTrackAPIs {
     }
   }
 }
-
 export const ChipsTrackSeverAPI = new ChipsTrackAPIs();

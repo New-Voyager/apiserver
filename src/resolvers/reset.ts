@@ -12,7 +12,7 @@ const resolvers: any = {
       // delete all the entries
       await getManager().transaction(async transactionalEntityManager => {
         await deleteAll('ClubGameRake');
-        await deleteAll('PlayerChipsTrack');
+        await deleteAll('PlayerGameTracker');
         await deleteAll('PokerGamePlayers');
         await deleteAll('PlayerGame');
         await deleteAll('PokerHand');

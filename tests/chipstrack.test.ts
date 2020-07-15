@@ -5,7 +5,8 @@ import * as clubutils from './utils/club.testutils';
 import * as handutils from './utils/hand.testutils';
 import * as gameutils from './utils/game.testutils';
 import {getLogger} from '../src/utils/log';
-const logger = getLogger('gameserver');
+const logger = getLogger('chipstrack');
+import {ChipsTrackRepository} from '../src/repositories/chipstrack';
 
 const SERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
@@ -85,5 +86,11 @@ describe('Player Chips tracking APIs', () => {
     const id = resp.data.id;
     expect(id).not.toBe(null);
     expect(id).not.toBe(undefined);
+    expect(id.buyIn).toBe(100.0);
+    expect(id.status).toBe(0);
+    expect(id.stack).toBe(100.0);
+    expect(id.seatNo).toBe(5);
+    expect(id.hhRank).toBe(0);
+    expect(id.hhHandNum).toBe(0);    
   });
 });

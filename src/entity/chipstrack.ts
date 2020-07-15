@@ -1,6 +1,3 @@
-import {Player} from './player';
-import {Club} from './club';
-import {PokerGame} from './game'
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -10,6 +7,9 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
+import {Player} from './player';
+import {Club} from './club';
+import {PokerGame} from './game';
 
 export enum PlayerStatus {
   PLAYING,
@@ -21,11 +21,11 @@ export enum PlayerStatus {
   BLOCKED,
   WAIT_FOR_SITTING_APPROVAL,
   LOST_CONNECTION,
-  WAIT_FOR_BUYIN_APPROVAL
+  WAIT_FOR_BUYIN_APPROVAL,
 }
 
-@Entity()
-export class PlayerChipsTrack {
+@Entity({name: 'player_game_tracker'})
+export class PlayerGameTracker {
   @PrimaryGeneratedColumn()
   public id!: number;
 
@@ -55,9 +55,15 @@ export class PlayerChipsTrack {
 
   @Column({name: 'no_of_buyins'})
   public noOfBuyins!: number;
+
+  @Column({name: "hh_rank"})
+  public hhRank!: number
+
+  @Column({name: "hh_hand_num"})
+  public hhHandNum!: number
 }
 
-@Entity()
+@Entity({name: "club_game_rake"})
 export class ClubGameRake {
   @PrimaryGeneratedColumn()
   public id!: number;

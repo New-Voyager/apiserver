@@ -8,7 +8,7 @@ import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {GameType} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
-import {PlayerChipsTrack, ClubGameRake} from '@src/entity/chipstrack';
+import {PlayerGameTracker, ClubGameRake} from '@src/entity/chipstrack';
 import {GameRepository} from './game';
 import {ClubRepository} from './club';
 
@@ -21,7 +21,7 @@ class HandRepositoryImpl {
     try {
       const handHistoryRepository = getRepository(HandHistory);
       const handWinnersRepository = getRepository(HandWinners);
-      const playersChipsRepository = getRepository(PlayerChipsTrack);
+      const playersChipsRepository = getRepository(PlayerGameTracker);
       const clubGameRakeRepository = getRepository(ClubGameRake);
 
       const handHistory = new HandHistory();
