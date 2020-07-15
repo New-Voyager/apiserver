@@ -9,7 +9,9 @@ import {PlayerStatus, PlayerGameTracker} from '@src/entity/chipstrack';
 import {identity} from 'lodash';
 
 class ChipsTrackRepositoryImpl {
-  public async saveChips(playerChipsData: any) : Promise<PlayerGameTracker | undefined>{
+  public async saveChips(
+    playerChipsData: any
+  ): Promise<PlayerGameTracker | undefined> {
     try {
       const clubRepository = getRepository(Club);
       const gameRepository = getRepository(PlayerGame);
@@ -48,6 +50,64 @@ class ChipsTrackRepositoryImpl {
         return response;
       }
     } catch (e) {
+      throw e;
+    }
+  }
+
+  public async buyChips(
+    playerChipsData: any
+  ): Promise<PlayerGameTracker | undefined> {
+    try {
+      const clubRepository = getRepository(Club);
+      const gameRepository = getRepository(PlayerGame);
+      const playerRepository = getRepository(Player);
+      const club = await clubRepository.findOne({
+        where: {id: playerChipsData.clubId},
+      });
+      const game = await gameRepository.findOne({
+        where: {id: playerChipsData.gameId},
+      });
+      const player = await playerRepository.findOne({
+        where: {id: playerChipsData.playerId},
+      });
+      if (!club) {
+        logger.debug(`Club ${playerChipsData.clubId} is not found`);
+        throw new Error(`Club ${playerChipsData.clubId} is not found`);
+      }
+      if (!game) {
+        logger.debug(`Game ${playerChipsData.gameId} is not found`);
+        throw new Error(`Game ${playerChipsData.gameId} is not found`);
+      }
+      if (!player) {
+        logger.debug(`Player ${playerChipsData.playerId} is not found`);
+        throw new Error(`Player ${playerChipsData.playerId} is not found`);
+      } else {
+        const playerGameTrackrepository = getRepository(PlayerGameTracker);
+        const playerGameTrack = await playerGameTrackrepository.findOne({
+          relations: ['club', 'game', 'player'],
+          where: {
+            game: playerChipsData.gameId,
+            player: playerChipsData.playerId,
+            club: playerChipsData.clubId,
+          },
+        });
+        if (!playerGameTrack) {
+          logger.error('No data found');
+          throw new Error('No data found');
+        }
+        playerGameTrack.noOfBuyins =
+          parseInt(playerGameTrack.noOfBuyins.toString()) + 1;
+        playerGameTrack.buyIn =
+          parseInt(playerGameTrack.buyIn.toString()) +
+          parseInt(playerChipsData.buyChips);
+        playerGameTrack.stack =
+          parseInt(playerGameTrack.stack.toString()) +
+          parseInt(playerChipsData.buyChips);
+        const response = await playerGameTrackrepository.save(playerGameTrack);
+        return response;
+      }
+    } catch (e) {
+      logger.error(e);
       throw e;
     }
   }

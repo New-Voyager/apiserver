@@ -15,16 +15,16 @@ class ChipsTrackAPIs {
 
     const errors = new Array<string>();
     if (!registerPayload.clubId) {
-      logger.error('ClubId is missing');
+      errors.push('ClubId is missing');
     }
     if (!registerPayload.playerId) {
-      logger.error('PlayerId is missing');
+      errors.push('PlayerId is missing');
     }
     if (!registerPayload.seatNo) {
-      logger.error('PlayerId is missing');
+      errors.push('PlayerId is missing');
     }
     if (!registerPayload.gameId) {
-      logger.error('Seat Number is missing');
+      errors.push('Seat Number is missing');
     }
     if (
       registerPayload.status === 'BLOCKED' ||
@@ -40,7 +40,43 @@ class ChipsTrackAPIs {
     }
 
     try {
-      const res = await ChipsTrackRepository.saveChips(req.body);
+      const res = await ChipsTrackRepository.saveChips(registerPayload);
+      if (res) {
+        resp.status(200).send(JSON.stringify({status: 'OK', id: res}));
+      } else {
+        logger.error('Error');
+        resp.status(500).send(JSON.stringify(res));
+      }
+    } catch (err) {
+      resp.status(500);
+      return;
+    }
+  }
+
+  public async buyChips(req: any, resp: any) {
+    const registerPayload = req.body;
+
+    const errors = new Array<string>();
+    if (!registerPayload.clubId) {
+      errors.push('ClubId is missing');
+    }
+    if (!registerPayload.playerId) {
+      errors.push('PlayerId is missing');
+    }
+    if (!registerPayload.gameId) {
+      errors.push('GameId is missing');
+    }
+    if (!registerPayload.buyChips) {
+      errors.push('Chips is missing');
+    }
+    if (errors.length) {
+      resp.status(500).send(JSON.stringify(errors));
+      return;
+    }
+
+    try {
+      const res = await ChipsTrackRepository.buyChips(registerPayload);
+      logger.debug(res);
       if (res) {
         resp.status(200).send(JSON.stringify({status: 'OK', id: res}));
       } else {

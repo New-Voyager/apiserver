@@ -152,6 +152,7 @@ class HandRepositoryImpl {
         await handData.Result.summary.forEach(
           async (playerData: {player: number; balance: number}) => {
             const playerChips = await playersChipsRepository.findOne({
+              relations: ['club', 'game', 'player'],
               where: {
                 club: clubId,
                 game: gameId,
@@ -172,6 +173,7 @@ class HandRepositoryImpl {
         );
 
         const clubRake = await clubGameRakeRepository.findOne({
+          relations: ['club', 'game'],
           where: {club: clubId, game: gameId},
         });
         if (!clubRake) {

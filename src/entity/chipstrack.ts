@@ -6,6 +6,7 @@ import {
   ManyToOne,
   OneToOne,
   JoinColumn,
+  PrimaryColumn,
 } from 'typeorm';
 import {Player} from './player';
 import {Club} from './club';
@@ -26,18 +27,15 @@ export enum PlayerStatus {
 
 @Entity({name: 'player_game_tracker'})
 export class PlayerGameTracker {
-  @PrimaryGeneratedColumn()
-  public id!: number;
-
-  @ManyToOne(type => Player)
+  @ManyToOne(() => Player, player => player.id, {primary: true})
   @JoinColumn({name: 'player_id'})
   public player!: Player;
 
-  @ManyToOne(type => Club)
+  @ManyToOne(() => Club, club => club.id, {primary: true})
   @JoinColumn({name: 'club_id'})
   public club!: Club;
 
-  @ManyToOne(type => PokerGame)
+  @ManyToOne(() => PokerGame, game => game.id, {primary: true})
   @JoinColumn({name: 'game_id'})
   public game!: PokerGame;
 
@@ -56,23 +54,20 @@ export class PlayerGameTracker {
   @Column({name: 'no_of_buyins'})
   public noOfBuyins!: number;
 
-  @Column({name: "hh_rank"})
-  public hhRank!: number
+  @Column({name: 'hh_rank'})
+  public hhRank!: number;
 
-  @Column({name: "hh_hand_num"})
-  public hhHandNum!: number
+  @Column({name: 'hh_hand_num'})
+  public hhHandNum!: number;
 }
 
-@Entity({name: "club_game_rake"})
+@Entity({name: 'club_game_rake'})
 export class ClubGameRake {
-  @PrimaryGeneratedColumn()
-  public id!: number;
-
-  @ManyToOne(type => Club)
+  @ManyToOne(() => Club, club => club.id, {primary: true})
   @JoinColumn({name: 'club_id'})
   public club!: Club;
 
-  @ManyToOne(type => PokerGame)
+  @ManyToOne(() => PokerGame, game => game.id, {primary: true})
   @JoinColumn({name: 'game_id'})
   public game!: PokerGame;
 
