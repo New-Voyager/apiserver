@@ -12,13 +12,16 @@ const resolvers: any = {
       // delete all the entries
       await getManager().transaction(async transactionalEntityManager => {
         await deleteAll('ClubGameRake');
-        await deleteAll('PlayerChipsTrack');
+        await deleteAll('PlayerGameTracker');
         await deleteAll('PokerGamePlayers');
         await deleteAll('PlayerGame');
         await deleteAll('PokerHand');
+        await deleteAll('ClubGameRake');
         await deleteAll('PokerGame');
         await deleteAll('ClubMember');
         await deleteAll('Club');
+        await deleteAll('player_game_tracker');
+        await deleteAll('club_game_rake');
         await deleteAll('Player');
         await deleteAll('game_gameserver');
         await deleteAll('GameServer');
@@ -38,7 +41,7 @@ async function deleteAll(table: string) {
     .createQueryBuilder()
     .delete()
     .from(table)
-    .where('id is not null')
+    .where('')
     .execute();
 }
 

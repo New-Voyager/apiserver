@@ -5,7 +5,8 @@ import * as clubutils from './utils/club.testutils';
 import * as handutils from './utils/hand.testutils';
 import * as gameutils from './utils/game.testutils';
 import {getLogger} from '../src/utils/log';
-const logger = getLogger('gameserver');
+const logger = getLogger('chipstrack');
+import {ChipsTrackRepository} from '../src/repositories/chipstrack';
 
 const SERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
@@ -85,5 +86,69 @@ describe('Player Chips tracking APIs', () => {
     const id = resp.data.id;
     expect(id).not.toBe(null);
     expect(id).not.toBe(undefined);
+    expect(id.buyIn).toBe(100.0);
+    expect(id.status).toBe(0);
+    expect(id.stack).toBe(100.0);
+    expect(id.seatNo).toBe(5);
+    expect(id.hhRank).toBe(0);
+    expect(id.hhHandNum).toBe(0);
+  });
+
+  test('Buy chips', async () => {
+    logger.debug('Player buys chips');
+    const gameServer1 = {
+      ipAddress: '10.1.1.3',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    try {
+      await axios.post(`${SERVER_API}/register-game-server`, gameServer1);
+    } catch (err) {
+      console.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+    const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
+    let game, resp, response;
+
+    game = await gameutils.startGame(playerId, clubId, holdemGameInput);
+
+    const playerID = await handutils.getPlayerById(playerId);
+    const clubID = await clubutils.getClubById(clubId);
+    const gameID = await gameutils.getGameById(game.gameId);
+
+    const messageInput = {
+      clubId: clubID,
+      playerId: playerID,
+      gameId: gameID,
+      buyIn: 100.0,
+      status: 'PLAYING',
+      seatNo: 5,
+    };
+
+    const buyChips = {
+      clubId: clubID,
+      playerId: playerID,
+      gameId: gameID,
+      buyChips: 100.0,
+    };
+
+    try {
+      resp = await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
+      response = await axios.post(`${SERVER_API}/buy-chips`, buyChips);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+    }
+
+    expect(response.status).toBe(200);
+    const id = response.data.id;
+    expect(id).not.toBe(null);
+    expect(id).not.toBe(undefined);
+    expect(id.buyIn).toBe(200.0);
+    expect(id.status).toBe(0);
+    expect(id.stack).toBe(200.0);
+    expect(id.noOfBuyins).toBe(2);
+    expect(id.seatNo).toBe(5);
+    expect(id.hhRank).toBe(0);
+    expect(id.hhHandNum).toBe(0);
   });
 });
