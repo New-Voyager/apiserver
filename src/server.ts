@@ -80,6 +80,7 @@ function addInternalRoutes(app: any) {
   app.get('/internal/game-servers', GameServerAPI.getGameServers);
   app.post('/internal/save-hand', HandServerAPI.saveHand);
   app.post('/internal/player-sit-in', ChipsTrackSeverAPI.playerSitsIn);
+  app.post('/internal/game-ended', ChipsTrackSeverAPI.endGame);
   app.get(
     '/internal/get-game-server/club_id/:clubId/game_num/:gameNum',
     GameServerAPI.getSpecificGameServer

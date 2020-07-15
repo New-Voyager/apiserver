@@ -86,4 +86,31 @@ describe('Player Chips tracking APIs', () => {
     expect(id).not.toBe(null);
     expect(id).not.toBe(undefined);
   });
+
+  test('End Game', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.1.3',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    
+    await axios.post(`${SERVER_API}/register-game-server`, gameServer1);
+    const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
+    const game = await gameutils.startGame(playerId, clubId, holdemGameInput);
+    const playerID = await handutils.getPlayerById(playerId);
+    const clubID = await clubutils.getClubById(clubId);
+    const gameID = await gameutils.getGameById(game.gameId);
+
+    const messageInput = {
+      clubId: clubID,
+      playerId: playerID,
+      gameId: gameID,
+      buyIn: 100.0,
+      status: 'PLAYING',
+      seatNo: 5,
+    };
+    await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
+    const res = await axios.post(`${SERVER_API}/game-ended`, {club_id: clubID, game_id: gameID});
+    console.log(res);
+  });
 });

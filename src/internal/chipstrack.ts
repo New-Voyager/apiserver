@@ -52,6 +52,39 @@ class ChipsTrackAPIs {
       return;
     }
   }
+
+  /**
+   * @param req request object
+   * @param resp response object
+   */
+  public async endGame(req: any, resp: any) {
+    const registerPayload = req.body;
+
+    const errors = new Array<string>();
+    if (!registerPayload.club_id) {
+      logger.error('club_id is missing');
+    }
+    if (!registerPayload.game_id) {
+      logger.error('game_id  is missing');
+    }
+
+    if (errors.length) {
+      resp.status(500).send(JSON.stringify(errors));
+      return;
+    }
+
+    try {
+      const res = await ChipsTrackRepository.endGame(req.body);
+      if (res == true) {
+        resp.status(200).send(JSON.stringify({status: 'OK', id: res}));
+      } else {
+        resp.status(500).send(JSON.stringify(res));
+      }
+    } catch (err) {
+      resp.status(500);
+      return;
+    }
+  }
 }
 
 export const ChipsTrackSeverAPI = new ChipsTrackAPIs();
