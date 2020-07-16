@@ -75,8 +75,9 @@ class ChipsTrackAPIs {
 
     try {
       const res = await ChipsTrackRepository.endGame(req.body);
-      if (res == true) {
-        resp.status(200).send(JSON.stringify({status: 'OK', id: res}));
+      logger.debug(JSON.stringify(res));
+      if (res[2].clubPlayerBalance) {
+        resp.status(200).send(JSON.stringify({status: 'OK', data: res}));
       } else {
         resp.status(500).send(JSON.stringify(res));
       }
@@ -110,7 +111,7 @@ class ChipsTrackAPIs {
     try {
       const res = await ChipsTrackRepository.buyChips(registerPayload);
       if (res) {
-        logger.debug(res);
+        logger.debug(JSON.stringify(res));
         resp.status(200).send(JSON.stringify({status: 'OK', id: res}));
       } else {
         logger.error('Error');

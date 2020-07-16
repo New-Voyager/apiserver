@@ -11,7 +11,7 @@ import {
 import {Player} from './player';
 import {Club} from './club';
 import {PokerGame} from './game';
-import { DbAwareUpdateDateColumn } from './dbaware';
+import {DbAwareUpdateDateColumn} from './dbaware';
 
 export enum PlayerStatus {
   PLAYING,
@@ -111,7 +111,7 @@ export class ClubChipsTransaction {
 
 @Entity({name: 'club_balance'})
 export class ClubBalance {
-  @ManyToOne(type => Club, (club) => club.id, {primary: true})
+  @ManyToOne(type => Club, club => club.id, {primary: true})
   @JoinColumn({name: 'club_id'})
   public club!: Club;
 
@@ -129,11 +129,11 @@ export class ClubBalance {
 
 @Entity({name: 'club_player_balance'})
 export class ClubPlayerBalance {
-  @ManyToOne(type => Player, (player) => player.id, {primary: true})
+  @ManyToOne(type => Player, player => player.id, {primary: true})
   @JoinColumn({name: 'player_id'})
   public player!: Player;
 
-  @ManyToOne(type => Club, (club) => club.id, {primary: true})
+  @ManyToOne(type => Club, club => club.id, {primary: true})
   @JoinColumn({name: 'club_id'})
   public club!: Club;
 

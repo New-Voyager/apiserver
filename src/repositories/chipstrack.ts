@@ -156,6 +156,7 @@ class ChipsTrackRepositoryImpl {
           `Game ${endGameData.game_id} is not found in clubGameRake table`
         );
       }
+      const response = new Array<any>();
 
       await getManager().transaction(async transactionalEntityManager => {
         const clubChipsTransaction = new ClubChipsTransaction();
@@ -169,25 +170,32 @@ class ChipsTrackRepositoryImpl {
         }
         clubChipsTransaction.club = club;
         clubChipsTransaction.amount = clubGameRake.rake;
-        clubChipsTransaction.balance =
-          clubBalance.balance + clubGameRake.rake;
+        clubChipsTransaction.balance = clubBalance.balance + clubGameRake.rake;
         clubChipsTransaction.description = `rake collected from game #${endGameData.game_id}`;
-        const resp = await clubChipsTransactionRepository.save(clubChipsTransaction);
-        // console.log(resp);
+        const resp = await clubChipsTransactionRepository.save(
+          clubChipsTransaction
+        );
+        response.push({
+          clubChipsTransaction: {
+            amount: resp.amount,
+            balance: resp.balance,
+            description: resp.description,
+          },
+        });
+
         clubBalance.balance += clubGameRake.rake;
         const resp1 = await clubBalanceRepository.save(clubBalance);
-        // console.log(resp1);
+        response.push({clubBalance: {balance: resp1.balance}});
+
         const playerChips = await playerGameTrackRepository.find({
           relations: ['club', 'game', 'player'],
           where: {club: endGameData.club_id, game: endGameData.game_id},
         });
-        // console.log(playerChips)
-        playerChips.forEach(async playerChip => {
+        for await (const playerChip of playerChips) {
           let clubPlayerBalance = await clubPlayerBalanceRepository.findOne({
             relations: ['club'],
             where: {player: playerChip.player.id, club: endGameData.club_id},
           });
-          // console.log(clubPlayerBalance);
           if (!clubPlayerBalance) {
             clubPlayerBalance = new ClubPlayerBalance();
             clubPlayerBalance.balance = 0;
@@ -196,15 +204,24 @@ class ChipsTrackRepositoryImpl {
             clubPlayerBalance.totalBuyins = 0;
             clubPlayerBalance.player = playerChip.player;
             clubPlayerBalance.notes = '';
-          } 
+          }
           clubPlayerBalance.balance += playerChip.stack;
           clubPlayerBalance.totalBuyins += playerChip.buyIn;
           clubPlayerBalance.totalWinnings += playerChip.stack;
-          const resp2 = await clubPlayerBalanceRepository.save(clubPlayerBalance);
-          // console.log(resp2);
-        });
+          const resp2 = await clubPlayerBalanceRepository.save(
+            clubPlayerBalance
+          );
+          response.push({
+            clubPlayerBalance: {
+              balance: resp2.balance,
+              totalBuyins: resp2.totalBuyins,
+              totalWinnings: resp2.totalWinnings,
+              playerId: resp2.player.id,
+            },
+          });
+        }
       });
-      return true;
+      return response;
     } catch (e) {
       logger.error(`Error: ${JSON.stringify(e)}`);
       return new Error(JSON.stringify(e));

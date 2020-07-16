@@ -7,7 +7,6 @@ import * as gameutils from './utils/game.testutils';
 import {getLogger} from '../src/utils/log';
 const logger = getLogger('chipstrack');
 import {ChipsTrackRepository} from '../src/repositories/chipstrack';
-import { exec } from 'child_process';
 
 const SERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
@@ -159,7 +158,7 @@ describe('Player Chips tracking APIs', () => {
       currentMemory: 100,
       status: 'ACTIVE',
     };
-    
+
     await axios.post(`${SERVER_API}/register-game-server`, gameServer1);
     const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
     const game = await gameutils.startGame(playerId, clubId, holdemGameInput);
@@ -176,9 +175,18 @@ describe('Player Chips tracking APIs', () => {
       seatNo: 5,
     };
     await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
-    const res = await axios.post(`${SERVER_API}/game-ended`, {club_id: clubID, game_id: gameID});
+    const res = await axios.post(`${SERVER_API}/game-ended`, {
+      club_id: clubID,
+      game_id: gameID,
+    });
     expect(res.status).toBe(200);
     expect(res.data.status).toBe('OK');
-    expect(res.data.id).toBe(true);
+    expect(res.data.data[0].clubChipsTransaction.amount).toBe(0);
+    expect(res.data.data[0].clubChipsTransaction.balance).toBe(0);
+    expect(res.data.data[1].clubBalance.balance).toBe(0);
+    expect(res.data.data[2].clubPlayerBalance.balance).toBe(100);
+    expect(res.data.data[2].clubPlayerBalance.totalBuyins).toBe(100);
+    expect(res.data.data[2].clubPlayerBalance.totalWinnings).toBe(100);
+    expect(res.data.data[2].clubPlayerBalance.playerId).toBe(playerID);
   });
 });
