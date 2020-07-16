@@ -36,16 +36,16 @@ const holdemGameInput = {
   muckLosingHand: true,
 };
 
+beforeAll(async done => {
+  await resetDatabase();
+  done();
+});
+
+afterAll(async done => {
+  done();
+});
+
 describe('Player Chips tracking APIs', () => {
-  beforeEach(async done => {
-    await resetDatabase();
-    done();
-  });
-
-  afterEach(async done => {
-    done();
-  });
-
   test('Create a player chips tracker when player sits in', async () => {
     logger.debug('Creating a player chips tracker');
     const gameServer1 = {
@@ -97,7 +97,7 @@ describe('Player Chips tracking APIs', () => {
   test('Buy chips', async () => {
     logger.debug('Player buys chips');
     const gameServer1 = {
-      ipAddress: '10.1.1.3',
+      ipAddress: '10.1.1.4',
       currentMemory: 100,
       status: 'ACTIVE',
     };
@@ -150,5 +150,43 @@ describe('Player Chips tracking APIs', () => {
     expect(id.seatNo).toBe(5);
     expect(id.hhRank).toBe(0);
     expect(id.hhHandNum).toBe(0);
+  });
+
+  test('End Game', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.1.5',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+
+    await axios.post(`${SERVER_API}/register-game-server`, gameServer1);
+    const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
+    const game = await gameutils.startGame(playerId, clubId, holdemGameInput);
+    const playerID = await handutils.getPlayerById(playerId);
+    const clubID = await clubutils.getClubById(clubId);
+    const gameID = await gameutils.getGameById(game.gameId);
+
+    const messageInput = {
+      clubId: clubID,
+      playerId: playerID,
+      gameId: gameID,
+      buyIn: 100.0,
+      status: 'PLAYING',
+      seatNo: 5,
+    };
+    await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
+    const res = await axios.post(`${SERVER_API}/game-ended`, {
+      club_id: clubID,
+      game_id: gameID,
+    });
+    expect(res.status).toBe(200);
+    expect(res.data.status).toBe('OK');
+    expect(res.data.data[0].clubChipsTransaction.amount).toBe(0);
+    expect(res.data.data[0].clubChipsTransaction.balance).toBe(0);
+    expect(res.data.data[1].clubBalance.balance).toBe(0);
+    expect(res.data.data[2].clubPlayerBalance.balance).toBe(100);
+    expect(res.data.data[2].clubPlayerBalance.totalBuyins).toBe(100);
+    expect(res.data.data[2].clubPlayerBalance.totalWinnings).toBe(100);
+    expect(res.data.data[2].clubPlayerBalance.playerId).toBe(playerID);
   });
 });
