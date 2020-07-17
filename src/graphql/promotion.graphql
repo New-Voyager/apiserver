@@ -1,0 +1,41 @@
+enum PromotionType {
+  HIGH_HAND,
+  BAD_BEAT,
+  SPECIFIC_CARDS
+}
+
+input CreatePromotionInput {
+  promotionType: PromotionType
+  cardRank: Int!
+  bonus: Float!
+}
+
+type Promotion {
+  id: Int!
+  clubId: String!
+  promotionType: PromotionType
+  cardRank: Int
+  bonus: Float!
+} 
+
+type AssignedPromotions {
+  promotionId: Int!
+  clubId: String!
+  gameId: String!
+  promotionType: PromotionType
+  cardRank: Int
+  bonus: Float!
+  startAt: DateTime
+  endAt: DateTime
+}
+
+type Mutation {
+  createPromotion(clubId: String! input: CreatePromotionInput): Promotion
+  assignPromotion(clubId: String!, gameId: String, promotionId: Int!, startAt: DateTime, endAt: DateTime): String
+}
+
+
+type Query {
+  promotions(clubId: String!): [Promotion!]
+  assignedPromotions(clubId: String!, gameId: String!): [AssignedPromotions!]
+}
