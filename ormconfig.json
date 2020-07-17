@@ -29,7 +29,7 @@
     "database": ":memory:",
     "dropSchema": true,
     "synchronize": true,
-    "logging": true,
+    "logging": false,
     "entities": ["build/src/entity/**/*.js", "../build/src/entity/**/*.js"]
   },
   {
