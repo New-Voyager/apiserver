@@ -94,3 +94,4 @@ export class PromotionWinners {
   @Column({name: 'amount_won', type: 'decimal', precision: 9, scale: 2})
   public amountWon!: number;
 }
+

@@ -13,3 +13,7 @@ clean:
 .PHONY: test
 test:
 	./run_system_tests.sh
+
+.PHONY: unit_test
+unit_test:
+	yarn unit-tests
