@@ -53,6 +53,40 @@ class ChipsTrackAPIs {
     }
   }
 
+  /**
+   * @param req request object
+   * @param resp response object
+   */
+  public async endGame(req: any, resp: any) {
+    const registerPayload = req.body;
+
+    const errors = new Array<string>();
+    if (!registerPayload.club_id) {
+      logger.error('club_id is missing');
+    }
+    if (!registerPayload.game_id) {
+      logger.error('game_id  is missing');
+    }
+
+    if (errors.length) {
+      resp.status(500).send(JSON.stringify(errors));
+      return;
+    }
+
+    try {
+      const res = await ChipsTrackRepository.endGame(req.body);
+      logger.debug(JSON.stringify(res));
+      if (res[2].clubPlayerBalance) {
+        resp.status(200).send(JSON.stringify({status: 'OK', data: res}));
+      } else {
+        resp.status(500).send(JSON.stringify(res));
+      }
+    } catch (err) {
+      resp.status(500);
+      return;
+    }
+  }
+
   public async buyChips(req: any, resp: any) {
     const registerPayload = req.body;
 
@@ -76,8 +110,8 @@ class ChipsTrackAPIs {
 
     try {
       const res = await ChipsTrackRepository.buyChips(registerPayload);
-      logger.debug(res);
       if (res) {
+        logger.debug(JSON.stringify(res));
         resp.status(200).send(JSON.stringify({status: 'OK', id: res}));
       } else {
         logger.error('Error');
