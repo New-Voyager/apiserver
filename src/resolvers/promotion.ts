@@ -1,0 +1,162 @@
+import * as _ from 'lodash';
+import {PromotionType} from '@src/entity/promotion';
+import {getLogger} from '@src/utils/log';
+const logger = getLogger('promotion');
+import {
+  PromotionRepository,
+  PromotionCreateInput,
+} from '@src/repositories/promotion';
+
+export async function createPromotion(
+  args: any,
+  playerUuid: string
+): Promise<any> {
+  const errors = new Array<string>();
+  if (!args.clubId) {
+    errors.push('clubId not found');
+  }
+  if (!args.input) {
+    errors.push('Promotion input is not found');
+  }
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+
+  try {
+    const input = args.input as PromotionCreateInput;
+    return PromotionRepository.createPromotion(args.clubId, input, playerUuid);
+  } catch (err) {
+    logger.error(err);
+    throw new Error('Failed to create the promotion');
+  }
+}
+
+export async function assignPromotion(
+  args: any,
+  playerUuid: string
+): Promise<any> {
+  const errors = new Array<string>();
+  if (!args.clubId) {
+    errors.push('clubId not found');
+  }
+  if (!args.promotionId) {
+    errors.push('PromotionId not found');
+  }
+  if (!args.gameId) {
+    errors.push('gameId not found');
+  }
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+
+  try {
+    return PromotionRepository.assignPromotion(
+      args.clubId,
+      args.gameId,
+      args.promotionId,
+      args.startAt,
+      args.endAt
+    );
+  } catch (err) {
+    logger.error(err);
+    throw new Error('Failed to create the promotion');
+  }
+}
+
+export async function getPromotions(args: any) {
+  const errors = new Array<string>();
+  if (!args.clubId) {
+    errors.push('clubId not found');
+  }
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+  try {
+    const data = await PromotionRepository.getPromotions(args.clubId);
+    logger.debug(data);
+    return _.map(data, x => {
+      return {
+        id: x.id,
+        clubId: x.clubId,
+        bonus: x.bonus,
+        cardRank: x.cardRank,
+        promotionType: PromotionType[x.promotionType],
+      };
+    });
+  } catch (err) {
+    logger.error(err);
+    throw new Error('Failed to retreive the promotions');
+  }
+}
+
+export async function getAssignedPromotions(args: any) {
+  const errors = new Array<string>();
+  if (!args.clubId) {
+    errors.push('clubId not found');
+  }
+  if (!args.gameId) {
+    errors.push('gameId not found');
+  }
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+  try {
+    const data = await PromotionRepository.getAssignedPromotions(
+      args.clubId,
+      args.gameId
+    );
+    return _.map(data, x => {
+      logger.debug(x);
+      return {
+        promotionId: x.promoId.id,
+        clubId: x.club.displayId,
+        gameId: x.game.gameId,
+        cardRank: x.promoId.cardRank,
+        bonus: x.promoId.bonus,
+        startAt: x.startAt,
+        endAt: x.endAt,
+        promotionType: PromotionType[x.promoId.promotionType],
+      };
+    });
+  } catch (err) {
+    logger.error(err);
+    throw new Error('Failed to retreive the promotions');
+  }
+}
+
+const resolvers: any = {
+  Query: {
+    promotions: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+      return getPromotions(args);
+    },
+
+    assignedPromotions: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+      return getAssignedPromotions(args);
+    },
+  },
+  Mutation: {
+    createPromotion: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+      return createPromotion(args, ctx.req.playerId);
+    },
+
+    assignPromotion: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+      return assignPromotion(args, ctx.req.playerId);
+    },
+  },
+};
+
+export function getResolvers() {
+  return resolvers;
+}
