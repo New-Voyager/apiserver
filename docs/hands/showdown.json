@@ -133,6 +133,12 @@
 		"rank_num": 1023,
 		"winning_cards": ["Ah", "As", "Kh", "Kc", "Qh"],
 		"total_pot": 186.0,
+		"qualifying_promotion_winner": {
+			"promo_id": 123456,
+			"player_id": 1,
+			"cards": ["7h", "7s", "7c", "Ks", "Kh"],
+			"rank": 150
+		},
 		"summary": [{
 				"player": 1000,
 				"balance": 85.0,
