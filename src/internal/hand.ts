@@ -96,6 +96,14 @@ function validateHandData(handData: any): Array<string> {
     if (!handData.Result.rake) {
       errors.push('rake field is missing');
     }
+    if (handData.Result.qualifying_promotion_winner) {
+      if (!handData.Result.qualifying_promotion_winner.promo_id) {
+        errors.push('promo_id field is missing');
+      }
+      if (!handData.Result.qualifying_promotion_winner.player_id) {
+        errors.push('player_id field is missing');
+      }
+    }
   } catch (err) {
     errors.push('INTERNAL');
     return errors;

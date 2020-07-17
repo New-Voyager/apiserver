@@ -218,6 +218,12 @@
 		"lo_winning_cards":  ["8d", "4s", "5d", "2s", "Ac"],
 		"lo_winning_rank": 5882,
 		"total_pot": 255.0,
+		"qualifying_promotion_winner": {
+			"promo_id": 123456,
+			"player_id": 1,
+			"cards": ["7h", "7s", "7c", "Ks", "Kh"],
+			"rank": 150
+		},
 		"summary": [{
 				"player": 1000,
 				"balance": 85.0,

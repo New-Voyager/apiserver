@@ -11,6 +11,12 @@ import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker, ClubGameRake} from '@src/entity/chipstrack';
 import {GameRepository} from './game';
 import {ClubRepository} from './club';
+import {
+  GamePromotion,
+  Promotion,
+  PromotionWinners,
+} from '@src/entity/promotion';
+import {Player} from '@src/entity/player';
 
 const logger = getLogger('hand');
 
@@ -23,10 +29,77 @@ class HandRepositoryImpl {
       const handWinnersRepository = getRepository(HandWinners);
       const playersChipsRepository = getRepository(PlayerGameTracker);
       const clubGameRakeRepository = getRepository(ClubGameRake);
+      const gamePromotionRepository = getRepository(GamePromotion);
+      const promotionRepository = getRepository(Promotion);
+      const promotionWinnersRepository = getRepository(PromotionWinners);
+      const playerRepository = getRepository(Player);
 
       const handHistory = new HandHistory();
       const wonAt: string = handData.Result.won_at;
       const gameType: string = handData.GameType;
+
+      /**
+       * Validating data
+       */
+      const gameId = await GameRepository.getGameById(handData.GameNum);
+      if (!gameId) {
+        logger.error(`Game ID ${gameId} not found`);
+        throw new Error(`Game ID ${gameId} not found`);
+      }
+
+      const clubId = await ClubRepository.getClubById(handData.ClubId);
+      if (!clubId) {
+        logger.error(`Club ID ${clubId} not found`);
+        throw new Error(`Club ID ${clubId} not found`);
+      }
+
+      const clubRake = await clubGameRakeRepository.findOne({
+        relations: ['club', 'game'],
+        where: {club: clubId, game: gameId},
+      });
+      if (!clubRake) {
+        logger.error(`Club ID ${handData.ClubId} not found in rake table`);
+        throw new Error(`Club ID ${handData.ClubId} not found in rake table`);
+      }
+
+      let promotion, gamePromotion, promoPlayer;
+      if (handData.Result.qualifying_promotion_winner) {
+        promotion = await promotionRepository.findOne({
+          where: {id: handData.Result.qualifying_promotion_winner.promo_id},
+        });
+        if (!promotion) {
+          logger.error(
+            `Promotion ID ${handData.Result.qualifying_promotion_winner.promo_id} not found`
+          );
+          throw new Error(
+            `Promotion ID ${handData.Result.qualifying_promotion_winner.promo_id} not found`
+          );
+        }
+
+        gamePromotion = await gamePromotionRepository.findOne({
+          where: {club: clubId, game: gameId, promoId: promotion.id},
+        });
+        if (!gamePromotion) {
+          logger.error(
+            `Promotion ID ${handData.Result.qualifying_promotion_winner.promo_id} not found in game promotion`
+          );
+          throw new Error(
+            `Promotion ID ${handData.Result.qualifying_promotion_winner.promo_id} not found in game promotion`
+          );
+        }
+
+        promoPlayer = await playerRepository.findOne({
+          where: {id: handData.Result.qualifying_promotion_winner.player_id},
+        });
+        if (!promoPlayer) {
+          logger.error(
+            `Player ID ${handData.Result.qualifying_promotion_winner.player_id} not found`
+          );
+          throw new Error(
+            `Player ID ${handData.Result.qualifying_promotion_winner.player_id} not found`
+          );
+        }
+      }
 
       /**
        * Assigning values and saving hand history
@@ -56,18 +129,6 @@ class HandRepositoryImpl {
       handHistory.timeStarted = handData.StartedAt;
       handHistory.timeEnded = handData.EndedAt;
       handHistory.data = JSON.stringify(handData);
-
-      const gameId = await GameRepository.getGameById(handData.GameNum);
-      const clubId = await ClubRepository.getClubById(handData.ClubId);
-
-      if (!gameId) {
-        logger.error(`Game ID ${gameId} not found`);
-        throw new Error(`Game ID ${gameId} not found`);
-      }
-      if (!clubId) {
-        logger.error(`Club ID ${clubId} not found`);
-        throw new Error(`Club ID ${clubId} not found`);
-      }
 
       await getManager().transaction(async transactionalEntityManager => {
         await handHistoryRepository.save(handHistory);
@@ -172,16 +233,47 @@ class HandRepositoryImpl {
           }
         );
 
-        const clubRake = await clubGameRakeRepository.findOne({
-          relations: ['club', 'game'],
-          where: {club: clubId, game: gameId},
-        });
-        if (!clubRake) {
-          logger.error(`Club ID ${handData.ClubId} not found in rake table`);
-          throw new Error(`Club ID ${handData.ClubId} not found in rake table`);
-        }
         clubRake.rake += Number.parseFloat(handData.Result.rake);
         await clubGameRakeRepository.save(clubRake);
+
+        if (handData.Result.qualifying_promotion_winner) {
+          const promotionWinners = await promotionWinnersRepository.find({
+            where: {club: clubId, game: gameId, promoId: promotion},
+          });
+
+          let flag = true;
+          if (promotionWinners.length !== 0) {
+            if (
+              promotionWinners[0].rank >
+              handData.Result.qualifying_promotion_winner.rank
+            ) {
+              await promotionWinnersRepository.delete({
+                club: clubId,
+                game: gameId,
+                promoId: promotion,
+              });
+            } else if (
+              promotionWinners[0].rank <
+              handData.Result.qualifying_promotion_winner.rank
+            ) {
+              flag = false;
+            }
+          }
+          if (flag) {
+            const newWinner = new PromotionWinners();
+            newWinner.club = clubId;
+            newWinner.amountWon = 0;
+            newWinner.game = gameId;
+            newWinner.handNum = handData.HandNum;
+            newWinner.player = promoPlayer;
+            newWinner.promoId = promotion;
+            newWinner.rank = handData.Result.qualifying_promotion_winner.rank;
+            newWinner.winningCards = handData.Result.qualifying_promotion_winner.cards.join(
+              ', '
+            );
+            await promotionWinnersRepository.save(newWinner);
+          }
+        }
       });
       return true;
     } catch (err) {
