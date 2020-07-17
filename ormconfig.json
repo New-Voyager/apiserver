@@ -29,8 +29,8 @@
     "database": ":memory:",
     "dropSchema": true,
     "synchronize": true,
-    "logging": true,
-    "entities": ["build/src/entity/**/*.js"]
+    "logging": false,
+    "entities": ["build/src/entity/**/*.js", "../build/src/entity/**/*.js"]
   },
   {
     "name": "pgtest",
@@ -43,6 +43,6 @@
     "logging": true,
     "synchronize": true,
     "dropSchema": true,
-    "entities": ["build/src/entity/**/*.js"]
+    "entities": ["build/src/entity/**/*.js", "../build/src/entity/**/*.js"]
   }
 ]
