@@ -12,6 +12,9 @@ jobs:
           name: Compile TS
           command: make build
       - run:
+          name: Run unit tests
+          command: make unit_test
+      - run:
           name: Run tests
           command: make test
 workflows:

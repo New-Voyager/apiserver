@@ -11,6 +11,8 @@
     "debug-windows": "set NODE_ENV=dev && tsc-watch.bat",
     "debug-break": "node --nolazy --inspect-brk=9235 ./build/index.js",
     "test": "NODE_ENV=test jest --runInBand",
+    "unit-tests": "NODE_ENV=test DB_USED=sqllite jest --coverage=true --runInBand ./unit-tests",
+    "unit-test-specific": "NODE_ENV=test jest --runInBand ./unit-tests \"--testNamePattern\" \"create a club\"",
     "test-specific": "NODE_ENV=test jest --runInBand \"--testNamePattern\" ",
     "test-server-watch": "tsc-watch --noClear --onSuccess './debug.sh' --onFailure 'echo Beep! Compilation Failed'",
     "test-server": "NODE_ENV=test DB_USED=sqllite node build/index.js",

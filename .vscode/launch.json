@@ -65,6 +65,26 @@
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "port": 9229
-    }    
+    },
+    {
+      "name": "Run a specific jest unit-test",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "--inspect-brk",
+        "${workspaceRoot}/node_modules/.bin/jest",
+        "--runInBand",
+        "./unit-tests",
+        "--testNamePattern",
+        "get club members"
+      ],
+      "env": {
+        "NODE_ENV": "test",
+        "DB_USED": "sqllite"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "port": 9229
+    }
   ]
 }
