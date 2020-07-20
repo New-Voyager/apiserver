@@ -11,6 +11,9 @@ export async function createPromotion(
   args: any,
   playerUuid: string
 ): Promise<any> {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
   const errors = new Array<string>();
   if (!args.clubId) {
     errors.push('clubId not found');
@@ -35,6 +38,9 @@ export async function assignPromotion(
   args: any,
   playerUuid: string
 ): Promise<any> {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
   const errors = new Array<string>();
   if (!args.clubId) {
     errors.push('clubId not found');
@@ -63,7 +69,10 @@ export async function assignPromotion(
   }
 }
 
-export async function getPromotions(args: any) {
+export async function getPromotions(args: any, playerUuid: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
   const errors = new Array<string>();
   if (!args.clubId) {
     errors.push('clubId not found');
@@ -89,7 +98,10 @@ export async function getPromotions(args: any) {
   }
 }
 
-export async function getAssignedPromotions(args: any) {
+export async function getAssignedPromotions(args: any, playerUuid: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
   const errors = new Array<string>();
   if (!args.clubId) {
     errors.push('clubId not found');
@@ -127,31 +139,19 @@ export async function getAssignedPromotions(args: any) {
 const resolvers: any = {
   Query: {
     promotions: async (parent, args, ctx, info) => {
-      if (!ctx.req.playerId) {
-        throw new Error('Unauthorized');
-      }
-      return getPromotions(args);
+      return getPromotions(args, ctx.req.playerId);
     },
 
     assignedPromotions: async (parent, args, ctx, info) => {
-      if (!ctx.req.playerId) {
-        throw new Error('Unauthorized');
-      }
-      return getAssignedPromotions(args);
+      return getAssignedPromotions(args, ctx.req.playerId);
     },
   },
   Mutation: {
     createPromotion: async (parent, args, ctx, info) => {
-      if (!ctx.req.playerId) {
-        throw new Error('Unauthorized');
-      }
       return createPromotion(args, ctx.req.playerId);
     },
 
     assignPromotion: async (parent, args, ctx, info) => {
-      if (!ctx.req.playerId) {
-        throw new Error('Unauthorized');
-      }
       return assignPromotion(args, ctx.req.playerId);
     },
   },
