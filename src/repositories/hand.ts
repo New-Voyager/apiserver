@@ -264,7 +264,7 @@ class HandRepositoryImpl {
             newWinner.club = clubId;
             newWinner.amountWon = 0;
             newWinner.game = gameId;
-            newWinner.handNum = handData.HandNum;
+            newWinner.handNum = Number.parseInt(handData.HandNum);
             newWinner.player = promoPlayer;
             newWinner.promoId = promotion;
             newWinner.rank = handData.Result.qualifying_promotion_winner.rank;

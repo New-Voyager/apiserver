@@ -253,29 +253,23 @@ export function getResolvers() {
   return resolvers;
 }
 
-
 export async function getClubMembers(playerId: string, args: any) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
   const clubMembers1 = await ClubRepository.getMembers(args.clubId);
-  const clubMember = await ClubRepository.isClubMember(
-    args.clubId,
-    playerId
-  );
+  const clubMember = await ClubRepository.isClubMember(args.clubId, playerId);
   if (!clubMember) {
     logger.error(
-      `The user ${playerId} is not a member of ${
-        args.clubId
-      }, ${JSON.stringify(clubMembers1)}`
+      `The user ${playerId} is not a member of ${args.clubId}, ${JSON.stringify(
+        clubMembers1
+      )}`
     );
     throw new Error('Unauthorized');
   }
 
   if (clubMember.status == ClubMemberStatus.KICKEDOUT) {
-    logger.error(
-      `The user ${playerId} is kicked out of ${args.clubId}`
-    );
+    logger.error(`The user ${playerId} is kicked out of ${args.clubId}`);
     throw new Error('Unauthorized');
   }
 
@@ -302,5 +296,5 @@ export async function getClubMembers(playerId: string, args: any) {
     });
   }
 
-  return members;  
+  return members;
 }

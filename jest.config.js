@@ -3,7 +3,7 @@ module.exports = {
   testEnvironment: 'node',
   testTimeout: 20000,
 
-  "moduleNameMapper": {
-    "^@src/(.*)": "<rootDir>/src/$1"
-  }  
+  moduleNameMapper: {
+    '^@src/(.*)': '<rootDir>/src/$1',
+  },
 };

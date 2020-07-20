@@ -140,13 +140,18 @@ class HandServerAPIs {
     /**
      * Saving the data
      */
-    const res = await HandRepository.saveHand(handData);
-    if (res === true) {
+    const response = await saveHandData(handData);
+    if (response === true) {
       resp.status(200).send(JSON.stringify({status: 'OK'}));
     } else {
-      resp.status(500).send(JSON.stringify(res));
+      resp.status(500).send(JSON.stringify(response));
     }
   }
 }
 
 export const HandServerAPI = new HandServerAPIs();
+
+export async function saveHandData(handData: any) {
+  const res = await HandRepository.saveHand(handData);
+  return res;
+}

@@ -25,93 +25,116 @@ async function getClubs(playerId: string): Promise<Array<any>> {
 const resolvers: any = {
   Query: {
     myClubs: async (parent, args, ctx, info) => {
-      if (!ctx.req.playerId) {
-        throw new Error('Unauthorized');
-      }
-      return getClubs(ctx.req.playerId);
+      return getMyClubs(ctx.req.playerId);
     },
+    /**
+     * For testing(Without Authorization)
+     */
     allPlayers: async (parent, args, ctx, info) => {
-      //if (!ctx.req.playerId) {
-      //  throw new Error('Unauthorized');
-      //}
-      const players = await PlayerRepository.getPlayers();
-      return _.map(players, x => {
-        return {
-          playerId: x.uuid,
-          name: x.name,
-          lastActiveTime: x.updatedAt,
-        };
-      });
+      return getAllPlayers();
     },
     playerById: async (parent, args, ctx, info) => {
-      if (!ctx.req.playerId) {
-        throw new Error('Unauthorized');
-      }
-      const player = await PlayerRepository.getPlayerById(ctx.req.playerId);
-      if (!player) {
-        throw new Error('Player not found');
-      }
-      return {
-        uuid: player.uuid,
-        id: player.id,
-        name: player.name,
-        lastActiveTime: player.updatedAt,
-      };
+      return getPlayerById(ctx.req.playerId);
     },
   },
   Mutation: {
     createPlayer: async (parent, args, ctx, info) => {
-      const errors = new Array<string>();
-      if (!args.player) {
-        errors.push('player object not found');
-      }
-      if (args.player.name === '') {
-        errors.push('name is a required field');
-      }
-      if (args.player.deviceId === '') {
-        errors.push('deviceId is a required field');
-      }
-      if (errors.length > 0) {
-        throw new Error(errors.join('\n'));
-      }
-
-      try {
-        const playerInput = args.player;
-        return PlayerRepository.createPlayer(
-          playerInput.name,
-          playerInput.deviceId
-        );
-      } catch (err) {
-        logger.error(err);
-        throw new Error('Failed to register Player');
-      }
+      return createPlayer(args);
     },
     leaveClub: async (parent, args, ctx, info) => {
-      if (!ctx.req.playerId) {
-        throw new Error('Unauthorized');
-      }
-      const isClubMember = await ClubRepository.isClubMember(
-        args.clubId,
-        ctx.req.playerId
-      );
-      if (!isClubMember) {
-        // nothing to do
-        return ClubMemberStatus[ClubMemberStatus.LEFT];
-      }
-      await ClubRepository.leaveClub(args.clubId, ctx.req.playerId);
-      return ClubMemberStatus[ClubMemberStatus.LEFT];
+      return leaveClub(ctx.req.playerId, args);
     },
   },
   Player: {
     clubs: async (parent, args, ctx, info) => {
-      if (!ctx.req.playerId) {
-        throw new Error('Unauthorized');
-      }
-      return getClubs(parent.playerId);
+      return getPlayerClubs(ctx.req.playerId, parent);
     },
   },
 };
 
 export function getResolvers() {
   return resolvers;
+}
+
+export async function getMyClubs(playerId: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  return getClubs(playerId);
+}
+
+/**
+ * For testing(Without Authorization)
+ */
+export async function getAllPlayers() {
+  const players = await PlayerRepository.getPlayers();
+  return _.map(players, x => {
+    return {
+      playerId: x.uuid,
+      name: x.name,
+      lastActiveTime: x.updatedAt,
+    };
+  });
+}
+
+export async function getPlayerById(playerId: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const player = await PlayerRepository.getPlayerById(playerId);
+  if (!player) {
+    throw new Error('Player not found');
+  }
+  return {
+    uuid: player.uuid,
+    id: player.id,
+    name: player.name,
+    lastActiveTime: player.updatedAt,
+  };
+}
+
+export async function createPlayer(args: any) {
+  const errors = new Array<string>();
+  if (!args.player) {
+    errors.push('player object not found');
+  }
+  if (args.player.name === '') {
+    errors.push('name is a required field');
+  }
+  if (args.player.deviceId === '') {
+    errors.push('deviceId is a required field');
+  }
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+
+  try {
+    const playerInput = args.player;
+    return PlayerRepository.createPlayer(
+      playerInput.name,
+      playerInput.deviceId
+    );
+  } catch (err) {
+    logger.error(err);
+    throw new Error('Failed to register Player');
+  }
+}
+
+export async function leaveClub(playerId: string, args: any) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const isClubMember = await ClubRepository.isClubMember(args.clubId, playerId);
+  if (!isClubMember) {
+    return ClubMemberStatus[ClubMemberStatus.LEFT];
+  }
+  await ClubRepository.leaveClub(args.clubId, playerId);
+  return ClubMemberStatus[ClubMemberStatus.LEFT];
+}
+
+export async function getPlayerClubs(playerId: string, parent: any) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  return getClubs(parent.playerId);
 }

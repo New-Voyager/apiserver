@@ -1,11 +1,11 @@
 import * as _ from 'lodash';
 import {PromotionType} from '@src/entity/promotion';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger('promotion');
 import {
   PromotionRepository,
   PromotionCreateInput,
 } from '@src/repositories/promotion';
+const logger = getLogger('promotion');
 
 export async function createPromotion(
   args: any,
@@ -26,7 +26,7 @@ export async function createPromotion(
     const input = args.input as PromotionCreateInput;
     return PromotionRepository.createPromotion(args.clubId, input, playerUuid);
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error('Failed to create the promotion');
   }
 }
@@ -58,7 +58,7 @@ export async function assignPromotion(
       args.endAt
     );
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error('Failed to create the promotion');
   }
 }
@@ -84,7 +84,7 @@ export async function getPromotions(args: any) {
       };
     });
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error('Failed to retreive the promotions');
   }
 }
@@ -119,7 +119,7 @@ export async function getAssignedPromotions(args: any) {
       };
     });
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error('Failed to retreive the promotions');
   }
 }
