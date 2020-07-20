@@ -1,16 +1,19 @@
 import * as _ from 'lodash';
 import {PromotionType} from '@src/entity/promotion';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger('promotion');
 import {
   PromotionRepository,
   PromotionCreateInput,
 } from '@src/repositories/promotion';
+const logger = getLogger('promotion');
 
 export async function createPromotion(
   args: any,
   playerUuid: string
 ): Promise<any> {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
   const errors = new Array<string>();
   if (!args.clubId) {
     errors.push('clubId not found');
@@ -26,7 +29,7 @@ export async function createPromotion(
     const input = args.input as PromotionCreateInput;
     return PromotionRepository.createPromotion(args.clubId, input, playerUuid);
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error('Failed to create the promotion');
   }
 }
@@ -35,6 +38,9 @@ export async function assignPromotion(
   args: any,
   playerUuid: string
 ): Promise<any> {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
   const errors = new Array<string>();
   if (!args.clubId) {
     errors.push('clubId not found');
@@ -58,12 +64,15 @@ export async function assignPromotion(
       args.endAt
     );
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error('Failed to create the promotion');
   }
 }
 
-export async function getPromotions(args: any) {
+export async function getPromotions(args: any, playerUuid: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
   const errors = new Array<string>();
   if (!args.clubId) {
     errors.push('clubId not found');
@@ -84,12 +93,15 @@ export async function getPromotions(args: any) {
       };
     });
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error('Failed to retreive the promotions');
   }
 }
 
-export async function getAssignedPromotions(args: any) {
+export async function getAssignedPromotions(args: any, playerUuid: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
   const errors = new Array<string>();
   if (!args.clubId) {
     errors.push('clubId not found');
@@ -119,7 +131,7 @@ export async function getAssignedPromotions(args: any) {
       };
     });
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error('Failed to retreive the promotions');
   }
 }
@@ -127,31 +139,19 @@ export async function getAssignedPromotions(args: any) {
 const resolvers: any = {
   Query: {
     promotions: async (parent, args, ctx, info) => {
-      if (!ctx.req.playerId) {
-        throw new Error('Unauthorized');
-      }
-      return getPromotions(args);
+      return getPromotions(args, ctx.req.playerId);
     },
 
     assignedPromotions: async (parent, args, ctx, info) => {
-      if (!ctx.req.playerId) {
-        throw new Error('Unauthorized');
-      }
-      return getAssignedPromotions(args);
+      return getAssignedPromotions(args, ctx.req.playerId);
     },
   },
   Mutation: {
     createPromotion: async (parent, args, ctx, info) => {
-      if (!ctx.req.playerId) {
-        throw new Error('Unauthorized');
-      }
       return createPromotion(args, ctx.req.playerId);
     },
 
     assignPromotion: async (parent, args, ctx, info) => {
-      if (!ctx.req.playerId) {
-        throw new Error('Unauthorized');
-      }
       return assignPromotion(args, ctx.req.playerId);
     },
   },

@@ -1,9 +1,21 @@
-import {getRepository} from 'typeorm';
-import {PlayerStatus, PlayerGameTracker} from '@src/entity/chipstrack';
 import {ChipsTrackRepository} from '@src/repositories/chipstrack';
-import {STATUS_CODES} from 'http';
 import {getLogger} from '@src/utils/log';
 const logger = getLogger('chipstrack');
+
+export async function saveChipsData(registerPayload: any) {
+  const res = await ChipsTrackRepository.saveChips(registerPayload);
+  return res;
+}
+
+export async function endGameData(data: any) {
+  const res = await ChipsTrackRepository.endGame(data);
+  return res;
+}
+
+export async function buyChipsData(registerPayload: any) {
+  const res = await ChipsTrackRepository.buyChips(registerPayload);
+  return res;
+}
 
 class ChipsTrackAPIs {
   /**
@@ -40,7 +52,7 @@ class ChipsTrackAPIs {
     }
 
     try {
-      const res = await ChipsTrackRepository.saveChips(registerPayload);
+      const res = await saveChipsData(registerPayload);
       if (res) {
         resp.status(200).send(JSON.stringify({status: 'OK', id: res}));
       } else {
@@ -74,7 +86,7 @@ class ChipsTrackAPIs {
     }
 
     try {
-      const res = await ChipsTrackRepository.endGame(req.body);
+      const res = await endGameData(req.body);
       logger.debug(JSON.stringify(res));
       if (res[2].clubPlayerBalance) {
         resp.status(200).send(JSON.stringify({status: 'OK', data: res}));
@@ -109,7 +121,7 @@ class ChipsTrackAPIs {
     }
 
     try {
-      const res = await ChipsTrackRepository.buyChips(registerPayload);
+      const res = await buyChipsData(registerPayload);
       if (res) {
         logger.debug(JSON.stringify(res));
         resp.status(200).send(JSON.stringify({status: 'OK', id: res}));

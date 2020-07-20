@@ -18,7 +18,6 @@ class GameServerAPIs {
    */
   public async registerGameServer(req: any, resp: any) {
     const registerPayload = req.body;
-
     const errors = new Array<string>();
     try {
       if (!registerPayload.ipAddress) {
@@ -46,31 +45,11 @@ class GameServerAPIs {
       resp.status(500).send(JSON.stringify(errors));
       return;
     }
-
-    try {
-      const gameServerRepository = getRepository(GameServer);
-      let gameServer = await gameServerRepository.findOne({
-        ipAddress: registerPayload.ip_address,
-      });
-      if (!gameServer) {
-        gameServer = new GameServer();
-        gameServer.noGamesHandled = 0;
-        gameServer.noPlayersHandled = 0;
-      }
-      const gameServerStatus: string = registerPayload.status;
-      gameServer.ipAddress = registerPayload.ipAddress;
-      gameServer.currentMemory = registerPayload.currentMemory;
-      gameServer.startingMemory = registerPayload.currentMemory;
-      gameServer.status = GameServerStatus[gameServerStatus];
-      gameServer.startedAt = new Date();
-      gameServer.lastHeartBeatTime = new Date();
-      gameServer.noActiveGames = 0;
-      gameServer.noActivePlayers = 0;
-      await gameServerRepository.save(gameServer);
+    const response = await createGameServer(registerPayload);
+    if (response === true) {
       resp.status(200).send(JSON.stringify({status: 'OK'}));
-    } catch (err) {
-      resp.status(500);
-      return;
+    } else {
+      resp.status(500).send(JSON.stringify(response));
     }
   }
 
@@ -88,45 +67,18 @@ class GameServerAPIs {
    * @param resp
    */
   public async updateGameServer(req: any, resp: any) {
-    const gameServerPayload = req.body;
-    const gameServerRepository = getRepository(GameServer);
-    const gameServer = await gameServerRepository.findOne({
-      where: {ipAddress: gameServerPayload.ipAddress},
-    });
-    if (!gameServer) {
-      resp
-        .status(500)
-        .send(`gameserver ${gameServerPayload.ipAddress} is not found`);
-      return;
+    const registerPayload = req.body;
+    const response = await editGameServer(registerPayload);
+    if (response === true) {
+      resp.status(200).send(JSON.stringify({status: 'OK'}));
+    } else {
+      resp.status(500).send(JSON.stringify(response));
     }
-    if (gameServerPayload.status) {
-      gameServer.status = gameServerPayload.status;
-    }
-    if (gameServerPayload.status) {
-      const gameServerStatus: string = gameServerPayload.status;
-      gameServer.status = GameServerStatus[gameServerStatus];
-    }
-    if (gameServerPayload.noGamesHandled) {
-      gameServer.noGamesHandled += gameServerPayload.noGamesHandled;
-    }
-    if (gameServerPayload.noActiveGames) {
-      gameServer.noActiveGames = gameServerPayload.noActiveGames;
-    }
-    if (gameServerPayload.noActivePlayers) {
-      gameServer.noActivePlayers = gameServerPayload.noActivePlayers;
-    }
-    if (gameServerPayload.noPlayersHandled) {
-      gameServer.noPlayersHandled += gameServerPayload.noPlayersHandled;
-    }
-    gameServer.lastHeartBeatTime = new Date();
-    await gameServerRepository.update({id: gameServer.id}, gameServer);
-    resp.status(200).send(JSON.stringify({status: 'OK'}));
   }
 
   public async getGameServers(req: any, resp: any) {
-    const gameServerRepository = getRepository(GameServer);
-    const gameServers = await gameServerRepository.find();
-    resp.status(200).send(JSON.stringify({servers: gameServers}));
+    const response = await getAllGameServers();
+    resp.status(200).send(JSON.stringify({servers: response}));
   }
 
   public async getSpecificGameServer(req: any, resp: any) {
@@ -149,14 +101,87 @@ class GameServerAPIs {
       resp.status(500).send(JSON.stringify(errors));
       return;
     }
-
-    const trackGameServerRepository = getRepository(TrackGameServer);
-    const trackGameServer = await trackGameServerRepository.findOne({
-      relations: ['gameServerId'],
-      where: {clubId: clubId, gameNum: gameNum},
-    });
-    resp.status(200).send(JSON.stringify({server: trackGameServer}));
+    const response = await getParticularGameServer(clubId, gameNum);
+    resp.status(200).send(JSON.stringify({server: response}));
   }
 }
 
 export const GameServerAPI = new GameServerAPIs();
+
+export async function createGameServer(registerPayload: any) {
+  try {
+    const gameServerRepository = getRepository(GameServer);
+    let gameServer = await gameServerRepository.findOne({
+      ipAddress: registerPayload.ip_address,
+    });
+    if (!gameServer) {
+      gameServer = new GameServer();
+      gameServer.noGamesHandled = 0;
+      gameServer.noPlayersHandled = 0;
+    }
+    const gameServerStatus: string = registerPayload.status;
+    gameServer.ipAddress = registerPayload.ipAddress;
+    gameServer.currentMemory = registerPayload.currentMemory;
+    gameServer.startingMemory = registerPayload.currentMemory;
+    gameServer.status = GameServerStatus[gameServerStatus];
+    gameServer.startedAt = new Date();
+    gameServer.lastHeartBeatTime = new Date();
+    gameServer.noActiveGames = 0;
+    gameServer.noActivePlayers = 0;
+    await gameServerRepository.save(gameServer);
+    return true;
+  } catch (err) {
+    return err;
+  }
+}
+
+export async function editGameServer(gameServerPayload: any) {
+  try {
+    const gameServerRepository = getRepository(GameServer);
+    const gameServer = await gameServerRepository.findOne({
+      where: {ipAddress: gameServerPayload.ipAddress},
+    });
+    if (!gameServer) {
+      return `gameserver ${gameServerPayload.ipAddress} is not found`;
+    }
+    if (gameServerPayload.status) {
+      gameServer.status = gameServerPayload.status;
+    }
+    if (gameServerPayload.status) {
+      const gameServerStatus: string = gameServerPayload.status;
+      gameServer.status = GameServerStatus[gameServerStatus];
+    }
+    if (gameServerPayload.noGamesHandled) {
+      gameServer.noGamesHandled += gameServerPayload.noGamesHandled;
+    }
+    if (gameServerPayload.noActiveGames) {
+      gameServer.noActiveGames = gameServerPayload.noActiveGames;
+    }
+    if (gameServerPayload.noActivePlayers) {
+      gameServer.noActivePlayers = gameServerPayload.noActivePlayers;
+    }
+    if (gameServerPayload.noPlayersHandled) {
+      gameServer.noPlayersHandled += gameServerPayload.noPlayersHandled;
+    }
+    gameServer.lastHeartBeatTime = new Date();
+    await gameServerRepository.update({id: gameServer.id}, gameServer);
+    return true;
+  } catch (err) {
+    return err;
+  }
+}
+
+export async function getAllGameServers() {
+  const gameServerRepository = getRepository(GameServer);
+  const gameServers = await gameServerRepository.find();
+  return gameServers;
+}
+
+export async function getParticularGameServer(clubId: string, gameNum: string) {
+  const trackGameServerRepository = getRepository(TrackGameServer);
+  const trackGameServer = await trackGameServerRepository.findOne({
+    relations: ['gameServerId'],
+    where: {clubId: clubId, gameNum: gameNum},
+  });
+  return trackGameServer;
+}
