@@ -5,7 +5,7 @@ import {createPlayer, getPlayerById} from '@src/resolvers/player';
 import {createClub, getClubById} from '@src/resolvers/club';
 import {createGameServer} from '@src/internal/gameserver';
 import {startGame, getGameById} from '@src/resolvers/game';
-import {saveChipsData} from '@src/resolvers/chipstrack';
+import {saveChipsData} from '@src/internal/chipstrack';
 
 const logger = getLogger('Hand server unit-test');
 const holdemGameInput = {
