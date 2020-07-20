@@ -81,7 +81,6 @@ class GameRepositoryImpl {
         savedGame = await gameRespository.save(game);
 
         const pick = Number.parseInt(savedGame.gameId) % gameServers.length;
-        logger.debug(pick.toString());
         const trackgameServerRepository = getRepository(TrackGameServer);
         const trackServer = new TrackGameServer();
         trackServer.clubId = clubId;
