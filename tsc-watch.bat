@@ -1,0 +1,1 @@
+.\node_modules\.bin\tsc-watch --noClear --onSuccess "node --inspect=0.0.0.0:9235 --nolazy ./build/index.js" --onFailure "echo Beep! Compilation Failed"
