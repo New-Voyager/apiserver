@@ -33,14 +33,6 @@ export async function getClubMembers(playerId: string, args: any) {
 
   const clubMembers = await ClubRepository.getMembers(args.clubId);
   const members = new Array<any>();
-  /*
-      type ClubMember {
-      name: String!
-      joinedDate: String!
-      status: ClubMemberStatus!
-      lastGamePlayedDate: DateTime
-      imageId: String
-    }*/
   for (const member of clubMembers) {
     members.push({
       name: member.player.name,
@@ -142,11 +134,7 @@ export async function createClub(playerId: string, club: ClubCreateInput) {
   }
 }
 
-export async function updateClub(
-  playerId: string,
-  clubId: string,
-  club: ClubUpdateInput
-) {
+export async function updateClub(playerId: string, clubId: string, club: any) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
@@ -174,8 +162,9 @@ export async function updateClub(
       throw new Error(`Club ${clubId} does not have a owner`);
     }
     if (playerId != owner.uuid) {
+      const a = JSON.stringify(club.owner);
       throw new Error(
-        `Unauthorized. ${playerId} is not the owner of the club ${clubId}`
+        `Unauthorized. ${playerId} is not the owner of the club ${clubId}, ${a}`
       );
     }
     const input = club as ClubUpdateInput;
@@ -257,7 +246,7 @@ export async function rejectMember(
   return ClubMemberStatus[status];
 }
 
-async function kickMember(
+export async function kickMember(
   playerId: string,
   clubId: string,
   playerUuid: string
@@ -279,6 +268,24 @@ async function kickMember(
   // TODO: We need to get owner id from the JWT
   const ownerId = playerId;
   const status = await ClubRepository.kickMember(ownerId, clubId, playerUuid);
+  return ClubMemberStatus[status];
+}
+
+export async function leaveClub(playerId: string, clubId: string) {
+  const errors = new Array<string>();
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  if (clubId === '') {
+    errors.push('clubId is a required field');
+  }
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+
+  // TODO: We need to get owner id from the JWT
+  const ownerId = playerId;
+  const status = await ClubRepository.leaveClub(clubId, playerId);
   return ClubMemberStatus[status];
 }
 
@@ -317,6 +324,10 @@ const resolvers: any = {
 
     kickMember: async (parent, args, ctx, info) => {
       return kickMember(ctx.req.playerId, args.clubId, args.playerUuid);
+    },
+
+    leaveClub: async (parent, args, ctx, info) => {
+      return leaveClub(ctx.req.playerId, args.clubId);
     },
   },
 };
