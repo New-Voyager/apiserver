@@ -81,7 +81,6 @@ describe('Player Chips tracking APIs', () => {
     };
     try {
       const resp = await saveChipsData(input);
-      logger.debug(resp);
       expect(resp).not.toBeNull();
     } catch (e) {
       logger.error(JSON.stringify(e));
@@ -119,7 +118,6 @@ describe('Player Chips tracking APIs', () => {
     //Try to buy chips without being a member
     try {
       const resp = await buyChipsData(buyChips);
-      logger.debug(resp);
       expect(resp).not.toBeNull();
     } catch (e) {
       logger.error(JSON.stringify(e));
@@ -136,7 +134,6 @@ describe('Player Chips tracking APIs', () => {
     //Creating a member
     try {
       const resp = await saveChipsData(input);
-      logger.debug(resp);
       expect(resp).not.toBeNull();
     } catch (e) {
       logger.error(JSON.stringify(e));
@@ -145,7 +142,6 @@ describe('Player Chips tracking APIs', () => {
     //Buy chips
     try {
       const resp = await buyChipsData(buyChips);
-      logger.debug(resp);
       expect(resp).not.toBeNull();
     } catch (e) {
       logger.error(JSON.stringify(e));
@@ -184,7 +180,6 @@ describe('Player Chips tracking APIs', () => {
     };
     try {
       const resp = await saveChipsData(input);
-      logger.debug(resp);
       expect(resp).not.toBeNull();
     } catch (e) {
       logger.error(JSON.stringify(e));
