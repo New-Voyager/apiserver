@@ -38,6 +38,7 @@ class ClubRepositoryImpl {
     const club = await clubRepository.findOne({where: {displayId: clubId}});
     return club;
   }
+
   public async updateClub(
     clubId: string,
     input: ClubUpdateInput,

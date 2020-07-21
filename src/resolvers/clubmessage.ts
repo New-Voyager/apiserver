@@ -10,7 +10,7 @@ const logger = getLogger('clubmessage');
 export async function getClubMsg(
   playerId: string,
   clubId: string,
-  pageOptions: PageOptions
+  pageOptions?: PageOptions
 ) {
   if (!playerId) {
     throw new Error('Unauthorized');
