@@ -84,7 +84,7 @@ class ClubMessageRepositoryImpl {
 
   public async getClubMessage(
     clubId: string,
-    pageOptions: PageOptions
+    pageOptions?: PageOptions
   ): Promise<Array<any>> {
     try {
       const clubRepository = getRepository(Club);

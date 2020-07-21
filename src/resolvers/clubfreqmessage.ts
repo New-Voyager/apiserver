@@ -41,10 +41,7 @@ export async function getPlayerFavMsg(playerId: string) {
   });
 }
 
-export async function saveFavMsg(
-  playerId: string,
-  message: FavouriteMessageInputFormat
-) {
+export async function saveFavMsg(playerId: string, message: any) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
