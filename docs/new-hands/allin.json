@@ -1,0 +1,81 @@
+{
+	"clubId": 1,
+	"gameNum": 1,
+	"handNum": 1,
+	"messageType": "RESULT",
+	"handStatus": "RESULT",
+	"handResult": {
+		"preflopActions": {
+			"pot": 3,
+			"actions": [{
+				"seatNo": 5,
+				"amount": 1
+			}, {
+				"seatNo": 8,
+				"action": "BB",
+				"amount": 2
+			}, {
+				"seatNo": 1,
+				"action": "ALLIN"
+			}, {
+				"seatNo": 5,
+				"action": "ALLIN"
+			}, {
+				"seatNo": 8,
+				"action": "ALLIN"
+			}]
+		},
+		"flopActions": {},
+		"turnActions": {},
+		"riverActions": {},
+		"potWinners": {
+			"0": {
+				"hiWinners": [{
+					"seatNo": 1,
+					"amount": 150,
+					"winningCards": [200, 196, 8, 132, 1],
+					"winningCardsStr": "[ A♣  A♦  2♣  T♦  2♠ ]",
+          "rankStr": "Two Pair",
+          "rank": 1000
+        }],
+				"loWinners": [{
+					"seatNo": 1,
+					"amount": 150,
+					"winningCards": [200, 196, 8, 132, 1],
+					"winningCardsStr": "[ A♣  A♦  2♣  T♦  2♠ ]",
+          "rankStr": "Two Pair",
+          "rank": 1000
+        }]
+      }
+		},
+    "wonAt": "SHOW_DOWN",
+    "rank": 1000,
+		"balanceAfterHand": [{
+			"seatNo": 1,
+			"playerId": 1,
+			"balance": 150
+		}, {
+			"seatNo": 5,
+			"playerId": 2
+		}, {
+			"seatNo": 8,
+			"playerId": 3
+		}],
+		"handStartedAt": "1595385733",
+		"balanceBeforeHand": [{
+			"seatNo": 1,
+			"playerId": 1,
+			"balance": 50
+		}, {
+			"seatNo": 5,
+			"playerId": 2,
+			"balance": 50
+		}, {
+			"seatNo": 8,
+			"playerId": 3,
+			"balance": 50
+		}],
+		"handEndedAt": "1595385735",
+		"playersInSeats": [1, 0, 0, 0, 2, 0, 0, 3, 0]
+	}
+}
