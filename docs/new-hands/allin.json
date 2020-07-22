@@ -49,7 +49,8 @@
       }
 		},
     "wonAt": "SHOW_DOWN",
-    "rank": 1000,
+		"rank": 1000,
+		"tips": 2.0,
 		"balanceAfterHand": [{
 			"seatNo": 1,
 			"playerId": 1,

@@ -63,6 +63,7 @@
 			}
 		},
 		"wonAt": "FLOP",
+		"tips": 2.0,
 		"balanceAfterHand": [{
 			"seatNo": 1,
 			"playerId": 1,
