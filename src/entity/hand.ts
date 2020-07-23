@@ -45,7 +45,7 @@ export enum WonAtStatus {
   FLOP,
   TURN,
   RIVER,
-  SHOWDOWN,
+  SHOW_DOWN,
 }
 
 export enum GameType {
@@ -61,13 +61,13 @@ export class HandHistory {
   public id!: number;
 
   @Column({name: 'club_id'})
-  public clubId!: string;
+  public clubId!: number;
 
   @Column({name: 'game_num'})
-  public gameNum!: string;
+  public gameNum!: number;
 
   @Column({name: 'hand_num'})
-  public handNum!: string;
+  public handNum!: number;
 
   @Column({name: 'game_type'})
   public gameType!: GameType;
@@ -115,13 +115,13 @@ export class StarredHands {
   public playerId!: number;
 
   @Column({name: 'club_id'})
-  public clubId!: string;
+  public clubId!: number;
 
   @Column({name: 'game_num'})
-  public gameNum!: string;
+  public gameNum!: number;
 
   @Column({name: 'hand_num'})
-  public handNum!: string;
+  public handNum!: number;
 
   @ManyToOne(type => HandHistory)
   public handHistory!: HandHistory;

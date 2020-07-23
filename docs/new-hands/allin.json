@@ -51,6 +51,7 @@
     "wonAt": "SHOW_DOWN",
 		"rank": 1000,
 		"tips": 2.0,
+		"totalPot": 150,
 		"balanceAfterHand": [{
 			"seatNo": 1,
 			"playerId": 1,
@@ -77,6 +78,13 @@
 			"balance": 50
 		}],
 		"handEndedAt": "1595385735",
-		"playersInSeats": [1, 0, 0, 0, 2, 0, 0, 3, 0]
+		"playersInSeats": [1, 0, 0, 0, 2, 0, 0, 3, 0],
+		"qualifyingPromotionWinner": {
+			"promoId": 123456,
+			"playerId": 1,
+			"cards": [200, 196, 8, 132, 1],
+			"cardsStr": "[ A♣  A♦  2♣  T♦  2♠ ]",
+			"rank": 150
+		}
 	}
 }

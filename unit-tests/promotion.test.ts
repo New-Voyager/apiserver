@@ -41,50 +41,111 @@ const holdemGameInput = {
   muckLosingHand: true,
 };
 
-const handData = {
-  ClubId: '',
-  GameNum: '',
-  HandNum: '1',
-  Players: [1000, 1001, 20001, 30001, 40001],
-  GameType: 'HOLDEM',
-  StartedAt: '2020-06-30T00:02:10',
-  EndedAt: '2020-06-30T00:04:00',
-  Result: {
-    pot_winners: [
-      {
-        pot: 0,
-        amount: 186.0,
-        winners: [
+const flopHandWithPromotions = {
+  clubId: 1,
+  gameNum: 2,
+  handNum: 1,
+  messageType: 'RESULT',
+  handStatus: 'RESULT',
+  handResult: {
+    preflopActions: {
+      pot: 7,
+      actions: [
+        {
+          seatNo: 5,
+          amount: 1,
+        },
+        {
+          seatNo: 8,
+          action: 'BB',
+          amount: 2,
+        },
+        {
+          seatNo: 1,
+          action: 'CALL',
+          amount: 2,
+        },
+        {
+          seatNo: 5,
+          action: 'CALL',
+          amount: 2,
+        },
+        {
+          seatNo: 8,
+          action: 'CHECK',
+        },
+      ],
+    },
+    flopActions: {
+      pot: 8,
+      actions: [
+        {
+          seatNo: 5,
+          action: 'CHECK',
+        },
+        {
+          seatNo: 8,
+          action: 'BET',
+          amount: 2,
+        },
+        {
+          seatNo: 1,
+          action: 'CALL',
+          amount: 2,
+        },
+        {
+          seatNo: 5,
+          action: 'RAISE',
+          amount: 4,
+        },
+        {
+          seatNo: 8,
+          action: 'FOLD',
+        },
+        {
+          seatNo: 1,
+          action: 'FOLD',
+        },
+      ],
+    },
+    turnActions: {},
+    riverActions: {},
+    potWinners: {
+      '0': {
+        hiWinners: [
           {
-            player: 1,
-            received: 93.0,
-            rank: 'TWO PAIR',
-            rank_num: 1203,
-            winning_cards: ['Ah', 'As', 'Kh', 'Ks', 'Qh'],
+            seatNo: 5,
+            amount: 14,
           },
         ],
       },
-    ],
-    won_at: 'SHOWDOWN',
-    showdown: true,
-    winning_rank: 'TWO PAIR',
-    rank_num: 1023,
-    winning_cards: ['Ah', 'As', 'Kh', 'Kc', 'Qh'],
-    total_pot: 186.0,
-    rake: 2.0,
-    qualifying_promotion_winner: {
-      promo_id: 123456,
-      player_id: 1,
-      cards: ['7h', '7s', '7c', 'Ks', 'Kh'],
-      rank: 150,
     },
-    summary: [
+    wonAt: 'FLOP',
+    tips: 2.0,
+    balanceAfterHand: [
       {
-        player: 1000,
-        balance: 85.0,
-        change: 0.0,
+        seatNo: 1,
+        playerId: 1,
+        balance: 96,
       },
     ],
+    handStartedAt: '1595385736',
+    balanceBeforeHand: [
+      {
+        seatNo: 1,
+        playerId: 1,
+        balance: 100,
+      },
+    ],
+    handEndedAt: '1595385739',
+    playersInSeats: [1, 0, 0, 0, 2, 0, 0, 3, 0],
+    qualifyingPromotionWinner: {
+      promoId: 123456,
+      playerId: 1,
+      cards: [200, 196, 8, 132, 1],
+      cardsStr: '[ A♣  A♦  2♣  T♦  2♠ ]',
+      rank: 150,
+    },
   },
 };
 
@@ -279,80 +340,85 @@ describe('Promotion APIs', () => {
   });
 
   test('Save hand with promotion', async () => {
-    // try{
-    const owner = await createPlayer({
-      player: {
-        name: 'player_name',
-        deviceId: 'abc',
-      },
-    });
-    expect(owner).not.toBeNull();
-    const club = await createClub(owner, {
-      name: 'club_name',
-      description: 'poker players gather',
-      ownerUuid: owner,
-    });
-    expect(club).not.toBeNull();
-    const gameServer = {
-      ipAddress: '10.1.1.1',
-      currentMemory: 100,
-      status: 'ACTIVE',
-    };
-    await createGameServer(gameServer);
-    const game = await startGame(owner, club, holdemGameInput);
-    const playerId = (await getPlayerById(owner)).id;
-    const gameId = (await getGameById(owner, game.gameId)).id;
-    const clubId = (await getClubById(owner, club)).id;
-    const messageInput = {
-      clubId: clubId,
-      playerId: playerId,
-      gameId: gameId,
-      buyIn: 100.0,
-      status: 'PLAYING',
-      seatNo: 1,
-    };
-    await saveChipsData(messageInput);
-    const promotion = await createPromotion(
-      {
-        clubId: club,
-        input: {
-          cardRank: 5,
-          bonus: 4,
-          promotionType: 'HIGH_HAND',
+    try {
+      const owner = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc',
         },
-      },
-      owner
-    );
-    await assignPromotion(
-      {
-        clubId: club,
-        promotionId: promotion.id,
-        gameId: game.gameId,
-        startAt: 1594919334244,
-        endAt: 1594919334244,
-      },
-      owner
-    );
-    handData.HandNum = '1';
-    handData.GameNum = game.gameId;
-    handData.ClubId = club;
-    handData.Result.pot_winners[0].winners[0].player = playerId;
-    handData.Result.summary[0].player = playerId;
-    handData.Result.qualifying_promotion_winner.player_id = playerId;
-    handData.Result.qualifying_promotion_winner.promo_id = promotion.id;
-    handData.Result.qualifying_promotion_winner.rank = 4;
-    const resp = await saveHandData(handData);
-    expect(resp).toBe(true);
-    handData.HandNum = '2';
-    const resp1 = await saveHandData(handData);
-    expect(resp1).toBe(true);
-    handData.HandNum = '3';
-    handData.Result.qualifying_promotion_winner.rank = 3;
-    const resp2 = await saveHandData(handData);
-    expect(resp2).toBe(true);
-    // } catch (err) {
-    //   logger.error(JSON.stringify(err));
-    //   expect(true).toBeFalsy();
-    // }
+      });
+      expect(owner).not.toBeNull();
+      const club = await createClub(owner, {
+        name: 'club_name',
+        description: 'poker players gather',
+        ownerUuid: owner,
+      });
+      expect(club).not.toBeNull();
+      const gameServer = {
+        ipAddress: '10.1.1.1',
+        currentMemory: 100,
+        status: 'ACTIVE',
+      };
+      await createGameServer(gameServer);
+      const game = await startGame(owner, club, holdemGameInput);
+      const playerId = (await getPlayerById(owner)).id;
+      const gameId = (await getGameById(owner, game.gameId)).id;
+      const clubId = (await getClubById(owner, club)).id;
+      const messageInput = {
+        clubId: clubId,
+        playerId: playerId,
+        gameId: gameId,
+        buyIn: 100.0,
+        status: 'PLAYING',
+        seatNo: 1,
+      };
+      await saveChipsData(messageInput);
+      const promotion = await createPromotion(
+        {
+          clubId: club,
+          input: {
+            cardRank: 5,
+            bonus: 4,
+            promotionType: 'HIGH_HAND',
+          },
+        },
+        owner
+      );
+      await assignPromotion(
+        {
+          clubId: club,
+          promotionId: promotion.id,
+          gameId: game.gameId,
+          startAt: 1594919334244,
+          endAt: 1594919334244,
+        },
+        owner
+      );
+      flopHandWithPromotions.handNum = 1;
+      flopHandWithPromotions.gameNum = gameId;
+      flopHandWithPromotions.clubId = clubId;
+      flopHandWithPromotions.handResult.potWinners[0].hiWinners[0].seatNo = 1;
+      flopHandWithPromotions.handResult.balanceAfterHand[0].playerId = playerId;
+      flopHandWithPromotions.handResult.playersInSeats = [playerId];
+      flopHandWithPromotions.handResult.qualifyingPromotionWinner.playerId = playerId;
+      flopHandWithPromotions.handResult.qualifyingPromotionWinner.promoId =
+        promotion.id;
+      flopHandWithPromotions.handResult.qualifyingPromotionWinner.rank = 4;
+
+      const resp = await saveHandData(flopHandWithPromotions);
+      expect(resp).toBe(true);
+
+      flopHandWithPromotions.handNum = 2;
+      const resp1 = await saveHandData(flopHandWithPromotions);
+      expect(resp1).toBe(true);
+
+      flopHandWithPromotions.handNum = 3;
+      flopHandWithPromotions.handResult.qualifyingPromotionWinner.rank = 3;
+      const resp2 = await saveHandData(flopHandWithPromotions);
+      expect(resp2).toBe(true);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
   });
 });
