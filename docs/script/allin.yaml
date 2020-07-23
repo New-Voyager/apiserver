@@ -13,12 +13,13 @@
 #13. sam sits in with 100.00
 
 cleanup:
-  club:
+  club:   # delete clubs and club members
     - delete:
         name: chennai
 
+# register players if doesn't exist and store the player.id in a dictionary
 setup:
-  players:
+  players: 
     - name: arun
       uuid: 1edad270-1926-4634-b89b-9d5a62586d9e
     - name: arjun
@@ -27,31 +28,36 @@ setup:
       uuid: 1d43342c-84bf-4928-b5b4-ece904b66dd0
     - name: bala
       uuid: 8ba53577-1318-4da3-adbd-0796234e405a
+  # create a club and pass the owner in the Auth header
+  # store clubId in a dictionary (key: chennai.clubId)
   club:
     - create:
         name: chennai
         owner: bala
+    # use joinClub API and auth header to join each player
     - join:
         players:
           - arun
           - arjun
           - sam
+    # verify the players are waiting to be approved  (PENDING)
     - verify:
-        players:
+        members:
           - name: arun
-            status: WAITING_FOR_APPROVAL
+            status: PENDING
           - name: arjun
-            status: WAITING_FOR_APPROVAL
+            status: PENDING
           - name: sam
-            status: WAITING_FOR_APPROVAL
+            status: PENDING
+    # approve members with auth header (bala,club.owner)
     - approve:
         owner: bala
-        players:
+        members:
           - arun
           - arjun
           - sam
 
-start-game:
+start-game: # start game API
   config:
     title: test1
     gameType: HOLDEM
@@ -88,11 +94,11 @@ start-game:
 
 game:
   game1:
-    ClubId: chennai.id
-    GameNum: test1.id
+    club-id: chennai.id
+    game-num: test1.id
     hands:
-      - HandNum: 1
-        Players: [arun.id, arjun.id, sam.id, bala.id]
+      - hand-num: 1
+        players: [arun.id, arjun.id, sam.id, bala.id]
         GameType: HOLDEM
         StartedAt: 2020-06-30T00:02:10
         PREFLOP:
