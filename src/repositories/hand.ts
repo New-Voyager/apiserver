@@ -6,7 +6,7 @@ import {
 } from '@src/entity/hand';
 import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
-import {GameType} from '@src/entity/game';
+import {PokerGame} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker, ClubGameRake} from '@src/entity/chipstrack';
 import {GameRepository} from './game';
@@ -17,6 +17,7 @@ import {
   PromotionWinners,
 } from '@src/entity/promotion';
 import {Player} from '@src/entity/player';
+import {Club} from '@src/entity/club';
 
 const logger = getLogger('hand');
 
@@ -33,259 +34,238 @@ class HandRepositoryImpl {
       const promotionRepository = getRepository(Promotion);
       const promotionWinnersRepository = getRepository(PromotionWinners);
       const playerRepository = getRepository(Player);
-
-      const handHistory = new HandHistory();
-      const wonAt: string = handData.Result.won_at;
-      const gameType: string = handData.GameType;
+      const clubRepository = getRepository(Club);
+      const gameRepository = getRepository(PokerGame);
 
       /**
        * Validating data
        */
-      const gameId = await GameRepository.getGameById(handData.GameNum);
-      if (!gameId) {
-        logger.error(`Game ID ${gameId} not found`);
-        throw new Error(`Game ID ${gameId} not found`);
+      const club = await clubRepository.findOne({
+        where: {id: handData.clubId},
+      });
+      if (!club) {
+        logger.error(`Club ID ${handData.clubId} not found`);
+        return new Error(`Club ID ${handData.clubId} not found`);
       }
 
-      const clubId = await ClubRepository.getClubById(handData.ClubId);
-      if (!clubId) {
-        logger.error(`Club ID ${clubId} not found`);
-        throw new Error(`Club ID ${clubId} not found`);
+      const game = await gameRepository.findOne({
+        where: {id: handData.gameNum},
+      });
+      if (!game) {
+        logger.error(`Game ID ${handData.gameNum} not found`);
+        return new Error(`Game ID ${handData.gameNum} not found`);
       }
 
       const clubRake = await clubGameRakeRepository.findOne({
         relations: ['club', 'game'],
-        where: {club: clubId, game: gameId},
+        where: {club: club, game: game},
       });
       if (!clubRake) {
-        logger.error(`Club ID ${handData.ClubId} not found in rake table`);
-        throw new Error(`Club ID ${handData.ClubId} not found in rake table`);
+        logger.error(`Club ID ${handData.clubId} not found in rake table`);
+        return new Error(`Club ID ${handData.clubId} not found in rake table`);
       }
 
       let promotion, gamePromotion, promoPlayer;
-      if (handData.Result.qualifying_promotion_winner) {
+      if (handData.handResult.qualifyingPromotionWinner) {
         promotion = await promotionRepository.findOne({
-          where: {id: handData.Result.qualifying_promotion_winner.promo_id},
+          where: {id: handData.handResult.qualifyingPromotionWinner.promoId},
         });
         if (!promotion) {
           logger.error(
-            `Promotion ID ${handData.Result.qualifying_promotion_winner.promo_id} not found`
+            `Promotion ID ${handData.handResult.qualifyingPromotionWinner.promoId} not found`
           );
-          throw new Error(
-            `Promotion ID ${handData.Result.qualifying_promotion_winner.promo_id} not found`
+          return new Error(
+            `Promotion ID ${handData.handResult.qualifyingPromotionWinner.promoId} not found`
           );
         }
 
         gamePromotion = await gamePromotionRepository.findOne({
-          where: {club: clubId, game: gameId, promoId: promotion.id},
+          where: {club: club.id, game: game.id, promoId: promotion.id},
         });
         if (!gamePromotion) {
           logger.error(
-            `Promotion ID ${handData.Result.qualifying_promotion_winner.promo_id} not found in game promotion`
+            `Promotion ID ${handData.handResult.qualifyingPromotionWinner.promoId} not found in game promotion`
           );
-          throw new Error(
-            `Promotion ID ${handData.Result.qualifying_promotion_winner.promo_id} not found in game promotion`
+          return new Error(
+            `Promotion ID ${handData.handResult.qualifyingPromotionWinner.promoId} not found in game promotion`
           );
         }
 
         promoPlayer = await playerRepository.findOne({
-          where: {id: handData.Result.qualifying_promotion_winner.player_id},
+          where: {id: handData.handResult.qualifyingPromotionWinner.playerId},
         });
         if (!promoPlayer) {
           logger.error(
-            `Player ID ${handData.Result.qualifying_promotion_winner.player_id} not found`
+            `Player ID ${handData.handResult.qualifyingPromotionWinner.playerId} not found`
           );
-          throw new Error(
-            `Player ID ${handData.Result.qualifying_promotion_winner.player_id} not found`
+          return new Error(
+            `Player ID ${handData.handResult.qualifyingPromotionWinner.playerId} not found`
           );
         }
       }
 
       /**
-       * Assigning values and saving hand history
+       * Assigning hand history values
        */
-      handHistory.clubId = handData.ClubId;
-      handHistory.gameNum = handData.GameNum;
-      handHistory.handNum = handData.HandNum;
-      handHistory.gameType = GameType[gameType];
+      const handHistory = new HandHistory();
+      const wonAt: string = handData.handResult.wonAt;
+      const potWinners = handData.handResult.potWinners[0];
+      const seatingArrangements = handData.handResult.playersInSeats;
+
+      handHistory.clubId = handData.clubId;
+      handHistory.gameNum = handData.gameNum;
+      handHistory.handNum = handData.handNum;
+      handHistory.gameType = game.gameType;
       handHistory.wonAt = WonAtStatus[wonAt];
-      handHistory.showDown = handData.Result.showdown;
-      if (handData.Result.showdown) {
-        if (handData.GameType === GameType[GameType.OMAHA_HILO]) {
-          handHistory.winningCards = handData.Result.hi_winning_cards.join(
-            ', '
-          );
-          handHistory.winningRank = handData.Result.hi_winning_rank;
-          handHistory.loWinningCards = handData.Result.lo_winning_cards.join(
-            ', '
-          );
-          handHistory.loWinningRank = handData.Result.lo_winning_rank;
-        } else {
-          handHistory.winningCards = handData.Result.winning_cards.join(', ');
-          handHistory.winningRank = handData.Result.rank_num;
+      if (wonAt === 'SHOW_DOWN') {
+        handHistory.showDown = true;
+        handHistory.winningCards = potWinners.hiWinners[0].winningCardsStr;
+        handHistory.winningRank = potWinners.hiWinners[0].rank;
+        handHistory.totalPot = handData.handResult.totalPot;
+        if (potWinners.loWinners) {
+          handHistory.loWinningCards = potWinners.loWinners[0].winningCardsStr;
+          handHistory.loWinningRank = potWinners.loWinners[0].rank;
         }
-        handHistory.totalPot = handData.Result.total_pot;
+      } else {
+        handHistory.showDown = false;
       }
-      handHistory.timeStarted = handData.StartedAt;
-      handHistory.timeEnded = handData.EndedAt;
+      handHistory.timeStarted = handData.handResult.handStartedAt;
+      handHistory.timeEnded = handData.handResult.handEndedAt;
       handHistory.data = JSON.stringify(handData);
 
-      await getManager().transaction(async transactionalEntityManager => {
-        await handHistoryRepository.save(handHistory);
-
-        /**
-         * Assigning values and saving hand winners
-         */
-        if (handData.Result.showdown) {
-          if (handData.GameType === GameType[GameType.OMAHA_HILO]) {
-            await handData.Result.pot_winners[0].hi_winners.forEach(
-              async (winner: {
-                winning_cards: Array<string>;
-                rank_num: number;
-                player: number;
-                received: number;
-              }) => {
-                const handWinners = new HandWinners();
-                handWinners.clubId = handData.ClubId;
-                handWinners.gameNum = handData.GameNum;
-                handWinners.handNum = handData.HandNum;
-                handWinners.winningCards = winner.winning_cards.join(', ');
-                handWinners.winningRank = winner.rank_num;
-                handWinners.playerId = winner.player;
-                handWinners.received = winner.received;
-                await handWinnersRepository.save(handWinners);
-              }
-            );
-
-            await handData.Result.pot_winners[0].lo_winners.forEach(
-              async (winner: {
-                winning_cards: Array<string>;
-                rank_num: number;
-                player: number;
-                received: number;
-              }) => {
-                const handWinners = new HandWinners();
-                handWinners.clubId = handData.ClubId;
-                handWinners.gameNum = handData.GameNum;
-                handWinners.handNum = handData.HandNum;
-                handWinners.winningCards = winner.winning_cards.join(', ');
-                handWinners.winningRank = winner.rank_num;
-                handWinners.playerId = winner.player;
-                handWinners.received = winner.received;
-                handWinners.isHigh = false;
-                await handWinnersRepository.save(handWinners);
-              }
-            );
-          } else {
-            await handData.Result.pot_winners[0].winners.forEach(
-              async (winner: {
-                winning_cards: Array<string>;
-                rank_num: number;
-                player: number;
-                received: number;
-              }) => {
-                const handWinners = new HandWinners();
-                handWinners.clubId = handData.ClubId;
-                handWinners.gameNum = handData.GameNum;
-                handWinners.handNum = handData.HandNum;
-                handWinners.winningCards = winner.winning_cards.join(', ');
-                handWinners.winningRank = winner.rank_num;
-                handWinners.playerId = winner.player;
-                handWinners.received = winner.received;
-                await handWinnersRepository.save(handWinners);
-              }
-            );
+      /**
+       * Assigning hand winners values
+       */
+      const allHandWinners = new Array<HandWinners>();
+      for await (const hiWinner of potWinners.hiWinners) {
+        const handWinners = new HandWinners();
+        handWinners.clubId = handData.clubId;
+        handWinners.gameNum = handData.gameNum;
+        handWinners.handNum = handData.handNum;
+        if (wonAt === 'SHOW_DOWN') {
+          handWinners.winningCards = hiWinner.winningCardsStr;
+          handWinners.winningRank = hiWinner.rank;
+        }
+        handWinners.playerId = seatingArrangements[hiWinner.seatNo - 1];
+        handWinners.received = hiWinner.amount;
+        allHandWinners.push(handWinners);
+      }
+      if (potWinners.loWinners) {
+        for await (const loWinner of potWinners.loWinners) {
+          const handWinners = new HandWinners();
+          handWinners.clubId = handData.clubId;
+          handWinners.gameNum = handData.gameNum;
+          handWinners.handNum = handData.handNum;
+          if (wonAt === 'SHOW_DOWN') {
+            handWinners.winningCards = loWinner.winningCardsStr;
+            handWinners.winningRank = loWinner.rank;
           }
-        } else {
-          await handData.Result.pot_winners[0].winners.forEach(
-            async (winner: {player: number; received: number}) => {
-              const handWinners = new HandWinners();
-              handWinners.clubId = handData.ClubId;
-              handWinners.gameNum = handData.GameNum;
-              handWinners.handNum = handData.HandNum;
-              handWinners.playerId = winner.player;
-              handWinners.received = winner.received;
-              await handWinnersRepository.save(handWinners);
-            }
+          handWinners.playerId = seatingArrangements[loWinner.seatNo - 1];
+          handWinners.received = loWinner.amount;
+          handWinners.isHigh = false;
+          allHandWinners.push(handWinners);
+        }
+      }
+
+      /**
+       * Assigning player chips values
+       */
+      const allPlayerChips = new Array<PlayerGameTracker>();
+      for await (const playerData of handData.handResult.balanceAfterHand) {
+        const playerChips = await playersChipsRepository.findOne({
+          relations: ['club', 'game', 'player'],
+          where: {
+            club: club.id,
+            game: game.id,
+            player: playerData.playerId,
+          },
+        });
+        if (!playerChips) {
+          logger.error(
+            `Player ID ${playerData.player} not found in chips table`
+          );
+          return new Error(
+            `Player ID ${playerData.player} not found in chips table`
           );
         }
+        playerChips.stack = playerData.balance;
+        allPlayerChips.push(playerChips);
+      }
 
-        await handData.Result.summary.forEach(
-          async (playerData: {player: number; balance: number}) => {
-            const playerChips = await playersChipsRepository.findOne({
-              relations: ['club', 'game', 'player'],
-              where: {
-                club: clubId,
-                game: gameId,
-                player: playerData.player,
-              },
+      /**
+       * Making all DB transactions
+       */
+      await getManager()
+        .transaction(async transactionalEntityManager => {
+          await handHistoryRepository.save(handHistory);
+          for await (const winner of allHandWinners) {
+            await handWinnersRepository.save(winner);
+          }
+          for await (const chips of allPlayerChips) {
+            await playersChipsRepository.save(chips);
+          }
+
+          clubRake.rake += Number.parseFloat(handData.handResult.tips);
+          await clubGameRakeRepository.save(clubRake);
+
+          if (handData.handResult.qualifyingPromotionWinner) {
+            const promotionWinners = await promotionWinnersRepository.find({
+              where: {club: club, game: game, promoId: promotion},
             });
-            if (!playerChips) {
-              logger.error(
-                `Player ID ${playerData.player} not found in chips table`
-              );
-              throw new Error(
-                `Player ID ${playerData.player} not found in chips table`
-              );
+
+            let flag = true;
+            if (promotionWinners.length !== 0) {
+              if (
+                promotionWinners[0].rank >
+                handData.handResult.qualifyingPromotionWinner.rank
+              ) {
+                await promotionWinnersRepository.delete({
+                  club: club,
+                  game: game,
+                  promoId: promotion,
+                });
+              } else if (
+                promotionWinners[0].rank <
+                handData.handResult.qualifyingPromotionWinner.rank
+              ) {
+                flag = false;
+              }
             }
-            playerChips.stack = playerData.balance;
-            await playersChipsRepository.save(playerChips);
-          }
-        );
-
-        clubRake.rake += Number.parseFloat(handData.Result.rake);
-        await clubGameRakeRepository.save(clubRake);
-
-        if (handData.Result.qualifying_promotion_winner) {
-          const promotionWinners = await promotionWinnersRepository.find({
-            where: {club: clubId, game: gameId, promoId: promotion},
-          });
-
-          let flag = true;
-          if (promotionWinners.length !== 0) {
-            if (
-              promotionWinners[0].rank >
-              handData.Result.qualifying_promotion_winner.rank
-            ) {
-              await promotionWinnersRepository.delete({
-                club: clubId,
-                game: gameId,
-                promoId: promotion,
-              });
-            } else if (
-              promotionWinners[0].rank <
-              handData.Result.qualifying_promotion_winner.rank
-            ) {
-              flag = false;
+            if (flag) {
+              const newWinner = new PromotionWinners();
+              newWinner.club = club;
+              newWinner.amountWon = 0;
+              newWinner.game = game;
+              newWinner.handNum = handData.handNum;
+              newWinner.player = promoPlayer;
+              newWinner.promoId = promotion;
+              newWinner.rank =
+                handData.handResult.qualifyingPromotionWinner.rank;
+              newWinner.winningCards =
+                handData.handResult.qualifyingPromotionWinner.cardsStr;
+              await promotionWinnersRepository.save(newWinner);
             }
           }
-          if (flag) {
-            const newWinner = new PromotionWinners();
-            newWinner.club = clubId;
-            newWinner.amountWon = 0;
-            newWinner.game = gameId;
-            newWinner.handNum = Number.parseInt(handData.HandNum);
-            newWinner.player = promoPlayer;
-            newWinner.promoId = promotion;
-            newWinner.rank = handData.Result.qualifying_promotion_winner.rank;
-            newWinner.winningCards = handData.Result.qualifying_promotion_winner.cards.join(
-              ', '
-            );
-            await promotionWinnersRepository.save(newWinner);
-          }
-        }
-      });
+        })
+        .catch(err => {
+          logger.error(
+            `Error when trying to save starred hands: ${err.toString()}`
+          );
+          return err;
+        });
       return true;
     } catch (err) {
-      logger.error(`Error when trying to save starred hands: ${err.toString}`);
+      logger.error(
+        `Error when trying to save starred hands: ${err.toString()}`
+      );
       return err;
     }
   }
 
   public async getSpecificHandHistory(
-    clubId: string,
-    gameNum: string,
-    handNum: string
+    clubId: number,
+    gameNum: number,
+    handNum: number
   ): Promise<HandHistory | undefined> {
     const handHistoryRepository = getRepository(HandHistory);
     const handHistory = await handHistoryRepository.findOne({
@@ -295,23 +275,20 @@ class HandRepositoryImpl {
   }
 
   public async getLastHandHistory(
-    clubId: string,
-    gameNum: string
+    clubId: number,
+    gameNum: number
   ): Promise<HandHistory | undefined> {
     const handHistoryRepository = getRepository(HandHistory);
     const hands = await handHistoryRepository.find({
       where: {clubId: clubId, gameNum: gameNum},
       order: {handNum: 'DESC'},
     });
-    // const sortedHands = hands.sort((b, a) => {
-    //   return b.handNum < a.handNum ? 1 : b.handNum > a.handNum ? -1 : 0;
-    // });
     return hands[0];
   }
 
   public async getAllHandHistory(
-    clubId: string,
-    gameNum: string,
+    clubId: number,
+    gameNum: number,
     pageOptions?: PageOptions
   ): Promise<Array<HandHistory>> {
     if (!pageOptions) {
@@ -364,8 +341,8 @@ class HandRepositoryImpl {
   }
 
   public async getMyWinningHands(
-    clubId: string,
-    gameNum: string,
+    clubId: number,
+    gameNum: number,
     playerId: number,
     pageOptions?: PageOptions
   ): Promise<Array<HandWinners>> {
@@ -420,9 +397,9 @@ class HandRepositoryImpl {
   }
 
   public async saveStarredHand(
-    clubId: string,
-    gameNum: string,
-    handNum: string,
+    clubId: number,
+    gameNum: number,
+    handNum: number,
     playerId: number,
     handHistory: HandHistory
   ): Promise<boolean> {

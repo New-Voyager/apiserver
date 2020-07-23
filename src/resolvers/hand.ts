@@ -9,6 +9,7 @@ import {ClubRepository} from '@src/repositories/club';
 import {ClubMemberStatus} from '@src/entity/club';
 import {PlayerRepository} from '@src/repositories/player';
 import {getLogger} from '@src/utils/log';
+import {GameRepository} from '@src/repositories/game';
 const logger = getLogger('hand');
 
 const resolvers: any = {
@@ -85,7 +86,14 @@ export async function getLastHandHistory(playerId: string, args: any) {
   if (!player) {
     throw new Error(`Player ${playerId} is not found`);
   }
-
+  const club = await ClubRepository.getClubById(args.clubId);
+  if (!club) {
+    throw new Error(`Club ${args.clubId} is not found`);
+  }
+  const game = await GameRepository.getGameById(args.gameNum);
+  if (!game) {
+    throw new Error(`Game ${args.gameNum} is not found`);
+  }
   if (!clubMember) {
     logger.error(
       `The user ${playerId} is not a member of ${args.clubId}, ${JSON.stringify(
@@ -105,10 +113,7 @@ export async function getLastHandHistory(playerId: string, args: any) {
     throw new Error('Unauthorized');
   }
 
-  const handHistory = await HandRepository.getLastHandHistory(
-    args.clubId,
-    args.gameNum
-  );
+  const handHistory = await HandRepository.getLastHandHistory(club.id, game.id);
   if (!handHistory) {
     throw new Error('No hand found');
   }
@@ -123,6 +128,14 @@ export async function getSpecificHandHistory(playerId: string, args: any) {
   if (!player) {
     throw new Error(`Player ${playerId} is not found`);
   }
+  const club = await ClubRepository.getClubById(args.clubId);
+  if (!club) {
+    throw new Error(`Club ${args.clubId} is not found`);
+  }
+  const game = await GameRepository.getGameById(args.gameNum);
+  if (!game) {
+    throw new Error(`Game ${args.gameNum} is not found`);
+  }
 
   const clubMembers1 = await ClubRepository.getMembers(args.clubId);
   const clubMember = await ClubRepository.isClubMember(args.clubId, playerId);
@@ -136,19 +149,14 @@ export async function getSpecificHandHistory(playerId: string, args: any) {
     throw new Error('Unauthorized');
   }
 
-  if (clubMember.status == ClubMemberStatus.KICKEDOUT) {
-    logger.error(`The user ${playerId} is kicked out of ${args.clubId}`);
-    throw new Error('Unauthorized');
-  }
-
   if (clubMember.status !== ClubMemberStatus.ACTIVE) {
     logger.error(`The user ${playerId} is not Active in ${args.clubId}`);
     throw new Error('Unauthorized');
   }
 
   const handHistory = await HandRepository.getSpecificHandHistory(
-    args.clubId,
-    args.gameNum,
+    club.id,
+    game.id,
     args.handNum
   );
   if (!handHistory) {
@@ -165,7 +173,14 @@ export async function getAllHandHistory(playerId: string, args: any) {
   if (!player) {
     throw new Error(`Player ${playerId} is not found`);
   }
-
+  const club = await ClubRepository.getClubById(args.clubId);
+  if (!club) {
+    throw new Error(`Club ${args.clubId} is not found`);
+  }
+  const game = await GameRepository.getGameById(args.gameNum);
+  if (!game) {
+    throw new Error(`Game ${args.gameNum} is not found`);
+  }
   const clubMembers1 = await ClubRepository.getMembers(args.clubId);
   const clubMember = await ClubRepository.isClubMember(args.clubId, playerId);
 
@@ -189,8 +204,8 @@ export async function getAllHandHistory(playerId: string, args: any) {
   }
 
   const handHistory = await HandRepository.getAllHandHistory(
-    args.clubId,
-    args.gameNum,
+    club.id,
+    game.id,
     args.page
   );
   const hands = new Array<any>();
@@ -208,7 +223,14 @@ export async function getMyWinningHands(playerId: string, args: any) {
   if (!player) {
     throw new Error(`Player ${playerId} is not found`);
   }
-
+  const club = await ClubRepository.getClubById(args.clubId);
+  if (!club) {
+    throw new Error(`Club ${args.clubId} is not found`);
+  }
+  const game = await GameRepository.getGameById(args.gameNum);
+  if (!game) {
+    throw new Error(`Game ${args.gameNum} is not found`);
+  }
   const clubMembers1 = await ClubRepository.getMembers(args.clubId);
   const clubMember = await ClubRepository.isClubMember(args.clubId, playerId);
 
@@ -232,8 +254,8 @@ export async function getMyWinningHands(playerId: string, args: any) {
   }
 
   const handwinners = await HandRepository.getMyWinningHands(
-    args.clubId,
-    args.gameNum,
+    club.id,
+    game.id,
     player.id,
     args.page
   );
@@ -287,7 +309,14 @@ export async function saveStarredHand(playerId: string, args: any) {
   if (!player) {
     throw new Error(`Player ${playerId} is not found`);
   }
-
+  const club = await ClubRepository.getClubById(args.clubId);
+  if (!club) {
+    throw new Error(`Club ${args.clubId} is not found`);
+  }
+  const game = await GameRepository.getGameById(args.gameNum);
+  if (!game) {
+    throw new Error(`Game ${args.gameNum} is not found`);
+  }
   if (!clubMember) {
     logger.error(
       `The user ${playerId} is not a member of ${args.clubId}, ${JSON.stringify(
@@ -308,8 +337,8 @@ export async function saveStarredHand(playerId: string, args: any) {
   }
 
   const handHistory = await HandRepository.getSpecificHandHistory(
-    args.clubId,
-    args.gameNum,
+    club.id,
+    game.id,
     args.handNum
   );
   if (!handHistory) {
@@ -318,8 +347,8 @@ export async function saveStarredHand(playerId: string, args: any) {
   }
 
   const resp = await HandRepository.saveStarredHand(
-    args.clubId,
-    args.gameNum,
+    club.id,
+    game.id,
     args.handNum,
     player.id,
     handHistory

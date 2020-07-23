@@ -17,6 +17,7 @@ import {
 } from '@src/resolvers/hand';
 
 const logger = getLogger('Hand server unit-test');
+
 const holdemGameInput = {
   gameType: 'HOLDEM',
   title: 'Friday game',
@@ -43,95 +44,188 @@ const holdemGameInput = {
   muckLosingHand: true,
 };
 
-const handData = {
-  ClubId: '',
-  GameNum: '',
-  HandNum: '1',
-  Players: [1],
-  GameType: 'HOLDEM',
-  StartedAt: '2020-06-30T00:02:10',
-  EndedAt: '2020-06-30T00:04:00',
-  Result: {
-    pot_winners: [
-      {
-        pot: 0,
-        amount: 186.0,
-        winners: [
+const allInHand = {
+  clubId: 1,
+  gameNum: 1,
+  handNum: 1,
+  messageType: 'RESULT',
+  handStatus: 'RESULT',
+  handResult: {
+    preflopActions: {
+      pot: 3,
+      actions: [
+        {
+          seatNo: 5,
+          amount: 1,
+        },
+        {
+          seatNo: 8,
+          action: 'BB',
+          amount: 2,
+        },
+        {
+          seatNo: 1,
+          action: 'ALLIN',
+        },
+        {
+          seatNo: 5,
+          action: 'ALLIN',
+        },
+        {
+          seatNo: 8,
+          action: 'ALLIN',
+        },
+      ],
+    },
+    flopActions: {},
+    turnActions: {},
+    riverActions: {},
+    potWinners: {
+      '0': {
+        hiWinners: [
           {
-            player: 1,
-            received: 93.0,
-            rank: 'TWO PAIR',
-            rank_num: 1203,
-            winning_cards: ['Ah', 'As', 'Kh', 'Ks', 'Qh'],
+            seatNo: 1,
+            amount: 150,
+            winningCards: [200, 196, 8, 132, 1],
+            winningCardsStr: '[ A♣  A♦  2♣  T♦  2♠ ]',
+            rankStr: 'Two Pair',
+            rank: 1000,
+          },
+        ],
+        loWinners: [
+          {
+            seatNo: 1,
+            amount: 150,
+            winningCards: [200, 196, 8, 132, 1],
+            winningCardsStr: '[ A♣  A♦  2♣  T♦  2♠ ]',
+            rankStr: 'Two Pair',
+            rank: 1000,
           },
         ],
       },
-    ],
-    won_at: 'SHOWDOWN',
-    showdown: true,
-    winning_rank: 'TWO PAIR',
-    rank_num: 1023,
-    winning_cards: ['Ah', 'As', 'Kh', 'Kc', 'Qh'],
-    total_pot: 186.0,
-    rake: 2.0,
-    summary: [
+    },
+    wonAt: 'SHOW_DOWN',
+    rank: 1000,
+    tips: 2.0,
+    totalPot: 150,
+    balanceAfterHand: [
       {
-        player: 1000,
-        balance: 85.0,
-        change: 0.0,
+        seatNo: 1,
+        playerId: 1,
+        balance: 150,
       },
     ],
+    handStartedAt: '1595385733',
+    balanceBeforeHand: [
+      {
+        seatNo: 1,
+        playerId: 1,
+        balance: 50,
+      },
+    ],
+    handEndedAt: '1595385735',
+    playersInSeats: [1, 0, 0, 0, 2, 0, 0, 3, 0],
   },
 };
 
-const handDataHiLo = {
-  ClubId: '',
-  GameNum: '',
-  HandNum: '1',
-  Players: [1],
-  GameType: 'OMAHA_HILO',
-  StartedAt: '2020-06-30T00:02:10',
-  EndedAt: '2020-06-30T00:04:00',
-  Result: {
-    pot_winners: [
-      {
-        pot: 0,
-        amount: 186.0,
-        hi_winners: [
+const flopHand = {
+  clubId: 1,
+  gameNum: 2,
+  handNum: 1,
+  messageType: 'RESULT',
+  handStatus: 'RESULT',
+  handResult: {
+    preflopActions: {
+      pot: 7,
+      actions: [
+        {
+          seatNo: 5,
+          amount: 1,
+        },
+        {
+          seatNo: 8,
+          action: 'BB',
+          amount: 2,
+        },
+        {
+          seatNo: 1,
+          action: 'CALL',
+          amount: 2,
+        },
+        {
+          seatNo: 5,
+          action: 'CALL',
+          amount: 2,
+        },
+        {
+          seatNo: 8,
+          action: 'CHECK',
+        },
+      ],
+    },
+    flopActions: {
+      pot: 8,
+      actions: [
+        {
+          seatNo: 5,
+          action: 'CHECK',
+        },
+        {
+          seatNo: 8,
+          action: 'BET',
+          amount: 2,
+        },
+        {
+          seatNo: 1,
+          action: 'CALL',
+          amount: 2,
+        },
+        {
+          seatNo: 5,
+          action: 'RAISE',
+          amount: 4,
+        },
+        {
+          seatNo: 8,
+          action: 'FOLD',
+        },
+        {
+          seatNo: 1,
+          action: 'FOLD',
+        },
+      ],
+    },
+    turnActions: {},
+    riverActions: {},
+    potWinners: {
+      '0': {
+        hiWinners: [
           {
-            player: 1,
-            received: 93.0,
-            rank: 'TWO PAIR',
-            rank_num: 1203,
-            winning_cards: ['Ah', 'As', 'Kh', 'Ks', 'Qh'],
-          },
-        ],
-        lo_winners: [
-          {
-            player: 1,
-            received: 93.0,
-            rank: 'TWO PAIR',
-            rank_num: 1203,
-            winning_cards: ['Ah', 'As', 'Kh', 'Ks', 'Qh'],
+            seatNo: 5,
+            amount: 14,
           },
         ],
       },
-    ],
-    won_at: 'SHOWDOWN',
-    showdown: true,
-    hi_winning_cards: ['Ac', 'Ad', 'Kd', 'Kc', 'Qh'],
-    hi_winning_rank: 1203,
-    lo_winning_cards: ['8d', '4s', '5d', '2s', 'Ac'],
-    lo_winning_rank: 5882,
-    total_pot: 255.0,
-    rake: 2.0,
-    summary: [
+    },
+    wonAt: 'FLOP',
+    tips: 2.0,
+    balanceAfterHand: [
       {
-        player: 1000,
-        balance: 85.0,
-        change: 0.0,
+        seatNo: 1,
+        playerId: 1,
+        balance: 96,
       },
     ],
+    handStartedAt: '1595385736',
+    balanceBeforeHand: [
+      {
+        seatNo: 1,
+        playerId: 1,
+        balance: 100,
+      },
+    ],
+    handEndedAt: '1595385739',
+    playersInSeats: [1, 0, 0, 0, 2, 0, 0, 3, 0],
   },
 };
 
@@ -144,6 +238,44 @@ afterAll(async done => {
   done();
 });
 
+async function createClubAndStartGame(): Promise<
+  [number, number, number, string, string, string]
+> {
+  const owner = await createPlayer({
+    player: {
+      name: 'player_name',
+      deviceId: 'abc',
+    },
+  });
+  expect(owner).not.toBeNull();
+  const club = await createClub(owner, {
+    name: 'club_name',
+    description: 'poker players gather',
+    ownerUuid: owner,
+  });
+  expect(club).not.toBeNull();
+  const gameServer = {
+    ipAddress: '10.1.1.1',
+    currentMemory: 100,
+    status: 'ACTIVE',
+  };
+  await createGameServer(gameServer);
+  const game = await startGame(owner, club, holdemGameInput);
+  const playerId = (await getPlayerById(owner)).id;
+  const gameId = (await getGameById(owner, game.gameId)).id;
+  const clubId = (await getClubById(owner, club)).id;
+  const messageInput = {
+    clubId: clubId,
+    playerId: playerId,
+    gameId: gameId,
+    buyIn: 100.0,
+    status: 'PLAYING',
+    seatNo: 1,
+  };
+  await saveChipsData(messageInput);
+  return [clubId, playerId, gameId, owner, club, game.gameId];
+}
+
 describe('Hand server APIs', () => {
   beforeEach(async done => {
     await resetDB();
@@ -154,47 +286,24 @@ describe('Hand server APIs', () => {
     done();
   });
 
-  test('Save hand data', async () => {
+  test('Save hand data HiLo', async () => {
     try {
-      const owner = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc',
-        },
-      });
-      expect(owner).not.toBeNull();
-      const club = await createClub(owner, {
-        name: 'club_name',
-        description: 'poker players gather',
-        ownerUuid: owner,
-      });
-      expect(club).not.toBeNull();
-      const gameServer = {
-        ipAddress: '10.1.1.1',
-        currentMemory: 100,
-        status: 'ACTIVE',
-      };
-      await createGameServer(gameServer);
-      const game = await startGame(owner, club, holdemGameInput);
-      const playerId = (await getPlayerById(owner)).id;
-      const gameId = (await getGameById(owner, game.gameId)).id;
-      const clubId = (await getClubById(owner, club)).id;
-      const messageInput = {
-        clubId: clubId,
-        playerId: playerId,
-        gameId: gameId,
-        buyIn: 100.0,
-        status: 'PLAYING',
-        seatNo: 1,
-      };
-      await saveChipsData(messageInput);
-      handData.HandNum = '1';
-      handData.GameNum = game.gameId;
-      handData.ClubId = club;
-      handData.Result.pot_winners[0].winners[0].player = playerId;
-      handData.Result.summary[0].player = playerId;
-      handData.Result.showdown = false;
-      const resp = await saveHandData(handData);
+      const [
+        clubId,
+        playerId,
+        gameId,
+        playerUuid,
+        clubUuid,
+        gameUuid,
+      ] = await createClubAndStartGame();
+      allInHand.handNum = 1;
+      allInHand.gameNum = gameId;
+      allInHand.clubId = clubId;
+      allInHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
+      allInHand.handResult.potWinners[0].loWinners[0].seatNo = 1;
+      allInHand.handResult.balanceAfterHand[0].playerId = playerId;
+      allInHand.handResult.playersInSeats = [playerId];
+      const resp = await saveHandData(allInHand);
       expect(resp).toBe(true);
     } catch (err) {
       logger.error(JSON.stringify(err));
@@ -202,103 +311,54 @@ describe('Hand server APIs', () => {
     }
   });
 
-  test('Save hand data HiLo', async () => {
-    // try {
-    const owner = await createPlayer({
-      player: {
-        name: 'player_name',
-        deviceId: 'abc',
-      },
-    });
-    expect(owner).not.toBeNull();
-    const club = await createClub(owner, {
-      name: 'club_name',
-      description: 'poker players gather',
-      ownerUuid: owner,
-    });
-    expect(club).not.toBeNull();
-    const gameServer = {
-      ipAddress: '10.1.1.1',
-      currentMemory: 100,
-      status: 'ACTIVE',
-    };
-    await createGameServer(gameServer);
-    const game = await startGame(owner, club, holdemGameInput);
-    const playerId = (await getPlayerById(owner)).id;
-    const gameId = (await getGameById(owner, game.gameId)).id;
-    const clubId = (await getClubById(owner, club)).id;
-    const messageInput = {
-      clubId: clubId,
-      playerId: playerId,
-      gameId: gameId,
-      buyIn: 100.0,
-      status: 'PLAYING',
-      seatNo: 1,
-    };
-    await saveChipsData(messageInput);
-    handDataHiLo.HandNum = '1';
-    handDataHiLo.GameNum = game.gameId;
-    handDataHiLo.ClubId = club;
-    handDataHiLo.Result.pot_winners[0].hi_winners[0].player = playerId;
-    handDataHiLo.Result.pot_winners[0].lo_winners[0].player = playerId;
-    handDataHiLo.Result.summary[0].player = playerId;
-    const resp = await saveHandData(handDataHiLo);
-    expect(resp).toBe(true);
-    // } catch (err) {
-    //   logger.error(JSON.stringify(err));
-    //   expect(true).toBeFalsy();
-    // }
+  test('Save hand data Flop', async () => {
+    try {
+      const [
+        clubId,
+        playerId,
+        gameId,
+        playerUuid,
+        clubUuid,
+        gameUuid,
+      ] = await createClubAndStartGame();
+      flopHand.handNum = 1;
+      flopHand.gameNum = gameId;
+      flopHand.clubId = clubId;
+      flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
+      flopHand.handResult.balanceAfterHand[0].playerId = playerId;
+      flopHand.handResult.playersInSeats = [playerId];
+      const resp = await saveHandData(flopHand);
+      expect(resp).toBe(true);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
   });
 
   test('Get specific hand history', async () => {
     try {
-      const owner = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc',
-        },
-      });
-      expect(owner).not.toBeNull();
-      const club = await createClub(owner, {
-        name: 'club_name',
-        description: 'poker players gather',
-        ownerUuid: owner,
-      });
-      expect(club).not.toBeNull();
-      const gameServer = {
-        ipAddress: '10.1.1.1',
-        currentMemory: 100,
-        status: 'ACTIVE',
-      };
-      await createGameServer(gameServer);
-      const game = await startGame(owner, club, holdemGameInput);
-      const playerId = (await getPlayerById(owner)).id;
-      const gameId = (await getGameById(owner, game.gameId)).id;
-      const clubId = (await getClubById(owner, club)).id;
-      const messageInput = {
-        clubId: clubId,
-        playerId: playerId,
-        gameId: gameId,
-        buyIn: 100.0,
-        status: 'PLAYING',
-        seatNo: 1,
-      };
-      await saveChipsData(messageInput);
-      handData.HandNum = '1';
-      handData.GameNum = game.gameId;
-      handData.ClubId = club;
-      handData.Result.pot_winners[0].winners[0].player = playerId;
-      handData.Result.summary[0].player = playerId;
-      handData.Result.showdown = true;
-      const resp = await saveHandData(handData);
-      expect(resp).toBe(true);
-      const handHistory = await getSpecificHandHistory(owner, {
-        clubId: club,
-        gameNum: game.gameId,
-        handNum: '1',
+      const [
+        clubId,
+        playerId,
+        gameId,
+        playerUuid,
+        clubUuid,
+        gameUuid,
+      ] = await createClubAndStartGame();
+      flopHand.handNum = 1;
+      flopHand.gameNum = gameId;
+      flopHand.clubId = clubId;
+      flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
+      flopHand.handResult.balanceAfterHand[0].playerId = playerId;
+      flopHand.handResult.playersInSeats = [playerId];
+      const resp = await saveHandData(flopHand);
+      const handHistory = await getSpecificHandHistory(playerUuid, {
+        clubId: clubUuid,
+        gameNum: gameUuid,
+        handNum: 1,
       });
       expect(handHistory.gameType).toBe('HOLDEM');
-      expect(handHistory.wonAt).toBe('SHOWDOWN');
+      expect(handHistory.wonAt).toBe('FLOP');
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();
@@ -307,53 +367,31 @@ describe('Hand server APIs', () => {
 
   test('Get latest hand history', async () => {
     try {
-      const owner = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc',
-        },
-      });
-      expect(owner).not.toBeNull();
-      const club = await createClub(owner, {
-        name: 'club_name',
-        description: 'poker players gather',
-        ownerUuid: owner,
-      });
-      expect(club).not.toBeNull();
-      const gameServer = {
-        ipAddress: '10.1.1.1',
-        currentMemory: 100,
-        status: 'ACTIVE',
-      };
-      await createGameServer(gameServer);
-      const game = await startGame(owner, club, holdemGameInput);
-      const playerId = (await getPlayerById(owner)).id;
-      const gameId = (await getGameById(owner, game.gameId)).id;
-      const clubId = (await getClubById(owner, club)).id;
-      const messageInput = {
-        clubId: clubId,
-        playerId: playerId,
-        gameId: gameId,
-        buyIn: 100.0,
-        status: 'PLAYING',
-        seatNo: 1,
-      };
-      await saveChipsData(messageInput);
-      handData.GameNum = game.gameId;
-      handData.ClubId = club;
-      handData.Result.pot_winners[0].winners[0].player = playerId;
-      handData.Result.summary[0].player = playerId;
+      const [
+        clubId,
+        playerId,
+        gameId,
+        playerUuid,
+        clubUuid,
+        gameUuid,
+      ] = await createClubAndStartGame();
+      flopHand.handNum = 1;
+      flopHand.gameNum = gameId;
+      flopHand.clubId = clubId;
+      flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
+      flopHand.handResult.balanceAfterHand[0].playerId = playerId;
+      flopHand.handResult.playersInSeats = [playerId];
       for (let i = 1; i < 5; i++) {
-        handData.HandNum = i.toString();
-        await saveHandData(handData);
+        flopHand.handNum = i;
+        await saveHandData(flopHand);
       }
-      const handHistory = await getLastHandHistory(owner, {
-        clubId: club,
-        gameNum: game.gameId,
+      const handHistory = await getLastHandHistory(playerUuid, {
+        clubId: clubUuid,
+        gameNum: gameUuid,
       });
       expect(handHistory.gameType).toBe('HOLDEM');
-      expect(handHistory.wonAt).toBe('SHOWDOWN');
-      expect(handHistory.handNum).toBe('4');
+      expect(handHistory.wonAt).toBe('FLOP');
+      expect(handHistory.handNum).toBe(4);
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();
@@ -362,49 +400,27 @@ describe('Hand server APIs', () => {
 
   test('Get all hand history', async () => {
     try {
-      const owner = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc',
-        },
-      });
-      expect(owner).not.toBeNull();
-      const club = await createClub(owner, {
-        name: 'club_name',
-        description: 'poker players gather',
-        ownerUuid: owner,
-      });
-      expect(club).not.toBeNull();
-      const gameServer = {
-        ipAddress: '10.1.1.1',
-        currentMemory: 100,
-        status: 'ACTIVE',
-      };
-      await createGameServer(gameServer);
-      const game = await startGame(owner, club, holdemGameInput);
-      const playerId = (await getPlayerById(owner)).id;
-      const gameId = (await getGameById(owner, game.gameId)).id;
-      const clubId = (await getClubById(owner, club)).id;
-      const messageInput = {
-        clubId: clubId,
-        playerId: playerId,
-        gameId: gameId,
-        buyIn: 100.0,
-        status: 'PLAYING',
-        seatNo: 1,
-      };
-      await saveChipsData(messageInput);
-      handData.GameNum = game.gameId;
-      handData.ClubId = club;
-      handData.Result.pot_winners[0].winners[0].player = playerId;
-      handData.Result.summary[0].player = playerId;
+      const [
+        clubId,
+        playerId,
+        gameId,
+        playerUuid,
+        clubUuid,
+        gameUuid,
+      ] = await createClubAndStartGame();
+      flopHand.handNum = 1;
+      flopHand.gameNum = gameId;
+      flopHand.clubId = clubId;
+      flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
+      flopHand.handResult.balanceAfterHand[0].playerId = playerId;
+      flopHand.handResult.playersInSeats = [playerId];
       for (let i = 1; i < 5; i++) {
-        handData.HandNum = i.toString();
-        await saveHandData(handData);
+        flopHand.handNum = i;
+        await saveHandData(flopHand);
       }
-      const handHistory = await getAllHandHistory(owner, {
-        clubId: club,
-        gameNum: game.gameId,
+      const handHistory = await getAllHandHistory(playerUuid, {
+        clubId: clubUuid,
+        gameNum: gameUuid,
       });
       expect(handHistory).toHaveLength(4);
     } catch (err) {
@@ -415,55 +431,33 @@ describe('Hand server APIs', () => {
 
   test('Get all hand history pagination', async () => {
     try {
-      const owner = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc',
-        },
-      });
-      expect(owner).not.toBeNull();
-      const club = await createClub(owner, {
-        name: 'club_name',
-        description: 'poker players gather',
-        ownerUuid: owner,
-      });
-      expect(club).not.toBeNull();
-      const gameServer = {
-        ipAddress: '10.1.1.1',
-        currentMemory: 100,
-        status: 'ACTIVE',
-      };
-      await createGameServer(gameServer);
-      const game = await startGame(owner, club, holdemGameInput);
-      const playerId = (await getPlayerById(owner)).id;
-      const gameId = (await getGameById(owner, game.gameId)).id;
-      const clubId = (await getClubById(owner, club)).id;
-      const messageInput = {
-        clubId: clubId,
-        playerId: playerId,
-        gameId: gameId,
-        buyIn: 100.0,
-        status: 'PLAYING',
-        seatNo: 1,
-      };
-      await saveChipsData(messageInput);
-      handData.GameNum = game.gameId;
-      handData.ClubId = club;
-      handData.Result.pot_winners[0].winners[0].player = playerId;
-      handData.Result.summary[0].player = playerId;
+      const [
+        clubId,
+        playerId,
+        gameId,
+        playerUuid,
+        clubUuid,
+        gameUuid,
+      ] = await createClubAndStartGame();
+      flopHand.handNum = 1;
+      flopHand.gameNum = gameId;
+      flopHand.clubId = clubId;
+      flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
+      flopHand.handResult.balanceAfterHand[0].playerId = playerId;
+      flopHand.handResult.playersInSeats = [playerId];
       for (let i = 1; i < 17; i++) {
-        handData.HandNum = i.toString();
-        await saveHandData(handData);
+        flopHand.handNum = i;
+        await saveHandData(flopHand);
       }
-      const handHistory = await getAllHandHistory(owner, {
-        clubId: club,
-        gameNum: game.gameId,
+      const handHistory = await getAllHandHistory(playerUuid, {
+        clubId: clubUuid,
+        gameNum: gameUuid,
       });
       expect(handHistory).toHaveLength(10);
       const lastHand = handHistory[9];
-      const handHistory1 = await getAllHandHistory(owner, {
-        clubId: club,
-        gameNum: game.gameId,
+      const handHistory1 = await getAllHandHistory(playerUuid, {
+        clubId: clubUuid,
+        gameNum: gameUuid,
         page: {
           prev: lastHand.pageId,
           count: 5,
@@ -478,49 +472,27 @@ describe('Hand server APIs', () => {
 
   test('Get my winning hands', async () => {
     try {
-      const owner = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc',
-        },
-      });
-      expect(owner).not.toBeNull();
-      const club = await createClub(owner, {
-        name: 'club_name',
-        description: 'poker players gather',
-        ownerUuid: owner,
-      });
-      expect(club).not.toBeNull();
-      const gameServer = {
-        ipAddress: '10.1.1.1',
-        currentMemory: 100,
-        status: 'ACTIVE',
-      };
-      await createGameServer(gameServer);
-      const game = await startGame(owner, club, holdemGameInput);
-      const playerId = (await getPlayerById(owner)).id;
-      const gameId = (await getGameById(owner, game.gameId)).id;
-      const clubId = (await getClubById(owner, club)).id;
-      const messageInput = {
-        clubId: clubId,
-        playerId: playerId,
-        gameId: gameId,
-        buyIn: 100.0,
-        status: 'PLAYING',
-        seatNo: 1,
-      };
-      await saveChipsData(messageInput);
-      handData.GameNum = game.gameId;
-      handData.ClubId = club;
-      handData.Result.pot_winners[0].winners[0].player = playerId;
-      handData.Result.summary[0].player = playerId;
+      const [
+        clubId,
+        playerId,
+        gameId,
+        playerUuid,
+        clubUuid,
+        gameUuid,
+      ] = await createClubAndStartGame();
+      flopHand.handNum = 1;
+      flopHand.gameNum = gameId;
+      flopHand.clubId = clubId;
+      flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
+      flopHand.handResult.balanceAfterHand[0].playerId = playerId;
+      flopHand.handResult.playersInSeats = [playerId];
       for (let i = 1; i < 5; i++) {
-        handData.HandNum = i.toString();
-        await saveHandData(handData);
+        flopHand.handNum = i;
+        await saveHandData(flopHand);
       }
-      const winningHands = await getMyWinningHands(owner, {
-        clubId: club,
-        gameNum: game.gameId,
+      const winningHands = await getMyWinningHands(playerUuid, {
+        clubId: clubUuid,
+        gameNum: gameUuid,
       });
       expect(winningHands).toHaveLength(4);
       winningHands.forEach(element => {
@@ -534,67 +506,39 @@ describe('Hand server APIs', () => {
 
   test('Get my winning hands pagination', async () => {
     try {
-      const owner = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc',
-        },
-      });
-      expect(owner).not.toBeNull();
-      const club = await createClub(owner, {
-        name: 'club_name',
-        description: 'poker players gather',
-        ownerUuid: owner,
-      });
-      expect(club).not.toBeNull();
-      const gameServer = {
-        ipAddress: '10.1.1.1',
-        currentMemory: 100,
-        status: 'ACTIVE',
-      };
-      await createGameServer(gameServer);
-      const game = await startGame(owner, club, holdemGameInput);
-      const playerId = (await getPlayerById(owner)).id;
-      const gameId = (await getGameById(owner, game.gameId)).id;
-      const clubId = (await getClubById(owner, club)).id;
-      const messageInput = {
-        clubId: clubId,
-        playerId: playerId,
-        gameId: gameId,
-        buyIn: 100.0,
-        status: 'PLAYING',
-        seatNo: 1,
-      };
-      await saveChipsData(messageInput);
-      handData.GameNum = game.gameId;
-      handData.ClubId = club;
-      handData.Result.pot_winners[0].winners[0].player = playerId;
-      handData.Result.summary[0].player = playerId;
+      const [
+        clubId,
+        playerId,
+        gameId,
+        playerUuid,
+        clubUuid,
+        gameUuid,
+      ] = await createClubAndStartGame();
+      flopHand.handNum = 1;
+      flopHand.gameNum = gameId;
+      flopHand.clubId = clubId;
+      flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
+      flopHand.handResult.balanceAfterHand[0].playerId = playerId;
+      flopHand.handResult.playersInSeats = [playerId];
       for (let i = 1; i < 17; i++) {
-        handData.HandNum = i.toString();
-        await saveHandData(handData);
+        flopHand.handNum = i;
+        await saveHandData(flopHand);
       }
-      const winningHands = await getMyWinningHands(owner, {
-        clubId: club,
-        gameNum: game.gameId,
+      const winningHands = await getMyWinningHands(playerUuid, {
+        clubId: clubUuid,
+        gameNum: gameUuid,
       });
       expect(winningHands).toHaveLength(10);
-      winningHands.forEach(element => {
-        expect(element.playerId).toBe(playerId);
-      });
       const lastHand = winningHands[9];
-      const winningHands1 = await getMyWinningHands(owner, {
-        clubId: club,
-        gameNum: game.gameId,
+      const winningHands1 = await getMyWinningHands(playerUuid, {
+        clubId: clubUuid,
+        gameNum: gameUuid,
         page: {
           prev: lastHand.pageId,
           count: 5,
         },
       });
       expect(winningHands1).toHaveLength(5);
-      winningHands1.forEach(element => {
-        expect(element.playerId).toBe(playerId);
-      });
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();
@@ -603,50 +547,27 @@ describe('Hand server APIs', () => {
 
   test('Save starred hand', async () => {
     try {
-      const owner = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc',
-        },
-      });
-      expect(owner).not.toBeNull();
-      const club = await createClub(owner, {
-        name: 'club_name',
-        description: 'poker players gather',
-        ownerUuid: owner,
-      });
-      expect(club).not.toBeNull();
-      const gameServer = {
-        ipAddress: '10.1.1.1',
-        currentMemory: 100,
-        status: 'ACTIVE',
-      };
-      await createGameServer(gameServer);
-      const game = await startGame(owner, club, holdemGameInput);
-      const playerId = (await getPlayerById(owner)).id;
-      const gameId = (await getGameById(owner, game.gameId)).id;
-      const clubId = (await getClubById(owner, club)).id;
-      const messageInput = {
-        clubId: clubId,
-        playerId: playerId,
-        gameId: gameId,
-        buyIn: 100.0,
-        status: 'PLAYING',
-        seatNo: 1,
-      };
-      await saveChipsData(messageInput);
-      handData.HandNum = '1';
-      handData.GameNum = game.gameId;
-      handData.ClubId = club;
-      handData.Result.pot_winners[0].winners[0].player = playerId;
-      handData.Result.summary[0].player = playerId;
-      const resp = await saveHandData(handData);
+      const [
+        clubId,
+        playerId,
+        gameId,
+        playerUuid,
+        clubUuid,
+        gameUuid,
+      ] = await createClubAndStartGame();
+      flopHand.handNum = 1;
+      flopHand.gameNum = gameId;
+      flopHand.clubId = clubId;
+      flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
+      flopHand.handResult.balanceAfterHand[0].playerId = playerId;
+      flopHand.handResult.playersInSeats = [playerId];
+      const resp = await saveHandData(flopHand);
       expect(resp).toBe(true);
 
-      const starredHand = await saveStarredHand(owner, {
-        clubId: club,
-        gameNum: game.gameId,
-        handNum: '1',
+      const starredHand = await saveStarredHand(playerUuid, {
+        clubId: clubUuid,
+        gameNum: gameUuid,
+        handNum: 1,
       });
       expect(starredHand).toBe(true);
     } catch (err) {
@@ -657,52 +578,30 @@ describe('Hand server APIs', () => {
 
   test('Get starred hands', async () => {
     try {
-      const owner = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc',
-        },
-      });
-      expect(owner).not.toBeNull();
-      const club = await createClub(owner, {
-        name: 'club_name',
-        description: 'poker players gather',
-        ownerUuid: owner,
-      });
-      expect(club).not.toBeNull();
-      const gameServer = {
-        ipAddress: '10.1.1.1',
-        currentMemory: 100,
-        status: 'ACTIVE',
-      };
-      await createGameServer(gameServer);
-      const game = await startGame(owner, club, holdemGameInput);
-      const playerId = (await getPlayerById(owner)).id;
-      const gameId = (await getGameById(owner, game.gameId)).id;
-      const clubId = (await getClubById(owner, club)).id;
-      const messageInput = {
-        clubId: clubId,
-        playerId: playerId,
-        gameId: gameId,
-        buyIn: 100.0,
-        status: 'PLAYING',
-        seatNo: 1,
-      };
-      await saveChipsData(messageInput);
-      handData.GameNum = game.gameId;
-      handData.ClubId = club;
-      handData.Result.pot_winners[0].winners[0].player = playerId;
-      handData.Result.summary[0].player = playerId;
+      const [
+        clubId,
+        playerId,
+        gameId,
+        playerUuid,
+        clubUuid,
+        gameUuid,
+      ] = await createClubAndStartGame();
+      flopHand.gameNum = gameId;
+      flopHand.clubId = clubId;
+      flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
+      flopHand.handResult.balanceAfterHand[0].playerId = playerId;
+      flopHand.handResult.playersInSeats = [playerId];
       for (let i = 1; i < 30; i++) {
-        handData.HandNum = i.toString();
-        await saveHandData(handData);
-        await saveStarredHand(owner, {
-          clubId: club,
-          gameNum: game.gameId,
-          handNum: i.toString(),
+        flopHand.handNum = i;
+        await saveHandData(flopHand);
+        await saveStarredHand(playerUuid, {
+          clubId: clubUuid,
+          gameNum: gameUuid,
+          handNum: i,
         });
       }
-      const starredHands = await getAllStarredHands(owner, {});
+
+      const starredHands = await getAllStarredHands(playerUuid, {});
       expect(starredHands).toHaveLength(25);
     } catch (err) {
       logger.error(JSON.stringify(err));

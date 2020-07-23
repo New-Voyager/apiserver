@@ -5,7 +5,7 @@ enum WonAtStatus {
   FLOP
   TURN
   RIVER
-  SHOWDOWN
+  SHOW_DOWN
 }
 
 enum GameType {
@@ -17,9 +17,9 @@ enum GameType {
 
 type HandHistory {
   pageId: Int
-  clubId: String!
-  gameNum: String!
-  handNum: String!
+  clubId: Int!
+  gameNum: Int!
+  handNum: Int!
   gameType: GameType!
   wonAt: WonAtStatus!
   showDown: Boolean!
@@ -35,9 +35,9 @@ type HandHistory {
 
 type HandWinners {
   pageId: Int
-  clubId: String!
-  gameNum: String!
-  handNum: String!
+  clubId: Int!
+  gameNum: Int!
+  handNum: Int!
   isHigh: Boolean!
   winningCards: String
   winningRank: Int
@@ -47,9 +47,9 @@ type HandWinners {
 
 type StarredHands {
   playerId: Int!
-  clubId: String!
-  gameNum: String!
-  handNum: String!
+  clubId: Int!
+  gameNum: Int!
+  handNum: Int!
   handHistory: HandHistory!
 }
 

@@ -10,52 +10,114 @@ const logger = getLogger('promotion');
 
 const SERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
-const handData = {
-  ClubId: '',
-  GameNum: '',
-  HandNum: '1',
-  Players: [1000, 1001, 20001, 30001, 40001],
-  GameType: 'HOLDEM',
-  StartedAt: '2020-06-30T00:02:10',
-  EndedAt: '2020-06-30T00:04:00',
-  Result: {
-    pot_winners: [
-      {
-        pot: 0,
-        amount: 186.0,
-        winners: [
+const flopHandWithPromotions = {
+  clubId: 1,
+  gameNum: 2,
+  handNum: 1,
+  messageType: 'RESULT',
+  handStatus: 'RESULT',
+  handResult: {
+    preflopActions: {
+      pot: 7,
+      actions: [
+        {
+          seatNo: 5,
+          amount: 1,
+        },
+        {
+          seatNo: 8,
+          action: 'BB',
+          amount: 2,
+        },
+        {
+          seatNo: 1,
+          action: 'CALL',
+          amount: 2,
+        },
+        {
+          seatNo: 5,
+          action: 'CALL',
+          amount: 2,
+        },
+        {
+          seatNo: 8,
+          action: 'CHECK',
+        },
+      ],
+    },
+    flopActions: {
+      pot: 8,
+      actions: [
+        {
+          seatNo: 5,
+          action: 'CHECK',
+        },
+        {
+          seatNo: 8,
+          action: 'BET',
+          amount: 2,
+        },
+        {
+          seatNo: 1,
+          action: 'CALL',
+          amount: 2,
+        },
+        {
+          seatNo: 5,
+          action: 'RAISE',
+          amount: 4,
+        },
+        {
+          seatNo: 8,
+          action: 'FOLD',
+        },
+        {
+          seatNo: 1,
+          action: 'FOLD',
+        },
+      ],
+    },
+    turnActions: {},
+    riverActions: {},
+    potWinners: {
+      '0': {
+        hiWinners: [
           {
-            player: 1,
-            received: 93.0,
-            rank: 'TWO PAIR',
-            rank_num: 1203,
-            winning_cards: ['Ah', 'As', 'Kh', 'Ks', 'Qh'],
+            seatNo: 5,
+            amount: 14,
           },
         ],
       },
-    ],
-    won_at: 'SHOWDOWN',
-    showdown: true,
-    winning_rank: 'TWO PAIR',
-    rank_num: 1023,
-    winning_cards: ['Ah', 'As', 'Kh', 'Kc', 'Qh'],
-    total_pot: 186.0,
-    rake: 2.0,
-    qualifying_promotion_winner: {
-      promo_id: 123456,
-      player_id: 1,
-      cards: ['7h', '7s', '7c', 'Ks', 'Kh'],
-      rank: 150,
     },
-    summary: [
+    wonAt: 'FLOP',
+    tips: 2.0,
+    balanceAfterHand: [
       {
-        player: 1000,
-        balance: 85.0,
-        change: 0.0,
+        seatNo: 1,
+        playerId: 1,
+        balance: 96,
       },
     ],
+    handStartedAt: '1595385736',
+    balanceBeforeHand: [
+      {
+        seatNo: 1,
+        playerId: 1,
+        balance: 100,
+      },
+    ],
+    handEndedAt: '1595385739',
+    playersInSeats: [1, 0, 0, 0, 2, 0, 0, 3, 0],
+    qualifyingPromotionWinner: {
+      promoId: 123456,
+      playerId: 1,
+      cards: [200, 196, 8, 132, 1],
+      cardsStr: '[ A♣  A♦  2♣  T♦  2♠ ]',
+      rank: 150,
+    },
   },
 };
+
 const holdemGameInput = {
   gameType: 'HOLDEM',
   title: 'Friday game',
@@ -224,7 +286,6 @@ describe('Promotion APIs', () => {
   });
 
   test('Save hand with promotion', async () => {
-    const promotionCount = 20;
     const gameServer = {
       ipAddress: '10.1.1.5',
       currentMemory: 100,
@@ -268,29 +329,39 @@ describe('Promotion APIs', () => {
       mutation: promotionutils.assignPromotion,
     });
 
-    handData.HandNum = '1';
-    handData.GameNum = game.gameId;
-    handData.ClubId = clubId;
-    handData.Result.pot_winners[0].winners[0].player = player;
-    handData.Result.summary[0].player = player;
-    handData.Result.qualifying_promotion_winner.player_id = player;
-    handData.Result.qualifying_promotion_winner.promo_id =
+    flopHandWithPromotions.handNum = 1;
+    flopHandWithPromotions.gameNum = gameID;
+    flopHandWithPromotions.clubId = clubID;
+    flopHandWithPromotions.handResult.potWinners[0].hiWinners[0].seatNo = 1;
+    flopHandWithPromotions.handResult.balanceAfterHand[0].playerId = player;
+    flopHandWithPromotions.handResult.playersInSeats = [player];
+    flopHandWithPromotions.handResult.qualifyingPromotionWinner.playerId = player;
+    flopHandWithPromotions.handResult.qualifyingPromotionWinner.promoId =
       promotion.data.data.id;
-    handData.Result.qualifying_promotion_winner.rank = 4;
+    flopHandWithPromotions.handResult.qualifyingPromotionWinner.rank = 4;
 
     try {
-      const resp = await axios.post(`${SERVER_API}/save-hand`, handData);
+      const resp = await axios.post(
+        `${SERVER_API}/save-hand`,
+        flopHandWithPromotions
+      );
       expect(resp.status).toBe(200);
       expect(resp.data.status).toBe('OK');
 
-      handData.HandNum = '2';
-      const resp1 = await axios.post(`${SERVER_API}/save-hand`, handData);
+      flopHandWithPromotions.handNum = 2;
+      const resp1 = await axios.post(
+        `${SERVER_API}/save-hand`,
+        flopHandWithPromotions
+      );
       expect(resp1.status).toBe(200);
       expect(resp1.data.status).toBe('OK');
 
-      handData.HandNum = '3';
-      handData.Result.qualifying_promotion_winner.rank = 3;
-      const resp3 = await axios.post(`${SERVER_API}/save-hand`, handData);
+      flopHandWithPromotions.handNum = 3;
+      flopHandWithPromotions.handResult.qualifyingPromotionWinner.rank = 3;
+      const resp3 = await axios.post(
+        `${SERVER_API}/save-hand`,
+        flopHandWithPromotions
+      );
       expect(resp3.status).toBe(200);
       expect(resp3.data.status).toBe('OK');
     } catch (err) {
