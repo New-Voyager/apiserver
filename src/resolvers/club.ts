@@ -192,6 +192,27 @@ export async function joinClub(playerId: string, clubId: string) {
   return ClubMemberStatus[status];
 }
 
+export async function deleteClub(playerId: string, clubId: string) {
+  const errors = new Array<string>();
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  if (clubId === '') {
+    errors.push('clubId is a required field');
+  }
+  // ensure this player is the owner of the club
+  if (!(await ClubRepository.isClubOwner(clubId, playerId))) {
+    throw new Error('Unauthorized. Only owner can delete the club');
+  }
+
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+
+  await ClubRepository.deleteClub(clubId);
+  return true;
+}
+
 export async function approveMember(
   playerId: string,
   clubId: string,
@@ -306,6 +327,9 @@ const resolvers: any = {
   Mutation: {
     createClub: async (parent, args, ctx, info) => {
       return createClub(ctx.req.playerId, args.club);
+    },
+    deleteClub: async (parent, args, ctx, info) => {
+      return deleteClub(ctx.req.playerId, args.clubId);
     },
     updateClub: async (parent, args, ctx, info) => {
       return updateClub(ctx.req.playerId, args.clubId, args.club);

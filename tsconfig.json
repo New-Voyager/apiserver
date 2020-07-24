@@ -2,6 +2,7 @@
   "extends": "./node_modules/gts/tsconfig-google.json",
   "compilerOptions": {
     "rootDir": ".",
+    "lib": ["DOM"],
     "outDir": "build",
     "noImplicitAny": false,                 /* Raise error on expressions and declarations with an implied 'any' type. */
     "esModuleInterop": true,                   /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
@@ -13,9 +14,11 @@
       "@src/*": ["src/*"],
     }
   },
+  
   "include": [
     "*.ts",
     "src/**/*.ts",
-    "test/**/*.ts"
+    "test/**/*.ts",
+    "script-tests/**/*.ts"
   ]
 }

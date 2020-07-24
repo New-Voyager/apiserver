@@ -85,6 +85,22 @@
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "port": 9229
-    }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch Script tests",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register/transpile-only"],
+
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}",
+      "args": ["script-tests/testdriver.ts"],
+      "outFiles": [
+        "${workspaceFolder}/**/*.js"
+      ],
+    }    
   ]
 }

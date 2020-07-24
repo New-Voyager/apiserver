@@ -1,5 +1,5 @@
 import {v4 as uuidv4} from 'uuid';
-import {Club, ClubMember, ClubMemberStatus} from '@src/entity/club';
+import {Club, ClubMember, ClubMemberStatus, ClubStatus} from '@src/entity/club';
 import {Player} from '@src/entity/player';
 import {
   getConnection,
@@ -91,6 +91,7 @@ class ClubRepositoryImpl {
     club.name = input.name;
     club.description = input.description;
     club.displayId = clubId;
+    club.status = ClubStatus.ACTIVE;
     const ownerObj = await playerRepository.findOne({
       where: {uuid: input.ownerUuid},
     });
@@ -114,6 +115,54 @@ class ClubRepositoryImpl {
     });
 
     return club.displayId;
+  }
+
+  public async deleteClub(clubId: string) {
+    const clubRepository = getRepository(Club);
+    const club = await clubRepository.findOne({where: {displayId: clubId}});
+    if (!club) {
+      throw new Error(`Club: ${clubId} does not exist`);
+    }
+    // we won't delete the club
+    // we will simply defunct the club
+    club.status = ClubStatus.DEFUNCT;
+    clubRepository.save(club);
+  }
+
+  // This is an internal API
+  public async deleteClubByName(clubName: string) {
+    const clubRepository = getRepository(Club);
+    const clubMemberRepository = getRepository(ClubMember);
+    const club = await clubRepository.findOne({where: {name: clubName}});
+    if (club) {
+      await getManager().transaction(async transactionalEntityManager => {
+        await getConnection()
+          .createQueryBuilder()
+          .delete()
+          .from(ClubMember)
+          .where('club_id = :id', {id: club.id})
+          .execute();
+        clubRepository.delete(club);
+      });
+    }
+  }
+
+  public async isClubOwner(clubId: string, playerId: string) {
+    const clubRepository = getRepository(Club);
+    const club = await clubRepository.findOne({where: {displayId: clubId}});
+    if (!club) {
+      throw new Error(`Club: ${clubId} does not exist`);
+    }
+
+    const owner: Player | undefined = await Promise.resolve(club.owner);
+    if (!owner) {
+      throw new Error('Unexpected. There is no owner for the club');
+    }
+
+    if (owner.uuid == playerId) {
+      return true;
+    }
+    return false;
   }
 
   public async joinClub(

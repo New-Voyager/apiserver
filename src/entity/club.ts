@@ -14,6 +14,12 @@ import {
 } from './dbaware';
 import {Player} from './player';
 
+export enum ClubStatus {
+  UNKNOWN,
+  ACTIVE,
+  DEFUNCT,
+}
+
 @Entity()
 export class Club {
   @PrimaryGeneratedColumn()
@@ -28,6 +34,9 @@ export class Club {
   @Column()
   public description!: string;
 
+  @Column()
+  public status!: ClubStatus;
+
   @ManyToOne(type => Player, {nullable: false, eager: true})
   @JoinColumn()
   public owner!: Player | Promise<Player | undefined>;
@@ -38,7 +47,7 @@ export class Club {
 }
 
 export enum ClubMemberStatus {
-  UNKNOWNN,
+  UNKNOWN,
   INVITED,
   PENDING,
   DENIED,
