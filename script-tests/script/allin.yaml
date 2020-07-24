@@ -1,0 +1,199 @@
+#1. Player 1 (arun) registers
+#2. Player 2 (arjun) registers
+#3. Player 3 (sam) registers
+#4. Player 4 (bala) registers
+#5. Bala creates a club. 
+#6. arun, arjun, sam requests to join the club.
+#7. Bala should see the arun, arjun, same and bala are "waiting for approval"
+#8. Bala approves arun, arjun and sam requests
+#9. All the players in the club (verify using clubMembers API)
+#10. Start a new game (Texas Holdem)
+#11. arun sits in with 100.00
+#12. arjun sits in with 100.00
+#13. sam sits in with 100.00
+
+cleanup:
+  steps:
+    - 
+      delete-club:   # delete clubs and club members
+        name: chennai
+
+# register players if doesn't exist and store the player.id in a dictionary
+setup:
+  steps:
+    -
+      register-players: 
+        - name: arun
+          deviceId: 1edad270-1926-4634-b89b-9d5a62586d9e
+        - name: arjun
+          deviceId: c3744887-51d7-4ab9-b01b-0ea274577b04
+        - name: sam
+          deviceId: 1d43342c-84bf-4928-b5b4-ece904b66dd0
+        - name: bala
+          deviceId: 8ba53577-1318-4da3-adbd-0796234e405a
+
+    -
+      # create a club and pass the owner in the Auth header
+      # store clubId in a dictionary (key: chennai.clubId)
+      create-club:
+        name: chennai
+        owner: bala
+
+    # use joinClub API and auth header to join each player
+    - 
+      join-club:
+        - arun
+        - arjun
+        - sam
+
+    # verify the players are waiting to be approved  (PENDING)
+    - 
+      verify-club-members:
+        - name: arun
+          status: PENDING
+        - name: arjun
+          status: PENDING
+        - name: sam
+          status: PENDING
+
+    # approve members with auth header (bala,club.owner)
+    - 
+      approve-club-members:
+        owner: bala
+        members:
+          - arun
+          - arjun
+          - sam
+game:
+  steps:
+    # configure game
+    -
+      config:
+        club: chennai   # preserve the club.id in current.clubId
+        title: test1
+        gameType: HOLDEM
+        smallBlind: 1.0
+        bigBlind: 2.0
+        utgStraddleAllowed: true
+        straddleBet: 4.0
+        minPlayers: 2
+        maxPlayers: 9
+        gameLength: 60
+        buyInApproval: false
+        rakePercentage: 5.0
+        rakeCap: 5.0
+        buyInMin: 100
+        buyInMax: 300
+
+        # after the game is created, store the gameNum in current.gameNum
+    
+    # players buy-in
+    -
+      buyin:    # /internal/buy-chips
+        -
+          playerId: arun.id
+          seatNo: 1
+          buyChips: 100
+        -
+          playerId: arjun.id
+          seatNo: 5
+          buyChips: 100
+        -
+          playerId: sam.id
+          seatNo: 7
+          buyChips: 100
+        -
+          playerId: bala.id
+          seatNo: 8
+          buyChips: 100
+
+    -
+      hands:
+        -
+          save:   # /internal/save-hand
+            clubId: current.clubId    # use current.clubId captured in early steps
+            gameNum: current.gameNum  # use current.gameNum captured in early steps
+            handNum: 1
+            messageType: RESULT
+            handStatus: RESULT
+            playerInSeats: [arun.id, 0, 0, 0, arjun.id, 0, sam.id, bala.id, 0]
+            handStartedAt: "1595385733"
+            handEndedAt: "1595385739"
+            handResult:
+              preflopActions:
+              flopActions:
+              turnActions:
+              riverActions:
+              potWinners:
+                0:
+                  hiWinners:
+                    -
+                      seatNo: 1
+                      amount: 50
+                      winningCards: [200, 196, 8, 132, 1]
+                      winningCardsStr: "[ A♣  A♦  2♣  T♦  2♠ ]"
+                      rankStr: Two Pair
+                      rank: 1000
+                  loWinners:
+                    -
+                      seatNo: 1
+                      amount: 50
+                      winningCards: [200, 196, 8, 132, 1]
+                      winningCardsStr: "[ A♣  A♦  2♣  T♦  2♠ ]"
+                      rankStr: Two Pair
+                      rank: 1000
+              wonAt: SHOW_DOWN
+              rank: 1000
+              tips: 2.0
+              totalPot: 150
+              balanceAfterHand:
+                -
+                  seatNo: 1
+                  playerId: arun.id
+                  balance: 200
+                -
+                  seatNo: 4
+                  playerId: arjun.id
+                  balance: 50
+                -
+                  seatNo: 7
+                  playerId: sam.id
+                  balance: 50
+                -
+                  seatNo: 8
+                  playerId: bala.id
+                  balance: 0
+          # verify club balance and player balance
+          verify-balance:
+            club:
+              chennai:
+                balance: 2.0
+            players:
+              arun:
+                balance: 200
+              arjun:
+                balance: 50
+              sam:
+                balance: 50
+              bala:
+                balance: 0
+    -
+      end-game:   # /internal/game-ended
+
+    - verify-balance:
+        # verify the balance of the club
+        club:
+          chennai:
+            balance: 2.0
+
+        # verify how much each player owes chips to the club
+        # and the clubs owes to the players
+        players:
+          arun:
+            balance: 100    # borrowed 100 chips, left with 200 chips
+          arjun:
+            balance: -50    # borrowed 100 chips, left with 50 chips
+          sam:
+            balance: -50    # borrowed 100 chips, left with 50 chips
+          bala:
+            balance: -100   # borrowed 100 chips, left with 0 chips

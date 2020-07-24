@@ -19,12 +19,13 @@ type Mutation {
 type PlayerClub {
   name: String
   clubId: String
+  clubStatus: ClubStatus
   memberCount: Int
   imageId: String
   private: Boolean
 }
 
-type playerId{
+type PlayerId {
   uuid: String!
   id: Int!
   name: String!
@@ -34,5 +35,5 @@ type playerId{
 type Query {
   myClubs: [PlayerClub!]
   allPlayers: [Player!]
-  playerById: playerId!
+  playerById: PlayerId!
 }

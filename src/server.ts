@@ -9,6 +9,7 @@ import {ChipsTrackSeverAPI} from './internal/chipstrack';
 const bodyParser = require('body-parser');
 const GQL_PORT = 9501;
 import {getLogger} from '@src/utils/log';
+import {AdminAPI} from './internal/admin';
 const logger = getLogger('server');
 
 const requestContext = async ({req}) => {
@@ -82,6 +83,8 @@ function addInternalRoutes(app: any) {
   app.post('/internal/player-sit-in', ChipsTrackSeverAPI.playerSitsIn);
   app.post('/internal/game-ended', ChipsTrackSeverAPI.endGame);
   app.post('/internal/buy-chips', ChipsTrackSeverAPI.buyChips);
+  app.post('/internal/delete-club-by-name/:clubName', AdminAPI.deleteClub);
+
   app.get(
     '/internal/get-game-server/club_id/:clubId/game_num/:gameNum',
     GameServerAPI.getSpecificGameServer
