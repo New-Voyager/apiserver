@@ -80,6 +80,12 @@ export class ClubMember {
   @Column({name: 'is_owner', default: false})
   public isOwner!: boolean;
 
+  @Column({name: 'contact_info', default: ''})
+  public contactInfo!: string;
+
+  @Column({name: 'owner_notes', default: ''})
+  public ownerNotes!: string;
+
   @DbAwareColumn({name: 'last_played_date', type: 'timestamp', nullable: true})
   public lastGamePlayedDate!: Date;
 
