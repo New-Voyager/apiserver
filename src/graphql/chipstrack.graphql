@@ -1,0 +1,19 @@
+scalar DateTime
+
+type playerAmount{
+  totalBuyins: Int
+  totalWinnings: Int
+  balance: Int
+  notes: String
+  updatedAt: DateTime
+}
+
+type clubAmount{
+  balance: Int
+  updatedAt: DateTime
+}
+
+type Query {
+  clubBalance(clubId: Int!): clubAmount!
+  playerBalance(playerId: Int!, clubId: Int!): playerAmount!
+}

@@ -1,6 +1,10 @@
 import {initializeSqlLite} from './utils';
 import {createGameServer} from '../src/internal/gameserver';
 import {startGame, getGameById} from '../src/resolvers/game';
+import {
+  getClubBalanceAmount,
+  getPlayerBalanceAmount,
+} from '../src/resolvers/chipstrack';
 import {getClubById, createClub} from '../src/resolvers/club';
 import {getPlayerById, createPlayer} from '../src/resolvers/player';
 import {
@@ -10,6 +14,7 @@ import {
 } from '../src/internal/chipstrack';
 
 import {getLogger} from '../src/utils/log';
+import {getClubPlayerBalance} from '../tests/utils/chipstrack.testutils';
 const logger = getLogger('chipstrack-unit-test');
 
 const SERVER_API = 'http://localhost:9501/internal';
@@ -193,5 +198,58 @@ describe('Player Chips tracking APIs', () => {
       logger.error(JSON.stringify(e));
       expect(true).toBeFalsy();
     }
+  });
+
+  test('Club and Player Balance', async () => {
+    const ownerId = await createPlayer({
+      player: {name: 'player1', deviceId: 'test', page: {count: 20}},
+    });
+    const clubInput = {
+      name: 'bbc',
+      description: 'poker players gather',
+      ownerUuid: ownerId,
+    };
+    const clubId = await createClub(ownerId, clubInput);
+    const gameServer = {
+      ipAddress: '10.1.1.1',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    await createGameServer(gameServer);
+    const game = await startGame(ownerId, clubId, holdemGameInput);
+
+    const playerID = await getPlayerById(ownerId);
+    const clubID = await getClubById(ownerId, clubId);
+    const gameID = await getGameById(ownerId, game.gameId);
+    const input = {
+      clubId: clubID.id,
+      playerId: playerID.id,
+      gameId: gameID.id,
+      buyIn: 100.0,
+      status: 'PLAYING',
+      seatNo: 5,
+    };
+    try {
+      const resp = await saveChipsData(input);
+      expect(resp).not.toBeNull();
+    } catch (e) {
+      logger.error(JSON.stringify(e));
+      expect(true).toBeFalsy();
+    }
+
+    await endGameData({club_id: clubID.id, game_id: gameID.id});
+    const clubBalance = await getClubBalanceAmount(ownerId, {
+      clubId: clubID.id,
+    });
+    const playerBalance = await getPlayerBalanceAmount(ownerId, {
+      clubId: clubID.id,
+      playerId: playerID.id,
+    });
+    expect(clubBalance.balance).not.toBeNull();
+    expect(clubBalance.balance).not.toBeUndefined();
+    expect(clubBalance.balance).toBe(0);
+    expect(playerBalance.balance).not.toBeNull();
+    expect(playerBalance.balance).not.toBeUndefined();
+    expect(playerBalance.balance).toBe(100);
   });
 });

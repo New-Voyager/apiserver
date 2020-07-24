@@ -11,6 +11,7 @@ import {
   ClubPlayerBalance,
   ClubGameRake,
 } from '@src/entity/chipstrack';
+import {identity} from 'lodash';
 
 const logger = getLogger('chipstrack');
 const INITIAL_BUYIN_COUNT = 1;
@@ -226,6 +227,58 @@ class ChipsTrackRepositoryImpl {
       logger.error(`Error: ${JSON.stringify(e)}`);
       return new Error(JSON.stringify(e));
     }
+  }
+
+  public async getClubBalance(clubId: number): Promise<ClubBalance> {
+    const clubRepository = getRepository(Club);
+    const clubBalanceRepository = getRepository(ClubBalance);
+    const club = await clubRepository.findOne({
+      where: {id: clubId},
+    });
+    if (!club) {
+      logger.error(`Club ${clubId} is not found`);
+      throw new Error(`Club ${clubId} is not found`);
+    }
+    const clubBalance = await clubBalanceRepository.findOne({
+      where: {club: clubId},
+    });
+    if (!clubBalance) {
+      logger.error(`Club ${clubId} is not found`);
+      throw new Error(`Club ${clubId} is not found`);
+    }
+    logger.debug(clubBalance);
+    return clubBalance;
+  }
+
+  public async getPlayerBalance(
+    playerId: number,
+    clubId: number
+  ): Promise<ClubPlayerBalance> {
+    const clubRepository = getRepository(Club);
+    const playerRepository = getRepository(Player);
+    const clubPlayerBalanceRepository = getRepository(ClubPlayerBalance);
+    const club = await clubRepository.findOne({
+      where: {id: clubId},
+    });
+    const player = await playerRepository.findOne({
+      where: {id: playerId},
+    });
+    if (!club) {
+      logger.error(`Club ${clubId} is not found`);
+      throw new Error(`Club ${clubId} is not found`);
+    }
+    if (!player) {
+      logger.error(`Player ${playerId} is not found`);
+      throw new Error(`Player ${playerId} is not found`);
+    }
+    const clubPlayerBalance = await clubPlayerBalanceRepository.findOne({
+      where: {club: clubId},
+    });
+    if (!clubPlayerBalance) {
+      logger.error('Error in retreiving data');
+      throw new Error('Error in retreiving data');
+    }
+    return clubPlayerBalance;
   }
 }
 
