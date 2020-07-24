@@ -17,3 +17,8 @@ test:
 .PHONY: unit_test
 unit_test:
 	yarn unit-tests
+
+
+.PHONY: script_tests
+script_tests:
+	./run_script_tests.sh
