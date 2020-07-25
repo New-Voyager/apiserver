@@ -3,18 +3,18 @@ import {ChipsTrackRepository} from '@src/repositories/chipstrack';
 import {getLogger} from '@src/utils/log';
 const logger = getLogger('chipstrack-resolver');
 
-export async function getClubBalanceAmount(playerId: string, clubId: any) {
+export async function getClubBalanceAmount(playerId: string, data: any) {
   const errors = new Array<string>();
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  if (isNaN(clubId.clubId)) {
+  if (data.clubId === '') {
     errors.push('ClubId is a mandatory field');
   }
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
   }
-  return await ChipsTrackRepository.getClubBalance(clubId.clubId);
+  return await ChipsTrackRepository.getClubBalance(data.clubId);
 }
 
 export async function getPlayerBalanceAmount(playerId: string, data: any) {

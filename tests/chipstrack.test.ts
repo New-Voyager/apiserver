@@ -226,11 +226,10 @@ describe('Player Chips tracking APIs', () => {
       club_id: clubID,
       game_id: gameID,
     });
-    const clubBalance = await chipstrackutils.getClubBalance(playerId, clubID);
+    const clubBalance = await chipstrackutils.getClubBalance(playerId, clubId);
     const playerBalance = await chipstrackutils.getClubPlayerBalance(
       playerId,
-      clubID,
-      playerID
+      clubId
     );
     expect(clubBalance).not.toBeNull();
     expect(clubBalance).not.toBeUndefined();

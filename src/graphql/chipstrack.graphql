@@ -14,6 +14,6 @@ type clubAmount{
 }
 
 type Query {
-  clubBalance(clubId: Int!): clubAmount!
-  playerBalance(playerId: Int!, clubId: Int!): playerAmount!
+  clubBalance(clubId: String!): clubAmount!
+  playerBalance(playerId: String!, clubId: String!): playerAmount!
 }

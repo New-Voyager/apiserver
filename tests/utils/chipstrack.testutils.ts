@@ -2,7 +2,7 @@ import {resetDatabase, getClient} from './utils';
 import {gql} from 'apollo-boost';
 
 export const queryClubBalance = gql`
-  query($clubId: Int!) {
+  query($clubId: String!) {
     balance: clubBalance(clubId: $clubId) {
       balance
       updatedAt
@@ -11,7 +11,7 @@ export const queryClubBalance = gql`
 `;
 
 export const queryPlayerBalance = gql`
-  query($playerId: Int!, $clubId: Int!) {
+  query($playerId: String!, $clubId: String!) {
     balance: playerBalance(playerId: $playerId, clubId: $clubId) {
       totalBuyins
       totalWinnings
@@ -24,7 +24,7 @@ export const queryPlayerBalance = gql`
 
 export async function getClubBalance(
   playerId: string,
-  clubId: number
+  clubId: string
 ): Promise<Array<any>> {
   const playerClient = getClient(playerId);
   const resp = await playerClient.query({
@@ -37,12 +37,11 @@ export async function getClubBalance(
 
 export async function getClubPlayerBalance(
   playerId: string,
-  clubId: number,
-  playerID: number
+  clubId: string
 ): Promise<Array<any>> {
   const playerClient = getClient(playerId);
   const resp = await playerClient.query({
-    variables: {clubId: clubId, playerId: playerID},
+    variables: {clubId: clubId, playerId: playerId},
     query: queryPlayerBalance,
   });
 

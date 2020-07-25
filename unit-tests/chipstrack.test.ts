@@ -239,11 +239,11 @@ describe('Player Chips tracking APIs', () => {
 
     await endGameData({club_id: clubID.id, game_id: gameID.id});
     const clubBalance = await getClubBalanceAmount(ownerId, {
-      clubId: clubID.id,
+      clubId: clubId,
     });
     const playerBalance = await getPlayerBalanceAmount(ownerId, {
-      clubId: clubID.id,
-      playerId: playerID.id,
+      clubId: clubId,
+      playerId: ownerId,
     });
     expect(clubBalance.balance).not.toBeNull();
     expect(clubBalance.balance).not.toBeUndefined();

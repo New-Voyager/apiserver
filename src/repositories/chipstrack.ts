@@ -229,18 +229,18 @@ class ChipsTrackRepositoryImpl {
     }
   }
 
-  public async getClubBalance(clubId: number): Promise<ClubBalance> {
+  public async getClubBalance(clubId: string): Promise<ClubBalance> {
     const clubRepository = getRepository(Club);
     const clubBalanceRepository = getRepository(ClubBalance);
     const club = await clubRepository.findOne({
-      where: {id: clubId},
+      where: {displayId: clubId},
     });
     if (!club) {
       logger.error(`Club ${clubId} is not found`);
       throw new Error(`Club ${clubId} is not found`);
     }
     const clubBalance = await clubBalanceRepository.findOne({
-      where: {club: clubId},
+      where: {club: club.id},
     });
     if (!clubBalance) {
       logger.error(`Club ${clubId} is not found`);
@@ -251,17 +251,17 @@ class ChipsTrackRepositoryImpl {
   }
 
   public async getPlayerBalance(
-    playerId: number,
-    clubId: number
+    playerId: string,
+    clubId: string
   ): Promise<ClubPlayerBalance> {
     const clubRepository = getRepository(Club);
     const playerRepository = getRepository(Player);
     const clubPlayerBalanceRepository = getRepository(ClubPlayerBalance);
     const club = await clubRepository.findOne({
-      where: {id: clubId},
+      where: {displayId: clubId},
     });
     const player = await playerRepository.findOne({
-      where: {id: playerId},
+      where: {uuid: playerId},
     });
     if (!club) {
       logger.error(`Club ${clubId} is not found`);
@@ -272,7 +272,7 @@ class ChipsTrackRepositoryImpl {
       throw new Error(`Player ${playerId} is not found`);
     }
     const clubPlayerBalance = await clubPlayerBalanceRepository.findOne({
-      where: {club: clubId},
+      where: {club: club.id, player: player.id},
     });
     if (!clubPlayerBalance) {
       logger.error('Error in retreiving data');
