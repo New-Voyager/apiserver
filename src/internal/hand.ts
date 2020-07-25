@@ -64,12 +64,6 @@ function validateHandData(handData: any): Array<string> {
       ) {
         errors.push('balanceAfterHand are missing');
       }
-      if (
-        !handData.handResult.balanceBeforeHand ||
-        handData.handResult.balanceBeforeHand.length === 0
-      ) {
-        errors.push('balanceBeforeHand are missing');
-      }
     }
     if (handData.handResult.qualifyingPromotionWinner) {
       if (!handData.handResult.qualifyingPromotionWinner.promoId) {
