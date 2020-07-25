@@ -250,6 +250,6 @@ describe('Player Chips tracking APIs', () => {
     expect(clubBalance.balance).toBe(0);
     expect(playerBalance.balance).not.toBeNull();
     expect(playerBalance.balance).not.toBeUndefined();
-    expect(playerBalance.balance).toBe(100);
+    expect(playerBalance.balance).toBe(0);
   });
 });

@@ -535,7 +535,6 @@ class GameScript {
       },
       query: queryPlayerBalance,
     });
-    console.log(resp.data.balance);
     if (resp.data.balance.balance != balance.balance) {
       this.log(
         `Expected ${balance.balance} but received ${resp.data.balance.balance}`

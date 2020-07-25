@@ -185,7 +185,7 @@ describe('Player Chips tracking APIs', () => {
     expect(res.data.data[0].clubChipsTransaction.amount).toBe(0);
     expect(res.data.data[0].clubChipsTransaction.balance).toBe(0);
     expect(res.data.data[1].clubBalance.balance).toBe(0);
-    expect(res.data.data[2].clubPlayerBalance.balance).toBe(100);
+    expect(res.data.data[2].clubPlayerBalance.balance).toBe(0);
     expect(res.data.data[2].clubPlayerBalance.totalBuyins).toBe(100);
     expect(res.data.data[2].clubPlayerBalance.totalWinnings).toBe(100);
     expect(res.data.data[2].clubPlayerBalance.playerId).toBe(playerID);
@@ -236,6 +236,6 @@ describe('Player Chips tracking APIs', () => {
     expect(clubBalance).toBe(0);
     expect(playerBalance).not.toBeNull();
     expect(playerBalance).not.toBeUndefined();
-    expect(playerBalance).toBe(100);
+    expect(playerBalance).toBe(0);
   });
 });

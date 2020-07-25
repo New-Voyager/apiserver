@@ -206,7 +206,7 @@ class ChipsTrackRepositoryImpl {
             clubPlayerBalance.player = playerChip.player;
             clubPlayerBalance.notes = '';
           }
-          clubPlayerBalance.balance += playerChip.stack;
+          clubPlayerBalance.balance += (playerChip.stack - playerChip.buyIn);
           clubPlayerBalance.totalBuyins += playerChip.buyIn;
           clubPlayerBalance.totalWinnings += playerChip.stack;
           const resp2 = await clubPlayerBalanceRepository.save(
