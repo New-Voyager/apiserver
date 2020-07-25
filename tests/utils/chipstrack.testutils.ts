@@ -22,6 +22,33 @@ export const queryPlayerBalance = gql`
   }
 `;
 
+export const queryPlayerTrack = gql`
+  query($playerId: String!, $clubId: String!, $gameId: String!) {
+    balance: playerGametrack(
+      clubId: $clubId
+      gameId: $gameId
+      playerId: $playerId
+    ) {
+      buyIn
+      stack
+      seatNo
+      noOfBuyins
+      hhRank
+      hhHandNum
+    }
+  }
+`;
+
+export const queryClubTrack = gql`
+  query($clubId: String!, $gameId: String!) {
+    balance: clubGameRake(clubId: $clubId, gameId: $gameId) {
+      rake
+      promotion
+      lastHandNum
+    }
+  }
+`;
+
 export async function getClubBalance(
   playerId: string,
   clubId: string
@@ -46,4 +73,32 @@ export async function getClubPlayerBalance(
   });
 
   return resp.data.balance.balance;
+}
+
+export async function getPlayerTrack(
+  playerId: string,
+  clubId: string,
+  gameId: string
+) {
+  const playerClient = getClient(playerId);
+  const resp = await playerClient.query({
+    variables: {playerId: playerId, clubId: clubId, gameId: gameId},
+    query: queryPlayerTrack,
+  });
+
+  return resp.data.balance.stack;
+}
+
+export async function getClubTrack(
+  playerId: string,
+  clubId: string,
+  gameId: string
+) {
+  const playerClient = getClient(playerId);
+  const resp = await playerClient.query({
+    variables: {clubId: clubId, gameId: gameId},
+    query: queryClubTrack,
+  });
+
+  return resp.data.balance.rake;
 }

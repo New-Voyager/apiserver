@@ -179,9 +179,9 @@ class GameScript {
       if (handData['save']) {
         await this.saveHand(handData['save']);
       }
-      // if(handData['verify-balance']) {
-      //   await this.verifyBalances(handData['verify-balance']);
-      // }
+      if (handData['verify-game-stack']) {
+        await this.verifyGameStacks(handData['verify-game-stack']);
+      }
     }
   }
 
@@ -194,9 +194,24 @@ class GameScript {
     }
   }
 
+  protected async verifyGameStacks(balance: any) {
+    if (balance['club']) {
+      await this.verifyClubStack(balance['club']);
+    }
+    if (balance['players']) {
+      await this.verifyPlayersStack(balance['players']);
+    }
+  }
+
   protected async verifyPlayerBalances(playersBalance: any) {
     for (const balance of playersBalance) {
       await this.verifyPlayerBalance(balance);
+    }
+  }
+
+  protected async verifyPlayersStack(playersBalance: any) {
+    for (const balance of playersBalance) {
+      await this.verifyPlayerStack(balance);
     }
   }
 
@@ -539,7 +554,71 @@ class GameScript {
       this.log(
         `Expected ${balance.balance} but received ${resp.data.balance.balance}`
       );
-      throw new Error('Club balance verification failed');
+      throw new Error('Player balance verification failed');
+    }
+  }
+
+  protected async verifyClubStack(balance: any): Promise<any> {
+    this.log(`verify club stack: ${JSON.stringify(balance)}`);
+    const queryClubTrack = gql`
+      query($clubId: String!, $gameId: String!) {
+        balance: clubGameRake(clubId: $clubId, gameId: $gameId) {
+          rake
+          promotion
+          lastHandNum
+        }
+      }
+    `;
+    const resp = await getClient(
+      this.registeredPlayers[this.clubCreated.owner].playerUuid
+    ).query({
+      variables: {
+        clubId: this.clubCreated.clubUuid,
+        gameId: this.gameCreated.gameUuid,
+      },
+      query: queryClubTrack,
+    });
+    if (resp.data.balance.rake != balance.balance) {
+      this.log(
+        `Expected ${balance.balance} but received ${resp.data.balance.rake}`
+      );
+      throw new Error('Club stack verification failed');
+    }
+  }
+
+  protected async verifyPlayerStack(balance: any): Promise<any> {
+    this.log(`Verify player stack: ${JSON.stringify(balance)}`);
+    const queryPlayerTrack = gql`
+      query($playerId: String!, $clubId: String!, $gameId: String!) {
+        balance: playerGametrack(
+          clubId: $clubId
+          gameId: $gameId
+          playerId: $playerId
+        ) {
+          buyIn
+          stack
+          seatNo
+          noOfBuyins
+          hhRank
+          hhHandNum
+        }
+      }
+    `;
+    const resp = await getClient(
+      this.registeredPlayers[balance.name].playerUuid
+    ).query({
+      variables: {
+        playerId: this.registeredPlayers[balance.name].playerUuid,
+        clubId: this.clubCreated.clubUuid,
+        gameId: this.gameCreated.gameUuid,
+      },
+      query: queryPlayerTrack,
+    });
+    if (resp.data.balance.stack != balance.balance) {
+      this.log(
+        `Expected ${balance.balance} but received ${resp.data.balance.stack}`
+      );
+      throw new Error('Player stack verification failed');
     }
   }
 }

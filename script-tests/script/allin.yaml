@@ -189,7 +189,7 @@ game:
                   playerId: bala
                   balance: 0
           # verify club balance and player balance
-          verify-balance:
+          verify-game-stack:
             club:
               name: chennai
               balance: 2.0

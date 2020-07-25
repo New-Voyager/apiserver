@@ -37,6 +37,47 @@ export async function getPlayerBalanceAmount(playerId: string, data: any) {
   );
 }
 
+export async function getPlayerTrack(playerId: string, data: any) {
+  const errors = new Array<string>();
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  if (data.clubId === '') {
+    errors.push('ClubId is mandatory field');
+  }
+  if (data.playerId === '') {
+    errors.push('PlayerId is mandatory field');
+  }
+  if (data.gameId === '') {
+    errors.push('gameId is mandatory field');
+  }
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+  return await ChipsTrackRepository.getPlayerGametrack(
+    data.playerId,
+    data.clubId,
+    data.gameId
+  );
+}
+
+export async function getClubTrack(playerId: string, data: any) {
+  const errors = new Array<string>();
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  if (data.clubId === '') {
+    errors.push('ClubId is mandatory field');
+  }
+  if (data.gameId === '') {
+    errors.push('gameId is mandatory field');
+  }
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+  return await ChipsTrackRepository.getClubGametrack(data.clubId, data.gameId);
+}
+
 const resolvers: any = {
   Query: {
     clubBalance: async (parent, args, ctx, info) => {
@@ -45,6 +86,14 @@ const resolvers: any = {
 
     playerBalance: async (parent, args, ctx, info) => {
       return getPlayerBalanceAmount(ctx.req.playerId, args);
+    },
+
+    playerGametrack: async (parent, args, ctx, info) => {
+      return getPlayerTrack(ctx.req.playerId, args);
+    },
+
+    clubGameRake: async (parent, args, ctx, info) => {
+      return getClubTrack(ctx.req.playerId, args);
     },
   },
 };

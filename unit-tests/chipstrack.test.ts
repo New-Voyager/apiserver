@@ -3,6 +3,8 @@ import {createGameServer} from '../src/internal/gameserver';
 import {startGame, getGameById} from '../src/resolvers/game';
 import {
   getClubBalanceAmount,
+  getClubTrack,
+  getPlayerTrack,
   getPlayerBalanceAmount,
 } from '../src/resolvers/chipstrack';
 import {getClubById, createClub} from '../src/resolvers/club';
@@ -245,11 +247,26 @@ describe('Player Chips tracking APIs', () => {
       clubId: clubId,
       playerId: ownerId,
     });
+    const playerTrack = await getPlayerTrack(ownerId, {
+      clubId: clubId,
+      playerId: ownerId,
+      gameId: game.gameId,
+    });
+    const clubTrack = await getClubTrack(ownerId, {
+      clubId: clubId,
+      gameId: game.gameId,
+    });
     expect(clubBalance.balance).not.toBeNull();
     expect(clubBalance.balance).not.toBeUndefined();
     expect(clubBalance.balance).toBe(0);
     expect(playerBalance.balance).not.toBeNull();
     expect(playerBalance.balance).not.toBeUndefined();
     expect(playerBalance.balance).toBe(0);
+    expect(playerTrack.stack).not.toBeNull();
+    expect(playerTrack.stack).not.toBeUndefined();
+    expect(playerTrack.stack).toBe(100);
+    expect(clubTrack.rake).not.toBeNull();
+    expect(clubTrack.rake).not.toBeUndefined();
+    expect(clubTrack.rake).toBe(0);
   });
 });

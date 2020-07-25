@@ -231,11 +231,27 @@ describe('Player Chips tracking APIs', () => {
       playerId,
       clubId
     );
+    const playertrack = await chipstrackutils.getPlayerTrack(
+      playerId,
+      clubId,
+      game.gameId
+    );
+    const clubTrack = await chipstrackutils.getClubTrack(
+      playerId,
+      clubId,
+      game.gameId
+    );
     expect(clubBalance).not.toBeNull();
     expect(clubBalance).not.toBeUndefined();
     expect(clubBalance).toBe(0);
     expect(playerBalance).not.toBeNull();
     expect(playerBalance).not.toBeUndefined();
     expect(playerBalance).toBe(0);
+    expect(playertrack).not.toBeNull();
+    expect(playertrack).not.toBeUndefined();
+    expect(playertrack).toBe(100);
+    expect(clubTrack).not.toBeNull();
+    expect(clubTrack).not.toBeUndefined();
+    expect(clubTrack).toBe(0);
   });
 });
