@@ -35,8 +35,8 @@ export class PokerGame {
   public id!: number;
 
   @Index()
-  @Column({unique: true})
-  public gameId!: string;
+  @Column({unique: true, name: 'game_code'})
+  public gameCode!: string;
 
   @Index('game-club-idx')
   @ManyToOne(type => Club)

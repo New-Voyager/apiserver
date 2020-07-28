@@ -115,6 +115,13 @@ class GameRepositoryImpl {
     const game = await repository.findOne({where: {gameId: gameId}});
     return game;
   }
+
+  public async getGameCount(clubId: number): Promise<number> {
+    const repository = getRepository(PokerGame);
+    const count = await repository.count({where: {club: {id: clubId}}});
+    return count;
+ }
+
 }
 
 export const GameRepository = new GameRepositoryImpl();
