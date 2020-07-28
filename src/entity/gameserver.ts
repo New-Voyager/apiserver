@@ -72,9 +72,9 @@ export class TrackGameServer {
   @ManyToOne(type => GameServer)
   public gameServerId!: GameServer;
 
-  @Column({name: 'game_num'})
-  public gameNum!: string;
+  @Column({name: 'game_code'})
+  public gameCode!: string;
 
   @Column({name: 'club_id'})
-  public clubId!: string;
+  public clubCode!: string;
 }

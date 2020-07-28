@@ -5,11 +5,13 @@ import {Player} from '@src/entity/player';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {getLogger} from '@src/utils/log';
 import {ClubGameRake} from '@src/entity/chipstrack';
+import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
+
 const logger = getLogger('game');
 
 class GameRepositoryImpl {
   public async createPrivateGame(
-    clubId: string,
+    clubCode: string,
     playerId: string,
     input: any,
     template = false
@@ -18,9 +20,9 @@ class GameRepositoryImpl {
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);
 
     const clubRepository = getRepository(Club);
-    const club = await clubRepository.findOne({displayId: clubId});
+    const club = await clubRepository.findOne({clubeCode: clubCode});
     if (!club) {
-      throw new Error(`Club ${clubId} is not found`);
+      throw new Error(`Club ${clubCode} is not found`);
     }
 
     const playerRepository = getRepository(Player);
@@ -68,8 +70,7 @@ class GameRepositoryImpl {
     }
     let savedGame;
     // use current time as the game id for now
-    const timeInMS = new Date().getTime();
-    game.gameId = `${timeInMS}`;
+    game.gameCode = await getGameCodeForClub(club.id);
     game.privateGame = true;
 
     game.startedAt = new Date();
@@ -83,8 +84,8 @@ class GameRepositoryImpl {
         const pick = Number.parseInt(savedGame.gameId) % gameServers.length;
         const trackgameServerRepository = getRepository(TrackGameServer);
         const trackServer = new TrackGameServer();
-        trackServer.clubId = clubId;
-        trackServer.gameNum = savedGame.gameId;
+        trackServer.clubCode = clubCode;
+        trackServer.gameCode = savedGame.gameCode;
         trackServer.gameServerId = gameServers[pick];
         await trackgameServerRepository.save(trackServer);
 
