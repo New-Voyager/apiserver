@@ -1,5 +1,6 @@
 import {resetDatabase, getClient} from './utils';
 import {gql} from 'apollo-boost';
+import {ClubMember} from '../../src/entity/club';
 
 export const createPlayerQuery = gql`
   mutation($input: PlayerCreateInput!) {
@@ -48,6 +49,26 @@ export const queryClubMembers = gql`
       isOwner
       isManager
       playerId
+    }
+  }
+`;
+
+export const queryMemberStatus = gql`
+  query($clubId: String!) {
+    status: clubMemberStatus(clubId: $clubId) {
+      id
+      status
+      isManager
+      isOwner
+      contactInfo
+      ownerNotes
+      lastGamePlayedDate
+      joinedDate
+      leftDate
+      viewAllowed
+      playAllowed
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -170,6 +191,23 @@ export async function getClubMembers(
   });
 
   return resp.data.members;
+}
+
+export async function getClubMember(
+  playerId: string,
+  clubId: string
+): Promise<ClubMember> {
+  const playerClient = getClient(playerId);
+  const variables = {
+    clubId: clubId,
+  };
+
+  const resp = await playerClient.query({
+    variables: variables,
+    query: queryMemberStatus,
+  });
+
+  return resp.data.status;
 }
 
 export async function approvePlayer(

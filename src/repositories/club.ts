@@ -306,6 +306,34 @@ class ClubRepositoryImpl {
     return clubMember.status;
   }
 
+  public async getClubMemberStatus(
+    clubId: string,
+    playerId: string
+  ): Promise<ClubMember> {
+    const clubRepository = getRepository<Club>(Club);
+    const playerRepository = getRepository<Player>(Player);
+
+    const club = await clubRepository.findOne({where: {displayId: clubId}});
+    const player = await playerRepository.findOne({where: {uuid: playerId}});
+    if (!club) {
+      throw new Error(`Club ${clubId} is not found`);
+    }
+    if (!player) {
+      throw new Error(`Player ${playerId} is not found`);
+    }
+    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+    const clubMember = await clubMemberRepository.findOne({
+      where: {
+        club: {id: club.id},
+        player: {id: player.id},
+      },
+    });
+    if (!clubMember) {
+      throw new Error('No data found');
+    }
+    return clubMember;
+  }
+
   protected async getClubMember(
     clubId: string,
     playerId: string

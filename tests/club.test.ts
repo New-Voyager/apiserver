@@ -90,6 +90,15 @@ describe('Club APIs', () => {
       clubId: clubId,
     };
     try {
+      await client.query({
+        variables: variables,
+        query: clubutils.queryMemberStatus,
+      });
+      expect(false).toBeTruthy();
+    } catch (error) {
+      expect(error.toString()).toContain('Unauthorized');
+    }
+    try {
       await client.mutate({
         variables: variables,
         mutation: clubutils.joinClubQuery,
