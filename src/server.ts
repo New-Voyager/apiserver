@@ -86,7 +86,7 @@ function addInternalRoutes(app: any) {
   app.post('/internal/delete-club-by-name/:clubName', AdminAPI.deleteClub);
 
   app.get(
-    '/internal/get-game-server/club_id/:clubId/game_num/:gameNum',
+    '/internal/get-game-server/club_id/:clubCode/game_num/:gameCode',
     GameServerAPI.getSpecificGameServer
   );
 }

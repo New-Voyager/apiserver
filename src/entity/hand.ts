@@ -3,7 +3,6 @@ import {
   PrimaryGeneratedColumn,
   Column,
   Index,
-  JoinColumn,
   ManyToOne,
 } from 'typeorm';
 
@@ -15,13 +14,13 @@ export class HandWinners {
   public id!: number;
 
   @Column({name: 'club_id'})
-  public clubId!: string;
+  public clubId!: number;
 
   @Column({name: 'game_num'})
-  public gameNum!: string;
+  public gameNum!: number;
 
   @Column({name: 'hand_num'})
-  public handNum!: string;
+  public handNum!: number;
 
   @Column({name: 'is_high', default: true})
   public isHigh!: boolean;

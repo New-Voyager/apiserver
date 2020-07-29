@@ -1,9 +1,7 @@
 import {Club} from '@src/entity/club';
 import {Promotion, PromotionType, GamePromotion} from '@src/entity/promotion';
-import {getRepository, MoreThan, LessThan} from 'typeorm';
-import {ClubMessageType} from '../entity/clubmessage';
+import {getRepository} from 'typeorm';
 import {Player} from '@src/entity/player';
-import {PageOptions} from '@src/types';
 import {getLogger} from '@src/utils/log';
 import {PokerGame} from '@src/entity/game';
 const logger = getLogger('promotion');
@@ -16,7 +14,7 @@ export interface PromotionCreateInput {
 
 class PromotionRepositoryImpl {
   public async createPromotion(
-    clubId: string,
+    clubCode: string,
     input: PromotionCreateInput,
     ownerId: string
   ): Promise<Promotion | undefined> {
@@ -27,24 +25,24 @@ class PromotionRepositoryImpl {
     }
     const clubRepository = getRepository(Club);
     const club = await clubRepository.findOne({
-      where: {displayId: clubId, owner: player.id},
+      where: {clubeCode: clubCode, owner: player.id},
     });
     if (!club) {
-      throw new Error(`Club ${clubId} is not found`);
+      throw new Error(`Club ${clubCode} is not found`);
     }
     const data = new Promotion();
     data.promotionType = parseInt(PromotionType[input.promotionType]);
     data.cardRank = input.cardRank;
     data.bonus = input.bonus;
-    data.clubId = clubId;
+    data.clubCode = clubCode;
     const repository = getRepository(Promotion);
     const response = await repository.save(data);
     return response;
   }
 
   public async assignPromotion(
-    clubId: string,
-    gameId: string,
+    clubCode: string,
+    gameCode: string,
     promotionId: number,
     startAt: Date,
     endAt: Date
@@ -54,14 +52,14 @@ class PromotionRepositoryImpl {
       const gameRepository = getRepository(PokerGame);
       const promoRepository = getRepository(Promotion);
       const gamePromoRepository = getRepository(GamePromotion);
-      const club = await clubRepository.findOne({where: {displayId: clubId}});
-      const game = await gameRepository.findOne({where: {gameId: gameId}});
+      const club = await clubRepository.findOne({where: {clubeCode: clubCode}});
+      const game = await gameRepository.findOne({where: {gameCode: gameCode}});
       const promo = await promoRepository.findOne({where: {id: promotionId}});
       if (!club) {
-        throw new Error(`Club ${clubId} is not found`);
+        throw new Error(`Club ${clubCode} is not found`);
       }
       if (!game) {
-        throw new Error(`Game ${gameId} is not found`);
+        throw new Error(`Game ${gameCode} is not found`);
       }
       if (!promo) {
         throw new Error(`Promotion ${promotionId} is not found`);
@@ -88,15 +86,15 @@ class PromotionRepositoryImpl {
     }
   }
 
-  public async getPromotions(clubId: string): Promise<Array<any>> {
+  public async getPromotions(clubCode: string): Promise<Array<any>> {
     try {
       const clubRepository = getRepository(Club);
       const promoRepository = getRepository(Promotion);
-      const club = await clubRepository.findOne({where: {displayId: clubId}});
+      const club = await clubRepository.findOne({where: {clubeCode: clubCode}});
       if (!club) {
-        throw new Error(`Club ${clubId} is not found`);
+        throw new Error(`Club ${clubCode} is not found`);
       }
-      const promo = await promoRepository.find({where: {clubId: clubId}});
+      const promo = await promoRepository.find({where: {clubCode: clubCode}});
       if (!promo) {
         throw new Error('No promotions found');
       }
@@ -107,20 +105,20 @@ class PromotionRepositoryImpl {
   }
 
   public async getAssignedPromotions(
-    clubId: string,
-    gameId: string
+    clubCode: string,
+    gameCode: string
   ): Promise<Array<any>> {
     try {
       const clubRepository = getRepository(Club);
       const gameRepository = getRepository(PokerGame);
       const gamePromoRepository = getRepository(GamePromotion);
-      const game = await gameRepository.findOne({where: {gameId: gameId}});
-      const club = await clubRepository.findOne({where: {displayId: clubId}});
+      const game = await gameRepository.findOne({where: {gameCode: gameCode}});
+      const club = await clubRepository.findOne({where: {clubeCode: clubCode}});
       if (!club) {
-        throw new Error(`Club ${clubId} is not found`);
+        throw new Error(`Club ${clubCode} is not found`);
       }
       if (!game) {
-        throw new Error(`Game ${gameId} is not found`);
+        throw new Error(`Game ${gameCode} is not found`);
       }
       const gamePromo = await gamePromoRepository.find({
         relations: ['club', 'game', 'promoId'],

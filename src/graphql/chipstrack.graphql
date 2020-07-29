@@ -29,8 +29,8 @@ type clubTrack{
 }
 
 type Query {
-  clubBalance(clubId: String!): clubAmount!
-  playerBalance(playerId: String!, clubId: String!): playerAmount!
-  playerGametrack(clubId: String!, gameId: String!, playerId: String!): playerTrack!
-  clubGameRake(clubId: String!, gameId: String!): clubTrack!
+  clubBalance(clubCode: String!): clubAmount!
+  playerBalance(playerId: String!, clubCode: String!): playerAmount!
+  playerGametrack(clubCode: String!, gameCode: String!, playerId: String!): playerTrack!
+  clubGameRake(clubCode: String!, gameCode: String!): clubTrack!
 }

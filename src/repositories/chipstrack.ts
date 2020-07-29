@@ -1,7 +1,7 @@
 import {PlayerGame, PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {Club} from '@src/entity/club';
-import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
+import {getRepository, getManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {
   PlayerStatus,
@@ -11,7 +11,6 @@ import {
   ClubPlayerBalance,
   ClubGameRake,
 } from '@src/entity/chipstrack';
-import {identity} from 'lodash';
 
 const logger = getLogger('chipstrack');
 const INITIAL_BUYIN_COUNT = 1;
@@ -229,22 +228,22 @@ class ChipsTrackRepositoryImpl {
     }
   }
 
-  public async getClubBalance(clubId: string): Promise<ClubBalance> {
+  public async getClubBalance(clubCode: string): Promise<ClubBalance> {
     const clubRepository = getRepository(Club);
     const clubBalanceRepository = getRepository(ClubBalance);
     const club = await clubRepository.findOne({
-      where: {displayId: clubId},
+      where: {clubeCode: clubCode},
     });
     if (!club) {
-      logger.error(`Club ${clubId} is not found`);
-      throw new Error(`Club ${clubId} is not found`);
+      logger.error(`Club ${clubCode} is not found`);
+      throw new Error(`Club ${clubCode} is not found`);
     }
     const clubBalance = await clubBalanceRepository.findOne({
       where: {club: club.id},
     });
     if (!clubBalance) {
-      logger.error(`Club ${clubId} is not found`);
-      throw new Error(`Club ${clubId} is not found`);
+      logger.error(`Club ${clubCode} is not found`);
+      throw new Error(`Club ${clubCode} is not found`);
     }
     logger.debug(clubBalance);
     return clubBalance;
@@ -252,20 +251,20 @@ class ChipsTrackRepositoryImpl {
 
   public async getPlayerBalance(
     playerId: string,
-    clubId: string
+    clubCode: string
   ): Promise<ClubPlayerBalance> {
     const clubRepository = getRepository(Club);
     const playerRepository = getRepository(Player);
     const clubPlayerBalanceRepository = getRepository(ClubPlayerBalance);
     const club = await clubRepository.findOne({
-      where: {displayId: clubId},
+      where: {clubeCode: clubCode},
     });
     const player = await playerRepository.findOne({
       where: {uuid: playerId},
     });
     if (!club) {
-      logger.error(`Club ${clubId} is not found`);
-      throw new Error(`Club ${clubId} is not found`);
+      logger.error(`Club ${clubCode} is not found`);
+      throw new Error(`Club ${clubCode} is not found`);
     }
     if (!player) {
       logger.error(`Player ${playerId} is not found`);
@@ -283,27 +282,27 @@ class ChipsTrackRepositoryImpl {
 
   public async getPlayerGametrack(
     playerId: string,
-    clubId: string,
-    gameId: string
+    clubCode: string,
+    gameCode: string
   ): Promise<PlayerGameTracker> {
     const clubRepository = getRepository(Club);
     const gameRepository = getRepository(PokerGame);
     const playerRepository = getRepository(Player);
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const club = await clubRepository.findOne({
-      where: {displayId: clubId},
+      where: {clubeCode: clubCode},
     });
     const game = await gameRepository.findOne({
-      where: {gameId: gameId},
+      where: {gameCode: gameCode},
     });
     const player = await playerRepository.findOne({
       where: {uuid: playerId},
     });
     if (!club) {
-      throw new Error(`Club ${clubId} is not found`);
+      throw new Error(`Club ${clubCode} is not found`);
     }
     if (!game) {
-      throw new Error(`Game ${gameId} is not found`);
+      throw new Error(`Game ${gameCode} is not found`);
     }
     if (!player) {
       throw new Error(`Player ${playerId} is not found`);
@@ -319,23 +318,23 @@ class ChipsTrackRepositoryImpl {
   }
 
   public async getClubGametrack(
-    clubId: string,
-    gameId: string
+    clubCode: string,
+    gameCode: string
   ): Promise<ClubGameRake> {
     const clubRepository = getRepository(Club);
     const gameRepository = getRepository(PokerGame);
     const clubGameTrackerRepository = getRepository(ClubGameRake);
     const club = await clubRepository.findOne({
-      where: {displayId: clubId},
+      where: {clubeCode: clubCode},
     });
     const game = await gameRepository.findOne({
-      where: {gameId: gameId},
+      where: {gameCode: gameCode},
     });
     if (!club) {
-      throw new Error(`Club ${clubId} is not found`);
+      throw new Error(`Club ${clubCode} is not found`);
     }
     if (!game) {
-      throw new Error(`Game ${gameId} is not found`);
+      throw new Error(`Game ${gameCode} is not found`);
     }
     const clubTrack = await clubGameTrackerRepository.findOne({
       where: {club: club.id, game: game.id},

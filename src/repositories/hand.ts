@@ -9,8 +9,6 @@ import {PageOptions} from '@src/types';
 import {PokerGame} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker, ClubGameRake} from '@src/entity/chipstrack';
-import {GameRepository} from './game';
-import {ClubRepository} from './club';
 import {
   GamePromotion,
   Promotion,

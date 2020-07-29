@@ -13,12 +13,12 @@ type Player {
 type Mutation {
   createPlayer(player: PlayerCreateInput!): String!
   authenticatePlayer(name: String!, uuid: String!, deviceId: String!): Boolean
-  leaveClub(clubId: String!): ClubMemberStatus
+  leaveClub(clubCode: String!): ClubMemberStatus
 }
 
 type PlayerClub {
   name: String
-  clubId: String
+  clubCode: String
   clubStatus: ClubStatus
   memberCount: Int
   imageId: String
