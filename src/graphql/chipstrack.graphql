@@ -1,0 +1,36 @@
+scalar DateTime
+
+type playerAmount{
+  totalBuyins: Int
+  totalWinnings: Int
+  balance: Int
+  notes: String
+  updatedAt: DateTime
+}
+
+type clubAmount{
+  balance: Int
+  updatedAt: DateTime
+}
+
+type playerTrack{
+  buyIn: Int
+  stack: Int
+  seatNo: Int
+  noOfBuyins: Int
+  hhRank: Int
+  hhHandNum: Int
+}
+
+type clubTrack{
+  rake: Int
+  promotion: Int
+  lastHandNum: Int
+}
+
+type Query {
+  clubBalance(clubId: String!): clubAmount!
+  playerBalance(playerId: String!, clubId: String!): playerAmount!
+  playerGametrack(clubId: String!, gameId: String!, playerId: String!): playerTrack!
+  clubGameRake(clubId: String!, gameId: String!): clubTrack!
+}
