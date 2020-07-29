@@ -2,10 +2,10 @@ import {getClient} from './utils';
 import {gql} from 'apollo-boost';
 
 export const getSpecificHandHistoryQuery = gql`
-  query($clubId: String!, $gameNum: String!, $handNum: String!) {
+  query($clubCode: String!, $gameCode: String!, $handNum: String!) {
     handHistory: specificHandHistory(
-      clubId: $clubId
-      gameNum: $gameNum
+      clubCode: $clubCode
+      gameCode: $gameCode
       handNum: $handNum
     ) {
       pageId
@@ -28,8 +28,8 @@ export const getSpecificHandHistoryQuery = gql`
 `;
 
 export const getLastHandHistoryQuery = gql`
-  query($clubId: String!, $gameNum: String!) {
-    handHistory: lastHandHistory(clubId: $clubId, gameNum: $gameNum) {
+  query($clubCode: String!, $gameCode: String!) {
+    handHistory: lastHandHistory(clubCode: $clubCode, gameCode: $gameCode) {
       pageId
       clubId
       gameNum
@@ -50,10 +50,10 @@ export const getLastHandHistoryQuery = gql`
 `;
 
 export const getAllHandHistoryQuery = gql`
-  query($clubId: String!, $gameNum: String!, $page: PageInput) {
+  query($clubCode: String!, $gameCode: String!, $page: PageInput) {
     handHistory: allHandHistory(
-      clubId: $clubId
-      gameNum: $gameNum
+      clubCode: $clubCode
+      gameCode: $gameCode
       page: $page
     ) {
       pageId
@@ -76,10 +76,10 @@ export const getAllHandHistoryQuery = gql`
 `;
 
 export const getMyWinningHandsQuery = gql`
-  query($clubId: String!, $gameNum: String!, $page: PageInput) {
+  query($clubCode: String!, $gameCode: String!, $page: PageInput) {
     handWinners: myWinningHands(
-      clubId: $clubId
-      gameNum: $gameNum
+      clubCode: $clubCode
+      gameCode: $gameCode
       page: $page
     ) {
       pageId
@@ -120,10 +120,10 @@ export const getStarredHandsQuery = gql`
 `;
 
 export const saveStarredHandMutation = gql`
-  mutation($clubId: String!, $gameNum: String!, $handNum: String!) {
+  mutation($clubCode: String!, $gameCode: String!, $handNum: String!) {
     saved: saveStarredHand(
-      clubId: $clubId
-      gameNum: $gameNum
+      clubCode: $clubCode
+      gameCode: $gameCode
       handNum: $handNum
     )
   }
@@ -131,13 +131,13 @@ export const saveStarredHandMutation = gql`
 
 export async function getSpecificHandHistory(
   playerId: string,
-  clubId: string,
-  gameNum: string,
+  clubCode: string,
+  gameCode: string,
   handNum: string
 ): Promise<any> {
   const variables: any = {
-    clubId: clubId,
-    gameNum: gameNum,
+    clubCode: clubCode,
+    gameCode: gameCode,
     handNum: handNum,
   };
 
@@ -152,12 +152,12 @@ export async function getSpecificHandHistory(
 
 export async function getLastHandHistory(
   playerId: string,
-  clubId: string,
-  gameNum: string
+  clubCode: string,
+  gameCode: string
 ): Promise<any> {
   const variables: any = {
-    clubId: clubId,
-    gameNum: gameNum,
+    clubCode: clubCode,
+    gameCode: gameCode,
   };
 
   const resp = await getClient(playerId).query({
@@ -171,13 +171,13 @@ export async function getLastHandHistory(
 
 export async function getAllHandHistory(
   playerId: string,
-  clubId: string,
-  gameNum: string,
+  clubCode: string,
+  gameCode: string,
   page?: {prev?: number; next?: number; count?: number}
 ): Promise<any> {
   const variables: any = {
-    clubId: clubId,
-    gameNum: gameNum,
+    clubCode: clubCode,
+    gameCode: gameCode,
   };
 
   if (page) {
@@ -204,13 +204,13 @@ export async function getAllHandHistory(
 
 export async function getMyWinningHands(
   playerId: string,
-  clubId: string,
-  gameNum: string,
+  clubCode: string,
+  gameCode: string,
   page?: {prev?: number; next?: number; count?: number}
 ): Promise<any> {
   const variables: any = {
-    clubId: clubId,
-    gameNum: gameNum,
+    clubCode: clubCode,
+    gameCode: gameCode,
   };
 
   if (page) {
@@ -244,15 +244,15 @@ export async function getPlayerById(playerId: string): Promise<number> {
 }
 
 export async function saveStarredHand(
-  clubId: string,
-  gameNum: string,
+  clubCode: string,
+  gameCode: string,
   playerId: string,
   handNum: string
 ) {
   const client = getClient(playerId);
   const variables = {
-    clubId: clubId,
-    gameNum: gameNum,
+    clubCode: clubCode,
+    gameCode: gameCode,
     handNum: handNum,
   };
   const resp = await client.mutate({

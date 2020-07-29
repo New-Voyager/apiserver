@@ -38,7 +38,7 @@ class ClubFreqMessageRepositoryImpl {
     try {
       const clubRepository = getRepository(Club);
       const club = await clubRepository.findOne({
-        where: {clubeCode: message.clubCode},
+        where: {clubCode: message.clubCode},
       });
       if (!club) {
         throw new Error(`Club ${message.clubCode} is not found`);
@@ -111,7 +111,7 @@ class ClubFreqMessageRepositoryImpl {
   public async clubFavoriteMessage(clubCode: string): Promise<Array<any>> {
     try {
       const clubRepository = getRepository(Club);
-      const club = await clubRepository.findOne({where: {clubeCode: clubCode}});
+      const club = await clubRepository.findOne({where: {clubCode: clubCode}});
       if (!club) {
         throw new Error(`Club ${clubCode} is not found`);
       } else {

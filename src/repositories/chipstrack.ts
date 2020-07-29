@@ -232,7 +232,7 @@ class ChipsTrackRepositoryImpl {
     const clubRepository = getRepository(Club);
     const clubBalanceRepository = getRepository(ClubBalance);
     const club = await clubRepository.findOne({
-      where: {clubeCode: clubCode},
+      where: {clubCode: clubCode},
     });
     if (!club) {
       logger.error(`Club ${clubCode} is not found`);
@@ -257,7 +257,7 @@ class ChipsTrackRepositoryImpl {
     const playerRepository = getRepository(Player);
     const clubPlayerBalanceRepository = getRepository(ClubPlayerBalance);
     const club = await clubRepository.findOne({
-      where: {clubeCode: clubCode},
+      where: {clubCode: clubCode},
     });
     const player = await playerRepository.findOne({
       where: {uuid: playerId},
@@ -290,7 +290,7 @@ class ChipsTrackRepositoryImpl {
     const playerRepository = getRepository(Player);
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const club = await clubRepository.findOne({
-      where: {clubeCode: clubCode},
+      where: {clubCode: clubCode},
     });
     const game = await gameRepository.findOne({
       where: {gameCode: gameCode},
@@ -325,7 +325,7 @@ class ChipsTrackRepositoryImpl {
     const gameRepository = getRepository(PokerGame);
     const clubGameTrackerRepository = getRepository(ClubGameRake);
     const club = await clubRepository.findOne({
-      where: {clubeCode: clubCode},
+      where: {clubCode: clubCode},
     });
     const game = await gameRepository.findOne({
       where: {gameCode: gameCode},

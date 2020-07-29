@@ -155,7 +155,7 @@ afterAll(async done => {
 
 describe('Promotion APIs', () => {
   test('Create a promotion', async () => {
-    const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
+    const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
     const input = {
       cardRank: 5,
       bonus: 4,
@@ -163,7 +163,7 @@ describe('Promotion APIs', () => {
     };
     const response = await getClient(playerId).mutate({
       variables: {
-        clubId: clubId,
+        clubCode: clubCode,
         input: input,
       },
       mutation: promotionutils.createPromotion,
@@ -187,8 +187,8 @@ describe('Promotion APIs', () => {
       console.error(JSON.stringify(err));
       expect(true).toBeFalsy();
     }
-    const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
-    const game = await gameutils.startGame(playerId, clubId, holdemGameInput);
+    const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
+    const game = await gameutils.startGame(playerId, clubCode, holdemGameInput);
     const input = {
       cardRank: 5,
       bonus: 4,
@@ -196,16 +196,16 @@ describe('Promotion APIs', () => {
     };
     const promotion = await getClient(playerId).mutate({
       variables: {
-        clubId: clubId,
+        clubCode: clubCode,
         input: input,
       },
       mutation: promotionutils.createPromotion,
     });
     const response = await getClient(playerId).mutate({
       variables: {
-        clubId: clubId,
+        clubCode: clubCode,
         promotionId: promotion.data.data.id,
-        gameId: game.gameId,
+        gameCode: game.gameCode,
         startAt: 1594919334244,
         endAt: 1594919334244,
       },
@@ -217,7 +217,7 @@ describe('Promotion APIs', () => {
   });
 
   test('Get promotions', async () => {
-    const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
+    const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
     const promotionCount = 20;
     const input = {
       cardRank: 5,
@@ -227,14 +227,14 @@ describe('Promotion APIs', () => {
     for (let i = 0; i < promotionCount; i++) {
       await getClient(playerId).mutate({
         variables: {
-          clubId: clubId,
+          clubCode: clubCode,
           input: input,
         },
         mutation: promotionutils.createPromotion,
       });
     }
 
-    const result = await promotionutils.getPromotion(clubId, playerId);
+    const result = await promotionutils.getPromotion(clubCode, playerId);
     expect(result).toHaveLength(20);
   });
 
@@ -251,8 +251,8 @@ describe('Promotion APIs', () => {
       console.error(JSON.stringify(err));
       expect(true).toBeFalsy();
     }
-    const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
-    const game = await gameutils.startGame(playerId, clubId, holdemGameInput);
+    const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
+    const game = await gameutils.startGame(playerId, clubCode, holdemGameInput);
     const input = {
       cardRank: 5,
       bonus: 4,
@@ -261,16 +261,16 @@ describe('Promotion APIs', () => {
     for (let i = 0; i < promotionCount; i++) {
       const promotion = await getClient(playerId).mutate({
         variables: {
-          clubId: clubId,
+          clubCode: clubCode,
           input: input,
         },
         mutation: promotionutils.createPromotion,
       });
       await getClient(playerId).mutate({
         variables: {
-          clubId: clubId,
+          clubCode: clubCode,
           promotionId: promotion.data.data.id,
-          gameId: game.gameId,
+          gameCode: game.gameCode,
           startAt: 1594919334244,
           endAt: 1594919334244,
         },
@@ -278,9 +278,9 @@ describe('Promotion APIs', () => {
       });
     }
     const result = await promotionutils.getAssignedPromotion(
-      clubId,
+      clubCode,
       playerId,
-      game.gameId
+      game.gameCode
     );
     expect(result).toHaveLength(20);
   });
@@ -292,10 +292,10 @@ describe('Promotion APIs', () => {
       status: 'ACTIVE',
     };
     await axios.post(`${SERVER_API}/register-game-server`, gameServer);
-    const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
-    const game = await gameutils.startGame(playerId, clubId, holdemGameInput);
-    const clubID = await clubutils.getClubById(clubId);
-    const gameID = await gameutils.getGameById(game.gameId);
+    const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
+    const game = await gameutils.startGame(playerId, clubCode, holdemGameInput);
+    const clubID = await clubutils.getClubById(clubCode);
+    const gameID = await gameutils.getGameById(game.gameCode);
     const player = await handutils.getPlayerById(playerId);
     const messageInput = {
       clubId: clubID,
@@ -313,16 +313,16 @@ describe('Promotion APIs', () => {
     };
     const promotion = await getClient(playerId).mutate({
       variables: {
-        clubId: clubId,
+        clubCode: clubCode,
         input: input,
       },
       mutation: promotionutils.createPromotion,
     });
     await getClient(playerId).mutate({
       variables: {
-        clubId: clubId,
+        clubCode: clubCode,
         promotionId: promotion.data.data.id,
-        gameId: game.gameId,
+        gameCode: game.gameCode,
         startAt: 1594919334244,
         endAt: 1594919334244,
       },

@@ -29,7 +29,7 @@ export class Club {
   public name!: string;
 
   @Column({name: 'club_code'})
-  public clubeCode!: string;
+  public clubCode!: string;
 
   @Column()
   public description!: string;

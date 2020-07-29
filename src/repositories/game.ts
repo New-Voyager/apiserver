@@ -20,7 +20,7 @@ class GameRepositoryImpl {
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);
 
     const clubRepository = getRepository(Club);
-    const club = await clubRepository.findOne({clubeCode: clubCode});
+    const club = await clubRepository.findOne({clubCode: clubCode});
     if (!club) {
       throw new Error(`Club ${clubCode} is not found`);
     }
@@ -70,7 +70,7 @@ class GameRepositoryImpl {
     }
     let savedGame;
     // use current time as the game id for now
-    game.gameCode = await getGameCodeForClub(club.id);
+    game.gameCode = await getGameCodeForClub(clubCode,club.id);
     game.privateGame = true;
 
     game.startedAt = new Date();

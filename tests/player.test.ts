@@ -67,19 +67,22 @@ describe('Player APIs', () => {
   });
 
   test('get my clubs', async () => {
-    const [club1Id] = await clubutils.createClub();
-    const [club2Id] = await clubutils.createClub();
+    const [clubCode1] = await clubutils.createClub();
+    const [club2Code] = await clubutils.createClub('owner','test');
     const player1 = await clubutils.createPlayer('player1', 'ABCDE');
-    await clubutils.playerJoinsClub(club1Id, player1);
-    await clubutils.playerJoinsClub(club2Id, player1);
+    await clubutils.playerJoinsClub(clubCode1, player1);
+    await clubutils.playerJoinsClub(club2Code, player1);
     const player2 = await clubutils.createPlayer('player2', '12345');
-    await clubutils.playerJoinsClub(club2Id, player2);
+    await clubutils.playerJoinsClub(club2Code, player2);
     const player1Clubs = await clubutils.getMyClubs(player1);
+    console.log(player1Clubs)
     expect(player1Clubs).toHaveLength(2);
     const player2Clubs = await clubutils.getMyClubs(player2);
     expect(player2Clubs).toHaveLength(1);
+    console.log(player2Clubs);
     const club2 = player2Clubs[0];
+    console.log(club2.clubCode);
     expect(club2.name).not.toBeNull();
-    expect(club2.clubId).toEqual(club2Id);
+    expect(club2.clubCode).toEqual(club2Code);
   });
 });

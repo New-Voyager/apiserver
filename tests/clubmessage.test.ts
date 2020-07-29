@@ -19,7 +19,7 @@ afterAll(async done => {
 
 describe('Club APIs', () => {
   test('send a text message', async () => {
-    const [clubId] = await clubutils.createClub();
+    const [clubCode] = await clubutils.createClub();
     const playerId = await clubutils.createPlayer('adam', '1243ABC');
 
     const messageInput = {
@@ -36,7 +36,7 @@ describe('Club APIs', () => {
 
     const response = await getClient(playerId).mutate({
       variables: {
-        clubId: clubId,
+        clubCode: clubCode,
         input: messageInput,
       },
       mutation: clubmessageutils.sendMessageQuery,
@@ -48,7 +48,7 @@ describe('Club APIs', () => {
   });
 
   test('send a hand message', async () => {
-    const [clubId] = await clubutils.createClub();
+    const [clubCode] = await clubutils.createClub();
     const playerId = await clubutils.createPlayer('adam', '1243ABC');
     const messageInput = {
       messageType: 'HAND',
@@ -68,7 +68,7 @@ describe('Club APIs', () => {
 
     const response = await getClient(playerId).mutate({
       variables: {
-        clubId: clubId,
+        clubCode: clubCode,
         input: messageInput,
       },
       mutation: clubmessageutils.sendMessageQuery,
@@ -80,7 +80,7 @@ describe('Club APIs', () => {
   });
 
   test('send a GIPHY message', async () => {
-    const [clubId] = await clubutils.createClub();
+    const [clubCode] = await clubutils.createClub();
     const playerId = await clubutils.createPlayer('adam', '1243ABC');
     const messageInput = {
       messageType: 'GIPHY',
@@ -96,7 +96,7 @@ describe('Club APIs', () => {
 
     const response = await getClient(playerId).mutate({
       variables: {
-        clubId: clubId,
+        clubCode: clubCode,
         input: messageInput,
       },
       mutation: clubmessageutils.sendMessageQuery,
@@ -108,7 +108,7 @@ describe('Club APIs', () => {
   });
 
   test('get message', async () => {
-    const [clubId, playerId] = await clubutils.createClub('brady3', 'yatzee3');
+    const [clubCode, playerId] = await clubutils.createClub('brady3', 'yatzee3');
     const messageCount = 100;
     const messageInput = {
       messageType: 'GIPHY',
@@ -118,19 +118,19 @@ describe('Club APIs', () => {
     for (let i = 0; i < messageCount; i++) {
       await getClient(playerId).mutate({
         variables: {
-          clubId: clubId,
+          clubCode: clubCode,
           input: messageInput,
         },
         mutation: clubmessageutils.sendMessageQuery,
       });
     }
-    let result = await clubmessageutils.getClubMessage(clubId, playerId);
+    let result = await clubmessageutils.getClubMessage(clubCode, playerId);
     expect(result).toHaveLength(50);
     const firstGame = result[0];
     const lastGame = result[49];
     logger.debug(JSON.stringify(firstGame));
     logger.debug(JSON.stringify(lastGame));
-    result = await clubmessageutils.getClubMessage(clubId, playerId, {
+    result = await clubmessageutils.getClubMessage(clubCode, playerId, {
       prev: lastGame.pageId,
       count: 5,
     });

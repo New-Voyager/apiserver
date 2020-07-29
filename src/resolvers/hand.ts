@@ -10,7 +10,7 @@ import {ClubMemberStatus} from '@src/entity/club';
 import {PlayerRepository} from '@src/repositories/player';
 import {getLogger} from '@src/utils/log';
 import {GameRepository} from '@src/repositories/game';
-const logger = getLogger('hand');
+const logger = getLogger('hand-resolvers');
 
 const resolvers: any = {
   Query: {
@@ -76,11 +76,14 @@ async function generateHandWinnersData(hand: HandWinners) {
 }
 
 export async function getLastHandHistory(playerId: string, args: any) {
+  logger.debug(args.clubCode)
   if (!playerId) {
     throw new Error('Unauthorized');
   }
   const clubMembers1 = await ClubRepository.getMembers(args.clubCode);
+  logger.debug(clubMembers1)
   const clubMember = await ClubRepository.isClubMember(args.clubCode, playerId);
+  logger.debug(clubMember)
 
   const player = await PlayerRepository.getPlayerById(playerId);
   if (!player) {
@@ -112,11 +115,11 @@ export async function getLastHandHistory(playerId: string, args: any) {
     logger.error(`The user ${playerId} is not Active in ${args.clubCode}`);
     throw new Error('Unauthorized');
   }
-
   const handHistory = await HandRepository.getLastHandHistory(club.id, game.id);
   if (!handHistory) {
     throw new Error('No hand found');
   }
+  logger.debug(handHistory);
   return await generateHandHistoryData(handHistory);
 }
 
@@ -285,7 +288,7 @@ export async function saveStarredHand(playerId: string, args: any) {
   }
   const errors = new Array<string>();
   try {
-    if (!args.ClubCode) {
+    if (!args.clubCode) {
       errors.push('ClubCode is missing');
     }
     if (!args.gameCode) {
@@ -302,17 +305,18 @@ export async function saveStarredHand(playerId: string, args: any) {
     throw new Error(JSON.stringify(errors));
   }
 
-  const clubMembers1 = await ClubRepository.getMembers(args.ClubCode);
-  const clubMember = await ClubRepository.isClubMember(args.ClubCode, playerId);
+  const clubMembers1 = await ClubRepository.getMembers(args.clubCode);
+  const clubMember = await ClubRepository.isClubMember(args.clubCode, playerId);
 
   const player = await PlayerRepository.getPlayerById(playerId);
   if (!player) {
     throw new Error(`Player ${playerId} is not found`);
   }
-  const club = await ClubRepository.getClubById(args.ClubCode);
+  const club = await ClubRepository.getClubById(args.clubCode);
   if (!club) {
-    throw new Error(`Club ${args.ClubCode} is not found`);
+    throw new Error(`Club ${args.clubCode} is not found`);
   }
+  logger.debug(club.id) ;
   const game = await GameRepository.getGameById(args.gameCode);
   if (!game) {
     throw new Error(`Game ${args.gameCode} is not found`);
@@ -320,19 +324,19 @@ export async function saveStarredHand(playerId: string, args: any) {
   if (!clubMember) {
     logger.error(
       `The user ${playerId} is not a member of ${
-        args.ClubCode
+        args.clubCode
       }, ${JSON.stringify(clubMembers1)}`
     );
     throw new Error('Unauthorized');
   }
 
   if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
-    logger.error(`The user ${playerId} is kicked out of ${args.ClubCode}`);
+    logger.error(`The user ${playerId} is kicked out of ${args.clubCode}`);
     throw new Error('Unauthorized');
   }
 
   if (clubMember.status !== ClubMemberStatus.ACTIVE) {
-    logger.error(`The user ${playerId} is not Active in ${args.ClubCode}`);
+    logger.error(`The user ${playerId} is not Active in ${args.clubCode}`);
     throw new Error('Unauthorized');
   }
 

@@ -3,10 +3,10 @@ import {gql} from 'apollo-boost';
 import {GameType} from '../../src/entity/game';
 
 export const startGameQuery = gql`
-  mutation($clubId: String!, $gameInput: GameCreateInput!) {
-    startedGame: startGame(clubId: $clubId, game: $gameInput) {
+  mutation($clubCode: String!, $gameInput: GameCreateInput!) {
+    startedGame: startGame(clubCode: $clubCode, game: $gameInput) {
       title
-      gameId
+      gameCode
       gameType
       smallBlind
       bigBlind
@@ -35,10 +35,10 @@ export const startGameQuery = gql`
 `;
 
 export const getClubGamesQuery = gql`
-  query($clubId: String!, $page: PageInput) {
-    clubGames: clubGames(clubId: $clubId, page: $page) {
+  query($clubCode: String!, $page: PageInput) {
+    clubGames: clubGames(clubCode: $clubCode, page: $page) {
       pageId
-      gameId
+      gameCode
       status
       startedAt
       startedBy
@@ -49,8 +49,8 @@ export const getClubGamesQuery = gql`
 `;
 
 export const gameByIdQuery = gql`
-  query($gameId: String!) {
-    game: gameById(gameId: $gameId) {
+  query($gameCode: String!) {
+    game: gameById(gameCode: $gameCode) {
       id
     }
   }
@@ -86,12 +86,12 @@ export interface GameInput {
 
 export async function startGame(
   playerId: string,
-  clubId: string,
+  clubCode: string,
   gameInput: GameInput
 ): Promise<any> {
   const resp = await getClient(playerId).mutate({
     variables: {
-      clubId: clubId,
+      clubCode: clubCode,
       gameInput: gameInput,
     },
     mutation: startGameQuery,
@@ -103,10 +103,10 @@ export async function startGame(
   return startedGame;
 }
 
-export async function getGameById(gameId: string): Promise<number> {
-  const gameClient = getClient(gameId);
+export async function getGameById(gameCode: string): Promise<number> {
+  const gameClient = getClient(gameCode);
   const resp = await gameClient.query({
-    variables: {gameId: gameId},
+    variables: {gameCode: gameCode},
     query: gameByIdQuery,
   });
   return resp.data.game.id;
@@ -114,11 +114,11 @@ export async function getGameById(gameId: string): Promise<number> {
 
 export async function getClubGames(
   playerId: string,
-  clubId: string,
+  clubCode: string,
   page?: {prev?: number; next?: number; count?: number}
 ): Promise<Array<any>> {
   const variables: any = {
-    clubId: clubId,
+    clubCode: clubCode,
   };
 
   if (page) {

@@ -10,8 +10,8 @@ export async function getClubCode(name: string): Promise<string> {
   return clubId;
 }
 
-export async function getGameCodeForClub(clubId: number): Promise<string> {
-  const hashIds = new Hashids(name, 6, '0123456789ABCDEFGHIJKLMNOPQRSTWXYZ');
+export async function getGameCodeForClub(clubCode: string, clubId: number): Promise<string> {
+  const hashIds = new Hashids(clubCode, 6, '0123456789ABCDEFGHIJKLMNOPQRSTWXYZ');
   // let us get the count of total clubs
   const gameCount = await GameRepository.getGameCount(clubId);
   const gameCode = hashIds.encode(clubId, gameCount);
@@ -19,8 +19,8 @@ export async function getGameCodeForClub(clubId: number): Promise<string> {
 }
 
 // This method is used for players hosting games (not club games)
-export async function getGameCodeForPlayer(playerId: number): Promise<string> {
-  const hashIds = new Hashids(name, 6, '0123456789ABCDEFGHIJKLMNOPQRSTWXYZ');
+export async function getGameCodeForPlayer(clubCode: string,playerId: number): Promise<string> {
+  const hashIds = new Hashids(clubCode, 6, '0123456789ABCDEFGHIJKLMNOPQRSTWXYZ');
   // let us get the count of total clubs
   const gameCount = await GameRepository.getGameCount(playerId);
   const gameCode = hashIds.encode(playerId, gameCount);

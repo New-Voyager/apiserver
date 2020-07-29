@@ -12,7 +12,7 @@ import {PokerGame} from '@src/entity/game';
 import {PageOptions} from '@src/types';
 import {getLogger} from '@src/utils/log';
 import {getClubCode} from '@src/utils/uniqueid';
-const logger = getLogger('club');
+const logger = getLogger('club-repository');
 
 export interface ClubCreateInput {
   ownerUuid: string;
@@ -79,7 +79,7 @@ class ClubRepositoryImpl {
       //clubId = uuid.substr(uuid.lastIndexOf('-') + 1);
       //clubId = clubId.toUpperCase();
       clubCode = await getClubCode(input.name);
-      const club = await clubRepository.findOne({where: {clubeCode: clubCode}});
+      const club = await clubRepository.findOne({where: {clubCode: clubCode}});
       if (!club) {
         break;
       }
@@ -96,7 +96,7 @@ class ClubRepositoryImpl {
     const club = new Club();
     club.name = input.name;
     club.description = input.description;
-    club.clubeCode = clubCode;
+    club.clubCode = clubCode;
     club.status = ClubStatus.ACTIVE;
     const ownerObj = await playerRepository.findOne({
       where: {uuid: input.ownerUuid},
@@ -120,12 +120,12 @@ class ClubRepositoryImpl {
       await clubMemberRepository.save(clubMember);
     });
 
-    return club.clubeCode;
+    return club.clubCode;
   }
 
   public async deleteClub(clubCode: string) {
     const clubRepository = getRepository(Club);
-    const club = await clubRepository.findOne({where: {clubeCode: clubCode}});
+    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     if (!club) {
       throw new Error(`Club: ${clubCode} does not exist`);
     }
@@ -321,7 +321,7 @@ class ClubRepositoryImpl {
     const clubRepository = getRepository<Club>(Club);
     const playerRepository = getRepository<Player>(Player);
 
-    const club = await clubRepository.findOne({where: {clubeCode: clubCode}});
+    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     const player = await playerRepository.findOne({where: {uuid: playerId}});
     if (!club) {
       throw new Error(`Club ${clubCode} is not found`);
@@ -371,12 +371,13 @@ class ClubRepositoryImpl {
   }
 
   public async getMembers(clubCode: string): Promise<ClubMember[]> {
+    logger.debug(clubCode);
     const clubRepository = getRepository<Club>(Club);
     const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     if (!club) {
       throw new Error(`Club ${clubCode} is not found`);
     }
-
+    logger.debug(club.id)
     const owner: Player | undefined = await Promise.resolve(club.owner);
     if (!owner) {
       throw new Error('Unexpected. There is no owner for the club');
@@ -390,6 +391,7 @@ class ClubRepositoryImpl {
         status: Not(ClubMemberStatus.LEFT),
       },
     });
+    logger.debug(clubMembers);  
     return clubMembers;
   }
 
@@ -428,10 +430,11 @@ class ClubRepositoryImpl {
     if (!isPostgres()) {
       placeHolder = '?';
     }
-    const query = `SELECT c.name, c.club_code clubid, COUNT(*) memberCount FROM club_member cm JOIN club c
+    const query = `SELECT c.name, c.club_code clubCode, COUNT(*) memberCount FROM club_member cm JOIN club c
              ON cm.club_id = c.id WHERE cm.player_id = ${placeHolder} 
              GROUP BY c.name, c.club_code, cm.club_id`;
     const result = await getConnection().query(query, [player.id]);
+    logger.debug(result)
     return result;
   }
 
@@ -500,7 +503,7 @@ class ClubRepositoryImpl {
       take = 20;
     }
     const clubRepository = getRepository(Club);
-    const club = await clubRepository.findOne({where: {clubeCode: clubCode}});
+    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     if (!club) {
       throw new Error(`Club ${clubCode} is not found`);
     }
@@ -525,7 +528,10 @@ class ClubRepositoryImpl {
   public async getClubById(clubCode: string): Promise<Club | undefined> {
     const repository = getRepository(Club);
     // get club by id (testing only)
-    const club = await repository.findOne({where: {clubeCode: clubCode}});
+    const club = await repository.findOne({where: {clubCode: clubCode}});
+    if(!club){
+      throw new Error('Club not found');
+    }
     return club;
   }
 }

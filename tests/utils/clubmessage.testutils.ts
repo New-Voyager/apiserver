@@ -4,19 +4,19 @@ import {getLogger} from '../../src/utils/log';
 const logger = getLogger('clubmessage');
 
 export const sendMessageQuery = gql`
-  mutation($clubId: String!, $input: ClubMessageInput!) {
-    messageId: sendClubMessage(clubId: $clubId, message: $input)
+  mutation($clubCode: String!, $input: ClubMessageInput!) {
+    messageId: sendClubMessage(clubCode: $clubCode, message: $input)
   }
 `;
 
 export const getClubMessageQuery = gql`
-  query($clubId: String!, $page: PageInput) {
-    clubMessage: clubMessages(clubId: $clubId, pageOptions: $page) {
+  query($clubCode: String!, $page: PageInput) {
+    clubMessage: clubMessages(clubCode: $clubCode, pageOptions: $page) {
       id
       gameNum
       handNum
       text
-      clubId
+      clubCode
       giphyLink
       playerTags
       messageType
@@ -40,12 +40,12 @@ interface ClubMessageInputFormat {
 }
 
 export async function getClubMessage(
-  clubId: string,
+  clubCode: string,
   playerId: string,
   page?: {prev?: number; next?: number; count?: number}
 ): Promise<Array<any>> {
   const variables: any = {
-    clubId: clubId,
+    clubCode: clubCode,
   };
   if (page) {
     variables.page = {};

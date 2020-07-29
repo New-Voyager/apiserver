@@ -59,16 +59,16 @@ const GAMESERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
 describe('Game APIs', () => {
   test('start a new game', async () => {
-    const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
+    const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
     await createGameServer('1.2.0.1');
     const resp = await getClient(playerId).mutate({
       variables: {
-        clubId: clubId,
+        clubCode: clubCode,
         gameInput: holdemGameInput,
       },
       mutation: gameutils.startGameQuery,
     });
-    logger.debug(resp, clubId);
+    logger.debug(resp, clubCode);
     expect(resp.errors).toBeUndefined();
     expect(resp.data).not.toBeNull();
     const startedGame = resp.data.startedGame;
@@ -97,39 +97,39 @@ describe('Game APIs', () => {
   });
 
   test('get club games', async () => {
-    const [clubId, playerId] = await clubutils.createClub('brady1', 'yatzee2');
+    const [clubCode, playerId] = await clubutils.createClub('brady1', 'yatzee2');
     await createGameServer('1.2.0.2');
-    const game1 = await gameutils.startGame(playerId, clubId, holdemGameInput);
-    const game2 = await gameutils.startGame(playerId, clubId, holdemGameInput);
+    const game1 = await gameutils.startGame(playerId, clubCode, holdemGameInput);
+    const game2 = await gameutils.startGame(playerId, clubCode, holdemGameInput);
     // get number of club games
-    const clubGames = await gameutils.getClubGames(playerId, clubId);
+    const clubGames = await gameutils.getClubGames(playerId, clubCode);
     expect(clubGames).toHaveLength(2);
 
-    const [clubId2, playerId2] = await clubutils.createClub(
+    const [clubCode2, playerId2] = await clubutils.createClub(
       'brady1',
       'yatzee2'
     );
     // get number of club games
-    const club2Games = await gameutils.getClubGames(playerId2, clubId2);
+    const club2Games = await gameutils.getClubGames(playerId2, clubCode2);
     expect(club2Games).toHaveLength(0);
   });
 
   test('get club games pagination', async () => {
-    const [clubId, playerId] = await clubutils.createClub('brady3', 'yatzee3');
+    const [clubCode, playerId] = await clubutils.createClub('brady3', 'yatzee3');
     const numGames = 100;
     await createGameServer('1.2.0.3');
     await createGameServer('1.2.0.4');
     for (let i = 0; i < numGames; i++) {
-      await gameutils.startGame(playerId, clubId, holdemGameInput);
+      await gameutils.startGame(playerId, clubCode, holdemGameInput);
     }
-    let clubGames = await gameutils.getClubGames(playerId, clubId);
+    let clubGames = await gameutils.getClubGames(playerId, clubCode);
     // we can get only 20 games
     expect(clubGames).toHaveLength(20);
     const firstGame = clubGames[0];
     const lastGame = clubGames[19];
     logger.debug(JSON.stringify(firstGame));
     logger.debug(JSON.stringify(lastGame));
-    clubGames = await gameutils.getClubGames(playerId, clubId, {
+    clubGames = await gameutils.getClubGames(playerId, clubCode, {
       prev: lastGame.pageId,
       count: 5,
     });

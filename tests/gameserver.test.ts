@@ -155,25 +155,26 @@ describe('Game server APIs', () => {
       console.error(JSON.stringify(err));
       expect(true).toBeFalsy();
     }
-    const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
+    const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
 
     for (let i = 0; i < 3; i++) {
       const game1 = await gameutils.startGame(
         playerId,
-        clubId,
+        clubCode,
         holdemGameInput
       );
 
       let resp;
       try {
         resp = await axios.get(
-          `${GAMESERVER_API}/get-game-server/club_id/${clubId}/game_num/${game1.gameId}`
+          `${GAMESERVER_API}/get-game-server/club_id/${clubCode}/game_num/${game1.gameCode}`
         );
       } catch (err) {
         console.error(JSON.stringify(err));
       }
       expect(resp.status).toBe(200);
       const server = resp.data.server;
+      logger.debug(server);
       expect(server).not.toBe(null);
       expect(server.ipAddress).not.toBe(null);
     }

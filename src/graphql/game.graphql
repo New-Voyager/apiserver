@@ -82,7 +82,8 @@ input GameUpdateInput {
 
 type Mutation {
   # Not implemented
-  startGameFromTemplate(clubCode: String!, templateId: Int!): GameInfo!
+  startGameFromTemplate(
+  clubCode  : String!, templateId: Int!): GameInfo!
   updateGame(
     clubCode: String!
     gameCode: String!

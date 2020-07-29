@@ -4,8 +4,8 @@ import {getLogger} from '../../src/utils/log';
 const logger = getLogger('promotion');
 
 export const createPromotion = gql`
-  mutation($clubId: String!, $input: CreatePromotionInput) {
-    data: createPromotion(clubId: $clubId, input: $input) {
+  mutation($clubCode: String!, $input: CreatePromotionInput) {
+    data: createPromotion(clubCode: $clubCode, input: $input) {
       id
     }
   }
@@ -13,15 +13,15 @@ export const createPromotion = gql`
 
 export const assignPromotion = gql`
   mutation(
-    $clubId: String!
-    $gameId: String!
+    $clubCode: String!
+    $gameCode: String!
     $promotionId: Int!
     $startAt: DateTime
     $endAt: DateTime
   ) {
     data: assignPromotion(
-      clubId: $clubId
-      gameId: $gameId
+      clubCode: $clubCode
+      gameCode: $gameCode
       promotionId: $promotionId
       startAt: $startAt
       endAt: $endAt
@@ -30,23 +30,23 @@ export const assignPromotion = gql`
 `;
 
 export const getPromotionsQuery = gql`
-  query($clubId: String!) {
-    promotion: promotions(clubId: $clubId) {
+  query($clubCode: String!) {
+    promotion: promotions(clubCode: $clubCode) {
       id
       bonus
       promotionType
-      clubId
+      clubCode
       cardRank
     }
   }
 `;
 
 export const getAssignedPromotionsQuery = gql`
-  query($clubId: String!, $gameId: String!) {
-    assignedPromotion: assignedPromotions(clubId: $clubId, gameId: $gameId) {
-      gameId
+  query($clubCode: String!, $gameCode: String!) {
+    assignedPromotion: assignedPromotions(clubCode: $clubCode, gameCode: $gameCode) {
+      gameCode
       promotionId
-      clubId
+      clubCode
       bonus
       endAt
       startAt
@@ -57,11 +57,11 @@ export const getAssignedPromotionsQuery = gql`
 `;
 
 export async function getPromotion(
-  clubId: string,
+  clubCode: string,
   playerId: string
 ): Promise<Array<any>> {
   const variables: any = {
-    clubId: clubId,
+    clubCode: clubCode,
   };
 
   const resp = await getClient(playerId).query({
@@ -74,13 +74,13 @@ export async function getPromotion(
 }
 
 export async function getAssignedPromotion(
-  clubId: string,
+  clubCode: string,
   playerId: string,
-  gameId: string
+  gameCode: string
 ): Promise<Array<any>> {
   const variables: any = {
-    clubId: clubId,
-    gameId: gameId,
+    clubCode: clubCode,
+    gameCode: gameCode,
   };
 
   const resp = await getClient(playerId).query({

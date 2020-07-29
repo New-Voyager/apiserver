@@ -25,7 +25,7 @@ class PromotionRepositoryImpl {
     }
     const clubRepository = getRepository(Club);
     const club = await clubRepository.findOne({
-      where: {clubeCode: clubCode, owner: player.id},
+      where: {clubCode: clubCode, owner: player.id},
     });
     if (!club) {
       throw new Error(`Club ${clubCode} is not found`);
@@ -52,7 +52,7 @@ class PromotionRepositoryImpl {
       const gameRepository = getRepository(PokerGame);
       const promoRepository = getRepository(Promotion);
       const gamePromoRepository = getRepository(GamePromotion);
-      const club = await clubRepository.findOne({where: {clubeCode: clubCode}});
+      const club = await clubRepository.findOne({where: {clubCode: clubCode}});
       const game = await gameRepository.findOne({where: {gameCode: gameCode}});
       const promo = await promoRepository.findOne({where: {id: promotionId}});
       if (!club) {
@@ -90,7 +90,7 @@ class PromotionRepositoryImpl {
     try {
       const clubRepository = getRepository(Club);
       const promoRepository = getRepository(Promotion);
-      const club = await clubRepository.findOne({where: {clubeCode: clubCode}});
+      const club = await clubRepository.findOne({where: {clubCode: clubCode}});
       if (!club) {
         throw new Error(`Club ${clubCode} is not found`);
       }
@@ -113,7 +113,7 @@ class PromotionRepositoryImpl {
       const gameRepository = getRepository(PokerGame);
       const gamePromoRepository = getRepository(GamePromotion);
       const game = await gameRepository.findOne({where: {gameCode: gameCode}});
-      const club = await clubRepository.findOne({where: {clubeCode: clubCode}});
+      const club = await clubRepository.findOne({where: {clubCode: clubCode}});
       if (!club) {
         throw new Error(`Club ${clubCode} is not found`);
       }
