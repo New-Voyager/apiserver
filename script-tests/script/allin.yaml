@@ -64,47 +64,72 @@ setup:
           - arun
           - arjun
           - sam
+
+    # create a game server if does not exist
+    -
+      create-game-server:
+        ipAddress: 10.1.1.4
+        currentMemory: 100
+        status: ACTIVE
 game:
   steps:
     # configure game
     -
       config:
         club: chennai   # preserve the club.id in current.clubId
-        title: test1
-        gameType: HOLDEM
-        smallBlind: 1.0
-        bigBlind: 2.0
-        utgStraddleAllowed: true
-        straddleBet: 4.0
-        minPlayers: 2
-        maxPlayers: 9
-        gameLength: 60
-        buyInApproval: false
-        rakePercentage: 5.0
-        rakeCap: 5.0
-        buyInMin: 100
-        buyInMax: 300
+        input:
+          title: test1
+          gameType: HOLDEM
+          smallBlind: 1.0
+          bigBlind: 2.0
+          utgStraddleAllowed: true
+          straddleBet: 4.0
+          minPlayers: 2
+          maxPlayers: 9
+          gameLength: 60
+          buyInApproval: false
+          rakePercentage: 5.0
+          rakeCap: 5.0
+          buyInMin: 100
+          buyInMax: 300
+          actionTime: 100
 
         # after the game is created, store the gameNum in current.gameNum
     
+    # players sits in
+    -
+      sitsin:    # /internal/player-sit-in
+        -
+          playerId: arun
+          seatNo: 1
+          buyChips: 0
+        -
+          playerId: arjun
+          seatNo: 5
+          buyChips: 0
+        -
+          playerId: sam
+          seatNo: 7
+          buyChips: 0
+        -
+          playerId: bala
+          seatNo: 8
+          buyChips: 0
+
     # players buy-in
     -
       buyin:    # /internal/buy-chips
         -
-          playerId: arun.id
-          seatNo: 1
+          playerId: arun
           buyChips: 100
         -
-          playerId: arjun.id
-          seatNo: 5
+          playerId: arjun
           buyChips: 100
         -
-          playerId: sam.id
-          seatNo: 7
+          playerId: sam
           buyChips: 100
         -
-          playerId: bala.id
-          seatNo: 8
+          playerId: bala
           buyChips: 100
 
     -
@@ -116,10 +141,10 @@ game:
             handNum: 1
             messageType: RESULT
             handStatus: RESULT
-            playerInSeats: [arun.id, 0, 0, 0, arjun.id, 0, sam.id, bala.id, 0]
-            handStartedAt: "1595385733"
-            handEndedAt: "1595385739"
             handResult:
+              playersInSeats: [arun, 0, 0, 0, arjun, 0, sam, bala, 0]
+              handStartedAt: "1595385733"
+              handEndedAt: "1595385739"
               preflopActions:
               flopActions:
               turnActions:
@@ -149,51 +174,62 @@ game:
               balanceAfterHand:
                 -
                   seatNo: 1
-                  playerId: arun.id
+                  playerId: arun
                   balance: 200
                 -
                   seatNo: 4
-                  playerId: arjun.id
+                  playerId: arjun
                   balance: 50
                 -
                   seatNo: 7
-                  playerId: sam.id
+                  playerId: sam
                   balance: 50
                 -
                   seatNo: 8
-                  playerId: bala.id
+                  playerId: bala
                   balance: 0
           # verify club balance and player balance
-          verify-balance:
+          verify-game-stack:
             club:
-              chennai:
-                balance: 2.0
+              name: chennai
+              balance: 2.0
             players:
-              arun:
+              -
+                name: arun
                 balance: 200
-              arjun:
+              -
+                name: arjun
                 balance: 50
-              sam:
+              -
+                name: sam
                 balance: 50
-              bala:
+              -
+                name: bala
                 balance: 0
     -
       end-game:   # /internal/game-ended
+        gameId: current.gameId
+        clubId: current.clubId
 
     - verify-balance:
         # verify the balance of the club
         club:
-          chennai:
-            balance: 2.0
+          name: chennai
+          balance: 2.0
 
         # verify how much each player owes chips to the club
         # and the clubs owes to the players
         players:
-          arun:
+          -
+            name: arun
             balance: 100    # borrowed 100 chips, left with 200 chips
-          arjun:
+          -
+            name: arjun
             balance: -50    # borrowed 100 chips, left with 50 chips
-          sam:
+          -
+            name: sam
             balance: -50    # borrowed 100 chips, left with 50 chips
-          bala:
+          -
+            name: bala
             balance: -100   # borrowed 100 chips, left with 0 chips
+            

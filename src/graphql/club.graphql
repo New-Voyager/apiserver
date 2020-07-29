@@ -68,9 +68,27 @@ type clubId{
   id: Int!
 }
 
+
+type Member{
+  id: Int!
+  status: Int!
+  isManager: Boolean!
+  isOwner: Boolean
+  contactInfo: String
+  ownerNotes: String
+  lastGamePlayedDate: DateTime
+  joinedDate: DateTime
+  leftDate: DateTime
+  viewAllowed: Boolean
+  playAllowed: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
 type Query {
   clubMembers(clubCode: String!): [ClubMember!]
   clubById(clubCode: String!): clubId!
+  clubMemberStatus(clubCode: String!): Member!
 
   # returns 'last' number of games 'from' in reverse order
   # by default, this call returns only last 20 games

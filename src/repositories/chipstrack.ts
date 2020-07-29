@@ -1,4 +1,4 @@
-import {PlayerGame} from '@src/entity/game';
+import {PlayerGame, PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {Club} from '@src/entity/club';
 import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
@@ -11,6 +11,7 @@ import {
   ClubPlayerBalance,
   ClubGameRake,
 } from '@src/entity/chipstrack';
+import {identity} from 'lodash';
 
 const logger = getLogger('chipstrack');
 const INITIAL_BUYIN_COUNT = 1;
@@ -205,7 +206,7 @@ class ChipsTrackRepositoryImpl {
             clubPlayerBalance.player = playerChip.player;
             clubPlayerBalance.notes = '';
           }
-          clubPlayerBalance.balance += playerChip.stack;
+          clubPlayerBalance.balance += playerChip.stack - playerChip.buyIn;
           clubPlayerBalance.totalBuyins += playerChip.buyIn;
           clubPlayerBalance.totalWinnings += playerChip.stack;
           const resp2 = await clubPlayerBalanceRepository.save(
@@ -226,6 +227,124 @@ class ChipsTrackRepositoryImpl {
       logger.error(`Error: ${JSON.stringify(e)}`);
       return new Error(JSON.stringify(e));
     }
+  }
+
+  public async getClubBalance(clubId: string): Promise<ClubBalance> {
+    const clubRepository = getRepository(Club);
+    const clubBalanceRepository = getRepository(ClubBalance);
+    const club = await clubRepository.findOne({
+      where: {displayId: clubId},
+    });
+    if (!club) {
+      logger.error(`Club ${clubId} is not found`);
+      throw new Error(`Club ${clubId} is not found`);
+    }
+    const clubBalance = await clubBalanceRepository.findOne({
+      where: {club: club.id},
+    });
+    if (!clubBalance) {
+      logger.error(`Club ${clubId} is not found`);
+      throw new Error(`Club ${clubId} is not found`);
+    }
+    logger.debug(clubBalance);
+    return clubBalance;
+  }
+
+  public async getPlayerBalance(
+    playerId: string,
+    clubId: string
+  ): Promise<ClubPlayerBalance> {
+    const clubRepository = getRepository(Club);
+    const playerRepository = getRepository(Player);
+    const clubPlayerBalanceRepository = getRepository(ClubPlayerBalance);
+    const club = await clubRepository.findOne({
+      where: {displayId: clubId},
+    });
+    const player = await playerRepository.findOne({
+      where: {uuid: playerId},
+    });
+    if (!club) {
+      logger.error(`Club ${clubId} is not found`);
+      throw new Error(`Club ${clubId} is not found`);
+    }
+    if (!player) {
+      logger.error(`Player ${playerId} is not found`);
+      throw new Error(`Player ${playerId} is not found`);
+    }
+    const clubPlayerBalance = await clubPlayerBalanceRepository.findOne({
+      where: {club: club.id, player: player.id},
+    });
+    if (!clubPlayerBalance) {
+      logger.error('Error in retreiving data');
+      throw new Error('Error in retreiving data');
+    }
+    return clubPlayerBalance;
+  }
+
+  public async getPlayerGametrack(
+    playerId: string,
+    clubId: string,
+    gameId: string
+  ): Promise<PlayerGameTracker> {
+    const clubRepository = getRepository(Club);
+    const gameRepository = getRepository(PokerGame);
+    const playerRepository = getRepository(Player);
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const club = await clubRepository.findOne({
+      where: {displayId: clubId},
+    });
+    const game = await gameRepository.findOne({
+      where: {gameId: gameId},
+    });
+    const player = await playerRepository.findOne({
+      where: {uuid: playerId},
+    });
+    if (!club) {
+      throw new Error(`Club ${clubId} is not found`);
+    }
+    if (!game) {
+      throw new Error(`Game ${gameId} is not found`);
+    }
+    if (!player) {
+      throw new Error(`Player ${playerId} is not found`);
+    }
+    const playerTrack = await playerGameTrackerRepository.findOne({
+      where: {club: club.id, player: player.id, game: game.id},
+    });
+    if (!playerTrack) {
+      logger.error('Error in retreiving data');
+      throw new Error('Error in retreiving data');
+    }
+    return playerTrack;
+  }
+
+  public async getClubGametrack(
+    clubId: string,
+    gameId: string
+  ): Promise<ClubGameRake> {
+    const clubRepository = getRepository(Club);
+    const gameRepository = getRepository(PokerGame);
+    const clubGameTrackerRepository = getRepository(ClubGameRake);
+    const club = await clubRepository.findOne({
+      where: {displayId: clubId},
+    });
+    const game = await gameRepository.findOne({
+      where: {gameId: gameId},
+    });
+    if (!club) {
+      throw new Error(`Club ${clubId} is not found`);
+    }
+    if (!game) {
+      throw new Error(`Game ${gameId} is not found`);
+    }
+    const clubTrack = await clubGameTrackerRepository.findOne({
+      where: {club: club.id, game: game.id},
+    });
+    if (!clubTrack) {
+      logger.error('Error in retreiving data');
+      throw new Error('Error in retreiving data');
+    }
+    return clubTrack;
   }
 }
 

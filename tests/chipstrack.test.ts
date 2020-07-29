@@ -1,8 +1,9 @@
 import {PORT_NUMBER} from './utils/utils';
 import {default as axios} from 'axios';
-import {resetDatabase} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
+import * as chipstrackutils from './utils/chipstrack.testutils';
 import * as handutils from './utils/hand.testutils';
+import {resetDatabase, getClient} from './utils/utils';
 import * as gameutils from './utils/game.testutils';
 import {getLogger} from '../src/utils/log';
 const logger = getLogger('chipstrack');
@@ -184,9 +185,73 @@ describe('Player Chips tracking APIs', () => {
     expect(res.data.data[0].clubChipsTransaction.amount).toBe(0);
     expect(res.data.data[0].clubChipsTransaction.balance).toBe(0);
     expect(res.data.data[1].clubBalance.balance).toBe(0);
-    expect(res.data.data[2].clubPlayerBalance.balance).toBe(100);
+    expect(res.data.data[2].clubPlayerBalance.balance).toBe(0);
     expect(res.data.data[2].clubPlayerBalance.totalBuyins).toBe(100);
     expect(res.data.data[2].clubPlayerBalance.totalWinnings).toBe(100);
     expect(res.data.data[2].clubPlayerBalance.playerId).toBe(playerID);
+  });
+
+  test('Club and Player Balance', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.1.7',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    try {
+      await axios.post(`${SERVER_API}/register-game-server`, gameServer1);
+    } catch (err) {
+      console.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+    const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
+    let game;
+
+    game = await gameutils.startGame(playerId, clubId, holdemGameInput);
+
+    const playerID = await handutils.getPlayerById(playerId);
+    const clubID = await clubutils.getClubById(clubId);
+    const gameID = await gameutils.getGameById(game.gameId);
+
+    const messageInput = {
+      clubId: clubID,
+      playerId: playerID,
+      gameId: gameID,
+      buyIn: 100.0,
+      status: 'PLAYING',
+      seatNo: 5,
+    };
+
+    await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
+    const res = await axios.post(`${SERVER_API}/game-ended`, {
+      club_id: clubID,
+      game_id: gameID,
+    });
+    const clubBalance = await chipstrackutils.getClubBalance(playerId, clubId);
+    const playerBalance = await chipstrackutils.getClubPlayerBalance(
+      playerId,
+      clubId
+    );
+    const playertrack = await chipstrackutils.getPlayerTrack(
+      playerId,
+      clubId,
+      game.gameId
+    );
+    const clubTrack = await chipstrackutils.getClubTrack(
+      playerId,
+      clubId,
+      game.gameId
+    );
+    expect(clubBalance).not.toBeNull();
+    expect(clubBalance).not.toBeUndefined();
+    expect(clubBalance).toBe(0);
+    expect(playerBalance).not.toBeNull();
+    expect(playerBalance).not.toBeUndefined();
+    expect(playerBalance).toBe(0);
+    expect(playertrack).not.toBeNull();
+    expect(playertrack).not.toBeUndefined();
+    expect(playertrack).toBe(100);
+    expect(clubTrack).not.toBeNull();
+    expect(clubTrack).not.toBeUndefined();
+    expect(clubTrack).toBe(0);
   });
 });

@@ -310,6 +310,20 @@ export async function leaveClub(playerId: string, clubCode: string) {
   return ClubMemberStatus[status];
 }
 
+export async function getMemberStatus(playerId: string, clubId: string) {
+  const errors = new Array<string>();
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  if (clubId === '') {
+    errors.push('clubId is a required field');
+  }
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+  return await ClubRepository.getClubMemberStatus(clubId, playerId);
+}
+
 const resolvers: any = {
   Query: {
     clubMembers: async (parent, args, ctx, info) => {
@@ -322,6 +336,10 @@ const resolvers: any = {
 
     clubById: async (parent, args, ctx, info) => {
       return getClubById(ctx.req.playerId, args.clubCode);
+    },
+
+    clubMemberStatus: async (parent, args, ctx, info) => {
+      return getMemberStatus(ctx.req.playerId, args.clubId);
     },
   },
   Mutation: {

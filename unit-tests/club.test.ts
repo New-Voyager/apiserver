@@ -4,6 +4,7 @@ import {
   createClub,
   updateClub,
   joinClub,
+  getMemberStatus,
   approveMember,
   rejectMember,
   kickMember,
@@ -100,6 +101,14 @@ describe('Club APIs', () => {
       ownerUuid: playerId,
     };
     const clubId = await createClub(playerId, clubInput);
+    try {
+      const resp = await getMemberStatus(playerId, clubId);
+      expect(resp).not.toBeUndefined();
+      expect(resp).not.toBeNull();
+    } catch (error) {
+      logger.error(JSON.stringify(error));
+      expect(true).toBeFalsy();
+    }
     try {
       const resp = await joinClub(playerId, clubId);
       expect(resp).not.toBeUndefined();
