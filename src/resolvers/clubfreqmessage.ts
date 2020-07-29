@@ -1,19 +1,17 @@
 import * as _ from 'lodash';
 import {ClubFreqMessageRepository} from '@src/repositories/clubfreqmessage';
-import {FavouriteMessageInputFormat} from '@src/repositories/clubfreqmessage';
 import {getLogger} from '@src/utils/log';
 const logger = getLogger('clubfreqmessage');
 
-export async function getClubFavMsg(playerId: string, clubId: string) {
+export async function getClubFavMsg(playerId: string, clubCode: string) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  const messages = await ClubFreqMessageRepository.clubFavoriteMessage(clubId);
-  logger.debug(messages);
+  const messages = await ClubFreqMessageRepository.clubFavoriteMessage(clubCode);
   return _.map(messages, x => {
     return {
       id: x.id,
-      clubId: x.clubId,
+      clubCode: x.clubCode,
       playerId: x.playerId,
       text: x.text,
       audioLink: x.audioLink,
@@ -32,7 +30,7 @@ export async function getPlayerFavMsg(playerId: string) {
   return _.map(messages, x => {
     return {
       id: x.id,
-      clubId: x.clubId,
+      clubCode: x.clubCode,
       playerId: x.playerId,
       text: x.text,
       audioLink: x.audioLink,
@@ -64,7 +62,7 @@ export async function saveFavMsg(playerId: string, message: any) {
 const resolvers: any = {
   Query: {
     clubFavoriteMessages: async (parent, args, ctx, info) => {
-      return getClubFavMsg(ctx.req.playerId, args.clubId);
+      return getClubFavMsg(ctx.req.playerId, args.clubCode);
     },
 
     playerFavoriteMessages: async (parent, args, ctx, info) => {

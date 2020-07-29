@@ -3,7 +3,7 @@ import {
   ClubCreateInput,
   ClubUpdateInput,
 } from '@src/repositories/club';
-import {ClubMemberStatus, Club} from '@src/entity/club';
+import {ClubMemberStatus} from '@src/entity/club';
 import {Player} from '@src/entity/player';
 import {PageOptions} from '@src/types';
 import * as _ from 'lodash';
@@ -15,11 +15,11 @@ export async function getClubMembers(playerId: string, args: any) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  const clubMembers1 = await ClubRepository.getMembers(args.clubId);
-  const clubMember = await ClubRepository.isClubMember(args.clubId, playerId);
+  const clubMembers1 = await ClubRepository.getMembers(args.clubCode);
+  const clubMember = await ClubRepository.isClubMember(args.clubCode, playerId);
   if (!clubMember) {
     logger.error(
-      `The user ${playerId} is not a member of ${args.clubId}, ${JSON.stringify(
+      `The user ${playerId} is not a member of ${args.clubCode}, ${JSON.stringify(
         clubMembers1
       )}`
     );
@@ -27,11 +27,11 @@ export async function getClubMembers(playerId: string, args: any) {
   }
 
   if (clubMember.status == ClubMemberStatus.KICKEDOUT) {
-    logger.error(`The user ${playerId} is kicked out of ${args.clubId}`);
+    logger.error(`The user ${playerId} is kicked out of ${args.clubCode}`);
     throw new Error('Unauthorized');
   }
 
-  const clubMembers = await ClubRepository.getMembers(args.clubId);
+  const clubMembers = await ClubRepository.getMembers(args.clubCode);
   const members = new Array<any>();
   for (const member of clubMembers) {
     members.push({
@@ -51,18 +51,18 @@ export async function getClubMembers(playerId: string, args: any) {
 
 export async function getClubGames(
   playerId: string,
-  clubId: string,
+  clubCode: string,
   pageOptions?: PageOptions
 ): Promise<Array<any>> {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  const clubMember = await ClubRepository.isClubMember(clubId, playerId);
+  const clubMember = await ClubRepository.isClubMember(clubCode, playerId);
   if (!clubMember) {
-    logger.error(`The user ${playerId} is not a member of ${clubId}`);
+    logger.error(`The user ${playerId} is not a member of ${clubCode}`);
     throw new Error('Unauthorized');
   }
-  const clubGames = await ClubRepository.getClubGames(clubId, pageOptions);
+  const clubGames = await ClubRepository.getClubGames(clubCode, pageOptions);
   const ret = _.map(clubGames, x => {
     let endedAt;
     let endedBy;
@@ -77,7 +77,7 @@ export async function getClubGames(
       pageId: x.id,
       title: x.title,
       type: x.gameType,
-      gameId: x.gameId,
+      gameCode: x.gameCode,
       startedBy: x.startedBy.name,
       startedAt: x.startedAt,
       status: GameStatus[x.status],
@@ -91,12 +91,12 @@ export async function getClubGames(
 
 export async function getClubById(
   playerId: string,
-  clubId: string
+  clubCode: string
 ): Promise<any> {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  const club = await ClubRepository.getClubById(clubId);
+  const club = await ClubRepository.getClubById(clubCode);
   if (!club) {
     throw new Error('Club not found');
   }
@@ -134,7 +134,7 @@ export async function createClub(playerId: string, club: ClubCreateInput) {
   }
 }
 
-export async function updateClub(playerId: string, clubId: string, club: any) {
+export async function updateClub(playerId: string, clubCode: string, club: any) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
@@ -153,55 +153,55 @@ export async function updateClub(playerId: string, clubId: string, club: any) {
   }
 
   try {
-    const club = await ClubRepository.getClub(clubId);
+    const club = await ClubRepository.getClub(clubCode);
     if (!club) {
-      throw new Error(`Club ${clubId} is not found`);
+      throw new Error(`Club ${clubCode} is not found`);
     }
     const owner: Player | undefined = await Promise.resolve(club.owner);
     if (!owner) {
-      throw new Error(`Club ${clubId} does not have a owner`);
+      throw new Error(`Club ${clubCode} does not have a owner`);
     }
     if (playerId != owner.uuid) {
       const a = JSON.stringify(club.owner);
       throw new Error(
-        `Unauthorized. ${playerId} is not the owner of the club ${clubId}, ${a}`
+        `Unauthorized. ${playerId} is not the owner of the club ${clubCode}, ${a}`
       );
     }
     const input = club as ClubUpdateInput;
-    return ClubRepository.updateClub(clubId, input);
+    return ClubRepository.updateClub(clubCode, input);
   } catch (err) {
     logger.error(err);
     throw err;
   }
 }
 
-export async function joinClub(playerId: string, clubId: string) {
+export async function joinClub(playerId: string, clubCode: string) {
   const errors = new Array<string>();
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  if (clubId === '') {
-    errors.push('clubId is a required field');
+  if (clubCode === '') {
+    errors.push('clubCode is a required field');
   }
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
   }
 
   // TODO: We need to get owner id from the JWT
-  const status = await ClubRepository.joinClub(clubId, playerId);
+  const status = await ClubRepository.joinClub(clubCode, playerId);
   return ClubMemberStatus[status];
 }
 
-export async function deleteClub(playerId: string, clubId: string) {
+export async function deleteClub(playerId: string, clubCode: string) {
   const errors = new Array<string>();
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  if (clubId === '') {
-    errors.push('clubId is a required field');
+  if (clubCode === '') {
+    errors.push('clubCode is a required field');
   }
   // ensure this player is the owner of the club
-  if (!(await ClubRepository.isClubOwner(clubId, playerId))) {
+  if (!(await ClubRepository.isClubOwner(clubCode, playerId))) {
     throw new Error('Unauthorized. Only owner can delete the club');
   }
 
@@ -209,21 +209,21 @@ export async function deleteClub(playerId: string, clubId: string) {
     throw new Error(errors.join('\n'));
   }
 
-  await ClubRepository.deleteClub(clubId);
+  await ClubRepository.deleteClub(clubCode);
   return true;
 }
 
 export async function approveMember(
   playerId: string,
-  clubId: string,
+  clubCode: string,
   playerUuid: string
 ) {
   const errors = new Array<string>();
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  if (clubId === '') {
-    errors.push('clubId is a required field');
+  if (clubCode === '') {
+    errors.push('clubCode is a required field');
   }
   if (playerUuid === '') {
     errors.push('playerUuid is a required field');
@@ -236,7 +236,7 @@ export async function approveMember(
   const ownerId = playerId;
   const status = await ClubRepository.approveMember(
     ownerId,
-    clubId,
+    clubCode,
     playerUuid
   );
   return ClubMemberStatus[status];
@@ -244,15 +244,15 @@ export async function approveMember(
 
 export async function rejectMember(
   playerId: string,
-  clubId: string,
+  clubCode: string,
   playerUuid: string
 ) {
   const errors = new Array<string>();
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  if (clubId === '') {
-    errors.push('clubId is a required field');
+  if (clubCode === '') {
+    errors.push('clubCode is a required field');
   }
   if (playerUuid === '') {
     errors.push('playerUuid is a required field');
@@ -263,21 +263,21 @@ export async function rejectMember(
 
   // TODO: We need to get owner id from the JWT
   const ownerId = playerId;
-  const status = await ClubRepository.rejectMember(ownerId, clubId, playerUuid);
+  const status = await ClubRepository.rejectMember(ownerId, clubCode, playerUuid);
   return ClubMemberStatus[status];
 }
 
 export async function kickMember(
   playerId: string,
-  clubId: string,
+  clubCode: string,
   playerUuid: string
 ) {
   const errors = new Array<string>();
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  if (clubId === '') {
-    errors.push('clubId is a required field');
+  if (clubCode === '') {
+    errors.push('clubCode is a required field');
   }
   if (playerUuid === '') {
     errors.push('playerUuid is a required field');
@@ -288,17 +288,17 @@ export async function kickMember(
 
   // TODO: We need to get owner id from the JWT
   const ownerId = playerId;
-  const status = await ClubRepository.kickMember(ownerId, clubId, playerUuid);
+  const status = await ClubRepository.kickMember(ownerId, clubCode, playerUuid);
   return ClubMemberStatus[status];
 }
 
-export async function leaveClub(playerId: string, clubId: string) {
+export async function leaveClub(playerId: string, clubCode: string) {
   const errors = new Array<string>();
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  if (clubId === '') {
-    errors.push('clubId is a required field');
+  if (clubCode === '') {
+    errors.push('clubCode is a required field');
   }
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
@@ -306,7 +306,7 @@ export async function leaveClub(playerId: string, clubId: string) {
 
   // TODO: We need to get owner id from the JWT
   const ownerId = playerId;
-  const status = await ClubRepository.leaveClub(clubId, playerId);
+  const status = await ClubRepository.leaveClub(clubCode, playerId);
   return ClubMemberStatus[status];
 }
 
@@ -317,11 +317,11 @@ const resolvers: any = {
     },
 
     clubGames: async (parent, args, ctx, info) => {
-      return getClubGames(ctx.req.playerId, args.clubId, args.page);
+      return getClubGames(ctx.req.playerId, args.clubCode, args.page);
     },
 
     clubById: async (parent, args, ctx, info) => {
-      return getClubById(ctx.req.playerId, args.clubId);
+      return getClubById(ctx.req.playerId, args.clubCode);
     },
   },
   Mutation: {
@@ -329,29 +329,29 @@ const resolvers: any = {
       return createClub(ctx.req.playerId, args.club);
     },
     deleteClub: async (parent, args, ctx, info) => {
-      return deleteClub(ctx.req.playerId, args.clubId);
+      return deleteClub(ctx.req.playerId, args.clubCode);
     },
     updateClub: async (parent, args, ctx, info) => {
-      return updateClub(ctx.req.playerId, args.clubId, args.club);
+      return updateClub(ctx.req.playerId, args.clubCode, args.club);
     },
     joinClub: async (parent, args, ctx, info) => {
-      return joinClub(ctx.req.playerId, args.clubId);
+      return joinClub(ctx.req.playerId, args.clubCode);
     },
 
     approveMember: async (parent, args, ctx, info) => {
-      return approveMember(ctx.req.playerId, args.clubId, args.playerUuid);
+      return approveMember(ctx.req.playerId, args.clubCode, args.playerUuid);
     },
 
     rejectMember: async (parent, args, ctx, info) => {
-      return rejectMember(ctx.req.playerId, args.clubId, args.playerUuid);
+      return rejectMember(ctx.req.playerId, args.clubCode, args.playerUuid);
     },
 
     kickMember: async (parent, args, ctx, info) => {
-      return kickMember(ctx.req.playerId, args.clubId, args.playerUuid);
+      return kickMember(ctx.req.playerId, args.clubCode, args.playerUuid);
     },
 
     leaveClub: async (parent, args, ctx, info) => {
-      return leaveClub(ctx.req.playerId, args.clubId);
+      return leaveClub(ctx.req.playerId, args.clubCode);
     },
   },
 };

@@ -22,8 +22,8 @@ export class Promotion {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @Column({name: 'club_id'})
-  public clubId!: string;
+  @Column({name: 'club_code'})
+  public clubCode!: string;
 
   @Column({name: 'promotion_type'})
   public promotionType!: PromotionType;

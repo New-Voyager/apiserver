@@ -27,12 +27,12 @@ input ClubUpdateInput {
 
 type Mutation {
   createClub(club: ClubCreateInput!): String!
-  updateClub(clubId: String!, club: ClubUpdateInput!): Boolean!
-  joinClub(clubId: String!): ClubMemberStatus
-  approveMember(clubId: String!, playerUuid: String!): ClubMemberStatus
-  rejectMember(clubId: String!, playerUuid: String!): ClubMemberStatus
-  kickMember(clubId: String!, playerUuid: String!): ClubMemberStatus
-  deleteClub(clubId: String!): Boolean!
+  updateClub(clubCode: String!, club: ClubUpdateInput!): Boolean!
+  joinClub(clubCode: String!): ClubMemberStatus
+  approveMember(clubCode: String!, playerUuid: String!): ClubMemberStatus
+  rejectMember(clubCode: String!, playerUuid: String!): ClubMemberStatus
+  kickMember(clubCode: String!, playerUuid: String!): ClubMemberStatus
+  deleteClub(clubCode: String!): Boolean!
 }
 
 type ClubMember {
@@ -50,7 +50,7 @@ type ClubGameInfo {
   title: String
   type: GameType
   pageId: Int!
-  gameId: String!
+  gameCode: String!
   startedBy: String
   startedAt: DateTime
   endedBy: String
@@ -69,12 +69,12 @@ type clubId{
 }
 
 type Query {
-  clubMembers(clubId: String!): [ClubMember!]
-  clubById(clubId: String!): clubId!
+  clubMembers(clubCode: String!): [ClubMember!]
+  clubById(clubCode: String!): clubId!
 
   # returns 'last' number of games 'from' in reverse order
   # by default, this call returns only last 20 games
   # the caller can paginate with pageId
-  # clubGames(clubId: "", prev: 20, from: 10000001)
-  clubGames(clubId: String!, page: PageInput): [ClubGameInfo!]
+  # clubGames(clubCode: "", prev: 20, from: 10000001)
+  clubGames(clubCode: String!, page: PageInput): [ClubGameInfo!]
 }

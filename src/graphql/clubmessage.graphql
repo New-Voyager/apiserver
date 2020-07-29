@@ -16,7 +16,7 @@ input ClubMessageInput {
 type ClubMessage {
   id: Int!               
   messageType: ClubMessageType!
-  clubId: String!
+  clubCode: String!
   text: String
   gameNum: Int
   handNum: Int
@@ -25,9 +25,9 @@ type ClubMessage {
 }
 
 type Mutation {
-  sendClubMessage(clubId: String!, message: ClubMessageInput!): String!
+  sendClubMessage(clubCode: String!, message: ClubMessageInput!): String!
 }
 
 type Query {
-  clubMessages(clubId: String!, pageOptions: PageInput): [ClubMessage]  
+  clubMessages(clubCode: String!, pageOptions: PageInput): [ClubMessage]  
 }

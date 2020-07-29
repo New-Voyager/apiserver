@@ -1,5 +1,4 @@
 import {ClubRepository} from '@src/repositories/club';
-import {Club} from '@src/entity/club';
 
 /**
  * These APIs are only available for testdriver.

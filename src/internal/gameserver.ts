@@ -82,15 +82,15 @@ class GameServerAPIs {
   }
 
   public async getSpecificGameServer(req: any, resp: any) {
-    const clubId = req.params.clubId;
-    const gameNum = req.params.gameNum;
+    const clubCode = req.params.clubCode;
+    const gameCode = req.params.gameCode;
     const errors = new Array<string>();
     try {
-      if (!clubId) {
-        errors.push('clubId is missing');
+      if (!clubCode) {
+        errors.push('clubCode is missing');
       }
-      if (!gameNum) {
-        errors.push('gameNum is missing');
+      if (!gameCode) {
+        errors.push('gameCode is missing');
       }
     } catch (err) {
       resp.status(500).send('Internal service error');
@@ -101,7 +101,7 @@ class GameServerAPIs {
       resp.status(500).send(JSON.stringify(errors));
       return;
     }
-    const response = await getParticularGameServer(clubId, gameNum);
+    const response = await getParticularGameServer(clubCode, gameCode);
     resp.status(200).send(JSON.stringify({server: response}));
   }
 }
@@ -177,11 +177,11 @@ export async function getAllGameServers() {
   return gameServers;
 }
 
-export async function getParticularGameServer(clubId: string, gameNum: string) {
+export async function getParticularGameServer(clubCode: string, gameCode: string) {
   const trackGameServerRepository = getRepository(TrackGameServer);
   const trackGameServer = await trackGameServerRepository.findOne({
     relations: ['gameServerId'],
-    where: {clubId: clubId, gameNum: gameNum},
+    where: {clubCode: clubCode, gameCode: gameCode},
   });
   return trackGameServer;
 }

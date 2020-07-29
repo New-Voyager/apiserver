@@ -17,8 +17,8 @@ export class ClubMessageInput {
   @Column({name: 'text', nullable: true})
   public text!: string;
 
-  @Column({name: 'club_id', nullable: false})
-  public clubId!: string;
+  @Column({name: 'club_code', nullable: false})
+  public clubCode!: string;
 
   @Column({name: 'hand_number', type: 'int', nullable: true})
   public handNum!: number;

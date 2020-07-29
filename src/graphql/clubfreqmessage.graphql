@@ -1,5 +1,5 @@
 input FavouriteMessageInput {
-  clubId: String
+  clubCode: String
   playerId: String
   text: String
   audioLink: String
@@ -8,7 +8,7 @@ input FavouriteMessageInput {
 
 type FavouriteMessage {
   id: Int!               
-  clubId: String
+  clubCode: String
   playerId: String
   text: String
   audioLink: String
@@ -24,5 +24,5 @@ type Query{
 }
 
 type Query {
-  clubFavoriteMessages(clubId: String!): [FavouriteMessage!]
+  clubFavoriteMessages(clubCode: String!): [FavouriteMessage!]
 }
