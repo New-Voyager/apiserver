@@ -18,13 +18,13 @@ export interface ClubMessageInputFormat {
 
 class ClubMessageRepositoryImpl {
   public async sendClubMessage(
-    clubId: string,
+    clubCode: string,
     message: ClubMessageInputFormat
   ) {
     try {
       let invalidPlayer = '';
       const clubRepository = getRepository(Club);
-      const club = await clubRepository.findOne({where: {displayId: clubId}});
+      const club = await clubRepository.findOne({where: {clubeCode: clubCode}});
       const playerArray = message.playerTags.split(',');
       const playerRepository = getRepository<Player>(Player);
       playerArray.forEach(player => {
@@ -34,7 +34,7 @@ class ClubMessageRepositoryImpl {
         }
       });
       if (!club) {
-        throw new Error(`Club ${clubId} is not found`);
+        throw new Error(`Club ${clubCode} is not found`);
       } else if (invalidPlayer !== '') {
         throw new Error(`Player ${invalidPlayer} is not found`);
       } else {
@@ -43,18 +43,18 @@ class ClubMessageRepositoryImpl {
           message.text !== '' &&
           message.text !== undefined
         ) {
-          return this.saveMessage(0, clubId, message);
+          return this.saveMessage(0, clubCode, message);
         } else if (
           message.messageType.toString() === 'GIPHY' &&
           message.giphyLink !== '' &&
           message.giphyLink !== undefined
         ) {
-          return this.saveMessage(2, clubId, message);
+          return this.saveMessage(2, clubCode, message);
         } else if (
           message.messageType.toString() === 'HAND' &&
           message.handNum !== undefined
         ) {
-          return this.saveMessage(1, clubId, message);
+          return this.saveMessage(1, clubCode, message);
         } else {
           throw new Error('Bad parameters');
         }
@@ -66,13 +66,13 @@ class ClubMessageRepositoryImpl {
 
   public async saveMessage(
     messageType: number,
-    clubId: string,
+    clubCode: string,
     message: ClubMessageInputFormat
   ) {
     const sendMessage = new ClubMessageInput();
     sendMessage.text = message.text;
     sendMessage.messageType = messageType;
-    sendMessage.clubId = clubId;
+    sendMessage.clubCode = clubCode;
     sendMessage.gameNum = message.gameNum;
     sendMessage.handNum = message.handNum;
     sendMessage.giphyLink = message.giphyLink;
@@ -83,14 +83,14 @@ class ClubMessageRepositoryImpl {
   }
 
   public async getClubMessage(
-    clubId: string,
+    clubCode: string,
     pageOptions?: PageOptions
   ): Promise<Array<any>> {
     try {
       const clubRepository = getRepository(Club);
-      const club = await clubRepository.findOne({where: {displayId: clubId}});
+      const club = await clubRepository.findOne({where: {clubeCode: clubCode}});
       if (!club) {
-        throw new Error(`Club ${clubId} is not found`);
+        throw new Error(`Club ${clubCode} is not found`);
       } else {
         if (!pageOptions) {
           pageOptions = {
@@ -124,14 +124,16 @@ class ClubMessageRepositoryImpl {
           take = 50;
         }
         const clubRepository = getRepository(Club);
-        const club = await clubRepository.findOne({where: {displayId: clubId}});
+        const club = await clubRepository.findOne({
+          where: {clubeCode: clubCode},
+        });
         if (!club) {
-          throw new Error(`Club ${clubId} is not found`);
+          throw new Error(`Club ${clubCode} is not found`);
         }
 
         const findOptions: any = {
           where: {
-            clubId: clubId,
+            clubCode: clubCode,
           },
           order: order,
           take: take,

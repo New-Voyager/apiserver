@@ -1,5 +1,5 @@
 import {Club} from '@src/entity/club';
-import {getRepository, MoreThan, LessThan} from 'typeorm';
+import {getRepository} from 'typeorm';
 import {Player} from '@src/entity/player';
 import {FavouriteMessage} from '@src/entity/clubfreqmessage';
 const MAX_ALLOWED_MESSAGES = 20;
@@ -38,7 +38,7 @@ class ClubFreqMessageRepositoryImpl {
     try {
       const clubRepository = getRepository(Club);
       const club = await clubRepository.findOne({
-        where: {displayId: message.clubCode},
+        where: {clubeCode: message.clubCode},
       });
       if (!club) {
         throw new Error(`Club ${message.clubCode} is not found`);
@@ -111,7 +111,7 @@ class ClubFreqMessageRepositoryImpl {
   public async clubFavoriteMessage(clubCode: string): Promise<Array<any>> {
     try {
       const clubRepository = getRepository(Club);
-      const club = await clubRepository.findOne({where: {displayId: clubCode}});
+      const club = await clubRepository.findOne({where: {clubeCode: clubCode}});
       if (!club) {
         throw new Error(`Club ${clubCode} is not found`);
       } else {

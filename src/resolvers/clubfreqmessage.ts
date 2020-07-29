@@ -7,7 +7,9 @@ export async function getClubFavMsg(playerId: string, clubCode: string) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  const messages = await ClubFreqMessageRepository.clubFavoriteMessage(clubCode);
+  const messages = await ClubFreqMessageRepository.clubFavoriteMessage(
+    clubCode
+  );
   return _.map(messages, x => {
     return {
       id: x.id,

@@ -177,7 +177,10 @@ export async function getAllGameServers() {
   return gameServers;
 }
 
-export async function getParticularGameServer(clubCode: string, gameCode: string) {
+export async function getParticularGameServer(
+  clubCode: string,
+  gameCode: string
+) {
   const trackGameServerRepository = getRepository(TrackGameServer);
   const trackGameServer = await trackGameServerRepository.findOne({
     relations: ['gameServerId'],

@@ -3,11 +3,11 @@ import {GameType} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
 const logger = getLogger('game');
 
-export async function getGameById(playerId: string, gameId: string) {
+export async function getGameById(playerId: string, gameCode: string) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  const game = await GameRepository.getGameById(gameId);
+  const game = await GameRepository.getGameById(gameCode);
   if (!game) {
     throw new Error('Game not found');
   }
@@ -16,7 +16,7 @@ export async function getGameById(playerId: string, gameId: string) {
   };
 }
 
-export async function startGame(playerId: string, clubId: string, game: any) {
+export async function startGame(playerId: string, clubCode: string, game: any) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
@@ -26,7 +26,7 @@ export async function startGame(playerId: string, clubId: string, game: any) {
   }
   try {
     const gameInfo = await GameRepository.createPrivateGame(
-      clubId,
+      clubCode,
       playerId,
       game
     );
@@ -42,12 +42,12 @@ export async function startGame(playerId: string, clubId: string, game: any) {
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
-      return getGameById(ctx.req.playerId, args.gameId);
+      return getGameById(ctx.req.playerId, args.gameCode);
     },
   },
   Mutation: {
     startGame: async (parent, args, ctx, info) => {
-      return startGame(ctx.req.playerId, args.clubId, args.game);
+      return startGame(ctx.req.playerId, args.clubCode, args.game);
     },
   },
 };

@@ -43,7 +43,6 @@ export class PokerGame {
   @JoinColumn({name: 'club_id'})
   public club!: Club;
 
-
   @Index('game-host-idx')
   @ManyToOne(type => Player)
   @JoinColumn({name: 'host_id'})

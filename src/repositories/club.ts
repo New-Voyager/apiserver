@@ -174,7 +174,10 @@ class ClubRepositoryImpl {
     clubCode: string,
     playerId: string
   ): Promise<ClubMemberStatus> {
-    let [club, player, clubMember] = await this.getClubMember(clubCode, playerId);
+    let [club, player, clubMember] = await this.getClubMember(
+      clubCode,
+      playerId
+    );
 
     const owner: Player | undefined = await Promise.resolve(club.owner);
     if (!owner) {
@@ -312,16 +315,16 @@ class ClubRepositoryImpl {
   }
 
   public async getClubMemberStatus(
-    clubId: string,
+    clubCode: string,
     playerId: string
   ): Promise<ClubMember> {
     const clubRepository = getRepository<Club>(Club);
     const playerRepository = getRepository<Player>(Player);
 
-    const club = await clubRepository.findOne({where: {displayId: clubId}});
+    const club = await clubRepository.findOne({where: {clubeCode: clubCode}});
     const player = await playerRepository.findOne({where: {uuid: playerId}});
     if (!club) {
-      throw new Error(`Club ${clubId} is not found`);
+      throw new Error(`Club ${clubCode} is not found`);
     }
     if (!player) {
       throw new Error(`Player ${playerId} is not found`);

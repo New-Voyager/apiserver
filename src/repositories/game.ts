@@ -1,11 +1,11 @@
-import {getConnection, getRepository, getManager, LessThan} from 'typeorm';
+import {getRepository, getManager} from 'typeorm';
 import {PokerGame, GameType, PlayerGame, GameStatus} from '@src/entity/game';
 import {Club, ClubMember, ClubMemberStatus} from '@src/entity/club';
 import {Player} from '@src/entity/player';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {getLogger} from '@src/utils/log';
 import {ClubGameRake} from '@src/entity/chipstrack';
-import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
+import {getGameCodeForClub} from '@src/utils/uniqueid';
 
 const logger = getLogger('game');
 
@@ -81,7 +81,7 @@ class GameRepositoryImpl {
       await getManager().transaction(async transactionalEntityManager => {
         savedGame = await gameRespository.save(game);
 
-        const pick = Number.parseInt(savedGame.gameId) % gameServers.length;
+        const pick = Number.parseInt(savedGame.id) % gameServers.length;
         const trackgameServerRepository = getRepository(TrackGameServer);
         const trackServer = new TrackGameServer();
         trackServer.clubCode = clubCode;
@@ -110,10 +110,10 @@ class GameRepositoryImpl {
     return savedGame;
   }
 
-  public async getGameById(gameId: string): Promise<PokerGame | undefined> {
+  public async getGameById(gameCode: string): Promise<PokerGame | undefined> {
     const repository = getRepository(PokerGame);
     // get game by id (testing only)
-    const game = await repository.findOne({where: {gameId: gameId}});
+    const game = await repository.findOne({where: {gameCode: gameCode}});
     return game;
   }
 
@@ -121,8 +121,7 @@ class GameRepositoryImpl {
     const repository = getRepository(PokerGame);
     const count = await repository.count({where: {club: {id: clubId}}});
     return count;
- }
-
+  }
 }
 
 export const GameRepository = new GameRepositoryImpl();

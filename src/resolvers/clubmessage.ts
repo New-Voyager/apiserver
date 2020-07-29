@@ -9,17 +9,17 @@ const logger = getLogger('clubmessage');
 
 export async function getClubMsg(
   playerId: string,
-  clubId: string,
+  clubCode: string,
   pageOptions?: PageOptions
 ) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  const clubMembers1 = await ClubRepository.getMembers(clubId);
-  const clubMember = await ClubRepository.isClubMember(clubId, playerId);
+  const clubMembers1 = await ClubRepository.getMembers(clubCode);
+  const clubMember = await ClubRepository.isClubMember(clubCode, playerId);
   if (!clubMember) {
     logger.error(
-      `The user ${playerId} is not a member of ${clubId}, ${JSON.stringify(
+      `The user ${playerId} is not a member of ${clubCode}, ${JSON.stringify(
         clubMembers1
       )}`
     );
@@ -27,11 +27,11 @@ export async function getClubMsg(
   }
 
   if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
-    logger.error(`The user ${playerId} is kicked out of ${clubId}`);
+    logger.error(`The user ${playerId} is kicked out of ${clubCode}`);
     throw new Error('Unauthorized');
   }
   const messages = await ClubMessageRepository.getClubMessage(
-    clubId,
+    clubCode,
     pageOptions
   );
   return _.map(messages, x => {
@@ -42,7 +42,7 @@ export async function getClubMsg(
       giphyLink: x.giphyLink,
       gameNum: x.gameNum,
       playerTags: x.playerTags,
-      clubId: x.clubId,
+      clubCode: x.clubCode,
       text: x.text,
     };
   });
@@ -50,15 +50,15 @@ export async function getClubMsg(
 
 export async function sendClubMsg(
   playerId: string,
-  clubId: string,
+  clubCode: string,
   message: any
 ) {
   const errors = new Array<string>();
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  if (!clubId) {
-    errors.push('ClubId not found');
+  if (!clubCode) {
+    errors.push('ClubCode not found');
   }
   if (!message) {
     errors.push('Message Object not found');
@@ -74,7 +74,7 @@ export async function sendClubMsg(
   }
 
   try {
-    return ClubMessageRepository.sendClubMessage(clubId, message);
+    return ClubMessageRepository.sendClubMessage(clubCode, message);
   } catch (err) {
     logger.error(err);
     throw new Error('Failed to send the message');
@@ -84,13 +84,13 @@ export async function sendClubMsg(
 const resolvers: any = {
   Query: {
     clubMessages: async (parent, args, ctx, info) => {
-      return getClubMsg(ctx.req.playerId, args.clubId, args.pageOptions);
+      return getClubMsg(ctx.req.playerId, args.clubCode, args.pageOptions);
     },
   },
 
   Mutation: {
     sendClubMessage: async (parent, args, ctx, info) => {
-      return sendClubMsg(ctx.req.playerId, args.clubId, args.message);
+      return sendClubMsg(ctx.req.playerId, args.clubCode, args.message);
     },
   },
 };

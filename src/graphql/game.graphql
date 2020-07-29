@@ -81,19 +81,21 @@ input GameUpdateInput {
 }
 
 type Mutation {
+  # Not implemented
   startGameFromTemplate(clubCode: String!, templateId: Int!): GameInfo!
   updateGame(
     clubCode: String!
     gameCode: String!
     update: GameUpdateInput
   ): GameInfo!
-  startGame(clubCode: String!, game: GameCreateInput!): GameInfo!
   startFriendsGame(game: GameCreateInput!): GameInfo!
   saveGameTemplate(
     clubCode: String!
     templateName: String!
     gameInput: GameCreateInput!
   ): Int!
+  # implemented
+  startGame(clubCode: String!, game: GameCreateInput!): GameInfo!
 }
 
 type gameId{
@@ -101,6 +103,8 @@ type gameId{
 }
 
 type Query {
+  # Not implemented
   getGameTemplates(clubCode: String!): [GameInfo!]
+  # implemented
   gameById(gameCode: String!): gameId!
 }

@@ -15,7 +15,7 @@ async function getClubs(playerId: string): Promise<Array<any>> {
       name: x.name,
       private: true,
       imageId: '',
-      clubId: x.clubid,
+      clubCode: x.clubCode,
       memberCount: x.memberCount,
     };
   });
@@ -124,11 +124,14 @@ export async function leaveClub(playerId: string, args: any) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  const isClubMember = await ClubRepository.isClubMember(args.clubId, playerId);
+  const isClubMember = await ClubRepository.isClubMember(
+    args.clubCode,
+    playerId
+  );
   if (!isClubMember) {
     return ClubMemberStatus[ClubMemberStatus.LEFT];
   }
-  await ClubRepository.leaveClub(args.clubId, playerId);
+  await ClubRepository.leaveClub(args.clubCode, playerId);
   return ClubMemberStatus[ClubMemberStatus.LEFT];
 }
 

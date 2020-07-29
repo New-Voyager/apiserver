@@ -19,9 +19,9 @@ export async function getClubMembers(playerId: string, args: any) {
   const clubMember = await ClubRepository.isClubMember(args.clubCode, playerId);
   if (!clubMember) {
     logger.error(
-      `The user ${playerId} is not a member of ${args.clubCode}, ${JSON.stringify(
-        clubMembers1
-      )}`
+      `The user ${playerId} is not a member of ${
+        args.clubCode
+      }, ${JSON.stringify(clubMembers1)}`
     );
     throw new Error('Unauthorized');
   }
@@ -134,7 +134,11 @@ export async function createClub(playerId: string, club: ClubCreateInput) {
   }
 }
 
-export async function updateClub(playerId: string, clubCode: string, club: any) {
+export async function updateClub(
+  playerId: string,
+  clubCode: string,
+  club: any
+) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
@@ -263,7 +267,11 @@ export async function rejectMember(
 
   // TODO: We need to get owner id from the JWT
   const ownerId = playerId;
-  const status = await ClubRepository.rejectMember(ownerId, clubCode, playerUuid);
+  const status = await ClubRepository.rejectMember(
+    ownerId,
+    clubCode,
+    playerUuid
+  );
   return ClubMemberStatus[status];
 }
 
@@ -310,18 +318,18 @@ export async function leaveClub(playerId: string, clubCode: string) {
   return ClubMemberStatus[status];
 }
 
-export async function getMemberStatus(playerId: string, clubId: string) {
+export async function getMemberStatus(playerId: string, clubCode: string) {
   const errors = new Array<string>();
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  if (clubId === '') {
-    errors.push('clubId is a required field');
+  if (clubCode === '') {
+    errors.push('clubCode is a required field');
   }
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
   }
-  return await ClubRepository.getClubMemberStatus(clubId, playerId);
+  return await ClubRepository.getClubMemberStatus(clubCode, playerId);
 }
 
 const resolvers: any = {
@@ -339,7 +347,7 @@ const resolvers: any = {
     },
 
     clubMemberStatus: async (parent, args, ctx, info) => {
-      return getMemberStatus(ctx.req.playerId, args.clubId);
+      return getMemberStatus(ctx.req.playerId, args.clubCode);
     },
   },
   Mutation: {
