@@ -183,7 +183,7 @@ describe('Promotion APIs', () => {
       });
       const promotion = await createPromotion(
         {
-          clubId: club,
+          clubCode: club,
           input: {
             cardRank: 5,
             bonus: 4,
@@ -193,7 +193,7 @@ describe('Promotion APIs', () => {
         player
       );
       expect(promotion.id).not.toBe(null);
-      expect(promotion.clubId).toBe(club);
+      expect(promotion.clubCode).toBe(club);
       expect(promotion.promotionType).toBe(0);
       expect(promotion.cardRank).toBe(5);
       expect(promotion.bonus).toBe(4);
@@ -225,7 +225,7 @@ describe('Promotion APIs', () => {
       const game = await startGame(player, club, holdemGameInput);
       const promotion = await createPromotion(
         {
-          clubId: club,
+          clubCode: club,
           input: {
             cardRank: 5,
             bonus: 4,
@@ -236,10 +236,10 @@ describe('Promotion APIs', () => {
       );
       const resp = await assignPromotion(
         {
-          clubId: club,
+          clubCode: club,
           promotionId: promotion.id,
-          gameId: game.gameId,
-          startAt: 1594919334244,
+          gameCode: game.gameCode,
+          startAt: 1594919334244, 
           endAt: 1594919334244,
         },
         player
@@ -267,7 +267,7 @@ describe('Promotion APIs', () => {
       for (let i = 0; i < 20; i++) {
         await createPromotion(
           {
-            clubId: club,
+            clubCode: club,
             input: {
               cardRank: 5,
               bonus: 4,
@@ -277,7 +277,7 @@ describe('Promotion APIs', () => {
           player
         );
       }
-      const promotions = await getPromotions({clubId: club}, player);
+      const promotions = await getPromotions({clubCode: club}, player);
       expect(promotions).toHaveLength(20);
     } catch (err) {
       logger.error(JSON.stringify(err));
@@ -308,7 +308,7 @@ describe('Promotion APIs', () => {
       for (let i = 0; i < 20; i++) {
         const promotion = await createPromotion(
           {
-            clubId: club,
+            clubCode: club,
             input: {
               cardRank: 5,
               bonus: 4,
@@ -319,9 +319,9 @@ describe('Promotion APIs', () => {
         );
         await assignPromotion(
           {
-            clubId: club,
+            clubCode: club,
             promotionId: promotion.id,
-            gameId: game.gameId,
+            gameCode: game.gameCode,
             startAt: 1594919334244,
             endAt: 1594919334244,
           },
@@ -329,7 +329,7 @@ describe('Promotion APIs', () => {
         );
       }
       const promotions = await getAssignedPromotions(
-        {clubId: club, gameId: game.gameId},
+        {clubCode: club, gameCode: game.gameCode},
         player
       );
       expect(promotions).toHaveLength(20);
@@ -362,7 +362,7 @@ describe('Promotion APIs', () => {
       await createGameServer(gameServer);
       const game = await startGame(owner, club, holdemGameInput);
       const playerId = (await getPlayerById(owner)).id;
-      const gameId = (await getGameById(owner, game.gameId)).id;
+      const gameId = (await getGameById(owner, game.gameCode)).id;
       const clubId = (await getClubById(owner, club)).id;
       const messageInput = {
         clubId: clubId,
@@ -375,7 +375,7 @@ describe('Promotion APIs', () => {
       await saveChipsData(messageInput);
       const promotion = await createPromotion(
         {
-          clubId: club,
+          clubCode: club,
           input: {
             cardRank: 5,
             bonus: 4,
@@ -386,9 +386,9 @@ describe('Promotion APIs', () => {
       );
       await assignPromotion(
         {
-          clubId: club,
+          clubCode: club,
           promotionId: promotion.id,
-          gameId: game.gameId,
+          gameCode: game.gameCode,
           startAt: 1594919334244,
           endAt: 1594919334244,
         },

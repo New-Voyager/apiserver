@@ -160,7 +160,7 @@ describe('Game server APIs', () => {
         ownerUuid: player,
       });
       const game = await startGame(player, club, holdemGameInput);
-      const server = await getParticularGameServer(club, game.gameId);
+      const server = await getParticularGameServer(club, game.gameCode);
       if (!server) {
         expect(true).toBeFalsy();
       } else {

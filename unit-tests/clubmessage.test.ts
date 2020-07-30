@@ -30,7 +30,7 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: ownerId,
     };
-    const clubId = await createClub(ownerId, clubInput);
+    const clubCode = await createClub(ownerId, clubInput);
     const messageInput = {
       messageType: 'TEXT',
       text: 'Hi buddy',
@@ -38,7 +38,7 @@ describe('Club APIs', () => {
     };
 
     try {
-      const resp = await sendClubMsg(ownerId, clubId, messageInput);
+      const resp = await sendClubMsg(ownerId, clubCode, messageInput);
       expect(resp).not.toBeNull();
       expect(resp).not.toBeUndefined();
     } catch (e) {
@@ -56,7 +56,7 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: ownerId,
     };
-    const clubId = await createClub(ownerId, clubInput);
+    const clubCode = await createClub(ownerId, clubInput);
     const messageInput = {
       messageType: 'GIPHY',
       giphyLink: 'test.com',
@@ -64,7 +64,7 @@ describe('Club APIs', () => {
     };
 
     try {
-      const resp = await sendClubMsg(ownerId, clubId, messageInput);
+      const resp = await sendClubMsg(ownerId, clubCode, messageInput);
       expect(resp).not.toBeNull();
       expect(resp).not.toBeUndefined();
     } catch (e) {
@@ -82,7 +82,7 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: ownerId,
     };
-    const clubId = await createClub(ownerId, clubInput);
+    const clubCode = await createClub(ownerId, clubInput);
     const messageInput = {
       messageType: 'HAND',
       handNum: 0,
@@ -91,7 +91,7 @@ describe('Club APIs', () => {
     };
 
     try {
-      const resp = await sendClubMsg(ownerId, clubId, messageInput);
+      const resp = await sendClubMsg(ownerId, clubCode, messageInput);
       expect(resp).not.toBeNull();
       expect(resp).not.toBeUndefined();
     } catch (e) {
@@ -110,17 +110,17 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: ownerId,
     };
-    const clubId = await createClub(ownerId, clubInput);
+    const clubCode = await createClub(ownerId, clubInput);
     const messageInput = {
       messageType: 'TEXT',
       text: 'Hi buddy',
       playerTags: ownerId,
     };
     for (let i = 0; i < msgCount; i++) {
-      await sendClubMsg(ownerId, clubId, messageInput);
+      await sendClubMsg(ownerId, clubCode, messageInput);
     }
     try {
-      const resp = await getClubMsg(ownerId, clubId);
+      const resp = await getClubMsg(ownerId, clubCode);
       expect(resp).not.toBeNull();
       expect(resp).not.toBeUndefined();
       expect(resp).toHaveLength(50);
@@ -140,19 +140,19 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: ownerId,
     };
-    const clubId = await createClub(ownerId, clubInput);
+    const clubCode = await createClub(ownerId, clubInput);
     const messageInput = {
       messageType: 'TEXT',
       text: 'Hi buddy',
       playerTags: ownerId,
     };
     for (let i = 0; i < msgCount; i++) {
-      await sendClubMsg(ownerId, clubId, messageInput);
+      await sendClubMsg(ownerId, clubCode, messageInput);
     }
     try {
-      let message = await getClubMsg(ownerId, clubId);
+      let message = await getClubMsg(ownerId, clubCode);
       expect(message).toHaveLength(50);
-      message = await getClubMsg(ownerId, clubId, {
+      message = await getClubMsg(ownerId, clubCode, {
         count: 25,
         next: 5,
       });

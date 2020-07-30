@@ -66,7 +66,7 @@ describe('Club APIs', () => {
     expect(player1Id).not.toBeNull();
     expect(ownerId).not.toBeUndefined();
     expect(player1Id).not.toBeUndefined();
-    let clubId;
+    let clubCode;
 
     const clubInput = {
       name: 'bbc',
@@ -74,16 +74,16 @@ describe('Club APIs', () => {
       ownerUuid: ownerId,
     };
     try {
-      clubId = await createClub(ownerId, clubInput);
-      logger.debug(clubId);
-      expect(clubId).not.toBeNull();
+      clubCode = await createClub(ownerId, clubInput);
+      logger.debug(clubCode);
+      expect(clubCode).not.toBeNull();
     } catch (error) {
       logger.error(JSON.stringify(error));
       expect(true).toBeFalsy();
     }
 
     try {
-      const club = await updateClub(ownerId, clubId, clubInput);
+      const club = await updateClub(ownerId, clubCode, clubInput);
       expect(club).not.toBeNull();
     } catch (error) {
       logger.error(JSON.stringify(error));
@@ -100,9 +100,9 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: playerId,
     };
-    const clubId = await createClub(playerId, clubInput);
+    const clubCode = await createClub(playerId, clubInput);
     try {
-      const resp = await getMemberStatus(playerId, clubId);
+      const resp = await getMemberStatus(playerId, clubCode);
       expect(resp).not.toBeUndefined();
       expect(resp).not.toBeNull();
     } catch (error) {
@@ -110,7 +110,7 @@ describe('Club APIs', () => {
       expect(true).toBeFalsy();
     }
     try {
-      const resp = await joinClub(playerId, clubId);
+      const resp = await joinClub(playerId, clubCode);
       expect(resp).not.toBeUndefined();
       expect(resp).not.toBeNull();
     } catch (error) {
@@ -130,19 +130,19 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: playerId,
     };
-    const clubId = await createClub(playerId, clubInput);
+    const clubCode = await createClub(playerId, clubInput);
     const player1Id = await createPlayer({
       player: {name: 'player1', deviceId: 'test-device1'},
     });
     const player2Id = await createPlayer({
       player: {name: 'player2', deviceId: 'test-device2'},
     });
-    await joinClub(player1Id, clubId);
-    await joinClub(player2Id, clubId);
+    await joinClub(player1Id, clubCode);
+    await joinClub(player2Id, clubCode);
 
     // player1 whose status is in PENDING approves player2
     try {
-      const approved = await approveMember(player1Id, clubId, player2Id);
+      const approved = await approveMember(player1Id, clubCode, player2Id);
       expect(approved).not.toBe('ACTIVE');
     } catch (error) {
       expect(error.message).toContain('Unauthorized');
@@ -158,18 +158,18 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: playerId,
     };
-    const clubId = await createClub(playerId, clubInput);
+    const clubCode = await createClub(playerId, clubInput);
     const player1Id = await createPlayer({
       player: {name: 'player1', deviceId: 'test-device1'},
     });
     const player2Id = await createPlayer({
       player: {name: 'player2', deviceId: 'test-device2'},
     });
-    await joinClub(player1Id, clubId);
-    await joinClub(player2Id, clubId);
+    await joinClub(player1Id, clubCode);
+    await joinClub(player2Id, clubCode);
 
     try {
-      const approved = await approveMember(playerId, clubId, player2Id);
+      const approved = await approveMember(playerId, clubCode, player2Id);
       expect(approved).toBe('ACTIVE');
     } catch (error) {
       logger.error(JSON.stringify(error));
@@ -186,18 +186,18 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: playerId,
     };
-    const clubId = await createClub(playerId, clubInput);
+    const clubCode = await createClub(playerId, clubInput);
     const player1Id = await createPlayer({
       player: {name: 'player1', deviceId: 'test-device1'},
     });
     const player2Id = await createPlayer({
       player: {name: 'player2', deviceId: 'test-device2'},
     });
-    await joinClub(player1Id, clubId);
-    await joinClub(player2Id, clubId);
+    await joinClub(player1Id, clubCode);
+    await joinClub(player2Id, clubCode);
 
     // query members and ensure the status is PENDING
-    let clubMembers = await getClubMembers(playerId, {clubId: clubId});
+    let clubMembers = await getClubMembers(playerId, {clubCode: clubCode});
     // owner + 2 players
     expect(clubMembers).toHaveLength(3);
     for (const member of clubMembers) {
@@ -210,13 +210,13 @@ describe('Club APIs', () => {
 
     // let the owner approve the request
 
-    const player1 = await rejectMember(playerId, clubId, player1Id);
+    const player1 = await rejectMember(playerId, clubCode, player1Id);
     expect(player1).toBe('DENIED');
 
-    const player2 = await approveMember(playerId, clubId, player2Id);
+    const player2 = await approveMember(playerId, clubCode, player2Id);
     expect(player2).toBe('ACTIVE');
 
-    clubMembers = await getClubMembers(playerId, {clubId: clubId});
+    clubMembers = await getClubMembers(playerId, {clubCode: clubCode});
     // owner + 2 players
     expect(clubMembers).toHaveLength(3);
     for (const member of clubMembers) {
@@ -237,25 +237,25 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: playerId,
     };
-    const clubId = await createClub(playerId, clubInput);
+    const clubCode = await createClub(playerId, clubInput);
     const player1Id = await createPlayer({
       player: {name: 'player1', deviceId: 'test-device1'},
     });
     const player2Id = await createPlayer({
       player: {name: 'player2', deviceId: 'test-device2'},
     });
-    await joinClub(player1Id, clubId);
-    await joinClub(player2Id, clubId);
+    await joinClub(player1Id, clubCode);
+    await joinClub(player2Id, clubCode);
 
     // let the owner approve the request
-    const player1 = await approveMember(playerId, clubId, player1Id);
+    const player1 = await approveMember(playerId, clubCode, player1Id);
     expect(player1).toBe('ACTIVE');
 
-    const player2 = await approveMember(playerId, clubId, player2Id);
+    const player2 = await approveMember(playerId, clubCode, player2Id);
     expect(player2).toBe('ACTIVE');
 
     // get club members as player1
-    let clubMembers = await getClubMembers(playerId, {clubId: clubId});
+    let clubMembers = await getClubMembers(playerId, {clubCode: clubCode});
     // owner + 2 players
     expect(clubMembers).toHaveLength(3);
     for (const member of clubMembers) {
@@ -263,10 +263,10 @@ describe('Club APIs', () => {
     }
 
     // kick player1, he should not be able to access the club
-    const kicked = await kickMember(playerId, clubId, player1Id);
+    const kicked = await kickMember(playerId, clubCode, player1Id);
 
     // get club members as owner
-    clubMembers = await getClubMembers(playerId, {clubId: clubId});
+    clubMembers = await getClubMembers(playerId, {clubCode: clubCode});
     // owner + 2 players
     expect(clubMembers).toHaveLength(3);
     for (const member of clubMembers) {
@@ -279,7 +279,7 @@ describe('Club APIs', () => {
 
     // get club members as the player who got kicked out
     try {
-      clubMembers = await getClubMembers(player1Id, {clubId: clubId});
+      clubMembers = await getClubMembers(player1Id, {clubCode: clubCode});
       expect(false).toBeTruthy();
     } catch (error) {
       expect(error.toString()).toContain('Unauthorized');
@@ -295,29 +295,29 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: playerId,
     };
-    const clubId = await createClub(playerId, clubInput);
+    const clubCode = await createClub(playerId, clubInput);
     const player1Id = await createPlayer({
       player: {name: 'player1', deviceId: 'test-device1'},
     });
     const player2Id = await createPlayer({
       player: {name: 'player2', deviceId: 'test-device2'},
     });
-    await joinClub(player1Id, clubId);
-    await joinClub(player2Id, clubId);
+    await joinClub(player1Id, clubCode);
+    await joinClub(player2Id, clubCode);
 
     // make sure the owner cannot leave the club
 
     try {
-      await leaveClub(playerId, clubId);
+      await leaveClub(playerId, clubCode);
       expect(false).toBeTruthy();
     } catch (error) {
       expect(error.toString()).toContain('Owner cannot leave the club');
     }
 
-    await leaveClub(player1Id, clubId);
+    await leaveClub(player1Id, clubCode);
 
     // get club members and ensure player 1 is not in the club
-    const members = await getClubMembers(playerId, {clubId: clubId});
+    const members = await getClubMembers(playerId, {clubCode: clubCode});
     let player1Found = false;
     for (const member of members) {
       if (member.playerId === player1Id) {
@@ -329,7 +329,7 @@ describe('Club APIs', () => {
 
   test('get club members', async () => {
     try {
-      const members = await getClubMembers('1234', {clubId: '1234'});
+      const members = await getClubMembers('1234', {clubCode: '1234'});
       expect(members).toBeNull();
     } catch (err) {
       expect(err.message).toContain('not found');
@@ -345,7 +345,7 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: ownerId,
     };
-    const clubId = await createClub(ownerId, clubInput);
+    const clubCode = await createClub(ownerId, clubInput);
     const gameServer = {
       ipAddress: '10.1.1.1',
       currentMemory: 100,
@@ -353,11 +353,11 @@ describe('Club APIs', () => {
     };
     await createGameServer(gameServer);
 
-    await startGame(ownerId, clubId, holdemGameInput);
-    await startGame(ownerId, clubId, holdemGameInput);
+    await startGame(ownerId, clubCode, holdemGameInput);
+    await startGame(ownerId, clubCode, holdemGameInput);
 
     try {
-      const games = await getClubGames(ownerId, clubId);
+      const games = await getClubGames(ownerId, clubCode);
       expect(games).toHaveLength(2);
     } catch (err) {
       logger.error(JSON.stringify(err));
@@ -372,9 +372,9 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: ownerId,
     };
-    const clubId2 = await createClub(ownerId2, clubInput2);
+    const clubCode2 = await createClub(ownerId2, clubInput2);
     // get number of club games
-    const club2Games = await getClubGames(ownerId2, clubId2);
+    const club2Games = await getClubGames(ownerId2, clubCode2);
     expect(club2Games).toHaveLength(0);
   });
 
@@ -387,7 +387,7 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: ownerId,
     };
-    const clubId = await createClub(ownerId, clubInput);
+    const clubCode = await createClub(ownerId, clubInput);
     const numGames = 100;
     const gameServer1 = {
       ipAddress: '10.1.1.2',
@@ -402,16 +402,16 @@ describe('Club APIs', () => {
     await createGameServer(gameServer1);
     await createGameServer(gameServer2);
     for (let i = 0; i < numGames; i++) {
-      await startGame(ownerId, clubId, holdemGameInput);
+      await startGame(ownerId, clubCode, holdemGameInput);
     }
-    let clubGames = await getClubGames(ownerId, clubId);
+    let clubGames = await getClubGames(ownerId, clubCode);
     // we can get only 20 games
     expect(clubGames).toHaveLength(20);
     const firstGame = clubGames[0];
     const lastGame = clubGames[19];
     logger.debug(JSON.stringify(firstGame));
     logger.debug(JSON.stringify(lastGame));
-    clubGames = await getClubGames(ownerId, clubId, {
+    clubGames = await getClubGames(ownerId, clubCode, {
       prev: lastGame.pageId,
       count: 25,
       next: 5,
@@ -428,9 +428,9 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: ownerId,
     };
-    const clubId = await createClub(ownerId, clubInput);
+    const clubCode = await createClub(ownerId, clubInput);
     try {
-      const games = await getClubById(ownerId, clubId);
+      const games = await getClubById(ownerId, clubCode);
       expect(games).not.toBeNull();
     } catch (err) {
       expect(err.message).toContain('not found');

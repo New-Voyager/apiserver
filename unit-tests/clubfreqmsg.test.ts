@@ -34,10 +34,10 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: ownerId,
     };
-    const clubId = await createClub(ownerId, clubInput);
+    const clubCode = await createClub(ownerId, clubInput);
     const messageInput = {
       text: 'Hi buddy',
-      clubId: clubId,
+      clubCode: clubCode,
     };
     try {
       const resp = await saveFavMsg(ownerId, messageInput);
@@ -57,7 +57,7 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: ownerId,
     };
-    const clubId = await createClub(ownerId, clubInput);
+    const clubCode = await createClub(ownerId, clubInput);
     const messageInput = {
       text: 'Hi buddy',
       playerId: ownerId,
@@ -81,16 +81,16 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: ownerId,
     };
-    const clubId = await createClub(ownerId, clubInput);
+    const clubCode = await createClub(ownerId, clubInput);
     const messageInput = {
       text: 'Hi buddy',
-      clubId: clubId,
+      clubCode: clubCode,
     };
     for (let i = 0; i < msgCount; i++) {
       await saveFavMsg(ownerId, messageInput);
     }
     try {
-      const resp = await getClubFavMsg(ownerId, clubId);
+      const resp = await getClubFavMsg(ownerId, clubCode);
       expect(resp).not.toBeNull();
       expect(resp).toHaveLength(20);
     } catch (e) {
@@ -109,7 +109,7 @@ describe('Club APIs', () => {
       description: 'poker players gather',
       ownerUuid: ownerId,
     };
-    const clubId = await createClub(ownerId, clubInput);
+    const clubCode = await createClub(ownerId, clubInput);
     const messageInput = {
       text: 'Hi buddy',
       playerId: ownerId,

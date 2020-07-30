@@ -128,11 +128,11 @@ class GameScript {
   }
 
   protected async createClubs(params: any) {
-    const [clubUuid, clubId] = await this.createClub(params);
+    const [clubCode, clubId] = await this.createClub(params);
     this.clubCreated = {
       owner: params.owner,
       clubId: clubId,
-      clubUuid: clubUuid,
+      clubCode: clubCode,
     };
   }
 
@@ -155,9 +155,9 @@ class GameScript {
   }
 
   protected async startGames(params: any) {
-    const [gameUuid, gameId] = await this.startGame(params);
+    const [gameCode, gameId] = await this.startGame(params);
     this.gameCreated = {
-      gameUuid: gameUuid,
+      gameCode: gameCode,
       gameId: gameId,
     };
   }
@@ -221,7 +221,7 @@ class GameScript {
       club_id: this.clubCreated.clubId,
       game_id: this.gameCreated.gameId,
     });
-    this.log(`Game ${this.gameCreated.gameId} has been ended`);
+    this.log(`Game ${this.gameCreated.gameCode} has been ended`);
   }
 
   protected async deleteClub(params: any) {
@@ -281,7 +281,7 @@ class GameScript {
 
     const createClubQuery = gql`
       mutation($input: ClubCreateInput!) {
-        clubId: createClub(club: $input)
+        clubCode: createClub(club: $input)
       }
     `;
     const resp = await getClient(
@@ -298,8 +298,8 @@ class GameScript {
 
     // get club by uuid (we need to get internal id for game/hand requests)
     const queryClub = gql`
-      query($clubId: String!) {
-        club: clubById(clubId: $clubId) {
+      query($clubCode: String!) {
+        club: clubById(clubCode: $clubCode) {
           id
         }
       }
@@ -309,11 +309,11 @@ class GameScript {
         this.registeredPlayers[clubInput.owner].playerUuid
       ).query({
         variables: {
-          clubId: resp.data.clubId,
+          clubCode: resp.data.clubCode,
         },
         query: queryClub,
       });
-      return [resp.data.clubId, clubResp.data.club.id];
+      return [resp.data.clubCode, clubResp.data.club.id];
     } catch (err) {
       this.log(err.toString());
       throw err;
@@ -323,13 +323,13 @@ class GameScript {
   protected async joinClub(joinClubInput: any): Promise<any> {
     this.log(`Join Club: ${JSON.stringify(joinClubInput)}`);
     const joinClubQuery = gql`
-      mutation($clubId: String!) {
-        status: joinClub(clubId: $clubId)
+      mutation($clubCode: String!) {
+        status: joinClub(clubCode: $clubCode)
       }
     `;
     await getClient(this.registeredPlayers[joinClubInput].playerUuid).mutate({
       variables: {
-        clubId: this.clubCreated.clubUuid,
+        clubCode: this.clubCreated.clubCode,
       },
       mutation: joinClubQuery,
     });
@@ -338,8 +338,8 @@ class GameScript {
   protected async verifyMember(memberInput: any): Promise<any> {
     this.log(`Verify Club Membres: ${JSON.stringify(memberInput)}`);
     const queryMemberStatus = gql`
-      query($clubId: String!) {
-        status: clubMemberStatus(clubId: $clubId) {
+      query($clubCode: String!) {
+        status: clubMemberStatus(clubCode: $clubCode) {
           id
           status
           isManager
@@ -360,7 +360,7 @@ class GameScript {
       this.registeredPlayers[memberInput.name].playerUuid
     ).query({
       variables: {
-        clubId: this.clubCreated.clubUuid,
+        clubCode: this.clubCreated.clubCode,
       },
       query: queryMemberStatus,
     });
@@ -372,13 +372,13 @@ class GameScript {
   protected async approveMember(owner: string, memberInput: any): Promise<any> {
     this.log(`Approve Club Membres: ${JSON.stringify(memberInput)}`);
     const approveClubQuery = gql`
-      mutation($clubId: String!, $playerUuid: String!) {
-        status: approveMember(clubId: $clubId, playerUuid: $playerUuid)
+      mutation($clubCode: String!, $playerUuid: String!) {
+        status: approveMember(clubCode: $clubCode, playerUuid: $playerUuid)
       }
     `;
     await getClient(this.registeredPlayers[owner].playerUuid).mutate({
       variables: {
-        clubId: this.clubCreated.clubUuid,
+        clubCode: this.clubCreated.clubCode,
         playerUuid: this.registeredPlayers[memberInput].playerUuid,
       },
       mutation: approveClubQuery,
@@ -397,9 +397,9 @@ class GameScript {
   protected async startGame(gameInput: any) {
     this.log(`Register game: ${JSON.stringify(gameInput)}`);
     const startGame = gql`
-      mutation($clubId: String!, $gameInput: GameCreateInput!) {
-        startedGame: startGame(clubId: $clubId, game: $gameInput) {
-          gameId
+      mutation($clubCode: String!, $gameInput: GameCreateInput!) {
+        startedGame: startGame(clubCode: $clubCode, game: $gameInput) {
+          gameCode
         }
       }
     `;
@@ -408,15 +408,15 @@ class GameScript {
     ).mutate({
       variables: {
         gameInput: gameInput.input,
-        clubId: this.clubCreated.clubUuid,
+        clubCode: this.clubCreated.clubCode,
       },
       mutation: startGame,
     });
 
     // get game by uuid (we need to get internal id for game/hand requests)
     const queryGame = gql`
-      query($gameId: String!) {
-        game: gameById(gameId: $gameId) {
+      query($gameCode: String!) {
+        game: gameById(gameCode: $gameCode) {
           id
         }
       }
@@ -426,11 +426,11 @@ class GameScript {
         this.registeredPlayers[this.clubCreated.owner].playerUuid
       ).query({
         variables: {
-          gameId: resp.data.startedGame.gameId,
+          gameCode: resp.data.startedGame.gameCode,
         },
         query: queryGame,
       });
-      return [resp.data.startedGame.gameId, gameResp.data.game.id];
+      return [resp.data.startedGame.gameCode, gameResp.data.game.id];
     } catch (err) {
       this.log(err.toString());
       throw err;
@@ -454,6 +454,7 @@ class GameScript {
         messageInput
       );
     } catch (err) {
+      this.log(JSON.stringify(err))
       this.log(err.toString());
       throw err;
     }
@@ -481,7 +482,7 @@ class GameScript {
     this.log(`save hand: ${JSON.stringify(handData)}`);
     const saveHandData = handData;
     saveHandData.clubId = this.clubCreated.clubId;
-    saveHandData.gameNum = this.gameCreated.gameId;
+    saveHandData.gameNum = this.gameCreated.gameId
     for (var i = 0; i < handData.handResult.playersInSeats.length; i++) {
       if (handData.handResult.playersInSeats[i] !== 0) {
         saveHandData.handResult.playersInSeats[i] = this.registeredPlayers[
@@ -507,8 +508,8 @@ class GameScript {
   protected async verifyClubBalance(balance: any): Promise<any> {
     this.log(`verify club balance: ${JSON.stringify(balance)}`);
     const queryClubBalance = gql`
-      query($clubId: String!) {
-        balance: clubBalance(clubId: $clubId) {
+      query($clubCode: String!) {
+        balance: clubBalance(clubCode: $clubCode) {
           balance
           updatedAt
         }
@@ -517,7 +518,7 @@ class GameScript {
     const resp = await getClient(
       this.registeredPlayers[this.clubCreated.owner].playerUuid
     ).query({
-      variables: {clubId: this.clubCreated.clubUuid},
+      variables: {clubCode: this.clubCreated.clubCode},
       query: queryClubBalance,
     });
     if (resp.data.balance.balance != balance.balance) {
@@ -531,8 +532,8 @@ class GameScript {
   protected async verifyPlayerBalance(balance: any): Promise<any> {
     this.log(`Verify player balance: ${JSON.stringify(balance)}`);
     const queryPlayerBalance = gql`
-      query($playerId: String!, $clubId: String!) {
-        balance: playerBalance(playerId: $playerId, clubId: $clubId) {
+      query($playerId: String!, $clubCode: String!) {
+        balance: playerBalance(playerId: $playerId, clubCode: $clubCode) {
           totalBuyins
           totalWinnings
           balance
@@ -545,7 +546,7 @@ class GameScript {
       this.registeredPlayers[balance.name].playerUuid
     ).query({
       variables: {
-        clubId: this.clubCreated.clubUuid,
+        clubCode: this.clubCreated.clubCode,
         playerId: this.registeredPlayers[balance.name].playerUuid,
       },
       query: queryPlayerBalance,
@@ -561,8 +562,8 @@ class GameScript {
   protected async verifyClubStack(balance: any): Promise<any> {
     this.log(`verify club stack: ${JSON.stringify(balance)}`);
     const queryClubTrack = gql`
-      query($clubId: String!, $gameId: String!) {
-        balance: clubGameRake(clubId: $clubId, gameId: $gameId) {
+      query($clubCode: String!, $gameCode: String!) {
+        balance: clubGameRake(clubCode: $clubCode, gameCode: $gameCode) {
           rake
           promotion
           lastHandNum
@@ -573,8 +574,8 @@ class GameScript {
       this.registeredPlayers[this.clubCreated.owner].playerUuid
     ).query({
       variables: {
-        clubId: this.clubCreated.clubUuid,
-        gameId: this.gameCreated.gameUuid,
+        clubCode: this.clubCreated.clubCode,
+        gameCode: this.gameCreated.gameCode,
       },
       query: queryClubTrack,
     });
@@ -589,10 +590,10 @@ class GameScript {
   protected async verifyPlayerStack(balance: any): Promise<any> {
     this.log(`Verify player stack: ${JSON.stringify(balance)}`);
     const queryPlayerTrack = gql`
-      query($playerId: String!, $clubId: String!, $gameId: String!) {
+      query($playerId: String!, $clubCode: String!, $gameCode: String!) {
         balance: playerGametrack(
-          clubId: $clubId
-          gameId: $gameId
+          clubCode: $clubCode
+          gameCode: $gameCode
           playerId: $playerId
         ) {
           buyIn
@@ -609,8 +610,8 @@ class GameScript {
     ).query({
       variables: {
         playerId: this.registeredPlayers[balance.name].playerUuid,
-        clubId: this.clubCreated.clubUuid,
-        gameId: this.gameCreated.gameUuid,
+        clubCode: this.clubCreated.clubCode,
+        gameCode: this.gameCreated.gameCode,
       },
       query: queryPlayerTrack,
     });

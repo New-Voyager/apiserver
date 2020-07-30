@@ -120,7 +120,7 @@ describe('Game APIs', () => {
         ownerUuid: player,
       });
       const startedGame = await startGame(player, club, holdemGameInput);
-      const gameData = await getGameById(player, startedGame.gameId);
+      const gameData = await getGameById(player, startedGame.gameCode);
       expect(gameData.id).not.toBe(null);
     } catch (err) {
       logger.error(JSON.stringify(err));
