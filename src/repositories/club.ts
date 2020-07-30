@@ -1,4 +1,3 @@
-import {v4 as uuidv4} from 'uuid';
 import {Club, ClubMember, ClubMemberStatus, ClubStatus} from '@src/entity/club';
 import {Player} from '@src/entity/player';
 import {
@@ -9,10 +8,11 @@ import {
   LessThan,
   MoreThan,
 } from 'typeorm';
-import {PokerGame, GameType, PlayerGame} from '@src/entity/game';
+import {PokerGame} from '@src/entity/game';
 import {PageOptions} from '@src/types';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger('club');
+import {getClubCode} from '@src/utils/uniqueid';
+const logger = getLogger('club-repository');
 
 export interface ClubCreateInput {
   ownerUuid: string;
@@ -33,23 +33,23 @@ function isPostgres() {
 }
 
 class ClubRepositoryImpl {
-  public async getClub(clubId: string): Promise<Club | undefined> {
+  public async getClub(clubCode: string): Promise<Club | undefined> {
     const clubRepository = getRepository(Club);
-    const club = await clubRepository.findOne({where: {displayId: clubId}});
+    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     return club;
   }
 
   public async updateClub(
-    clubId: string,
+    clubCode: string,
     input: ClubUpdateInput,
     club?: Club
   ): Promise<boolean> {
     const clubRepository = getRepository(Club);
 
     if (!club) {
-      club = await clubRepository.findOne({where: {displayId: clubId}});
+      club = await clubRepository.findOne({where: {clubCode: clubCode}});
       if (!club) {
-        throw new Error(`Club ${clubId} is not found`);
+        throw new Error(`Club ${clubCode} is not found`);
       }
     }
 
@@ -63,17 +63,23 @@ class ClubRepositoryImpl {
     return true;
   }
 
+  public async getClubCount(): Promise<number> {
+    const clubRepository = getRepository(Club);
+    return clubRepository.count();
+  }
+
   public async createClub(input: ClubCreateInput): Promise<string> {
     // whoever creates this club is the owner of the club
-    let clubId = '';
+    let clubCode = '';
     const clubRepository = getRepository(Club);
 
     while (true) {
       // find whether the club already exists
-      const uuid: string = uuidv4();
-      clubId = uuid.substr(uuid.lastIndexOf('-') + 1);
-      clubId = clubId.toUpperCase();
-      const club = await clubRepository.findOne({where: {displayId: clubId}});
+      //const uuid: string = uuidv4();
+      //clubId = uuid.substr(uuid.lastIndexOf('-') + 1);
+      //clubId = clubId.toUpperCase();
+      clubCode = await getClubCode(input.name);
+      const club = await clubRepository.findOne({where: {clubCode: clubCode}});
       if (!club) {
         break;
       }
@@ -90,7 +96,7 @@ class ClubRepositoryImpl {
     const club = new Club();
     club.name = input.name;
     club.description = input.description;
-    club.displayId = clubId;
+    club.clubCode = clubCode;
     club.status = ClubStatus.ACTIVE;
     const ownerObj = await playerRepository.findOne({
       where: {uuid: input.ownerUuid},
@@ -114,14 +120,14 @@ class ClubRepositoryImpl {
       await clubMemberRepository.save(clubMember);
     });
 
-    return club.displayId;
+    return club.clubCode;
   }
 
-  public async deleteClub(clubId: string) {
+  public async deleteClub(clubCode: string) {
     const clubRepository = getRepository(Club);
-    const club = await clubRepository.findOne({where: {displayId: clubId}});
+    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     if (!club) {
-      throw new Error(`Club: ${clubId} does not exist`);
+      throw new Error(`Club: ${clubCode} does not exist`);
     }
     // we won't delete the club
     // we will simply defunct the club
@@ -132,7 +138,6 @@ class ClubRepositoryImpl {
   // This is an internal API
   public async deleteClubByName(clubName: string) {
     const clubRepository = getRepository(Club);
-    const clubMemberRepository = getRepository(ClubMember);
     const club = await clubRepository.findOne({where: {name: clubName}});
     if (club) {
       await getManager().transaction(async transactionalEntityManager => {
@@ -147,11 +152,11 @@ class ClubRepositoryImpl {
     }
   }
 
-  public async isClubOwner(clubId: string, playerId: string) {
+  public async isClubOwner(clubCode: string, playerId: string) {
     const clubRepository = getRepository(Club);
-    const club = await clubRepository.findOne({where: {displayId: clubId}});
+    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     if (!club) {
-      throw new Error(`Club: ${clubId} does not exist`);
+      throw new Error(`Club: ${clubCode} does not exist`);
     }
 
     const owner: Player | undefined = await Promise.resolve(club.owner);
@@ -166,10 +171,13 @@ class ClubRepositoryImpl {
   }
 
   public async joinClub(
-    clubId: string,
+    clubCode: string,
     playerId: string
   ): Promise<ClubMemberStatus> {
-    let [club, player, clubMember] = await this.getClubMember(clubId, playerId);
+    let [club, player, clubMember] = await this.getClubMember(
+      clubCode,
+      playerId
+    );
 
     const owner: Player | undefined = await Promise.resolve(club.owner);
     if (!owner) {
@@ -198,11 +206,11 @@ class ClubRepositoryImpl {
 
   public async approveMember(
     ownerId: string,
-    clubId: string,
+    clubCode: string,
     playerId: string
   ): Promise<ClubMemberStatus> {
     const [club, player, clubMember] = await this.getClubMember(
-      clubId,
+      clubCode,
       playerId
     );
 
@@ -235,11 +243,11 @@ class ClubRepositoryImpl {
 
   public async rejectMember(
     ownerId: string,
-    clubId: string,
+    clubCode: string,
     playerId: string
   ): Promise<ClubMemberStatus> {
     const [club, player, clubMember] = await this.getClubMember(
-      clubId,
+      clubCode,
       playerId
     );
 
@@ -272,11 +280,11 @@ class ClubRepositoryImpl {
 
   public async kickMember(
     ownerId: string,
-    clubId: string,
+    clubCode: string,
     playerId: string
   ): Promise<ClubMemberStatus> {
     const [club, player, clubMember] = await this.getClubMember(
-      clubId,
+      clubCode,
       playerId
     );
     const owner: Player | undefined = await Promise.resolve(club.owner);
@@ -307,16 +315,16 @@ class ClubRepositoryImpl {
   }
 
   public async getClubMemberStatus(
-    clubId: string,
+    clubCode: string,
     playerId: string
   ): Promise<ClubMember> {
     const clubRepository = getRepository<Club>(Club);
     const playerRepository = getRepository<Player>(Player);
 
-    const club = await clubRepository.findOne({where: {displayId: clubId}});
+    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     const player = await playerRepository.findOne({where: {uuid: playerId}});
     if (!club) {
-      throw new Error(`Club ${clubId} is not found`);
+      throw new Error(`Club ${clubCode} is not found`);
     }
     if (!player) {
       throw new Error(`Player ${playerId} is not found`);
@@ -335,16 +343,16 @@ class ClubRepositoryImpl {
   }
 
   protected async getClubMember(
-    clubId: string,
+    clubCode: string,
     playerId: string
   ): Promise<[Club, Player, ClubMember | undefined]> {
     const clubRepository = getRepository<Club>(Club);
     const playerRepository = getRepository<Player>(Player);
 
-    const club = await clubRepository.findOne({where: {displayId: clubId}});
+    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     const player = await playerRepository.findOne({where: {uuid: playerId}});
     if (!club) {
-      throw new Error(`Club ${clubId} is not found`);
+      throw new Error(`Club ${clubCode} is not found`);
     }
 
     if (!player) {
@@ -362,13 +370,14 @@ class ClubRepositoryImpl {
     return [club, player, clubMember];
   }
 
-  public async getMembers(clubId: string): Promise<ClubMember[]> {
+  public async getMembers(clubCode: string): Promise<ClubMember[]> {
+    logger.debug(clubCode);
     const clubRepository = getRepository<Club>(Club);
-    const club = await clubRepository.findOne({where: {displayId: clubId}});
+    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     if (!club) {
-      throw new Error(`Club ${clubId} is not found`);
+      throw new Error(`Club ${clubCode} is not found`);
     }
-
+    logger.debug(club.id)
     const owner: Player | undefined = await Promise.resolve(club.owner);
     if (!owner) {
       throw new Error('Unexpected. There is no owner for the club');
@@ -382,16 +391,17 @@ class ClubRepositoryImpl {
         status: Not(ClubMemberStatus.LEFT),
       },
     });
+    logger.debug(clubMembers);  
     return clubMembers;
   }
 
   public async isClubMember(
-    clubId: string,
+    clubCode: string,
     playerId: string
   ): Promise<ClubMember | null> {
     const playerRepository = getRepository<Player>(Player);
     const clubRepository = getRepository<Club>(Club);
-    const club = await clubRepository.findOne({where: {displayId: clubId}});
+    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     const player = await playerRepository.findOne({where: {uuid: playerId}});
     if (!club || !player) {
       return null;
@@ -420,19 +430,20 @@ class ClubRepositoryImpl {
     if (!isPostgres()) {
       placeHolder = '?';
     }
-    const query = `SELECT c.name, c.display_id clubid, COUNT(*) memberCount FROM club_member cm JOIN club c
+    const query = `SELECT c.name, c.club_code clubCode, COUNT(*) memberCount FROM club_member cm JOIN club c
              ON cm.club_id = c.id WHERE cm.player_id = ${placeHolder} 
-             GROUP BY c.name, c.display_id, cm.club_id`;
+             GROUP BY c.name, c.club_code, cm.club_id`;
     const result = await getConnection().query(query, [player.id]);
+    logger.debug(result)
     return result;
   }
 
   public async leaveClub(
-    clubId: string,
+    clubCode: string,
     playerId: string
   ): Promise<ClubMemberStatus> {
     const [club, player, clubMember] = await this.getClubMember(
-      clubId,
+      clubCode,
       playerId
     );
 
@@ -458,7 +469,7 @@ class ClubRepositoryImpl {
   }
 
   public async getClubGames(
-    clubId: string,
+    clubCode: string,
     pageOptions?: PageOptions
   ): Promise<Array<any>> {
     if (!pageOptions) {
@@ -492,9 +503,9 @@ class ClubRepositoryImpl {
       take = 20;
     }
     const clubRepository = getRepository(Club);
-    const club = await clubRepository.findOne({where: {displayId: clubId}});
+    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     if (!club) {
-      throw new Error(`Club ${clubId} is not found`);
+      throw new Error(`Club ${clubCode} is not found`);
     }
 
     const findOptions: any = {
@@ -514,10 +525,13 @@ class ClubRepositoryImpl {
     return games;
   }
 
-  public async getClubById(clubId: string): Promise<Club | undefined> {
+  public async getClubById(clubCode: string): Promise<Club | undefined> {
     const repository = getRepository(Club);
     // get club by id (testing only)
-    const club = await repository.findOne({where: {displayId: clubId}});
+    const club = await repository.findOne({where: {clubCode: clubCode}});
+    if(!club){
+      throw new Error('Club not found');
+    }
     return club;
   }
 }

@@ -1,15 +1,17 @@
-import {getConnection, getRepository, getManager, LessThan} from 'typeorm';
+import {getRepository, getManager} from 'typeorm';
 import {PokerGame, GameType, PlayerGame, GameStatus} from '@src/entity/game';
 import {Club, ClubMember, ClubMemberStatus} from '@src/entity/club';
 import {Player} from '@src/entity/player';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {getLogger} from '@src/utils/log';
 import {ClubGameRake} from '@src/entity/chipstrack';
+import {getGameCodeForClub} from '@src/utils/uniqueid';
+
 const logger = getLogger('game');
 
 class GameRepositoryImpl {
   public async createPrivateGame(
-    clubId: string,
+    clubCode: string,
     playerId: string,
     input: any,
     template = false
@@ -18,9 +20,9 @@ class GameRepositoryImpl {
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);
 
     const clubRepository = getRepository(Club);
-    const club = await clubRepository.findOne({displayId: clubId});
+    const club = await clubRepository.findOne({clubCode: clubCode});
     if (!club) {
-      throw new Error(`Club ${clubId} is not found`);
+      throw new Error(`Club ${clubCode} is not found`);
     }
 
     const playerRepository = getRepository(Player);
@@ -68,8 +70,7 @@ class GameRepositoryImpl {
     }
     let savedGame;
     // use current time as the game id for now
-    const timeInMS = new Date().getTime();
-    game.gameId = `${timeInMS}`;
+    game.gameCode = await getGameCodeForClub(clubCode,club.id);
     game.privateGame = true;
 
     game.startedAt = new Date();
@@ -80,11 +81,11 @@ class GameRepositoryImpl {
       await getManager().transaction(async transactionalEntityManager => {
         savedGame = await gameRespository.save(game);
 
-        const pick = Number.parseInt(savedGame.gameId) % gameServers.length;
+        const pick = Number.parseInt(savedGame.id) % gameServers.length;
         const trackgameServerRepository = getRepository(TrackGameServer);
         const trackServer = new TrackGameServer();
-        trackServer.clubId = clubId;
-        trackServer.gameNum = savedGame.gameId;
+        trackServer.clubCode = clubCode;
+        trackServer.gameCode = savedGame.gameCode;
         trackServer.gameServerId = gameServers[pick];
         await trackgameServerRepository.save(trackServer);
 
@@ -109,11 +110,17 @@ class GameRepositoryImpl {
     return savedGame;
   }
 
-  public async getGameById(gameId: string): Promise<PokerGame | undefined> {
+  public async getGameById(gameCode: string): Promise<PokerGame | undefined> {
     const repository = getRepository(PokerGame);
     // get game by id (testing only)
-    const game = await repository.findOne({where: {gameId: gameId}});
+    const game = await repository.findOne({where: {gameCode: gameCode}});
     return game;
+  }
+
+  public async getGameCount(clubId: number): Promise<number> {
+    const repository = getRepository(PokerGame);
+    const count = await repository.count({where: {club: {id: clubId}}});
+    return count;
   }
 }
 

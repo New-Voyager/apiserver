@@ -15,8 +15,8 @@ export async function createPromotion(
     throw new Error('Unauthorized');
   }
   const errors = new Array<string>();
-  if (!args.clubId) {
-    errors.push('clubId not found');
+  if (!args.clubCode) {
+    errors.push('clubCode not found');
   }
   if (!args.input) {
     errors.push('Promotion input is not found');
@@ -27,7 +27,11 @@ export async function createPromotion(
 
   try {
     const input = args.input as PromotionCreateInput;
-    return PromotionRepository.createPromotion(args.clubId, input, playerUuid);
+    return PromotionRepository.createPromotion(
+      args.clubCode,
+      input,
+      playerUuid
+    );
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error('Failed to create the promotion');
@@ -42,14 +46,14 @@ export async function assignPromotion(
     throw new Error('Unauthorized');
   }
   const errors = new Array<string>();
-  if (!args.clubId) {
-    errors.push('clubId not found');
+  if (!args.clubCode) {
+    errors.push('clubCode not found');
   }
   if (!args.promotionId) {
     errors.push('PromotionId not found');
   }
-  if (!args.gameId) {
-    errors.push('gameId not found');
+  if (!args.gameCode) {
+    errors.push('gameCode not found');
   }
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
@@ -57,8 +61,8 @@ export async function assignPromotion(
 
   try {
     return PromotionRepository.assignPromotion(
-      args.clubId,
-      args.gameId,
+      args.clubCode,
+      args.gameCode,
       args.promotionId,
       args.startAt,
       args.endAt
@@ -74,19 +78,19 @@ export async function getPromotions(args: any, playerUuid: string) {
     throw new Error('Unauthorized');
   }
   const errors = new Array<string>();
-  if (!args.clubId) {
-    errors.push('clubId not found');
+  if (!args.clubCode) {
+    errors.push('clubCode not found');
   }
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
   }
   try {
-    const data = await PromotionRepository.getPromotions(args.clubId);
+    const data = await PromotionRepository.getPromotions(args.clubCode);
     logger.debug(data);
     return _.map(data, x => {
       return {
         id: x.id,
-        clubId: x.clubId,
+        clubCode: x.clubCode,
         bonus: x.bonus,
         cardRank: x.cardRank,
         promotionType: PromotionType[x.promotionType],
@@ -103,26 +107,26 @@ export async function getAssignedPromotions(args: any, playerUuid: string) {
     throw new Error('Unauthorized');
   }
   const errors = new Array<string>();
-  if (!args.clubId) {
-    errors.push('clubId not found');
+  if (!args.clubCode) {
+    errors.push('clubCode not found');
   }
-  if (!args.gameId) {
-    errors.push('gameId not found');
+  if (!args.gameCode) {
+    errors.push('gameCode not found');
   }
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
   }
   try {
     const data = await PromotionRepository.getAssignedPromotions(
-      args.clubId,
-      args.gameId
+      args.clubCode,
+      args.gameCode
     );
     return _.map(data, x => {
       logger.debug(x);
       return {
         promotionId: x.promoId.id,
-        clubId: x.club.displayId,
-        gameId: x.game.gameId,
+        clubCode: x.club.clubCode,
+        gameCode: x.game.gameCode,
         cardRank: x.promoId.cardRank,
         bonus: x.promoId.bonus,
         startAt: x.startAt,

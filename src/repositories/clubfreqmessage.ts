@@ -1,10 +1,10 @@
 import {Club} from '@src/entity/club';
-import {getRepository, MoreThan, LessThan} from 'typeorm';
+import {getRepository} from 'typeorm';
 import {Player} from '@src/entity/player';
 import {FavouriteMessage} from '@src/entity/clubfreqmessage';
 const MAX_ALLOWED_MESSAGES = 20;
 export interface FavouriteMessageInputFormat {
-  clubId: string;
+  clubCode: string;
   playerId: string;
   text: string;
   audioLink: string;
@@ -17,19 +17,19 @@ class ClubFreqMessageRepositoryImpl {
   public async saveFreqMessage(message: FavouriteMessageInputFormat) {
     if (
       (message.playerId === '' || message.playerId === undefined) &&
-      message.clubId !== '' &&
-      message.clubId !== undefined
+      message.clubCode !== '' &&
+      message.clubCode !== undefined
     ) {
       return this.saveClubMessage(message);
     } else if (
-      (message.clubId === '' || message.clubId === undefined) &&
+      (message.clubCode === '' || message.clubCode === undefined) &&
       message.playerId !== '' &&
       message.playerId !== undefined
     ) {
       return this.savePlayerMessage(message);
     } else {
       throw new Error(
-        'Invalid parameters. Either clubId or playerId must be specified'
+        'Invalid parameters. Either clubCode or playerId must be specified'
       );
     }
   }
@@ -38,14 +38,14 @@ class ClubFreqMessageRepositoryImpl {
     try {
       const clubRepository = getRepository(Club);
       const club = await clubRepository.findOne({
-        where: {displayId: message.clubId},
+        where: {clubCode: message.clubCode},
       });
       if (!club) {
-        throw new Error(`Club ${message.clubId} is not found`);
+        throw new Error(`Club ${message.clubCode} is not found`);
       } else {
         const findOptions: any = {
           where: {
-            clubId: message.clubId,
+            clubCode: message.clubCode,
           },
           order: {id: 'ASC'},
         };
@@ -96,10 +96,10 @@ class ClubFreqMessageRepositoryImpl {
 
   public async saveMessage(message: FavouriteMessageInputFormat, flag: number) {
     if (flag === 0) message.playerId === '';
-    else message.clubId === '';
+    else message.clubCode === '';
     const saveMessage = new FavouriteMessage();
     saveMessage.text = message.text;
-    saveMessage.clubId = message.clubId;
+    saveMessage.clubCode = message.clubCode;
     saveMessage.audioLink = message.audioLink;
     saveMessage.imageLink = message.imageLink;
     saveMessage.playerId = message.playerId;
@@ -108,17 +108,16 @@ class ClubFreqMessageRepositoryImpl {
     return response.id;
   }
 
-  public async clubFavoriteMessage(clubId: string): Promise<Array<any>> {
-    logger.debug(clubId);
+  public async clubFavoriteMessage(clubCode: string): Promise<Array<any>> {
     try {
       const clubRepository = getRepository(Club);
-      const club = await clubRepository.findOne({where: {displayId: clubId}});
+      const club = await clubRepository.findOne({where: {clubCode: clubCode}});
       if (!club) {
-        throw new Error(`Club ${clubId} is not found`);
+        throw new Error(`Club ${clubCode} is not found`);
       } else {
         const findOptions: any = {
           where: {
-            clubId: clubId,
+            clubCode: clubCode,
           },
           take: MAX_ALLOWED_MESSAGES,
         };

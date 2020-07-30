@@ -9,38 +9,38 @@ export const createPlayerQuery = gql`
 `;
 export const createClubQuery = gql`
   mutation($input: ClubCreateInput!) {
-    clubId: createClub(club: $input)
+    clubCode: createClub(club: $input)
   }
 `;
 export const updateClubQuery = gql`
-  mutation($clubId: String!, $input: ClubUpdateInput!) {
-    success: updateClub(clubId: $clubId, club: $input)
+  mutation($clubCode: String!, $input: ClubUpdateInput!) {
+    success: updateClub(clubCode: $clubCode, club: $input)
   }
 `;
 export const joinClubQuery = gql`
-  mutation($clubId: String!) {
-    status: joinClub(clubId: $clubId)
+  mutation($clubCode: String!) {
+    status: joinClub(clubCode: $clubCode)
   }
 `;
 export const approveClubQuery = gql`
-  mutation($clubId: String!, $playerUuid: String!) {
-    status: approveMember(clubId: $clubId, playerUuid: $playerUuid)
+  mutation($clubCode: String!, $playerUuid: String!) {
+    status: approveMember(clubCode: $clubCode, playerUuid: $playerUuid)
   }
 `;
 export const kickedClubQuery = gql`
-  mutation($clubId: String!, $playerUuid: String!) {
-    status: kickMember(clubId: $clubId, playerUuid: $playerUuid)
+  mutation($clubCode: String!, $playerUuid: String!) {
+    status: kickMember(clubCode: $clubCode, playerUuid: $playerUuid)
   }
 `;
 export const leaveClubQuery = gql`
-  mutation($clubId: String!) {
-    status: leaveClub(clubId: $clubId)
+  mutation($clubCode: String!) {
+    status: leaveClub(clubCode: $clubCode)
   }
 `;
 
 export const queryClubMembers = gql`
-  query($clubId: String!) {
-    members: clubMembers(clubId: $clubId) {
+  query($clubCode: String!) {
+    members: clubMembers(clubCode: $clubCode) {
       name
       joinedDate
       status
@@ -54,8 +54,8 @@ export const queryClubMembers = gql`
 `;
 
 export const queryMemberStatus = gql`
-  query($clubId: String!) {
-    status: clubMemberStatus(clubId: $clubId) {
+  query($clubCode: String!) {
+    status: clubMemberStatus(clubCode: $clubCode) {
       id
       status
       isManager
@@ -74,8 +74,8 @@ export const queryMemberStatus = gql`
 `;
 
 export const rejectClubQuery = gql`
-  mutation($clubId: String!, $playerUuid: String!) {
-    status: rejectMember(clubId: $clubId, playerUuid: $playerUuid)
+  mutation($clubCode: String!, $playerUuid: String!) {
+    status: rejectMember(clubCode: $clubCode, playerUuid: $playerUuid)
   }
 `;
 
@@ -84,14 +84,14 @@ const myClubsQuery = gql`
     clubs: myClubs {
       name
       private
-      clubId
+      clubCode
     }
   }
 `;
 
 export const clubByIdQuery = gql`
-  query($clubId: String!) {
-    club: clubById(clubId: $clubId) {
+  query($clubCode: String!) {
+    club: clubById(clubCode: $clubCode) {
       id
     }
   }
@@ -135,9 +135,9 @@ export async function createClub(
     variables: clubInput,
     mutation: createClubQuery,
   });
-  const clubId = resp.data.clubId;
+  const clubCode = resp.data.clubCode;
 
-  return [clubId, ownerId];
+  return [clubCode, ownerId];
 }
 
 export async function createPlayer(name: string, deviceId: string) {
@@ -155,19 +155,19 @@ export async function createPlayer(name: string, deviceId: string) {
   return resp.data.playerId;
 }
 
-export async function getClubById(clubId: string): Promise<number> {
-  const clubClient = getClient(clubId);
+export async function getClubById(clubCode: string): Promise<number> {
+  const clubClient = getClient(clubCode);
   const resp = await clubClient.query({
-    variables: {clubId: clubId},
+    variables: {clubCode: clubCode},
     query: clubByIdQuery,
   });
   return resp.data.club.id;
 }
 
-export async function playerJoinsClub(clubId: string, playerId: string) {
+export async function playerJoinsClub(clubCode: string, playerId: string) {
   const playerClient = getClient(playerId);
   const variables = {
-    clubId: clubId,
+    clubCode: clubCode,
   };
 
   await playerClient.mutate({
@@ -178,11 +178,11 @@ export async function playerJoinsClub(clubId: string, playerId: string) {
 
 export async function getClubMembers(
   playerId: string,
-  clubId: string
+  clubCode: string
 ): Promise<Array<any>> {
   const playerClient = getClient(playerId);
   const variables = {
-    clubId: clubId,
+    clubCode: clubCode,
   };
 
   const resp = await playerClient.query({
@@ -195,11 +195,11 @@ export async function getClubMembers(
 
 export async function getClubMember(
   playerId: string,
-  clubId: string
+  clubCode: string
 ): Promise<ClubMember> {
   const playerClient = getClient(playerId);
   const variables = {
-    clubId: clubId,
+    clubCode: clubCode,
   };
 
   const resp = await playerClient.query({
@@ -211,13 +211,13 @@ export async function getClubMember(
 }
 
 export async function approvePlayer(
-  clubId: string,
+  clubCode: string,
   ownerId: string,
   playerId: string
 ) {
   const ownerClient = getClient(ownerId);
   const variables = {
-    clubId: clubId,
+    clubCode: clubCode,
     playerUuid: playerId,
   };
   const resp = await ownerClient.mutate({

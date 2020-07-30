@@ -17,12 +17,12 @@ afterAll(async done => {
 
 describe('Club APIs', () => {
   test('save a favourite message', async () => {
-    const [clubId] = await clubutils.createClub();
+    const [clubCode] = await clubutils.createClub();
     const playerId = await clubutils.createPlayer('adam', '1243ABC');
 
     const messageInput = {
       text: 'Hi buddy',
-      clubId: clubId,
+      clubCode: clubCode,
     };
 
     const response = await getClient(playerId).mutate({
@@ -38,11 +38,11 @@ describe('Club APIs', () => {
   });
 
   test('get club message', async () => {
-    const [clubId, playerId] = await clubutils.createClub('brady3', 'yatzee3');
+    const [clubCode, playerId] = await clubutils.createClub('brady3', 'yatzee3');
     const messageCount = 50;
     const messageInput = {
       audioLink: 'test.com',
-      clubId: clubId,
+      clubCode: clubCode,
     };
     for (let i = 0; i < messageCount; i++) {
       await getClient(playerId).mutate({
@@ -54,7 +54,7 @@ describe('Club APIs', () => {
     }
     const result = await clubfreqmessageutils.getClubFavMessages(
       playerId,
-      clubId
+      clubCode
     );
     expect(result).toHaveLength(20);
   });

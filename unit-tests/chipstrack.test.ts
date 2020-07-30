@@ -66,18 +66,18 @@ describe('Player Chips tracking APIs', () => {
       description: 'poker players gather',
       ownerUuid: ownerId,
     };
-    const clubId = await createClub(ownerId, clubInput);
+    const clubCode = await createClub(ownerId, clubInput);
     const gameServer = {
       ipAddress: '10.1.1.1',
       currentMemory: 100,
       status: 'ACTIVE',
     };
     await createGameServer(gameServer);
-    const game = await startGame(ownerId, clubId, holdemGameInput);
+    const game = await startGame(ownerId, clubCode, holdemGameInput);
 
     const playerID = await getPlayerById(ownerId);
-    const clubID = await getClubById(ownerId, clubId);
-    const gameID = await getGameById(ownerId, game.gameId);
+    const clubID = await getClubById(ownerId, clubCode);
+    const gameID = await getGameById(ownerId, game.gameCode);
     const input = {
       clubId: clubID.id,
       playerId: playerID.id,
@@ -104,18 +104,18 @@ describe('Player Chips tracking APIs', () => {
       description: 'poker players gather',
       ownerUuid: ownerId,
     };
-    const clubId = await createClub(ownerId, clubInput);
+    const clubCode = await createClub(ownerId, clubInput);
     const gameServer = {
       ipAddress: '10.1.1.1',
       currentMemory: 100,
       status: 'ACTIVE',
     };
     await createGameServer(gameServer);
-    const game = await startGame(ownerId, clubId, holdemGameInput);
+    const game = await startGame(ownerId, clubCode, holdemGameInput);
 
     const playerID = await getPlayerById(ownerId);
-    const clubID = await getClubById(ownerId, clubId);
-    const gameID = await getGameById(ownerId, game.gameId);
+    const clubID = await getClubById(ownerId, clubCode);
+    const gameID = await getGameById(ownerId, game.gameCode);
     const buyChips = {
       clubId: clubID.id,
       playerId: playerID.id,
@@ -165,18 +165,18 @@ describe('Player Chips tracking APIs', () => {
       description: 'poker players gather',
       ownerUuid: ownerId,
     };
-    const clubId = await createClub(ownerId, clubInput);
+    const clubCode = await createClub(ownerId, clubInput);
     const gameServer = {
       ipAddress: '10.1.1.1',
       currentMemory: 100,
       status: 'ACTIVE',
     };
     await createGameServer(gameServer);
-    const game = await startGame(ownerId, clubId, holdemGameInput);
+    const game = await startGame(ownerId, clubCode, holdemGameInput);
 
     const playerID = await getPlayerById(ownerId);
-    const clubID = await getClubById(ownerId, clubId);
-    const gameID = await getGameById(ownerId, game.gameId);
+    const clubID = await getClubById(ownerId, clubCode);
+    const gameID = await getGameById(ownerId, game.gameCode);
     const input = {
       clubId: clubID.id,
       playerId: playerID.id,
@@ -211,18 +211,18 @@ describe('Player Chips tracking APIs', () => {
       description: 'poker players gather',
       ownerUuid: ownerId,
     };
-    const clubId = await createClub(ownerId, clubInput);
+    const clubCode = await createClub(ownerId, clubInput);
     const gameServer = {
       ipAddress: '10.1.1.1',
       currentMemory: 100,
       status: 'ACTIVE',
     };
     await createGameServer(gameServer);
-    const game = await startGame(ownerId, clubId, holdemGameInput);
+    const game = await startGame(ownerId, clubCode, holdemGameInput);
 
     const playerID = await getPlayerById(ownerId);
-    const clubID = await getClubById(ownerId, clubId);
-    const gameID = await getGameById(ownerId, game.gameId);
+    const clubID = await getClubById(ownerId, clubCode);
+    const gameID = await getGameById(ownerId, game.gameCode);
     const input = {
       clubId: clubID.id,
       playerId: playerID.id,
@@ -241,20 +241,20 @@ describe('Player Chips tracking APIs', () => {
 
     await endGameData({club_id: clubID.id, game_id: gameID.id});
     const clubBalance = await getClubBalanceAmount(ownerId, {
-      clubId: clubId,
+      clubCode: clubCode,
     });
     const playerBalance = await getPlayerBalanceAmount(ownerId, {
-      clubId: clubId,
+      clubCode: clubCode,
       playerId: ownerId,
     });
     const playerTrack = await getPlayerTrack(ownerId, {
-      clubId: clubId,
+      clubCode: clubCode,
       playerId: ownerId,
-      gameId: game.gameId,
+      gameCode: game.gameCode,
     });
     const clubTrack = await getClubTrack(ownerId, {
-      clubId: clubId,
-      gameId: game.gameId,
+      clubCode: clubCode,
+      gameCode: game.gameCode,
     });
     expect(clubBalance.balance).not.toBeNull();
     expect(clubBalance.balance).not.toBeUndefined();

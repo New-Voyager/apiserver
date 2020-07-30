@@ -39,7 +39,7 @@ input GameCreateInput {
 }
 
 type GameInfo {
-  gameId: String!
+  gameCode: String!
   gameType: GameType
   title: String
   smallBlind: Float
@@ -81,18 +81,22 @@ input GameUpdateInput {
 }
 
 type Mutation {
-  startGameFromTemplate(clubId: String!, templateId: Int!): GameInfo!
+  # Not implemented
+  startGameFromTemplate(
+  clubCode  : String!, templateId: Int!): GameInfo!
   updateGame(
-    clubId: String!
-    gameId: String!
+    clubCode: String!
+    gameCode: String!
     update: GameUpdateInput
   ): GameInfo!
-  startGame(clubId: String!, game: GameCreateInput!): GameInfo!
+  startFriendsGame(game: GameCreateInput!): GameInfo!
   saveGameTemplate(
-    clubId: String!
+    clubCode: String!
     templateName: String!
     gameInput: GameCreateInput!
   ): Int!
+  # implemented
+  startGame(clubCode: String!, game: GameCreateInput!): GameInfo!
 }
 
 type gameId{
@@ -100,6 +104,8 @@ type gameId{
 }
 
 type Query {
-  getGameTemplates(clubId: String!): [GameInfo!]
-    gameById(gameId: String!): gameId!
+  # Not implemented
+  getGameTemplates(clubCode: String!): [GameInfo!]
+  # implemented
+  gameById(gameCode: String!): gameId!
 }

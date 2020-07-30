@@ -2,8 +2,8 @@ import {resetDatabase, getClient} from './utils';
 import {gql} from 'apollo-boost';
 
 export const queryClubBalance = gql`
-  query($clubId: String!) {
-    balance: clubBalance(clubId: $clubId) {
+  query($clubCode: String!) {
+    balance: clubBalance(clubCode: $clubCode) {
       balance
       updatedAt
     }
@@ -11,8 +11,8 @@ export const queryClubBalance = gql`
 `;
 
 export const queryPlayerBalance = gql`
-  query($playerId: String!, $clubId: String!) {
-    balance: playerBalance(playerId: $playerId, clubId: $clubId) {
+  query($playerId: String!, $clubCode: String!) {
+    balance: playerBalance(playerId: $playerId, clubCode: $clubCode) {
       totalBuyins
       totalWinnings
       balance
@@ -23,10 +23,10 @@ export const queryPlayerBalance = gql`
 `;
 
 export const queryPlayerTrack = gql`
-  query($playerId: String!, $clubId: String!, $gameId: String!) {
+  query($playerId: String!, $clubCode: String!, $gameCode: String!) {
     balance: playerGametrack(
-      clubId: $clubId
-      gameId: $gameId
+      clubCode: $clubCode
+      gameCode: $gameCode
       playerId: $playerId
     ) {
       buyIn
@@ -40,8 +40,8 @@ export const queryPlayerTrack = gql`
 `;
 
 export const queryClubTrack = gql`
-  query($clubId: String!, $gameId: String!) {
-    balance: clubGameRake(clubId: $clubId, gameId: $gameId) {
+  query($clubCode: String!, $gameCode: String!) {
+    balance: clubGameRake(clubCode: $clubCode, gameCode: $gameCode) {
       rake
       promotion
       lastHandNum
@@ -51,11 +51,11 @@ export const queryClubTrack = gql`
 
 export async function getClubBalance(
   playerId: string,
-  clubId: string
+  clubCode: string
 ): Promise<Array<any>> {
   const playerClient = getClient(playerId);
   const resp = await playerClient.query({
-    variables: {clubId: clubId},
+    variables: {clubCode: clubCode},
     query: queryClubBalance,
   });
 
@@ -64,11 +64,11 @@ export async function getClubBalance(
 
 export async function getClubPlayerBalance(
   playerId: string,
-  clubId: string
+  clubCode: string
 ): Promise<Array<any>> {
   const playerClient = getClient(playerId);
   const resp = await playerClient.query({
-    variables: {clubId: clubId, playerId: playerId},
+    variables: {clubCode: clubCode, playerId: playerId},
     query: queryPlayerBalance,
   });
 
@@ -77,12 +77,12 @@ export async function getClubPlayerBalance(
 
 export async function getPlayerTrack(
   playerId: string,
-  clubId: string,
-  gameId: string
+  clubCode: string,
+  gameCode: string
 ) {
   const playerClient = getClient(playerId);
   const resp = await playerClient.query({
-    variables: {playerId: playerId, clubId: clubId, gameId: gameId},
+    variables: {playerId: playerId, clubCode: clubCode, gameCode: gameCode},
     query: queryPlayerTrack,
   });
 
@@ -91,12 +91,12 @@ export async function getPlayerTrack(
 
 export async function getClubTrack(
   playerId: string,
-  clubId: string,
-  gameId: string
+  clubCode: string,
+  gameCode: string
 ) {
   const playerClient = getClient(playerId);
   const resp = await playerClient.query({
-    variables: {clubId: clubId, gameId: gameId},
+    variables: {clubCode: clubCode, gameCode: gameCode},
     query: queryClubTrack,
   });
 

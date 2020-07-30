@@ -8,10 +8,10 @@ export const saveFreqMessage = gql`
 `;
 
 export const getClubFavMessageQuery = gql`
-  query($clubId: String!) {
-    clubFreqMessage: clubFavoriteMessages(clubId: $clubId) {
+  query($clubCode: String!) {
+    clubFreqMessage: clubFavoriteMessages(clubCode: $clubCode) {
       id
-      clubId
+      clubCode
       text
       audioLink
       imageLink
@@ -33,10 +33,10 @@ export const getPlayerFavMessageQuery = gql`
 
 export async function getClubFavMessages(
   playerId: string,
-  clubId: string
+  clubCode: string
 ): Promise<Array<any>> {
   const variables: any = {
-    clubId: clubId,
+    clubCode: clubCode,
   };
   const resp = await getClient(playerId).query({
     variables: variables,

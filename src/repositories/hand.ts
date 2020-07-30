@@ -9,8 +9,6 @@ import {PageOptions} from '@src/types';
 import {PokerGame} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker, ClubGameRake} from '@src/entity/chipstrack';
-import {GameRepository} from './game';
-import {ClubRepository} from './club';
 import {
   GamePromotion,
   Promotion,
@@ -267,6 +265,7 @@ class HandRepositoryImpl {
     gameNum: number,
     handNum: number
   ): Promise<HandHistory | undefined> {
+    logger.debug(clubId);
     const handHistoryRepository = getRepository(HandHistory);
     const handHistory = await handHistoryRepository.findOne({
       where: {clubId: clubId, gameNum: gameNum, handNum: handNum},
@@ -278,6 +277,7 @@ class HandRepositoryImpl {
     clubId: number,
     gameNum: number
   ): Promise<HandHistory | undefined> {
+    logger.debug(clubId);
     const handHistoryRepository = getRepository(HandHistory);
     const hands = await handHistoryRepository.find({
       where: {clubId: clubId, gameNum: gameNum},

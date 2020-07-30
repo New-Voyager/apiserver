@@ -61,34 +61,34 @@ input PageInput {
 
 type Mutation {
   saveStarredHand(
-    clubId: String!
-    gameNum: String!
+    clubCode: String!
+    gameCode: String!
     handNum: String!
   ): String!
 }
 
 type Query {
   # To get the last hand history for a given gameNum and clubId
-  lastHandHistory(clubId: String!, gameNum: String!): HandHistory!
+  lastHandHistory(clubCode: String!, gameCode: String!): HandHistory!
 
   # To get specific hand history for a given gameNum, clubId and handNum
   specificHandHistory(
-    clubId: String!
-    gameNum: String!
+    clubCode: String!
+    gameCode: String!
     handNum: String!
   ): HandHistory!
 
   # To get all hand history for a given gameNum and clubId
   allHandHistory(
-    clubId: String!
-    gameNum: String!
+    clubCode: String!
+    gameCode: String!
     page: PageInput
   ): [HandHistory!]
 
   # To get a specific user's last 10 winning hands for a given gameNum and clubId
   myWinningHands(
-    clubId: String!
-    gameNum: String!
+    clubCode: String!
+    gameCode: String!
     page: PageInput
   ): [HandWinners!]
 

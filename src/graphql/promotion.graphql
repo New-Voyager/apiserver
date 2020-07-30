@@ -12,7 +12,7 @@ input CreatePromotionInput {
 
 type Promotion {
   id: Int!
-  clubId: String!
+  clubCode: String!
   promotionType: PromotionType
   cardRank: Int
   bonus: Float!
@@ -20,8 +20,8 @@ type Promotion {
 
 type AssignedPromotions {
   promotionId: Int!
-  clubId: String!
-  gameId: String!
+  clubCode: String!
+  gameCode: String!
   promotionType: PromotionType
   cardRank: Int
   bonus: Float!
@@ -30,12 +30,12 @@ type AssignedPromotions {
 }
 
 type Mutation {
-  createPromotion(clubId: String! input: CreatePromotionInput): Promotion
-  assignPromotion(clubId: String!, gameId: String, promotionId: Int!, startAt: DateTime, endAt: DateTime): String
+  createPromotion(clubCode: String! input: CreatePromotionInput): Promotion
+  assignPromotion(clubCode: String!, gameCode: String, promotionId: Int!, startAt: DateTime, endAt: DateTime): String
 }
 
 
 type Query {
-  promotions(clubId: String!): [Promotion!]
-  assignedPromotions(clubId: String!, gameId: String!): [AssignedPromotions!]
+  promotions(clubCode: String!): [Promotion!]
+  assignedPromotions(clubCode: String!, gameCode: String!): [AssignedPromotions!]
 }

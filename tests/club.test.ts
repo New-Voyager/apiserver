@@ -53,13 +53,13 @@ describe('Club APIs', () => {
     });
     expect(resp.errors).toBeUndefined();
     expect(resp.data).not.toBeUndefined();
-    const clubId = resp.data.clubId;
-    expect(clubId).not.toBeNull();
+    const clubCode = resp.data.clubCode;
+    expect(clubCode).not.toBeNull();
 
     // update the club name using the player token
     const playerClient = getClient(player1Id);
     const clubUpdateInput = {
-      clubId: clubId,
+      clubCode: clubCode,
       input: clubInput['input'],
     };
 
@@ -82,12 +82,12 @@ describe('Club APIs', () => {
   });
 
   test('player joins a club', async () => {
-    const [clubId] = await clubutils.createClub();
+    const [clubCode] = await clubutils.createClub();
     const playerId = await clubutils.createPlayer('adam', '1243ABC');
     // try to join the club without auth header
     const client = getClient();
     const variables = {
-      clubId: clubId,
+      clubCode: clubCode,
     };
     try {
       await client.query({
@@ -120,15 +120,15 @@ describe('Club APIs', () => {
   });
 
   test('player who is not an owner approves a new member', async () => {
-    const [clubId] = await clubutils.createClub();
+    const [clubCode] = await clubutils.createClub();
     const player1Id = await clubutils.createPlayer('adam', '1243ABC');
     const player2Id = await clubutils.createPlayer('eve', '1243EDF');
-    await clubutils.playerJoinsClub(clubId, player1Id);
-    await clubutils.playerJoinsClub(clubId, player2Id);
+    await clubutils.playerJoinsClub(clubCode, player1Id);
+    await clubutils.playerJoinsClub(clubCode, player2Id);
 
     // try to join the club without auth header
     const variables = {
-      clubId: clubId,
+      clubCode: clubCode,
       playerUuid: player2Id,
     };
     // player1 whose status is in PENDING approves player2
@@ -145,15 +145,15 @@ describe('Club APIs', () => {
   });
 
   test('owner approves a new member', async () => {
-    const [clubId, ownerId] = await clubutils.createClub();
+    const [clubCode, ownerId] = await clubutils.createClub();
     const player1Id = await clubutils.createPlayer('adam', '1243ABC');
     const player2Id = await clubutils.createPlayer('eve', '1243EDF');
-    await clubutils.playerJoinsClub(clubId, player1Id);
-    await clubutils.playerJoinsClub(clubId, player2Id);
+    await clubutils.playerJoinsClub(clubCode, player1Id);
+    await clubutils.playerJoinsClub(clubCode, player2Id);
     // let the owner approve the request
     const ownerClient = getClient(ownerId);
     let variables = {
-      clubId: clubId,
+      clubCode: clubCode,
       playerUuid: player1Id,
     };
     let resp = await ownerClient.mutate({
@@ -162,7 +162,7 @@ describe('Club APIs', () => {
     });
     expect(resp.data.status).toBe('ACTIVE');
     variables = {
-      clubId: clubId,
+      clubCode: clubCode,
       playerUuid: player2Id,
     };
     resp = await ownerClient.mutate({
@@ -171,7 +171,7 @@ describe('Club APIs', () => {
     });
     expect(resp.data.status).toBe('ACTIVE');
 
-    const clubMembers = await clubutils.getClubMembers(ownerId, clubId);
+    const clubMembers = await clubutils.getClubMembers(ownerId, clubCode);
     // owner + 2 players
     expect(clubMembers).toHaveLength(3);
     for (const member of clubMembers) {
@@ -180,14 +180,14 @@ describe('Club APIs', () => {
   });
 
   test('owner rejects a new member request', async () => {
-    const [clubId, ownerId] = await clubutils.createClub();
+    const [clubCode, ownerId] = await clubutils.createClub();
     const player1Id = await clubutils.createPlayer('adam', '1243ABC');
     const player2Id = await clubutils.createPlayer('eve', '1243EDF');
-    await clubutils.playerJoinsClub(clubId, player1Id);
-    await clubutils.playerJoinsClub(clubId, player2Id);
+    await clubutils.playerJoinsClub(clubCode, player1Id);
+    await clubutils.playerJoinsClub(clubCode, player2Id);
 
     // query members and ensure the status is PENDING
-    let clubMembers = await clubutils.getClubMembers(ownerId, clubId);
+    let clubMembers = await clubutils.getClubMembers(ownerId, clubCode);
     // owner + 2 players
     expect(clubMembers).toHaveLength(3);
     for (const member of clubMembers) {
@@ -201,7 +201,7 @@ describe('Club APIs', () => {
     // let the owner approve the request
     const ownerClient = getClient(ownerId);
     let variables = {
-      clubId: clubId,
+      clubCode: clubCode,
       playerUuid: player1Id,
     };
     let resp = await ownerClient.mutate({
@@ -210,7 +210,7 @@ describe('Club APIs', () => {
     });
     expect(resp.data.status).toBe('DENIED');
     variables = {
-      clubId: clubId,
+      clubCode: clubCode,
       playerUuid: player2Id,
     };
     resp = await ownerClient.mutate({
@@ -219,7 +219,7 @@ describe('Club APIs', () => {
     });
     expect(resp.data.status).toBe('ACTIVE');
 
-    clubMembers = await clubutils.getClubMembers(ownerId, clubId);
+    clubMembers = await clubutils.getClubMembers(ownerId, clubCode);
     // owner + 2 players
     expect(clubMembers).toHaveLength(3);
     for (const member of clubMembers) {
@@ -232,16 +232,16 @@ describe('Club APIs', () => {
   });
 
   test('owner kicks an existing member request', async () => {
-    const [clubId, ownerId] = await clubutils.createClub();
+    const [clubCode, ownerId] = await clubutils.createClub();
     const player1Id = await clubutils.createPlayer('adam', '1243ABC');
     const player2Id = await clubutils.createPlayer('eve', '1243EDF');
-    await clubutils.playerJoinsClub(clubId, player1Id);
-    await clubutils.playerJoinsClub(clubId, player2Id);
+    await clubutils.playerJoinsClub(clubCode, player1Id);
+    await clubutils.playerJoinsClub(clubCode, player2Id);
 
     // let the owner approve the request
     const ownerClient = getClient(ownerId);
     let variables = {
-      clubId: clubId,
+      clubCode: clubCode,
       playerUuid: player1Id,
     };
     await ownerClient.mutate({
@@ -249,7 +249,7 @@ describe('Club APIs', () => {
       mutation: clubutils.approveClubQuery,
     });
     variables = {
-      clubId: clubId,
+      clubCode: clubCode,
       playerUuid: player2Id,
     };
     await ownerClient.mutate({
@@ -258,7 +258,7 @@ describe('Club APIs', () => {
     });
 
     // get club members as player1
-    let clubMembers = await clubutils.getClubMembers(player1Id, clubId);
+    let clubMembers = await clubutils.getClubMembers(player1Id, clubCode);
     // owner + 2 players
     expect(clubMembers).toHaveLength(3);
     for (const member of clubMembers) {
@@ -267,7 +267,7 @@ describe('Club APIs', () => {
 
     // kick player1, he should not be able to access the club
     variables = {
-      clubId: clubId,
+      clubCode: clubCode,
       playerUuid: player1Id,
     };
     await ownerClient.mutate({
@@ -276,7 +276,7 @@ describe('Club APIs', () => {
     });
 
     // get club members as owner
-    clubMembers = await clubutils.getClubMembers(ownerId, clubId);
+    clubMembers = await clubutils.getClubMembers(ownerId, clubCode);
     // owner + 2 players
     expect(clubMembers).toHaveLength(3);
     for (const member of clubMembers) {
@@ -289,7 +289,7 @@ describe('Club APIs', () => {
 
     // get club members as the player who got kicked out
     try {
-      clubMembers = await clubutils.getClubMembers(player1Id, clubId);
+      clubMembers = await clubutils.getClubMembers(player1Id, clubCode);
       expect(false).toBeTruthy();
     } catch (error) {
       expect(error.toString()).toContain('Unauthorized');
@@ -297,16 +297,16 @@ describe('Club APIs', () => {
   });
 
   test('player leaves a club', async () => {
-    const [clubId, ownerId] = await clubutils.createClub();
+    const [clubCode, ownerId] = await clubutils.createClub();
     const player1Id = await clubutils.createPlayer('adam', '1243ABC');
     const player2Id = await clubutils.createPlayer('eve', '1243EDF');
-    await clubutils.playerJoinsClub(clubId, player1Id);
-    await clubutils.playerJoinsClub(clubId, player2Id);
-    await clubutils.approvePlayer(clubId, ownerId, player1Id);
+    await clubutils.playerJoinsClub(clubCode, player1Id);
+    await clubutils.playerJoinsClub(clubCode, player2Id);
+    await clubutils.approvePlayer(clubCode, ownerId, player1Id);
     // make sure the owner cannot leave the club
     const ownerClient = getClient(ownerId);
     let variables = {
-      clubId: clubId,
+      clubCode: clubCode,
     };
     try {
       await ownerClient.mutate({
@@ -320,7 +320,7 @@ describe('Club APIs', () => {
 
     const player1Client = getClient(player1Id);
     variables = {
-      clubId: clubId,
+      clubCode: clubCode,
     };
     await player1Client.mutate({
       variables: variables,
@@ -328,7 +328,7 @@ describe('Club APIs', () => {
     });
 
     // get club members and ensure player 1 is not in the club
-    const members = await clubutils.getClubMembers(ownerId, clubId);
+    const members = await clubutils.getClubMembers(ownerId, clubCode);
     let player1Found = false;
     for (const member of members) {
       if (member.playerId === player1Id) {

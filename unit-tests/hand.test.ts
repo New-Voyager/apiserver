@@ -262,7 +262,7 @@ async function createClubAndStartGame(): Promise<
   await createGameServer(gameServer);
   const game = await startGame(owner, club, holdemGameInput);
   const playerId = (await getPlayerById(owner)).id;
-  const gameId = (await getGameById(owner, game.gameId)).id;
+  const gameId = (await getGameById(owner, game.gameCode)).id;
   const clubId = (await getClubById(owner, club)).id;
   const messageInput = {
     clubId: clubId,
@@ -273,7 +273,7 @@ async function createClubAndStartGame(): Promise<
     seatNo: 1,
   };
   await saveChipsData(messageInput);
-  return [clubId, playerId, gameId, owner, club, game.gameId];
+  return [clubId, playerId, gameId, owner, club, game.gameCode];
 }
 
 describe('Hand server APIs', () => {
@@ -293,8 +293,8 @@ describe('Hand server APIs', () => {
         playerId,
         gameId,
         playerUuid,
-        clubUuid,
-        gameUuid,
+        clubCode,
+        gameCode,
       ] = await createClubAndStartGame();
       allInHand.handNum = 1;
       allInHand.gameNum = gameId;
@@ -318,8 +318,8 @@ describe('Hand server APIs', () => {
         playerId,
         gameId,
         playerUuid,
-        clubUuid,
-        gameUuid,
+        clubCode,
+        gameCode,
       ] = await createClubAndStartGame();
       flopHand.handNum = 1;
       flopHand.gameNum = gameId;
@@ -342,8 +342,8 @@ describe('Hand server APIs', () => {
         playerId,
         gameId,
         playerUuid,
-        clubUuid,
-        gameUuid,
+        clubCode,
+        gameCode,
       ] = await createClubAndStartGame();
       flopHand.handNum = 1;
       flopHand.gameNum = gameId;
@@ -353,8 +353,8 @@ describe('Hand server APIs', () => {
       flopHand.handResult.playersInSeats = [playerId];
       const resp = await saveHandData(flopHand);
       const handHistory = await getSpecificHandHistory(playerUuid, {
-        clubId: clubUuid,
-        gameNum: gameUuid,
+        clubCode: clubCode,
+        gameCode: gameCode,
         handNum: 1,
       });
       expect(handHistory.gameType).toBe('HOLDEM');
@@ -372,8 +372,8 @@ describe('Hand server APIs', () => {
         playerId,
         gameId,
         playerUuid,
-        clubUuid,
-        gameUuid,
+        clubCode,
+        gameCode,
       ] = await createClubAndStartGame();
       flopHand.handNum = 1;
       flopHand.gameNum = gameId;
@@ -386,8 +386,8 @@ describe('Hand server APIs', () => {
         await saveHandData(flopHand);
       }
       const handHistory = await getLastHandHistory(playerUuid, {
-        clubId: clubUuid,
-        gameNum: gameUuid,
+        clubCode: clubCode,
+        gameCode: gameCode,
       });
       expect(handHistory.gameType).toBe('HOLDEM');
       expect(handHistory.wonAt).toBe('FLOP');
@@ -405,8 +405,8 @@ describe('Hand server APIs', () => {
         playerId,
         gameId,
         playerUuid,
-        clubUuid,
-        gameUuid,
+        clubCode,
+        gameCode,
       ] = await createClubAndStartGame();
       flopHand.handNum = 1;
       flopHand.gameNum = gameId;
@@ -419,8 +419,8 @@ describe('Hand server APIs', () => {
         await saveHandData(flopHand);
       }
       const handHistory = await getAllHandHistory(playerUuid, {
-        clubId: clubUuid,
-        gameNum: gameUuid,
+        clubCode: clubCode,
+        gameCode: gameCode,
       });
       expect(handHistory).toHaveLength(4);
     } catch (err) {
@@ -436,8 +436,8 @@ describe('Hand server APIs', () => {
         playerId,
         gameId,
         playerUuid,
-        clubUuid,
-        gameUuid,
+        clubCode,
+        gameCode,
       ] = await createClubAndStartGame();
       flopHand.handNum = 1;
       flopHand.gameNum = gameId;
@@ -450,14 +450,14 @@ describe('Hand server APIs', () => {
         await saveHandData(flopHand);
       }
       const handHistory = await getAllHandHistory(playerUuid, {
-        clubId: clubUuid,
-        gameNum: gameUuid,
+        clubCode: clubCode,
+        gameCode: gameCode,
       });
       expect(handHistory).toHaveLength(10);
       const lastHand = handHistory[9];
       const handHistory1 = await getAllHandHistory(playerUuid, {
-        clubId: clubUuid,
-        gameNum: gameUuid,
+        clubCode: clubCode,
+        gameCode: gameCode,
         page: {
           prev: lastHand.pageId,
           count: 5,
@@ -477,8 +477,8 @@ describe('Hand server APIs', () => {
         playerId,
         gameId,
         playerUuid,
-        clubUuid,
-        gameUuid,
+        clubCode,
+        gameCode,
       ] = await createClubAndStartGame();
       flopHand.handNum = 1;
       flopHand.gameNum = gameId;
@@ -491,8 +491,8 @@ describe('Hand server APIs', () => {
         await saveHandData(flopHand);
       }
       const winningHands = await getMyWinningHands(playerUuid, {
-        clubId: clubUuid,
-        gameNum: gameUuid,
+        clubCode: clubCode,
+        gameCode: gameCode,
       });
       expect(winningHands).toHaveLength(4);
       winningHands.forEach(element => {
@@ -511,8 +511,8 @@ describe('Hand server APIs', () => {
         playerId,
         gameId,
         playerUuid,
-        clubUuid,
-        gameUuid,
+        clubCode,
+        gameCode,
       ] = await createClubAndStartGame();
       flopHand.handNum = 1;
       flopHand.gameNum = gameId;
@@ -525,14 +525,14 @@ describe('Hand server APIs', () => {
         await saveHandData(flopHand);
       }
       const winningHands = await getMyWinningHands(playerUuid, {
-        clubId: clubUuid,
-        gameNum: gameUuid,
+        clubCode: clubCode,
+        gameCode: gameCode,
       });
       expect(winningHands).toHaveLength(10);
       const lastHand = winningHands[9];
       const winningHands1 = await getMyWinningHands(playerUuid, {
-        clubId: clubUuid,
-        gameNum: gameUuid,
+        clubCode: clubCode,
+        gameCode: gameCode,
         page: {
           prev: lastHand.pageId,
           count: 5,
@@ -552,8 +552,8 @@ describe('Hand server APIs', () => {
         playerId,
         gameId,
         playerUuid,
-        clubUuid,
-        gameUuid,
+        clubCode,
+        gameCode,
       ] = await createClubAndStartGame();
       flopHand.handNum = 1;
       flopHand.gameNum = gameId;
@@ -565,8 +565,8 @@ describe('Hand server APIs', () => {
       expect(resp).toBe(true);
 
       const starredHand = await saveStarredHand(playerUuid, {
-        clubId: clubUuid,
-        gameNum: gameUuid,
+        clubCode: clubCode,
+        gameCode: gameCode,
         handNum: 1,
       });
       expect(starredHand).toBe(true);
@@ -583,8 +583,8 @@ describe('Hand server APIs', () => {
         playerId,
         gameId,
         playerUuid,
-        clubUuid,
-        gameUuid,
+        clubCode,
+        gameCode,
       ] = await createClubAndStartGame();
       flopHand.gameNum = gameId;
       flopHand.clubId = clubId;
@@ -595,8 +595,8 @@ describe('Hand server APIs', () => {
         flopHand.handNum = i;
         await saveHandData(flopHand);
         await saveStarredHand(playerUuid, {
-          clubId: clubUuid,
-          gameNum: gameUuid,
+          clubCode: clubCode,
+          gameCode: gameCode,
           handNum: i,
         });
       }

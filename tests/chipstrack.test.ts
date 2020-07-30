@@ -60,14 +60,14 @@ describe('Player Chips tracking APIs', () => {
       console.error(JSON.stringify(err));
       expect(true).toBeFalsy();
     }
-    const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
+    const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
     let game, resp;
 
-    game = await gameutils.startGame(playerId, clubId, holdemGameInput);
+    game = await gameutils.startGame(playerId, clubCode, holdemGameInput);
 
     const playerID = await handutils.getPlayerById(playerId);
-    const clubID = await clubutils.getClubById(clubId);
-    const gameID = await gameutils.getGameById(game.gameId);
+    const clubID = await clubutils.getClubById(clubCode);
+    const gameID = await gameutils.getGameById(game.gameCode);
 
     const messageInput = {
       clubId: clubID,
@@ -115,7 +115,7 @@ describe('Player Chips tracking APIs', () => {
 
     const playerID = await handutils.getPlayerById(playerId);
     const clubID = await clubutils.getClubById(clubId);
-    const gameID = await gameutils.getGameById(game.gameId);
+    const gameID = await gameutils.getGameById(game.gameCode);
 
     const messageInput = {
       clubId: clubID,
@@ -161,11 +161,11 @@ describe('Player Chips tracking APIs', () => {
     };
 
     await axios.post(`${SERVER_API}/register-game-server`, gameServer1);
-    const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
-    const game = await gameutils.startGame(playerId, clubId, holdemGameInput);
+    const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
+    const game = await gameutils.startGame(playerId, clubCode, holdemGameInput);
     const playerID = await handutils.getPlayerById(playerId);
-    const clubID = await clubutils.getClubById(clubId);
-    const gameID = await gameutils.getGameById(game.gameId);
+    const clubID = await clubutils.getClubById(clubCode);
+    const gameID = await gameutils.getGameById(game.gameCode);
 
     const messageInput = {
       clubId: clubID,
@@ -203,14 +203,14 @@ describe('Player Chips tracking APIs', () => {
       console.error(JSON.stringify(err));
       expect(true).toBeFalsy();
     }
-    const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
+    const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
     let game;
 
-    game = await gameutils.startGame(playerId, clubId, holdemGameInput);
+    game = await gameutils.startGame(playerId, clubCode, holdemGameInput);
 
     const playerID = await handutils.getPlayerById(playerId);
-    const clubID = await clubutils.getClubById(clubId);
-    const gameID = await gameutils.getGameById(game.gameId);
+    const clubID = await clubutils.getClubById(clubCode);
+    const gameID = await gameutils.getGameById(game.gameCode);
 
     const messageInput = {
       clubId: clubID,
@@ -226,20 +226,20 @@ describe('Player Chips tracking APIs', () => {
       club_id: clubID,
       game_id: gameID,
     });
-    const clubBalance = await chipstrackutils.getClubBalance(playerId, clubId);
+    const clubBalance = await chipstrackutils.getClubBalance(playerId, clubCode);
     const playerBalance = await chipstrackutils.getClubPlayerBalance(
       playerId,
-      clubId
+      clubCode
     );
     const playertrack = await chipstrackutils.getPlayerTrack(
       playerId,
-      clubId,
-      game.gameId
+      clubCode,
+      game.gameCode
     );
     const clubTrack = await chipstrackutils.getClubTrack(
       playerId,
-      clubId,
-      game.gameId
+      clubCode,
+      game.gameCode
     );
     expect(clubBalance).not.toBeNull();
     expect(clubBalance).not.toBeUndefined();

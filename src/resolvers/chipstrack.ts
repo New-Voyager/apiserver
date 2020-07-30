@@ -8,13 +8,13 @@ export async function getClubBalanceAmount(playerId: string, data: any) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  if (data.clubId === '') {
-    errors.push('ClubId is a mandatory field');
+  if (data.clubCode === '') {
+    errors.push('ClubCode is a mandatory field');
   }
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
   }
-  return await ChipsTrackRepository.getClubBalance(data.clubId);
+  return await ChipsTrackRepository.getClubBalance(data.clubCode);
 }
 
 export async function getPlayerBalanceAmount(playerId: string, data: any) {
@@ -22,8 +22,8 @@ export async function getPlayerBalanceAmount(playerId: string, data: any) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  if (data.clubId === '') {
-    errors.push('ClubId is mandatory field');
+  if (data.clubCode === '') {
+    errors.push('ClubCode is mandatory field');
   }
   if (data.playerId === '') {
     errors.push('PlayerId is mandatory field');
@@ -33,7 +33,7 @@ export async function getPlayerBalanceAmount(playerId: string, data: any) {
   }
   return await ChipsTrackRepository.getPlayerBalance(
     data.playerId,
-    data.clubId
+    data.clubCode
   );
 }
 
@@ -42,22 +42,22 @@ export async function getPlayerTrack(playerId: string, data: any) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  if (data.clubId === '') {
-    errors.push('ClubId is mandatory field');
+  if (data.clubCode === '') {
+    errors.push('ClubCode is mandatory field');
   }
   if (data.playerId === '') {
     errors.push('PlayerId is mandatory field');
   }
-  if (data.gameId === '') {
-    errors.push('gameId is mandatory field');
+  if (data.gameCode === '') {
+    errors.push('gameCode is mandatory field');
   }
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
   }
   return await ChipsTrackRepository.getPlayerGametrack(
     data.playerId,
-    data.clubId,
-    data.gameId
+    data.clubCode,
+    data.gameCode
   );
 }
 
@@ -66,16 +66,19 @@ export async function getClubTrack(playerId: string, data: any) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  if (data.clubId === '') {
-    errors.push('ClubId is mandatory field');
+  if (data.clubCode === '') {
+    errors.push('ClubCode is mandatory field');
   }
-  if (data.gameId === '') {
-    errors.push('gameId is mandatory field');
+  if (data.gameCode === '') {
+    errors.push('gameCode is mandatory field');
   }
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
   }
-  return await ChipsTrackRepository.getClubGametrack(data.clubId, data.gameId);
+  return await ChipsTrackRepository.getClubGametrack(
+    data.clubCode,
+    data.gameCode
+  );
 }
 
 const resolvers: any = {
