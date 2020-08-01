@@ -38,7 +38,10 @@ describe('Club APIs', () => {
   });
 
   test('get club message', async () => {
-    const [clubCode, playerId] = await clubutils.createClub('brady3', 'yatzee3');
+    const [clubCode, playerId] = await clubutils.createClub(
+      'brady3',
+      'yatzee3'
+    );
     const messageCount = 50;
     const messageInput = {
       audioLink: 'test.com',

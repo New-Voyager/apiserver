@@ -454,8 +454,7 @@ class GameScript {
         messageInput
       );
     } catch (err) {
-      this.log(JSON.stringify(err))
-      this.log(err.toString());
+      this.log(JSON.stringify(err));
       throw err;
     }
   }
@@ -482,7 +481,7 @@ class GameScript {
     this.log(`save hand: ${JSON.stringify(handData)}`);
     const saveHandData = handData;
     saveHandData.clubId = this.clubCreated.clubId;
-    saveHandData.gameNum = this.gameCreated.gameId
+    saveHandData.gameNum = this.gameCreated.gameId;
     for (var i = 0; i < handData.handResult.playersInSeats.length; i++) {
       if (handData.handResult.playersInSeats[i] !== 0) {
         saveHandData.handResult.playersInSeats[i] = this.registeredPlayers[

@@ -97,10 +97,21 @@ describe('Game APIs', () => {
   });
 
   test('get club games', async () => {
-    const [clubCode, playerId] = await clubutils.createClub('brady1', 'yatzee2');
+    const [clubCode, playerId] = await clubutils.createClub(
+      'brady1',
+      'yatzee2'
+    );
     await createGameServer('1.2.0.2');
-    const game1 = await gameutils.startGame(playerId, clubCode, holdemGameInput);
-    const game2 = await gameutils.startGame(playerId, clubCode, holdemGameInput);
+    const game1 = await gameutils.startGame(
+      playerId,
+      clubCode,
+      holdemGameInput
+    );
+    const game2 = await gameutils.startGame(
+      playerId,
+      clubCode,
+      holdemGameInput
+    );
     // get number of club games
     const clubGames = await gameutils.getClubGames(playerId, clubCode);
     expect(clubGames).toHaveLength(2);
@@ -115,7 +126,10 @@ describe('Game APIs', () => {
   });
 
   test('get club games pagination', async () => {
-    const [clubCode, playerId] = await clubutils.createClub('brady3', 'yatzee3');
+    const [clubCode, playerId] = await clubutils.createClub(
+      'brady3',
+      'yatzee3'
+    );
     const numGames = 100;
     await createGameServer('1.2.0.3');
     await createGameServer('1.2.0.4');

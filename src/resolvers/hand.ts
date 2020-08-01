@@ -76,15 +76,12 @@ async function generateHandWinnersData(hand: HandWinners) {
 }
 
 export async function getLastHandHistory(playerId: string, args: any) {
-  logger.debug(args.clubCode)
   if (!playerId) {
     throw new Error('Unauthorized');
   }
   const clubMembers1 = await ClubRepository.getMembers(args.clubCode);
-  logger.debug(clubMembers1)
   const clubMember = await ClubRepository.isClubMember(args.clubCode, playerId);
-  logger.debug(clubMember)
-
+  
   const player = await PlayerRepository.getPlayerById(playerId);
   if (!player) {
     throw new Error(`Player ${playerId} is not found`);
@@ -316,7 +313,6 @@ export async function saveStarredHand(playerId: string, args: any) {
   if (!club) {
     throw new Error(`Club ${args.clubCode} is not found`);
   }
-  logger.debug(club.id) ;
   const game = await GameRepository.getGameById(args.gameCode);
   if (!game) {
     throw new Error(`Game ${args.gameCode} is not found`);

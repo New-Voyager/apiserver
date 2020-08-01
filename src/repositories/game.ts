@@ -70,7 +70,7 @@ class GameRepositoryImpl {
     }
     let savedGame;
     // use current time as the game id for now
-    game.gameCode = await getGameCodeForClub(clubCode,club.id);
+    game.gameCode = await getGameCodeForClub(clubCode, club.id);
     game.privateGame = true;
 
     game.startedAt = new Date();
@@ -117,9 +117,15 @@ class GameRepositoryImpl {
     return game;
   }
 
-  public async getGameCount(clubId: number): Promise<number> {
+  public async getGameCountByClubId(clubId: number): Promise<number> {
     const repository = getRepository(PokerGame);
     const count = await repository.count({where: {club: {id: clubId}}});
+    return count;
+  }
+
+  public async getGameCountByPlayerId(playerId: number): Promise<number> {
+    const repository = getRepository(PokerGame);
+    const count = await repository.count({where: {host: {id: playerId}}});
     return count;
   }
 }

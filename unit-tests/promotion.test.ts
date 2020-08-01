@@ -239,7 +239,7 @@ describe('Promotion APIs', () => {
           clubCode: club,
           promotionId: promotion.id,
           gameCode: game.gameCode,
-          startAt: 1594919334244, 
+          startAt: 1594919334244,
           endAt: 1594919334244,
         },
         player
