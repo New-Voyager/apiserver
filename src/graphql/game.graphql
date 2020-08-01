@@ -82,14 +82,12 @@ input GameUpdateInput {
 
 type Mutation {
   # Not implemented
-  startGameFromTemplate(
-  clubCode  : String!, templateId: Int!): GameInfo!
+  startGameFromTemplate(clubCode: String!, templateId: Int!): GameInfo!
   updateGame(
     clubCode: String!
     gameCode: String!
     update: GameUpdateInput
   ): GameInfo!
-  startFriendsGame(game: GameCreateInput!): GameInfo!
   saveGameTemplate(
     clubCode: String!
     templateName: String!
@@ -97,6 +95,7 @@ type Mutation {
   ): Int!
   # implemented
   startGame(clubCode: String!, game: GameCreateInput!): GameInfo!
+  startFriendsGame(game: GameCreateInput!): GameInfo!
 }
 
 type gameId{

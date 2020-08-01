@@ -81,7 +81,7 @@ export async function getLastHandHistory(playerId: string, args: any) {
   }
   const clubMembers1 = await ClubRepository.getMembers(args.clubCode);
   const clubMember = await ClubRepository.isClubMember(args.clubCode, playerId);
-  
+
   const player = await PlayerRepository.getPlayerById(playerId);
   if (!player) {
     throw new Error(`Player ${playerId} is not found`);

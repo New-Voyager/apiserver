@@ -68,7 +68,42 @@ describe('Game APIs', () => {
       },
       mutation: gameutils.startGameQuery,
     });
-    logger.debug(resp, clubCode);
+    expect(resp.errors).toBeUndefined();
+    expect(resp.data).not.toBeNull();
+    const startedGame = resp.data.startedGame;
+    expect(startedGame).not.toBeNull();
+    expect(startedGame.gameType).toEqual('HOLDEM');
+    expect(startedGame.title).toEqual('Friday game');
+    expect(startedGame.smallBlind).toEqual(1.0);
+    expect(startedGame.bigBlind).toEqual(2.0);
+    expect(startedGame.straddleBet).toEqual(4.0);
+    expect(startedGame.utgStraddleAllowed).toEqual(true);
+    expect(startedGame.buttonStraddleAllowed).toEqual(false);
+    expect(startedGame.minPlayers).toEqual(3);
+    expect(startedGame.maxPlayers).toEqual(9);
+    expect(startedGame.gameLength).toEqual(60);
+    expect(startedGame.buyInApproval).toEqual(true);
+    expect(startedGame.breakLength).toEqual(20);
+    expect(startedGame.autoKickAfterBreak).toEqual(true);
+    expect(startedGame.waitForBigBlind).toEqual(true);
+    expect(startedGame.sitInApproval).toEqual(true);
+    expect(startedGame.rakePercentage).toEqual(5.0);
+    expect(startedGame.rakeCap).toEqual(5.0);
+    expect(startedGame.buyInMin).toEqual(100);
+    expect(startedGame.buyInMax).toEqual(600);
+    expect(startedGame.actionTime).toEqual(30);
+    expect(startedGame.muckLosingHand).toEqual(true);
+  });
+
+  test('start a new game by player', async () => {
+    const playerUuid = await clubutils.createPlayer('player1', 'abc123');
+    await createGameServer('1.2.0.6');
+    const resp = await getClient(playerUuid).mutate({
+      variables: {
+        gameInput: holdemGameInput,
+      },
+      mutation: gameutils.startFriendsGameQuery,
+    });
     expect(resp.errors).toBeUndefined();
     expect(resp.data).not.toBeNull();
     const startedGame = resp.data.startedGame;

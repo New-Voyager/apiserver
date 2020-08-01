@@ -4,7 +4,7 @@ import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/resolvers/reset';
 import {createPlayer} from '@src/resolvers/player';
 import {createClub} from '@src/resolvers/club';
-import {startGame, getGameById} from '@src/resolvers/game';
+import {startGame, getGameById, startGameByPlayer} from '@src/resolvers/game';
 
 const logger = getLogger('game unit-test');
 const holdemGameInput = {
@@ -72,6 +72,50 @@ describe('Game APIs', () => {
         ownerUuid: player,
       });
       const startedGame = await startGame(player, club, holdemGameInput);
+      expect(startedGame).not.toBeNull();
+      expect(startedGame.gameType).toEqual('HOLDEM');
+      expect(startedGame.title).toEqual('Friday game');
+      expect(startedGame.smallBlind).toEqual(1.0);
+      expect(startedGame.bigBlind).toEqual(2.0);
+      expect(startedGame.straddleBet).toEqual(4.0);
+      expect(startedGame.utgStraddleAllowed).toEqual(true);
+      expect(startedGame.buttonStraddleAllowed).toEqual(false);
+      expect(startedGame.minPlayers).toEqual(3);
+      expect(startedGame.maxPlayers).toEqual(9);
+      expect(startedGame.gameLength).toEqual(60);
+      expect(startedGame.buyInApproval).toEqual(true);
+      expect(startedGame.breakLength).toEqual(20);
+      expect(startedGame.autoKickAfterBreak).toEqual(true);
+      expect(startedGame.waitForBigBlind).toEqual(true);
+      expect(startedGame.sitInApproval).toEqual(true);
+      expect(startedGame.rakePercentage).toEqual(5.0);
+      expect(startedGame.rakeCap).toEqual(5.0);
+      expect(startedGame.buyInMin).toEqual(100);
+      expect(startedGame.buyInMax).toEqual(600);
+      expect(startedGame.actionTime).toEqual(30);
+      expect(startedGame.muckLosingHand).toEqual(true);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
+
+  test('Start a new game by player', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.1.1',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    try {
+      await createGameServer(gameServer1);
+      const player = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+      const startedGame = await startGameByPlayer(player, holdemGameInput);
+      // console.log(startedGame);
       expect(startedGame).not.toBeNull();
       expect(startedGame.gameType).toEqual('HOLDEM');
       expect(startedGame.title).toEqual('Friday game');

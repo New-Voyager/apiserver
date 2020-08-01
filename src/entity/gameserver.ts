@@ -75,6 +75,6 @@ export class TrackGameServer {
   @Column({name: 'game_code'})
   public gameCode!: string;
 
-  @Column({name: 'club_id'})
+  @Column({name: 'club_code', nullable: true})
   public clubCode!: string;
 }
