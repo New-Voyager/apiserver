@@ -281,10 +281,64 @@ describe('Player Chips tracking APIs', () => {
       const resp = await endGameData({club_id: clubID.id, game_id: gameID.id});
       logger.debug(resp);
       expect(resp).not.toBeNull();
+      expect(resp).toBe(true);
     } catch (e) {
       logger.error(JSON.stringify(e));
       expect(true).toBeFalsy();
     }
+  });
+
+  test('Track Club and Players game Balance', async () => {
+    const ownerId = await createPlayer({
+      player: {name: 'player1', deviceId: 'test', page: {count: 20}},
+    });
+    const clubInput = {
+      name: 'bbc',
+      description: 'poker players gather',
+      ownerUuid: ownerId,
+    };
+    const clubCode = await createClub(ownerId, clubInput);
+    const gameServer = {
+      ipAddress: '10.1.1.1',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    await createGameServer(gameServer);
+    const game = await startGame(ownerId, clubCode, holdemGameInput);
+
+    const playerID = await getPlayerById(ownerId);
+    const clubID = await getClubById(ownerId, clubCode);
+    const gameID = await getGameById(ownerId, game.gameCode);
+    const input = {
+      clubId: clubID.id,
+      playerId: playerID.id,
+      gameId: gameID.id,
+      buyIn: 100.0,
+      status: 'PLAYING',
+      seatNo: 5,
+    };
+    try {
+      const resp = await saveChipsData(input);
+      expect(resp).not.toBeNull();
+    } catch (e) {
+      logger.error(JSON.stringify(e));
+      expect(true).toBeFalsy();
+    }
+
+    const playerTrack = await getPlayerTrack(ownerId, {
+      clubCode: clubCode,
+      playerId: ownerId,
+      gameCode: game.gameCode,
+    });
+    const clubTrack = await getClubTrack(ownerId, {
+      clubCode: clubCode,
+      gameCode: game.gameCode,
+    });
+    expect(playerTrack.stack).not.toBeUndefined();
+    expect(playerTrack.stack).toBe(100);
+    expect(clubTrack.rake).not.toBeNull();
+    expect(clubTrack.rake).not.toBeUndefined();
+    expect(clubTrack.rake).toBe(0);
   });
 
   test('Club and Player Balance', async () => {
@@ -332,26 +386,84 @@ describe('Player Chips tracking APIs', () => {
       clubCode: clubCode,
       playerId: ownerId,
     });
-    const playerTrack = await getPlayerTrack(ownerId, {
-      clubCode: clubCode,
-      playerId: ownerId,
-      gameCode: game.gameCode,
-    });
-    const clubTrack = await getClubTrack(ownerId, {
-      clubCode: clubCode,
-      gameCode: game.gameCode,
-    });
     expect(clubBalance.balance).not.toBeNull();
     expect(clubBalance.balance).not.toBeUndefined();
     expect(clubBalance.balance).toBe(0);
     expect(playerBalance.balance).not.toBeNull();
     expect(playerBalance.balance).not.toBeUndefined();
     expect(playerBalance.balance).toBe(0);
-    expect(playerTrack.stack).not.toBeNull();
+  });
+
+  test('Track Club and Players game Balance without club', async () => {
+    const ownerId = await createPlayer({
+      player: {name: 'player1', deviceId: 'test', page: {count: 20}},
+    });
+    const gameServer = {
+      ipAddress: '10.1.1.1',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    await createGameServer(gameServer);
+    const game = await startGameByPlayer(ownerId, holdemGameInput);
+
+    const playerID = await getPlayerById(ownerId);
+    const gameID = await getGameById(ownerId, game.gameCode);
+    const input = {
+      clubId: 0,
+      playerId: playerID.id,
+      gameId: gameID.id,
+      buyIn: 100.0,
+      status: 'PLAYING',
+      seatNo: 5,
+    };
+    await saveChipsData(input);
+
+    const playerTrack = await getPlayerTrack(ownerId, {
+      clubCode: '000000',
+      playerId: ownerId,
+      gameCode: game.gameCode,
+    });
+    const clubTrack = await getClubTrack(ownerId, {
+      clubCode: '000000',
+      gameCode: game.gameCode,
+    });
     expect(playerTrack.stack).not.toBeUndefined();
     expect(playerTrack.stack).toBe(100);
     expect(clubTrack.rake).not.toBeNull();
     expect(clubTrack.rake).not.toBeUndefined();
     expect(clubTrack.rake).toBe(0);
+  });
+
+  test('End game without club', async () => {
+    const ownerId = await createPlayer({
+      player: {name: 'player1', deviceId: 'test', page: {count: 20}},
+    });
+    const gameServer = {
+      ipAddress: '10.1.1.1',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    await createGameServer(gameServer);
+    const game = await startGameByPlayer(ownerId, holdemGameInput);
+
+    const playerID = await getPlayerById(ownerId);
+    const gameID = await getGameById(ownerId, game.gameCode);
+    const input = {
+      clubId: 0,
+      playerId: playerID.id,
+      gameId: gameID.id,
+      buyIn: 100.0,
+      status: 'PLAYING',
+      seatNo: 5,
+    };
+    await saveChipsData(input);
+    try {
+      const resp = await endGameData({club_id: 0, game_id: gameID.id});
+      logger.debug(resp);
+      expect(resp).toBe(true);
+    } catch (e) {
+      logger.error(JSON.stringify(e));
+      expect(true).toBeFalsy();
+    }
   });
 });

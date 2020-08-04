@@ -73,7 +73,7 @@ class ChipsTrackAPIs {
     const registerPayload = req.body;
 
     const errors = new Array<string>();
-    if (!registerPayload.club_id) {
+    if (!registerPayload.club_id && registerPayload.club_id !== 0) {
       logger.error('club_id is missing');
     }
     if (!registerPayload.game_id) {
@@ -88,7 +88,7 @@ class ChipsTrackAPIs {
     try {
       const res = await endGameData(req.body);
       logger.debug(JSON.stringify(res));
-      if (res[2].clubPlayerBalance) {
+      if (res === true) {
         resp.status(200).send(JSON.stringify({status: 'OK', data: res}));
       } else {
         resp.status(500).send(JSON.stringify(res));
