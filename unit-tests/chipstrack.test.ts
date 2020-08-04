@@ -1,6 +1,6 @@
 import {initializeSqlLite} from './utils';
 import {createGameServer} from '../src/internal/gameserver';
-import {startGame, getGameById} from '../src/resolvers/game';
+import {startGame, getGameById, startGameByPlayer} from '../src/resolvers/game';
 import {
   getClubBalanceAmount,
   getClubTrack,
@@ -95,6 +95,37 @@ describe('Player Chips tracking APIs', () => {
     }
   });
 
+  test('Player sits in without club', async () => {
+    const ownerId = await createPlayer({
+      player: {name: 'player1', deviceId: 'test', page: {count: 20}},
+    });
+    const gameServer = {
+      ipAddress: '10.1.1.1',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    await createGameServer(gameServer);
+    const game = await startGameByPlayer(ownerId, holdemGameInput);
+
+    const playerID = await getPlayerById(ownerId);
+    const gameID = await getGameById(ownerId, game.gameCode);
+    const input = {
+      clubId: 0,
+      playerId: playerID.id,
+      gameId: gameID.id,
+      buyIn: 100.0,
+      status: 'PLAYING',
+      seatNo: 5,
+    };
+    try {
+      const resp = await saveChipsData(input);
+      expect(resp).not.toBeNull();
+    } catch (e) {
+      logger.error(JSON.stringify(e));
+      expect(true).toBeFalsy();
+    }
+  });
+
   test('Buy chips', async () => {
     const ownerId = await createPlayer({
       player: {name: 'player1', deviceId: 'test', page: {count: 20}},
@@ -132,6 +163,60 @@ describe('Player Chips tracking APIs', () => {
     }
     const input = {
       clubId: clubID.id,
+      playerId: playerID.id,
+      gameId: gameID.id,
+      buyIn: 100.0,
+      status: 'PLAYING',
+      seatNo: 5,
+    };
+    //Creating a member
+    try {
+      const resp = await saveChipsData(input);
+      expect(resp).not.toBeNull();
+    } catch (e) {
+      logger.error(JSON.stringify(e));
+      expect(true).toBeFalsy();
+    }
+    //Buy chips
+    try {
+      const resp = await buyChipsData(buyChips);
+      expect(resp).not.toBeNull();
+    } catch (e) {
+      logger.error(JSON.stringify(e));
+      expect(e.message).toBe('No data found');
+    }
+  });
+
+  test('Buy chips without club', async () => {
+    const ownerId = await createPlayer({
+      player: {name: 'player1', deviceId: 'test', page: {count: 20}},
+    });
+    const gameServer = {
+      ipAddress: '10.1.1.1',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    await createGameServer(gameServer);
+    const game = await startGameByPlayer(ownerId, holdemGameInput);
+
+    const playerID = await getPlayerById(ownerId);
+    const gameID = await getGameById(ownerId, game.gameCode);
+    const buyChips = {
+      clubId: 0,
+      playerId: playerID.id,
+      gameId: gameID.id,
+      buyChips: 100.0,
+    };
+    //Try to buy chips without being a member
+    try {
+      const resp = await buyChipsData(buyChips);
+      expect(resp).not.toBeNull();
+    } catch (e) {
+      logger.error(JSON.stringify(e));
+      expect(e.message).toBe('No data found');
+    }
+    const input = {
+      clubId: 0,
       playerId: playerID.id,
       gameId: gameID.id,
       buyIn: 100.0,

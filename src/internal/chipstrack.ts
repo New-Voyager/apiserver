@@ -26,7 +26,7 @@ class ChipsTrackAPIs {
     const registerPayload = req.body;
 
     const errors = new Array<string>();
-    if (!registerPayload.clubId) {
+    if (!registerPayload.clubId && registerPayload.clubId !== 0) {
       errors.push('ClubId is missing');
     }
     if (!registerPayload.playerId) {
@@ -103,7 +103,7 @@ class ChipsTrackAPIs {
     const registerPayload = req.body;
 
     const errors = new Array<string>();
-    if (!registerPayload.clubId) {
+    if (!registerPayload.clubId && registerPayload.clubId !== 0) {
       errors.push('ClubId is missing');
     }
     if (!registerPayload.playerId) {

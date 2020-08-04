@@ -32,7 +32,7 @@ export class PlayerGameTracker {
   @JoinColumn({name: 'player_id'})
   public player!: Player;
 
-  @ManyToOne(() => Club, club => club.id, {primary: true})
+  @ManyToOne(() => Club, club => club.id)
   @JoinColumn({name: 'club_id'})
   public club!: Club;
 
