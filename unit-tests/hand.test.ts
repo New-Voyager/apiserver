@@ -4,7 +4,7 @@ import {resetDB} from '@src/resolvers/reset';
 import {createPlayer, getPlayerById} from '@src/resolvers/player';
 import {createClub, getClubById} from '@src/resolvers/club';
 import {createGameServer} from '@src/internal/gameserver';
-import {startGame, getGameById} from '@src/resolvers/game';
+import {startGame, getGameById, startGameByPlayer} from '@src/resolvers/game';
 import {saveChipsData} from '@src/internal/chipstrack';
 import {saveHandData} from '@src/internal/hand';
 import {
@@ -328,6 +328,51 @@ describe('Hand server APIs', () => {
       flopHand.handResult.balanceAfterHand[0].playerId = playerId;
       flopHand.handResult.playersInSeats = [playerId];
       const resp = await saveHandData(flopHand);
+      expect(resp).toBe(true);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
+
+  test('Save hand data HiLo without club', async () => {
+    try {
+      const ownerId = await createPlayer({
+        player: {name: 'player1', deviceId: 'test', page: {count: 20}},
+      });
+      const gameServer = {
+        ipAddress: '10.1.1.1',
+        currentMemory: 100,
+        status: 'ACTIVE',
+      };
+      await createGameServer(gameServer);
+      const game = await startGameByPlayer(ownerId, holdemGameInput);
+
+      const playerID = await getPlayerById(ownerId);
+      const gameID = await getGameById(ownerId, game.gameCode);
+      const input = {
+        clubId: 0,
+        playerId: playerID.id,
+        gameId: gameID.id,
+        buyIn: 100.0,
+        status: 'PLAYING',
+        seatNo: 5,
+      };
+      try {
+        const resp = await saveChipsData(input);
+        expect(resp).not.toBeNull();
+      } catch (e) {
+        logger.error(JSON.stringify(e));
+        expect(true).toBeFalsy();
+      }
+      allInHand.handNum = 1;
+      allInHand.gameNum = gameID.id;
+      allInHand.clubId = 0;
+      allInHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
+      allInHand.handResult.potWinners[0].loWinners[0].seatNo = 1;
+      allInHand.handResult.balanceAfterHand[0].playerId = playerID.id;
+      allInHand.handResult.playersInSeats = [playerID.id];
+      const resp = await saveHandData(allInHand);
       expect(resp).toBe(true);
     } catch (err) {
       logger.error(JSON.stringify(err));

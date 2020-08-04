@@ -32,7 +32,7 @@ class ChipsTrackRepositoryImpl {
       const player = await playerRepository.findOne({
         where: {id: playerChipsData.playerId},
       });
-      if(playerChipsData.clubId === 0){
+      if (playerChipsData.clubId === 0) {
         club = new Club();
         club.id = 0;
       }
@@ -46,7 +46,7 @@ class ChipsTrackRepositoryImpl {
         throw new Error(`Player ${playerChipsData.playerId} is not found`);
       } else {
         const playerSetIn = new PlayerGameTracker();
-        if(playerChipsData.clubId !== 0){
+        if (playerChipsData.clubId !== 0) {
           playerSetIn.club = club;
         }
         playerSetIn.game = game.game;
@@ -83,7 +83,7 @@ class ChipsTrackRepositoryImpl {
       const player = await playerRepository.findOne({
         where: {id: playerChipsData.playerId},
       });
-      if(playerChipsData.clubId === 0){
+      if (playerChipsData.clubId === 0) {
         club = new Club();
         club.id = 0;
       }
@@ -101,7 +101,7 @@ class ChipsTrackRepositoryImpl {
       } else {
         const playerGameTrackrepository = getRepository(PlayerGameTracker);
         let playerGameTrack;
-        if(playerChipsData.clubId !== 0){
+        if (playerChipsData.clubId !== 0) {
           playerGameTrack = await playerGameTrackrepository.findOne({
             relations: ['club', 'game', 'player'],
             where: {
@@ -110,7 +110,7 @@ class ChipsTrackRepositoryImpl {
               club: playerChipsData.clubId,
             },
           });
-        }else {
+        } else {
           playerGameTrack = await playerGameTrackrepository.findOne({
             relations: ['game', 'player'],
             where: {

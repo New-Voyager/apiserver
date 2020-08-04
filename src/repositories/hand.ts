@@ -38,9 +38,15 @@ class HandRepositoryImpl {
       /**
        * Validating data
        */
-      const club = await clubRepository.findOne({
+      let club = await clubRepository.findOne({
         where: {id: handData.clubId},
       });
+
+      if (handData.clubId === 0) {
+        club = new Club();
+        club.id = 0;
+      }
+
       if (!club) {
         logger.error(`Club ID ${handData.clubId} not found`);
         return new Error(`Club ID ${handData.clubId} not found`);
@@ -53,18 +59,28 @@ class HandRepositoryImpl {
         logger.error(`Game ID ${handData.gameNum} not found`);
         return new Error(`Game ID ${handData.gameNum} not found`);
       }
-
-      const clubRake = await clubGameRakeRepository.findOne({
-        relations: ['club', 'game'],
-        where: {club: club, game: game},
-      });
+      let clubRake;
+      if (handData.clubId !== 0) {
+        clubRake = await clubGameRakeRepository.findOne({
+          relations: ['club', 'game'],
+          where: {club: club, game: game},
+        });
+      } else {
+        clubRake = await clubGameRakeRepository.findOne({
+          relations: ['game'],
+          where: {game: game},
+        });
+      }
       if (!clubRake) {
         logger.error(`Club ID ${handData.clubId} not found in rake table`);
         return new Error(`Club ID ${handData.clubId} not found in rake table`);
       }
 
       let promotion, gamePromotion, promoPlayer;
-      if (handData.handResult.qualifyingPromotionWinner) {
+      if (
+        handData.handResult.qualifyingPromotionWinner &&
+        handData.clubId !== 0
+      ) {
         promotion = await promotionRepository.findOne({
           where: {id: handData.handResult.qualifyingPromotionWinner.promoId},
         });
@@ -170,14 +186,25 @@ class HandRepositoryImpl {
        */
       const allPlayerChips = new Array<PlayerGameTracker>();
       for await (const playerData of handData.handResult.balanceAfterHand) {
-        const playerChips = await playersChipsRepository.findOne({
-          relations: ['club', 'game', 'player'],
-          where: {
-            club: club.id,
-            game: game.id,
-            player: playerData.playerId,
-          },
-        });
+        let playerChips;
+        if (handData.clubId !== 0) {
+          playerChips = await playersChipsRepository.findOne({
+            relations: ['club', 'game', 'player'],
+            where: {
+              club: club.id,
+              game: game.id,
+              player: playerData.playerId,
+            },
+          });
+        } else {
+          playerChips = await playersChipsRepository.findOne({
+            relations: ['game', 'player'],
+            where: {
+              game: game.id,
+              player: playerData.playerId,
+            },
+          });
+        }
         if (!playerChips) {
           logger.error(
             `Player ID ${playerData.player} not found in chips table`
@@ -206,7 +233,10 @@ class HandRepositoryImpl {
           clubRake.rake += Number.parseFloat(handData.handResult.tips);
           await clubGameRakeRepository.save(clubRake);
 
-          if (handData.handResult.qualifyingPromotionWinner) {
+          if (
+            handData.handResult.qualifyingPromotionWinner &&
+            handData.clubId !== 0
+          ) {
             const promotionWinners = await promotionWinnersRepository.find({
               where: {club: club, game: game, promoId: promotion},
             });
@@ -231,7 +261,9 @@ class HandRepositoryImpl {
             }
             if (flag) {
               const newWinner = new PromotionWinners();
-              newWinner.club = club;
+              if (club) {
+                newWinner.club = club;
+              }
               newWinner.amountWon = 0;
               newWinner.game = game;
               newWinner.handNum = handData.handNum;

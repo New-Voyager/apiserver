@@ -107,7 +107,7 @@ describe('Player Chips tracking APIs', () => {
       expect(true).toBeFalsy();
     }
     const playerUuid = await clubutils.createPlayer('player1', 'abc123');
-    
+
     let resp;
 
     const game = await gameutils.startFriendsGame(playerUuid, holdemGameInput);
@@ -127,7 +127,7 @@ describe('Player Chips tracking APIs', () => {
     try {
       resp = await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
     } catch (err) {
-      console.error(JSON.stringify(err));
+      console.log(JSON.stringify(err));
     }
     expect(resp.status).toBe(200);
     const id = resp.data.id;
@@ -211,7 +211,7 @@ describe('Player Chips tracking APIs', () => {
       expect(true).toBeFalsy();
     }
     const playerUuid = await clubutils.createPlayer('player1', 'abc123');
-    
+
     let resp, response;
 
     const game = await gameutils.startFriendsGame(playerUuid, holdemGameInput);

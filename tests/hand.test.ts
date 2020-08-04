@@ -288,6 +288,49 @@ describe('Hand Server', () => {
     expect(resp1.data.status).toBe('OK');
   });
 
+  test('Save hand data without club', async () => {
+    await createGameServer('1.2.0.1');
+    const playerUuid = await clubutils.createPlayer('player1', 'abc123');
+    const game = await gameutils.startFriendsGame(playerUuid, holdemGameInput);
+    const playerID = await handutils.getPlayerById(playerUuid);
+    const gameID = await gameutils.getGameById(game.gameCode);
+    const messageInput = {
+      clubId: 0,
+      playerId: playerID,
+      gameId: gameID,
+      buyIn: 100.0,
+      status: 'PLAYING',
+      seatNo: 5,
+    };
+
+    try {
+      await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
+    } catch (err) {
+      console.log(JSON.stringify(err));
+    }
+
+    allInHand.handNum = 1;
+    allInHand.gameNum = gameID;
+    allInHand.clubId = 0;
+    allInHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
+    allInHand.handResult.potWinners[0].loWinners[0].seatNo = 1;
+    allInHand.handResult.balanceAfterHand[0].playerId = playerID;
+    allInHand.handResult.playersInSeats = [playerID];
+    const resp = await axios.post(`${SERVER_API}/save-hand`, allInHand);
+    expect(resp.status).toBe(200);
+    expect(resp.data.status).toBe('OK');
+
+    flopHand.handNum = 2;
+    flopHand.gameNum = gameID;
+    flopHand.clubId = 0;
+    flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
+    flopHand.handResult.balanceAfterHand[0].playerId = playerID;
+    flopHand.handResult.playersInSeats = [playerID];
+    const resp1 = await axios.post(`${SERVER_API}/save-hand`, flopHand);
+    expect(resp1.status).toBe(200);
+    expect(resp1.data.status).toBe('OK');
+  });
+
   test('Get specific hand history', async () => {
     const [
       clubId,
