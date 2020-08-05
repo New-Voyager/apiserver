@@ -231,28 +231,27 @@ async function createGameServer(ipAddress: string) {
   }
 }
 
-async function createClubAndStartGame(): Promise<
+async function createPlayerStartFriendsGame(): Promise<
   [number, number, number, string, string, string]
 > {
-  const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
-  const player = await handutils.getPlayerById(playerId);
   await createGameServer('1.2.0.1');
-  const game1 = await gameutils.startGame(playerId, clubCode, holdemGameInput);
-  const clubID = await clubutils.getClubById(clubCode);
-  const gameID = await gameutils.getGameById(game1.gameCode);
+  const playerUuid = await clubutils.createPlayer('player1', 'abc123');
+  const game = await gameutils.startFriendsGame(playerUuid, holdemGameInput);
+  const playerID = await handutils.getPlayerById(playerUuid);
+  const gameID = await gameutils.getGameById(game.gameCode);
   const messageInput = {
-    clubId: clubID,
-    playerId: player,
+    clubId: 0,
+    playerId: playerID,
     gameId: gameID,
     buyIn: 100.0,
     status: 'PLAYING',
-    seatNo: 1,
+    seatNo: 5,
   };
   await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
-  return [clubID, player, gameID, playerId, clubCode, game1.gameCode];
+  return [0, playerID, gameID, playerUuid, '000000', game.gameCode];
 }
 
-describe('Hand Server', () => {
+describe('Hand Server without club', () => {
   beforeEach(async done => {
     await resetDatabase();
     done();
@@ -262,32 +261,39 @@ describe('Hand Server', () => {
     done();
   });
 
-  test('Save hand data', async () => {
-    const [clubId, playerId, gameId] = await createClubAndStartGame();
+  test('Save hand data without club', async () => {
+    const [
+      clubId,
+      playerID,
+      gameID,
+      playerUuid,
+      clubCode,
+      gameCode,
+    ] = await createPlayerStartFriendsGame();
 
     allInHand.handNum = 1;
-    allInHand.gameNum = gameId;
-    allInHand.clubId = clubId;
+    allInHand.gameNum = gameID;
+    allInHand.clubId = 0;
     allInHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
     allInHand.handResult.potWinners[0].loWinners[0].seatNo = 1;
-    allInHand.handResult.balanceAfterHand[0].playerId = playerId;
-    allInHand.handResult.playersInSeats = [playerId];
+    allInHand.handResult.balanceAfterHand[0].playerId = playerID;
+    allInHand.handResult.playersInSeats = [playerID];
     const resp = await axios.post(`${SERVER_API}/save-hand`, allInHand);
     expect(resp.status).toBe(200);
     expect(resp.data.status).toBe('OK');
 
     flopHand.handNum = 2;
-    flopHand.gameNum = gameId;
-    flopHand.clubId = clubId;
+    flopHand.gameNum = gameID;
+    flopHand.clubId = 0;
     flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
-    flopHand.handResult.balanceAfterHand[0].playerId = playerId;
-    flopHand.handResult.playersInSeats = [playerId];
+    flopHand.handResult.balanceAfterHand[0].playerId = playerID;
+    flopHand.handResult.playersInSeats = [playerID];
     const resp1 = await axios.post(`${SERVER_API}/save-hand`, flopHand);
     expect(resp1.status).toBe(200);
     expect(resp1.data.status).toBe('OK');
   });
 
-  test('Get specific hand history', async () => {
+  test('Get specific hand history without club', async () => {
     const [
       clubId,
       playerId,
@@ -295,7 +301,7 @@ describe('Hand Server', () => {
       playerUuid,
       clubCode,
       gameCode,
-    ] = await createClubAndStartGame();
+    ] = await createPlayerStartFriendsGame();
 
     allInHand.handNum = 1;
     allInHand.gameNum = gameId;
@@ -316,7 +322,7 @@ describe('Hand Server', () => {
     expect(resp.wonAt).toBe('SHOW_DOWN');
   });
 
-  test('Get latest hand history', async () => {
+  test('Get latest hand history without club', async () => {
     const [
       clubId,
       playerId,
@@ -324,7 +330,7 @@ describe('Hand Server', () => {
       playerUuid,
       clubCode,
       gameCode,
-    ] = await createClubAndStartGame();
+    ] = await createPlayerStartFriendsGame();
 
     allInHand.gameNum = gameId;
     allInHand.clubId = clubId;
@@ -347,7 +353,7 @@ describe('Hand Server', () => {
     expect(resp1.handNum).toBe(4);
   });
 
-  test('Get all hand history', async () => {
+  test('Get all hand history without club', async () => {
     const [
       clubId,
       playerId,
@@ -355,7 +361,7 @@ describe('Hand Server', () => {
       playerUuid,
       clubCode,
       gameCode,
-    ] = await createClubAndStartGame();
+    ] = await createPlayerStartFriendsGame();
 
     allInHand.gameNum = gameId;
     allInHand.clubId = clubId;
@@ -375,7 +381,7 @@ describe('Hand Server', () => {
     expect(resp1).toHaveLength(4);
   });
 
-  test('Get all hand history pagination', async () => {
+  test('Get all hand history pagination without club', async () => {
     const [
       clubId,
       playerId,
@@ -383,7 +389,7 @@ describe('Hand Server', () => {
       playerUuid,
       clubCode,
       gameCode,
-    ] = await createClubAndStartGame();
+    ] = await createPlayerStartFriendsGame();
 
     allInHand.gameNum = gameId;
     allInHand.clubId = clubId;
@@ -415,7 +421,7 @@ describe('Hand Server', () => {
     expect(resp2).toHaveLength(5);
   });
 
-  test('Get my winning hands', async () => {
+  test('Get my winning hands without club', async () => {
     const [
       clubId,
       playerId,
@@ -423,7 +429,7 @@ describe('Hand Server', () => {
       playerUuid,
       clubCode,
       gameCode,
-    ] = await createClubAndStartGame();
+    ] = await createPlayerStartFriendsGame();
 
     allInHand.gameNum = gameId;
     allInHand.clubId = clubId;
@@ -446,7 +452,7 @@ describe('Hand Server', () => {
     });
   });
 
-  test('Get my winning hands pagination', async () => {
+  test('Get my winning hands pagination without club', async () => {
     const [
       clubId,
       playerId,
@@ -454,7 +460,7 @@ describe('Hand Server', () => {
       playerUuid,
       clubCode,
       gameCode,
-    ] = await createClubAndStartGame();
+    ] = await createPlayerStartFriendsGame();
 
     allInHand.gameNum = gameId;
     allInHand.clubId = clubId;
@@ -486,7 +492,7 @@ describe('Hand Server', () => {
     expect(resp2).toHaveLength(5);
   });
 
-  test('Save starred hand', async () => {
+  test('Save starred hand without club', async () => {
     const [
       clubId,
       playerId,
@@ -494,7 +500,7 @@ describe('Hand Server', () => {
       playerUuid,
       clubCode,
       gameCode,
-    ] = await createClubAndStartGame();
+    ] = await createPlayerStartFriendsGame();
 
     allInHand.gameNum = gameId;
     allInHand.clubId = clubId;
@@ -514,7 +520,7 @@ describe('Hand Server', () => {
     expect(resp).toBe('true');
   });
 
-  test('Get starred hand', async () => {
+  test('Get starred hand without club', async () => {
     const [
       clubId,
       playerId,
@@ -522,8 +528,7 @@ describe('Hand Server', () => {
       playerUuid,
       clubCode,
       gameCode,
-    ] = await createClubAndStartGame();
-
+    ] = await createPlayerStartFriendsGame();
     allInHand.gameNum = gameId;
     allInHand.clubId = clubId;
     allInHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
