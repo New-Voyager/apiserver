@@ -9,7 +9,7 @@ import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/resolvers/reset';
 import {createPlayer} from '@src/resolvers/player';
 import {createClub} from '@src/resolvers/club';
-import {startGame} from '@src/resolvers/game';
+import {startGame, startGameByPlayer} from '@src/resolvers/game';
 
 const logger = getLogger('gameserver unit-test');
 const holdemGameInput = {
@@ -161,6 +161,43 @@ describe('Game server APIs', () => {
       });
       const game = await startGame(player, club, holdemGameInput);
       const server = await getParticularGameServer(club, game.gameCode);
+      if (!server) {
+        expect(true).toBeFalsy();
+      } else {
+        expect(server).not.toBe(null);
+        expect(server.gameServerId.ipAddress).not.toBe(null);
+      }
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
+
+  test('Get specific game server', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.1.5',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    const gameServer2 = {
+      ipAddress: '10.1.1.6',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    try {
+      const resp1 = await createGameServer(gameServer1);
+      const resp2 = await createGameServer(gameServer2);
+      expect(resp1).toBe(true);
+      expect(resp2).toBe(true);
+      const player = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+
+      const game = await startGameByPlayer(player, holdemGameInput);
+      const server = await getParticularGameServer('000000', game.gameCode);
       if (!server) {
         expect(true).toBeFalsy();
       } else {

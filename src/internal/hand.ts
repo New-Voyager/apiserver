@@ -1,4 +1,4 @@
-import {WonAtStatus, GameType} from '@src/entity/hand';
+import {WonAtStatus} from '@src/entity/hand';
 import {HandRepository} from '@src/repositories/hand';
 
 function validateHandData(handData: any): Array<string> {
@@ -97,7 +97,6 @@ class HandServerAPIs {
      * If any data is missing throwing errors
      */
     if (errors.length) {
-      console.log(errors);
       if (errors[errors.length - 1] === 'INTERNAL') {
         resp.status(500).send('Internal service error');
         return;

@@ -179,4 +179,55 @@ describe('Game server APIs', () => {
       expect(server.ipAddress).not.toBe(null);
     }
   });
+
+  test('get specific game server without club', async () => {
+    logger.debug('Getting game server');
+    const gameServer1 = {
+      ipAddress: '10.1.1.3',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    const gameServer2 = {
+      ipAddress: '10.1.1.4',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    const gameServer3 = {
+      ipAddress: '10.1.1.5',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    try {
+      await axios.post(`${GAMESERVER_API}/register-game-server`, gameServer1);
+      await axios.post(`${GAMESERVER_API}/register-game-server`, gameServer2);
+      await axios.post(`${GAMESERVER_API}/register-game-server`, gameServer3);
+    } catch (err) {
+      console.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+
+    const playerUuid = await clubutils.createPlayer('player1', 'abc123');
+
+    for (let i = 0; i < 3; i++) {
+      const game1 = await gameutils.startFriendsGame(
+        playerUuid,
+        holdemGameInput
+      );
+
+      let resp;
+      const clubCode = '000000';
+      try {
+        resp = await axios.get(
+          `${GAMESERVER_API}/get-game-server/club_id/${clubCode}/game_num/${game1.gameCode}`
+        );
+      } catch (err) {
+        console.error(JSON.stringify(err));
+      }
+      expect(resp.status).toBe(200);
+      const server = resp.data.server;
+      logger.debug(server);
+      expect(server).not.toBe(null);
+      expect(server.ipAddress).not.toBe(null);
+    }
+  });
 });
