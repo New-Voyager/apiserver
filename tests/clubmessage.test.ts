@@ -108,7 +108,10 @@ describe('Club APIs', () => {
   });
 
   test('get message', async () => {
-    const [clubCode, playerId] = await clubutils.createClub('brady3', 'yatzee3');
+    const [clubCode, playerId] = await clubutils.createClub(
+      'brady3',
+      'yatzee3'
+    );
     const messageCount = 100;
     const messageInput = {
       messageType: 'GIPHY',

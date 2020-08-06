@@ -348,7 +348,7 @@ export class PlayerGame {
   public player!: Player;
 
   @Index()
-  @ManyToOne(type => Club, {nullable: false, eager: true})
+  @ManyToOne(type => Club, {nullable: true})
   public club!: Club;
 
   @DbAwareColumn({

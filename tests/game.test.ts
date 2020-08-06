@@ -68,7 +68,42 @@ describe('Game APIs', () => {
       },
       mutation: gameutils.startGameQuery,
     });
-    logger.debug(resp, clubCode);
+    expect(resp.errors).toBeUndefined();
+    expect(resp.data).not.toBeNull();
+    const startedGame = resp.data.startedGame;
+    expect(startedGame).not.toBeNull();
+    expect(startedGame.gameType).toEqual('HOLDEM');
+    expect(startedGame.title).toEqual('Friday game');
+    expect(startedGame.smallBlind).toEqual(1.0);
+    expect(startedGame.bigBlind).toEqual(2.0);
+    expect(startedGame.straddleBet).toEqual(4.0);
+    expect(startedGame.utgStraddleAllowed).toEqual(true);
+    expect(startedGame.buttonStraddleAllowed).toEqual(false);
+    expect(startedGame.minPlayers).toEqual(3);
+    expect(startedGame.maxPlayers).toEqual(9);
+    expect(startedGame.gameLength).toEqual(60);
+    expect(startedGame.buyInApproval).toEqual(true);
+    expect(startedGame.breakLength).toEqual(20);
+    expect(startedGame.autoKickAfterBreak).toEqual(true);
+    expect(startedGame.waitForBigBlind).toEqual(true);
+    expect(startedGame.sitInApproval).toEqual(true);
+    expect(startedGame.rakePercentage).toEqual(5.0);
+    expect(startedGame.rakeCap).toEqual(5.0);
+    expect(startedGame.buyInMin).toEqual(100);
+    expect(startedGame.buyInMax).toEqual(600);
+    expect(startedGame.actionTime).toEqual(30);
+    expect(startedGame.muckLosingHand).toEqual(true);
+  });
+
+  test('start a new game by player', async () => {
+    const playerUuid = await clubutils.createPlayer('player1', 'abc123');
+    await createGameServer('1.2.0.6');
+    const resp = await getClient(playerUuid).mutate({
+      variables: {
+        gameInput: holdemGameInput,
+      },
+      mutation: gameutils.startFriendsGameQuery,
+    });
     expect(resp.errors).toBeUndefined();
     expect(resp.data).not.toBeNull();
     const startedGame = resp.data.startedGame;
@@ -97,10 +132,21 @@ describe('Game APIs', () => {
   });
 
   test('get club games', async () => {
-    const [clubCode, playerId] = await clubutils.createClub('brady1', 'yatzee2');
+    const [clubCode, playerId] = await clubutils.createClub(
+      'brady1',
+      'yatzee2'
+    );
     await createGameServer('1.2.0.2');
-    const game1 = await gameutils.startGame(playerId, clubCode, holdemGameInput);
-    const game2 = await gameutils.startGame(playerId, clubCode, holdemGameInput);
+    const game1 = await gameutils.startGame(
+      playerId,
+      clubCode,
+      holdemGameInput
+    );
+    const game2 = await gameutils.startGame(
+      playerId,
+      clubCode,
+      holdemGameInput
+    );
     // get number of club games
     const clubGames = await gameutils.getClubGames(playerId, clubCode);
     expect(clubGames).toHaveLength(2);
@@ -115,7 +161,10 @@ describe('Game APIs', () => {
   });
 
   test('get club games pagination', async () => {
-    const [clubCode, playerId] = await clubutils.createClub('brady3', 'yatzee3');
+    const [clubCode, playerId] = await clubutils.createClub(
+      'brady3',
+      'yatzee3'
+    );
     const numGames = 100;
     await createGameServer('1.2.0.3');
     await createGameServer('1.2.0.4');

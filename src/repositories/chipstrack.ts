@@ -23,7 +23,7 @@ class ChipsTrackRepositoryImpl {
       const clubRepository = getRepository(Club);
       const gameRepository = getRepository(PlayerGame);
       const playerRepository = getRepository(Player);
-      const club = await clubRepository.findOne({
+      let club = await clubRepository.findOne({
         where: {id: playerChipsData.clubId},
       });
       const game = await gameRepository.findOne({
@@ -32,6 +32,10 @@ class ChipsTrackRepositoryImpl {
       const player = await playerRepository.findOne({
         where: {id: playerChipsData.playerId},
       });
+      if (playerChipsData.clubId === 0) {
+        club = new Club();
+        club.id = 0;
+      }
       if (!club) {
         throw new Error(`Club ${playerChipsData.clubId} is not found`);
       }
@@ -42,7 +46,9 @@ class ChipsTrackRepositoryImpl {
         throw new Error(`Player ${playerChipsData.playerId} is not found`);
       } else {
         const playerSetIn = new PlayerGameTracker();
-        playerSetIn.club = club;
+        if (playerChipsData.clubId !== 0) {
+          playerSetIn.club = club;
+        }
         playerSetIn.game = game.game;
         playerSetIn.player = player;
         playerSetIn.buyIn = playerChipsData.buyIn;
@@ -68,7 +74,7 @@ class ChipsTrackRepositoryImpl {
       const clubRepository = getRepository(Club);
       const gameRepository = getRepository(PlayerGame);
       const playerRepository = getRepository(Player);
-      const club = await clubRepository.findOne({
+      let club = await clubRepository.findOne({
         where: {id: playerChipsData.clubId},
       });
       const game = await gameRepository.findOne({
@@ -77,6 +83,10 @@ class ChipsTrackRepositoryImpl {
       const player = await playerRepository.findOne({
         where: {id: playerChipsData.playerId},
       });
+      if (playerChipsData.clubId === 0) {
+        club = new Club();
+        club.id = 0;
+      }
       if (!club) {
         logger.debug(`Club ${playerChipsData.clubId} is not found`);
         throw new Error(`Club ${playerChipsData.clubId} is not found`);
@@ -90,14 +100,25 @@ class ChipsTrackRepositoryImpl {
         throw new Error(`Player ${playerChipsData.playerId} is not found`);
       } else {
         const playerGameTrackrepository = getRepository(PlayerGameTracker);
-        const playerGameTrack = await playerGameTrackrepository.findOne({
-          relations: ['club', 'game', 'player'],
-          where: {
-            game: playerChipsData.gameId,
-            player: playerChipsData.playerId,
-            club: playerChipsData.clubId,
-          },
-        });
+        let playerGameTrack;
+        if (playerChipsData.clubId !== 0) {
+          playerGameTrack = await playerGameTrackrepository.findOne({
+            relations: ['club', 'game', 'player'],
+            where: {
+              game: playerChipsData.gameId,
+              player: playerChipsData.playerId,
+              club: playerChipsData.clubId,
+            },
+          });
+        } else {
+          playerGameTrack = await playerGameTrackrepository.findOne({
+            relations: ['game', 'player'],
+            where: {
+              game: playerChipsData.gameId,
+              player: playerChipsData.playerId,
+            },
+          });
+        }
         if (!playerGameTrack) {
           logger.error('No data found');
           throw new Error('No data found');
@@ -121,6 +142,9 @@ class ChipsTrackRepositoryImpl {
 
   public async endGame(endGameData: any): Promise<any> {
     try {
+      if (endGameData.club_id === 0) {
+        return true;
+      }
       const clubRepository = getRepository(Club);
       const gameRepository = getRepository(PlayerGame);
       const clubChipsTransactionRepository = getRepository(
@@ -156,7 +180,6 @@ class ChipsTrackRepositoryImpl {
           `Game ${endGameData.game_id} is not found in clubGameRake table`
         );
       }
-      const response = new Array<any>();
 
       await getManager().transaction(async transactionalEntityManager => {
         const clubChipsTransaction = new ClubChipsTransaction();
@@ -175,17 +198,9 @@ class ChipsTrackRepositoryImpl {
         const resp = await clubChipsTransactionRepository.save(
           clubChipsTransaction
         );
-        response.push({
-          clubChipsTransaction: {
-            amount: resp.amount,
-            balance: resp.balance,
-            description: resp.description,
-          },
-        });
 
         clubBalance.balance += clubGameRake.rake;
         const resp1 = await clubBalanceRepository.save(clubBalance);
-        response.push({clubBalance: {balance: resp1.balance}});
 
         const playerChips = await playerGameTrackRepository.find({
           relations: ['club', 'game', 'player'],
@@ -211,17 +226,9 @@ class ChipsTrackRepositoryImpl {
           const resp2 = await clubPlayerBalanceRepository.save(
             clubPlayerBalance
           );
-          response.push({
-            clubPlayerBalance: {
-              balance: resp2.balance,
-              totalBuyins: resp2.totalBuyins,
-              totalWinnings: resp2.totalWinnings,
-              playerId: resp2.player.id,
-            },
-          });
         }
       });
-      return response;
+      return true;
     } catch (e) {
       logger.error(`Error: ${JSON.stringify(e)}`);
       return new Error(JSON.stringify(e));
@@ -289,7 +296,7 @@ class ChipsTrackRepositoryImpl {
     const gameRepository = getRepository(PokerGame);
     const playerRepository = getRepository(Player);
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-    const club = await clubRepository.findOne({
+    let club = await clubRepository.findOne({
       where: {clubCode: clubCode},
     });
     const game = await gameRepository.findOne({
@@ -298,6 +305,10 @@ class ChipsTrackRepositoryImpl {
     const player = await playerRepository.findOne({
       where: {uuid: playerId},
     });
+    if (clubCode === '000000') {
+      club = new Club();
+      club.id = 0;
+    }
     if (!club) {
       throw new Error(`Club ${clubCode} is not found`);
     }
@@ -307,9 +318,16 @@ class ChipsTrackRepositoryImpl {
     if (!player) {
       throw new Error(`Player ${playerId} is not found`);
     }
-    const playerTrack = await playerGameTrackerRepository.findOne({
-      where: {club: club.id, player: player.id, game: game.id},
-    });
+    let playerTrack;
+    if (clubCode === '000000') {
+      playerTrack = await playerGameTrackerRepository.findOne({
+        where: {player: player.id, game: game.id},
+      });
+    } else {
+      playerTrack = await playerGameTrackerRepository.findOne({
+        where: {club: club.id, player: player.id, game: game.id},
+      });
+    }
     if (!playerTrack) {
       logger.error('Error in retreiving data');
       throw new Error('Error in retreiving data');
@@ -324,21 +342,32 @@ class ChipsTrackRepositoryImpl {
     const clubRepository = getRepository(Club);
     const gameRepository = getRepository(PokerGame);
     const clubGameTrackerRepository = getRepository(ClubGameRake);
-    const club = await clubRepository.findOne({
+    let club = await clubRepository.findOne({
       where: {clubCode: clubCode},
     });
     const game = await gameRepository.findOne({
       where: {gameCode: gameCode},
     });
+    if (clubCode === '000000') {
+      club = new Club();
+      club.id = 0;
+    }
     if (!club) {
       throw new Error(`Club ${clubCode} is not found`);
     }
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
-    const clubTrack = await clubGameTrackerRepository.findOne({
-      where: {club: club.id, game: game.id},
-    });
+    let clubTrack;
+    if (clubCode === '000000') {
+      clubTrack = await clubGameTrackerRepository.findOne({
+        where: {game: game.id},
+      });
+    } else {
+      clubTrack = await clubGameTrackerRepository.findOne({
+        where: {club: club.id, game: game.id},
+      });
+    }
     if (!clubTrack) {
       logger.error('Error in retreiving data');
       throw new Error('Error in retreiving data');

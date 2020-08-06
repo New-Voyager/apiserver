@@ -34,6 +34,38 @@ export const startGameQuery = gql`
   }
 `;
 
+export const startFriendsGameQuery = gql`
+  mutation($gameInput: GameCreateInput!) {
+    startedGame: startFriendsGame(game: $gameInput) {
+      title
+      gameCode
+      gameType
+      smallBlind
+      bigBlind
+      straddleBet
+      buyInMin
+      buyInMax
+      utgStraddleAllowed
+      buttonStraddleAllowed
+      maxWaitList
+      maxPlayers
+      minPlayers
+      rakePercentage
+      rakeCap
+      gameLength
+      buyInApproval
+      breakLength
+      autoKickAfterBreak
+      waitForBigBlind
+      waitlistSupported
+      maxWaitList
+      sitInApproval
+      actionTime
+      muckLosingHand
+    }
+  }
+`;
+
 export const getClubGamesQuery = gql`
   query($clubCode: String!, $page: PageInput) {
     clubGames: clubGames(clubCode: $clubCode, page: $page) {
@@ -95,6 +127,23 @@ export async function startGame(
       gameInput: gameInput,
     },
     mutation: startGameQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  const startedGame = resp.data.startedGame;
+  expect(startedGame).not.toBeNull();
+  return startedGame;
+}
+
+export async function startFriendsGame(
+  playerId: string,
+  gameInput: GameInput
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameInput: gameInput,
+    },
+    mutation: startFriendsGameQuery,
   });
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();

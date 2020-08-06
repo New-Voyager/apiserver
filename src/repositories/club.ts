@@ -377,7 +377,6 @@ class ClubRepositoryImpl {
     if (!club) {
       throw new Error(`Club ${clubCode} is not found`);
     }
-    logger.debug(club.id)
     const owner: Player | undefined = await Promise.resolve(club.owner);
     if (!owner) {
       throw new Error('Unexpected. There is no owner for the club');
@@ -391,7 +390,7 @@ class ClubRepositoryImpl {
         status: Not(ClubMemberStatus.LEFT),
       },
     });
-    logger.debug(clubMembers);  
+    logger.debug(clubMembers);
     return clubMembers;
   }
 
@@ -434,7 +433,6 @@ class ClubRepositoryImpl {
              ON cm.club_id = c.id WHERE cm.player_id = ${placeHolder} 
              GROUP BY c.name, c.club_code, cm.club_id`;
     const result = await getConnection().query(query, [player.id]);
-    logger.debug(result)
     return result;
   }
 
@@ -529,7 +527,7 @@ class ClubRepositoryImpl {
     const repository = getRepository(Club);
     // get club by id (testing only)
     const club = await repository.findOne({where: {clubCode: clubCode}});
-    if(!club){
+    if (!club) {
       throw new Error('Club not found');
     }
     return club;

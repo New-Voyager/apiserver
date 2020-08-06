@@ -48,9 +48,8 @@ afterAll(async done => {
 
 describe('Player Chips tracking APIs', () => {
   test('Create a player chips tracker when player sits in', async () => {
-    logger.debug('Creating a player chips tracker');
     const gameServer1 = {
-      ipAddress: '10.1.1.3',
+      ipAddress: '10.1.1.1',
       currentMemory: 100,
       status: 'ACTIVE',
     };
@@ -95,10 +94,56 @@ describe('Player Chips tracking APIs', () => {
     expect(id.hhHandNum).toBe(0);
   });
 
-  test('Buy chips', async () => {
-    logger.debug('Player buys chips');
+  test('Player sits in without club', async () => {
     const gameServer1 = {
-      ipAddress: '10.1.1.4',
+      ipAddress: '10.1.1.2',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    try {
+      await axios.post(`${SERVER_API}/register-game-server`, gameServer1);
+    } catch (err) {
+      console.log(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+    const playerUuid = await clubutils.createPlayer('player1', 'abc123');
+
+    let resp;
+
+    const game = await gameutils.startFriendsGame(playerUuid, holdemGameInput);
+
+    const playerID = await handutils.getPlayerById(playerUuid);
+    const gameID = await gameutils.getGameById(game.gameCode);
+
+    const messageInput = {
+      clubId: 0,
+      playerId: playerID,
+      gameId: gameID,
+      buyIn: 100.0,
+      status: 'PLAYING',
+      seatNo: 5,
+    };
+
+    try {
+      resp = await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
+    } catch (err) {
+      console.log(JSON.stringify(err));
+    }
+    expect(resp.status).toBe(200);
+    const id = resp.data.id;
+    expect(id).not.toBe(null);
+    expect(id).not.toBe(undefined);
+    expect(id.buyIn).toBe(100.0);
+    expect(id.status).toBe(0);
+    expect(id.stack).toBe(100.0);
+    expect(id.seatNo).toBe(5);
+    expect(id.hhRank).toBe(0);
+    expect(id.hhHandNum).toBe(0);
+  });
+
+  test('Buy chips', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.1.3',
       currentMemory: 100,
       status: 'ACTIVE',
     };
@@ -153,6 +198,63 @@ describe('Player Chips tracking APIs', () => {
     expect(id.hhHandNum).toBe(0);
   });
 
+  test('Buy chips without club', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.1.4',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    try {
+      await axios.post(`${SERVER_API}/register-game-server`, gameServer1);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+    const playerUuid = await clubutils.createPlayer('player1', 'abc123');
+
+    let resp, response;
+
+    const game = await gameutils.startFriendsGame(playerUuid, holdemGameInput);
+
+    const playerID = await handutils.getPlayerById(playerUuid);
+    const gameID = await gameutils.getGameById(game.gameCode);
+
+    const messageInput = {
+      clubId: 0,
+      playerId: playerID,
+      gameId: gameID,
+      buyIn: 100.0,
+      status: 'PLAYING',
+      seatNo: 5,
+    };
+
+    const buyChips = {
+      clubId: 0,
+      playerId: playerID,
+      gameId: gameID,
+      buyChips: 100.0,
+    };
+
+    try {
+      resp = await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
+      response = await axios.post(`${SERVER_API}/buy-chips`, buyChips);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+    }
+
+    expect(response.status).toBe(200);
+    const id = response.data.id;
+    expect(id).not.toBe(null);
+    expect(id).not.toBe(undefined);
+    expect(id.buyIn).toBe(200.0);
+    expect(id.status).toBe(0);
+    expect(id.stack).toBe(200.0);
+    expect(id.noOfBuyins).toBe(2);
+    expect(id.seatNo).toBe(5);
+    expect(id.hhRank).toBe(0);
+    expect(id.hhHandNum).toBe(0);
+  });
+
   test('End Game', async () => {
     const gameServer1 = {
       ipAddress: '10.1.1.5',
@@ -182,13 +284,56 @@ describe('Player Chips tracking APIs', () => {
     });
     expect(res.status).toBe(200);
     expect(res.data.status).toBe('OK');
-    expect(res.data.data[0].clubChipsTransaction.amount).toBe(0);
-    expect(res.data.data[0].clubChipsTransaction.balance).toBe(0);
-    expect(res.data.data[1].clubBalance.balance).toBe(0);
-    expect(res.data.data[2].clubPlayerBalance.balance).toBe(0);
-    expect(res.data.data[2].clubPlayerBalance.totalBuyins).toBe(100);
-    expect(res.data.data[2].clubPlayerBalance.totalWinnings).toBe(100);
-    expect(res.data.data[2].clubPlayerBalance.playerId).toBe(playerID);
+    expect(res.data.data).toBe(true);
+  });
+
+  test('Track Club and Players game Balance', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.1.6',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    try {
+      await axios.post(`${SERVER_API}/register-game-server`, gameServer1);
+    } catch (err) {
+      console.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+    const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
+    let game;
+
+    game = await gameutils.startGame(playerId, clubCode, holdemGameInput);
+
+    const playerID = await handutils.getPlayerById(playerId);
+    const clubID = await clubutils.getClubById(clubCode);
+    const gameID = await gameutils.getGameById(game.gameCode);
+
+    const messageInput = {
+      clubId: clubID,
+      playerId: playerID,
+      gameId: gameID,
+      buyIn: 100.0,
+      status: 'PLAYING',
+      seatNo: 5,
+    };
+
+    await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
+    const playertrack = await chipstrackutils.getPlayerTrack(
+      playerId,
+      clubCode,
+      game.gameCode
+    );
+    const clubTrack = await chipstrackutils.getClubTrack(
+      playerId,
+      clubCode,
+      game.gameCode
+    );
+    expect(playertrack).not.toBeNull();
+    expect(playertrack).not.toBeUndefined();
+    expect(playertrack).toBe(100);
+    expect(clubTrack).not.toBeNull();
+    expect(clubTrack).not.toBeUndefined();
+    expect(clubTrack).toBe(0);
   });
 
   test('Club and Player Balance', async () => {
@@ -226,20 +371,13 @@ describe('Player Chips tracking APIs', () => {
       club_id: clubID,
       game_id: gameID,
     });
-    const clubBalance = await chipstrackutils.getClubBalance(playerId, clubCode);
-    const playerBalance = await chipstrackutils.getClubPlayerBalance(
+    const clubBalance = await chipstrackutils.getClubBalance(
       playerId,
       clubCode
     );
-    const playertrack = await chipstrackutils.getPlayerTrack(
+    const playerBalance = await chipstrackutils.getClubPlayerBalance(
       playerId,
-      clubCode,
-      game.gameCode
-    );
-    const clubTrack = await chipstrackutils.getClubTrack(
-      playerId,
-      clubCode,
-      game.gameCode
+      clubCode
     );
     expect(clubBalance).not.toBeNull();
     expect(clubBalance).not.toBeUndefined();
@@ -247,11 +385,76 @@ describe('Player Chips tracking APIs', () => {
     expect(playerBalance).not.toBeNull();
     expect(playerBalance).not.toBeUndefined();
     expect(playerBalance).toBe(0);
+  });
+
+  test('Track Club and Players game Balance without club', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.1.8',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    await axios.post(`${SERVER_API}/register-game-server`, gameServer1);
+    const playerUuid = await clubutils.createPlayer('player1', 'abc123');
+    const game = await gameutils.startFriendsGame(playerUuid, holdemGameInput);
+    const playerID = await handutils.getPlayerById(playerUuid);
+    const gameID = await gameutils.getGameById(game.gameCode);
+
+    const messageInput = {
+      clubId: 0,
+      playerId: playerID,
+      gameId: gameID,
+      buyIn: 100.0,
+      status: 'PLAYING',
+      seatNo: 5,
+    };
+
+    await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
+    const playertrack = await chipstrackutils.getPlayerTrack(
+      playerUuid,
+      '000000',
+      game.gameCode
+    );
+    const clubTrack = await chipstrackutils.getClubTrack(
+      playerUuid,
+      '000000',
+      game.gameCode
+    );
     expect(playertrack).not.toBeNull();
     expect(playertrack).not.toBeUndefined();
     expect(playertrack).toBe(100);
     expect(clubTrack).not.toBeNull();
     expect(clubTrack).not.toBeUndefined();
     expect(clubTrack).toBe(0);
+  });
+
+  test('End Game without club', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.1.9',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    await axios.post(`${SERVER_API}/register-game-server`, gameServer1);
+    const playerUuid = await clubutils.createPlayer('player1', 'abc123');
+    const game = await gameutils.startFriendsGame(playerUuid, holdemGameInput);
+    const playerID = await handutils.getPlayerById(playerUuid);
+    const gameID = await gameutils.getGameById(game.gameCode);
+
+    const messageInput = {
+      clubId: 0,
+      playerId: playerID,
+      gameId: gameID,
+      buyIn: 100.0,
+      status: 'PLAYING',
+      seatNo: 5,
+    };
+
+    await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
+    const res = await axios.post(`${SERVER_API}/game-ended`, {
+      club_id: 0,
+      game_id: gameID,
+    });
+    expect(res.status).toBe(200);
+    expect(res.data.status).toBe('OK');
+    expect(res.data.data).toBe(true);
   });
 });

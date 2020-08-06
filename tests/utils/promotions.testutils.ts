@@ -43,7 +43,10 @@ export const getPromotionsQuery = gql`
 
 export const getAssignedPromotionsQuery = gql`
   query($clubCode: String!, $gameCode: String!) {
-    assignedPromotion: assignedPromotions(clubCode: $clubCode, gameCode: $gameCode) {
+    assignedPromotion: assignedPromotions(
+      clubCode: $clubCode
+      gameCode: $gameCode
+    ) {
       gameCode
       promotionId
       clubCode

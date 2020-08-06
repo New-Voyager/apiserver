@@ -5,7 +5,7 @@ import {Player} from '@src/entity/player';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {getLogger} from '@src/utils/log';
 import {ClubGameRake} from '@src/entity/chipstrack';
-import {getGameCodeForClub} from '@src/utils/uniqueid';
+import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
 
 const logger = getLogger('game');
 
@@ -70,7 +70,7 @@ class GameRepositoryImpl {
     }
     let savedGame;
     // use current time as the game id for now
-    game.gameCode = await getGameCodeForClub(clubCode,club.id);
+    game.gameCode = await getGameCodeForClub(clubCode, club.id);
     game.privateGame = true;
 
     game.startedAt = new Date();
@@ -110,6 +110,71 @@ class GameRepositoryImpl {
     return savedGame;
   }
 
+  public async createPrivateGameForPlayer(
+    playerId: string,
+    input: any,
+    template = false
+  ): Promise<PokerGame> {
+    const playerRepository = getRepository(Player);
+    const player = await playerRepository.findOne({uuid: playerId});
+    if (!player) {
+      throw new Error(`Player ${playerId} is not found`);
+    }
+
+    const gameServerRepository = getRepository(GameServer);
+    const gameServers = await gameServerRepository.find();
+    if (gameServers.length === 0) {
+      throw new Error('No game server is availabe');
+    }
+
+    // create the game
+    const game: PokerGame = {...input} as PokerGame;
+    const gameTypeStr: string = input['gameType'];
+    const gameType: GameType = GameType[gameTypeStr];
+    game.gameType = gameType;
+    game.isTemplate = template;
+    game.status = GameStatus.WAITING;
+    game.host = player;
+    game.gameCode = await getGameCodeForPlayer(player.id);
+    game.privateGame = true;
+    game.startedAt = new Date();
+    game.startedBy = player;
+
+    let savedGame;
+    try {
+      const gameRespository = getRepository(PokerGame);
+      const playerGameRespository = getRepository(PlayerGame);
+      await getManager().transaction(async transactionalEntityManager => {
+        savedGame = await gameRespository.save(game);
+
+        const pick = savedGame.id % gameServers.length;
+        const trackgameServerRepository = getRepository(TrackGameServer);
+        const trackServer = new TrackGameServer();
+        trackServer.clubCode = '000000';
+        trackServer.gameCode = savedGame.gameCode;
+        trackServer.gameServerId = gameServers[pick];
+        await trackgameServerRepository.save(trackServer);
+
+        const playerGame = new PlayerGame();
+        playerGame.game = savedGame;
+        playerGame.player = player;
+        await playerGameRespository.save(playerGame);
+
+        const clubGameRakeRepository = getRepository(ClubGameRake);
+        const clubRake = new ClubGameRake();
+        clubRake.game = savedGame;
+        clubRake.lastHandNum = 0;
+        clubRake.promotion = 0;
+        clubRake.rake = 0;
+        await clubGameRakeRepository.save(clubRake);
+      });
+    } catch (err) {
+      logger.error("Couldn't create game and retry again");
+      throw new Error("Couldn't create the game, please retry again");
+    }
+    return savedGame;
+  }
+
   public async getGameById(gameCode: string): Promise<PokerGame | undefined> {
     const repository = getRepository(PokerGame);
     // get game by id (testing only)
@@ -117,9 +182,15 @@ class GameRepositoryImpl {
     return game;
   }
 
-  public async getGameCount(clubId: number): Promise<number> {
+  public async getGameCountByClubId(clubId: number): Promise<number> {
     const repository = getRepository(PokerGame);
     const count = await repository.count({where: {club: {id: clubId}}});
+    return count;
+  }
+
+  public async getGameCountByPlayerId(playerId: number): Promise<number> {
+    const repository = getRepository(PokerGame);
+    const count = await repository.count({where: {host: {id: playerId}}});
     return count;
   }
 }

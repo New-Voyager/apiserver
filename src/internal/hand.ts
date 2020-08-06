@@ -1,10 +1,10 @@
-import {WonAtStatus, GameType} from '@src/entity/hand';
+import {WonAtStatus} from '@src/entity/hand';
 import {HandRepository} from '@src/repositories/hand';
 
 function validateHandData(handData: any): Array<string> {
   const errors = new Array<string>();
   try {
-    if (!handData.clubId) {
+    if (!handData.clubId && handData.clubId !== 0) {
       errors.push('clubId is missing');
     }
     if (!handData.gameNum) {

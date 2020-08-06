@@ -10,7 +10,6 @@ async function getClubs(playerId: string): Promise<Array<any>> {
   if (!clubMembers) {
     return [];
   }
-  logger.debug(JSON.stringify(clubMembers[0]))
   const clubs = _.map(clubMembers, x => {
     return {
       name: x.name,
