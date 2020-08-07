@@ -184,6 +184,7 @@ class ChipsTrackRepositoryImpl {
       await getManager().transaction(async transactionalEntityManager => {
         const clubChipsTransaction = new ClubChipsTransaction();
         let clubBalance = await clubBalanceRepository.findOne({
+          relations: ['club'],
           where: {club: endGameData.club_id},
         });
         if (!clubBalance) {
@@ -208,7 +209,7 @@ class ChipsTrackRepositoryImpl {
         });
         for await (const playerChip of playerChips) {
           let clubPlayerBalance = await clubPlayerBalanceRepository.findOne({
-            relations: ['club'],
+            relations: ['player', 'club'],
             where: {player: playerChip.player.id, club: endGameData.club_id},
           });
           if (!clubPlayerBalance) {

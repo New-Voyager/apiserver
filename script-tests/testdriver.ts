@@ -100,8 +100,8 @@ class GameScript {
 
     // run game steps
     for (const step of game['steps']) {
-      if (step['config']) {
-        await this.startGames(step['config']);
+      if (step['start-games']) {
+        await this.startGames(step['start-games']);
       }
       if (step['sitsin']) {
         await this.playersSitsin(step['sitsin']);
@@ -109,15 +109,21 @@ class GameScript {
       if (step['buyin']) {
         await this.addBuyins(step['buyin']);
       }
-      if (step['hands']) {
-        await this.hands(step['hands']);
+      if (step['verify-club-game-stack']) {
+        await this.verifyClubGameStacks(step['verify-club-game-stack']);
       }
-      if (step['end-game']) {
-        await this.endGame(step['end-game']);
+      if (step['verify-player-game-stack']) {
+        await this.verifyPlayerGameStacks(step['verify-player-game-stack']);
       }
-      if (step['verify-balance']) {
-        await this.verifyBalances(step['verify-balance']);
+      if (step['save-hands']) {
+        await this.saveHands(step['save-hands']);
       }
+      if (step['end-games']) {
+        await this.endGames(step['end-games']);
+      }
+      // if (step['verify-balance']) {
+      //   await this.verifyBalances(step['verify-balance']);
+      // }
     }
   }
 
@@ -175,11 +181,14 @@ class GameScript {
   }
 
   protected async startGames(params: any) {
-    const [gameCode, gameId] = await this.startGame(params);
-    this.gameCreated = {
-      gameCode: gameCode,
-      gameId: gameId,
-    };
+    for (const gameInput of params) {
+      const [gameCode, gameId] = await this.startGame(gameInput);
+      this.gameCreated[gameInput.game] = {
+        club: gameInput.club,
+        gameCode: gameCode,
+        gameId: gameId,
+      };
+    }
   }
 
   protected async playersSitsin(params: any) {
@@ -194,57 +203,72 @@ class GameScript {
     }
   }
 
-  protected async hands(params: any) {
+  protected async verifyClubGameStacks(params: any) {
+    for (const clubStack of params) {
+      await this.verifyClubGameStack(clubStack);
+    }
+  }
+
+  protected async verifyPlayerGameStacks(params: any) {
+    for (const playerStack of params) {
+      await this.verifyPlayerGameStack(playerStack);
+    }
+  }
+
+  protected async saveHands(params: any) {
     for (const handData of params) {
-      if (handData['save']) {
-        await this.saveHand(handData['save']);
-      }
-      if (handData['verify-game-stack']) {
-        await this.verifyGameStacks(handData['verify-game-stack']);
-      }
+      await this.saveHand(handData);
     }
   }
 
-  protected async verifyBalances(balance: any) {
-    if (balance['club']) {
-      await this.verifyClubBalance(balance['club']);
-    }
-    if (balance['players']) {
-      await this.verifyPlayerBalances(balance['players']);
+  protected async endGames(params: any) {
+    for (const endGameInput of params) {
+      await this.endGame(endGameInput);
     }
   }
 
-  protected async verifyGameStacks(balance: any) {
-    if (balance['club']) {
-      await this.verifyClubStack(balance['club']);
-    }
-    if (balance['players']) {
-      await this.verifyPlayersStack(balance['players']);
-    }
-  }
+  // protected async hands(params: any) {
+  //   for (const handData of params) {
+  //     if (handData['save']) {
+  //       await this.saveHand(handData['save']);
+  //     }
+  //     if (handData['verify-game-stack']) {
+  //       await this.verifyGameStacks(handData['verify-game-stack']);
+  //     }
+  //   }
+  // }
 
-  protected async verifyPlayerBalances(playersBalance: any) {
-    for (const balance of playersBalance) {
-      await this.verifyPlayerBalance(balance);
-    }
-  }
+  // protected async verifyBalances(balance: any) {
+  //   if (balance['club']) {
+  //     await this.verifyClubBalance(balance['club']);
+  //   }
+  //   if (balance['players']) {
+  //     await this.verifyPlayerBalances(balance['players']);
+  //   }
+  // }
 
-  protected async verifyPlayersStack(playersBalance: any) {
-    for (const balance of playersBalance) {
-      await this.verifyPlayerStack(balance);
-    }
-  }
+  // protected async verifyGameStacks(balance: any) {
+  //   if (balance['club']) {
+  //     await this.verifyClubStack(balance['club']);
+  //   }
+  //   if (balance['players']) {
+  //     await this.verifyPlayersStack(balance['players']);
+  //   }
+  // }
+
+  // protected async verifyPlayerBalances(playersBalance: any) {
+  //   for (const balance of playersBalance) {
+  //     await this.verifyPlayerBalance(balance);
+  //   }
+  // }
+
+  // protected async verifyPlayersStack(playersBalance: any) {
+  //   for (const balance of playersBalance) {
+  //     await this.verifyPlayerStack(balance);
+  //   }
+  // }
 
   /////////////////////// Level 3 Functions
-
-  protected async endGame(params: any) {
-    const url = `${this.serverURL}/internal/game-ended`;
-    const resp = await axios.post(url, {
-      club_id: this.clubCreated.clubId,
-      game_id: this.gameCreated.gameId,
-    });
-    this.log(`Game ${this.gameCreated.gameCode} has been ended`);
-  }
 
   protected async deleteClub(params: any) {
     // call internal REST API to delete the club
@@ -436,34 +460,36 @@ class GameScript {
 
   protected async startGame(gameInput: any) {
     this.log(`Register game: ${JSON.stringify(gameInput)}`);
-    const startGame = gql`
-      mutation($clubCode: String!, $gameInput: GameCreateInput!) {
-        startedGame: startGame(clubCode: $clubCode, game: $gameInput) {
-          gameCode
-        }
-      }
-    `;
-    const resp = await getClient(
-      this.registeredPlayers[this.clubCreated.owner].playerUuid
-    ).mutate({
-      variables: {
-        gameInput: gameInput.input,
-        clubCode: this.clubCreated.clubCode,
-      },
-      mutation: startGame,
-    });
-
-    // get game by uuid (we need to get internal id for game/hand requests)
-    const queryGame = gql`
-      query($gameCode: String!) {
-        game: gameById(gameCode: $gameCode) {
-          id
-        }
-      }
-    `;
     try {
+      const startGame = gql`
+        mutation($clubCode: String!, $gameInput: GameCreateInput!) {
+          startedGame: startGame(clubCode: $clubCode, game: $gameInput) {
+            gameCode
+          }
+        }
+      `;
+      const resp = await getClient(
+        this.registeredPlayers[this.clubCreated[gameInput.club].owner]
+          .playerUuid
+      ).mutate({
+        variables: {
+          gameInput: gameInput.input,
+          clubCode: this.clubCreated[gameInput.club].clubCode,
+        },
+        mutation: startGame,
+      });
+
+      // get game by uuid (we need to get internal id for game/hand requests)
+      const queryGame = gql`
+        query($gameCode: String!) {
+          game: gameById(gameCode: $gameCode) {
+            id
+          }
+        }
+      `;
       const gameResp = await getClient(
-        this.registeredPlayers[this.clubCreated.owner].playerUuid
+        this.registeredPlayers[this.clubCreated[gameInput.club].owner]
+          .playerUuid
       ).query({
         variables: {
           gameCode: resp.data.startedGame.gameCode,
@@ -478,21 +504,22 @@ class GameScript {
   }
 
   protected async playerSitsin(sitsinInput: any): Promise<any> {
-    this.log(`Player sits in: ${JSON.stringify(sitsinInput)}`);
-    const messageInput = {
-      clubId: this.clubCreated.clubId,
-      playerId: this.registeredPlayers[sitsinInput.playerId].playerId,
-      gameId: this.gameCreated.gameId,
-      buyIn: sitsinInput.buyChips,
-      status: 'PLAYING',
-      seatNo: sitsinInput.seatNo,
-    };
-
+    this.log(`Players sits in: ${JSON.stringify(sitsinInput)}`);
     try {
-      await axios.post(
-        `${this.serverURL}/internal/player-sit-in`,
-        messageInput
-      );
+      for (const player of sitsinInput.players) {
+        const messageInput = {
+          clubId: this.clubCreated[sitsinInput.club].clubId,
+          playerId: this.registeredPlayers[player.playerId].playerId,
+          gameId: this.gameCreated[sitsinInput.game].gameId,
+          buyIn: player.buyChips,
+          status: 'PLAYING',
+          seatNo: player.seatNo,
+        };
+        await axios.post(
+          `${this.serverURL}/internal/player-sit-in`,
+          messageInput
+        );
+      }
     } catch (err) {
       this.log(JSON.stringify(err));
       throw err;
@@ -501,16 +528,90 @@ class GameScript {
 
   protected async addBuyin(buyinInput: any): Promise<any> {
     this.log(`Buyin: ${JSON.stringify(buyinInput)}`);
-
-    const buyChips = {
-      clubId: this.clubCreated.clubId,
-      playerId: this.registeredPlayers[buyinInput.playerId].playerId,
-      gameId: this.gameCreated.gameId,
-      buyChips: buyinInput.buyChips,
-    };
-
     try {
-      await axios.post(`${this.serverURL}/internal/buy-chips`, buyChips);
+      for (const player of buyinInput.players) {
+        const buyChips = {
+          clubId: this.clubCreated[buyinInput.club].clubId,
+          playerId: this.registeredPlayers[player.playerId].playerId,
+          gameId: this.gameCreated[buyinInput.game].gameId,
+          buyChips: player.buyChips,
+        };
+        const resp = await axios.post(
+          `${this.serverURL}/internal/buy-chips`,
+          buyChips
+        );
+      }
+    } catch (err) {
+      this.log(err.toString());
+      throw err;
+    }
+  }
+
+  protected async verifyClubGameStack(balance: any): Promise<any> {
+    this.log(`verify club stack: ${JSON.stringify(balance)}`);
+    const queryClubTrack = gql`
+      query($clubCode: String!, $gameCode: String!) {
+        balance: clubGameRake(clubCode: $clubCode, gameCode: $gameCode) {
+          rake
+          promotion
+          lastHandNum
+        }
+      }
+    `;
+    const resp = await getClient(
+      this.registeredPlayers[this.clubCreated[balance.club].owner].playerUuid
+    ).query({
+      variables: {
+        clubCode: this.clubCreated[balance.club].clubCode,
+        gameCode: this.gameCreated[balance.game].gameCode,
+      },
+      query: queryClubTrack,
+    });
+    if (resp.data.balance.rake != balance.balance) {
+      this.log(
+        `Expected ${balance.balance} but received ${resp.data.balance.rake}`
+      );
+      throw new Error('Club stack verification failed');
+    }
+  }
+
+  protected async verifyPlayerGameStack(balance: any): Promise<any> {
+    this.log(`Verify player stack: ${JSON.stringify(balance)}`);
+    const queryPlayerTrack = gql`
+      query($playerId: String!, $clubCode: String!, $gameCode: String!) {
+        balance: playerGametrack(
+          clubCode: $clubCode
+          gameCode: $gameCode
+          playerId: $playerId
+        ) {
+          buyIn
+          stack
+          seatNo
+          noOfBuyins
+          hhRank
+          hhHandNum
+        }
+      }
+    `;
+    try {
+      for (const player of balance.players) {
+        const resp = await getClient(
+          this.registeredPlayers[player.name].playerUuid
+        ).query({
+          variables: {
+            playerId: this.registeredPlayers[player.name].playerUuid,
+            clubCode: this.clubCreated[balance.club].clubCode,
+            gameCode: this.gameCreated[balance.game].gameCode,
+          },
+          query: queryPlayerTrack,
+        });
+        if (resp.data.balance.stack != player.balance) {
+          this.log(
+            `Expected ${player.balance} but received ${resp.data.balance.stack}`
+          );
+          throw new Error('Player stack verification failed');
+        }
+      }
     } catch (err) {
       this.log(err.toString());
       throw err;
@@ -520,8 +621,8 @@ class GameScript {
   protected async saveHand(handData: any): Promise<any> {
     this.log(`save hand: ${JSON.stringify(handData)}`);
     const saveHandData = handData;
-    saveHandData.clubId = this.clubCreated.clubId;
-    saveHandData.gameNum = this.gameCreated.gameId;
+    saveHandData.clubId = this.clubCreated[handData.clubId].clubId;
+    saveHandData.gameNum = this.gameCreated[handData.gameNum].gameId;
     for (var i = 0; i < handData.handResult.playersInSeats.length; i++) {
       if (handData.handResult.playersInSeats[i] !== 0) {
         saveHandData.handResult.playersInSeats[i] = this.registeredPlayers[
@@ -544,121 +645,71 @@ class GameScript {
     }
   }
 
-  protected async verifyClubBalance(balance: any): Promise<any> {
-    this.log(`verify club balance: ${JSON.stringify(balance)}`);
-    const queryClubBalance = gql`
-      query($clubCode: String!) {
-        balance: clubBalance(clubCode: $clubCode) {
-          balance
-          updatedAt
-        }
-      }
-    `;
-    const resp = await getClient(
-      this.registeredPlayers[this.clubCreated.owner].playerUuid
-    ).query({
-      variables: {clubCode: this.clubCreated.clubCode},
-      query: queryClubBalance,
-    });
-    if (resp.data.balance.balance != balance.balance) {
-      this.log(
-        `Expected ${balance.balance} but received ${resp.data.balance.balance}`
-      );
-      throw new Error('Club balance verification failed');
-    }
-  }
+  // protected async verifyClubBalance(balance: any): Promise<any> {
+  //   this.log(`verify club balance: ${JSON.stringify(balance)}`);
+  //   const queryClubBalance = gql`
+  //     query($clubCode: String!) {
+  //       balance: clubBalance(clubCode: $clubCode) {
+  //         balance
+  //         updatedAt
+  //       }
+  //     }
+  //   `;
+  //   const resp = await getClient(
+  //     this.registeredPlayers[this.clubCreated.owner].playerUuid
+  //   ).query({
+  //     variables: {clubCode: this.clubCreated.clubCode},
+  //     query: queryClubBalance,
+  //   });
+  //   if (resp.data.balance.balance != balance.balance) {
+  //     this.log(
+  //       `Expected ${balance.balance} but received ${resp.data.balance.balance}`
+  //     );
+  //     throw new Error('Club balance verification failed');
+  //   }
+  // }
 
-  protected async verifyPlayerBalance(balance: any): Promise<any> {
-    this.log(`Verify player balance: ${JSON.stringify(balance)}`);
-    const queryPlayerBalance = gql`
-      query($playerId: String!, $clubCode: String!) {
-        balance: playerBalance(playerId: $playerId, clubCode: $clubCode) {
-          totalBuyins
-          totalWinnings
-          balance
-          notes
-          updatedAt
-        }
-      }
-    `;
-    const resp = await getClient(
-      this.registeredPlayers[balance.name].playerUuid
-    ).query({
-      variables: {
-        clubCode: this.clubCreated.clubCode,
-        playerId: this.registeredPlayers[balance.name].playerUuid,
-      },
-      query: queryPlayerBalance,
-    });
-    if (resp.data.balance.balance != balance.balance) {
-      this.log(
-        `Expected ${balance.balance} but received ${resp.data.balance.balance}`
-      );
-      throw new Error('Player balance verification failed');
-    }
-  }
+  // protected async verifyPlayerBalance(balance: any): Promise<any> {
+  //   this.log(`Verify player balance: ${JSON.stringify(balance)}`);
+  //   const queryPlayerBalance = gql`
+  //     query($playerId: String!, $clubCode: String!) {
+  //       balance: playerBalance(playerId: $playerId, clubCode: $clubCode) {
+  //         totalBuyins
+  //         totalWinnings
+  //         balance
+  //         notes
+  //         updatedAt
+  //       }
+  //     }
+  //   `;
+  //   const resp = await getClient(
+  //     this.registeredPlayers[balance.name].playerUuid
+  //   ).query({
+  //     variables: {
+  //       clubCode: this.clubCreated.clubCode,
+  //       playerId: this.registeredPlayers[balance.name].playerUuid,
+  //     },
+  //     query: queryPlayerBalance,
+  //   });
+  //   if (resp.data.balance.balance != balance.balance) {
+  //     this.log(
+  //       `Expected ${balance.balance} but received ${resp.data.balance.balance}`
+  //     );
+  //     throw new Error('Player balance verification failed');
+  //   }
+  // }
 
-  protected async verifyClubStack(balance: any): Promise<any> {
-    this.log(`verify club stack: ${JSON.stringify(balance)}`);
-    const queryClubTrack = gql`
-      query($clubCode: String!, $gameCode: String!) {
-        balance: clubGameRake(clubCode: $clubCode, gameCode: $gameCode) {
-          rake
-          promotion
-          lastHandNum
-        }
-      }
-    `;
-    const resp = await getClient(
-      this.registeredPlayers[this.clubCreated.owner].playerUuid
-    ).query({
-      variables: {
-        clubCode: this.clubCreated.clubCode,
-        gameCode: this.gameCreated.gameCode,
-      },
-      query: queryClubTrack,
-    });
-    if (resp.data.balance.rake != balance.balance) {
-      this.log(
-        `Expected ${balance.balance} but received ${resp.data.balance.rake}`
-      );
-      throw new Error('Club stack verification failed');
-    }
-  }
-
-  protected async verifyPlayerStack(balance: any): Promise<any> {
-    this.log(`Verify player stack: ${JSON.stringify(balance)}`);
-    const queryPlayerTrack = gql`
-      query($playerId: String!, $clubCode: String!, $gameCode: String!) {
-        balance: playerGametrack(
-          clubCode: $clubCode
-          gameCode: $gameCode
-          playerId: $playerId
-        ) {
-          buyIn
-          stack
-          seatNo
-          noOfBuyins
-          hhRank
-          hhHandNum
-        }
-      }
-    `;
-    const resp = await getClient(
-      this.registeredPlayers[balance.name].playerUuid
-    ).query({
-      variables: {
-        playerId: this.registeredPlayers[balance.name].playerUuid,
-        clubCode: this.clubCreated.clubCode,
-        gameCode: this.gameCreated.gameCode,
-      },
-      query: queryPlayerTrack,
-    });
-    if (resp.data.balance.stack != balance.balance) {
-      this.log(
-        `Expected ${balance.balance} but received ${resp.data.balance.stack}`
-      );
-      throw new Error('Player stack verification failed');
+  protected async endGame(params: any) {
+    try {
+      const url = `${this.serverURL}/internal/game-ended`;
+      const resp = await axios.post(url, {
+        club_id: this.clubCreated[params.club].clubId,
+        game_id: this.gameCreated[params.game].gameId,
+      });
+      this.log(`Game ${[params.game]} has been ended`);
+    } catch (err) {
+      this.log(err.toString());
+      throw err;
     }
   }
 }
