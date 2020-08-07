@@ -1,29 +1,18 @@
-#1. Player 1 (arun) registers
-#2. Player 2 (arjun) registers
-#3. Player 3 (sam) registers
-#4. Player 4 (bala) registers
-#5. Bala creates a club. 
-#6. arun, arjun, sam requests to join the club.
-#7. Bala should see the arun, arjun, same and bala are "waiting for approval"
-#8. Bala approves arun, arjun and sam requests
-#9. All the players in the club (verify using clubMembers API)
-#10. Start a new game (Texas Holdem)
-#11. arun sits in with 100.00
-#12. arjun sits in with 100.00
-#13. sam sits in with 100.00
-
+# Cleanup steps
 cleanup:
   steps:
-    - 
-      delete-clubs:   # delete clubs and club members
+
+      # delete clubs and club members
+    - delete-clubs:
         - name: chennai
         - name: newClub
 
-# register players if doesn't exist and store the player.id in a dictionary
+# Setup steps
 setup:
   steps:
-    -
-      register-players: 
+
+      # register players if doesn't exist and store the player info
+    - register-players: 
         - name: arun
           deviceId: 1edad270-1926-4634-b89b-9d5a62586d9e
         - name: arjun
@@ -31,20 +20,18 @@ setup:
         - name: sam
           deviceId: 1d43342c-84bf-4928-b5b4-ece904b66dd0
         - name: bala
-          deviceId: 8ba53577-1318-4da3-adbd-0796234e405a
-
-    -
+          deviceId: 8ba53577-1318-4da3-adbd-0796234e405a   
+ 
       # create a club and pass the owner in the Auth header
-      # store clubId in a dictionary (key: chennai.clubId)
-      create-clubs:
+      # store club info in a dictionary
+    - create-clubs:
         - name: chennai
           owner: bala
         - name: newClub
           owner: sam
 
-    # use joinClub API and auth header to join each player
-    - 
-      join-clubs:
+      # use joinClub API and auth header to join each player
+    - join-clubs:
         - club: chennai
           members:     
             - arun
@@ -55,9 +42,8 @@ setup:
             - arjun
             - bala
 
-    # verify the players are waiting to be approved  (PENDING)
-    - 
-      verify-club-members:
+      # verify the players are waiting to be approved  (PENDING)
+    - verify-club-members:
         - club: chennai
           members:
             - name: arun
@@ -71,11 +57,10 @@ setup:
             - name: arjun
               status: PENDING
             - name: bala
-              status: PENDING
+              status: PENDING 
 
-    # approve members with auth header (bala,club.owner)
-    - 
-      approve-club-members:
+      # approve members with auth header (club.owner)
+    - approve-club-members:
         - club: chennai
           members:     
             - arun
@@ -86,9 +71,8 @@ setup:
             - arjun
             - bala
 
-    # verify the players are approved  (ACTIVE)
-    - 
-      verify-club-members:
+      # verify the players are approved  (ACTIVE)
+    - verify-club-members:
         - club: chennai
           members:
             - name: arun
@@ -104,9 +88,8 @@ setup:
             - name: bala
               status: ACTIVE
 
-    # create game servers if does not exist
-    -
-      create-game-servers:
+      # create game servers if does not exist
+    - create-game-servers:
         - ipAddress: 10.1.1.5
           currentMemory: 100
           status: ACTIVE

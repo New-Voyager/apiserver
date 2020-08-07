@@ -33,7 +33,7 @@ class GameScript {
     this.scriptFile = filename;
   }
 
-/////////////////////// Main Run Function
+  /////////////////////// Main Run Function
 
   public async run() {
     // cleanup
@@ -46,7 +46,7 @@ class GameScript {
     await this.game();
   }
 
-/////////////////////// Level 1 Functions
+  /////////////////////// Level 1 Functions
 
   protected async cleanup() {
     const cleanup = this.script['cleanup'];
@@ -121,7 +121,7 @@ class GameScript {
     }
   }
 
-/////////////////////// Level 2 Functions
+  /////////////////////// Level 2 Functions
 
   protected async deleteClubs(params: any) {
     for (const clubName of params) {
@@ -235,7 +235,7 @@ class GameScript {
     }
   }
 
-/////////////////////// Level 3 Functions
+  /////////////////////// Level 3 Functions
 
   protected async endGame(params: any) {
     const url = `${this.serverURL}/internal/game-ended`;
@@ -248,7 +248,7 @@ class GameScript {
 
   protected async deleteClub(params: any) {
     // call internal REST API to delete the club
-    try{
+    try {
       const url = `${this.serverURL}/internal/delete-club-by-name/${params.name}`;
       this.log(url);
       await axios.post(url, {});
@@ -303,7 +303,7 @@ class GameScript {
 
   protected async createClub(clubInput: any): Promise<any> {
     this.log(`Create Club: ${JSON.stringify(clubInput)}`);
-    try{
+    try {
       const createClubQuery = gql`
         mutation($input: ClubCreateInput!) {
           clubCode: createClub(club: $input)
@@ -352,7 +352,7 @@ class GameScript {
           status: joinClub(clubCode: $clubCode)
         }
       `;
-      for(const member of joinClubInput.members){
+      for (const member of joinClubInput.members) {
         await getClient(this.registeredPlayers[member].playerUuid).mutate({
           variables: {
             clubCode: this.clubCreated[joinClubInput.club].clubCode,
@@ -376,7 +376,7 @@ class GameScript {
           }
         }
       `;
-      for(const member of memberInput.members){
+      for (const member of memberInput.members) {
         const resp = await getClient(
           this.registeredPlayers[member.name].playerUuid
         ).query({
@@ -386,7 +386,11 @@ class GameScript {
           query: queryMemberStatus,
         });
         if (ClubMemberStatus[resp.data.status.status] != member.status) {
-          throw new Error(`${member.name}'s status verification failed. Expected: ${member.status} Received: ${ClubMemberStatus[resp.data.status.status]}`);
+          throw new Error(
+            `${member.name}'s status verification failed. Expected: ${
+              member.status
+            } Received: ${ClubMemberStatus[resp.data.status.status]}`
+          );
         }
       }
     } catch (err) {
@@ -397,14 +401,17 @@ class GameScript {
 
   protected async approveMember(memberInput: any): Promise<any> {
     this.log(`Approve Club Membres: ${JSON.stringify(memberInput)}`);
-    try { 
+    try {
       const approveClubQuery = gql`
         mutation($clubCode: String!, $playerUuid: String!) {
           status: approveMember(clubCode: $clubCode, playerUuid: $playerUuid)
         }
       `;
-      for(const member of memberInput.members){
-        await getClient(this.registeredPlayers[this.clubCreated[memberInput.club].owner].playerUuid).mutate({
+      for (const member of memberInput.members) {
+        await getClient(
+          this.registeredPlayers[this.clubCreated[memberInput.club].owner]
+            .playerUuid
+        ).mutate({
           variables: {
             clubCode: this.clubCreated[memberInput.club].clubCode,
             playerUuid: this.registeredPlayers[member].playerUuid,
