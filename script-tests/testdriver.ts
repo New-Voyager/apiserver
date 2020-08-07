@@ -33,6 +33,8 @@ class GameScript {
     this.scriptFile = filename;
   }
 
+/////////////////////// Main Run Function
+
   public async run() {
     // cleanup
     await this.cleanup();
@@ -44,6 +46,8 @@ class GameScript {
     await this.game();
   }
 
+/////////////////////// Level 1 Functions
+
   protected async cleanup() {
     const cleanup = this.script['cleanup'];
     if (!cleanup) {
@@ -52,8 +56,8 @@ class GameScript {
 
     // run cleanup steps
     for (const step of cleanup['steps']) {
-      if (step['delete-club']) {
-        await this.deleteClub(step['delete-club']);
+      if (step['delete-clubs']) {
+        await this.deleteClubs(step['delete-clubs']);
       }
     }
   }
@@ -70,11 +74,11 @@ class GameScript {
         // register players
         await this.registerPlayers(step['register-players']);
       }
-      if (step['create-club']) {
-        await this.createClubs(step['create-club']);
+      if (step['create-clubs']) {
+        await this.createClubs(step['create-clubs']);
       }
-      if (step['join-club']) {
-        await this.joinClubs(step['join-club']);
+      if (step['join-clubs']) {
+        await this.joinClubs(step['join-clubs']);
       }
       if (step['verify-club-members']) {
         await this.verifyClubMembers(step['verify-club-members']);
@@ -82,8 +86,8 @@ class GameScript {
       if (step['approve-club-members']) {
         await this.approveClubMembers(step['approve-club-members']);
       }
-      if (step['create-game-server']) {
-        await this.createGameServer(step['create-game-server']);
+      if (step['create-game-servers']) {
+        await this.createGameServers(step['create-game-servers']);
       }
     }
   }
@@ -117,6 +121,14 @@ class GameScript {
     }
   }
 
+/////////////////////// Level 2 Functions
+
+  protected async deleteClubs(params: any) {
+    for (const clubName of params) {
+      await this.deleteClub(clubName);
+    }
+  }
+
   protected async registerPlayers(params: any) {
     for (const playerInput of params) {
       const [playerUuid, playerId] = await this.registerPlayer(playerInput);
@@ -128,12 +140,14 @@ class GameScript {
   }
 
   protected async createClubs(params: any) {
-    const [clubCode, clubId] = await this.createClub(params);
-    this.clubCreated = {
-      owner: params.owner,
-      clubId: clubId,
-      clubCode: clubCode,
-    };
+    for (const clubInput of params) {
+      const [clubCode, clubId] = await this.createClub(clubInput);
+      this.clubCreated[clubInput.name] = {
+        owner: clubInput.owner,
+        clubId: clubId,
+        clubCode: clubCode,
+      };
+    }
   }
 
   protected async joinClubs(params: any) {
@@ -149,8 +163,14 @@ class GameScript {
   }
 
   protected async approveClubMembers(params: any) {
-    for (const membersInput of params.members) {
-      await this.approveMember(params.owner, membersInput);
+    for (const membersInput of params) {
+      await this.approveMember(membersInput);
+    }
+  }
+
+  protected async createGameServers(params: any) {
+    for (const serverInput of params) {
+      await this.createGameServer(serverInput);
     }
   }
 
@@ -215,6 +235,8 @@ class GameScript {
     }
   }
 
+/////////////////////// Level 3 Functions
+
   protected async endGame(params: any) {
     const url = `${this.serverURL}/internal/game-ended`;
     const resp = await axios.post(url, {
@@ -226,43 +248,46 @@ class GameScript {
 
   protected async deleteClub(params: any) {
     // call internal REST API to delete the club
-    const url = `${this.serverURL}/internal/delete-club-by-name/${params.name}`;
-    this.log(url);
-    await axios.post(url, {});
-    this.log(`Club ${params.name} has been deleted`);
+    try{
+      const url = `${this.serverURL}/internal/delete-club-by-name/${params.name}`;
+      this.log(url);
+      await axios.post(url, {});
+      this.log(`Club ${params.name} has been deleted`);
+    } catch (err) {
+      this.log(err.toString());
+    }
   }
 
   protected async registerPlayer(playerInput: any): Promise<any> {
     this.log(`Register player: ${JSON.stringify(playerInput)}`);
-
-    const createPlayer = gql`
-      mutation($input: PlayerCreateInput!) {
-        playerId: createPlayer(player: $input)
-      }
-    `;
-    const resp = await getClient().mutate({
-      variables: {
-        input: {
-          name: playerInput.name,
-          deviceId: playerInput.deviceId,
-        },
-      },
-      mutation: createPlayer,
-    });
-    const playerId = resp.data.playerId;
-
-    // get player by uuid (we need to get internal id for game/hand requests)
-    const queryPlayer = gql`
-      query {
-        player: playerById {
-          uuid
-          id
-          name
-          lastActiveTime
-        }
-      }
-    `;
     try {
+      const createPlayer = gql`
+        mutation($input: PlayerCreateInput!) {
+          playerId: createPlayer(player: $input)
+        }
+      `;
+      const resp = await getClient().mutate({
+        variables: {
+          input: {
+            name: playerInput.name,
+            deviceId: playerInput.deviceId,
+          },
+        },
+        mutation: createPlayer,
+      });
+      const playerId = resp.data.playerId;
+
+      // get player by uuid (we need to get internal id for game/hand requests)
+      const queryPlayer = gql`
+        query {
+          player: playerById {
+            uuid
+            id
+            name
+            lastActiveTime
+          }
+        }
+      `;
       const playerResp = await getClient(playerId).query({
         variables: {
           playerId: resp.data.playerId,
@@ -278,33 +303,32 @@ class GameScript {
 
   protected async createClub(clubInput: any): Promise<any> {
     this.log(`Create Club: ${JSON.stringify(clubInput)}`);
-
-    const createClubQuery = gql`
-      mutation($input: ClubCreateInput!) {
-        clubCode: createClub(club: $input)
-      }
-    `;
-    const resp = await getClient(
-      this.registeredPlayers[clubInput.owner].playerUuid
-    ).mutate({
-      variables: {
-        input: {
-          name: clubInput.name,
-          description: 'Poker players gather',
-        },
-      },
-      mutation: createClubQuery,
-    });
-
-    // get club by uuid (we need to get internal id for game/hand requests)
-    const queryClub = gql`
-      query($clubCode: String!) {
-        club: clubById(clubCode: $clubCode) {
-          id
+    try{
+      const createClubQuery = gql`
+        mutation($input: ClubCreateInput!) {
+          clubCode: createClub(club: $input)
         }
-      }
-    `;
-    try {
+      `;
+      const resp = await getClient(
+        this.registeredPlayers[clubInput.owner].playerUuid
+      ).mutate({
+        variables: {
+          input: {
+            name: clubInput.name,
+            description: 'Poker players gather',
+          },
+        },
+        mutation: createClubQuery,
+      });
+
+      // get club by uuid (we need to get internal id for game/hand requests)
+      const queryClub = gql`
+        query($clubCode: String!) {
+          club: clubById(clubCode: $clubCode) {
+            id
+          }
+        }
+      `;
       const clubResp = await getClient(
         this.registeredPlayers[clubInput.owner].playerUuid
       ).query({
@@ -322,67 +346,76 @@ class GameScript {
 
   protected async joinClub(joinClubInput: any): Promise<any> {
     this.log(`Join Club: ${JSON.stringify(joinClubInput)}`);
-    const joinClubQuery = gql`
-      mutation($clubCode: String!) {
-        status: joinClub(clubCode: $clubCode)
+    try {
+      const joinClubQuery = gql`
+        mutation($clubCode: String!) {
+          status: joinClub(clubCode: $clubCode)
+        }
+      `;
+      for(const member of joinClubInput.members){
+        await getClient(this.registeredPlayers[member].playerUuid).mutate({
+          variables: {
+            clubCode: this.clubCreated[joinClubInput.club].clubCode,
+          },
+          mutation: joinClubQuery,
+        });
       }
-    `;
-    await getClient(this.registeredPlayers[joinClubInput].playerUuid).mutate({
-      variables: {
-        clubCode: this.clubCreated.clubCode,
-      },
-      mutation: joinClubQuery,
-    });
+    } catch (err) {
+      this.log(err.toString());
+      throw err;
+    }
   }
 
   protected async verifyMember(memberInput: any): Promise<any> {
     this.log(`Verify Club Membres: ${JSON.stringify(memberInput)}`);
-    const queryMemberStatus = gql`
-      query($clubCode: String!) {
-        status: clubMemberStatus(clubCode: $clubCode) {
-          id
-          status
-          isManager
-          isOwner
-          contactInfo
-          ownerNotes
-          lastGamePlayedDate
-          joinedDate
-          leftDate
-          viewAllowed
-          playAllowed
-          createdAt
-          updatedAt
+    try {
+      const queryMemberStatus = gql`
+        query($clubCode: String!) {
+          status: clubMemberStatus(clubCode: $clubCode) {
+            status
+          }
+        }
+      `;
+      for(const member of memberInput.members){
+        const resp = await getClient(
+          this.registeredPlayers[member.name].playerUuid
+        ).query({
+          variables: {
+            clubCode: this.clubCreated[memberInput.club].clubCode,
+          },
+          query: queryMemberStatus,
+        });
+        if (ClubMemberStatus[resp.data.status.status] != member.status) {
+          throw new Error(`${member.name}'s status verification failed. Expected: ${member.status} Received: ${ClubMemberStatus[resp.data.status.status]}`);
         }
       }
-    `;
-    const resp = await getClient(
-      this.registeredPlayers[memberInput.name].playerUuid
-    ).query({
-      variables: {
-        clubCode: this.clubCreated.clubCode,
-      },
-      query: queryMemberStatus,
-    });
-    if (ClubMemberStatus[resp.data.status.status] != memberInput.status) {
-      throw new Error(`${memberInput.name}'s status verification failed`);
+    } catch (err) {
+      this.log(err.toString());
+      throw err;
     }
   }
 
-  protected async approveMember(owner: string, memberInput: any): Promise<any> {
+  protected async approveMember(memberInput: any): Promise<any> {
     this.log(`Approve Club Membres: ${JSON.stringify(memberInput)}`);
-    const approveClubQuery = gql`
-      mutation($clubCode: String!, $playerUuid: String!) {
-        status: approveMember(clubCode: $clubCode, playerUuid: $playerUuid)
+    try { 
+      const approveClubQuery = gql`
+        mutation($clubCode: String!, $playerUuid: String!) {
+          status: approveMember(clubCode: $clubCode, playerUuid: $playerUuid)
+        }
+      `;
+      for(const member of memberInput.members){
+        await getClient(this.registeredPlayers[this.clubCreated[memberInput.club].owner].playerUuid).mutate({
+          variables: {
+            clubCode: this.clubCreated[memberInput.club].clubCode,
+            playerUuid: this.registeredPlayers[member].playerUuid,
+          },
+          mutation: approveClubQuery,
+        });
       }
-    `;
-    await getClient(this.registeredPlayers[owner].playerUuid).mutate({
-      variables: {
-        clubCode: this.clubCreated.clubCode,
-        playerUuid: this.registeredPlayers[memberInput].playerUuid,
-      },
-      mutation: approveClubQuery,
-    });
+    } catch (err) {
+      this.log(err.toString());
+      throw err;
+    }
   }
 
   protected async createGameServer(gameServer: any): Promise<any> {
@@ -624,6 +657,9 @@ class GameScript {
 }
 
 const serverURL = 'http://localhost:9501';
-const gameScript = new GameScript(serverURL, './script/allin.yaml');
-gameScript.load();
-gameScript.run();
+// const gameScript1 = new GameScript(serverURL, 'script/allin.yaml');
+// gameScript1.load();
+// gameScript1.run();
+const gameScript2 = new GameScript(serverURL, 'script/allinTest.yaml');
+gameScript2.load();
+gameScript2.run();
