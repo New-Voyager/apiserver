@@ -430,25 +430,33 @@ game:
         - club: newClub
           game: test3
 
-#     - verify-balance:
-#         # verify the balance of the club
-#         club:
-#           name: chennai
-#           balance: 2.0
+    # verify the balance of the clubs
+    - verify-club-balance:
+        - club: chennai
+          balance: 4
+        - club: newClub
+          balance: 2
 
-#         # verify how much each player owes chips to the club
-#         # and the clubs owes to the players
-#         players:
-#           -
-#             name: arun
-#             balance: 100    # borrowed 100 chips, left with 200 chips
-#           -
-#             name: arjun
-#             balance: -50    # borrowed 100 chips, left with 50 chips
-#           -
-#             name: sam
-#             balance: -50    # borrowed 100 chips, left with 50 chips
-#           -
-#             name: bala
-#             balance: -100   # borrowed 100 chips, left with 0 chips
-            
+    # verify the balance of the club players
+    - verify-player-balance:
+        - club: chennai
+          player: arun
+          balance: 250
+        - club: chennai
+          player: sam
+          balance: -50
+        - club: chennai
+          player: bala
+          balance: -150
+        - club: newClub
+          player: bala
+          balance: -100
+        - club: newClub
+          player: arun
+          balance: 100
+        - club: newClub
+          player: sam
+          balance: -50
+        - club: newClub
+          player: arjun
+          balance: -50
