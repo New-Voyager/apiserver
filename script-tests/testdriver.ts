@@ -27,7 +27,13 @@ class GameScript {
   public load() {
     const cwd = __dirname;
     const filename = `${cwd}/${this.scriptFile}`;
+    console.log(
+      '\n---------------------------------------------------------------------\n'
+    );
     console.log('dir: ' + filename);
+    console.log(
+      '\n---------------------------------------------------------------------\n'
+    );
     const doc = yaml.safeLoad(fs.readFileSync(filename, 'utf8'));
     this.script = doc;
     this.scriptFile = filename;
@@ -703,10 +709,14 @@ class GameScript {
   }
 }
 
+async function main() {
+  const list = fs.readdirSync(`${__dirname}/script/`);
+  for await (const file of list) {
+    const gameScript1 = new GameScript(serverURL, `script/${file}`);
+    gameScript1.load();
+    await gameScript1.run();
+  }
+}
+
 const serverURL = 'http://localhost:9501';
-// const gameScript1 = new GameScript(serverURL, 'script/allin.yaml');
-// gameScript1.load();
-// gameScript1.run();
-const gameScript2 = new GameScript(serverURL, 'script/allinTest.yaml');
-gameScript2.load();
-gameScript2.run();
+main();
