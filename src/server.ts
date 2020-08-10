@@ -64,7 +64,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
 
   const httpServer = app.listen(
     {
-      port: 9501,
+      port: GQL_PORT,
     },
     async () => {
       logger.error(`🚀 Server ready at http://0.0.0.0:${GQL_PORT}/graphql}`);
