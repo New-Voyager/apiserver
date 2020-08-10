@@ -26,7 +26,8 @@ class GameScript {
 
   public load() {
     const cwd = __dirname;
-    const filename = `${cwd}/${this.scriptFile}`;
+    //const filename = `${cwd}/${this.scriptFile}`;
+    const filename = this.scriptFile;
     console.log(
       '\n---------------------------------------------------------------------\n'
     );
@@ -710,11 +711,20 @@ class GameScript {
 }
 
 async function main() {
-  const list = fs.readdirSync(`${__dirname}/script/`);
+  var myArgs = process.argv.slice(2);
+  let scriptDir = `${__dirname}/script/`;
+  if (myArgs.length > 0) {
+    scriptDir = myArgs[0];
+  }
+  console.log(`Script directory: ${scriptDir}`);
+
+  const list = fs.readdirSync(scriptDir);
   for await (const file of list) {
-    const gameScript1 = new GameScript(serverURL, `script/${file}`);
-    gameScript1.load();
-    await gameScript1.run();
+    if (file.endsWith(".yaml")) {
+      const gameScript1 = new GameScript(serverURL, `${scriptDir}/${file}`);
+      gameScript1.load();
+      await gameScript1.run();
+    }
   }
 }
 

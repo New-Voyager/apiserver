@@ -18,7 +18,7 @@
     "test-server": "NODE_ENV=test DB_USED=sqllite node build/index.js",
     "test-server-windows": "test-server.bat",
     "test-windows": "NODE_ENV=test jest --runInBand",
-    "script-tests": "node --nolazy -r ts-node/register/transpile-only script-tests/testdriver.ts",
+    "script-tests-old": "node --nolazy -r ts-node/register/transpile-only script-tests/testdriver.ts",
     "check": "gts check",
     "clean": "gts clean",
     "compile": "tsc",
@@ -26,7 +26,8 @@
     "prepare": "npm run compile",
     "pretest-disabled": "npm run compile",
     "posttest-disabled": "npm run check",
-    "run-pg": "docker-compose -f docker-compose-pg.yaml up"
+    "run-pg": "docker-compose -f docker-compose-pg.yaml up",
+    "script-tests": "node build/script-tests/testdriver.js ./script-tests/script"
   },
   "dependencies": {
     "@types/jest": "^26.0.0",

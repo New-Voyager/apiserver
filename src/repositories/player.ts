@@ -11,7 +11,12 @@ class PlayerRepositoryImpl {
       player.isActive = true;
     } else {
       player = new Player();
-      player.uuid = uuidv4();
+      // use device id as player uuid (easy for testing)
+      if (deviceId) {
+        player.uuid = deviceId;
+      } else {
+        player.uuid = uuidv4();
+      }
     }
     player.name = name;
     player.isActive = true;

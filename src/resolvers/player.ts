@@ -16,7 +16,7 @@ async function getClubs(playerId: string): Promise<Array<any>> {
       private: true,
       imageId: '',
       clubCode: x.clubCode,
-      memberCount: x.memberCount,
+      memberCount: parseInt(x.memberCount),
     };
   });
   return clubs;

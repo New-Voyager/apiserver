@@ -429,7 +429,7 @@ class ClubRepositoryImpl {
     if (!isPostgres()) {
       placeHolder = '?';
     }
-    const query = `SELECT c.name, c.club_code clubCode, COUNT(*) memberCount FROM club_member cm JOIN club c
+    const query = `SELECT c.name, c.club_code "clubCode", COUNT(*) "memberCount" FROM club_member cm JOIN club c
              ON cm.club_id = c.id WHERE cm.player_id = ${placeHolder} 
              GROUP BY c.name, c.club_code, cm.club_id`;
     const result = await getConnection().query(query, [player.id]);

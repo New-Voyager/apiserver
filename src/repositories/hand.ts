@@ -297,7 +297,7 @@ class HandRepositoryImpl {
     gameNum: number,
     handNum: number
   ): Promise<HandHistory | undefined> {
-    logger.debug(clubId);
+    logger.debug(`Clubid: ${clubId}`);
     const handHistoryRepository = getRepository(HandHistory);
     const handHistory = await handHistoryRepository.findOne({
       where: {clubId: clubId, gameNum: gameNum, handNum: handNum},
@@ -309,7 +309,7 @@ class HandRepositoryImpl {
     clubId: number,
     gameNum: number
   ): Promise<HandHistory | undefined> {
-    logger.debug(clubId);
+    logger.debug(`Clubid: ${clubId}`);
     const handHistoryRepository = getRepository(HandHistory);
     const hands = await handHistoryRepository.find({
       where: {clubId: clubId, gameNum: gameNum},
