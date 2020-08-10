@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  apiserver:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.apiserver
+    image: api-server
+    ports:
+      - 9501:9501
+    tty: true
+    command: ["/bin/sh", "-c", "sleep 5 && yarn debug"]
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: 'game'
+      POSTGRES_PASSWORD: 'game'
+
+volumes:
+  db-data:
+
+networks:
+  default:
+    external:
+      name: game

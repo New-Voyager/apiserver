@@ -1,3 +1,5 @@
+DEFAULT_DOCKER_NET := game
+
 .PHONY: build
 build:
 	./node_modules/.bin/tsc
@@ -22,3 +24,11 @@ unit_test:
 .PHONY: script_tests
 script_tests:
 	./run_script_tests.sh
+
+.PHONY: create-network
+create-network:
+	@docker network create $(DEFAULT_DOCKER_NET) 2>/dev/null || true
+
+.PHONY: up
+up: create-network
+	docker-compose up
