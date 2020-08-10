@@ -5,6 +5,7 @@ cleanup:
       # delete clubs and club members
     - delete-clubs:
         - name: chennai
+        - name: newClub
 
 # Setup steps
 setup:
@@ -26,6 +27,8 @@ setup:
     - create-clubs:
         - name: chennai
           owner: bala
+        - name: newClub
+          owner: sam
 
       # use joinClub API and auth header to join each player
     - join-clubs:
@@ -33,7 +36,11 @@ setup:
           members:     
             - arun
             - sam
+        - club: newClub
+          members:     
+            - arun
             - arjun
+            - bala
 
       # verify the players are waiting to be approved  (PENDING)
     - verify-club-members:
@@ -43,8 +50,14 @@ setup:
               status: PENDING
             - name: sam
               status: PENDING
+        - club: newClub
+          members: 
+            - name: arun
+              status: PENDING
             - name: arjun
               status: PENDING
+            - name: bala
+              status: PENDING 
 
       # approve members with auth header (club.owner)
     - approve-club-members:
@@ -52,7 +65,11 @@ setup:
           members:     
             - arun
             - sam
+        - club: newClub
+          members:     
+            - arun
             - arjun
+            - bala
 
       # verify the players are approved  (ACTIVE)
     - verify-club-members:
@@ -62,12 +79,21 @@ setup:
               status: ACTIVE
             - name: sam
               status: ACTIVE
+        - club: newClub
+          members: 
+            - name: arun
+              status: ACTIVE
             - name: arjun
+              status: ACTIVE
+            - name: bala
               status: ACTIVE
 
       # create game servers if does not exist
     - create-game-servers:
-        - ipAddress: 10.1.1.4
+        - ipAddress: 10.1.1.5
+          currentMemory: 100
+          status: ACTIVE
+        - ipAddress: 10.1.1.6
           currentMemory: 100
           status: ACTIVE
 
@@ -81,6 +107,42 @@ game:
           game: test1
           input:
             title: test1
+            gameType: HOLDEM
+            smallBlind: 1.0
+            bigBlind: 2.0
+            utgStraddleAllowed: true
+            straddleBet: 4.0
+            minPlayers: 2
+            maxPlayers: 9
+            gameLength: 60
+            buyInApproval: false
+            rakePercentage: 5.0
+            rakeCap: 5.0
+            buyInMin: 100
+            buyInMax: 300
+            actionTime: 100
+        - club: chennai
+          game: test2
+          input:
+            title: test2
+            gameType: HOLDEM
+            smallBlind: 1.0
+            bigBlind: 2.0
+            utgStraddleAllowed: true
+            straddleBet: 4.0
+            minPlayers: 2
+            maxPlayers: 9
+            gameLength: 60
+            buyInApproval: false
+            rakePercentage: 5.0
+            rakeCap: 5.0
+            buyInMin: 100
+            buyInMax: 300
+            actionTime: 100
+        - club: newClub
+          game: test3
+          input:
+            title: test3
             gameType: HOLDEM
             smallBlind: 1.0
             bigBlind: 2.0
@@ -110,6 +172,30 @@ game:
             - playerId: bala
               seatNo: 5
               buyChips: 0
+        - club: chennai
+          game: test2
+          players:
+            - playerId: arun
+              seatNo: 1
+              buyChips: 0
+            - playerId: sam
+              seatNo: 3
+              buyChips: 0
+            - playerId: bala
+              seatNo: 5
+              buyChips: 0
+        - club: newClub
+          game: test3
+          players:
+            - playerId: arun
+              seatNo: 1
+              buyChips: 0
+            - playerId: sam
+              seatNo: 3
+              buyChips: 0
+            - playerId: bala
+              seatNo: 5
+              buyChips: 0
             - playerId: arjun
               seatNo: 8
               buyChips: 0
@@ -118,6 +204,30 @@ game:
     - buyin:
         - club: chennai
           game: test1
+          players:
+            - playerId: arun
+              seatNo: 1
+              buyChips: 100
+            - playerId: sam
+              seatNo: 3
+              buyChips: 100
+            - playerId: bala
+              seatNo: 5
+              buyChips: 100
+        - club: chennai
+          game: test2
+          players:
+            - playerId: arun
+              seatNo: 1
+              buyChips: 50
+            - playerId: sam
+              seatNo: 3
+              buyChips: 50
+            - playerId: bala
+              seatNo: 5
+              buyChips: 50
+        - club: newClub
+          game: test3
           players:
             - playerId: arun
               seatNo: 1
@@ -137,6 +247,12 @@ game:
         - club: chennai
           game: test1
           balance: 0
+        - club: chennai
+          game: test2
+          balance: 0
+        - club: newClub
+          game: test3
+          balance: 0
 
     # verify player game balance
     - verify-player-game-stack:
@@ -149,79 +265,23 @@ game:
             balance: 100
           - name: bala
             balance: 100
+        - club: chennai
+          game: test2
+          players:
+          - name: arun
+            balance: 50
+          - name: sam
+            balance: 50
+          - name: bala
+            balance: 50
+        - club: newClub
+          game: test3
+          players:
+          - name: arun
+            balance: 100
           - name: arjun
             balance: 100
-
-    # save hands
-    - save-hands:
-        - clubId: chennai
-          gameNum: test1
-          handNum: 1
-          messageType: RESULT
-          handStatus: RESULT
-          handResult:
-            playersInSeats: [arun, 0, sam, 0, bala, 0, 0, arjun]
-            handStartedAt: "1595385733"
-            handEndedAt: "1595385739"
-            preflopActions:
-            flopActions:
-            turnActions:
-            riverActions:
-            potWinners:
-              0:
-                hiWinners:
-                  - seatNo: 1
-                    amount: 50
-                    winningCards: [200, 196, 8, 132, 1]
-                    winningCardsStr: "[ A♣  A♦  2♣  T♦  2♠ ]"
-                    rankStr: Two Pair
-                    rank: 1000
-                loWinners:
-                  - seatNo: 1
-                    amount: 50
-                    winningCards: [200, 196, 8, 132, 1]
-                    winningCardsStr: "[ A♣  A♦  2♣  T♦  2♠ ]"
-                    rankStr: Two Pair
-                    rank: 1000
-            wonAt: SHOW_DOWN
-            rank: 1000
-            tips: 2.0
-            totalPot: 150
-            balanceAfterHand:
-              - seatNo: 1
-                playerId: arun
-                balance: 200
-              - seatNo: 3
-                playerId: sam
-                balance: 50
-              - seatNo: 5
-                playerId: bala
-                balance: 0
-              - seatNo: 8
-                playerId: arjun
-                balance: 50
-    
-    # End multiple games
-    - end-games:
-        - club: chennai
-          game: test1
-
-    # verify the balance of the clubs
-    - verify-club-balance:
-        - club: chennai
-          balance: 2
-
-    # verify the balance of the club players
-    - verify-player-balance:
-        - club: chennai
-          player: arun
-          balance: 100
-        - club: chennai
-          player: sam
-          balance: -50
-        - club: chennai
-          player: bala
-          balance: -100
-        - club: chennai
-          player: arjun
-          balance: -50
+          - name: sam
+            balance: 100
+          - name: bala
+            balance: 100
