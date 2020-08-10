@@ -5,7 +5,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
     ports:
-      - 5436:5432
+      - 5432:5432
     environment:
       POSTGRES_USER: 'game'
       POSTGRES_PASSWORD: 'game'

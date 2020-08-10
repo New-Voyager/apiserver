@@ -10,7 +10,7 @@ export async function pgConnection() {
   const connection = await createConnection({
     type: 'postgres',
     host: '10.2.4.4',
-    port: 5436,
+    port: 5432,
     username: 'game',
     password: 'game',
     database: 'game',
