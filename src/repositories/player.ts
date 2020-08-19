@@ -3,10 +3,15 @@ import {v4 as uuidv4} from 'uuid';
 import {Player} from '@src/entity/player';
 
 class PlayerRepositoryImpl {
-  public async createPlayer(name: string, deviceId: string): Promise<string> {
+  public async createPlayer(name: string, email: string, deviceId: string): Promise<string> {
     const repository = getRepository(Player);
+    let player;
+    if (email){
+      player = await repository.findOne({where: {email: email}});
+    }else{
+      player = await repository.findOne({where: {deviceId: deviceId}});
+    }
     // if a player already exists with the device id, update the user name
-    let player = await repository.findOne({where: {deviceId: deviceId}});
     if (player) {
       player.isActive = true;
     } else {
@@ -19,6 +24,7 @@ class PlayerRepositoryImpl {
       }
     }
     player.name = name;
+    player.email = email;
     player.isActive = true;
     player.deviceId = deviceId;
 

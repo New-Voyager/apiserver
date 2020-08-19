@@ -1,11 +1,13 @@
 input PlayerCreateInput {
   name: String!
-  deviceId: String!
+  email: String
+  deviceId: String
 }
 
 type Player {
   name: String!
   playerId: String!
+  email: String
   lastActiveTime: DateTime
   clubs: [PlayerClub!]
 }
