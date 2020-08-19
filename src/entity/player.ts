@@ -12,8 +12,11 @@ export class Player {
   @Column()
   public name!: string;
 
+  @Column( {nullable: true})
+  public email!: string;
+
   @Index()
-  @Column({name: 'device_id', unique: true})
+  @Column({name: 'device_id', unique: true, nullable:true })
   public deviceId!: string;
 
   @Column({name: 'is_active'})

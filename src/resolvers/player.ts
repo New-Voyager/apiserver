@@ -72,6 +72,7 @@ export async function getAllPlayers() {
     return {
       playerId: x.uuid,
       name: x.name,
+      email: x.email,
       lastActiveTime: x.updatedAt,
     };
   });
@@ -89,6 +90,7 @@ export async function getPlayerById(playerId: string) {
     uuid: player.uuid,
     id: player.id,
     name: player.name,
+    email: player.email,
     lastActiveTime: player.updatedAt,
   };
 }
@@ -101,8 +103,8 @@ export async function createPlayer(args: any) {
   if (args.player.name === '') {
     errors.push('name is a required field');
   }
-  if (args.player.deviceId === '') {
-    errors.push('deviceId is a required field');
+  if (args.player.deviceId === '' && args.player.email === '') {
+    errors.push('deviceId or email should be specified');
   }
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
@@ -112,6 +114,7 @@ export async function createPlayer(args: any) {
     const playerInput = args.player;
     return PlayerRepository.createPlayer(
       playerInput.name,
+      playerInput.email,
       playerInput.deviceId
     );
   } catch (err) {
