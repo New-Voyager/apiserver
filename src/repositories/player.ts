@@ -3,7 +3,7 @@ import {v4 as uuidv4} from 'uuid';
 import {Player} from '@src/entity/player';
 
 class PlayerRepositoryImpl {
-  public async createPlayer(name: string, email: string, deviceId: string): Promise<string> {
+  public async createPlayer(name: string, email: string, password: string, deviceId: string): Promise<string> {
     const repository = getRepository(Player);
     let player;
     if (email){
@@ -25,6 +25,7 @@ class PlayerRepositoryImpl {
     }
     player.name = name;
     player.email = email;
+    player.password = password;
     player.isActive = true;
     player.deviceId = deviceId;
 
