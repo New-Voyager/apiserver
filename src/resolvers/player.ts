@@ -96,30 +96,46 @@ export async function getPlayerById(playerId: string) {
 }
 
 export async function createPlayer(args: any) {
-  const errors = new Array<string>();
-  if (!args.player) {
-    errors.push('player object not found');
-  }
-  if (args.player.name === '') {
-    errors.push('name is a required field');
-  }
-  if (args.player.deviceId === '' && args.player.email === '') {
-    errors.push('deviceId or email should be specified');
-  }
+  const errors = validate();
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
   }
-
   try {
     const playerInput = args.player;
     return PlayerRepository.createPlayer(
       playerInput.name,
       playerInput.email,
+      playerInput.password,
       playerInput.deviceId
     );
   } catch (err) {
     logger.error(err);
     throw new Error('Failed to register Player');
+  }
+
+  function validate() {
+    const errors = new Array<string>();
+    if (!args.player) {
+      errors.push('player object not found');
+    }
+    if (isEmpty(args.player.name) ){
+      errors.push('name is a required field');
+    }
+    if (isEmpty(args.player.deviceId) && isEmpty(args.player.email) ){
+      errors.push('deviceId or email should be specified');
+    }
+    if (!isEmpty(args.player.deviceId) && !isEmpty(args.player.email)) {
+      errors.push('deviceId and email both should not be specified');
+    }
+    if (!isEmpty(args.player.email) && isEmpty(args.player.password)){
+      errors.push('password should be specified');
+    }
+
+    return errors;
+
+    function isEmpty(value: any){
+      return value === undefined || value === '';
+    }
   }
 }
 

@@ -1,6 +1,7 @@
 input PlayerCreateInput {
   name: String!
   email: String
+  password: String
   deviceId: String
 }
 
