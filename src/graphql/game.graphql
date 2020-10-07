@@ -107,4 +107,6 @@ type Query {
   getGameTemplates(clubCode: String!): [GameInfo!]
   # implemented
   gameById(gameCode: String!): gameId!
+  #getLiveGames: [GameShortInfo!]
+  #getPastGames: [GameShortInfo!]
 }

@@ -429,9 +429,12 @@ class ClubRepositoryImpl {
     if (!isPostgres()) {
       placeHolder = '?';
     }
-    const query = `SELECT c.name, c.club_code "clubCode", COUNT(*) "memberCount" FROM club_member cm JOIN club c
-             ON cm.club_id = c.id WHERE cm.player_id = ${placeHolder} 
-             GROUP BY c.name, c.club_code, cm.club_id`;
+    const query = `WITH my_clubs as (
+      SELECT cm.club_id, count(*) member_count FROM club_member cm
+      WHERE cm.club_id in (SELECT club_id FROM club_member WHERE player_id=${placeHolder})
+                 GROUP BY cm.club_id)
+      SELECT c.club_code as "clubCode", member_count as "memberCount", c.name, c.owner_id as "ownerId" 
+      FROM club c JOIN my_clubs mc ON c.id = mc.club_id`;
     const result = await getConnection().query(query, [player.id]);
     return result;
   }

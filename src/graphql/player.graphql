@@ -25,6 +25,7 @@ type PlayerClub {
   clubStatus: ClubStatus
   memberCount: Int
   imageId: String
+  isOwner: Boolean
   private: Boolean
 }
 

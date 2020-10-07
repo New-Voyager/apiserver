@@ -147,6 +147,16 @@ class HandRepositoryImpl {
       handHistory.timeEnded = handData.handResult.handEndedAt;
       handHistory.data = JSON.stringify(handData);
 
+      if (typeof handData.handResult.handStartedAt === 'string') {
+        handData.handResult.handStartedAt = parseInt(handData.handResult.handStartedAt);
+      }
+
+      if (typeof handData.handResult.handEndedAt === 'string') {
+        handData.handResult.handEndedAt = parseInt(handData.handResult.handEndedAt);
+      }
+
+      handHistory.timeStarted = new Date(handData.handResult.handStartedAt * 1000);
+      handHistory.timeEnded = new Date(handData.handResult.handEndedAt * 1000);
       /**
        * Assigning hand winners values
        */

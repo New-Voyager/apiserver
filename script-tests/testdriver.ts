@@ -4,6 +4,7 @@ import {default as axios} from 'axios';
 import {getClient} from '../tests/utils/utils';
 import {gql} from 'apollo-boost';
 import {ClubMemberStatus} from '../src/entity/club';
+import { isUndefined } from 'lodash';
 
 /*
 This class runs game script and verifies results in different stages
@@ -13,6 +14,7 @@ class GameScript {
   registeredPlayers: Record<string, any>;
   clubCreated: Record<string, any>;
   gameCreated: Record<string, any>;
+  disabled: boolean;
 
   public log(logStr: string) {
     console.log(`[${this.scriptFile}] ${logStr}`);
@@ -22,6 +24,11 @@ class GameScript {
     this.registeredPlayers = {};
     this.clubCreated = {};
     this.gameCreated = {};
+    this.disabled = false;
+  }
+
+  public isDisabled(): boolean {
+    return this.disabled;
   }
 
   public load() {
@@ -38,6 +45,13 @@ class GameScript {
     const doc = yaml.safeLoad(fs.readFileSync(filename, 'utf8'));
     this.script = doc;
     this.scriptFile = filename;
+
+    if (this.script['test']) {
+      const config = this.script['test'];
+      if (config['disabled'] === true) {
+        this.disabled = true;
+      }
+    }
   }
 
   /////////////////////// Main Run Function
@@ -609,14 +623,14 @@ class GameScript {
     const saveHandData = handData;
     saveHandData.clubId = this.clubCreated[handData.clubId].clubId;
     saveHandData.gameNum = this.gameCreated[handData.gameNum].gameId;
-    for (var i = 0; i < handData.handResult.playersInSeats.length; i++) {
+    for (let i = 0; i < handData.handResult.playersInSeats.length; i++) {
       if (handData.handResult.playersInSeats[i] !== 0) {
         saveHandData.handResult.playersInSeats[i] = this.registeredPlayers[
           handData.handResult.playersInSeats[i]
         ].playerId;
       }
     }
-    for (var i = 0; i < handData.handResult.balanceAfterHand.length; i++) {
+    for (let i = 0; i < handData.handResult.balanceAfterHand.length; i++) {
       saveHandData.handResult.balanceAfterHand[
         i
       ].playerId = this.registeredPlayers[
@@ -662,7 +676,7 @@ class GameScript {
         variables: {clubCode: this.clubCreated[balance.club].clubCode},
         query: queryClubBalance,
       });
-      if (resp.data.balance.balance != balance.balance) {
+      if (resp.data.balance.balance !== balance.balance) {
         this.log(
           `Expected ${balance.balance} but received ${resp.data.balance.balance}`
         );
@@ -697,7 +711,7 @@ class GameScript {
         },
         query: queryPlayerBalance,
       });
-      if (resp.data.balance.balance != balance.balance) {
+      if (resp.data.balance.balance !== balance.balance) {
         this.log(
           `Expected ${balance.balance} but received ${resp.data.balance.balance}`
         );
@@ -711,7 +725,7 @@ class GameScript {
 }
 
 async function main() {
-  var myArgs = process.argv.slice(2);
+  const myArgs = process.argv.slice(2);
   let scriptDir = `${__dirname}/script/`;
   if (myArgs.length > 0) {
     scriptDir = myArgs[0];
@@ -720,9 +734,13 @@ async function main() {
 
   const list = fs.readdirSync(scriptDir);
   for await (const file of list) {
-    if (file.endsWith(".yaml")) {
+    if (file.endsWith('.yaml')) {
       const gameScript1 = new GameScript(serverURL, `${scriptDir}/${file}`);
       gameScript1.load();
+      if (gameScript1.isDisabled()) {
+        console.log(`Script: ${file} is marked as disabled`);
+        continue;
+      }
       await gameScript1.run();
     }
   }

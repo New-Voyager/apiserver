@@ -13,13 +13,13 @@ jobs:
           command: make build
       - run:
           name: Run unit tests
-          command: make unit_test
+          command: make unit-tests
       - run:
           name: Run tests
-          command: make test
+          command: make tests
       - run:
           name: Run script tests
-          command: make script_tests          
+          command: make script-tests          
 workflows:
     build-and-test:
       jobs:

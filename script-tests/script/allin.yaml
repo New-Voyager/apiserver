@@ -1,3 +1,6 @@
+test:
+  disabled: false
+
 # Cleanup steps
 cleanup:
   steps:

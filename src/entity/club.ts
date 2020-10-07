@@ -38,7 +38,7 @@ export class Club {
   public status!: ClubStatus;
 
   @ManyToOne(type => Player, {nullable: false, eager: true})
-  @JoinColumn()
+  @JoinColumn({name: 'owner_id'})
   public owner!: Player | Promise<Player | undefined>;
 
   @OneToMany(type => ClubMember, clubMember => clubMember.club)

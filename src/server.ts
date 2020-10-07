@@ -45,7 +45,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     context: requestContext,
   });
 
-  if (process.env.NODE_ENV != 'test') {
+  if (process.env.NODE_ENV !== 'test') {
     logger.debug('Running in dev/prod mode');
     const options = await getConnectionOptions('default');
     await createConnection(options);
@@ -56,6 +56,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     await createConnection({...options, name: 'default'});
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const express = require('express');
   app = express();
   app.use(authorize);

@@ -11,10 +11,15 @@ async function getClubs(playerId: string): Promise<Array<any>> {
     return [];
   }
   const clubs = _.map(clubMembers, x => {
+    let isOwner = false;
+    if (x.ownerId === playerId) {
+      isOwner = true;
+    }
     return {
       name: x.name,
       private: true,
       imageId: '',
+      isOwner: isOwner,
       clubCode: x.clubCode,
       memberCount: parseInt(x.memberCount),
     };

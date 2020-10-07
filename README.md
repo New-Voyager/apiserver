@@ -2,41 +2,54 @@
 
 [![CircleCI](https://circleci.com/gh/New-Voyager/apiserver.svg?style=svg&circle-token=332b6c164df3a333a6d6e14282ca317d0c52abe5)](https://app.circleci.com/pipelines/github/New-Voyager/apiserver)
 
-## Development
-To run the project with postgres database, you need to run the postgres in docker.
-```
-docker-compose -f docker-compose-pg.yaml up
-```
 
-Then, run the server using either yarn and npm command.
-```
-yarn debug
-```
-To run in windows, use debug-windows script.
-```
-yarn debug-windows 
-```
+
+## Build
+
+To build api server, run the following command.
+
+``
+make build
+``
+
+## Debug
+
+You need to run postgres first before launching the api server. To run postgres server, use the following command.
+
+``
+make run-pg
+`` 
+
+To debug api server, first run the API server in watch debug mode. The node server will run in debug mode with watch enabled, and will listen at port 9235 for the debugger to be attached. 
+
+``
+make watch-debug
+``
+
+Launch vscode debugger with “Watch debug” configuration.
+
 
 ## Testing
-There are two run configurations to run tests in package json
-First run the the server in test mode, which will use sqllite for database
-  "test-server": "NODE_ENV=test DB_USED=sqllite node build/index.js"
-```
-yarn test-server
-```
 
-In windows, use test-server-windows script.
-```
-yarn test-server-windows
-```
+There are several tests written to test api server. 
 
-Then, run the jest test with test configuration. 
-    "test": "NODE_ENV=test jest --runInBand",
-```
-yarn test
-```
+*unit-tests*: Tests the API server functionality without running the graphql server. These tests use sqlite as database backend.
 
-You can run below make target to run both test-server and tests.
-```
-make test
-```
+To run unit-tests, run the following command.
+
+``
+  make unit-tests
+``
+*tests*: These tests are functional tests, which is used for testing the graphql API.
+To run functional tests, run the following command.
+
+``
+  make tests
+``
+*script-tests*: These tests are kind of end-to-end tests, which can also be used for setting up database for UI development and other testing.  
+
+To run script-tests, run the following command.
+
+``
+  make script-tests
+``
