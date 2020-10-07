@@ -14,17 +14,17 @@ install_deps:
 clean:
 	rm -rf build
 
-.PHONY: test
-test:
+.PHONY: tests
+tests:
 	./run_system_tests.sh
 
-.PHONY: unit_test
-unit_test:
+.PHONY: unit-tests
+unit-tests:
 	yarn unit-tests
 
 
-.PHONY: script_tests
-script_tests:
+.PHONY: script-tests
+script-tests:
 	./run_script_tests.sh
 
 .PHONY: create-network
@@ -46,3 +46,17 @@ publish:
 	docker tag api-server gcr.io/${GCP_PROJECT_ID}/api-server:latest
 	docker push gcr.io/${GCP_PROJECT_ID}/api-server:$(BUILD_NO)
 	docker push gcr.io/${GCP_PROJECT_ID}/api-server:latest
+
+.PHONY: run-pg
+run-pg:
+	yarn run-pg
+
+.PHONY: debug
+debug:
+	yarn watch-debug 
+ 
+.PHONY: run-server
+run-server:
+	yarn run-pg &
+	yarn watch-debug
+	echo "Running server...."
