@@ -1,12 +1,7 @@
 import {createConnection, getConnectionOptions} from 'typeorm';
 import {Player} from '@src/entity/player';
 import {Club, ClubMember} from '@src/entity/club';
-import {
-  PokerGame,
-  PokerGamePlayers,
-  PokerHand,
-  PlayerGame,
-} from '@src/entity/game';
+import {PokerGame, PokerGamePlayers, PokerHand} from '@src/entity/game';
 import {HandWinners, HandHistory, StarredHands} from '@src/entity/hand';
 import {
   PlayerGameTracker,
@@ -43,7 +38,6 @@ export async function sqlliteConnection() {
       PokerGamePlayers,
       HandWinners,
       HandHistory,
-      PlayerGame,
       StarredHands,
       PlayerGameTracker,
       ClubGameRake,
