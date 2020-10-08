@@ -1,0 +1,17 @@
+1 Registration screen
+  API needs to take password. Selva has a PR. We need to publish the container (Soma)
+2. Games screen
+    We need API to return live games baded on current user. Currently, this API requires club id (Soma)
+    We need an API to get recently played games for the current user (games played in last 7 days) (Selva)
+3. Clubs screen
+    The current API needs a output field to indicate the current user is a owner or not (Selva)
+    Club delete is not working
+    Remove Search Club widget and add "Search Club" as a clickable text like Create Club (Paul)
+
+    Join/Decline APIs: Verify the APIs work correctly (Soma)
+4. Club messaging screen: Verify the API works 
+5. Members screen: Verify the APIs (Soma/Selva)
+
+
+JWT: 
+

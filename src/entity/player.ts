@@ -12,14 +12,14 @@ export class Player {
   @Column()
   public name!: string;
 
-  @Column( {unique:true, nullable: true})
+  @Column({unique: true, nullable: true})
   public email!: string;
 
-  @Column( {nullable: true})
+  @Column({nullable: true})
   public password!: string;
 
   @Index()
-  @Column({name: 'device_id', unique: true, nullable:true })
+  @Column({name: 'device_id', unique: true, nullable: true})
   public deviceId!: string;
 
   @Column({name: 'is_active'})

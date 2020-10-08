@@ -1,3 +1,6 @@
+import {GameRepository} from '@src/repositories/game';
+import {getLogger} from '@src/utils/log';
+
 /**
  * These APIs are only available for game server.
  */
@@ -17,6 +20,27 @@ class GameAPIs {
     }
 
     resp.status(200).send({status: 'OK'});
+  }
+
+  public async startGame(req: any, resp: any) {
+    const clubID = parseInt(req.param('club-id'));
+    if (!clubID) {
+      const res = {error: 'Invalid club id'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    const gameNum = parseInt(req.param('game-id'));
+    if (!gameNum) {
+      const res = {error: 'Invalid game id'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    try {
+      await GameRepository.markGameStarted(clubID, gameNum);
+      resp.status(200).send({status: 'OK'});
+    } catch (err) {
+      resp.status(500).send({error: err.message});
+    }
   }
 }
 

@@ -123,6 +123,12 @@ export class PokerGame {
   @Column({name: 'max_waitlist', type: 'int', default: 20})
   public maxWaitlist!: number;
 
+  @Column({name: 'players_in_seats', type: 'int', default: 0})
+  public playersInSeats!: number;
+
+  @Column({name: 'players_in_waitlist', type: 'int', default: 0})
+  public playersInWaitList!: number;
+
   @Column({
     name: 'rake_percentage',
     type: 'decimal',
@@ -330,34 +336,3 @@ export class PokerHand {
             pot: value
         },
 */
-
-/**
- * Quick way to get list of games the user is part of.
- */
-@Entity({name: 'player_games'})
-export class PlayerGame {
-  @PrimaryGeneratedColumn()
-  public id!: number;
-
-  @Index()
-  @ManyToOne(type => PokerGame, {nullable: false, eager: true})
-  public game!: PokerGame;
-
-  @Index()
-  @ManyToOne(type => Player, {nullable: false, eager: true})
-  public player!: Player;
-
-  @Index()
-  @ManyToOne(type => Club, {nullable: true})
-  public club!: Club;
-
-  @DbAwareColumn({
-    name: 'started_playing_at',
-    type: 'timestamp',
-    nullable: true,
-  })
-  public startedPlayingAt!: Date;
-
-  @DbAwareColumn({name: 'left_playing_at', type: 'timestamp', nullable: true})
-  public leftPlayingAt!: Date;
-}

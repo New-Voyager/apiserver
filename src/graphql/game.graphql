@@ -12,6 +12,22 @@ enum GameStatus {
   ENDED
 }
 
+
+enum PlayerGameStatus {
+  NOT_PLAYING
+  PLAYING
+  IN_QUEUE
+  BREAK
+  STANDING_UP
+  LEFT
+  KICKED_OUT
+  BLOCKED
+  WAIT_FOR_SITTING_APPROVAL
+  LOST_CONNECTION
+  WAIT_FOR_BUYIN_APPROVAL
+}
+
+
 input GameCreateInput {
   gameType: GameType!
   title: String
@@ -78,6 +94,7 @@ input GameUpdateInput {
   buyInMin: Float
   buyInMax: Float
   title: String
+
 }
 
 type Mutation {
@@ -102,11 +119,10 @@ type gameId{
   id: Int!
 }
 
+
 type Query {
   # Not implemented
   getGameTemplates(clubCode: String!): [GameInfo!]
   # implemented
   gameById(gameCode: String!): gameId!
-  #getLiveGames: [GameShortInfo!]
-  #getPastGames: [GameShortInfo!]
 }

@@ -3,12 +3,17 @@ import {v4 as uuidv4} from 'uuid';
 import {Player} from '@src/entity/player';
 
 class PlayerRepositoryImpl {
-  public async createPlayer(name: string, email: string, password: string, deviceId: string): Promise<string> {
+  public async createPlayer(
+    name: string,
+    email: string,
+    password: string,
+    deviceId: string
+  ): Promise<string> {
     const repository = getRepository(Player);
     let player;
-    if (email){
+    if (email) {
       player = await repository.findOne({where: {email: email}});
-    }else{
+    } else {
       player = await repository.findOne({where: {deviceId: deviceId}});
     }
     // if a player already exists with the device id, update the user name

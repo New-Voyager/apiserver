@@ -6,6 +6,8 @@ import {createConnection, getConnectionOptions} from 'typeorm';
 import {GameServerAPI} from './internal/gameserver';
 import {HandServerAPI} from './internal/hand';
 import {ChipsTrackSeverAPI} from './internal/chipstrack';
+import {GameAPI} from './internal/game';
+
 const bodyParser = require('body-parser');
 const GQL_PORT = 9501;
 import {getLogger} from '@src/utils/log';
@@ -20,6 +22,16 @@ const requestContext = async ({req}) => {
 };
 
 let app: any = null;
+
+function setPgConversion() {
+  const types = require('pg').types;
+  types.setTypeParser(20, val => {
+    return parseInt(val);
+  });
+  types.setTypeParser(1700, val => {
+    return parseFloat(val);
+  });
+}
 
 export async function start(dbConnection?: any): Promise<[any, any]> {
   logger.debug('In start method');
@@ -71,7 +83,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
       logger.error(`🚀 Server ready at http://0.0.0.0:${GQL_PORT}/graphql}`);
     }
   );
-
+  setPgConversion();
   addInternalRoutes(app);
   return [app, httpServer];
 }
@@ -81,6 +93,7 @@ function addInternalRoutes(app: any) {
   app.post('/internal/update-game-server', GameServerAPI.updateGameServer);
   app.get('/internal/game-servers', GameServerAPI.getGameServers);
   app.post('/internal/save-hand', HandServerAPI.saveHand);
+  app.post('/internal/start-game', GameAPI.startGame);
   app.post('/internal/player-sit-in', ChipsTrackSeverAPI.playerSitsIn);
   app.post('/internal/game-ended', ChipsTrackSeverAPI.endGame);
   app.post('/internal/buy-chips', ChipsTrackSeverAPI.buyChips);

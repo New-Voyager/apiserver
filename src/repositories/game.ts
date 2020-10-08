@@ -1,6 +1,6 @@
-import {getRepository, getManager} from 'typeorm';
-import {PokerGame, GameType, PlayerGame, GameStatus} from '@src/entity/game';
-import {Club, ClubMember, ClubMemberStatus} from '@src/entity/club';
+import {getRepository, getManager, getConnection, createQueryBuilder} from 'typeorm';
+import {PokerGame, GameType, GameStatus} from '@src/entity/game';
+import {Club, ClubMember, ClubMemberStatus, ClubStatus} from '@src/entity/club';
 import {Player} from '@src/entity/player';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {getLogger} from '@src/utils/log';
@@ -46,7 +46,7 @@ class GameRepositoryImpl {
       );
     }
 
-    if (clubMember.isManager && clubMember.status == ClubMemberStatus.ACTIVE) {
+    if (clubMember.isManager && clubMember.status === ClubMemberStatus.ACTIVE) {
       throw new Error(
         `The player ${playerId} is not an approved manager to create a game`
       );
@@ -77,7 +77,6 @@ class GameRepositoryImpl {
     game.startedBy = player;
     try {
       const gameRespository = getRepository(PokerGame);
-      const playerGameRespository = getRepository(PlayerGame);
       await getManager().transaction(async transactionalEntityManager => {
         savedGame = await gameRespository.save(game);
 
@@ -88,12 +87,6 @@ class GameRepositoryImpl {
         trackServer.gameCode = savedGame.gameCode;
         trackServer.gameServerId = gameServers[pick];
         await trackgameServerRepository.save(trackServer);
-
-        const playerGame = new PlayerGame();
-        playerGame.club = club;
-        playerGame.game = savedGame;
-        playerGame.player = player;
-        await playerGameRespository.save(playerGame);
 
         const clubRake = new ClubGameRake();
         clubRake.club = club;
@@ -143,7 +136,6 @@ class GameRepositoryImpl {
     let savedGame;
     try {
       const gameRespository = getRepository(PokerGame);
-      const playerGameRespository = getRepository(PlayerGame);
       await getManager().transaction(async transactionalEntityManager => {
         savedGame = await gameRespository.save(game);
 
@@ -154,11 +146,6 @@ class GameRepositoryImpl {
         trackServer.gameCode = savedGame.gameCode;
         trackServer.gameServerId = gameServers[pick];
         await trackgameServerRepository.save(trackServer);
-
-        const playerGame = new PlayerGame();
-        playerGame.game = savedGame;
-        playerGame.player = player;
-        await playerGameRespository.save(playerGame);
 
         const clubGameRakeRepository = getRepository(ClubGameRake);
         const clubRake = new ClubGameRake();
@@ -192,6 +179,68 @@ class GameRepositoryImpl {
     const repository = getRepository(PokerGame);
     const count = await repository.count({where: {host: {id: playerId}}});
     return count;
+  }
+
+  public async markGameStarted(clubId: number, gameId: number) {
+    this.markGameStatus(clubId, gameId, GameStatus.RUNNING);
+  }
+
+  public async markGameEnded(clubId: number, gameId: number) {
+    this.markGameStatus(clubId, gameId, GameStatus.ENDED);
+  }
+
+  public async markGameStatus(clubId: number, gameId: number, status: GameStatus) {
+    const repository = getRepository(PokerGame);
+    const game = await repository.findOne({where: {id: gameId}});
+    if (!game) {
+      throw new Error(`Game: ${gameId} is not found`);
+    }
+
+    await getConnection()
+      .createQueryBuilder()
+      .update(PokerGame)
+      .set({status: status})
+      .where('id = :id', {id: gameId})
+      .execute();
+  }
+
+  public async getLiveGames(playerId: string) {
+    // get the list of live games associated with player clubs
+    const query = `
+          WITH my_clubs AS (SELECT DISTINCT c.*, p.id player_id FROM club c JOIN club_member cm ON
+            c.id  = cm.club_id JOIN player p ON 
+            cm.player_id = p.id AND 
+            p.uuid = '${playerId}' AND
+            c.status = ${ClubStatus.ACTIVE} AND cm.status = ${ClubMemberStatus.ACTIVE})
+          SELECT 
+            c.club_code as "clubCode", 
+            c.name as "clubName", 
+            g.game_code as "gameCode", 
+            g.id as gameId, 
+            g.title as title, 
+            g.game_type as "gameType", 
+            g.buy_in_min as "buyInMin", 
+            g.buy_in_max as "buyInMax", 
+            EXTRACT(EPOCH FROM(now()-g.started_at)) as "elapsedTime", 
+            g.started_at as "startedAt", 
+            g.max_players as "maxPlayers", 
+            g.max_waitlist as "maxWaitList", 
+            g.players_in_waitlist as "playersInWaitList", 
+            g.players_in_seats as "playersInSeats", 
+            g.game_status as "gameStatus",
+            pgt.status as "playerStatus"
+          FROM poker_game g JOIN my_clubs c 
+          ON 
+            g.club_id = c.id 
+            AND g.game_status = ${GameStatus.RUNNING}
+          LEFT OUTER JOIN 
+            player_game_tracker pgt ON
+            pgt.player_id = c.player_id AND
+            pgt.game_id  = g.id;
+        `;
+    const resp = await getConnection().query(query);
+    console.log(JSON.stringify(resp));
+    return resp;
   }
 }
 

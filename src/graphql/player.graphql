@@ -29,6 +29,21 @@ type PlayerClub {
   private: Boolean
 }
 
+
+type LiveGame {
+  clubCode: String
+  clubName: String
+  gameCode: String!
+  title: String
+  gameType: GameType!
+  buyInMin: Float
+  buyInMax: Float
+  elapsedTime: Int!
+  startedAt: DateTime!
+  status: GameStatus!
+  playerStatus: PlayerGameStatus!
+}
+
 type PlayerId {
   uuid: String!
   id: Int!
@@ -40,4 +55,7 @@ type Query {
   myClubs: [PlayerClub!]
   allPlayers: [Player!]
   playerById: PlayerId!
+  liveGames: [LiveGame!]
+  #getPastGames: [GameShortInfo!]
+
 }

@@ -7,7 +7,7 @@ cleanup:
 
       # delete clubs and club members
     - delete-clubs:
-        - name: chennai
+        - name: New Delhi
 
 # Setup steps
 setup:
@@ -27,12 +27,12 @@ setup:
       # create a club and pass the owner in the Auth header
       # store club info in a dictionary
     - create-clubs:
-        - name: chennai
+        - name: New Delhi
           owner: bala
 
       # use joinClub API and auth header to join each player
     - join-clubs:
-        - club: chennai
+        - club: New Delhi
           members:     
             - arun
             - sam
@@ -40,7 +40,7 @@ setup:
 
       # verify the players are waiting to be approved  (PENDING)
     - verify-club-members:
-        - club: chennai
+        - club: New Delhi
           members:
             - name: arun
               status: PENDING
@@ -51,7 +51,7 @@ setup:
 
       # approve members with auth header (club.owner)
     - approve-club-members:
-        - club: chennai
+        - club: New Delhi
           members:     
             - arun
             - sam
@@ -59,7 +59,7 @@ setup:
 
       # verify the players are approved  (ACTIVE)
     - verify-club-members:
-        - club: chennai
+        - club: New Delhi
           members:
             - name: arun
               status: ACTIVE
@@ -79,8 +79,8 @@ game:
   steps:
 
     # configure game
-    - start-games:
-        - club: chennai
+    - configure-games:
+        - club: New Delhi
           game: test1
           input:
             title: test1
@@ -101,7 +101,7 @@ game:
 
     # players sits in
     - sitsin:
-        - club: chennai
+        - club: New Delhi
           game: test1
           players:
             - playerId: arun
@@ -119,7 +119,7 @@ game:
 
     # players buy-in
     - buyin:
-        - club: chennai
+        - club: New Delhi
           game: test1
           players:
             - playerId: arun
@@ -137,13 +137,13 @@ game:
 
     # verify club game balance
     - verify-club-game-stack:
-        - club: chennai
+        - club: New Delhi
           game: test1
           balance: 0
 
     # verify player game balance
     - verify-player-game-stack:
-        - club: chennai
+        - club: New Delhi
           game: test1
           players:
           - name: arun
@@ -155,9 +155,14 @@ game:
           - name: arjun
             balance: 100
 
+    # start games
+    - start-games:
+        - club: New Delhi
+          game: test1
+
     # save hands
     - save-hands:
-        - clubId: chennai
+        - clubId: New Delhi
           gameNum: test1
           handNum: 1
           messageType: RESULT
@@ -206,25 +211,25 @@ game:
     
     # End multiple games
     - end-games:
-        - club: chennai
+        - club: New Delhi
           game: test1
 
     # verify the balance of the clubs
     - verify-club-balance:
-        - club: chennai
+        - club: New Delhi
           balance: 2
 
     # verify the balance of the club players
     - verify-player-balance:
-        - club: chennai
+        - club: New Delhi
           player: arun
           balance: 100
-        - club: chennai
+        - club: New Delhi
           player: sam
           balance: -50
-        - club: chennai
+        - club: New Delhi
           player: bala
           balance: -100
-        - club: chennai
+        - club: New Delhi
           player: arjun
           balance: -50

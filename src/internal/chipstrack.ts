@@ -130,7 +130,10 @@ class ChipsTrackAPIs {
         resp.status(500).send(JSON.stringify(res));
       }
     } catch (err) {
-      resp.status(500);
+      logger.error(`
+        Error when buying chips. Message: ${err.message}
+      `);
+      resp.status(500).send(JSON.stringify({error: err.message}));
       return;
     }
   }

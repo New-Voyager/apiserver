@@ -12,6 +12,8 @@ import {PokerGame} from '@src/entity/game';
 import {PageOptions} from '@src/types';
 import {getLogger} from '@src/utils/log';
 import {getClubCode} from '@src/utils/uniqueid';
+import {isPostgres} from '@src/utils';
+
 const logger = getLogger('club-repository');
 
 export interface ClubCreateInput {
@@ -23,13 +25,6 @@ export interface ClubCreateInput {
 export interface ClubUpdateInput {
   name: string;
   description: string;
-}
-
-function isPostgres() {
-  if (process.env.DB_USED === 'sqllite') {
-    return false;
-  }
-  return true;
 }
 
 class ClubRepositoryImpl {
@@ -74,13 +69,12 @@ class ClubRepositoryImpl {
     const clubRepository = getRepository(Club);
 
     while (true) {
-      // find whether the club already exists
-      //const uuid: string = uuidv4();
-      //clubId = uuid.substr(uuid.lastIndexOf('-') + 1);
-      //clubId = clubId.toUpperCase();
+      // generate a club code
       clubCode = await getClubCode(input.name);
       const club = await clubRepository.findOne({where: {clubCode: clubCode}});
+
       if (!club) {
+        // if the club doesn't exist, we can use it
         break;
       }
     }
@@ -230,7 +224,7 @@ class ClubRepositoryImpl {
       throw new Error(`The player ${player.name} is not in the club`);
     }
 
-    if (clubMember.status == ClubMemberStatus.ACTIVE) {
+    if (clubMember.status === ClubMemberStatus.ACTIVE) {
       return clubMember.status;
     }
 
@@ -256,7 +250,7 @@ class ClubRepositoryImpl {
       throw new Error('Unexpected. There is no owner for the club');
     }
 
-    if (owner.uuid != ownerId) {
+    if (owner.uuid !== ownerId) {
       // TODO: make sure the ownerId is matching with club owner
       if (ownerId !== '') {
         throw new Error('Unauthorized');
@@ -267,7 +261,7 @@ class ClubRepositoryImpl {
       throw new Error(`The player ${player.name} is not in the club`);
     }
 
-    if (clubMember.status == ClubMemberStatus.DENIED) {
+    if (clubMember.status === ClubMemberStatus.DENIED) {
       return clubMember.status;
     }
 
@@ -303,7 +297,7 @@ class ClubRepositoryImpl {
       throw new Error(`The player ${player.name} is not in the club`);
     }
 
-    if (clubMember.status == ClubMemberStatus.KICKEDOUT) {
+    if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
       return clubMember.status;
     }
 
