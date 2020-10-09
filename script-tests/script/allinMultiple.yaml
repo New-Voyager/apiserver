@@ -1,5 +1,5 @@
 test:
-  disabled: true
+  disabled: false
 
 # Cleanup steps
 cleanup:
@@ -105,7 +105,7 @@ game:
   steps:
 
     # configure game
-    - start-games:
+    - configure-games:
         - club: chennai
           game: test1
           input:
@@ -160,7 +160,42 @@ game:
             buyInMin: 100
             buyInMax: 300
             actionTime: 100
-
+        - club: chennai
+          game: live game 1
+          input:
+            title: live game 1
+            gameType: HOLDEM
+            smallBlind: 1.0
+            bigBlind: 2.0
+            utgStraddleAllowed: true
+            straddleBet: 4.0
+            minPlayers: 2
+            maxPlayers: 9
+            gameLength: 60
+            buyInApproval: false
+            rakePercentage: 5.0
+            rakeCap: 5.0
+            buyInMin: 100
+            buyInMax: 300
+            actionTime: 100
+        - club: newClub
+          game: live game 2
+          input:
+            title: live game 2
+            gameType: HOLDEM
+            smallBlind: 1.0
+            bigBlind: 2.0
+            utgStraddleAllowed: true
+            straddleBet: 4.0
+            minPlayers: 2
+            maxPlayers: 9
+            gameLength: 60
+            buyInApproval: false
+            rakePercentage: 5.0
+            rakeCap: 5.0
+            buyInMin: 100
+            buyInMax: 300
+            actionTime: 100            
     # players sits in
     - sitsin:
         - club: chennai
@@ -202,7 +237,33 @@ game:
             - playerId: arjun
               seatNo: 8
               buyChips: 0
-
+        - club: chennai
+          game: live game 1
+          players:
+            - playerId: arun
+              seatNo: 1
+              buyChips: 0
+            - playerId: sam
+              seatNo: 3
+              buyChips: 0
+            - playerId: bala
+              seatNo: 5
+              buyChips: 0
+        - club: newClub
+          game: live game 2
+          players:
+            - playerId: arun
+              seatNo: 1
+              buyChips: 0
+            - playerId: sam
+              seatNo: 3
+              buyChips: 0
+            - playerId: bala
+              seatNo: 5
+              buyChips: 0
+            - playerId: arjun
+              seatNo: 8
+              buyChips: 0              
     # players buy-in
     - buyin:
         - club: chennai
@@ -243,6 +304,33 @@ game:
               buyChips: 100
             - playerId: arjun
               seatNo: 8
+              buyChips: 100
+        - club: newClub
+          game: live game 2
+          players:
+            - playerId: arun
+              seatNo: 1
+              buyChips: 100
+            - playerId: sam
+              seatNo: 3
+              buyChips: 100
+            - playerId: bala
+              seatNo: 5
+              buyChips: 100
+            - playerId: arjun
+              seatNo: 8
+              buyChips: 100
+        - club: chennai
+          game: live game 1
+          players:
+            - playerId: arun
+              seatNo: 1
+              buyChips: 100
+            - playerId: sam
+              seatNo: 3
+              buyChips: 100
+            - playerId: bala
+              seatNo: 5
               buyChips: 100
 
     # verify club game balance
@@ -288,6 +376,18 @@ game:
             balance: 100
           - name: bala
             balance: 100
+    # start games
+    - start-games:
+        - club: chennai
+          game: test1
+        - club: chennai
+          game: test2
+        - club: newClub
+          game: test3
+        - club: chennai
+          game: live game 1
+        - club: newClub
+          game: live game 2
 
     # save hands
     - save-hands:

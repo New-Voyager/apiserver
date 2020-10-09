@@ -3,6 +3,10 @@ import {PlayerRepository} from '@src/repositories/player';
 import {ClubRepository} from '@src/repositories/club';
 import {ClubMemberStatus} from '@src/entity/club';
 import {getLogger} from '@src/utils/log';
+import { GameRepository } from '@src/repositories/game';
+import { GameStatus } from '@src/entity/game';
+import { GameType } from '@src/entity/hand';
+import { PlayerStatus } from '@src/entity/chipstrack';
 const logger = getLogger('player');
 
 async function getClubs(playerId: string): Promise<Array<any>> {
@@ -40,6 +44,10 @@ const resolvers: any = {
     },
     playerById: async (parent, args, ctx, info) => {
       return getPlayerById(ctx.req.playerId);
+    },
+
+    liveGames: async (parent, args, ctx, info) => {
+      return getLiveGames(ctx.req.playerId);
     },
   },
   Mutation: {
@@ -123,22 +131,22 @@ export async function createPlayer(args: any) {
     if (!args.player) {
       errors.push('player object not found');
     }
-    if (isEmpty(args.player.name) ){
+    if (isEmpty(args.player.name)) {
       errors.push('name is a required field');
     }
-    if (isEmpty(args.player.deviceId) && isEmpty(args.player.email) ){
+    if (isEmpty(args.player.deviceId) && isEmpty(args.player.email)) {
       errors.push('deviceId or email should be specified');
     }
     if (!isEmpty(args.player.deviceId) && !isEmpty(args.player.email)) {
       errors.push('deviceId and email both should not be specified');
     }
-    if (!isEmpty(args.player.email) && isEmpty(args.player.password)){
+    if (!isEmpty(args.player.email) && isEmpty(args.player.password)) {
       errors.push('password should be specified');
     }
 
     return errors;
 
-    function isEmpty(value: any){
+    function isEmpty(value: any) {
       return value === undefined || value === '';
     }
   }
@@ -164,4 +172,19 @@ export async function getPlayerClubs(playerId: string, parent: any) {
     throw new Error('Unauthorized');
   }
   return getClubs(parent.playerId);
+}
+
+async function getLiveGames(playerId: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const liveGames = await GameRepository.getLiveGames(playerId);
+  let game: any;
+  for (game of liveGames) {
+    game.elapsedTime = Math.floor(game.elapsedTime);
+    game.status = GameStatus[game['gameStatus']];
+    game.gameType = GameType[game['gameType']];
+    game.playerStatus = PlayerStatus[game['playerStatus']];
+  }
+  return liveGames;
 }

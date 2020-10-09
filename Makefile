@@ -60,3 +60,7 @@ run-server:
 	yarn run-pg &
 	yarn watch-debug
 	echo "Running server...."
+
+.PHONY: watch-debug
+watch-debug:
+	yarn watch-debug

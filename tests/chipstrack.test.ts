@@ -87,7 +87,7 @@ describe('Player Chips tracking APIs', () => {
     expect(id).not.toBe(null);
     expect(id).not.toBe(undefined);
     expect(id.buyIn).toBe(100.0);
-    expect(id.status).toBe(0);
+    expect(id.status).toBe(1);
     expect(id.stack).toBe(100.0);
     expect(id.seatNo).toBe(5);
     expect(id.hhRank).toBe(0);
@@ -134,7 +134,7 @@ describe('Player Chips tracking APIs', () => {
     expect(id).not.toBe(null);
     expect(id).not.toBe(undefined);
     expect(id.buyIn).toBe(100.0);
-    expect(id.status).toBe(0);
+    expect(id.status).toBe(1);
     expect(id.stack).toBe(100.0);
     expect(id.seatNo).toBe(5);
     expect(id.hhRank).toBe(0);
@@ -190,7 +190,7 @@ describe('Player Chips tracking APIs', () => {
     expect(id).not.toBe(null);
     expect(id).not.toBe(undefined);
     expect(id.buyIn).toBe(200.0);
-    expect(id.status).toBe(0);
+    expect(id.status).toBe(1);
     expect(id.stack).toBe(200.0);
     expect(id.noOfBuyins).toBe(2);
     expect(id.seatNo).toBe(5);
@@ -247,7 +247,7 @@ describe('Player Chips tracking APIs', () => {
     expect(id).not.toBe(null);
     expect(id).not.toBe(undefined);
     expect(id.buyIn).toBe(200.0);
-    expect(id.status).toBe(0);
+    expect(id.status).toBe(1);
     expect(id.stack).toBe(200.0);
     expect(id.noOfBuyins).toBe(2);
     expect(id.seatNo).toBe(5);

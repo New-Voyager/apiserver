@@ -1,8 +1,9 @@
-import {PlayerGame, PokerGame} from '@src/entity/game';
+import {PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {Club} from '@src/entity/club';
-import {getRepository, getManager} from 'typeorm';
+import {getConnection, getRepository, getManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
+import {isPostgres} from '@src/utils';
 import {
   PlayerStatus,
   PlayerGameTracker,
@@ -11,18 +12,22 @@ import {
   ClubPlayerBalance,
   ClubGameRake,
 } from '@src/entity/chipstrack';
+import {GameRepository} from '@src/repositories/game';
+
+import {PlayerSitInput} from './types';
 
 const logger = getLogger('chipstrack');
 const INITIAL_BUYIN_COUNT = 1;
 
 class ChipsTrackRepositoryImpl {
   public async saveChips(
-    playerChipsData: any
+    playerChipsData: PlayerSitInput
   ): Promise<PlayerGameTracker | undefined> {
     try {
       const clubRepository = getRepository(Club);
-      const gameRepository = getRepository(PlayerGame);
+      const gameRepository = getRepository(PokerGame);
       const playerRepository = getRepository(Player);
+
       let club = await clubRepository.findOne({
         where: {id: playerChipsData.clubId},
       });
@@ -44,25 +49,38 @@ class ChipsTrackRepositoryImpl {
       }
       if (!player) {
         throw new Error(`Player ${playerChipsData.playerId} is not found`);
-      } else {
-        const playerSetIn = new PlayerGameTracker();
-        if (playerChipsData.clubId !== 0) {
-          playerSetIn.club = club;
-        }
-        playerSetIn.game = game.game;
-        playerSetIn.player = player;
-        playerSetIn.buyIn = playerChipsData.buyIn;
-        playerSetIn.stack = playerChipsData.buyIn;
-        playerSetIn.seatNo = playerChipsData.seatNo;
-        playerSetIn.hhRank = 0;
-        playerSetIn.hhHandNum = 0;
-        playerSetIn.status = parseInt(PlayerStatus[playerChipsData.status]);
-        playerSetIn.noOfBuyins = INITIAL_BUYIN_COUNT;
-        const repository = getRepository(PlayerGameTracker);
-        const response = await repository.save(playerSetIn);
-        return response;
       }
+      const playerSetIn = new PlayerGameTracker();
+      if (playerChipsData.clubId !== 0) {
+        playerSetIn.club = club;
+      }
+      playerSetIn.game = game;
+      playerSetIn.player = player;
+      playerSetIn.buyIn = playerChipsData.buyIn;
+      playerSetIn.stack = playerChipsData.buyIn;
+      playerSetIn.seatNo = playerChipsData.seatNo;
+      playerSetIn.hhRank = 0;
+      playerSetIn.hhHandNum = 0;
+      playerSetIn.status = PlayerStatus.PLAYING;
+      playerSetIn.noOfBuyins = INITIAL_BUYIN_COUNT;
+      const repository = getRepository(PlayerGameTracker);
+      const response = await repository.save(playerSetIn);
+
+      // update number of players in the seats
+      let placeHolder = '$1';
+      if (!isPostgres()) {
+        placeHolder = '?';
+      }
+      const query = `
+        UPDATE poker_game SET players_in_seats = players_in_seats + 1
+        WHERE id = ${placeHolder}`;
+      await getConnection().query(query, [game.id]);
+
+      return response;
     } catch (e) {
+      logger.error(
+        'Error thrown when a player sits in a seat: ' + e.toString()
+      );
       throw e;
     }
   }
@@ -72,13 +90,9 @@ class ChipsTrackRepositoryImpl {
   ): Promise<PlayerGameTracker | undefined> {
     try {
       const clubRepository = getRepository(Club);
-      const gameRepository = getRepository(PlayerGame);
       const playerRepository = getRepository(Player);
       let club = await clubRepository.findOne({
         where: {id: playerChipsData.clubId},
-      });
-      const game = await gameRepository.findOne({
-        where: {id: playerChipsData.gameId},
       });
       const player = await playerRepository.findOne({
         where: {id: playerChipsData.playerId},
@@ -90,10 +104,6 @@ class ChipsTrackRepositoryImpl {
       if (!club) {
         logger.debug(`Club ${playerChipsData.clubId} is not found`);
         throw new Error(`Club ${playerChipsData.clubId} is not found`);
-      }
-      if (!game) {
-        logger.debug(`Game ${playerChipsData.gameId} is not found`);
-        throw new Error(`Game ${playerChipsData.gameId} is not found`);
       }
       if (!player) {
         logger.debug(`Player ${playerChipsData.playerId} is not found`);
@@ -146,7 +156,7 @@ class ChipsTrackRepositoryImpl {
         return true;
       }
       const clubRepository = getRepository(Club);
-      const gameRepository = getRepository(PlayerGame);
+      const gameRepository = getRepository(PokerGame);
       const clubChipsTransactionRepository = getRepository(
         ClubChipsTransaction
       );
@@ -228,6 +238,7 @@ class ChipsTrackRepositoryImpl {
             clubPlayerBalance
           );
         }
+        GameRepository.markGameEnded(club.id, game.id);
       });
       return true;
     } catch (e) {

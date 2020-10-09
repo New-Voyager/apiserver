@@ -4,7 +4,7 @@ import {default as axios} from 'axios';
 import {getClient} from '../tests/utils/utils';
 import {gql} from 'apollo-boost';
 import {ClubMemberStatus} from '../src/entity/club';
-import { isUndefined } from 'lodash';
+import {isUndefined} from 'lodash';
 
 /*
 This class runs game script and verifies results in different stages
@@ -121,14 +121,17 @@ class GameScript {
 
     // run game steps
     for (const step of game['steps']) {
-      if (step['start-games']) {
-        await this.startGames(step['start-games']);
+      if (step['configure-games']) {
+        await this.configureGames(step['configure-games']);
       }
       if (step['sitsin']) {
         await this.playersSitsin(step['sitsin']);
       }
       if (step['buyin']) {
         await this.addBuyins(step['buyin']);
+      }
+      if (step['start-games']) {
+        await this.startGames(step['start-games']);
       }
       if (step['verify-club-game-stack']) {
         await this.verifyClubGameStacks(step['verify-club-game-stack']);
@@ -204,9 +207,9 @@ class GameScript {
     }
   }
 
-  protected async startGames(params: any) {
+  protected async configureGames(params: any) {
     for (const gameInput of params) {
-      const [gameCode, gameId] = await this.startGame(gameInput);
+      const [gameCode, gameId] = await this.configureGame(gameInput);
       this.gameCreated[gameInput.game] = {
         club: gameInput.club,
         gameCode: gameCode,
@@ -226,6 +229,13 @@ class GameScript {
       await this.addBuyin(BuyinsInput);
     }
   }
+
+  protected async startGames(params: any) {
+    for (const startGameInput of params) {
+      await this.startGame(startGameInput);
+    }
+  }
+
 
   protected async verifyClubGameStacks(params: any) {
     for (const clubStack of params) {
@@ -453,7 +463,7 @@ class GameScript {
     });
   }
 
-  protected async startGame(gameInput: any) {
+  protected async configureGame(gameInput: any) {
     this.log(`Register game: ${JSON.stringify(gameInput)}`);
     try {
       const startGame = gql`
@@ -498,6 +508,24 @@ class GameScript {
     }
   }
 
+  protected async startGame(input: any): Promise<any> {
+    this.log(`Start game: ${JSON.stringify(input)}`);
+    try {
+      const clubId = this.clubCreated[input.club].clubId;
+      const gameId = this.gameCreated[input.game].gameId;
+      const url =  `${this.serverURL}/internal/start-game/club_id/${clubId}/game_id/${gameId}`;
+      const resp = await axios.post(
+        `${this.serverURL}/internal/start-game?club-id=${clubId}&game-id=${gameId}`
+      );
+    } catch (err) {
+      if (err.response && err.response.data) {
+        this.log(err.response.data);
+      }
+      this.log(err.toString());
+      throw err;
+    }
+  }
+
   protected async playerSitsin(sitsinInput: any): Promise<any> {
     this.log(`Players sits in: ${JSON.stringify(sitsinInput)}`);
     try {
@@ -537,6 +565,9 @@ class GameScript {
         );
       }
     } catch (err) {
+      if (err.response && err.response.data) {
+        this.log(err.response.data);
+      }
       this.log(err.toString());
       throw err;
     }
@@ -563,7 +594,7 @@ class GameScript {
         },
         query: queryClubTrack,
       });
-      if (resp.data.balance.rake != balance.balance) {
+      if (resp.data.balance.rake !== balance.balance) {
         this.log(
           `Expected ${balance.balance} but received ${resp.data.balance.rake}`
         );
@@ -724,6 +755,17 @@ class GameScript {
   }
 }
 
+async function resetDatabase() {
+  const resetDB = gql`
+    mutation {
+      resetDB
+    }
+  `;
+  const resp = await getClient().mutate({
+    mutation: resetDB,
+  });
+}
+
 async function main() {
   const myArgs = process.argv.slice(2);
   let scriptDir = `${__dirname}/script/`;
@@ -733,18 +775,28 @@ async function main() {
   console.log(`Script directory: ${scriptDir}`);
 
   const list = fs.readdirSync(scriptDir);
-  for await (const file of list) {
+  await resetDatabase();
+  for (const file of list) {
     if (file.endsWith('.yaml')) {
-      const gameScript1 = new GameScript(serverURL, `${scriptDir}/${file}`);
-      gameScript1.load();
-      if (gameScript1.isDisabled()) {
-        console.log(`Script: ${file} is marked as disabled`);
-        continue;
+      try {
+        const gameScript1 = new GameScript(serverURL, `${scriptDir}/${file}`);
+        gameScript1.load();
+        if (gameScript1.isDisabled()) {
+          console.log(`Script: ${file} is marked as disabled`);
+          continue;
+        }
+        await gameScript1.run();
+      } catch (err) {
+        console.log(
+          `Setting up script ${file} failed. Error: ${err.toString()}`
+        );
+        throw err;
       }
-      await gameScript1.run();
     }
   }
 }
 
 const serverURL = 'http://localhost:9501';
-main();
+(async () => {
+  await main();
+})();

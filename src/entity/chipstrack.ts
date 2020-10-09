@@ -14,6 +14,7 @@ import {PokerGame} from './game';
 import {DbAwareUpdateDateColumn} from './dbaware';
 
 export enum PlayerStatus {
+  NOT_PLAYING,
   PLAYING,
   IN_QUEUE,
   BREAK,
@@ -72,7 +73,7 @@ export class ClubGameRake {
   @JoinColumn({name: 'game_id'})
   public game!: PokerGame;
 
-  @Column({name: 'rake', type: 'decimal', nullable: false})
+  @Column({name: 'rake', type: 'decimal', precision: 8, scale: 2, default: 0.0})
   public rake!: number;
 
   @Column({type: 'decimal', name: 'promotion'})
