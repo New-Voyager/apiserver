@@ -11,7 +11,7 @@ import {
 import {Player} from './player';
 import {Club} from './club';
 import {PokerGame} from './game';
-import {DbAwareUpdateDateColumn} from './dbaware';
+import {DbAwareColumn, DbAwareUpdateDateColumn} from './dbaware';
 
 export enum PlayerStatus {
   NOT_PLAYING,
@@ -61,6 +61,23 @@ export class PlayerGameTracker {
 
   @Column({name: 'hh_hand_num'})
   public hhHandNum!: number;
+
+  @Column({name: 'session_time', default: 0})
+  public sessionTime!: number;
+
+  @DbAwareColumn({
+    name: 'sat_at',
+    type: 'timestamp',
+    nullable: true,
+  })
+  public satAt!: Date;
+
+  @DbAwareColumn({
+    name: 'waiting_from',
+    type: 'timestamp',
+    nullable: true,
+  })
+  public waitingFrom!: Date;
 }
 
 @Entity({name: 'club_game_rake'})

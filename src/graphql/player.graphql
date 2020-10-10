@@ -44,6 +44,20 @@ type LiveGame {
   playerStatus: PlayerGameStatus!
 }
 
+type PastGame {
+  clubCode: String
+  clubName: String
+  gameCode: String!
+  title: String
+  gameType: GameType!
+  sessionTime: Int!
+  startedAt: DateTime!
+  endedAt: DateTime!
+  gameTime: Int!
+  buyIn: Float
+  stack: Float
+}
+
 type PlayerId {
   uuid: String!
   id: Int!
@@ -56,6 +70,5 @@ type Query {
   allPlayers: [Player!]
   playerById: PlayerId!
   liveGames: [LiveGame!]
-  #getPastGames: [GameShortInfo!]
-
+  pastGames: [PastGame!]
 }
