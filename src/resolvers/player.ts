@@ -49,6 +49,10 @@ const resolvers: any = {
     liveGames: async (parent, args, ctx, info) => {
       return getLiveGames(ctx.req.playerId);
     },
+
+    pastGames: async (parent, args, ctx, info) => {
+      return getPastGames(ctx.req.playerId);
+    },
   },
   Mutation: {
     createPlayer: async (parent, args, ctx, info) => {
@@ -187,4 +191,20 @@ async function getLiveGames(playerId: string) {
     game.playerStatus = PlayerStatus[game['playerStatus']];
   }
   return liveGames;
+}
+
+async function getPastGames(playerId: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const pastGames = await GameRepository.getPastGames(playerId);
+  let game: any;
+  for (game of pastGames) {
+    game.gameTime = Math.floor(game.gameTime);
+    game.sessionTime = Math.floor(game.sessionTime);
+    game.status = GameStatus[game['gameStatus']];
+    game.gameType = GameType[game['gameType']];
+    game.playerStatus = PlayerStatus[game['playerStatus']];
+  }
+  return pastGames;
 }

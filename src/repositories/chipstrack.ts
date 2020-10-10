@@ -63,6 +63,7 @@ class ChipsTrackRepositoryImpl {
       playerSetIn.hhHandNum = 0;
       playerSetIn.status = PlayerStatus.PLAYING;
       playerSetIn.noOfBuyins = INITIAL_BUYIN_COUNT;
+      playerSetIn.satAt = new Date();
       const repository = getRepository(PlayerGameTracker);
       const response = await repository.save(playerSetIn);
 
@@ -237,6 +238,22 @@ class ChipsTrackRepositoryImpl {
           const resp2 = await clubPlayerBalanceRepository.save(
             clubPlayerBalance
           );
+        }
+
+        // update session time
+        let placeHolder1 = '$1';
+        let placeHolder2 = '$2';
+        if (!isPostgres()) {
+          placeHolder1 = '?';
+          placeHolder2 = '?';
+        }
+        // SOMA: the following query does not work in sqllite
+        // skip this for now
+        // TODO: Need fix for sqllite
+        if (isPostgres()) {
+          const query = `UPDATE player_game_tracker SET session_time=coalesce(ROUND(EXTRACT(EPOCH FROM (NOW()-sat_at))), 0)+coalesce(session_time, 0) 
+                WHERE game_id=${placeHolder1} AND club_id=${placeHolder2}`;
+          await getConnection().query(query, [game.id, club.id]);
         }
         GameRepository.markGameEnded(club.id, game.id);
       });
