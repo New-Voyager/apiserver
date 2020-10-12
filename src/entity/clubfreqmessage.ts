@@ -1,6 +1,7 @@
 import {Entity, Column, PrimaryGeneratedColumn} from 'typeorm';
+import { DbAwareUpdateDateColumn } from './dbaware';
 
-@Entity()
+@Entity({name: 'club_freq_messages'})
 export class FavouriteMessage {
   @PrimaryGeneratedColumn()
   public id!: number;
@@ -19,4 +20,15 @@ export class FavouriteMessage {
 
   @Column({name: 'image_link', nullable: true})
   public imageLink!: string;
+
+  /**
+   * DB last update time.
+   */
+  @DbAwareUpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  public updatedAt!: Date;
 }
+

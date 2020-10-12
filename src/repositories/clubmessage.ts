@@ -25,14 +25,17 @@ class ClubMessageRepositoryImpl {
       let invalidPlayer = '';
       const clubRepository = getRepository(Club);
       const club = await clubRepository.findOne({where: {clubCode: clubCode}});
-      const playerArray = message.playerTags.split(',');
-      const playerRepository = getRepository<Player>(Player);
-      playerArray.forEach(player => {
-        const result = playerRepository.findOne({where: {uuid: player}});
-        if (!result) {
-          invalidPlayer = player;
-        }
-      });
+      if (message.playerTags) {
+        const playerArray = message.playerTags.split(',');
+        const playerRepository = getRepository<Player>(Player);
+        playerArray.forEach(player => {
+          const result = playerRepository.findOne({where: {uuid: player}});
+          if (!result) {
+            invalidPlayer = player;
+          }
+        });
+      }
+
       if (!club) {
         throw new Error(`Club ${clubCode} is not found`);
       } else if (invalidPlayer !== '') {

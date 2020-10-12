@@ -1,4 +1,5 @@
 import {Entity, Column, PrimaryGeneratedColumn} from 'typeorm';
+import {DbAwareUpdateDateColumn} from './dbaware';
 
 export enum ClubMessageType {
   TEXT,
@@ -6,7 +7,7 @@ export enum ClubMessageType {
   GIPHY,
 }
 
-@Entity()
+@Entity({name: 'club_messages'})
 export class ClubMessageInput {
   @PrimaryGeneratedColumn()
   public id!: number;
@@ -29,6 +30,16 @@ export class ClubMessageInput {
   @Column({name: 'game_number', nullable: true})
   public gameNum!: number;
 
-  @Column({name: 'player_tags'})
+  @Column({name: 'player_tags', nullable: true})
   public playerTags!: string;
+
+  /**
+   * DB last update time.
+   */
+  @DbAwareUpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  public updatedAt!: Date;
 }

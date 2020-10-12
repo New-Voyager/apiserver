@@ -44,6 +44,8 @@ export async function getClubMsg(
       playerTags: x.playerTags,
       clubCode: x.clubCode,
       text: x.text,
+      messageTime: x.updatedAt,
+      messageTimeInEpoc: Math.floor(x.updatedAt.getTime() / 1000),
     };
   });
 }
@@ -98,3 +100,4 @@ const resolvers: any = {
 export function getResolvers() {
   return resolvers;
 }
+

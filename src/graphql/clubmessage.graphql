@@ -10,7 +10,7 @@ input ClubMessageInput {
   gameNum: Int
   handNum: Int
   giphyLink: String
-  playerTags: String!
+  playerTags: String
 }
 
 type ClubMessage {
@@ -21,7 +21,9 @@ type ClubMessage {
   gameNum: Int
   handNum: Int
   giphyLink: String
-  playerTags: String!
+  playerTags: String
+  messageTime: DateTime
+  messageTimeInEpoc: Int
 }
 
 type Mutation {
