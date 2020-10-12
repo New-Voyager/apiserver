@@ -1,19 +1,23 @@
 import {ApolloServer} from 'apollo-server-express';
 import {fileLoader, mergeTypes} from 'merge-graphql-schemas';
-import {merge} from 'lodash';
+import {merge, uniqueId} from 'lodash';
 import {authorize} from '@src/middlewares/authorization';
-import {createConnection, getConnectionOptions} from 'typeorm';
+import {createConnection, getConnectionOptions, getRepository} from 'typeorm';
 import {GameServerAPI} from './internal/gameserver';
 import {HandServerAPI} from './internal/hand';
 import {ChipsTrackSeverAPI} from './internal/chipstrack';
 import {GameAPI} from './internal/game';
+import * as jwt from 'jsonwebtoken';
+import * as dotenv from 'dotenv';
+import {getJwtSecret} from './index';
 
 const bodyParser = require('body-parser');
 const GQL_PORT = 9501;
 import {getLogger} from '@src/utils/log';
 import {AdminAPI} from './internal/admin';
+import {Player} from './entity/player';
 const logger = getLogger('server');
-
+const JWT_EXPIRY_DAYS = 3;
 const requestContext = async ({req}) => {
   const ctx = {
     req: req,
@@ -68,6 +72,9 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     await createConnection({...options, name: 'default'});
   }
 
+  // get config vars
+  dotenv.config();
+
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const express = require('express');
   app = express();
@@ -103,4 +110,85 @@ function addInternalRoutes(app: any) {
     '/internal/get-game-server/club_id/:clubCode/game_num/:gameCode',
     GameServerAPI.getSpecificGameServer
   );
+
+  app.post('/auth/login', login);
+}
+
+/**
+ * Login API
+ * @param req
+ * {
+ *  "uuid": <player uuid>,
+ *  "device-id": <uuid assigned in the device>,
+ *  "email": "player email address",
+ *  "password": "password"
+ * }
+ * The player can login using uuid/device-id or email/password.
+ * @param resp
+ */
+async function login(req: any, resp: any) {
+  const payload = req.body;
+  const repository = getRepository(Player);
+
+  const errors = new Array<string>();
+  const uuid = payload["uuid"];
+  const deviceId = payload["device-id"];
+  const email = payload["email"];
+  const password = payload["password"];
+
+  if (email && password) {
+    // use email and password to login
+  } else {
+    if (uuid && !deviceId) {
+      errors.push("uuid and deviceId should be specified to login");
+    }
+  }
+  if (errors.length) {
+    resp.status(500).send(JSON.stringify({errors: errors}));
+    return;
+  }
+
+  let player;
+  if (email) {
+    player = await repository.findOne({where: {email: email}});
+  } else {
+    player = await repository.findOne({where: {deviceId: deviceId}});
+  }
+
+  if (!player) {
+    resp.status(400).send(JSON.stringify({errors: ["Player is not found"]}));
+  }
+
+  if (email) {
+    if (password !== player.password) {
+      resp.status(400).send(JSON.stringify({errors: ["Invalid password"]}));
+    }
+  } else {
+    if (deviceId !== player.deviceId) {
+      resp.status(400).send(JSON.stringify({errors: ["Invalid device id"]}));
+    }
+  }
+
+  const expiryTime = new Date();
+  expiryTime.setDate(expiryTime.getDate() + JWT_EXPIRY_DAYS);
+  const jwtClaims = {
+    user: player.name,
+    uuid: player.uuid,
+    iat: new Date(),
+    exp: expiryTime,
+  };
+  try {
+    const jwt = generateAccessToken(payload);
+    resp.status(200).send(JSON.stringify({jwt: jwt}));
+  } catch (err) {
+    console.error(err.toString());
+    resp.status(500).send({errors: [`JWT cannot be generated`]});
+  }
+}
+
+// username is in the form { username: "my cool username" }
+// ^^the above object structure is completely arbitrary
+function generateAccessToken(payload) {
+  // expires after 3 days
+  return jwt.sign(payload, getJwtSecret(), {expiresIn: `${JWT_EXPIRY_DAYS}d`});
 }
