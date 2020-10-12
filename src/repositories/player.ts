@@ -51,6 +51,7 @@ class PlayerRepositoryImpl {
     const player = await repository.findOne({where: {uuid: playerId}});
     return player;
   }
+
 }
 
 export const PlayerRepository = new PlayerRepositoryImpl();
