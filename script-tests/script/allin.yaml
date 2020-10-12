@@ -155,6 +155,13 @@ game:
           - name: arjun
             balance: 100
 
+    - messages:
+        - club: New Delhi
+          messages:
+            - arun: hello guys
+            - bala: did you see the weird hand?
+            - arjun: I know. Doesn't it happen often
+
     # start games
     - start-games:
         - club: New Delhi

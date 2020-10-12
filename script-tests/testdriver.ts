@@ -151,6 +151,9 @@ class GameScript {
       if (step['verify-player-balance']) {
         await this.verifyPlayerBalances(step['verify-player-balance']);
       }
+      if (step['messages']) {
+        await this.sendClubMessages(step['messages']);
+      }
     }
   }
 
@@ -751,6 +754,38 @@ class GameScript {
     } catch (err) {
       this.log(err.toString());
       throw err;
+    }
+  }
+
+  protected async sendClubMessages(params: any) {
+    for (const club of params) {
+      await this.sendClubMessagesForClub(club);
+    }
+  }
+
+  protected async sendClubMessagesForClub(club: any) {
+    const sendMessage = gql`
+      mutation($clubCode: String!, $text: String) {
+        resp: sendClubMessage(
+          clubCode: $clubCode
+          message: {messageType: TEXT, text: $text}
+        )
+      }
+    `;
+    const clubCode = this.clubCreated[club.club].clubCode;
+    const messages = club.messages;
+    for (const message of messages) {
+      let playerId;
+      let messageText;
+      for (const key of Object.keys(message)) {
+        messageText = message[key];
+        playerId = this.registeredPlayers[key].playerUuid;
+        break;
+      }
+      const resp = await getClient(playerId).mutate({
+        variables: {clubCode: clubCode, text: messageText},
+        mutation: sendMessage,
+      });
     }
   }
 }

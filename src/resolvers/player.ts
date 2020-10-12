@@ -53,6 +53,11 @@ const resolvers: any = {
     pastGames: async (parent, args, ctx, info) => {
       return getPastGames(ctx.req.playerId);
     },
+
+    myInfo: async (parent, args, ctx, info) => {
+      return getPlayerInfo(ctx.req.playerId);
+    },
+
   },
   Mutation: {
     createPlayer: async (parent, args, ctx, info) => {
@@ -100,6 +105,23 @@ export async function getPlayerById(playerId: string) {
     throw new Error('Unauthorized');
   }
   const player = await PlayerRepository.getPlayerById(playerId);
+  if (!player) {
+    throw new Error('Player not found');
+  }
+  return {
+    uuid: player.uuid,
+    id: player.id,
+    name: player.name,
+    email: player.email,
+    lastActiveTime: player.updatedAt,
+  };
+}
+
+export async function getPlayerInfo(playerId: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const player = await PlayerRepository.getPlayerInfo(playerId);
   if (!player) {
     throw new Error('Player not found');
   }

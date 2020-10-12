@@ -65,10 +65,20 @@ type PlayerId {
   lastActiveTime: DateTime
 }
 
+type PlayerInfo {
+  uuid: String!
+  id: Int!
+  name: String!
+  email: String
+  lastActiveTime: DateTime  
+}
+
+
 type Query {
   myClubs: [PlayerClub!]
   allPlayers: [Player!]
   playerById: PlayerId!
   liveGames: [LiveGame!]
   pastGames: [PastGame!]
+  myInfo: PlayerInfo!
 }
