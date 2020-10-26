@@ -44,6 +44,7 @@ type ClubMember {
   isOwner: Boolean
   isManager: Boolean
   playerId: String
+  balance: Float
 }
 
 type ClubGameInfo {

@@ -4,6 +4,7 @@ BUILD_NO := $(shell cat build_number.txt)
 
 .PHONY: build
 build:
+	npm install
 	./node_modules/.bin/tsc
 
 .PHONY: install_deps
