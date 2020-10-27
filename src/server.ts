@@ -139,7 +139,7 @@ async function login(req: any, resp: any) {
   if (email && password) {
     // use email and password to login
   } else {
-    if (uuid && !deviceId) {
+    if (!uuid || !deviceId) {
       errors.push("uuid and deviceId should be specified to login");
     }
   }
@@ -152,20 +152,23 @@ async function login(req: any, resp: any) {
   if (email) {
     player = await repository.findOne({where: {email: email}});
   } else {
-    player = await repository.findOne({where: {deviceId: deviceId}});
+    player = await repository.findOne({where: {uuid: uuid}});
   }
 
   if (!player) {
-    resp.status(400).send(JSON.stringify({errors: ["Player is not found"]}));
+    resp.status(401).send(JSON.stringify({errors: ["Player is not found"]}));
+    return;
   }
 
   if (email) {
     if (password !== player.password) {
-      resp.status(400).send(JSON.stringify({errors: ["Invalid password"]}));
+      resp.status(401).send(JSON.stringify({errors: ["Invalid password"]}));
+      return;
     }
   } else {
     if (deviceId !== player.deviceId) {
-      resp.status(400).send(JSON.stringify({errors: ["Invalid device id"]}));
+      resp.status(401).send(JSON.stringify({errors: ["Invalid device id"]}));
+      return;
     }
   }
 
