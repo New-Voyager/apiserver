@@ -163,9 +163,6 @@ export async function createPlayer(args: any) {
     if (isEmpty(args.player.deviceId) && isEmpty(args.player.email)) {
       errors.push('deviceId or email should be specified');
     }
-    if (!isEmpty(args.player.deviceId) && !isEmpty(args.player.email)) {
-      errors.push('deviceId and email both should not be specified');
-    }
     if (!isEmpty(args.player.email) && isEmpty(args.player.password)) {
       errors.push('password should be specified');
     }
