@@ -144,34 +144,3 @@ export class ClubBalance {
   })
   public updatedAt!: Date;
 }
-
-@Entity({name: 'club_player_balance'})
-export class ClubPlayerBalance {
-  @ManyToOne(type => Player, player => player.id, {primary: true})
-  @JoinColumn({name: 'player_id'})
-  public player!: Player;
-
-  @ManyToOne(type => Club, club => club.id, {primary: true})
-  @JoinColumn({name: 'club_id'})
-  public club!: Club;
-
-  @Column({name: 'total_buyins', type: 'decimal', precision: 8, scale: 2})
-  public totalBuyins!: number;
-
-  @Column({name: 'total_winnings', type: 'decimal', precision: 8, scale: 2})
-  public totalWinnings!: number;
-
-  @Column({name: 'balance', type: 'decimal', precision: 8, scale: 2})
-  public balance!: number;
-
-  @Column({name: 'notes', type: 'text'})
-  public notes!: string;
-
-  @DbAwareUpdateDateColumn({
-    name: 'updated_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
-  public updatedAt!: Date;
-}

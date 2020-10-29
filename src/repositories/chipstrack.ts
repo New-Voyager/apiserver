@@ -1,6 +1,6 @@
 import {PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
-import {Club} from '@src/entity/club';
+import {Club, ClubMember} from '@src/entity/club';
 import {getConnection, getRepository, getManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {isPostgres} from '@src/utils';
@@ -9,7 +9,7 @@ import {
   PlayerGameTracker,
   ClubChipsTransaction,
   ClubBalance,
-  ClubPlayerBalance,
+  // ClubPlayerBalance,
   ClubGameRake,
 } from '@src/entity/chipstrack';
 import {GameRepository} from '@src/repositories/game';
@@ -162,7 +162,7 @@ class ChipsTrackRepositoryImpl {
         ClubChipsTransaction
       );
       const clubBalanceRepository = getRepository(ClubBalance);
-      const clubPlayerBalanceRepository = getRepository(ClubPlayerBalance);
+      const clubMemberRepository = getRepository(ClubMember);
       const clubGameRakeRepository = getRepository(ClubGameRake);
       const playerGameTrackRepository = getRepository(PlayerGameTracker);
 
@@ -219,25 +219,19 @@ class ChipsTrackRepositoryImpl {
           where: {club: endGameData.club_id, game: endGameData.game_id},
         });
         for await (const playerChip of playerChips) {
-          let clubPlayerBalance = await clubPlayerBalanceRepository.findOne({
+          let clubPlayerBalance = await clubMemberRepository.findOne({
             relations: ['player', 'club'],
             where: {player: playerChip.player.id, club: endGameData.club_id},
           });
-          if (!clubPlayerBalance) {
-            clubPlayerBalance = new ClubPlayerBalance();
-            clubPlayerBalance.balance = 0;
-            clubPlayerBalance.club = club;
-            clubPlayerBalance.totalWinnings = 0;
-            clubPlayerBalance.totalBuyins = 0;
-            clubPlayerBalance.player = playerChip.player;
+          if(clubPlayerBalance) {
+            clubPlayerBalance.balance += playerChip.stack - playerChip.buyIn;
+            clubPlayerBalance.totalBuyins += playerChip.buyIn;
+            clubPlayerBalance.totalWinnings += playerChip.stack;
             clubPlayerBalance.notes = '';
+            const resp2 = await clubMemberRepository.save(
+              clubPlayerBalance
+            );
           }
-          clubPlayerBalance.balance += playerChip.stack - playerChip.buyIn;
-          clubPlayerBalance.totalBuyins += playerChip.buyIn;
-          clubPlayerBalance.totalWinnings += playerChip.stack;
-          const resp2 = await clubPlayerBalanceRepository.save(
-            clubPlayerBalance
-          );
         }
 
         // update session time
@@ -288,10 +282,10 @@ class ChipsTrackRepositoryImpl {
   public async getPlayerBalance(
     playerId: string,
     clubCode: string
-  ): Promise<ClubPlayerBalance> {
+  ) : Promise<ClubMember> {
     const clubRepository = getRepository(Club);
     const playerRepository = getRepository(Player);
-    const clubPlayerBalanceRepository = getRepository(ClubPlayerBalance);
+    const clubMemberRepository = getRepository(ClubMember);
     const club = await clubRepository.findOne({
       where: {clubCode: clubCode},
     });
@@ -306,7 +300,7 @@ class ChipsTrackRepositoryImpl {
       logger.error(`Player ${playerId} is not found`);
       throw new Error(`Player ${playerId} is not found`);
     }
-    const clubPlayerBalance = await clubPlayerBalanceRepository.findOne({
+    const clubPlayerBalance = await clubMemberRepository.findOne({
       where: {club: club.id, player: player.id},
     });
     if (!clubPlayerBalance) {

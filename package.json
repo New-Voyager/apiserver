@@ -18,7 +18,6 @@
     "test-server": "NODE_ENV=test DB_USED=sqllite node build/index.js",
     "run-server": "node build/index.js",
     "test-server-windows": "test-server.bat",
-    "test-server-win": "set NODE_ENV=test && node build/index.js",
     "test-windows": "set NODE_ENV=test && jest --runInBand ./tests",
     "script-tests-old": "node --nolazy -r ts-node/register/transpile-only script-tests/testdriver.ts",
     "check": "gts check",
