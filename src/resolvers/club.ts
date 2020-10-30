@@ -43,7 +43,10 @@ export async function getClubMembers(playerId: string, args: any) {
       isOwner: member.isOwner,
       isManager: member.isManager,
       playerId: member.player.uuid,
-      balance: 0.0,
+      balance: member.balance,
+      totalBuyins: member.totalBuyins,
+      totalWinnings: member.totalWinnings,
+      notes: member.notes
     });
   }
 
