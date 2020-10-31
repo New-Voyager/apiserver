@@ -45,6 +45,9 @@ type ClubMember {
   isManager: Boolean
   playerId: String
   balance: Float
+  totalBuyins: Int
+  totalWinnings: Int
+  notes: String
 }
 
 type ClubGameInfo {
@@ -84,6 +87,10 @@ type Member{
   playAllowed: Boolean
   createdAt: DateTime
   updatedAt: DateTime
+  balance: Float
+  totalBuyins: Int
+  totalWinnings: Int
+  notes: String
 }
 
 type Query {

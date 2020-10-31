@@ -8,7 +8,6 @@ import {
   ClubGameRake,
   ClubChipsTransaction,
   ClubBalance,
-  ClubPlayerBalance,
 } from '@src/entity/chipstrack';
 import {FavouriteMessage} from '@src/entity/clubfreqmessage';
 import {ClubMessageInput} from '@src/entity/clubmessage';
@@ -43,7 +42,6 @@ export async function sqlliteConnection() {
       ClubGameRake,
       ClubChipsTransaction,
       ClubBalance,
-      ClubPlayerBalance,
       FavouriteMessage,
       ClubMessageInput,
       GameServer,
