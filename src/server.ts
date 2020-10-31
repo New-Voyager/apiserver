@@ -177,11 +177,11 @@ async function login(req: any, resp: any) {
   const jwtClaims = {
     user: player.name,
     uuid: player.uuid,
-    iat: new Date(),
-    exp: expiryTime,
+    // iat: new Date(),
+    // exp: expiryTime,
   };
   try {
-    const jwt = generateAccessToken(payload);
+    const jwt = generateAccessToken(jwtClaims);
     resp.status(200).send(JSON.stringify({jwt: jwt}));
   } catch (err) {
     console.error(err.toString());
