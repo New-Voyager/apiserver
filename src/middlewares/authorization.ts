@@ -8,7 +8,6 @@ const logger = getLogger('chipstrack');
 export async function authorize(req, res, next) {
   if (req.headers.authorization) {
     const toks: string[] = req.headers.authorization.split(' ');
-    console.log(toks);
     if (toks[0] === 'Bearer') {
       // set the context of the current user who is making this call
       req.playerId = toks[1];
@@ -20,7 +19,6 @@ export async function authorize(req, res, next) {
         try {
           const decoded = jwt.verify(toks[1], secret);
           req.playerId = decoded['uuid'];
-          console.log(decoded);
         } catch (err) {
           logger.error(`Invalid JWT`);
           res.status(401).send("Invalid JWT. Unauthorized");
