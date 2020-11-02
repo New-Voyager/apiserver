@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 
 import {DbAwareColumn} from './dbaware';
+import {GameType, WonAtStatus} from './types';
 
 @Entity({name: 'hand_winners'})
 export class HandWinners {
@@ -39,20 +40,6 @@ export class HandWinners {
   public received!: number;
 }
 
-export enum WonAtStatus {
-  PREFLOP,
-  FLOP,
-  TURN,
-  RIVER,
-  SHOW_DOWN,
-}
-
-export enum GameType {
-  UNKNOWN,
-  HOLDEM,
-  OMAHA,
-  OMAHA_HILO,
-}
 
 @Entity({name: 'hand_history'})
 export class HandHistory {

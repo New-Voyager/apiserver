@@ -1,5 +1,5 @@
 import {GameRepository} from '@src/repositories/game';
-import {GameType} from '@src/entity/game';
+import {GameType} from '@src/entity/types';
 import {getLogger} from '@src/utils/log';
 const logger = getLogger('game');
 

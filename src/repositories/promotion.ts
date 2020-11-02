@@ -1,5 +1,6 @@
 import {Club} from '@src/entity/club';
-import {Promotion, PromotionType, GamePromotion} from '@src/entity/promotion';
+import {Promotion, GamePromotion} from '@src/entity/promotion';
+import {PromotionType} from '@src/entity/types';
 import {getRepository} from 'typeorm';
 import {Player} from '@src/entity/player';
 import {getLogger} from '@src/utils/log';

@@ -4,7 +4,6 @@ import {
   Column,
   ManyToOne,
   Index,
-  JoinColumn,
 } from 'typeorm';
 
 import {
@@ -12,12 +11,7 @@ import {
   DbAwareCreateDateColumn,
   DbAwareUpdateDateColumn,
 } from './dbaware';
-
-export enum GameServerStatus {
-  UNKNOWNN,
-  ACTIVE,
-  DOWN,
-}
+import {GameServerStatus} from './types';
 
 @Entity({name: 'game_server'})
 export class GameServer {

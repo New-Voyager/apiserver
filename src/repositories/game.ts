@@ -1,6 +1,12 @@
 import {getRepository, getManager, getConnection, createQueryBuilder} from 'typeorm';
-import {PokerGame, GameType, GameStatus} from '@src/entity/game';
-import {Club, ClubMember, ClubMemberStatus, ClubStatus} from '@src/entity/club';
+import {PokerGame} from '@src/entity/game';
+import {
+  GameType,
+  GameStatus,
+  ClubMemberStatus,
+  ClubStatus,
+} from '@src/entity/types';
+import {Club, ClubMember} from '@src/entity/club';
 import {Player} from '@src/entity/player';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {getLogger} from '@src/utils/log';
@@ -64,7 +70,7 @@ class GameRepositoryImpl {
     const gameType: GameType = GameType[gameTypeStr];
     game.gameType = gameType;
     game.isTemplate = template;
-    game.status = GameStatus.WAITING;
+    game.status = GameStatus.WAITING_FOR_PLAYERS;
     if (club) {
       game.club = club;
     }
@@ -126,7 +132,7 @@ class GameRepositoryImpl {
     const gameType: GameType = GameType[gameTypeStr];
     game.gameType = gameType;
     game.isTemplate = template;
-    game.status = GameStatus.WAITING;
+    game.status = GameStatus.WAITING_FOR_PLAYERS;
     game.host = player;
     game.gameCode = await getGameCodeForPlayer(player.id);
     game.privateGame = true;

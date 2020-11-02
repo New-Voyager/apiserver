@@ -1,8 +1,7 @@
 import * as _ from 'lodash';
 import {ClubMessageRepository} from '@src/repositories/clubmessage';
 import {ClubRepository} from '@src/repositories/club';
-import {ClubMemberStatus} from '@src/entity/club';
-import {ClubMessageType} from '@src/entity/clubmessage';
+import {ClubMemberStatus, ClubMessageType} from '@src/entity/types';
 import {PageOptions} from '@src/types';
 import {getLogger} from '@src/utils/log';
 const logger = getLogger('clubmessage');

@@ -1,5 +1,5 @@
 import * as _ from 'lodash';
-import {PromotionType} from '@src/entity/promotion';
+import {PromotionType} from '@src/entity/types';
 import {getLogger} from '@src/utils/log';
 import {
   PromotionRepository,

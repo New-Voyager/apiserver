@@ -10,12 +10,8 @@ import {Club} from './club';
 import {PokerGame} from './game';
 import {DbAwareColumn} from './dbaware';
 import {Player} from './player';
+import { PromotionType } from './types';
 
-export enum PromotionType {
-  HIGH_HAND,
-  BAD_BEAT,
-  SPECIFIC_CARDS,
-}
 
 @Entity({name: 'promotion'})
 export class Promotion {
