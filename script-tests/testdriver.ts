@@ -303,6 +303,8 @@ class GameScript {
           input: {
             name: playerInput.name,
             deviceId: playerInput.deviceId,
+            email: `${playerInput.name}@poker.net`,
+            password: playerInput.name,
           },
         },
         mutation: createPlayer,
