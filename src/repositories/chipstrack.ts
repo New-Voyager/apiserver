@@ -217,18 +217,16 @@ class ChipsTrackRepositoryImpl {
           where: {club: endGameData.club_id, game: endGameData.game_id},
         });
         for await (const playerChip of playerChips) {
-          let clubPlayerBalance = await clubMemberRepository.findOne({
+          const clubPlayerBalance = await clubMemberRepository.findOne({
             relations: ['player', 'club'],
             where: {player: playerChip.player.id, club: endGameData.club_id},
           });
-          if(clubPlayerBalance) {
+          if (clubPlayerBalance) {
             clubPlayerBalance.balance += playerChip.stack - playerChip.buyIn;
             clubPlayerBalance.totalBuyins += playerChip.buyIn;
             clubPlayerBalance.totalWinnings += playerChip.stack;
             clubPlayerBalance.notes = '';
-            const resp2 = await clubMemberRepository.save(
-              clubPlayerBalance
-            );
+            const resp2 = await clubMemberRepository.save(clubPlayerBalance);
           }
         }
 
@@ -280,7 +278,7 @@ class ChipsTrackRepositoryImpl {
   public async getPlayerBalance(
     playerId: string,
     clubCode: string
-  ) : Promise<ClubMember> {
+  ): Promise<ClubMember> {
     const clubRepository = getRepository(Club);
     const playerRepository = getRepository(Player);
     const clubMemberRepository = getRepository(ClubMember);

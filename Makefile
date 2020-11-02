@@ -1,6 +1,11 @@
 DEFAULT_DOCKER_NET := game
 GCP_PROJECT_ID := voyager-01-285603
-BUILD_NO := $(shell cat build_number.txt)
+
+ifeq ($(OS), Windows_NT)
+	BUILD_NO := $(file < build_number.txt)
+else
+	BUILD_NO := $(shell cat build_number.txt)
+endif
 
 .PHONY: build
 build:
@@ -42,7 +47,6 @@ up: create-network
 
 .PHONY: publish
 publish:
-	# publish api server
 	docker tag api-server gcr.io/${GCP_PROJECT_ID}/api-server:$(BUILD_NO)
 	docker tag api-server gcr.io/${GCP_PROJECT_ID}/api-server:latest
 	docker push gcr.io/${GCP_PROJECT_ID}/api-server:$(BUILD_NO)

@@ -99,4 +99,3 @@ const resolvers: any = {
 export function getResolvers() {
   return resolvers;
 }
-

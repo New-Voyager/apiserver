@@ -131,16 +131,16 @@ async function login(req: any, resp: any) {
   const repository = getRepository(Player);
 
   const errors = new Array<string>();
-  const uuid = payload["uuid"];
-  const deviceId = payload["device-id"];
-  const email = payload["email"];
-  const password = payload["password"];
+  const uuid = payload['uuid'];
+  const deviceId = payload['device-id'];
+  const email = payload['email'];
+  const password = payload['password'];
 
   if (email && password) {
     // use email and password to login
   } else {
     if (!uuid || !deviceId) {
-      errors.push("uuid and deviceId should be specified to login");
+      errors.push('uuid and deviceId should be specified to login');
     }
   }
   if (errors.length) {
@@ -156,18 +156,18 @@ async function login(req: any, resp: any) {
   }
 
   if (!player) {
-    resp.status(401).send(JSON.stringify({errors: ["Player is not found"]}));
+    resp.status(401).send(JSON.stringify({errors: ['Player is not found']}));
     return;
   }
 
   if (email) {
     if (password !== player.password) {
-      resp.status(401).send(JSON.stringify({errors: ["Invalid password"]}));
+      resp.status(401).send(JSON.stringify({errors: ['Invalid password']}));
       return;
     }
   } else {
     if (deviceId !== player.deviceId) {
-      resp.status(401).send(JSON.stringify({errors: ["Invalid device id"]}));
+      resp.status(401).send(JSON.stringify({errors: ['Invalid device id']}));
       return;
     }
   }
@@ -185,7 +185,7 @@ async function login(req: any, resp: any) {
     resp.status(200).send(JSON.stringify({jwt: jwt}));
   } catch (err) {
     console.error(err.toString());
-    resp.status(500).send({errors: [`JWT cannot be generated`]});
+    resp.status(500).send({errors: ['JWT cannot be generated']});
   }
 }
 

@@ -111,13 +111,31 @@ export class ClubMember {
   })
   public updatedAt!: Date;
 
-  @Column({name: 'total_buyins', type: 'decimal', precision: 8, scale: 2, default: 0})
+  @Column({
+    name: 'total_buyins',
+    type: 'decimal',
+    precision: 8,
+    scale: 2,
+    default: 0,
+  })
   public totalBuyins!: number;
 
-  @Column({name: 'total_winnings', type: 'decimal', precision: 8, scale: 2, default: 0})
+  @Column({
+    name: 'total_winnings',
+    type: 'decimal',
+    precision: 8,
+    scale: 2,
+    default: 0,
+  })
   public totalWinnings!: number;
 
-  @Column({name: 'balance', type: 'decimal', precision: 8, scale: 2, default: 0})
+  @Column({
+    name: 'balance',
+    type: 'decimal',
+    precision: 8,
+    scale: 2,
+    default: 0,
+  })
   public balance!: number;
 
   @Column({name: 'notes', type: 'text', default: ''})

@@ -1,5 +1,5 @@
 import {Entity, Column, PrimaryGeneratedColumn} from 'typeorm';
-import { DbAwareUpdateDateColumn } from './dbaware';
+import {DbAwareUpdateDateColumn} from './dbaware';
 
 @Entity({name: 'club_freq_messages'})
 export class FavouriteMessage {
@@ -31,4 +31,3 @@ export class FavouriteMessage {
   })
   public updatedAt!: Date;
 }
-
