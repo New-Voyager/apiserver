@@ -112,6 +112,10 @@ describe('Player APIs', () => {
       const resp2 = await getMyClubs(player2);
       expect(resp1).toHaveLength(2);
       expect(resp2).toHaveLength(1);
+      expect(resp2[0].isOwner).toEqual(false);
+      const resp3 = await getMyClubs(owner);
+      expect(resp3[0].isOwner).toEqual(true);
+      expect(resp3[1].isOwner).toEqual(true);
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();

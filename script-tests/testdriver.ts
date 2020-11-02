@@ -239,7 +239,6 @@ class GameScript {
     }
   }
 
-
   protected async verifyClubGameStacks(params: any) {
     for (const clubStack of params) {
       await this.verifyClubGameStack(clubStack);
@@ -518,7 +517,7 @@ class GameScript {
     try {
       const clubId = this.clubCreated[input.club].clubId;
       const gameId = this.gameCreated[input.game].gameId;
-      const url =  `${this.serverURL}/internal/start-game/club_id/${clubId}/game_id/${gameId}`;
+      const url = `${this.serverURL}/internal/start-game/club_id/${clubId}/game_id/${gameId}`;
       const resp = await axios.post(
         `${this.serverURL}/internal/start-game?club-id=${clubId}&game-id=${gameId}`
       );

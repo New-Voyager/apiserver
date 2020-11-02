@@ -3,20 +3,24 @@ import {PlayerRepository} from '@src/repositories/player';
 import {ClubRepository} from '@src/repositories/club';
 import {ClubMemberStatus} from '@src/entity/club';
 import {getLogger} from '@src/utils/log';
-import { GameRepository } from '@src/repositories/game';
-import { GameStatus } from '@src/entity/game';
-import { GameType } from '@src/entity/hand';
-import { PlayerStatus } from '@src/entity/chipstrack';
+import {GameRepository} from '@src/repositories/game';
+import {GameStatus} from '@src/entity/game';
+import {GameType} from '@src/entity/hand';
+import {PlayerStatus} from '@src/entity/chipstrack';
 const logger = getLogger('player');
 
 async function getClubs(playerId: string): Promise<Array<any>> {
+  const player = await PlayerRepository.getPlayerById(playerId);
+  if (!player) {
+    throw new Error('Player Not Found');
+  }
   const clubMembers = await ClubRepository.getPlayerClubs(playerId);
   if (!clubMembers) {
     return [];
   }
   const clubs = _.map(clubMembers, x => {
     let isOwner = false;
-    if (x.ownerId === playerId) {
+    if (x.ownerId === player.id) {
       isOwner = true;
     }
     return {
@@ -57,7 +61,6 @@ const resolvers: any = {
     myInfo: async (parent, args, ctx, info) => {
       return getPlayerInfo(ctx.req.playerId);
     },
-
   },
   Mutation: {
     createPlayer: async (parent, args, ctx, info) => {

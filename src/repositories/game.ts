@@ -1,4 +1,9 @@
-import {getRepository, getManager, getConnection, createQueryBuilder} from 'typeorm';
+import {
+  getRepository,
+  getManager,
+  getConnection,
+  createQueryBuilder,
+} from 'typeorm';
 import {PokerGame, GameType, GameStatus} from '@src/entity/game';
 import {Club, ClubMember, ClubMemberStatus, ClubStatus} from '@src/entity/club';
 import {Player} from '@src/entity/player';
@@ -189,7 +194,11 @@ class GameRepositoryImpl {
     this.markGameStatus(clubId, gameId, GameStatus.ENDED);
   }
 
-  public async markGameStatus(clubId: number, gameId: number, status: GameStatus) {
+  public async markGameStatus(
+    clubId: number,
+    gameId: number,
+    status: GameStatus
+  ) {
     const repository = getRepository(PokerGame);
     const game = await repository.findOne({where: {id: gameId}});
     if (!game) {
