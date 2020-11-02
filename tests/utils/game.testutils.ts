@@ -1,6 +1,5 @@
 import {resetDatabase, getClient} from './utils';
 import {gql} from 'apollo-boost';
-import {GameType} from '../../src/entity/game';
 
 export const startGameQuery = gql`
   mutation($clubCode: String!, $gameInput: GameCreateInput!) {
