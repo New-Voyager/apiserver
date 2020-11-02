@@ -1,7 +1,11 @@
 DEFAULT_DOCKER_NET := game
 GCP_PROJECT_ID := voyager-01-285603
-BUILD_NO := $(shell cat build_number.txt) # It doesn't works for windows
-# BUILD_NO := $(file < build_number.txt) # For windows
+
+ifeq ($(OS), Windows_NT)
+	BUILD_NO := $(file < build_number.txt)
+else
+	BUILD_NO := $(shell cat build_number.txt)
+endif
 
 .PHONY: build
 build:
