@@ -12,20 +12,8 @@ import {Player} from './player';
 import {Club} from './club';
 import {PokerGame} from './game';
 import {DbAwareColumn, DbAwareUpdateDateColumn} from './dbaware';
+import { PlayerStatus } from './types';
 
-export enum PlayerStatus {
-  NOT_PLAYING,
-  PLAYING,
-  IN_QUEUE,
-  BREAK,
-  STANDING_UP,
-  LEFT,
-  KICKED_OUT,
-  BLOCKED,
-  WAIT_FOR_SITTING_APPROVAL,
-  LOST_CONNECTION,
-  WAIT_FOR_BUYIN_APPROVAL,
-}
 
 @Entity({name: 'player_game_tracker'})
 export class PlayerGameTracker {

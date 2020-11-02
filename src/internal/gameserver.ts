@@ -1,9 +1,6 @@
 import {getRepository} from 'typeorm';
-import {
-  GameServer,
-  GameServerStatus,
-  TrackGameServer,
-} from '@src/entity/gameserver';
+import {GameServer, TrackGameServer} from '@src/entity/gameserver';
+import {GameServerStatus} from '@src/entity/types';
 import {STATUS_CODES} from 'http';
 
 class GameServerAPIs {

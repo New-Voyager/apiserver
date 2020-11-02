@@ -1,4 +1,4 @@
-import {WonAtStatus} from '@src/entity/hand';
+import {WonAtStatus} from '@src/entity/types';
 import {HandRepository} from '@src/repositories/hand';
 
 function validateHandData(handData: any): Array<string> {

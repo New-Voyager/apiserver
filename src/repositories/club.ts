@@ -1,4 +1,5 @@
-import {Club, ClubMember, ClubMemberStatus, ClubStatus} from '@src/entity/club';
+import {Club, ClubMember} from '@src/entity/club';
+import {ClubMemberStatus, ClubStatus} from '@src/entity/types';
 import {Player} from '@src/entity/player';
 import {
   getConnection,

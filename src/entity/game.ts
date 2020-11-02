@@ -13,21 +13,8 @@ import {
   DbAwareCreateDateColumn,
   DbAwareUpdateDateColumn,
 } from './dbaware';
+import { GameStatus, GameType } from './types';
 
-export enum GameType {
-  UNKNOWN,
-  HOLDEM,
-  OMAHA,
-  OMAHA_HILO,
-}
-
-export enum GameStatus {
-  UNKNOWN,
-  WAITING,
-  NOTENOUGH_PLAYERS,
-  RUNNING,
-  ENDED,
-}
 
 @Entity({name: 'poker_game'})
 export class PokerGame {
@@ -105,10 +92,10 @@ export class PokerGame {
   @Column({name: 'game_length', type: 'int'})
   public gameLength!: number;
 
-  @Column({name: 'buy_in_approval', default: true})
+  @Column({name: 'buy_in_approval', default: false})
   public buyInApproval!: boolean;
 
-  @Column({name: 'sit_in_approval', default: true})
+  @Column({name: 'sit_in_approval', default: false})
   public sitInApproval!: boolean;
 
   @Column({name: 'break_length', default: 15})

@@ -5,15 +5,13 @@ import {getConnection, getRepository, getManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {isPostgres} from '@src/utils';
 import {
-  PlayerStatus,
   PlayerGameTracker,
   ClubChipsTransaction,
   ClubBalance,
-  // ClubPlayerBalance,
   ClubGameRake,
 } from '@src/entity/chipstrack';
 import {GameRepository} from '@src/repositories/game';
-
+import {PlayerStatus} from '@src/entity/types';
 import {PlayerSitInput} from './types';
 
 const logger = getLogger('chipstrack');

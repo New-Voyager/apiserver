@@ -13,12 +13,8 @@ import {
   DbAwareUpdateDateColumn,
 } from './dbaware';
 import {Player} from './player';
+import {ClubMemberStatus, ClubStatus} from './types';
 
-export enum ClubStatus {
-  UNKNOWN,
-  ACTIVE,
-  DEFUNCT,
-}
 
 @Entity()
 export class Club {
@@ -46,15 +42,6 @@ export class Club {
   public members!: Array<ClubMember>;
 }
 
-export enum ClubMemberStatus {
-  UNKNOWN,
-  INVITED,
-  PENDING,
-  DENIED,
-  ACTIVE,
-  LEFT,
-  KICKEDOUT,
-}
 
 @Entity()
 export class ClubMember {

@@ -1,12 +1,8 @@
 import {HandRepository} from '@src/repositories/hand';
-import {
-  WonAtStatus,
-  GameType,
-  HandHistory,
-  HandWinners,
-} from '@src/entity/hand';
+import {HandHistory, HandWinners} from '@src/entity/hand';
 import {ClubRepository} from '@src/repositories/club';
-import {ClubMemberStatus, Club} from '@src/entity/club';
+import {Club} from '@src/entity/club';
+import {WonAtStatus, GameType, ClubMemberStatus} from '@src/entity/types';
 import {PlayerRepository} from '@src/repositories/player';
 import {getLogger} from '@src/utils/log';
 import {GameRepository} from '@src/repositories/game';

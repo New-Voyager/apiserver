@@ -3,11 +3,10 @@ import {
   ClubCreateInput,
   ClubUpdateInput,
 } from '@src/repositories/club';
-import {ClubMemberStatus} from '@src/entity/club';
+import {ClubMemberStatus, GameStatus} from '@src/entity/types';
 import {Player} from '@src/entity/player';
 import {PageOptions} from '@src/types';
 import * as _ from 'lodash';
-import {GameStatus} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
 const logger = getLogger('clubresolvers');
 

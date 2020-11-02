@@ -1,9 +1,5 @@
-import {
-  HandHistory,
-  HandWinners,
-  WonAtStatus,
-  StarredHands,
-} from '@src/entity/hand';
+import {HandHistory, HandWinners, StarredHands} from '@src/entity/hand';
+import {WonAtStatus} from '@src/entity/types';
 import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {PokerGame} from '@src/entity/game';

@@ -1,7 +1,7 @@
 import {ClubMessageInput} from '@src/entity/clubmessage';
 import {Club} from '@src/entity/club';
 import {getRepository, MoreThan, LessThan} from 'typeorm';
-import {ClubMessageType} from '../entity/clubmessage';
+import {ClubMessageType} from '../entity/types';
 import {Player} from '@src/entity/player';
 import {PageOptions} from '@src/types';
 import {getLogger} from '@src/utils/log';

@@ -1,11 +1,7 @@
 import {Entity, Column, PrimaryGeneratedColumn} from 'typeorm';
 import {DbAwareUpdateDateColumn} from './dbaware';
+import { ClubMessageType } from './types';
 
-export enum ClubMessageType {
-  TEXT,
-  HAND,
-  GIPHY,
-}
 
 @Entity({name: 'club_messages'})
 export class ClubMessageInput {

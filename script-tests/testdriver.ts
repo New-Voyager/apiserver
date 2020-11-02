@@ -3,8 +3,7 @@ import * as fs from 'fs';
 import {default as axios} from 'axios';
 import {getClient} from '../tests/utils/utils';
 import {gql} from 'apollo-boost';
-import {ClubMemberStatus} from '../src/entity/club';
-import {isUndefined} from 'lodash';
+import {ClubMemberStatus} from '../src/entity/types';
 
 /*
 This class runs game script and verifies results in different stages
