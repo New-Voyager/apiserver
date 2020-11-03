@@ -12,8 +12,7 @@ import {Player} from './player';
 import {Club} from './club';
 import {PokerGame} from './game';
 import {DbAwareColumn, DbAwareUpdateDateColumn} from './dbaware';
-import { PlayerStatus } from './types';
-
+import {PlayerStatus} from './types';
 
 @Entity({name: 'player_game_tracker'})
 export class PlayerGameTracker {

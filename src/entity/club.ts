@@ -15,7 +15,6 @@ import {
 import {Player} from './player';
 import {ClubMemberStatus, ClubStatus} from './types';
 
-
 @Entity()
 export class Club {
   @PrimaryGeneratedColumn()
@@ -41,7 +40,6 @@ export class Club {
   @JoinColumn()
   public members!: Array<ClubMember>;
 }
-
 
 @Entity()
 export class ClubMember {

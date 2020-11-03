@@ -8,6 +8,9 @@ jobs:
       - checkout
       - node/install-packages:
           pkg-manager: yarn
+      - run:
+          name: Lint
+          command: make lint
       - run: 
           name: Compile TS
           command: make build
