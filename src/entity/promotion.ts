@@ -10,8 +10,7 @@ import {Club} from './club';
 import {PokerGame} from './game';
 import {DbAwareColumn} from './dbaware';
 import {Player} from './player';
-import { PromotionType } from './types';
-
+import {PromotionType} from './types';
 
 @Entity({name: 'promotion'})
 export class Promotion {

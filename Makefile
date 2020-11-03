@@ -14,7 +14,7 @@ build:
 
 .PHONY: install_deps
 install_deps:
-	yarn install
+	npx yarn install
 
 .PHONY: clean
 clean:
@@ -28,10 +28,17 @@ tests:
 unit-tests:
 	yarn unit-tests
 
-
 .PHONY: script-tests
 script-tests:
 	./run_script_tests.sh
+
+.PHONY: setup-hook
+setup-hook:
+	ln -sf ../../lint.sh .git/hooks/pre-commit
+
+.PHONY: lint
+lint:
+	./lint.sh
 
 .PHONY: create-network
 create-network:
