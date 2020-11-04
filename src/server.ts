@@ -184,7 +184,7 @@ async function login(req: any, resp: any) {
     const jwt = generateAccessToken(jwtClaims);
     resp.status(200).send(JSON.stringify({jwt: jwt}));
   } catch (err) {
-    console.error(err.toString());
+    logger.error(err.toString());
     resp.status(500).send({errors: ['JWT cannot be generated']});
   }
 }
