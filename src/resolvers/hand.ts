@@ -123,7 +123,6 @@ export async function getLastHandHistory(playerId: string, args: any) {
   if (!handHistory) {
     throw new Error('No hand found');
   }
-  logger.debug(handHistory);
   return await generateHandHistoryData(handHistory);
 }
 

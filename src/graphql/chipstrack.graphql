@@ -17,7 +17,7 @@ type ClubMember {
 }
 
 type clubAmount{
-  balance: Int
+  balance: Float
   updatedAt: DateTime
 }
 

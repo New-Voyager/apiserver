@@ -86,7 +86,6 @@ export async function getPromotions(args: any, playerUuid: string) {
   }
   try {
     const data = await PromotionRepository.getPromotions(args.clubCode);
-    logger.debug(data);
     return _.map(data, x => {
       return {
         id: x.id,
@@ -122,7 +121,6 @@ export async function getAssignedPromotions(args: any, playerUuid: string) {
       args.gameCode
     );
     return _.map(data, x => {
-      logger.debug(x);
       return {
         promotionId: x.promoId.id,
         clubCode: x.club.clubCode,

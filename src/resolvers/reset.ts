@@ -25,10 +25,7 @@ export async function resetDB() {
     await deleteAll('player_game_tracker');
     await deleteAll('club_chips_transaction');
     await deleteAll('club_game_rake');
-    await deleteAll('club_balance');
-    // await deleteAll('club_player_balance');
     await deleteAll('PokerGamePlayers');
-    //await deleteAll('PlayerGame');
     await deleteAll('PokerHand');
     await deleteAll('ClubGameRake');
     await deleteAll('PokerGame');

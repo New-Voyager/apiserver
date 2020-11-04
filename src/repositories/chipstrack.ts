@@ -7,7 +7,6 @@ import {isPostgres} from '@src/utils';
 import {
   PlayerGameTracker,
   ClubChipsTransaction,
-  ClubBalance,
   ClubGameRake,
 } from '@src/entity/chipstrack';
 import {GameRepository} from '@src/repositories/game';
@@ -159,7 +158,6 @@ class ChipsTrackRepositoryImpl {
       const clubChipsTransactionRepository = getRepository(
         ClubChipsTransaction
       );
-      const clubBalanceRepository = getRepository(ClubBalance);
       const clubMemberRepository = getRepository(ClubMember);
       const clubGameRakeRepository = getRepository(ClubGameRake);
       const playerGameTrackRepository = getRepository(PlayerGameTracker);
@@ -192,25 +190,16 @@ class ChipsTrackRepositoryImpl {
 
       await getManager().transaction(async transactionalEntityManager => {
         const clubChipsTransaction = new ClubChipsTransaction();
-        let clubBalance = await clubBalanceRepository.findOne({
-          relations: ['club'],
-          where: {club: endGameData.club_id},
-        });
-        if (!clubBalance) {
-          clubBalance = new ClubBalance();
-          clubBalance.club = club;
-          clubBalance.balance = 0;
-        }
         clubChipsTransaction.club = club;
         clubChipsTransaction.amount = clubGameRake.rake;
-        clubChipsTransaction.balance = clubBalance.balance + clubGameRake.rake;
+        clubChipsTransaction.balance = club.balance + clubGameRake.rake;
         clubChipsTransaction.description = `rake collected from game #${endGameData.game_id}`;
         const resp = await clubChipsTransactionRepository.save(
           clubChipsTransaction
         );
 
-        clubBalance.balance += clubGameRake.rake;
-        const resp1 = await clubBalanceRepository.save(clubBalance);
+        club.balance += clubGameRake.rake;
+        const resp1 = await clubRepository.save(club);
 
         const playerChips = await playerGameTrackRepository.find({
           relations: ['club', 'game', 'player'],
@@ -254,9 +243,8 @@ class ChipsTrackRepositoryImpl {
     }
   }
 
-  public async getClubBalance(clubCode: string): Promise<ClubBalance> {
+  public async getClubBalance(clubCode: string): Promise<Club> {
     const clubRepository = getRepository(Club);
-    const clubBalanceRepository = getRepository(ClubBalance);
     const club = await clubRepository.findOne({
       where: {clubCode: clubCode},
     });
@@ -264,15 +252,7 @@ class ChipsTrackRepositoryImpl {
       logger.error(`Club ${clubCode} is not found`);
       throw new Error(`Club ${clubCode} is not found`);
     }
-    const clubBalance = await clubBalanceRepository.findOne({
-      where: {club: club.id},
-    });
-    if (!clubBalance) {
-      logger.error(`Club ${clubCode} is not found`);
-      throw new Error(`Club ${clubCode} is not found`);
-    }
-    logger.debug(clubBalance);
-    return clubBalance;
+    return club;
   }
 
   public async getPlayerBalance(

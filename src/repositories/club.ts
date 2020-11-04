@@ -366,7 +366,6 @@ class ClubRepositoryImpl {
   }
 
   public async getMembers(clubCode: string): Promise<ClubMember[]> {
-    logger.debug(clubCode);
     const clubRepository = getRepository<Club>(Club);
     const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     if (!club) {
@@ -385,7 +384,6 @@ class ClubRepositoryImpl {
         status: Not(ClubMemberStatus.LEFT),
       },
     });
-    logger.debug(clubMembers);
     return clubMembers;
   }
 
