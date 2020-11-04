@@ -113,21 +113,3 @@ export class ClubChipsTransaction {
   })
   public updatedAt!: Date;
 }
-
-// @Entity({name: 'club_balance'})
-// export class ClubBalance {
-//   @ManyToOne(type => Club, club => club.id, {primary: true})
-//   @JoinColumn({name: 'club_id'})
-//   public club!: Club;
-
-//   @Column({name: 'balance', type: 'decimal', precision: 8, scale: 2})
-//   public balance!: number;
-
-//   @DbAwareUpdateDateColumn({
-//     name: 'updated_at',
-//     type: 'timestamp',
-//     default: () => 'CURRENT_TIMESTAMP',
-//     onUpdate: 'CURRENT_TIMESTAMP',
-//   })
-//   public updatedAt!: Date;
-// }
