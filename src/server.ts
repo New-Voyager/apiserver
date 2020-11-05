@@ -10,6 +10,7 @@ import {GameAPI} from './internal/game';
 import * as jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
 import {getJwtSecret} from './index';
+import {initializeNats} from './nats/index';
 
 const bodyParser = require('body-parser');
 const GQL_PORT = 9501;
@@ -72,6 +73,8 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     await createConnection({...options, name: 'default'});
   }
 
+  initializeNats();
+
   // get config vars
   dotenv.config();
 
@@ -109,6 +112,11 @@ function addInternalRoutes(app: any) {
   app.get(
     '/internal/get-game-server/club_id/:clubCode/game_num/:gameCode',
     GameServerAPI.getSpecificGameServer
+  );
+
+  app.get(
+    '/internal/get-game-server/club_id/:clubCode/game_num/:gameCode',
+    GameAPI.getGame
   );
 
   app.post('/auth/login', login);

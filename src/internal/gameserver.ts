@@ -125,6 +125,7 @@ export async function createGameServer(registerPayload: any) {
     gameServer.lastHeartBeatTime = new Date();
     gameServer.noActiveGames = 0;
     gameServer.noActivePlayers = 0;
+    gameServer.serverNumber = 1;
     await gameServerRepository.save(gameServer);
     return true;
   } catch (err) {

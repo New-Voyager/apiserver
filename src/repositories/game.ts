@@ -12,6 +12,7 @@ import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {getLogger} from '@src/utils/log';
 import {ClubGameRake} from '@src/entity/chipstrack';
 import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
+import {publishNewGame} from '@src/nats/index';
 
 const logger = getLogger('game');
 
@@ -70,7 +71,7 @@ class GameRepositoryImpl {
     const gameType: GameType = GameType[gameTypeStr];
     game.gameType = gameType;
     game.isTemplate = template;
-    game.status = GameStatus.WAITING_FOR_PLAYERS;
+    game.status = GameStatus.CONFIGURED;
     if (club) {
       game.club = club;
     }
@@ -81,17 +82,24 @@ class GameRepositoryImpl {
 
     game.startedAt = new Date();
     game.startedBy = player;
+
+    let gameServerId = 0;
     try {
       const gameRespository = getRepository(PokerGame);
-      await getManager().transaction(async transactionalEntityManager => {
+      await getManager().transaction(async () => {
         savedGame = await gameRespository.save(game);
 
-        const pick = Number.parseInt(savedGame.id) % gameServers.length;
+        let pick = 0;
+        if (gameServers.length > 0) {
+          pick = Number.parseInt(savedGame.id) % gameServers.length;
+        }
         const trackgameServerRepository = getRepository(TrackGameServer);
         const trackServer = new TrackGameServer();
         trackServer.clubCode = clubCode;
         trackServer.gameCode = savedGame.gameCode;
         trackServer.gameServerId = gameServers[pick];
+        const gameServer = gameServers[pick];
+        gameServerId = gameServer.serverNumber;
         await trackgameServerRepository.save(trackServer);
 
         const clubRake = new ClubGameRake();
@@ -102,6 +110,11 @@ class GameRepositoryImpl {
         clubRake.rake = 0;
         await clubGameRakeRepository.save(clubRake);
       });
+
+      if (!game.isTemplate) {
+        // publish a message to NATS topic
+        publishNewGame(gameServerId, game);
+      }
     } catch (err) {
       logger.error("Couldn't create game and retry again");
       throw new Error("Couldn't create the game, please retry again");
@@ -132,7 +145,7 @@ class GameRepositoryImpl {
     const gameType: GameType = GameType[gameTypeStr];
     game.gameType = gameType;
     game.isTemplate = template;
-    game.status = GameStatus.WAITING_FOR_PLAYERS;
+    game.status = GameStatus.CONFIGURED;
     game.host = player;
     game.gameCode = await getGameCodeForPlayer(player.id);
     game.privateGame = true;
