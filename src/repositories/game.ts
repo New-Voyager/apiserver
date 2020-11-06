@@ -262,7 +262,6 @@ class GameRepositoryImpl {
             pgt.game_id  = g.id;
         `;
     const resp = await getConnection().query(query);
-    console.log(JSON.stringify(resp));
     return resp;
   }
 
@@ -305,7 +304,6 @@ class GameRepositoryImpl {
             pgt.game_id  = g.id;
         `;
     const resp = await getConnection().query(query);
-    console.log(JSON.stringify(resp));
     return resp;
   }
 }

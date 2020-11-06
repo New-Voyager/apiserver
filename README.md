@@ -53,3 +53,18 @@ To run script-tests, run the following command.
 ``
   make script-tests
 ``
+
+
+## Pre-commit Hook
+
+Run the following command to setup the pre-commit style linter.
+
+``
+make setup-hook
+``
+
+You can also run the linter manually.
+
+``
+make lint
+``

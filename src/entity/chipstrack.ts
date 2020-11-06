@@ -12,8 +12,7 @@ import {Player} from './player';
 import {Club} from './club';
 import {PokerGame} from './game';
 import {DbAwareColumn, DbAwareUpdateDateColumn} from './dbaware';
-import { PlayerStatus } from './types';
-
+import {PlayerStatus} from './types';
 
 @Entity({name: 'player_game_tracker'})
 export class PlayerGameTracker {
@@ -102,24 +101,6 @@ export class ClubChipsTransaction {
 
   @Column({name: 'amount', type: 'decimal', precision: 8, scale: 2})
   public amount!: number;
-
-  @Column({name: 'balance', type: 'decimal', precision: 8, scale: 2})
-  public balance!: number;
-
-  @DbAwareUpdateDateColumn({
-    name: 'updated_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
-  public updatedAt!: Date;
-}
-
-@Entity({name: 'club_balance'})
-export class ClubBalance {
-  @ManyToOne(type => Club, club => club.id, {primary: true})
-  @JoinColumn({name: 'club_id'})
-  public club!: Club;
 
   @Column({name: 'balance', type: 'decimal', precision: 8, scale: 2})
   public balance!: number;

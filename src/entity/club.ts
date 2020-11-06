@@ -15,7 +15,6 @@ import {
 import {Player} from './player';
 import {ClubMemberStatus, ClubStatus} from './types';
 
-
 @Entity()
 export class Club {
   @PrimaryGeneratedColumn()
@@ -33,6 +32,23 @@ export class Club {
   @Column()
   public status!: ClubStatus;
 
+  @Column({
+    name: 'balance',
+    type: 'decimal',
+    precision: 8,
+    scale: 2,
+    default: 0,
+  })
+  public balance!: number;
+
+  @DbAwareUpdateDateColumn({
+    name: 'updated_at',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  public updatedAt!: Date;
+
   @ManyToOne(type => Player, {nullable: false, eager: true})
   @JoinColumn({name: 'owner_id'})
   public owner!: Player | Promise<Player | undefined>;
@@ -41,7 +57,6 @@ export class Club {
   @JoinColumn()
   public members!: Array<ClubMember>;
 }
-
 
 @Entity()
 export class ClubMember {

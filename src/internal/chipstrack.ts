@@ -87,7 +87,6 @@ class ChipsTrackAPIs {
 
     try {
       const res = await endGameData(req.body);
-      logger.debug(JSON.stringify(res));
       if (res === true) {
         resp.status(200).send(JSON.stringify({status: 'OK', data: res}));
       } else {
@@ -123,7 +122,6 @@ class ChipsTrackAPIs {
     try {
       const res = await buyChipsData(registerPayload);
       if (res) {
-        logger.debug(JSON.stringify(res));
         resp.status(200).send(JSON.stringify({status: 'OK', id: res}));
       } else {
         logger.error('Error');
