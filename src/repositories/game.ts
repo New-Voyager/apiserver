@@ -306,6 +306,16 @@ class GameRepositoryImpl {
     const resp = await getConnection().query(query);
     return resp;
   }
+
+  public async getNextGameServer(): Promise<number> {
+    const query = 'SELECT max(server_num)+1 next_number FROM game_server';
+    const resp = await getConnection().query(query);
+    let nextNumber = 1;
+    if (resp[0]['next_number']) {
+      nextNumber = resp[0]['next_number'];
+    }
+    return nextNumber;
+  }
 }
 
 export const GameRepository = new GameRepositoryImpl();
