@@ -47,7 +47,7 @@ class GameServerAPIs {
       return;
     }
     const [response, error] = await createGameServer(registerPayload);
-    if (error !== null) {
+    if (error === null) {
       resp.status(200).send(JSON.stringify(response));
     } else {
       resp.status(500).send(JSON.stringify(error));

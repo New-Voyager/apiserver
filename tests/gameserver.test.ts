@@ -57,7 +57,7 @@ describe('Game server APIs', () => {
         gameServer
       );
       expect(resp.status).toBe(200);
-      expect(resp.data.status).toBe('OK');
+      expect(resp.data.serverNumber).not.toBeNull();
     } catch (err) {
       console.error(JSON.stringify(err));
       expect(true).toBeFalsy();
@@ -77,7 +77,7 @@ describe('Game server APIs', () => {
         gameServer
       );
       expect(resp.status).toBe(200);
-      expect(resp.data.status).toBe('OK');
+      expect(resp.data.serverNumber).not.toBeNull();
       const gameServerUpdate = {
         ipAddress: '10.1.1.2',
         currentMemory: 200,
@@ -88,7 +88,7 @@ describe('Game server APIs', () => {
         gameServerUpdate
       );
       expect(resp.status).toBe(200);
-      expect(resp.data.status).toBe('OK');
+      expect(resp.data.serverNumber).not.toBeNull();
     } catch (err) {
       console.error(JSON.stringify(err));
       expect(true).toBeFalsy();
