@@ -111,7 +111,7 @@ export const GameServerAPI = new GameServerAPIs();
 
 export async function createGameServer(
   registerPayload: any
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<[any, any]> {
   try {
     const gameServerRepository = getRepository(GameServer);
