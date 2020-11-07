@@ -64,8 +64,8 @@ describe('Game server APIs', () => {
       status: 'ACTIVE',
     };
     try {
-      const resp = await createGameServer(gameServer);
-      expect(resp).toBe(true);
+      const [resp, _] = await createGameServer(gameServer);
+      expect(resp).not.toBeNull();
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();
@@ -93,8 +93,8 @@ describe('Game server APIs', () => {
       noActiveGames: 2,
     };
     try {
-      const resp = await createGameServer(gameServer);
-      expect(resp).toBe(true);
+      const [resp, error] = await createGameServer(gameServer);
+      expect(error).toBeNull();
       const edited1 = await editGameServer(gameServerUpdate1);
       const edited2 = await editGameServer(gameServerUpdate2);
       expect(edited1).toBe(true);
@@ -116,20 +116,18 @@ describe('Game server APIs', () => {
       currentMemory: 100,
       status: 'ACTIVE',
     };
-    try {
-      const resp1 = await createGameServer(gameServer1);
-      const resp2 = await createGameServer(gameServer2);
-      expect(resp1).toBe(true);
-      expect(resp2).toBe(true);
+    const [resp1, error] = await createGameServer(gameServer1);
+    const [resp2, error2] = await createGameServer(gameServer2);
+    expect(error).toBeNull();
+    expect(resp1).toBeDefined();
+    expect(resp1.serverNumber).toBeDefined();
+    expect(resp2).toBeDefined();
+    expect(resp2.serverNumber).toBeGreaterThan(resp1.serverNumber);
 
-      const servers = await getAllGameServers();
-      expect(servers).toHaveLength(2);
-      expect(servers[0].ipAddress).toBe('10.1.1.3');
-      expect(servers[1].ipAddress).toBe('10.1.1.4');
-    } catch (err) {
-      logger.error(JSON.stringify(err));
-      expect(true).toBeFalsy();
-    }
+    const servers = await getAllGameServers();
+    expect(servers).toHaveLength(2);
+    expect(servers[0].ipAddress).toBe('10.1.1.3');
+    expect(servers[1].ipAddress).toBe('10.1.1.4');
   });
 
   test('Get specific game server', async () => {
@@ -144,10 +142,10 @@ describe('Game server APIs', () => {
       status: 'ACTIVE',
     };
     try {
-      const resp1 = await createGameServer(gameServer1);
-      const resp2 = await createGameServer(gameServer2);
-      expect(resp1).toBe(true);
-      expect(resp2).toBe(true);
+      const [resp1, error1] = await createGameServer(gameServer1);
+      const [resp2, error2] = await createGameServer(gameServer2);
+      expect(error1).toBeNull();
+      expect(error2).toBeNull();
       const player = await createPlayer({
         player: {
           name: 'player_name',
@@ -185,10 +183,10 @@ describe('Game server APIs', () => {
       status: 'ACTIVE',
     };
     try {
-      const resp1 = await createGameServer(gameServer1);
-      const resp2 = await createGameServer(gameServer2);
-      expect(resp1).toBe(true);
-      expect(resp2).toBe(true);
+      const [resp1, error1] = await createGameServer(gameServer1);
+      const [resp2, error2] = await createGameServer(gameServer2);
+      expect(error1).toBeNull();
+      expect(error2).toBeNull();
       const player = await createPlayer({
         player: {
           name: 'player_name',

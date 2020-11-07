@@ -6,11 +6,7 @@ import {
   Index,
 } from 'typeorm';
 
-import {
-  DbAwareColumn,
-  DbAwareCreateDateColumn,
-  DbAwareUpdateDateColumn,
-} from './dbaware';
+import {DbAwareColumn} from './dbaware';
 import {GameServerStatus} from './types';
 
 @Entity({name: 'game_server'})
@@ -56,6 +52,9 @@ export class GameServer {
 
   @Column({name: 'current_memory', type: 'int'})
   public currentMemory!: number;
+
+  @DbAwareColumn({type: 'int8', name: 'server_num', unique: true})
+  public serverNumber!: number;
 }
 
 @Entity({name: 'game_gameserver'})

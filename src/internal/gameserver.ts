@@ -2,6 +2,9 @@ import {getRepository} from 'typeorm';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {GameServerStatus} from '@src/entity/types';
 import {STATUS_CODES} from 'http';
+import {GameRepository} from '@src/repositories/game';
+import {getLogger} from '@src/utils/log';
+const logger = getLogger('internal::gameserver');
 
 class GameServerAPIs {
   /**
@@ -27,8 +30,9 @@ class GameServerAPIs {
         errors.push('status is missing');
       } else {
         if (
-          registerPayload.status != GameServerStatus[GameServerStatus.ACTIVE] &&
-          registerPayload.status != GameServerStatus[GameServerStatus.DOWN]
+          registerPayload.status !==
+            GameServerStatus[GameServerStatus.ACTIVE] &&
+          registerPayload.status !== GameServerStatus[GameServerStatus.DOWN]
         ) {
           errors.push('invalid status field');
         }
@@ -42,11 +46,11 @@ class GameServerAPIs {
       resp.status(500).send(JSON.stringify(errors));
       return;
     }
-    const response = await createGameServer(registerPayload);
-    if (response === true) {
-      resp.status(200).send(JSON.stringify({status: 'OK'}));
+    const [response, error] = await createGameServer(registerPayload);
+    if (error === null) {
+      resp.status(200).send(JSON.stringify(response));
     } else {
-      resp.status(500).send(JSON.stringify(response));
+      resp.status(500).send(JSON.stringify(error));
     }
   }
 
@@ -105,7 +109,10 @@ class GameServerAPIs {
 
 export const GameServerAPI = new GameServerAPIs();
 
-export async function createGameServer(registerPayload: any) {
+export async function createGameServer(
+  registerPayload: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<[any, any]> {
   try {
     const gameServerRepository = getRepository(GameServer);
     let gameServer = await gameServerRepository.findOne({
@@ -116,6 +123,11 @@ export async function createGameServer(registerPayload: any) {
       gameServer.noGamesHandled = 0;
       gameServer.noPlayersHandled = 0;
     }
+    logger.debug(`Getting next game server number`);
+    // get next game server number
+    gameServer.serverNumber = await GameRepository.getNextGameServer();
+    logger.debug(`Next game server number: ${gameServer.serverNumber}`);
+
     const gameServerStatus: string = registerPayload.status;
     gameServer.ipAddress = registerPayload.ipAddress;
     gameServer.currentMemory = registerPayload.currentMemory;
@@ -125,10 +137,12 @@ export async function createGameServer(registerPayload: any) {
     gameServer.lastHeartBeatTime = new Date();
     gameServer.noActiveGames = 0;
     gameServer.noActivePlayers = 0;
+    //gameServer.serverNumber = 1;
     await gameServerRepository.save(gameServer);
-    return true;
+    return [gameServer, null];
   } catch (err) {
-    return err;
+    logger.error(`Registering game server failed. Error: ${err.toString()}`);
+    return [null, err];
   }
 }
 
