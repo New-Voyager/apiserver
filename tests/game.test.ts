@@ -102,7 +102,7 @@ describe('Game APIs', () => {
       variables: {
         gameInput: holdemGameInput,
       },
-      mutation: gameutils.startFriendsGameQuery,
+      mutation: gameutils.configureFriendsGameQuery,
     });
     expect(resp.errors).toBeUndefined();
     expect(resp.data).not.toBeNull();

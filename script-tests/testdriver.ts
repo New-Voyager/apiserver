@@ -471,7 +471,7 @@ class GameScript {
     try {
       const configureGame = gql`
         mutation($clubCode: String!, $gameInput: GameCreateInput!) {
-          startedGame: configureGame(clubCode: $clubCode, game: $gameInput) {
+          configuredGame: configureGame(clubCode: $clubCode, game: $gameInput) {
             gameCode
           }
         }
@@ -500,11 +500,11 @@ class GameScript {
           .playerUuid
       ).query({
         variables: {
-          gameCode: resp.data.startedGame.gameCode,
+          gameCode: resp.data.configuredGame.gameCode,
         },
         query: queryGame,
       });
-      return [resp.data.startedGame.gameCode, gameResp.data.game.id];
+      return [resp.data.configuredGame.gameCode, gameResp.data.game.id];
     } catch (err) {
       this.log(err.toString());
       throw err;

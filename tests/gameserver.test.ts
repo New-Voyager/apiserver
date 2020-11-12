@@ -209,7 +209,7 @@ describe('Game server APIs', () => {
     const playerUuid = await clubutils.createPlayer('player1', 'abc123');
 
     for (let i = 0; i < 3; i++) {
-      const game1 = await gameutils.startFriendsGame(
+      const game1 = await gameutils.configureFriendsGame(
         playerUuid,
         holdemGameInput
       );

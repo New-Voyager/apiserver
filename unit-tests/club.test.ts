@@ -16,6 +16,8 @@ import {createPlayer} from '../src/resolvers/player';
 import {configureGame} from '../src/resolvers/game';
 import {createGameServer} from '../src/internal/gameserver';
 import {getLogger} from '../src/utils/log';
+import {updateClubMember} from '../tests/utils/club.testutils';
+
 const logger = getLogger('club unit-test');
 
 beforeAll(async done => {

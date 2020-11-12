@@ -236,7 +236,10 @@ async function createPlayerStartFriendsGame(): Promise<
 > {
   await createGameServer('1.2.0.1');
   const playerUuid = await clubutils.createPlayer('player1', 'abc123');
-  const game = await gameutils.startFriendsGame(playerUuid, holdemGameInput);
+  const game = await gameutils.configureFriendsGame(
+    playerUuid,
+    holdemGameInput
+  );
   const playerID = await handutils.getPlayerById(playerUuid);
   const gameID = await gameutils.getGameById(game.gameCode);
   const messageInput = {
