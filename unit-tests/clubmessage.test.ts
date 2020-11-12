@@ -1,6 +1,6 @@
 import {initializeSqlLite} from './utils';
 import {createGameServer} from '../src/internal/gameserver';
-import {startGame} from '../src/resolvers/game';
+import {configureGame} from '../src/resolvers/game';
 import {getClubById, createClub} from '../src/resolvers/club';
 import {getPlayerById, createPlayer} from '../src/resolvers/player';
 import {sendClubMsg, getClubMsg} from '../src/resolvers/clubmessage';

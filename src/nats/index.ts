@@ -6,32 +6,32 @@ import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {GameServer} from '@src/entity/gameserver';
 
 let natsEnabled = false;
-let natsAddr = 'nats://localhost:4222';
+let natsServer = 'nats://localhost:4222';
 let nc: nats.Client;
-natsEnabled = false;
+//natsEnabled = false;
 const logger = getLogger('nats');
 const APISERVER_TO_GAMESERVER = 'apiserver.gameserver';
 
 export function initializeNats() {
-  if (process.env.NATS_ADDR) {
-    natsAddr = process.env.NATS_ADDR;
+  if (process.env.NATS_SERVER) {
+    natsServer = process.env.NATS_SERVER;
   }
 
-  if (process.env.USE_NATS === '1') {
+  if (process.env.NATS_ENABLED === '1') {
     natsEnabled = true;
   }
 
   if (natsEnabled) {
     try {
-      logger.info(`Connecting to nats server: ${natsAddr}`);
+      logger.info(`Connecting to nats server: ${natsServer}`);
       const opts: nats.ClientOpts = {
         json: true,
       };
-      nc = nats.connect(natsAddr, opts);
-      logger.info(`Connecting to nats server: ${natsAddr} succeeded`);
+      nc = nats.connect(natsServer, opts);
+      logger.info(`Connecting to nats server: ${natsServer} succeeded`);
     } catch (err) {
       logger.info(
-        `Connecting to nats server: ${natsAddr} failed. Error: ${err.toString()}`
+        `Connecting to nats server: ${natsServer} failed. Error: ${err.toString()}`
       );
     }
   }

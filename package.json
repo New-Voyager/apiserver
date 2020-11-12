@@ -6,7 +6,8 @@
   "author": "Voyager LLC",
   "private": true,
   "scripts": {
-    "watch-debug": "tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
+    "watch-debug": "NODE_ENV=dev tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
+    "watch-debug-nats": "NATS_SERVER=nats://localhost:4222 NATS_ENABLED=1 NODE_ENV=dev tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
     "debug": "NODE_ENV=dev node --inspect=0.0.0.0:9228 ./build/index.js",
     "debug-windows": "set NODE_ENV=dev && tsc-watch.bat",
     "debug-break": "node --nolazy --inspect-brk=9235 ./build/index.js",

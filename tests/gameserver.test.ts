@@ -158,7 +158,7 @@ describe('Game server APIs', () => {
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
 
     for (let i = 0; i < 3; i++) {
-      const game1 = await gameutils.startGame(
+      const game1 = await gameutils.configureGame(
         playerId,
         clubCode,
         holdemGameInput
@@ -209,7 +209,7 @@ describe('Game server APIs', () => {
     const playerUuid = await clubutils.createPlayer('player1', 'abc123');
 
     for (let i = 0; i < 3; i++) {
-      const game1 = await gameutils.startFriendsGame(
+      const game1 = await gameutils.configureFriendsGame(
         playerUuid,
         holdemGameInput
       );

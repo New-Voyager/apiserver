@@ -1,5 +1,5 @@
 test:
-  disabled: true
+  disabled: false
 
 # Cleanup steps
 cleanup:
@@ -121,7 +121,7 @@ game:
             buyInApproval: false
             rakePercentage: 5.0
             rakeCap: 5.0
-            buyInMin: 100
+            buyInMin: 50
             buyInMax: 300
             actionTime: 100
         - club: chennai
@@ -139,7 +139,7 @@ game:
             buyInApproval: false
             rakePercentage: 5.0
             rakeCap: 5.0
-            buyInMin: 100
+            buyInMin: 50
             buyInMax: 300
             actionTime: 100
         - club: newClub
@@ -157,7 +157,7 @@ game:
             buyInApproval: false
             rakePercentage: 5.0
             rakeCap: 5.0
-            buyInMin: 100
+            buyInMin: 50
             buyInMax: 300
             actionTime: 100
         - club: chennai

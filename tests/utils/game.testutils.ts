@@ -1,9 +1,9 @@
 import {resetDatabase, getClient} from './utils';
 import {gql} from 'apollo-boost';
 
-export const startGameQuery = gql`
+export const configureGameQuery = gql`
   mutation($clubCode: String!, $gameInput: GameCreateInput!) {
-    startedGame: startGame(clubCode: $clubCode, game: $gameInput) {
+    configuredGame: configureGame(clubCode: $clubCode, game: $gameInput) {
       title
       gameCode
       gameType
@@ -33,9 +33,9 @@ export const startGameQuery = gql`
   }
 `;
 
-export const startFriendsGameQuery = gql`
+export const configureFriendsGameQuery = gql`
   mutation($gameInput: GameCreateInput!) {
-    startedGame: startFriendsGame(game: $gameInput) {
+    configuredGame: configureFriendsGame(game: $gameInput) {
       title
       gameCode
       gameType
@@ -115,7 +115,7 @@ export interface GameInput {
   muckLosingHand?: boolean;
 }
 
-export async function startGame(
+export async function configureGame(
   playerId: string,
   clubCode: string,
   gameInput: GameInput
@@ -125,16 +125,16 @@ export async function startGame(
       clubCode: clubCode,
       gameInput: gameInput,
     },
-    mutation: startGameQuery,
+    mutation: configureGameQuery,
   });
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
-  const startedGame = resp.data.startedGame;
+  const startedGame = resp.data.configuredGame;
   expect(startedGame).not.toBeNull();
   return startedGame;
 }
 
-export async function startFriendsGame(
+export async function configureFriendsGame(
   playerId: string,
   gameInput: GameInput
 ): Promise<any> {
@@ -142,11 +142,11 @@ export async function startFriendsGame(
     variables: {
       gameInput: gameInput,
     },
-    mutation: startFriendsGameQuery,
+    mutation: configureFriendsGameQuery,
   });
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
-  const startedGame = resp.data.startedGame;
+  const startedGame = resp.data.configuredGame;
   expect(startedGame).not.toBeNull();
   return startedGame;
 }

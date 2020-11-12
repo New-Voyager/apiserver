@@ -5,7 +5,11 @@ import {getGame, getPlayer, isClubMember} from '@src/cache/index';
 
 const logger = getLogger('game');
 
-export async function startGame(playerId: string, clubCode: string, game: any) {
+export async function configureGame(
+  playerId: string,
+  clubCode: string,
+  game: any
+) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
@@ -28,7 +32,7 @@ export async function startGame(playerId: string, clubCode: string, game: any) {
   }
 }
 
-export async function startGameByPlayer(playerId: string, game: any) {
+export async function configureGameByPlayer(playerId: string, game: any) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
@@ -131,11 +135,11 @@ const resolvers: any = {
     },
   },
   Mutation: {
-    startGame: async (parent, args, ctx, info) => {
-      return startGame(ctx.req.playerId, args.clubCode, args.game);
+    configureGame: async (parent, args, ctx, info) => {
+      return configureGame(ctx.req.playerId, args.clubCode, args.game);
     },
-    startFriendsGame: async (parent, args, ctx, info) => {
-      return startGameByPlayer(ctx.req.playerId, args.game);
+    configureFriendsGame: async (parent, args, ctx, info) => {
+      return configureGameByPlayer(ctx.req.playerId, args.game);
     },
     joinGame: async (parent, args, ctx, info) => {
       return joinGame(ctx.req.playerId, args.gameCode, args.seatNo);

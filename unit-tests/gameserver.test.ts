@@ -9,7 +9,7 @@ import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/resolvers/reset';
 import {createPlayer} from '@src/resolvers/player';
 import {createClub} from '@src/resolvers/club';
-import {startGame, startGameByPlayer} from '@src/resolvers/game';
+import {configureGame, configureGameByPlayer} from '@src/resolvers/game';
 
 const logger = getLogger('gameserver unit-test');
 const holdemGameInput = {
@@ -156,7 +156,7 @@ describe('Game server APIs', () => {
       description: 'poker players gather',
       ownerUuid: player,
     });
-    const game = await startGame(player, club, holdemGameInput);
+    const game = await configureGame(player, club, holdemGameInput);
     const server = await getParticularGameServer(club, game.gameCode);
     if (!server) {
       expect(true).toBeFalsy();
@@ -189,7 +189,7 @@ describe('Game server APIs', () => {
       },
     });
 
-    const game = await startGameByPlayer(player, holdemGameInput);
+    const game = await configureGameByPlayer(player, holdemGameInput);
     const server = await getParticularGameServer('000000', game.gameCode);
     if (!server) {
       expect(true).toBeFalsy();

@@ -66,11 +66,11 @@ describe('Game APIs', () => {
         clubCode: clubCode,
         gameInput: holdemGameInput,
       },
-      mutation: gameutils.startGameQuery,
+      mutation: gameutils.configureGameQuery,
     });
     expect(resp.errors).toBeUndefined();
     expect(resp.data).not.toBeNull();
-    const startedGame = resp.data.startedGame;
+    const startedGame = resp.data.configuredGame;
     expect(startedGame).not.toBeNull();
     expect(startedGame.gameType).toEqual('HOLDEM');
     expect(startedGame.title).toEqual('Friday game');
@@ -102,11 +102,11 @@ describe('Game APIs', () => {
       variables: {
         gameInput: holdemGameInput,
       },
-      mutation: gameutils.startFriendsGameQuery,
+      mutation: gameutils.configureFriendsGameQuery,
     });
     expect(resp.errors).toBeUndefined();
     expect(resp.data).not.toBeNull();
-    const startedGame = resp.data.startedGame;
+    const startedGame = resp.data.configuredGame;
     expect(startedGame).not.toBeNull();
     expect(startedGame.gameType).toEqual('HOLDEM');
     expect(startedGame.title).toEqual('Friday game');
@@ -137,12 +137,12 @@ describe('Game APIs', () => {
       'yatzee2'
     );
     await createGameServer('1.2.0.2');
-    const game1 = await gameutils.startGame(
+    const game1 = await gameutils.configureGame(
       playerId,
       clubCode,
       holdemGameInput
     );
-    const game2 = await gameutils.startGame(
+    const game2 = await gameutils.configureGame(
       playerId,
       clubCode,
       holdemGameInput
@@ -169,7 +169,7 @@ describe('Game APIs', () => {
     await createGameServer('1.2.0.3');
     await createGameServer('1.2.0.4');
     for (let i = 0; i < numGames; i++) {
-      await gameutils.startGame(playerId, clubCode, holdemGameInput);
+      await gameutils.configureGame(playerId, clubCode, holdemGameInput);
     }
     let clubGames = await gameutils.getClubGames(playerId, clubCode);
     // we can get only 20 games
