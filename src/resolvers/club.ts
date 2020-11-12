@@ -2,6 +2,7 @@ import {
   ClubRepository,
   ClubCreateInput,
   ClubUpdateInput,
+  ClubMemberUpdateInput,
 } from '@src/repositories/club';
 import {ClubMemberStatus, GameStatus} from '@src/entity/types';
 import {Player} from '@src/entity/player';
@@ -335,6 +336,30 @@ export async function getMemberStatus(playerId: string, clubCode: string) {
   return await ClubRepository.getClubMemberStatus(clubCode, playerId);
 }
 
+export async function updateClubMember(
+  hostUuid: string,
+  playerUuid: string, 
+  clubCode: string, 
+  updateData: ClubMemberUpdateInput
+) {
+  const errors = new Array<string>();
+  if (!hostUuid || hostUuid === '') {
+    throw new Error('Unauthorized');
+  }
+  if (!clubCode || clubCode === '') {
+    errors.push('clubCode is a required field');
+  }
+  if (!playerUuid || playerUuid === '') {
+    errors.push('playerUuid is a required field');
+  }
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+  
+  const status = await ClubRepository.updateClubMember(hostUuid, playerUuid, clubCode, updateData);
+  return ClubMemberStatus[status];
+}
+
 const resolvers: any = {
   Query: {
     clubMembers: async (parent, args, ctx, info) => {
@@ -382,6 +407,10 @@ const resolvers: any = {
     leaveClub: async (parent, args, ctx, info) => {
       return leaveClub(ctx.req.playerId, args.clubCode);
     },
+
+    updateClubMember: async(parent, args, ctx, info) => {
+      return updateClubMember(ctx.req.playerId, args.playerUuid, args.clubCode, args.update);
+    }
   },
 };
 

@@ -28,7 +28,77 @@ export interface ClubUpdateInput {
   description: string;
 }
 
+export interface ClubMemberUpdateInput {
+  isManager: Boolean
+  notes: String
+  balance: number
+  status: ClubMemberStatus
+  creditLimit: number
+}
+
 class ClubRepositoryImpl {
+
+  public async updateClubMember(
+    hostUuid: string,
+    playerUuid: string, 
+    clubCode: string, 
+    updateData: ClubMemberUpdateInput
+  ): Promise<ClubMemberStatus> {
+    const clubRepository = getRepository<Club>(Club);
+    const playerRepository = getRepository<Player>(Player);
+    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+
+    // Check club data
+    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
+    if (!club) {
+      throw new Error(`Club: ${clubCode} does not exist`);
+    }
+
+    // Check player data
+    const player = await playerRepository.findOne({where: {uuid: playerUuid}});
+    if (!player) {
+      throw new Error(`Player ${playerUuid} is not found`);
+    }
+
+    // Check owner data
+    const owner: Player | undefined = await Promise.resolve(club.owner);
+    if (!owner) {
+      throw new Error('Unexpected. There is no owner for the club');
+    }
+    if (owner.uuid !== hostUuid) {
+      throw new Error('Unauthorized!');
+    }
+
+    // Check ClubMember data
+    const clubMember = await clubMemberRepository.findOne({
+      where: {
+        club: {id: club.id},
+        player: {id: player.id},
+      },
+    });
+    if (!clubMember) {
+      throw new Error(`The player ${player.name} is not in the club`);
+    }
+
+    // update data
+    if(updateData.balance){
+      clubMember.balance = updateData.balance;
+    }
+    if(updateData.creditLimit){
+      clubMember.creditLimit = updateData.creditLimit;
+    }
+    if(updateData.notes){
+      clubMember.notes = updateData.notes.toString();
+    }
+    if(updateData.status){
+      clubMember.status = ClubMemberStatus[updateData.status] as unknown as ClubMemberStatus;
+    }
+
+    // Save the data
+    const resp = await clubMemberRepository.save(clubMember);
+    return clubMember.status;    
+  }
+
   public async getClub(clubCode: string): Promise<Club | undefined> {
     const clubRepository = getRepository(Club);
     const club = await clubRepository.findOne({where: {clubCode: clubCode}});

@@ -97,6 +97,12 @@ export const clubByIdQuery = gql`
   }
 `;
 
+export const updateClubMemberQuery = gql`
+  mutation($clubCode: String!, $playerUuid: String!, $update: ClubMemberUpdateInput!) {
+    status: updateClubMember(clubCode: $clubCode, playerUuid: $playerUuid, update: $update)
+  }
+`;
+
 /**
  * Creates a club and returns clubId and owner id
  */
@@ -234,4 +240,23 @@ export async function getMyClubs(playerId: string): Promise<Array<any>> {
   });
 
   return resp.data.clubs;
+}
+
+export async function updateClubMember(
+  clubCode: string,
+  ownerId: string,
+  playerId: string,
+  updatedata: any,
+) {
+  const ownerClient = getClient(ownerId);
+  const variables = {
+    clubCode: clubCode,
+    playerUuid: playerId,
+    update: updatedata,
+  };
+  const resp = await ownerClient.mutate({
+    variables: variables,
+    mutation: updateClubMemberQuery,
+  });
+  return resp.data;
 }
