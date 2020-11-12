@@ -4,7 +4,8 @@ import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/resolvers/reset';
 import {createPlayer} from '@src/resolvers/player';
 import {createClub} from '@src/resolvers/club';
-import {startGame, getGameById, startGameByPlayer} from '@src/resolvers/game';
+import {startGame, startGameByPlayer} from '@src/resolvers/game';
+import {getGame} from '@src/cache/index';
 
 const logger = getLogger('game unit-test');
 const holdemGameInput = {
@@ -164,7 +165,7 @@ describe('Game APIs', () => {
         ownerUuid: player,
       });
       const startedGame = await startGame(player, club, holdemGameInput);
-      const gameData = await getGameById(player, startedGame.gameCode);
+      const gameData = await getGame(startedGame.gameCode);
       expect(gameData.id).not.toBe(null);
     } catch (err) {
       logger.error(JSON.stringify(err));

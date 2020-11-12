@@ -1,6 +1,6 @@
 import {initializeSqlLite} from './utils';
 import {createGameServer} from '../src/internal/gameserver';
-import {startGame, getGameById, startGameByPlayer} from '../src/resolvers/game';
+import {startGame, startGameByPlayer} from '../src/resolvers/game';
 import {
   getClubBalanceAmount,
   getClubTrack,
@@ -14,9 +14,9 @@ import {
   buyChipsData,
   endGameData,
 } from '../src/internal/chipstrack';
+import {getGame} from '@src/cache/index';
 
 import {getLogger} from '../src/utils/log';
-import {getClubPlayerBalance} from '../tests/utils/chipstrack.testutils';
 const logger = getLogger('chipstrack-unit-test');
 
 const SERVER_API = 'http://localhost:9501/internal';
@@ -77,7 +77,7 @@ describe('Player Chips tracking APIs', () => {
 
     const playerID = await getPlayerById(ownerId);
     const clubID = await getClubById(ownerId, clubCode);
-    const gameID = await getGameById(ownerId, game.gameCode);
+    const gameID = await getGame(game.gameCode);
     const input = {
       clubId: clubID.id,
       playerId: playerID.id,
@@ -108,7 +108,7 @@ describe('Player Chips tracking APIs', () => {
     const game = await startGameByPlayer(ownerId, holdemGameInput);
 
     const playerID = await getPlayerById(ownerId);
-    const gameID = await getGameById(ownerId, game.gameCode);
+    const gameID = await getGame(game.gameCode);
     const input = {
       clubId: 0,
       playerId: playerID.id,
@@ -146,7 +146,7 @@ describe('Player Chips tracking APIs', () => {
 
     const playerID = await getPlayerById(ownerId);
     const clubID = await getClubById(ownerId, clubCode);
-    const gameID = await getGameById(ownerId, game.gameCode);
+    const gameID = await getGame(game.gameCode);
     const buyChips = {
       clubId: clubID.id,
       playerId: playerID.id,
@@ -200,7 +200,7 @@ describe('Player Chips tracking APIs', () => {
     const game = await startGameByPlayer(ownerId, holdemGameInput);
 
     const playerID = await getPlayerById(ownerId);
-    const gameID = await getGameById(ownerId, game.gameCode);
+    const gameID = await getGame(game.gameCode);
     const buyChips = {
       clubId: 0,
       playerId: playerID.id,
@@ -261,7 +261,7 @@ describe('Player Chips tracking APIs', () => {
 
     const playerID = await getPlayerById(ownerId);
     const clubID = await getClubById(ownerId, clubCode);
-    const gameID = await getGameById(ownerId, game.gameCode);
+    const gameID = await getGame(game.gameCode);
     const input = {
       clubId: clubID.id,
       playerId: playerID.id,
@@ -308,7 +308,7 @@ describe('Player Chips tracking APIs', () => {
 
     const playerID = await getPlayerById(ownerId);
     const clubID = await getClubById(ownerId, clubCode);
-    const gameID = await getGameById(ownerId, game.gameCode);
+    const gameID = await getGame(game.gameCode);
     const input = {
       clubId: clubID.id,
       playerId: playerID.id,
@@ -361,7 +361,7 @@ describe('Player Chips tracking APIs', () => {
 
     const playerID = await getPlayerById(ownerId);
     const clubID = await getClubById(ownerId, clubCode);
-    const gameID = await getGameById(ownerId, game.gameCode);
+    const gameID = await getGame(game.gameCode);
     const input = {
       clubId: clubID.id,
       playerId: playerID.id,
@@ -407,7 +407,7 @@ describe('Player Chips tracking APIs', () => {
     const game = await startGameByPlayer(ownerId, holdemGameInput);
 
     const playerID = await getPlayerById(ownerId);
-    const gameID = await getGameById(ownerId, game.gameCode);
+    const gameID = await getGame(game.gameCode);
     const input = {
       clubId: 0,
       playerId: playerID.id,
@@ -447,7 +447,7 @@ describe('Player Chips tracking APIs', () => {
     const game = await startGameByPlayer(ownerId, holdemGameInput);
 
     const playerID = await getPlayerById(ownerId);
-    const gameID = await getGameById(ownerId, game.gameCode);
+    const gameID = await getGame(game.gameCode);
     const input = {
       clubId: 0,
       playerId: playerID.id,
