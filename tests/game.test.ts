@@ -70,7 +70,7 @@ describe('Game APIs', () => {
     });
     expect(resp.errors).toBeUndefined();
     expect(resp.data).not.toBeNull();
-    const startedGame = resp.data.startedGame;
+    const startedGame = resp.data.configuredGame;
     expect(startedGame).not.toBeNull();
     expect(startedGame.gameType).toEqual('HOLDEM');
     expect(startedGame.title).toEqual('Friday game');
@@ -106,7 +106,7 @@ describe('Game APIs', () => {
     });
     expect(resp.errors).toBeUndefined();
     expect(resp.data).not.toBeNull();
-    const startedGame = resp.data.startedGame;
+    const startedGame = resp.data.configuredGame;
     expect(startedGame).not.toBeNull();
     expect(startedGame.gameType).toEqual('HOLDEM');
     expect(startedGame.title).toEqual('Friday game');

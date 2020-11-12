@@ -129,7 +129,7 @@ export async function configureGame(
   });
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
-  const startedGame = resp.data.configureGame;
+  const startedGame = resp.data.configuredGame;
   expect(startedGame).not.toBeNull();
   return startedGame;
 }

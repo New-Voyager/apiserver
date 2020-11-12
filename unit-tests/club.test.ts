@@ -448,7 +448,7 @@ describe('Club APIs', () => {
     }
   });
 
-  test('update club members', async () => {
+  test.skip('update club members', async () => {
     const playerId = await createPlayer({
       player: {name: 'owner', deviceId: 'test-device-owner'},
     });
