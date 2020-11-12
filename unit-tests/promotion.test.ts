@@ -4,7 +4,7 @@ import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/resolvers/reset';
 import {createPlayer, getPlayerById} from '@src/resolvers/player';
 import {createClub, getClubById} from '@src/resolvers/club';
-import {startGame} from '@src/resolvers/game';
+import {configureGame} from '@src/resolvers/game';
 import {saveChipsData} from '@src/internal/chipstrack';
 import {saveHandData} from '@src/internal/hand';
 import {
@@ -223,7 +223,7 @@ describe('Promotion APIs', () => {
         description: 'poker players gather',
         ownerUuid: player,
       });
-      const game = await startGame(player, club, holdemGameInput);
+      const game = await configureGame(player, club, holdemGameInput);
       const promotion = await createPromotion(
         {
           clubCode: club,
@@ -305,7 +305,7 @@ describe('Promotion APIs', () => {
         description: 'poker players gather',
         ownerUuid: player,
       });
-      const game = await startGame(player, club, holdemGameInput);
+      const game = await configureGame(player, club, holdemGameInput);
       for (let i = 0; i < 20; i++) {
         const promotion = await createPromotion(
           {
@@ -361,7 +361,7 @@ describe('Promotion APIs', () => {
         status: 'ACTIVE',
       };
       await createGameServer(gameServer);
-      const game = await startGame(owner, club, holdemGameInput);
+      const game = await configureGame(owner, club, holdemGameInput);
       const playerId = (await getPlayerById(owner)).id;
       const gameId = (await getGame(game.gameCode)).id;
       const clubId = (await getClubById(owner, club)).id;

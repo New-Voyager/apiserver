@@ -469,9 +469,9 @@ class GameScript {
   protected async configureGame(gameInput: any) {
     this.log(`Register game: ${JSON.stringify(gameInput)}`);
     try {
-      const startGame = gql`
+      const configureGame = gql`
         mutation($clubCode: String!, $gameInput: GameCreateInput!) {
-          startedGame: startGame(clubCode: $clubCode, game: $gameInput) {
+          startedGame: configureGame(clubCode: $clubCode, game: $gameInput) {
             gameCode
           }
         }
@@ -484,7 +484,7 @@ class GameScript {
           gameInput: gameInput.input,
           clubCode: this.clubCreated[gameInput.club].clubCode,
         },
-        mutation: startGame,
+        mutation: configureGame,
       });
 
       // get game by uuid (we need to get internal id for game/hand requests)

@@ -62,7 +62,7 @@ describe('Player Chips tracking APIs', () => {
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
     let game, resp;
 
-    game = await gameutils.startGame(playerId, clubCode, holdemGameInput);
+    game = await gameutils.configureGame(playerId, clubCode, holdemGameInput);
 
     const playerID = await handutils.getPlayerById(playerId);
     const clubID = await clubutils.getClubById(clubCode);
@@ -156,7 +156,7 @@ describe('Player Chips tracking APIs', () => {
     const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
     let game, resp, response;
 
-    game = await gameutils.startGame(playerId, clubId, holdemGameInput);
+    game = await gameutils.configureGame(playerId, clubId, holdemGameInput);
 
     const playerID = await handutils.getPlayerById(playerId);
     const clubID = await clubutils.getClubById(clubId);
@@ -214,7 +214,10 @@ describe('Player Chips tracking APIs', () => {
 
     let resp, response;
 
-    const game = await gameutils.startFriendsGame(playerUuid, holdemGameInput);
+    const game = await gameutils.configureFriendsGame(
+      playerUuid,
+      holdemGameInput
+    );
 
     const playerID = await handutils.getPlayerById(playerUuid);
     const gameID = await gameutils.getGameById(game.gameCode);
@@ -264,7 +267,11 @@ describe('Player Chips tracking APIs', () => {
 
     await axios.post(`${SERVER_API}/register-game-server`, gameServer1);
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
-    const game = await gameutils.startGame(playerId, clubCode, holdemGameInput);
+    const game = await gameutils.configureGame(
+      playerId,
+      clubCode,
+      holdemGameInput
+    );
     const playerID = await handutils.getPlayerById(playerId);
     const clubID = await clubutils.getClubById(clubCode);
     const gameID = await gameutils.getGameById(game.gameCode);
@@ -302,7 +309,7 @@ describe('Player Chips tracking APIs', () => {
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
     let game;
 
-    game = await gameutils.startGame(playerId, clubCode, holdemGameInput);
+    game = await gameutils.configureGame(playerId, clubCode, holdemGameInput);
 
     const playerID = await handutils.getPlayerById(playerId);
     const clubID = await clubutils.getClubById(clubCode);
@@ -351,7 +358,7 @@ describe('Player Chips tracking APIs', () => {
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
     let game;
 
-    game = await gameutils.startGame(playerId, clubCode, holdemGameInput);
+    game = await gameutils.configureGame(playerId, clubCode, holdemGameInput);
 
     const playerID = await handutils.getPlayerById(playerId);
     const clubID = await clubutils.getClubById(clubCode);

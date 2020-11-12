@@ -17,6 +17,15 @@
       ],
     },
     {
+      "name": "Watch debug with NATS",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "watch-debug-nats"],
+      "port": 9235
+    },    
+    {
       "name": "Watch debug",
       "type": "node",
       "request": "launch",

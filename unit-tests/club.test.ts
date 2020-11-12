@@ -11,11 +11,9 @@ import {
   leaveClub,
   getClubGames,
   getClubById,
-  updateClubMember,
 } from '../src/resolvers/club';
 import {createPlayer} from '../src/resolvers/player';
-import {startGame} from '../src/resolvers/game';
-import {default as axios} from 'axios';
+import {configureGame} from '../src/resolvers/game';
 import {createGameServer} from '../src/internal/gameserver';
 import {getLogger} from '../src/utils/log';
 const logger = getLogger('club unit-test');
@@ -364,8 +362,8 @@ describe('Club APIs', () => {
     };
     await createGameServer(gameServer);
 
-    await startGame(ownerId, clubCode, holdemGameInput);
-    await startGame(ownerId, clubCode, holdemGameInput);
+    await configureGame(ownerId, clubCode, holdemGameInput);
+    await configureGame(ownerId, clubCode, holdemGameInput);
 
     try {
       const games = await getClubGames(ownerId, clubCode);
@@ -413,7 +411,7 @@ describe('Club APIs', () => {
     await createGameServer(gameServer1);
     await createGameServer(gameServer2);
     for (let i = 0; i < numGames; i++) {
-      await startGame(ownerId, clubCode, holdemGameInput);
+      await configureGame(ownerId, clubCode, holdemGameInput);
     }
     let clubGames = await getClubGames(ownerId, clubCode);
     // we can get only 20 games

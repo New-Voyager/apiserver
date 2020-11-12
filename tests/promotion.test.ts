@@ -188,7 +188,11 @@ describe('Promotion APIs', () => {
       expect(true).toBeFalsy();
     }
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
-    const game = await gameutils.startGame(playerId, clubCode, holdemGameInput);
+    const game = await gameutils.configureGame(
+      playerId,
+      clubCode,
+      holdemGameInput
+    );
     const input = {
       cardRank: 5,
       bonus: 4,
@@ -252,7 +256,11 @@ describe('Promotion APIs', () => {
       expect(true).toBeFalsy();
     }
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
-    const game = await gameutils.startGame(playerId, clubCode, holdemGameInput);
+    const game = await gameutils.configureGame(
+      playerId,
+      clubCode,
+      holdemGameInput
+    );
     const input = {
       cardRank: 5,
       bonus: 4,
@@ -293,7 +301,11 @@ describe('Promotion APIs', () => {
     };
     await axios.post(`${SERVER_API}/register-game-server`, gameServer);
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
-    const game = await gameutils.startGame(playerId, clubCode, holdemGameInput);
+    const game = await gameutils.configureGame(
+      playerId,
+      clubCode,
+      holdemGameInput
+    );
     const clubID = await clubutils.getClubById(clubCode);
     const gameID = await gameutils.getGameById(game.gameCode);
     const player = await handutils.getPlayerById(playerId);

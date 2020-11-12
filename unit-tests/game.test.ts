@@ -4,7 +4,7 @@ import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/resolvers/reset';
 import {createPlayer} from '@src/resolvers/player';
 import {createClub} from '@src/resolvers/club';
-import {startGame, startGameByPlayer} from '@src/resolvers/game';
+import {configureGame, configureGameByPlayer} from '@src/resolvers/game';
 import {getGame} from '@src/cache/index';
 
 const logger = getLogger('game unit-test');
@@ -72,7 +72,7 @@ describe('Game APIs', () => {
         description: 'poker players gather',
         ownerUuid: player,
       });
-      const startedGame = await startGame(player, club, holdemGameInput);
+      const startedGame = await configureGame(player, club, holdemGameInput);
       expect(startedGame).not.toBeNull();
       expect(startedGame.gameType).toEqual('HOLDEM');
       expect(startedGame.title).toEqual('Friday game');
@@ -115,7 +115,7 @@ describe('Game APIs', () => {
           deviceId: 'abc123',
         },
       });
-      const startedGame = await startGameByPlayer(player, holdemGameInput);
+      const startedGame = await configureGameByPlayer(player, holdemGameInput);
       // console.log(startedGame);
       expect(startedGame).not.toBeNull();
       expect(startedGame.gameType).toEqual('HOLDEM');
@@ -164,7 +164,7 @@ describe('Game APIs', () => {
         description: 'poker players gather',
         ownerUuid: player,
       });
-      const startedGame = await startGame(player, club, holdemGameInput);
+      const startedGame = await configureGame(player, club, holdemGameInput);
       const gameData = await getGame(startedGame.gameCode);
       expect(gameData.id).not.toBe(null);
     } catch (err) {

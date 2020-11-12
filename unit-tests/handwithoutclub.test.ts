@@ -3,7 +3,7 @@ import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/resolvers/reset';
 import {createPlayer, getPlayerById} from '@src/resolvers/player';
 import {createGameServer} from '@src/internal/gameserver';
-import {startGameByPlayer} from '@src/resolvers/game';
+import {configureGameByPlayer} from '@src/resolvers/game';
 import {saveChipsData} from '@src/internal/chipstrack';
 import {saveHandData} from '@src/internal/hand';
 import {
@@ -254,7 +254,7 @@ async function createPlayerStartFriendsGame(): Promise<
     status: 'ACTIVE',
   };
   await createGameServer(gameServer);
-  const game = await startGameByPlayer(owner, holdemGameInput);
+  const game = await configureGameByPlayer(owner, holdemGameInput);
   const playerId = (await getPlayerById(owner)).id;
   const gameId = (await getGame(game.gameCode)).id;
   const messageInput = {

@@ -4,7 +4,7 @@ import {resetDB} from '@src/resolvers/reset';
 import {createPlayer, getPlayerById} from '@src/resolvers/player';
 import {createClub, getClubById} from '@src/resolvers/club';
 import {createGameServer} from '@src/internal/gameserver';
-import {startGame, startGameByPlayer} from '@src/resolvers/game';
+import {configureGame, configureGameByPlayer} from '@src/resolvers/game';
 import {saveChipsData} from '@src/internal/chipstrack';
 import {saveHandData} from '@src/internal/hand';
 import {
@@ -261,7 +261,7 @@ async function createClubAndStartGame(): Promise<
     status: 'ACTIVE',
   };
   await createGameServer(gameServer);
-  const game = await startGame(owner, club, holdemGameInput);
+  const game = await configureGame(owner, club, holdemGameInput);
   const playerId = (await getPlayerById(owner)).id;
   const gameId = (await getGame(game.gameCode)).id;
   const clubId = (await getClubById(owner, club)).id;
@@ -347,7 +347,7 @@ describe('Hand server APIs', () => {
         status: 'ACTIVE',
       };
       await createGameServer(gameServer);
-      const game = await startGameByPlayer(ownerId, holdemGameInput);
+      const game = await configureGameByPlayer(ownerId, holdemGameInput);
 
       const playerID = await getPlayerById(ownerId);
       const gameID = await getGame(game.gameCode);
