@@ -5,7 +5,11 @@ import {getGame, getPlayer, isClubMember} from '@src/cache/index';
 
 const logger = getLogger('game');
 
-export async function configureGame(playerId: string, clubCode: string, game: any) {
+export async function configureGame(
+  playerId: string,
+  clubCode: string,
+  game: any
+) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
