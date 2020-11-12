@@ -25,6 +25,14 @@ input ClubUpdateInput {
   description: String
 }
 
+input ClubMemberUpdateInput {
+isManager: Boolean
+notes: String
+balance: Float
+status: ClubMemberStatus
+creditLimit: Float
+}
+
 type Mutation {
   createClub(club: ClubCreateInput!): String!
   updateClub(clubCode: String!, club: ClubUpdateInput!): Boolean!
@@ -33,6 +41,7 @@ type Mutation {
   rejectMember(clubCode: String!, playerUuid: String!): ClubMemberStatus
   kickMember(clubCode: String!, playerUuid: String!): ClubMemberStatus
   deleteClub(clubCode: String!): Boolean!
+  updateClubMember(clubCode: String!, playerUuid: String!, update: ClubMemberUpdateInput!): ClubMemberStatus
 }
 
 type ClubMember {

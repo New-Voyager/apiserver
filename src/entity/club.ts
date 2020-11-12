@@ -155,4 +155,16 @@ export class ClubMember {
 
   @Column({name: 'notes', type: 'text', default: ''})
   public notes!: string;
+
+  @Column({name: 'auto_buyin_approval', default: true})
+  public autoBuyinApproval!: boolean;
+
+  @Column({
+    name: 'credit_limit',
+    type: 'decimal',
+    precision: 8,
+    scale: 2,
+    default: 0,
+  })
+  public creditLimit!: number;
 }

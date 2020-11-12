@@ -11,6 +11,7 @@ import {
   leaveClub,
   getClubGames,
   getClubById,
+  updateClubMember,
 } from '../src/resolvers/club';
 import {createPlayer} from '../src/resolvers/player';
 import {startGame} from '../src/resolvers/game';
@@ -53,6 +54,16 @@ const holdemGameInput = {
   actionTime: 30,
   muckLosingHand: true,
 };
+
+enum ClubMemberStatus {
+  UNKNOWN,
+  INVITED,
+  PENDING,
+  DENIED,
+  ACTIVE,
+  LEFT,
+  KICKEDOUT,
+}
 
 describe('Club APIs', () => {
   test('create a club', async () => {
@@ -434,6 +445,56 @@ describe('Club APIs', () => {
       expect(games).not.toBeNull();
     } catch (err) {
       expect(err.message).toContain('not found');
+    }
+  });
+
+  test('update club members', async () => {
+    const playerId = await createPlayer({
+      player: {name: 'owner', deviceId: 'test-device-owner'},
+    });
+    const clubInput = {
+      name: 'bbc',
+      description: 'poker players gather',
+      ownerUuid: playerId,
+    };
+    const clubCode = await createClub(playerId, clubInput);
+    const player1Id = await createPlayer({
+      player: {name: 'player1', deviceId: 'test-device1'},
+    });
+    const player2Id = await createPlayer({
+      player: {name: 'player2', deviceId: 'test-device2'},
+    });
+    await joinClub(player1Id, clubCode);
+    await joinClub(player2Id, clubCode);
+
+    // let the owner approve the request
+    const player1 = await approveMember(playerId, clubCode, player1Id);
+    expect(player1).toBe('ACTIVE');
+
+    const player2 = await approveMember(playerId, clubCode, player2Id);
+    expect(player2).toBe('ACTIVE');
+
+    const resp = await updateClubMember(playerId, player1Id, clubCode, {
+      balance: 10,
+      creditLimit: 1000,
+      notes: 'Added credit limit',
+      status: ClubMemberStatus['KICKEDOUT'],
+      isManager: false,
+    });
+    expect(resp).toBe(ClubMemberStatus['KICKEDOUT']);
+
+    // Player 2 is not a owner of the club
+    try {
+      const resp1 = await updateClubMember(player2Id, player1Id, clubCode, {
+        balance: 10,
+        creditLimit: 1000,
+        notes: 'Added credit limit',
+        status: ClubMemberStatus['KICKEDOUT'],
+        isManager: false,
+      });
+      expect(false).toBeTruthy();
+    } catch (error) {
+      expect(error.toString()).toContain('Unauthorized');
     }
   });
 });
