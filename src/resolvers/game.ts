@@ -1,20 +1,9 @@
 import {GameRepository} from '@src/repositories/game';
-import {GameType} from '@src/entity/types';
+import {GameType, PlayerStatus} from '@src/entity/types';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger('game');
+import {getGame, getPlayer, isClubMember} from '@src/cache/index';
 
-export async function getGameById(playerId: string, gameCode: string) {
-  if (!playerId) {
-    throw new Error('Unauthorized');
-  }
-  const game = await GameRepository.getGameById(gameCode);
-  if (!game) {
-    throw new Error('Game not found');
-  }
-  return {
-    id: game.id,
-  };
-}
+const logger = getLogger('game');
 
 export async function startGame(playerId: string, clubCode: string, game: any) {
   if (!playerId) {
@@ -61,10 +50,84 @@ export async function startGameByPlayer(playerId: string, game: any) {
   }
 }
 
+async function joinGame(playerUuid: string, gameCode: string, seatNo: number) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubMember = await isClubMember(playerUuid, game.club.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode}`
+        );
+      }
+    }
+
+    const player = await getPlayer(playerUuid);
+    const status = await GameRepository.joinGame(player, game, seatNo);
+    // player is good to go
+    return PlayerStatus[status];
+  } catch (err) {
+    logger.error(err);
+    throw new Error(`Failed to create a new game. ${JSON.stringify(err)}`);
+  }
+}
+
+async function buyIn(playerUuid: string, gameCode: string, amount: number) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubMember = await isClubMember(playerUuid, game.club.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode}`
+        );
+      }
+    }
+
+    const player = await getPlayer(playerUuid);
+    const status = await GameRepository.buyIn(
+      player,
+      game,
+      amount,
+      false /*reload*/
+    );
+    // player is good to go
+    return PlayerStatus[status];
+  } catch (err) {
+    logger.error(err);
+    throw new Error(`Failed to update buyin. ${JSON.stringify(err)}`);
+  }
+}
+
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
-      return getGameById(ctx.req.playerId, args.gameCode);
+      const game = await getGame(args.gameCode);
+      return {
+        id: game.id,
+      };
     },
   },
   Mutation: {
@@ -73,6 +136,12 @@ const resolvers: any = {
     },
     startFriendsGame: async (parent, args, ctx, info) => {
       return startGameByPlayer(ctx.req.playerId, args.game);
+    },
+    joinGame: async (parent, args, ctx, info) => {
+      return joinGame(ctx.req.playerId, args.gameCode, args.seatNo);
+    },
+    buyIn: async (parent, args, ctx, info) => {
+      return buyIn(ctx.req.playerId, args.gameCode, args.amount);
     },
   },
 };

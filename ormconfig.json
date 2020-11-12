@@ -9,6 +9,7 @@
     "database": "game",
     "logging": true,
     "synchronize": true,
+    "cache": true,
     "bigNumberStrings": false,
     "entities": ["build/src/entity/**/*.js"]
 },  
@@ -21,6 +22,7 @@
     "password": "game",
     "database": "game",
     "logging": true,
+    "cache": true,
     "synchronize": true,
     "bigNumberStrings": false,
     "entities": ["build/src/entity/**/*.js"]
@@ -32,6 +34,7 @@
     "dropSchema": true,
     "synchronize": true,
     "logging": false,
+    "cache": true,
     "entities": ["build/src/entity/**/*.js", "../build/src/entity/**/*.js"]
   },
   {

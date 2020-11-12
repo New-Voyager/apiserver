@@ -51,14 +51,13 @@ export enum PlayerStatus {
   NOT_PLAYING,
   PLAYING,
   IN_QUEUE,
-  BREAK,
+  IN_BREAK,
   STANDING_UP,
   LEFT,
   KICKED_OUT,
   BLOCKED,
-  WAIT_FOR_SITTING_APPROVAL,
   LOST_CONNECTION,
-  WAIT_FOR_BUYIN_APPROVAL,
+  WAIT_FOR_BUYIN,
 }
 
 export enum PromotionType {

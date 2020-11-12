@@ -4,9 +4,11 @@ import {
   Column,
   ManyToOne,
   Index,
+  JoinColumn,
 } from 'typeorm';
 
 import {DbAwareColumn} from './dbaware';
+import {PokerGame} from './game';
 import {GameServerStatus} from './types';
 
 @Entity({name: 'game_server'})
@@ -62,12 +64,11 @@ export class TrackGameServer {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @ManyToOne(type => GameServer)
-  public gameServerId!: GameServer;
+  @ManyToOne(type => GameServer, {eager: true, nullable: false})
+  public gameServer!: GameServer;
 
-  @Column({name: 'game_code'})
-  public gameCode!: string;
-
-  @Column({name: 'club_code', nullable: true})
-  public clubCode!: string;
+  @Index('gameserver-game-idx')
+  @ManyToOne(type => PokerGame, {nullable: false})
+  @JoinColumn({name: 'game_id'})
+  public game!: PokerGame;
 }

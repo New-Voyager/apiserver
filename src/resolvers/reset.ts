@@ -28,11 +28,11 @@ export async function resetDB() {
     await deleteAll('PokerGamePlayers');
     await deleteAll('PokerHand');
     await deleteAll('ClubGameRake');
+    await deleteAll('game_gameserver');
     await deleteAll('PokerGame');
     await deleteAll('ClubMember');
     await deleteAll('Club');
     await deleteAll('Player');
-    await deleteAll('game_gameserver');
     await deleteAll('game_server');
     await deleteAll('starred_hands');
     await deleteAll('hand_winners');

@@ -532,6 +532,34 @@ class GameScript {
   protected async playerSitsin(sitsinInput: any): Promise<any> {
     this.log(`Players sits in: ${JSON.stringify(sitsinInput)}`);
     try {
+      const query = gql`
+        mutation($gameCode: String!, $seatNo: Int!) {
+          joinGame(gameCode: $gameCode, seatNo: $seatNo)
+        }
+      `;
+      //console.log(this.registeredPlayers);
+      //console.log(sitsinInput.players);
+      for (const player of sitsinInput.players) {
+        const client = await getClient(
+          this.registeredPlayers[player.playerId].playerUuid
+        );
+        await client.mutate({
+          variables: {
+            gameCode: this.gameCreated[sitsinInput.game].gameCode,
+            seatNo: player.seatNo,
+          },
+          mutation: query,
+        });
+      }
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
+  protected async playerSitsinOld(sitsinInput: any): Promise<any> {
+    this.log(`Players sits in: ${JSON.stringify(sitsinInput)}`);
+    try {
       for (const player of sitsinInput.players) {
         const messageInput = {
           clubId: this.clubCreated[sitsinInput.club].clubId,
@@ -553,6 +581,34 @@ class GameScript {
   }
 
   protected async addBuyin(buyinInput: any): Promise<any> {
+    this.log(`Buyin: ${JSON.stringify(buyinInput)}`);
+    try {
+      const query = gql`
+        mutation($gameCode: String!, $amount: Float!) {
+          buyIn(gameCode: $gameCode, amount: $amount)
+        }
+      `;
+      console.log(this.registeredPlayers);
+      console.log(buyinInput.players);
+      for (const player of buyinInput.players) {
+        const client = await getClient(
+          this.registeredPlayers[player.playerId].playerUuid
+        );
+        await client.mutate({
+          variables: {
+            gameCode: this.gameCreated[buyinInput.game].gameCode,
+            amount: player.buyChips,
+          },
+          mutation: query,
+        });
+      }
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
+  protected async addBuyinOld(buyinInput: any): Promise<any> {
     this.log(`Buyin: ${JSON.stringify(buyinInput)}`);
     try {
       for (const player of buyinInput.players) {
