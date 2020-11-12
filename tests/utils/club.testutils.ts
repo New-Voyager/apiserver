@@ -98,8 +98,16 @@ export const clubByIdQuery = gql`
 `;
 
 export const updateClubMemberQuery = gql`
-  mutation($clubCode: String!, $playerUuid: String!, $update: ClubMemberUpdateInput!) {
-    status: updateClubMember(clubCode: $clubCode, playerUuid: $playerUuid, update: $update)
+  mutation(
+    $clubCode: String!
+    $playerUuid: String!
+    $update: ClubMemberUpdateInput!
+  ) {
+    status: updateClubMember(
+      clubCode: $clubCode
+      playerUuid: $playerUuid
+      update: $update
+    )
   }
 `;
 
@@ -246,7 +254,7 @@ export async function updateClubMember(
   clubCode: string,
   ownerId: string,
   playerId: string,
-  updatedata: any,
+  updatedata: any
 ) {
   const ownerClient = getClient(ownerId);
   const variables = {

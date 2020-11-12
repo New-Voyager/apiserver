@@ -343,13 +343,18 @@ describe('Club APIs', () => {
     const player1Id = await clubutils.createPlayer('adam', '1243ABC');
     await clubutils.playerJoinsClub(clubCode, player1Id);
     await clubutils.approvePlayer(clubCode, ownerId, player1Id);
-    
-    const resp = await clubutils.updateClubMember(clubCode, ownerId, player1Id, {
-      balance: 10,
-      creditLimit: 1000,
-      notes: "Added credit limit",
-      status: "KICKEDOUT"
-    });
-    expect(resp.status).toBe("KICKEDOUT");
+
+    const resp = await clubutils.updateClubMember(
+      clubCode,
+      ownerId,
+      player1Id,
+      {
+        balance: 10,
+        creditLimit: 1000,
+        notes: 'Added credit limit',
+        status: 'KICKEDOUT',
+      }
+    );
+    expect(resp.status).toBe('KICKEDOUT');
   });
 });

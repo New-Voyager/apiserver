@@ -338,8 +338,8 @@ export async function getMemberStatus(playerId: string, clubCode: string) {
 
 export async function updateClubMember(
   hostUuid: string,
-  playerUuid: string, 
-  clubCode: string, 
+  playerUuid: string,
+  clubCode: string,
   updateData: ClubMemberUpdateInput
 ) {
   const errors = new Array<string>();
@@ -355,8 +355,13 @@ export async function updateClubMember(
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
   }
-  
-  const status = await ClubRepository.updateClubMember(hostUuid, playerUuid, clubCode, updateData);
+
+  const status = await ClubRepository.updateClubMember(
+    hostUuid,
+    playerUuid,
+    clubCode,
+    updateData
+  );
   return ClubMemberStatus[status];
 }
 
@@ -408,9 +413,14 @@ const resolvers: any = {
       return leaveClub(ctx.req.playerId, args.clubCode);
     },
 
-    updateClubMember: async(parent, args, ctx, info) => {
-      return updateClubMember(ctx.req.playerId, args.playerUuid, args.clubCode, args.update);
-    }
+    updateClubMember: async (parent, args, ctx, info) => {
+      return updateClubMember(
+        ctx.req.playerId,
+        args.playerUuid,
+        args.clubCode,
+        args.update
+      );
+    },
   },
 };
 

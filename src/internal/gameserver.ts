@@ -123,7 +123,7 @@ export async function createGameServer(
       gameServer.noGamesHandled = 0;
       gameServer.noPlayersHandled = 0;
     }
-    logger.debug(`Getting next game server number`);
+    logger.debug('Getting next game server number');
     // get next game server number
     gameServer.serverNumber = await GameRepository.getNextGameServer();
     logger.debug(`Next game server number: ${gameServer.serverNumber}`);

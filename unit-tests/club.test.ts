@@ -477,25 +477,24 @@ describe('Club APIs', () => {
     const resp = await updateClubMember(playerId, player1Id, clubCode, {
       balance: 10,
       creditLimit: 1000,
-      notes: "Added credit limit",
-      status: ClubMemberStatus["KICKEDOUT"],
-      isManager: false
+      notes: 'Added credit limit',
+      status: ClubMemberStatus['KICKEDOUT'],
+      isManager: false,
     });
-    expect(resp).toBe(ClubMemberStatus["KICKEDOUT"]);  
-    
+    expect(resp).toBe(ClubMemberStatus['KICKEDOUT']);
+
     // Player 2 is not a owner of the club
     try {
       const resp1 = await updateClubMember(player2Id, player1Id, clubCode, {
         balance: 10,
         creditLimit: 1000,
-        notes: "Added credit limit",
-        status: ClubMemberStatus["KICKEDOUT"],
-        isManager: false
+        notes: 'Added credit limit',
+        status: ClubMemberStatus['KICKEDOUT'],
+        isManager: false,
       });
       expect(false).toBeTruthy();
     } catch (error) {
       expect(error.toString()).toContain('Unauthorized');
     }
   });
-  
 });

@@ -29,19 +29,18 @@ export interface ClubUpdateInput {
 }
 
 export interface ClubMemberUpdateInput {
-  isManager: Boolean
-  notes: String
-  balance: number
-  status: ClubMemberStatus
-  creditLimit: number
+  isManager: boolean;
+  notes: string;
+  balance: number;
+  status: ClubMemberStatus;
+  creditLimit: number;
 }
 
 class ClubRepositoryImpl {
-
   public async updateClubMember(
     hostUuid: string,
-    playerUuid: string, 
-    clubCode: string, 
+    playerUuid: string,
+    clubCode: string,
     updateData: ClubMemberUpdateInput
   ): Promise<ClubMemberStatus> {
     const clubRepository = getRepository<Club>(Club);
@@ -81,22 +80,24 @@ class ClubRepositoryImpl {
     }
 
     // update data
-    if(updateData.balance){
+    if (updateData.balance) {
       clubMember.balance = updateData.balance;
     }
-    if(updateData.creditLimit){
+    if (updateData.creditLimit) {
       clubMember.creditLimit = updateData.creditLimit;
     }
-    if(updateData.notes){
+    if (updateData.notes) {
       clubMember.notes = updateData.notes.toString();
     }
-    if(updateData.status){
-      clubMember.status = ClubMemberStatus[updateData.status] as unknown as ClubMemberStatus;
+    if (updateData.status) {
+      clubMember.status = (ClubMemberStatus[
+        updateData.status
+      ] as unknown) as ClubMemberStatus;
     }
 
     // Save the data
     const resp = await clubMemberRepository.save(clubMember);
-    return clubMember.status;    
+    return clubMember.status;
   }
 
   public async getClub(clubCode: string): Promise<Club | undefined> {
