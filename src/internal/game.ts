@@ -5,6 +5,24 @@ import {getLogger} from '@src/utils/log';
  * These APIs are only available for game server.
  */
 class GameAPIs {
+  public async updateGameStatus(req: any, resp: any) {
+    const gameID = req.body.gameId;
+    if (!gameID) {
+      const res = {error: 'Invalid game id'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    const gameStatus = req.body.status;
+    if (!gameStatus) {
+      const res = {error: 'Invalid game status'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+
+    await GameRepository.markGameStatus(gameID, gameStatus);
+    resp.status(200).send({status: 'OK'});
+  }
+
   public async getGame(req: any, resp: any) {
     const clubID = req.params.clubID;
     if (!clubID) {

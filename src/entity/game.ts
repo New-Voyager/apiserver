@@ -25,7 +25,7 @@ export class PokerGame {
   public gameCode!: string;
 
   @Index('game-club-idx')
-  @ManyToOne(type => Club)
+  @ManyToOne(type => Club, {nullable: true, eager: true})
   @JoinColumn({name: 'club_id'})
   public club!: Club;
 
@@ -34,7 +34,7 @@ export class PokerGame {
   @JoinColumn({name: 'host_id'})
   public host!: Player;
 
-  @Column()
+  @Column({name: 'private_game'})
   public privateGame!: boolean;
 
   @Column({name: 'is_template'})

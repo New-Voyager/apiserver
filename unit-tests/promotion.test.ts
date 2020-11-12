@@ -4,7 +4,7 @@ import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/resolvers/reset';
 import {createPlayer, getPlayerById} from '@src/resolvers/player';
 import {createClub, getClubById} from '@src/resolvers/club';
-import {startGame, getGameById} from '@src/resolvers/game';
+import {startGame} from '@src/resolvers/game';
 import {saveChipsData} from '@src/internal/chipstrack';
 import {saveHandData} from '@src/internal/hand';
 import {
@@ -13,6 +13,7 @@ import {
   getPromotions,
   getAssignedPromotions,
 } from '@src/resolvers/promotion';
+import {getGame} from '@src/cache/index';
 
 const logger = getLogger('game unit-test');
 const holdemGameInput = {
@@ -362,7 +363,7 @@ describe('Promotion APIs', () => {
       await createGameServer(gameServer);
       const game = await startGame(owner, club, holdemGameInput);
       const playerId = (await getPlayerById(owner)).id;
-      const gameId = (await getGameById(owner, game.gameCode)).id;
+      const gameId = (await getGame(game.gameCode)).id;
       const clubId = (await getClubById(owner, club)).id;
       const messageInput = {
         clubId: clubId,

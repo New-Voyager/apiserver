@@ -231,7 +231,7 @@ class ChipsTrackRepositoryImpl {
         // TODO: Need fix for sqllite
         if (isPostgres()) {
           const query = `UPDATE player_game_tracker SET session_time=coalesce(ROUND(EXTRACT(EPOCH FROM (NOW()-sat_at))), 0)+coalesce(session_time, 0) 
-                WHERE game_id=${placeHolder1} AND club_id=${placeHolder2}`;
+                WHERE pgt_game_id=${placeHolder1} AND pgt_club_id=${placeHolder2}`;
           await getConnection().query(query, [game.id, club.id]);
         }
         GameRepository.markGameEnded(club.id, game.id);

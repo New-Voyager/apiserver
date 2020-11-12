@@ -5,14 +5,15 @@ import {
   GameStatus,
   ClubMemberStatus,
   ClubStatus,
+  PlayerStatus,
 } from '@src/entity/types';
 import {Club, ClubMember} from '@src/entity/club';
 import {Player} from '@src/entity/player';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {getLogger} from '@src/utils/log';
-import {ClubGameRake} from '@src/entity/chipstrack';
+import {ClubGameRake, PlayerGameTracker} from '@src/entity/chipstrack';
 import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
-import {publishNewGame} from '@src/nats/index';
+import {newPlayerSat, publishNewGame, playerBuyIn} from '@src/nats/index';
 
 const logger = getLogger('game');
 
@@ -95,9 +96,8 @@ class GameRepositoryImpl {
         }
         const trackgameServerRepository = getRepository(TrackGameServer);
         const trackServer = new TrackGameServer();
-        trackServer.clubCode = clubCode;
-        trackServer.gameCode = savedGame.gameCode;
-        trackServer.gameServerId = gameServers[pick];
+        trackServer.game = savedGame;
+        trackServer.gameServer = gameServers[pick];
         const gameServer = gameServers[pick];
         gameServerId = gameServer.serverNumber;
         await trackgameServerRepository.save(trackServer);
@@ -161,9 +161,8 @@ class GameRepositoryImpl {
         const pick = savedGame.id % gameServers.length;
         const trackgameServerRepository = getRepository(TrackGameServer);
         const trackServer = new TrackGameServer();
-        trackServer.clubCode = '000000';
-        trackServer.gameCode = savedGame.gameCode;
-        trackServer.gameServerId = gameServers[pick];
+        trackServer.game = savedGame;
+        trackServer.gameServer = gameServers[pick];
         await trackgameServerRepository.save(trackServer);
 
         const clubGameRakeRepository = getRepository(ClubGameRake);
@@ -201,18 +200,14 @@ class GameRepositoryImpl {
   }
 
   public async markGameStarted(clubId: number, gameId: number) {
-    this.markGameStatus(clubId, gameId, GameStatus.RUNNING);
+    this.markGameStatus(gameId, GameStatus.RUNNING);
   }
 
   public async markGameEnded(clubId: number, gameId: number) {
-    this.markGameStatus(clubId, gameId, GameStatus.ENDED);
+    this.markGameStatus(gameId, GameStatus.ENDED);
   }
 
-  public async markGameStatus(
-    clubId: number,
-    gameId: number,
-    status: GameStatus
-  ) {
+  public async markGameStatus(gameId: number, status: GameStatus) {
     const repository = getRepository(PokerGame);
     const game = await repository.findOne({where: {id: gameId}});
     if (!game) {
@@ -255,11 +250,11 @@ class GameRepositoryImpl {
           FROM poker_game g JOIN my_clubs c 
           ON 
             g.club_id = c.id 
-            AND g.game_status = ${GameStatus.RUNNING}
+            AND g.game_status NOT IN (${GameStatus.ENDED})
           LEFT OUTER JOIN 
             player_game_tracker pgt ON
-            pgt.player_id = c.player_id AND
-            pgt.game_id  = g.id;
+            pgt.pgt_player_id = c.player_id AND
+            pgt.pgt_game_id  = g.id;
         `;
     const resp = await getConnection().query(query);
     return resp;
@@ -300,8 +295,8 @@ class GameRepositoryImpl {
             AND g.game_status = ${GameStatus.ENDED}
           LEFT OUTER JOIN 
             player_game_tracker pgt ON
-            pgt.player_id = c.player_id AND
-            pgt.game_id  = g.id;
+            pgt.pgt_player_id = c.player_id AND
+            pgt.pgt_game_id  = g.id;
         `;
     const resp = await getConnection().query(query);
     return resp;
@@ -315,6 +310,158 @@ class GameRepositoryImpl {
       nextNumber = resp[0]['next_number'];
     }
     return nextNumber;
+  }
+
+  public async joinGame(
+    player: Player,
+    game: PokerGame,
+    seatNo: number
+  ): Promise<PlayerStatus> {
+    // player is taking a seat in the game
+    // ensure the seat is available
+    // create a record in the player_game_tracker
+    // set the player status to waiting_for_buyin
+    // send a message to game server that a new player is in the seat
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerInSeat = await playerGameTrackerRepository.findOne({
+      where: {
+        game: {id: game.id},
+        seatNo: seatNo,
+      },
+    });
+    if (playerInSeat) {
+      // there is a player in the seat (unexpected)
+      throw new Error(
+        `A player ${playerInSeat.player.name}:${playerInSeat.player.uuid} is sitting in seat: ${seatNo}`
+      );
+    }
+    // if this player has already played this game before, we should have his record
+    let thisPlayerInSeat = await playerGameTrackerRepository.findOne({
+      where: {
+        game: {id: game.id},
+        player: {id: player.id},
+        seatNo: seatNo,
+      },
+    });
+    if (thisPlayerInSeat) {
+      thisPlayerInSeat.seatNo = seatNo;
+    } else {
+      thisPlayerInSeat = new PlayerGameTracker();
+      thisPlayerInSeat.player = player;
+      thisPlayerInSeat.club = game.club;
+      thisPlayerInSeat.game = game;
+      thisPlayerInSeat.stack = 0;
+      thisPlayerInSeat.buyIn = 0;
+      thisPlayerInSeat.seatNo = seatNo;
+      thisPlayerInSeat.noOfBuyins = 0;
+    }
+    if (thisPlayerInSeat.stack > 0) {
+      thisPlayerInSeat.status = PlayerStatus.PLAYING;
+    } else {
+      thisPlayerInSeat.status = PlayerStatus.WAIT_FOR_BUYIN;
+    }
+    const resp = await playerGameTrackerRepository.save(thisPlayerInSeat);
+
+    // send a message to gameserver
+    // get game server of this game
+    const gameServer = await this.getGameServer(game.id);
+    if (gameServer) {
+      newPlayerSat(gameServer, game, player, seatNo, thisPlayerInSeat);
+    }
+
+    return thisPlayerInSeat.status;
+  }
+
+  public async buyIn(
+    player: Player,
+    game: PokerGame,
+    amount: number,
+    reload: boolean
+  ): Promise<PlayerStatus> {
+    // player must be already in a seat or waiting list
+    // if credit limit is set, make sure his buyin amount is within the credit limit
+    // if auto approval is set, add the buyin
+    // make sure buyin within min and maxBuyin
+    // send a message to game server that buyer stack has been updated
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerInGame = await playerGameTrackerRepository.findOne({
+      where: {
+        game: {id: game.id},
+        player: {id: player.id},
+      },
+    });
+
+    if (!playerInGame) {
+      logger.error(
+        `Player ${player.name} is not in the game: ${game.gameCode}`
+      );
+      throw new Error(`Player ${player.name} is not in the game`);
+    }
+
+    // NOTE TO SANJAY: Add other functionalities
+
+    if (reload) {
+      // if reload is set to true, if stack exceeds game.maxBuyIn
+      if (playerInGame.stack + amount > game.buyInMax) {
+        amount = game.buyInMax - playerInGame.stack;
+      }
+    } else {
+      playerInGame.noOfBuyins++;
+    }
+
+    // check amount should be between game.minBuyIn and game.maxBuyIn
+    if (
+      playerInGame.stack + amount < game.buyInMin ||
+      playerInGame.stack + amount > game.buyInMax
+    ) {
+      throw new Error(
+        `Buyin must be between ${game.buyInMin} and ${game.buyInMax}`
+      );
+    }
+
+    playerInGame.stack = playerInGame.stack + amount;
+    playerInGame.buyIn = playerInGame.buyIn + amount;
+
+    // if the player is in the seat and waiting for buyin
+    // then mark his status as playing
+    if (
+      playerInGame.seatNo !== 0 &&
+      playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN
+    ) {
+      playerInGame.status = PlayerStatus.PLAYING;
+    }
+    await playerGameTrackerRepository.update(
+      {
+        game: {id: game.id},
+        player: {id: player.id},
+      },
+      {
+        status: playerInGame.status,
+        stack: playerInGame.stack,
+        buyIn: playerInGame.buyIn,
+        noOfBuyins: playerInGame.noOfBuyins,
+      }
+    );
+
+    // send a message to gameserver
+    // get game server of this game
+    const gameServer = await this.getGameServer(game.id);
+    if (gameServer) {
+      playerBuyIn(gameServer, game, player, playerInGame);
+    }
+
+    return playerInGame.status;
+  }
+
+  public async getGameServer(gameId: number): Promise<GameServer | null> {
+    const trackgameServerRepository = getRepository(TrackGameServer);
+    const gameServer = await trackgameServerRepository.findOne({
+      where: {game: {id: gameId}},
+    });
+    if (!gameServer) {
+      return null;
+    }
+    return gameServer.gameServer;
   }
 }
 

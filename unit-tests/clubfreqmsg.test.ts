@@ -1,18 +1,11 @@
 import {initializeSqlLite} from './utils';
-import {createGameServer} from '../src/internal/gameserver';
-import {startGame, getGameById} from '../src/resolvers/game';
-import {getClubById, createClub} from '../src/resolvers/club';
+import {createClub} from '../src/resolvers/club';
 import {
   saveFavMsg,
   getClubFavMsg,
   getPlayerFavMsg,
 } from '../src/resolvers/clubfreqmessage';
-import {getPlayerById, createPlayer} from '../src/resolvers/player';
-import {
-  saveChipsData,
-  buyChipsData,
-  endGameData,
-} from '../src/internal/chipstrack';
+import {createPlayer} from '../src/resolvers/player';
 import {getLogger} from '../src/utils/log';
 const logger = getLogger('clubfreqmsg-unit-test');
 beforeAll(async done => {

@@ -20,14 +20,13 @@ enum PlayerGameStatus {
   NOT_PLAYING
   PLAYING
   IN_QUEUE
-  BREAK
+  IN_BREAK
   STANDING_UP
   LEFT
   KICKED_OUT
   BLOCKED
-  WAIT_FOR_SITTING_APPROVAL
   LOST_CONNECTION
-  WAIT_FOR_BUYIN_APPROVAL
+  WAIT_FOR_BUYIN
 }
 
 
@@ -116,6 +115,8 @@ type Mutation {
   # implemented
   startGame(clubCode: String!, game: GameCreateInput!): GameInfo!
   startFriendsGame(game: GameCreateInput!): GameInfo!
+  joinGame(gameCode: String!, seatNo: Int!): PlayerGameStatus!
+  buyIn(gameCode: String!, amount: Float!): PlayerGameStatus!
 }
 
 type gameId{

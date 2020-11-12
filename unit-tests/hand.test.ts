@@ -4,7 +4,7 @@ import {resetDB} from '@src/resolvers/reset';
 import {createPlayer, getPlayerById} from '@src/resolvers/player';
 import {createClub, getClubById} from '@src/resolvers/club';
 import {createGameServer} from '@src/internal/gameserver';
-import {startGame, getGameById, startGameByPlayer} from '@src/resolvers/game';
+import {startGame, startGameByPlayer} from '@src/resolvers/game';
 import {saveChipsData} from '@src/internal/chipstrack';
 import {saveHandData} from '@src/internal/hand';
 import {
@@ -15,6 +15,7 @@ import {
   getAllStarredHands,
   saveStarredHand,
 } from '@src/resolvers/hand';
+import {getGame} from '@src/cache/index';
 
 const logger = getLogger('Hand server unit-test');
 
@@ -262,7 +263,7 @@ async function createClubAndStartGame(): Promise<
   await createGameServer(gameServer);
   const game = await startGame(owner, club, holdemGameInput);
   const playerId = (await getPlayerById(owner)).id;
-  const gameId = (await getGameById(owner, game.gameCode)).id;
+  const gameId = (await getGame(game.gameCode)).id;
   const clubId = (await getClubById(owner, club)).id;
   const messageInput = {
     clubId: clubId,
@@ -349,7 +350,7 @@ describe('Hand server APIs', () => {
       const game = await startGameByPlayer(ownerId, holdemGameInput);
 
       const playerID = await getPlayerById(ownerId);
-      const gameID = await getGameById(ownerId, game.gameCode);
+      const gameID = await getGame(game.gameCode);
       const input = {
         clubId: 0,
         playerId: playerID.id,
