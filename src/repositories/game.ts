@@ -6,6 +6,7 @@ import {
   ClubMemberStatus,
   ClubStatus,
   PlayerStatus,
+  BuyInApprovalStatus,
 } from '@src/entity/types';
 import {Club, ClubMember} from '@src/entity/club';
 import {Player} from '@src/entity/player';
@@ -340,7 +341,7 @@ class GameRepositoryImpl {
       where: {
         game: {id: game.id},
         player: {id: player.id},
-        seatNo: seatNo,
+        // seatNo: seatNo,
       },
     });
     if (thisPlayerInSeat) {
@@ -377,7 +378,7 @@ class GameRepositoryImpl {
     game: PokerGame,
     amount: number,
     reload: boolean
-  ): Promise<PlayerStatus> {
+  ): Promise<BuyInApprovalStatus> {
     // player must be already in a seat or waiting list
     // if credit limit is set, make sure his buyin amount is within the credit limit
     // if auto approval is set, add the buyin
@@ -399,58 +400,75 @@ class GameRepositoryImpl {
     }
 
     // NOTE TO SANJAY: Add other functionalities
-
-    if (reload) {
-      // if reload is set to true, if stack exceeds game.maxBuyIn
-      if (playerInGame.stack + amount > game.buyInMax) {
-        amount = game.buyInMax - playerInGame.stack;
-      }
-    } else {
-      playerInGame.noOfBuyins++;
-    }
-
-    // check amount should be between game.minBuyIn and game.maxBuyIn
-    if (
-      playerInGame.stack + amount < game.buyInMin ||
-      playerInGame.stack + amount > game.buyInMax
-    ) {
-      throw new Error(
-        `Buyin must be between ${game.buyInMin} and ${game.buyInMax}`
-      );
-    }
-
-    playerInGame.stack = playerInGame.stack + amount;
-    playerInGame.buyIn = playerInGame.buyIn + amount;
-
-    // if the player is in the seat and waiting for buyin
-    // then mark his status as playing
-    if (
-      playerInGame.seatNo !== 0 &&
-      playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN
-    ) {
-      playerInGame.status = PlayerStatus.PLAYING;
-    }
-    await playerGameTrackerRepository.update(
-      {
-        game: {id: game.id},
+    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+    const clubMember = await clubMemberRepository.findOne({
+      where: {
+        club: {id: game.club.id},
         player: {id: player.id},
       },
-      {
-        status: playerInGame.status,
-        stack: playerInGame.stack,
-        buyIn: playerInGame.buyIn,
-        noOfBuyins: playerInGame.noOfBuyins,
-      }
-    );
-
-    // send a message to gameserver
-    // get game server of this game
-    const gameServer = await this.getGameServer(game.id);
-    if (gameServer) {
-      playerBuyIn(gameServer, game, player, playerInGame);
+    });
+    if (!clubMember) {
+      throw new Error(`The player ${player.name} is not in the club`);
     }
 
-    return playerInGame.status;
+    if(clubMember.autoBuyinApproval) {
+      playerInGame.buyInStatus = BuyInApprovalStatus.APPROVED;
+    }else if(amount <= (clubMember.creditLimit - playerInGame.buyIn)) {
+      playerInGame.buyInStatus = BuyInApprovalStatus.APPROVED;
+    }else{
+      playerInGame.buyInStatus = BuyInApprovalStatus.WAITING_FOR_APPROVAL;
+    }
+
+    return playerInGame.buyInStatus;
+    // if (reload) {
+    //   // if reload is set to true, if stack exceeds game.maxBuyIn
+    //   if (playerInGame.stack + amount > game.buyInMax) {
+    //     amount = game.buyInMax - playerInGame.stack;
+    //   }
+    // } else {
+    //   playerInGame.noOfBuyins++;
+    // }
+
+    // // check amount should be between game.minBuyIn and game.maxBuyIn
+    // if (
+    //   playerInGame.stack + amount < game.buyInMin ||
+    //   playerInGame.stack + amount > game.buyInMax
+    // ) {
+    //   throw new Error(
+    //     `Buyin must be between ${game.buyInMin} and ${game.buyInMax}`
+    //   );
+    // }
+
+    // playerInGame.stack = playerInGame.stack + amount;
+    // playerInGame.buyIn = playerInGame.buyIn + amount;
+
+    // // if the player is in the seat and waiting for buyin
+    // // then mark his status as playing
+    // if (
+    //   playerInGame.seatNo !== 0 &&
+    //   playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN
+    // ) {
+    //   playerInGame.status = PlayerStatus.PLAYING;
+    // }
+    // await playerGameTrackerRepository.update(
+    //   {
+    //     game: {id: game.id},
+    //     player: {id: player.id},
+    //   },
+    //   {
+    //     status: playerInGame.status,
+    //     stack: playerInGame.stack,
+    //     buyIn: playerInGame.buyIn,
+    //     noOfBuyins: playerInGame.noOfBuyins,
+    //   }
+    // );
+
+    // // send a message to gameserver
+    // // get game server of this game
+    // const gameServer = await this.getGameServer(game.id);
+    // if (gameServer) {
+    //   playerBuyIn(gameServer, game, player, playerInGame);
+    // }
   }
 
   public async getGameServer(gameId: number): Promise<GameServer | null> {
