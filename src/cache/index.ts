@@ -36,25 +36,55 @@ export async function getPlayer(playerUuid: string): Promise<Player> {
   return players[0];
 }
 
-export async function isClubMember(
+export async function getClubMember(
   playerUUid: string,
   clubCode: string
-): Promise<boolean> {
+): Promise<ClubMember | undefined> {
   // get from cache
 
+  const playerRepository = getRepository<Player>(Player);
+  const clubRepository = getRepository<Club>(Club);
+  const club = await clubRepository.findOne({where: {clubCode: clubCode}});
+  const player = await playerRepository.findOne({where: {uuid: playerUUid}});
+  if (!club || !player) {
+    return undefined;
+  }
+
   const clubMemberRepository = getRepository<ClubMember>(ClubMember);
-  // see whehter the player is already a member
   const clubMember = await clubMemberRepository.findOne({
+    where: {
+      club: {id: club.id},
+      player: {id: player.id},
+    },
+  });
+  return clubMember;
+  /*
+  const clubMemberRepository = getRepository(ClubMember);
+  // see whether the player is already a member
+  const members = await clubMemberRepository.find({
+    relations: ['player', 'club'],
     where: {
       club: {clubCode: clubCode},
       player: {uuid: playerUUid},
     },
   });
 
-  // cache the result
-
-  if (!clubMember) {
-    return true;
+  if (members.length === 0) {
+    return undefined;
   }
-  return false;
+
+  // cache the result
+  return members[0];
+  */
+}
+
+export async function isClubMember(
+  playerUUid: string,
+  clubCode: string
+): Promise<boolean> {
+  const clubMember = getClubMember(playerUUid, clubCode);
+  if (!clubMember) {
+    return false;
+  }
+  return true;
 }

@@ -10,7 +10,7 @@ import {
   ClubGameRake,
 } from '@src/entity/chipstrack';
 import {GameRepository} from '@src/repositories/game';
-import {PlayerStatus} from '@src/entity/types';
+import {GameStatus, PlayerStatus} from '@src/entity/types';
 import {PlayerSitInput} from './types';
 
 const logger = getLogger('chipstrack');
@@ -234,7 +234,7 @@ class ChipsTrackRepositoryImpl {
                 WHERE pgt_game_id=${placeHolder1} AND pgt_club_id=${placeHolder2}`;
           await getConnection().query(query, [game.id, club.id]);
         }
-        GameRepository.markGameEnded(club.id, game.id);
+        GameRepository.markGameStatus(game.id, GameStatus.ENDED);
       });
       return true;
     } catch (e) {
