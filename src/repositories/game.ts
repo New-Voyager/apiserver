@@ -14,7 +14,12 @@ import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {getLogger} from '@src/utils/log';
 import {ClubGameRake, PlayerGameTracker} from '@src/entity/chipstrack';
 import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
-import {newPlayerSat, publishNewGame, playerBuyIn} from '@src/nats/index';
+import {
+  newPlayerSat,
+  publishNewGame,
+  playerBuyIn,
+  changeGameStatus,
+} from '@src/nats/index';
 
 const logger = getLogger('game');
 
@@ -198,29 +203,6 @@ class GameRepositoryImpl {
     const repository = getRepository(PokerGame);
     const count = await repository.count({where: {host: {id: playerId}}});
     return count;
-  }
-
-  public async markGameStarted(clubId: number, gameId: number) {
-    this.markGameStatus(gameId, GameStatus.RUNNING);
-  }
-
-  public async markGameEnded(clubId: number, gameId: number) {
-    this.markGameStatus(gameId, GameStatus.ENDED);
-  }
-
-  public async markGameStatus(gameId: number, status: GameStatus) {
-    const repository = getRepository(PokerGame);
-    const game = await repository.findOne({where: {id: gameId}});
-    if (!game) {
-      throw new Error(`Game: ${gameId} is not found`);
-    }
-
-    await getConnection()
-      .createQueryBuilder()
-      .update(PokerGame)
-      .set({status: status, endedAt: new Date()})
-      .where('id = :id', {id: gameId})
-      .execute();
   }
 
   public async getLiveGames(playerId: string) {
@@ -480,6 +462,45 @@ class GameRepositoryImpl {
       return null;
     }
     return gameServer.gameServer;
+  }
+
+  public async startGame(player: Player, game: PokerGame): Promise<GameStatus> {
+    if (game.status === GameStatus.ENDED) {
+      // game that ended cannot be restarted
+      logger.error(`Game: ${game.gameCode} is ended. Cannot be restarted`);
+    }
+    await this.markGameStatus(game.id, GameStatus.ACTIVE);
+    return GameStatus.ACTIVE;
+  }
+
+  public async markGameActive(gameId: number): Promise<GameStatus> {
+    return this.markGameStatus(gameId, GameStatus.ACTIVE);
+  }
+
+  public async markGameEnded(gameId: number): Promise<GameStatus> {
+    return this.markGameStatus(gameId, GameStatus.ENDED);
+  }
+
+  public async markGameStatus(gameId: number, status: GameStatus) {
+    const repository = getRepository(PokerGame);
+    const game = await repository.findOne({where: {id: gameId}});
+    if (!game) {
+      throw new Error(`Game: ${gameId} is not found`);
+    }
+
+    await getConnection()
+      .createQueryBuilder()
+      .update(PokerGame)
+      .set({status: status, endedAt: new Date()})
+      .where('id = :id', {id: gameId})
+      .execute();
+
+    // update the game server with new status
+    const gameServer = await this.getGameServer(game.id);
+    if (gameServer) {
+      changeGameStatus(gameServer, game, status);
+    }
+    return status;
   }
 }
 

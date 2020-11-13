@@ -504,6 +504,7 @@ class GameScript {
         },
         query: queryGame,
       });
+      console.log(`Game code: ${resp.data.configuredGame.gameCode}`);
       return [resp.data.configuredGame.gameCode, gameResp.data.game.id];
     } catch (err) {
       this.log(err.toString());
@@ -512,6 +513,32 @@ class GameScript {
   }
 
   protected async startGame(input: any): Promise<any> {
+    this.log(`Start game: ${JSON.stringify(input)}`);
+
+    try {
+      const query = gql`
+        mutation($gameCode: String!) {
+          startGame(gameCode: $gameCode)
+        }
+      `;
+      const club = this.clubCreated[input.club]
+      const gameCode = this.gameCreated[input.game].gameCode;
+      const client = await getClient(
+        this.registeredPlayers[club.owner].playerUuid
+      );
+      await client.mutate({
+        variables: {
+          gameCode: gameCode,
+        },
+        mutation: query,
+      });
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
+  protected async startGameOld(input: any): Promise<any> {
     this.log(`Start game: ${JSON.stringify(input)}`);
     try {
       const clubId = this.clubCreated[input.club].clubId;

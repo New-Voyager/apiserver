@@ -4,17 +4,28 @@ enum GameType {
   HILO
 }
 
+
+# Game status track the host actions on a game
+# This information is updated by the host/manager
 enum GameStatus {
   UNKNOWN
   CONFIGURED
-  PREPARING
-  WAITING_FOR_PLAYERS
-  WAITNG_TO_BE_STARTED
+  ACTIVE
   RUNNING
   PAUSED
   ENDED
 }
 
+# Table status track the current status of the table
+# This information is updated from the game server
+enum TableStatus {
+  UNKNOWN
+  SETUP
+  PREPARING
+  NOT_ENOUGH_PLAYERS
+  TABLE_FULL
+  GAME_RUNNING
+}
 
 enum PlayerGameStatus {
   NOT_PLAYING
@@ -92,6 +103,7 @@ type GameInfo {
   endedAt: String
   template: Boolean
   status: GameStatus
+  tableStatus: TableStatus
 }
 
 input GameUpdateInput {
@@ -122,6 +134,10 @@ type Mutation {
   configureFriendsGame(game: GameCreateInput!): GameInfo!
   joinGame(gameCode: String!, seatNo: Int!): PlayerGameStatus!
   buyIn(gameCode: String!, amount: Float!): BuyInApprovalStatus!
+  startGame(gameCode: String!): GameStatus!
+  #pauseGame(gameCode: String!): GameStatus!
+  #endGame(gameCode: String!): GameStatus!
+  #resumeGame(gameCode: String!): GameStatus!
 }
 
 type gameId{

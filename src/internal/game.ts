@@ -1,3 +1,4 @@
+import {GameStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {getLogger} from '@src/utils/log';
 
@@ -47,14 +48,14 @@ class GameAPIs {
       resp.status(500).send(JSON.stringify(res));
       return;
     }
-    const gameNum = parseInt(req.param('game-id'));
-    if (!gameNum) {
+    const gameID = parseInt(req.param('game-id'));
+    if (!gameID) {
       const res = {error: 'Invalid game id'};
       resp.status(500).send(JSON.stringify(res));
       return;
     }
     try {
-      await GameRepository.markGameStarted(clubID, gameNum);
+      await GameRepository.markGameStatus(gameID, GameStatus.ACTIVE);
       resp.status(200).send({status: 'OK'});
     } catch (err) {
       resp.status(500).send({error: err.message});

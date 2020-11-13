@@ -13,7 +13,7 @@ import {
   DbAwareCreateDateColumn,
   DbAwareUpdateDateColumn,
 } from './dbaware';
-import {GameStatus, GameType} from './types';
+import {GameStatus, GameType, TableStatus} from './types';
 
 @Entity({name: 'poker_game'})
 export class PokerGame {
@@ -85,8 +85,11 @@ export class PokerGame {
   @Column({name: 'is_active', nullable: true})
   public isActive!: boolean;
 
-  @Column({name: 'game_status', nullable: true})
+  @Column({name: 'game_status', nullable: true, default: GameStatus.UNKNOWN})
   public status!: GameStatus;
+
+  @Column({name: 'table_status', nullable: true, default: TableStatus.UNKNOWN})
+  public tableStatus!: TableStatus;
 
   @Column({name: 'game_length', type: 'int'})
   public gameLength!: number;
