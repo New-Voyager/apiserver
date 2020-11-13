@@ -4,6 +4,7 @@ import {PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {GameServer} from '@src/entity/gameserver';
+import {GameStatus} from '@src/entity/types';
 
 let natsEnabled = false;
 let natsServer = 'nats://localhost:4222';
@@ -120,6 +121,24 @@ export async function playerBuyIn(
     stack: playerGameInfo.stack,
     status: playerGameInfo.status,
     buyIn: playerGameInfo.buyIn,
+  };
+  nc.publish(APISERVER_TO_GAMESERVER, message);
+}
+
+export async function changeGameStatus(
+  gameServer: GameServer,
+  game: PokerGame,
+  status: GameStatus
+) {
+  if (!natsEnabled) {
+    return;
+  }
+
+  const message = {
+    type: 'GameStatus',
+    gameServer: gameServer.serverNumber,
+    gameId: game.id,
+    gameStatus: status,
   };
   nc.publish(APISERVER_TO_GAMESERVER, message);
 }

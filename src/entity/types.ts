@@ -6,15 +6,25 @@ export enum GameType {
   FIVECARD_OMAHA,
 }
 
+// Game status track the host actions on a game
+// This information is updated by the host/manager
 export enum GameStatus {
   UNKNOWN,
   CONFIGURED,
-  PREPARING,
-  WAITING_FOR_PLAYERS,
-  WAITNG_TO_BE_STARTED,
-  RUNNING,
+  ACTIVE,
   PAUSED,
   ENDED,
+}
+
+// Table status track the current status of the table
+// This information is updated from the game server
+export enum TableStatus {
+  UNKNOWN,
+  SETUP,
+  PREPARING,
+  NOT_ENOUGH_PLAYERS,
+  TABLE_FULL,
+  GAME_RUNNING,
 }
 
 export enum WonAtStatus {
