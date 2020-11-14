@@ -130,7 +130,7 @@ describe('Game server APIs', () => {
     expect(servers[1].ipAddress).toBe('10.1.1.4');
   });
 
-  test.skip('Get specific game server 1', async () => {
+  test('Get specific game server 1', async () => {
     const gameServer1 = {
       ipAddress: '10.1.1.5',
       currentMemory: 100,
@@ -167,7 +167,7 @@ describe('Game server APIs', () => {
     }
   });
 
-  test.skip('Get specific game server 2', async () => {
+  test('Get specific game server 2', async () => {
     const gameServer1 = {
       ipAddress: '10.1.1.5',
       currentMemory: 100,

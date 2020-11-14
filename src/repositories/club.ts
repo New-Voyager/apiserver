@@ -94,6 +94,9 @@ class ClubRepositoryImpl {
         updateData.status
       ] as unknown) as ClubMemberStatus;
     }
+    if(updateData.isManager){
+      clubMember.isManager = updateData.isManager;
+    }
 
     // Save the data
     const resp = await clubMemberRepository.save(clubMember);

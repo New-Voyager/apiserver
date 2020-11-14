@@ -115,6 +115,18 @@ export interface GameInput {
   muckLosingHand?: boolean;
 }
 
+export const joinGameQuery = gql`
+  mutation($gameCode: String!, $seatNo: Int!) {
+    status: joinGame(gameCode: $gameCode, seatNo: $seatNo) 
+  }
+`;
+
+export const buyinQuery = gql`
+  mutation($gameCode: String!, $amount: Float!) {
+    status: buyIn(gameCode: $gameCode, amount: $amount) 
+  }
+`;
+
 export async function configureGame(
   playerId: string,
   clubCode: string,
@@ -189,4 +201,38 @@ export async function getClubGames(
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
   return resp.data.clubGames;
+}
+
+export async function joinGame(
+  playerId: string,
+  gameCode: string,
+  seatNo: number
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+      seatNo: seatNo,
+    },
+    mutation: joinGameQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+export async function buyin(
+  playerId: string,
+  gameCode: string,
+  amount: number
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+      amount: amount,
+    },
+    mutation: buyinQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
 }

@@ -47,6 +47,9 @@ export class PlayerGameTracker {
   @Column({name: 'buyIn_status', nullable: true, type: 'int'})
   public buyInStatus!: BuyInApprovalStatus;
 
+  @Column({name: 'buyin_notes', type: 'text', nullable: true})
+  public buyinNotes!: string;
+
   @Column({name: 'seat_no', nullable: false})
   public seatNo!: number;
 
