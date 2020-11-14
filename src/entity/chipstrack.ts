@@ -47,6 +47,9 @@ export class PlayerGameTracker {
   @Column({name: 'seat_no', nullable: false})
   public seatNo!: number;
 
+  @Column({name: 'queue_no', nullable: false, default: 0})
+  public queueNo!: number;
+
   @Column({name: 'no_of_buyins'})
   public noOfBuyins!: number;
 

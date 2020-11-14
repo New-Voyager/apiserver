@@ -24,6 +24,24 @@ class GameAPIs {
     resp.status(200).send({status: 'OK'});
   }
 
+  public async updateTableStatus(req: any, resp: any) {
+    const gameID = req.body.gameId;
+    if (!gameID) {
+      const res = {error: 'Invalid game id'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    const tableStatus = req.body.status;
+    if (!tableStatus) {
+      const res = {error: 'Invalid table status'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+
+    await GameRepository.markTableStatus(gameID, tableStatus);
+    resp.status(200).send({status: 'OK'});
+  }
+
   public async getGame(req: any, resp: any) {
     const clubID = req.params.clubID;
     if (!clubID) {
