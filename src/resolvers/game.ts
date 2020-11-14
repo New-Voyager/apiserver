@@ -4,7 +4,7 @@ import {
   GameType,
   PlayerStatus,
   TableStatus,
-  BuyInApprovalStatus
+  BuyInApprovalStatus,
 } from '@src/entity/types';
 import {getLogger} from '@src/utils/log';
 import {
@@ -66,7 +66,11 @@ export async function configureGameByPlayer(playerId: string, game: any) {
   }
 }
 
-export async function joinGame(playerUuid: string, gameCode: string, seatNo: number) {
+export async function joinGame(
+  playerUuid: string,
+  gameCode: string,
+  seatNo: number
+) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }
@@ -146,7 +150,11 @@ async function startGame(
   }
 }
 
-export async function buyIn(playerUuid: string, gameCode: string, amount: number) {
+export async function buyIn(
+  playerUuid: string,
+  gameCode: string,
+  amount: number
+) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }

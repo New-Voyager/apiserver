@@ -117,13 +117,13 @@ export interface GameInput {
 
 export const joinGameQuery = gql`
   mutation($gameCode: String!, $seatNo: Int!) {
-    status: joinGame(gameCode: $gameCode, seatNo: $seatNo) 
+    status: joinGame(gameCode: $gameCode, seatNo: $seatNo)
   }
 `;
 
 export const buyinQuery = gql`
   mutation($gameCode: String!, $amount: Float!) {
-    status: buyIn(gameCode: $gameCode, amount: $amount) 
+    status: buyIn(gameCode: $gameCode, amount: $amount)
   }
 `;
 

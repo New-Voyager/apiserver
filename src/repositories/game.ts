@@ -338,7 +338,7 @@ class GameRepositoryImpl {
       thisPlayerInSeat.buyIn = 0;
       thisPlayerInSeat.seatNo = seatNo;
       thisPlayerInSeat.noOfBuyins = 0;
-      thisPlayerInSeat.buyinNotes = "";
+      thisPlayerInSeat.buyinNotes = '';
     }
     if (thisPlayerInSeat.stack > 0) {
       thisPlayerInSeat.status = PlayerStatus.PLAYING;
@@ -346,7 +346,7 @@ class GameRepositoryImpl {
       thisPlayerInSeat.status = PlayerStatus.WAIT_FOR_BUYIN;
     }
     const resp = await playerGameTrackerRepository.save(thisPlayerInSeat);
-    
+
     // send a message to gameserver
     // get game server of this game
     const gameServer = await this.getGameServer(game.id);
@@ -405,24 +405,27 @@ class GameRepositoryImpl {
       throw new Error(`The player ${player.name} is not in the club`);
     }
 
-    if(clubMember.autoBuyinApproval) {
+    if (clubMember.autoBuyinApproval) {
       playerInGame.buyInStatus = BuyInApprovalStatus.APPROVED;
       playerInGame.noOfBuyins++;
       playerInGame.stack += amount;
       playerInGame.buyIn += amount;
-    }else {
-      const query = 'SELECT SUM(buyIn) current_buyin FROM PlayerGameTracker pgt, PokerGame pg WHERE pgt.pgt_player_id = '
-            + player.id+' AND pgt.pgt_game_id = pg.game_id AND pg.status ='+GameStatus.ENDED;
+    } else {
+      const query =
+        'SELECT SUM(buyIn) current_buyin FROM PlayerGameTracker pgt, PokerGame pg WHERE pgt.pgt_player_id = ' +
+        player.id +
+        ' AND pgt.pgt_game_id = pg.game_id AND pg.status =' +
+        GameStatus.ENDED;
       const resp = await getConnection().query(query);
-      let currentBuyin = resp[0]['current_buyin'];
-      
+      const currentBuyin = resp[0]['current_buyin'];
+
       let outstandingBalance = playerInGame.buyIn;
       if (currentBuyin) {
         outstandingBalance += currentBuyin;
       }
 
       let availableCredit = 0.0;
-      if(clubMember.creditLimit >= 0) {
+      if (clubMember.creditLimit >= 0) {
         availableCredit = clubMember.creditLimit - outstandingBalance;
       }
 
@@ -435,7 +438,7 @@ class GameRepositoryImpl {
       } else {
         playerInGame.buyinNotes = `Player ${player.name} has ${outstandingBalance} outstanding balance and Requested: ${amount}`;
         playerInGame.buyInStatus = BuyInApprovalStatus.WAITING_FOR_APPROVAL;
-      } 
+      }
     }
 
     await playerGameTrackerRepository.update(

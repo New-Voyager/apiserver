@@ -94,7 +94,7 @@ class ClubRepositoryImpl {
         updateData.status
       ] as unknown) as ClubMemberStatus;
     }
-    if(updateData.isManager){
+    if (updateData.isManager) {
       clubMember.isManager = updateData.isManager;
     }
 

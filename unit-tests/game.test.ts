@@ -4,7 +4,12 @@ import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/resolvers/reset';
 import {createPlayer} from '@src/resolvers/player';
 import {createClub} from '@src/resolvers/club';
-import {configureGame, configureGameByPlayer, joinGame, buyIn} from '@src/resolvers/game';
+import {
+  configureGame,
+  configureGameByPlayer,
+  joinGame,
+  buyIn,
+} from '@src/resolvers/game';
 import {getGame} from '@src/cache/index';
 
 const logger = getLogger('game unit-test');
@@ -223,7 +228,6 @@ describe('Game APIs', () => {
       // change seat after buyin
       const data4 = await joinGame(player1, game.gameCode, 1);
       expect(data4).toBe('PLAYING');
-
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();
@@ -276,7 +280,6 @@ describe('Game APIs', () => {
       // buyin
       const resp = await buyIn(player1, game.gameCode, 100);
       expect(resp).toBe('APPROVED');
-
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();

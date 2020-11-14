@@ -79,8 +79,8 @@ export enum PromotionType {
 export enum BuyInApprovalStatus {
   WAITING_FOR_APPROVAL,
   APPROVED,
-  DENIED, 
-  }
+  DENIED,
+}
 
 export enum ClubStatus {
   UNKNOWN,

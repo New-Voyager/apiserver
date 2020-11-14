@@ -11,7 +11,7 @@ import {
   leaveClub,
   getClubGames,
   getClubById,
-  updateClubMember
+  updateClubMember,
 } from '../src/resolvers/club';
 import {createPlayer} from '../src/resolvers/player';
 import {configureGame} from '../src/resolvers/game';
@@ -498,7 +498,7 @@ describe('Club APIs', () => {
     }
   });
 
-test('update club members', async () => {
+  test('update club members', async () => {
     const playerId = await createPlayer({
       player: {name: 'owner', deviceId: 'test-device-owner'},
     });

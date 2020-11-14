@@ -188,10 +188,14 @@ describe('Game APIs', () => {
   test('join a club game', async () => {
     const [clubCode, ownerId] = await clubutils.createClub('brady', 'yatzee');
     await createGameServer('1.2.0.7');
-    const game = await gameutils.configureGame(ownerId, clubCode, holdemGameInput);
+    const game = await gameutils.configureGame(
+      ownerId,
+      clubCode,
+      holdemGameInput
+    );
     const player1Id = await clubutils.createPlayer('player1', 'abc123');
     const player2Id = await clubutils.createPlayer('adam', '1243ABC');
-    
+
     // Join a game
     const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
     expect(data).toBe('WAIT_FOR_BUYIN');
@@ -214,10 +218,14 @@ describe('Game APIs', () => {
   test('buyIn for a club game', async () => {
     const [clubCode, ownerId] = await clubutils.createClub('brady', 'yatzee');
     await createGameServer('1.2.0.8');
-    const game = await gameutils.configureGame(ownerId, clubCode, holdemGameInput);
+    const game = await gameutils.configureGame(
+      ownerId,
+      clubCode,
+      holdemGameInput
+    );
     const player1Id = await clubutils.createPlayer('player1', 'abc123');
     const player2Id = await clubutils.createPlayer('adam', '1243ABC');
-    
+
     const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
     expect(data).toBe('WAIT_FOR_BUYIN');
     const data1 = await gameutils.joinGame(player2Id, game.gameCode, 2);
@@ -225,7 +233,5 @@ describe('Game APIs', () => {
 
     const resp = await gameutils.buyin(player1Id, game.gameCode, 100);
     expect(resp).toBe('APPROVED');
-
   });
-
 });
