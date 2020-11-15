@@ -95,10 +95,10 @@ class ClubRepositoryImpl {
         updateData.status
       ] as unknown) as ClubMemberStatus;
     }
-    if (updateData.isManager) {
+    if (updateData.isManager !== null) {
       clubMember.isManager = updateData.isManager;
     }
-    if (updateData.autoBuyinApproval) {
+    if (updateData.autoBuyinApproval !== null) {
       clubMember.autoBuyinApproval = updateData.autoBuyinApproval;
     }
 

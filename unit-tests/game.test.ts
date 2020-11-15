@@ -3,7 +3,7 @@ import {createGameServer} from '@src/internal/gameserver';
 import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/resolvers/reset';
 import {createPlayer} from '@src/resolvers/player';
-import {createClub} from '@src/resolvers/club';
+import {createClub, updateClubMember} from '@src/resolvers/club';
 import {
   configureGame,
   configureGameByPlayer,
@@ -38,6 +38,16 @@ const holdemGameInput = {
   actionTime: 30,
   muckLosingHand: true,
 };
+
+enum ClubMemberStatus {
+  UNKNOWN,
+  INVITED,
+  PENDING,
+  DENIED,
+  ACTIVE,
+  LEFT,
+  KICKEDOUT,
+}
 
 beforeAll(async done => {
   await initializeSqlLite();
@@ -273,13 +283,28 @@ describe('Game APIs', () => {
       const data1 = await joinGame(player2, game.gameCode, 2);
       expect(data1).toBe('WAIT_FOR_BUYIN');
 
-      // change seat before buyin
-      const data3 = await joinGame(player1, game.gameCode, 3);
-      expect(data3).toBe('WAIT_FOR_BUYIN');
-
-      // buyin
+      // Buyin with autoBuyinApproval true
       const resp = await buyIn(player1, game.gameCode, 100);
       expect(resp).toBe('APPROVED');
+
+      // setting autoBuyinApproval false and creditLimit
+      const resp1 = await updateClubMember(owner, player1, club, {
+        balance: 10,
+        creditLimit: 200,
+        notes: 'Added credit limit',
+        status: ClubMemberStatus['ACTIVE'],
+        isManager: false,
+        autoBuyinApproval: false,
+      });
+      expect(resp1).toBe(ClubMemberStatus['ACTIVE']);
+
+      // Buyin within credit limit and autoBuyinApproval false
+      const resp2 = await buyIn(player1, game.gameCode, 100);
+      expect(resp2).toBe('APPROVED');
+
+      // Buyin more than credit limit and autoBuyinApproval false
+      const resp3 = await buyIn(player1, game.gameCode, 100);
+      expect(resp3).toBe('WAITING_FOR_APPROVAL');
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();

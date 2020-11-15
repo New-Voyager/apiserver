@@ -412,11 +412,12 @@ class GameRepositoryImpl {
       playerInGame.buyIn += amount;
     } else {
       const query =
-        'SELECT SUM(buyIn) current_buyin FROM PlayerGameTracker pgt, PokerGame pg WHERE pgt.pgt_player_id = ' +
+        'SELECT SUM(buy_in) current_buyin FROM player_game_tracker pgt, poker_game pg WHERE pgt.pgt_player_id = ' +
         player.id +
-        ' AND pgt.pgt_game_id = pg.game_id AND pg.status =' +
+        ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
         GameStatus.ENDED;
       const resp = await getConnection().query(query);
+
       const currentBuyin = resp[0]['current_buyin'];
 
       let outstandingBalance = playerInGame.buyIn;
@@ -451,6 +452,7 @@ class GameRepositoryImpl {
         stack: playerInGame.stack,
         buyIn: playerInGame.buyIn,
         noOfBuyins: playerInGame.noOfBuyins,
+        buyinNotes: playerInGame.buyinNotes,
       }
     );
 

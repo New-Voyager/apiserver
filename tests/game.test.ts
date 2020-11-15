@@ -231,7 +231,28 @@ describe('Game APIs', () => {
     const data1 = await gameutils.joinGame(player2Id, game.gameCode, 2);
     expect(data1).toBe('WAIT_FOR_BUYIN');
 
+    // Buyin with autoBuyinApproval true
     const resp = await gameutils.buyin(player1Id, game.gameCode, 100);
     expect(resp).toBe('APPROVED');
+
+    // setting autoBuyinApproval false and creditLimit
+    const resp1 = await clubutils.updateClubMember(
+      clubCode,
+      ownerId,
+      player1Id,
+      {
+        autoBuyinApproval: false,
+        creditLimit: 200,
+      }
+    );
+    expect(resp1.status).toBe('ACTIVE');
+
+    // Buyin within credit limit and autoBuyinApproval false
+    const resp2 = await gameutils.buyin(player1Id, game.gameCode, 100);
+    expect(resp2).toBe('APPROVED');
+
+    // Buyin more than credit limit and autoBuyinApproval false
+    const resp3 = await gameutils.buyin(player1Id, game.gameCode, 100);
+    expect(resp3).toBe('WAITING_FOR_APPROVAL');
   });
 });
