@@ -353,6 +353,7 @@ describe('Club APIs', () => {
         creditLimit: 1000,
         notes: 'Added credit limit',
         status: 'KICKEDOUT',
+        autoBuyinApproval: true,
       }
     );
     expect(resp.status).toBe('KICKEDOUT');
