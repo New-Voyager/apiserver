@@ -492,7 +492,7 @@ describe('Club APIs', () => {
         notes: 'Added credit limit',
         status: ClubMemberStatus['KICKEDOUT'],
         isManager: false,
-        autoBuyinApproval: true
+        autoBuyinApproval: true,
       });
       expect(false).toBeTruthy();
     } catch (error) {
