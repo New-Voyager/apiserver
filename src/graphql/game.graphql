@@ -11,7 +11,6 @@ enum GameStatus {
   UNKNOWN
   CONFIGURED
   ACTIVE
-  RUNNING
   PAUSED
   ENDED
 }
@@ -20,10 +19,8 @@ enum GameStatus {
 # This information is updated from the game server
 enum TableStatus {
   UNKNOWN
-  SETUP
-  PREPARING
+  WAITING_TO_BE_STARTED
   NOT_ENOUGH_PLAYERS
-  TABLE_FULL
   GAME_RUNNING
 }
 

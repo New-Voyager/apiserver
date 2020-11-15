@@ -86,7 +86,7 @@ export async function newPlayerSat(
   }
 
   const message = {
-    type: 'PlayerSat',
+    type: 'PlayerUpdate',
     gameServer: gameServer.serverNumber,
     gameId: game.id,
     playerId: player.id,
@@ -111,7 +111,7 @@ export async function playerBuyIn(
   }
 
   const message = {
-    type: 'PlayerBuyIn',
+    type: 'PlayerUpdate',
     gameServer: gameServer.serverNumber,
     gameId: game.id,
     playerId: player.id,

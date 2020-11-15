@@ -7,6 +7,7 @@ import {
   ClubStatus,
   PlayerStatus,
   BuyInApprovalStatus,
+  TableStatus,
 } from '@src/entity/types';
 import {Club, ClubMember} from '@src/entity/club';
 import {Player} from '@src/entity/player';
@@ -519,10 +520,17 @@ class GameRepositoryImpl {
       throw new Error(`Game: ${gameId} is not found`);
     }
 
+    const values: any = {
+      status: status,
+    };
+    if (status === GameStatus.ENDED) {
+      values.endedAt = new Date();
+    }
+
     await getConnection()
       .createQueryBuilder()
       .update(PokerGame)
-      .set({status: status, endedAt: new Date()})
+      .set(values)
       .where('id = :id', {id: gameId})
       .execute();
 
@@ -531,6 +539,23 @@ class GameRepositoryImpl {
     if (gameServer) {
       changeGameStatus(gameServer, game, status);
     }
+    return status;
+  }
+
+  public async markTableStatus(gameId: number, status: TableStatus) {
+    const repository = getRepository(PokerGame);
+    const game = await repository.findOne({where: {id: gameId}});
+    if (!game) {
+      throw new Error(`Game: ${gameId} is not found`);
+    }
+
+    await getConnection()
+      .createQueryBuilder()
+      .update(PokerGame)
+      .set({tableStatus: status})
+      .where('id = :id', {id: gameId})
+      .execute();
+
     return status;
   }
 }

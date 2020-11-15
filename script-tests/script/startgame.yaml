@@ -1,5 +1,5 @@
 test:
-  disabled: true
+  disabled: false
 
 # Cleanup steps
 cleanup:
@@ -77,7 +77,6 @@ setup:
 # Game steps
 game:
   steps:
-
     # configure game
     - configure-games:
         - club: New Delhi
@@ -155,88 +154,7 @@ game:
           - name: arjun
             balance: 100
 
-    - messages:
-        - club: New Delhi
-          messages:
-            - arun: hello guys
-            - bala: did you see the weird hand?
-            - arjun: I know. Doesn't it happen often
-
     # start games
     - start-games:
         - club: New Delhi
           game: test1
-
-    # save hands
-    - save-hands:
-        - clubId: New Delhi
-          gameNum: test1
-          handNum: 1
-          messageType: RESULT
-          handStatus: RESULT
-          handResult:
-            playersInSeats: [arun, 0, sam, 0, bala, 0, 0, arjun]
-            handStartedAt: "1595385733"
-            handEndedAt: "1595385739"
-            preflopActions:
-            flopActions:
-            turnActions:
-            riverActions:
-            potWinners:
-              0:
-                hiWinners:
-                  - seatNo: 1
-                    amount: 50
-                    winningCards: [200, 196, 8, 132, 1]
-                    winningCardsStr: "[ A♣  A♦  2♣  T♦  2♠ ]"
-                    rankStr: Two Pair
-                    rank: 1000
-                loWinners:
-                  - seatNo: 1
-                    amount: 50
-                    winningCards: [200, 196, 8, 132, 1]
-                    winningCardsStr: "[ A♣  A♦  2♣  T♦  2♠ ]"
-                    rankStr: Two Pair
-                    rank: 1000
-            wonAt: SHOW_DOWN
-            rank: 1000
-            tips: 2.0
-            totalPot: 150
-            balanceAfterHand:
-              - seatNo: 1
-                playerId: arun
-                balance: 200
-              - seatNo: 3
-                playerId: sam
-                balance: 50
-              - seatNo: 5
-                playerId: bala
-                balance: 0
-              - seatNo: 8
-                playerId: arjun
-                balance: 50
-    
-    # End multiple games
-    - end-games:
-        - club: New Delhi
-          game: test1
-
-    # verify the balance of the clubs
-    - verify-club-balance:
-        - club: New Delhi
-          balance: 2
-
-    # verify the balance of the club players
-    - verify-player-balance:
-        - club: New Delhi
-          player: arun
-          balance: 100
-        - club: New Delhi
-          player: sam
-          balance: -50
-        - club: New Delhi
-          player: bala
-          balance: -100
-        - club: New Delhi
-          player: arjun
-          balance: -50

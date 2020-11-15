@@ -108,7 +108,8 @@ function addInternalRoutes(app: any) {
   app.post('/internal/game-ended', ChipsTrackSeverAPI.endGame);
   app.post('/internal/buy-chips', ChipsTrackSeverAPI.buyChips);
   app.post('/internal/delete-club-by-name/:clubName', AdminAPI.deleteClub);
-  app.post('/internal/update-game-status', GameAPI.updateGameStatus);
+  //app.post('/internal/update-game-status', GameAPI.updateGameStatus);
+  app.post('/internal/update-table-status', GameAPI.updateTableStatus);
 
   app.get(
     '/internal/get-game-server/club_id/:clubCode/game_num/:gameCode',

@@ -17,13 +17,11 @@ export enum GameStatus {
 }
 
 // Table status track the current status of the table
-// This information is updated from the game server
+// This information is updated by the game server
 export enum TableStatus {
   UNKNOWN,
-  SETUP,
-  PREPARING,
+  WAITING_TO_BE_STARTED,
   NOT_ENOUGH_PLAYERS,
-  TABLE_FULL,
   GAME_RUNNING,
 }
 
