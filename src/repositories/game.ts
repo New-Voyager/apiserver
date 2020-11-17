@@ -20,6 +20,7 @@ import {
   playerBuyIn,
   changeGameStatus,
 } from '@src/nats/index';
+import {isPostgres} from '@src/utils';
 
 const logger = getLogger('game');
 
@@ -186,7 +187,7 @@ class GameRepositoryImpl {
     return savedGame;
   }
 
-  public async getGameById(gameCode: string): Promise<PokerGame | undefined> {
+  public async getGameByCode(gameCode: string): Promise<PokerGame | undefined> {
     const repository = getRepository(PokerGame);
     // get game by id (testing only)
     const game = await repository.findOne({where: {gameCode: gameCode}});
@@ -508,6 +509,18 @@ class GameRepositoryImpl {
       .execute();
 
     return status;
+  }
+
+  public async getPlayersInSeats(gameId: number): Promise<any> {
+    let placeHolder1 = '$1';
+    if (!isPostgres()) {
+      placeHolder1 = '?';
+    }
+    const query = `SELECT name, uuid as "playerUuid", buy_in as "buyIn", stack, status, seat_no as "seatNo" FROM 
+          player_game_tracker pgt JOIN player p ON pgt.pgt_player_id = p.id
+          AND pgt.pgt_game_id = ${placeHolder1} AND seat_no IS NOT NULL`;
+    const resp = await getConnection().query(query, [gameId]);
+    return resp;
   }
 }
 

@@ -183,12 +183,64 @@ async function buyIn(playerUuid: string, gameCode: string, amount: number) {
   }
 }
 
+async function getGameInfo(playerUuid: string, gameCode: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubMember = await isClubMember(playerUuid, game.club.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode}`
+        );
+      }
+    }
+    const ret = game as any;
+    ret.gameType = GameType[game.gameType];
+    ret.tableStatus = TableStatus[game.tableStatus];
+    return ret;
+  } catch (err) {
+    logger.error(err);
+    throw new Error(`Failed to update buyin. ${JSON.stringify(err)}`);
+  }
+}
+
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
       const game = await getGame(args.gameCode);
       return {
         id: game.id,
+      };
+    },
+    gameInfo: async (parent, args, ctx, info) => {
+      return await getGameInfo(ctx.req.playerId, args.gameCode);
+    },
+  },
+  GameInfo: {
+    seatInfo: async (parent, args, ctx, info) => {
+      const game = await getGame(parent.gameCode);
+      const playersInSeats = await GameRepository.getPlayersInSeats(game.id);
+      const takenSeats = playersInSeats.map(x => x.seatNo);
+      const availableSeats: Array<number> = [];
+      for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+        if (takenSeats.indexOf(seatNo) === -1) {
+          availableSeats.push(seatNo);
+        }
+      }
+      return {
+        playersInSeats: playersInSeats,
+        availableSeats: availableSeats,
       };
     },
   },

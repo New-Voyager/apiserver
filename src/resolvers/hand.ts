@@ -6,6 +6,7 @@ import {WonAtStatus, GameType, ClubMemberStatus} from '@src/entity/types';
 import {PlayerRepository} from '@src/repositories/player';
 import {getLogger} from '@src/utils/log';
 import {GameRepository} from '@src/repositories/game';
+import {getGame} from '@src/cache';
 const logger = getLogger('hand-resolvers');
 
 const resolvers: any = {
@@ -114,7 +115,7 @@ export async function getLastHandHistory(playerId: string, args: any) {
     club.id = 0;
   }
 
-  const game = await GameRepository.getGameById(args.gameCode);
+  const game = await getGame(args.gameCode);
   if (!game) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
@@ -165,7 +166,7 @@ export async function getSpecificHandHistory(playerId: string, args: any) {
     club.id = 0;
   }
 
-  const game = await GameRepository.getGameById(args.gameCode);
+  const game = await getGame(args.gameCode);
   if (!game) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
@@ -224,7 +225,7 @@ export async function getAllHandHistory(playerId: string, args: any) {
     club.id = 0;
   }
 
-  const game = await GameRepository.getGameById(args.gameCode);
+  const game = await getGame(args.gameCode);
   if (!game) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
@@ -284,7 +285,7 @@ export async function getMyWinningHands(playerId: string, args: any) {
     club.id = 0;
   }
 
-  const game = await GameRepository.getGameById(args.gameCode);
+  const game = await getGame(args.gameCode);
   if (!game) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
@@ -341,7 +342,7 @@ export async function saveStarredHand(playerId: string, args: any) {
   if (!player) {
     throw new Error(`Player ${playerId} is not found`);
   }
-  const game = await GameRepository.getGameById(args.gameCode);
+  const game = await getGame(args.gameCode);
   if (!game) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }

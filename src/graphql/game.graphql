@@ -64,6 +64,19 @@ input GameCreateInput {
   waitForBigBlind: Boolean
 }
 
+type SeatInfo {
+  seatNo: Int!
+  playerUuid: String!
+  name: String!
+  buyIn: Float
+  stack: Float
+}
+
+type TableSeats {
+  playersInSeats: [SeatInfo!]
+  availableSeats: [Int!]
+}
+
 type GameInfo {
   gameCode: String!
   gameType: GameType
@@ -96,6 +109,7 @@ type GameInfo {
   template: Boolean
   status: GameStatus
   tableStatus: TableStatus
+  seatInfo: TableSeats
 }
 
 input GameUpdateInput {
@@ -142,4 +156,5 @@ type Query {
   getGameTemplates(clubCode: String!): [GameInfo!]
   # implemented
   gameById(gameCode: String!): gameId!
+  gameInfo(gameCode: String!): GameInfo
 }
