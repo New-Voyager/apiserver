@@ -131,6 +131,7 @@ type Mutation {
   configureFriendsGame(game: GameCreateInput!): GameInfo!
   joinGame(gameCode: String!, seatNo: Int!): PlayerGameStatus!
   buyIn(gameCode: String!, amount: Float!): BuyInApprovalStatus!
+  approveBuyIn(gameCode: String!, playerUuid: String!, amount: Float!): BuyInApprovalStatus!
   startGame(gameCode: String!): GameStatus!
   #pauseGame(gameCode: String!): GameStatus!
   #endGame(gameCode: String!): GameStatus!

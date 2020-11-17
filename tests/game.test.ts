@@ -255,4 +255,48 @@ describe('Game APIs', () => {
     const resp3 = await gameutils.buyin(player1Id, game.gameCode, 100);
     expect(resp3).toBe('WAITING_FOR_APPROVAL');
   });
+
+  test('approve buyIn for a club game', async () => {
+    const [clubCode, ownerId] = await clubutils.createClub('brady', 'yatzee');
+    await createGameServer('1.2.0.9');
+    const game = await gameutils.configureGame(
+      ownerId,
+      clubCode,
+      holdemGameInput
+    );
+    const player1Id = await clubutils.createPlayer('player1', 'abc123');
+    const player2Id = await clubutils.createPlayer('adam', '1243ABC');
+
+    const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
+    expect(data).toBe('WAIT_FOR_BUYIN');
+    const data1 = await gameutils.joinGame(player2Id, game.gameCode, 2);
+    expect(data1).toBe('WAIT_FOR_BUYIN');
+
+    // setting autoBuyinApproval false and creditLimit
+    const resp1 = await clubutils.updateClubMember(
+      clubCode,
+      ownerId,
+      player1Id,
+      {
+        autoBuyinApproval: false,
+      }
+    );
+    expect(resp1.status).toBe('ACTIVE');
+
+    // Buyin more than credit limit and autoBuyinApproval false
+    const resp3 = await gameutils.buyin(player1Id, game.gameCode, 100);
+    expect(resp3).toBe('WAITING_FOR_APPROVAL');
+
+    // Approve a buyin as host
+    const resp4 = await gameutils.approveBuyIn(ownerId, player1Id, game.gameCode, 100);
+    expect(resp4).toBe('APPROVED');
+
+    try {
+      // Approve a buyin as player
+      const resp5 = await gameutils.approveBuyIn(player2Id, player1Id, game.gameCode, 100);
+      expect(false).toBeTruthy();
+    } catch (error) {
+      expect(error.toString()).toContain('Failed to update buyin');
+    }
+  });
 });

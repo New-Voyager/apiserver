@@ -192,6 +192,58 @@ export async function buyIn(
   }
 }
 
+export async function approveBuyIn(
+  hostUuid: string,
+  playerUuid: string,
+  gameCode: string,
+  amount: number
+) {
+  if (!hostUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
+        );
+      }
+
+      const clubHost = await getClubMember(hostUuid, game.club.clubCode);
+      if (!clubHost || !(clubHost.isManager || clubHost.isOwner)) {
+        logger.error(
+          `Player: ${hostUuid} is not authorized to approve buyIn in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${hostUuid} is not authorized to approve buyIn in club ${game.club.name}`
+        );
+      }
+    }
+
+    const player = await getPlayer(playerUuid);
+    const status = await GameRepository.approveBuyIn(
+      player,
+      game,
+      amount,
+    );
+    // player is good to go
+    return BuyInApprovalStatus[status];
+  } catch (err) {
+    logger.error(err);
+    throw new Error(`Failed to update buyin. ${JSON.stringify(err)}`);
+  }
+}
+
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -213,6 +265,9 @@ const resolvers: any = {
     },
     buyIn: async (parent, args, ctx, info) => {
       return buyIn(ctx.req.playerId, args.gameCode, args.amount);
+    },
+    approveBuyIn: async (parent, args, ctx, info) => {
+      return approveBuyIn(ctx.req.playerId, args.playerUuid, args.gameCode, args.amount);
     },
     startGame: async (parent, args, ctx, info) => {
       return startGame(ctx.req.playerId, args.gameCode);

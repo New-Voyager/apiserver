@@ -127,6 +127,12 @@ export const buyinQuery = gql`
   }
 `;
 
+export const approveBuyInQuery = gql`
+  mutation($gameCode: String!, $playerUuid: String!, $amount: Float!) {
+    status: approveBuyIn(gameCode: $gameCode, playerUuid: $playerUuid,  amount: $amount)
+  }
+`;
+
 export async function configureGame(
   playerId: string,
   clubCode: string,
@@ -231,6 +237,25 @@ export async function buyin(
       amount: amount,
     },
     mutation: buyinQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+export async function approveBuyIn(
+  hostId: string,
+  playerId: string,
+  gameCode: string,
+  amount: number
+): Promise<any> {
+  const resp = await getClient(hostId).mutate({
+    variables: {
+      gameCode: gameCode,
+      playerUuid: playerId,
+      amount: amount,
+    },
+    mutation: approveBuyInQuery,
   });
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();

@@ -9,6 +9,7 @@ import {
   configureGameByPlayer,
   joinGame,
   buyIn,
+  approveBuyIn,
 } from '@src/resolvers/game';
 import {getGame} from '@src/cache/index';
 
@@ -305,6 +306,70 @@ describe('Game APIs', () => {
       // Buyin more than credit limit and autoBuyinApproval false
       const resp3 = await buyIn(player1, game.gameCode, 100);
       expect(resp3).toBe('WAITING_FOR_APPROVAL');
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
+
+  test('Approve Buyin for a game', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.1.7',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    try {
+      await createGameServer(gameServer1);
+      const owner = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+      const club = await createClub(owner, {
+        name: 'club_name',
+        description: 'poker players gather',
+        ownerUuid: owner,
+      });
+      const game = await configureGame(owner, club, holdemGameInput);
+      const player1 = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+      const player2 = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+
+      // Join a game
+      const data = await joinGame(player1, game.gameCode, 1);
+      expect(data).toBe('WAIT_FOR_BUYIN');
+      const data1 = await joinGame(player2, game.gameCode, 2);
+      expect(data1).toBe('WAIT_FOR_BUYIN');
+
+      // setting autoBuyinApproval false and creditLimit
+      const resp1 = await updateClubMember(owner, player1, club, {
+        balance: 0,
+        creditLimit: 0,
+        notes: 'Added credit limit',
+        status: ClubMemberStatus['ACTIVE'],
+        isManager: false,
+        autoBuyinApproval: false,
+      });
+      expect(resp1).toBe(ClubMemberStatus['ACTIVE']);
+
+      // Buyin within credit limit and autoBuyinApproval false
+      const resp2 = await buyIn(player1, game.gameCode, 100);
+      expect(resp2).toBe('WAITING_FOR_APPROVAL');
+
+      // Approve a buyin as host
+      const resp3 = await approveBuyIn(owner, player1, game.gameCode, 100);
+      expect(resp3).toBe('APPROVED');
+
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();
