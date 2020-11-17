@@ -309,11 +309,7 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
 
     const gameState = await GameRepository.tableGameState(game);
 
-<<<<<<< HEAD
     const tableGameState = new Array<any>();
-=======
-    const tableGameState = [];
->>>>>>> de8d6ace73bbc21761f97d52d0083d84228dcb60
     gameState.map(data => {
       const gameState = {
         playerUuid: data.player.uuid,
