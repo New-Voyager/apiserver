@@ -500,11 +500,7 @@ class GameRepositoryImpl {
     game: PokerGame,
     amount: number,
   ): Promise<BuyInApprovalStatus> {
-    // player must be already in a seat or waiting list
-    // if credit limit is set, make sure his buyin amount is within the credit limit
-    // if auto approval is set, add the buyin
-    // make sure buyin within min and maxBuyin
-    // send a message to game server that buyer stack has been updated
+    
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
       where: {
@@ -567,6 +563,50 @@ class GameRepositoryImpl {
     }
 
     return playerInGame.buyInStatus;
+  }
+
+  public async myGameState(
+    player: Player,
+    game: PokerGame,
+  ): Promise<PlayerGameTracker> {
+    
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerInGame = await playerGameTrackerRepository.findOne({
+      where: {
+        game: {id: game.id},
+        player: {id: player.id},
+      },
+    });
+
+    if (!playerInGame) {
+      logger.error(
+        `Player ${player.name} is not in the game: ${game.gameCode}`
+      );
+      throw new Error(`Player ${player.name} is not in the game`);
+    }
+
+    return playerInGame;
+  }
+
+  public async tableGameState(
+    game: PokerGame,
+  ): Promise<PlayerGameTracker[]> {
+    
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerInGame = await playerGameTrackerRepository.find({
+      where: {
+        game: {id: game.id}
+      },
+    });
+
+    if (!playerInGame) {
+      logger.error(
+        `Game: ${game.gameCode} not available`
+      );
+      throw new Error(`Game: ${game.gameCode} not available`);
+    }
+
+    return playerInGame;
   }
 
   public async getGameServer(gameId: number): Promise<GameServer | null> {

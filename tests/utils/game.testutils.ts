@@ -133,6 +133,36 @@ export const approveBuyInQuery = gql`
   }
 `;
 
+export const tableGameStateQuery = gql`
+  query($gameCode: String!) {
+    game: tableGameState(gameCode: $gameCode) {
+      playerUuid,
+      buyIn,
+      stack,
+      status,
+      buyInStatus,
+      playingFrom,
+      waitlistNo,
+      seatNo
+    }
+  }
+`;
+
+export const myGameStateQuery = gql`
+  query($gameCode: String!) {
+    game: myGameState(gameCode: $gameCode) {
+      playerUuid,
+      buyIn,
+      stack,
+      status,
+      buyInStatus,
+      playingFrom,
+      waitlistNo,
+      seatNo
+    }
+  }
+`;
+
 export async function configureGame(
   playerId: string,
   clubCode: string,
@@ -260,4 +290,26 @@ export async function approveBuyIn(
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
   return resp.data.status;
+}
+
+export async function myGameState(playerUuid: string, gameCode: string) {
+  const gameClient = getClient(playerUuid);
+  const resp = await gameClient.query({
+    variables: {gameCode: gameCode},
+    query: myGameStateQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.game;
+}
+
+export async function tableGameState(playerUuid: string, gameCode: string) {
+  const gameClient = getClient(playerUuid);
+  const resp = await gameClient.query({
+    variables: {gameCode: gameCode},
+    query: tableGameStateQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.game;
 }

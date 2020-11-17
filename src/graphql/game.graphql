@@ -113,6 +113,17 @@ input GameUpdateInput {
 
 }
 
+type PlayerGameState {
+playerUuid: String!
+buyIn: Float
+stack: Float
+status: PlayerGameStatus
+buyInStatus: BuyInApprovalStatus
+playingFrom: DateTime
+waitlistNo: Int
+seatNo: Int
+}
+
 type Mutation {
   # Not implemented
   configureGameFromTemplate(clubCode: String!, templateId: Int!): GameInfo!
@@ -148,4 +159,6 @@ type Query {
   getGameTemplates(clubCode: String!): [GameInfo!]
   # implemented
   gameById(gameCode: String!): gameId!
+  myGameState(gameCode: String!): PlayerGameState
+  tableGameState(gameCode: String!): [PlayerGameState!]
 }

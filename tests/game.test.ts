@@ -299,4 +299,73 @@ describe('Game APIs', () => {
       expect(error.toString()).toContain('Failed to update buyin');
     }
   });
+
+  test('get my game state', async () => {
+    const [clubCode, ownerId] = await clubutils.createClub('brady', 'yatzee');
+    await createGameServer('1.2.1.9');
+    const game = await gameutils.configureGame(
+      ownerId,
+      clubCode,
+      holdemGameInput
+    );
+    const player1Id = await clubutils.createPlayer('player1', 'abc123');
+    const player2Id = await clubutils.createPlayer('adam', '1243ABC');
+
+    const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
+    expect(data).toBe('WAIT_FOR_BUYIN');
+    const data1 = await gameutils.joinGame(player2Id, game.gameCode, 2);
+    expect(data1).toBe('WAIT_FOR_BUYIN');
+
+    const resp = await gameutils.myGameState(player1Id, game.gameCode);
+    expect(resp.buyInStatus).toBeNull();
+    expect(resp.playerUuid).toBe(player1Id);
+    expect(resp.buyIn).toBe(0);
+    expect(resp.stack).toBe(0);
+    expect(resp.status).toBe('WAIT_FOR_BUYIN');
+    expect(resp.playingFrom).toBeNull();
+    expect(resp.waitlistNo).toBe(0);
+    expect(resp.seatNo).toBe(1);
+
+    const resp1 = await gameutils.buyin(player1Id, game.gameCode, 100);
+    expect(resp1).toBe('APPROVED');
+
+    const resp2 = await gameutils.myGameState(player1Id, game.gameCode);
+    expect(resp2.buyInStatus).toBe('APPROVED');
+    expect(resp2.playerUuid).toBe(player1Id);
+    expect(resp2.buyIn).toBe(100);
+    expect(resp2.stack).toBe(100);
+    expect(resp2.status).toBe('PLAYING');
+    expect(resp2.playingFrom).toBeNull();
+    expect(resp2.waitlistNo).toBe(0);
+    expect(resp2.seatNo).toBe(1);
+  });
+
+  test('get table game state', async () => {
+    const [clubCode, ownerId] = await clubutils.createClub('brady', 'yatzee');
+    await createGameServer('1.2.1.2');
+    const game = await gameutils.configureGame(
+      ownerId,
+      clubCode,
+      holdemGameInput
+    );
+    const player1Id = await clubutils.createPlayer('player1', 'abc123');
+    const player2Id = await clubutils.createPlayer('adam', '1243ABC');
+
+    const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
+    expect(data).toBe('WAIT_FOR_BUYIN');
+    const data1 = await gameutils.joinGame(player2Id, game.gameCode, 2);
+    expect(data1).toBe('WAIT_FOR_BUYIN');
+
+    const data2 = await gameutils.tableGameState(player1Id, game.gameCode);
+    data2.map(resp => {
+      expect(resp.buyInStatus).toBeNull();
+      expect(resp.playerUuid == player1Id || resp.playerUuid == player2Id).toBeTruthy();
+      expect(resp.buyIn).toBe(0);
+      expect(resp.stack).toBe(0);
+      expect(resp.status).toBe('WAIT_FOR_BUYIN');
+      expect(resp.playingFrom).toBeNull();
+      expect(resp.waitlistNo).toBe(0);
+      expect(resp.seatNo == 1 || resp.seatNo == 2).toBeTruthy();
+    });
+  });
 });

@@ -10,6 +10,8 @@ import {
   joinGame,
   buyIn,
   approveBuyIn,
+  myGameState,
+  tableGameState,
 } from '@src/resolvers/game';
 import {getGame} from '@src/cache/index';
 
@@ -370,6 +372,130 @@ describe('Game APIs', () => {
       const resp3 = await approveBuyIn(owner, player1, game.gameCode, 100);
       expect(resp3).toBe('APPROVED');
 
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
+
+  test('Get my game state', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.1.8',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    try {
+      await createGameServer(gameServer1);
+      const owner = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+      const club = await createClub(owner, {
+        name: 'club_name',
+        description: 'poker players gather',
+        ownerUuid: owner,
+      });
+      const game = await configureGame(owner, club, holdemGameInput);
+      const player1 = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+      const player2 = await createPlayer({
+        player: {
+          name: 'player_name1',
+          deviceId: 'abc1234',
+        },
+      });
+
+      // Join a game
+      const data = await joinGame(player1, game.gameCode, 1);
+      expect(data).toBe('WAIT_FOR_BUYIN');
+      const data1 = await joinGame(player2, game.gameCode, 2);
+      expect(data1).toBe('WAIT_FOR_BUYIN');
+
+      const resp = await myGameState(player1, game.gameCode);
+      expect(resp.buyInStatus).toBeUndefined();
+      expect(resp.playerUuid).toBe(player1);
+      expect(resp.buyIn).toBe(0);
+      expect(resp.stack).toBe(0);
+      expect(resp.status).toBe('WAIT_FOR_BUYIN');
+      expect(resp.playingFrom).toBeNull();
+      expect(resp.waitlistNo).toBe(0);
+      expect(resp.seatNo).toBe(1);
+
+      const resp1 = await buyIn(player1, game.gameCode, 100);
+      expect(resp1).toBe('APPROVED');
+
+      const resp2 = await myGameState(player1, game.gameCode);
+      expect(resp2.buyInStatus).toBe('APPROVED');
+      expect(resp2.playerUuid).toBe(player1);
+      expect(resp2.buyIn).toBe(100);
+      expect(resp2.stack).toBe(100);
+      expect(resp2.status).toBe('PLAYING');
+      expect(resp2.playingFrom).toBeNull();
+      expect(resp2.waitlistNo).toBe(0);
+      expect(resp2.seatNo).toBe(1);
+
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
+
+  test('Get table game state', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.1.9',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    try {
+      await createGameServer(gameServer1);
+      const owner = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+      const club = await createClub(owner, {
+        name: 'club_name',
+        description: 'poker players gather',
+        ownerUuid: owner,
+      });
+      const game = await configureGame(owner, club, holdemGameInput);
+      const player1 = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+      const player2 = await createPlayer({
+        player: {
+          name: 'player_name1',
+          deviceId: 'abc1234',
+        },
+      });
+
+      // Join a game
+      const data = await joinGame(player1, game.gameCode, 1);
+      expect(data).toBe('WAIT_FOR_BUYIN');
+      const data1 = await joinGame(player2, game.gameCode, 2);
+      expect(data1).toBe('WAIT_FOR_BUYIN');
+
+      const data2 = await tableGameState(player1, game.gameCode);
+      data2.map(resp => {
+        expect(resp.buyInStatus).toBeUndefined();
+        expect(resp.playerUuid == player1 || resp.playerUuid == player2).toBeTruthy();
+        expect(resp.buyIn).toBe(0);
+        expect(resp.stack).toBe(0);
+        expect(resp.status).toBe('WAIT_FOR_BUYIN');
+        expect(resp.playingFrom).toBeNull();
+        expect(resp.waitlistNo).toBe(0);
+        expect(resp.seatNo == 1 || resp.seatNo == 2).toBeTruthy();
+      });
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();

@@ -244,6 +244,97 @@ export async function approveBuyIn(
   }
 }
 
+export async function myGameState(playerUuid: string, gameCode: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
+        );
+      }
+    }
+
+    const player = await getPlayer(playerUuid);
+    const data = await GameRepository.myGameState(player, game);
+
+    let gameState = {
+      playerUuid: data.player.uuid,
+      buyIn: data.buyIn,
+      stack: data.stack,
+      status: PlayerStatus[data.status],
+      buyInStatus: BuyInApprovalStatus[data.status],
+      playingFrom: data.satAt,
+      waitlistNo: data.queueNo,
+      seatNo: data.seatNo,
+    }
+
+    return gameState;
+  } catch (err) {
+    logger.error(err);
+    throw new Error(`Failed to get game state. ${JSON.stringify(err)}`);
+  }
+}
+
+export async function tableGameState(playerUuid: string, gameCode: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
+        );
+      }
+    }
+
+    const gameState = await GameRepository.tableGameState(game);
+
+    let tableGameState = new Array();
+    gameState.map(data => {
+      let gameState = {
+        playerUuid: data.player.uuid,
+        buyIn: data.buyIn,
+        stack: data.stack,
+        status: PlayerStatus[data.status],
+        buyInStatus: BuyInApprovalStatus[data.status],
+        playingFrom: data.satAt,
+        waitlistNo: data.queueNo,
+        seatNo: data.seatNo,
+      }
+      tableGameState.push(gameState);
+    });
+    
+    return tableGameState;
+  } catch (err) {
+    logger.error(err);
+    throw new Error(`Failed to get game state. ${JSON.stringify(err)}`);
+  }
+}
+
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -251,6 +342,12 @@ const resolvers: any = {
       return {
         id: game.id,
       };
+    },
+    myGameState: async (parent, args, ctx, info) => {
+      return myGameState(ctx.req.playerId, args.gameCode);
+    },
+    tableGameState: async (parent, args, ctx, info) => {
+      return tableGameState(ctx.req.playerId, args.gameCode);
     },
   },
   Mutation: {
