@@ -192,7 +192,7 @@ export async function getParticularGameServer(
   clubCode: string,
   gameCode: string
 ) {
-  const game = await GameRepository.getGameById(gameCode);
+  const game = await GameRepository.getGameByCode(gameCode);
   if (!game) {
     throw new Error('Game not found');
   }

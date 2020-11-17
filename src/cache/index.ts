@@ -11,6 +11,10 @@ export async function getGame(gameCode: string): Promise<PokerGame> {
   if (games.length > 1) {
     throw new Error(`More than one game found for code: ${gameCode}`);
   }
+  if (games.length === 0) {
+    throw new Error(`Cannot find with game code: ${gameCode}`);
+  }
+
   return games[0];
 }
 

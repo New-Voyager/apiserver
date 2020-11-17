@@ -21,6 +21,7 @@ import {
   playerBuyIn,
   changeGameStatus,
 } from '@src/nats/index';
+import {isPostgres} from '@src/utils';
 
 const logger = getLogger('game');
 
@@ -120,7 +121,7 @@ class GameRepositoryImpl {
 
       if (!game.isTemplate) {
         // publish a message to NATS topic
-        publishNewGame(gameServerId, game);
+        publishNewGame(game);
       }
     } catch (err) {
       logger.error("Couldn't create game and retry again");
@@ -187,7 +188,7 @@ class GameRepositoryImpl {
     return savedGame;
   }
 
-  public async getGameById(gameCode: string): Promise<PokerGame | undefined> {
+  public async getGameByCode(gameCode: string): Promise<PokerGame | undefined> {
     const repository = getRepository(PokerGame);
     // get game by id (testing only)
     const game = await repository.findOne({where: {gameCode: gameCode}});
@@ -349,11 +350,7 @@ class GameRepositoryImpl {
     const resp = await playerGameTrackerRepository.save(thisPlayerInSeat);
 
     // send a message to gameserver
-    // get game server of this game
-    const gameServer = await this.getGameServer(game.id);
-    if (gameServer) {
-      newPlayerSat(gameServer, game, player, seatNo, thisPlayerInSeat);
-    }
+    newPlayerSat(game, player, seatNo, thisPlayerInSeat);
 
     return thisPlayerInSeat.status;
   }
@@ -480,7 +477,7 @@ class GameRepositoryImpl {
     // get game server of this game
     const gameServer = await this.getGameServer(game.id);
     if (gameServer) {
-      playerBuyIn(gameServer, game, player, playerInGame);
+      playerBuyIn(game, player, playerInGame);
     }
 
     return playerInGame.buyInStatus;
@@ -556,10 +553,7 @@ class GameRepositoryImpl {
 
     // send a message to gameserver
     // get game server of this game
-    const gameServer = await this.getGameServer(game.id);
-    if (gameServer) {
-      playerBuyIn(gameServer, game, player, playerInGame);
-    }
+    playerBuyIn(game, player, playerInGame);
 
     return playerInGame.buyInStatus;
   }
@@ -652,10 +646,7 @@ class GameRepositoryImpl {
       .execute();
 
     // update the game server with new status
-    const gameServer = await this.getGameServer(game.id);
-    if (gameServer) {
-      changeGameStatus(gameServer, game, status);
-    }
+    changeGameStatus(game, status);
     return status;
   }
 
@@ -674,6 +665,18 @@ class GameRepositoryImpl {
       .execute();
 
     return status;
+  }
+
+  public async getPlayersInSeats(gameId: number): Promise<any> {
+    let placeHolder1 = '$1';
+    if (!isPostgres()) {
+      placeHolder1 = '?';
+    }
+    const query = `SELECT name, uuid as "playerUuid", buy_in as "buyIn", stack, status, seat_no as "seatNo" FROM 
+          player_game_tracker pgt JOIN player p ON pgt.pgt_player_id = p.id
+          AND pgt.pgt_game_id = ${placeHolder1} AND seat_no IS NOT NULL`;
+    const resp = await getConnection().query(query, [gameId]);
+    return resp;
   }
 }
 
