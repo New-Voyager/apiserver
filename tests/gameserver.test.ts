@@ -130,7 +130,7 @@ describe('Game server APIs', () => {
     expect(server2.ipAddress).toBe('10.1.1.4');
   });
 
-  test.skip('get specific game server', async () => {
+  test('get specific game server', async () => {
     logger.debug('Getting game server');
     const gameServer1 = {
       ipAddress: '10.1.1.3',
@@ -180,7 +180,7 @@ describe('Game server APIs', () => {
     }
   });
 
-  test.skip('get specific game server without club', async () => {
+  test('get specific game server without club', async () => {
     logger.debug('Getting game server');
     const gameServer1 = {
       ipAddress: '10.1.1.3',

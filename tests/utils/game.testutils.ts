@@ -115,6 +115,58 @@ export interface GameInput {
   muckLosingHand?: boolean;
 }
 
+export const joinGameQuery = gql`
+  mutation($gameCode: String!, $seatNo: Int!) {
+    status: joinGame(gameCode: $gameCode, seatNo: $seatNo)
+  }
+`;
+
+export const buyinQuery = gql`
+  mutation($gameCode: String!, $amount: Float!) {
+    status: buyIn(gameCode: $gameCode, amount: $amount)
+  }
+`;
+
+export const approveBuyInQuery = gql`
+  mutation($gameCode: String!, $playerUuid: String!, $amount: Float!) {
+    status: approveBuyIn(
+      gameCode: $gameCode
+      playerUuid: $playerUuid
+      amount: $amount
+    )
+  }
+`;
+
+export const tableGameStateQuery = gql`
+  query($gameCode: String!) {
+    game: tableGameState(gameCode: $gameCode) {
+      playerUuid
+      buyIn
+      stack
+      status
+      buyInStatus
+      playingFrom
+      waitlistNo
+      seatNo
+    }
+  }
+`;
+
+export const myGameStateQuery = gql`
+  query($gameCode: String!) {
+    game: myGameState(gameCode: $gameCode) {
+      playerUuid
+      buyIn
+      stack
+      status
+      buyInStatus
+      playingFrom
+      waitlistNo
+      seatNo
+    }
+  }
+`;
+
 export async function configureGame(
   playerId: string,
   clubCode: string,
@@ -189,4 +241,79 @@ export async function getClubGames(
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
   return resp.data.clubGames;
+}
+
+export async function joinGame(
+  playerId: string,
+  gameCode: string,
+  seatNo: number
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+      seatNo: seatNo,
+    },
+    mutation: joinGameQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+export async function buyin(
+  playerId: string,
+  gameCode: string,
+  amount: number
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+      amount: amount,
+    },
+    mutation: buyinQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+export async function approveBuyIn(
+  hostId: string,
+  playerId: string,
+  gameCode: string,
+  amount: number
+): Promise<any> {
+  const resp = await getClient(hostId).mutate({
+    variables: {
+      gameCode: gameCode,
+      playerUuid: playerId,
+      amount: amount,
+    },
+    mutation: approveBuyInQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+export async function myGameState(playerUuid: string, gameCode: string) {
+  const gameClient = getClient(playerUuid);
+  const resp = await gameClient.query({
+    variables: {gameCode: gameCode},
+    query: myGameStateQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.game;
+}
+
+export async function tableGameState(playerUuid: string, gameCode: string) {
+  const gameClient = getClient(playerUuid);
+  const resp = await gameClient.query({
+    variables: {gameCode: gameCode},
+    query: tableGameStateQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.game;
 }

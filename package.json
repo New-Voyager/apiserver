@@ -14,7 +14,7 @@
     "test": "NODE_ENV=test jest --runInBand ./tests",
     "unit-tests": "NODE_ENV=test DB_USED=sqllite jest --coverage=true --runInBand ./unit-tests",
     "unit-test-specific": "NODE_ENV=test DB_USED=sqllite jest --runInBand ./unit-tests \"--testNamePattern\" ",
-    "test-specific": "NODE_ENV=test jest --runInBand ./tests \"--testNamePattern\" \"Get specific game server 1\"",
+    "test-specific": "NODE_ENV=test jest --runInBand ./tests \"--testNamePattern\" ",
     "test-server-watch": "tsc-watch --noClear --onSuccess './debug.sh' --onFailure 'echo Beep! Compilation Failed'",
     "test-server": "NODE_ENV=test DB_USED=sqllite node build/index.js",
     "run-server": "node build/index.js",

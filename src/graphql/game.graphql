@@ -37,6 +37,11 @@ enum PlayerGameStatus {
   WAIT_FOR_BUYIN
 }
 
+enum BuyInApprovalStatus {
+WAITING_FOR_APPROVAL
+APPROVED
+DENIED    
+}
 
 input GameCreateInput {
   gameType: GameType!
@@ -122,6 +127,17 @@ input GameUpdateInput {
 
 }
 
+type PlayerGameState {
+  playerUuid: String!
+  buyIn: Float
+  stack: Float
+  status: PlayerGameStatus
+  buyInStatus: BuyInApprovalStatus
+  playingFrom: DateTime
+  waitlistNo: Int
+  seatNo: Int
+}
+
 type Mutation {
   # Not implemented
   configureGameFromTemplate(clubCode: String!, templateId: Int!): GameInfo!
@@ -139,7 +155,8 @@ type Mutation {
   configureGame(clubCode: String!, game: GameCreateInput!): GameInfo!
   configureFriendsGame(game: GameCreateInput!): GameInfo!
   joinGame(gameCode: String!, seatNo: Int!): PlayerGameStatus!
-  buyIn(gameCode: String!, amount: Float!): PlayerGameStatus!
+  buyIn(gameCode: String!, amount: Float!): BuyInApprovalStatus!
+  approveBuyIn(gameCode: String!, playerUuid: String!, amount: Float!): BuyInApprovalStatus!
   startGame(gameCode: String!): GameStatus!
   #pauseGame(gameCode: String!): GameStatus!
   #endGame(gameCode: String!): GameStatus!
@@ -157,4 +174,6 @@ type Query {
   # implemented
   gameById(gameCode: String!): gameId!
   gameInfo(gameCode: String!): GameInfo
+  myGameState(gameCode: String!): PlayerGameState
+  tableGameState(gameCode: String!): [PlayerGameState!]
 }

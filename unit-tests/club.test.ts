@@ -11,12 +11,12 @@ import {
   leaveClub,
   getClubGames,
   getClubById,
+  updateClubMember,
 } from '../src/resolvers/club';
 import {createPlayer} from '../src/resolvers/player';
 import {configureGame} from '../src/resolvers/game';
 import {createGameServer} from '../src/internal/gameserver';
 import {getLogger} from '../src/utils/log';
-import {updateClubMember} from '../tests/utils/club.testutils';
 
 const logger = getLogger('club unit-test');
 
@@ -448,7 +448,7 @@ describe('Club APIs', () => {
     }
   });
 
-  test.skip('update club members', async () => {
+  test('update club members', async () => {
     const playerId = await createPlayer({
       player: {name: 'owner', deviceId: 'test-device-owner'},
     });
@@ -480,6 +480,7 @@ describe('Club APIs', () => {
       notes: 'Added credit limit',
       status: ClubMemberStatus['KICKEDOUT'],
       isManager: false,
+      autoBuyinApproval: true,
     });
     expect(resp).toBe(ClubMemberStatus['KICKEDOUT']);
 
@@ -491,6 +492,7 @@ describe('Club APIs', () => {
         notes: 'Added credit limit',
         status: ClubMemberStatus['KICKEDOUT'],
         isManager: false,
+        autoBuyinApproval: true,
       });
       expect(false).toBeTruthy();
     } catch (error) {
