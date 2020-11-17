@@ -371,7 +371,6 @@ describe('Game APIs', () => {
       // Approve a buyin as host
       const resp3 = await approveBuyIn(owner, player1, game.gameCode, 100);
       expect(resp3).toBe('APPROVED');
-
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();
@@ -439,7 +438,6 @@ describe('Game APIs', () => {
       expect(resp2.playingFrom).toBeNull();
       expect(resp2.waitlistNo).toBe(0);
       expect(resp2.seatNo).toBe(1);
-
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();
@@ -488,7 +486,9 @@ describe('Game APIs', () => {
       const data2 = await tableGameState(player1, game.gameCode);
       data2.map(resp => {
         expect(resp.buyInStatus).toBeUndefined();
-        expect(resp.playerUuid == player1 || resp.playerUuid == player2).toBeTruthy();
+        expect(
+          resp.playerUuid == player1 || resp.playerUuid == player2
+        ).toBeTruthy();
         expect(resp.buyIn).toBe(0);
         expect(resp.stack).toBe(0);
         expect(resp.status).toBe('WAIT_FOR_BUYIN');
