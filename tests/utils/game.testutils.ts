@@ -127,6 +127,46 @@ export const buyinQuery = gql`
   }
 `;
 
+export const approveBuyInQuery = gql`
+  mutation($gameCode: String!, $playerUuid: String!, $amount: Float!) {
+    status: approveBuyIn(
+      gameCode: $gameCode
+      playerUuid: $playerUuid
+      amount: $amount
+    )
+  }
+`;
+
+export const tableGameStateQuery = gql`
+  query($gameCode: String!) {
+    game: tableGameState(gameCode: $gameCode) {
+      playerUuid
+      buyIn
+      stack
+      status
+      buyInStatus
+      playingFrom
+      waitlistNo
+      seatNo
+    }
+  }
+`;
+
+export const myGameStateQuery = gql`
+  query($gameCode: String!) {
+    game: myGameState(gameCode: $gameCode) {
+      playerUuid
+      buyIn
+      stack
+      status
+      buyInStatus
+      playingFrom
+      waitlistNo
+      seatNo
+    }
+  }
+`;
+
 export async function configureGame(
   playerId: string,
   clubCode: string,
@@ -235,4 +275,45 @@ export async function buyin(
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
   return resp.data.status;
+}
+
+export async function approveBuyIn(
+  hostId: string,
+  playerId: string,
+  gameCode: string,
+  amount: number
+): Promise<any> {
+  const resp = await getClient(hostId).mutate({
+    variables: {
+      gameCode: gameCode,
+      playerUuid: playerId,
+      amount: amount,
+    },
+    mutation: approveBuyInQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+export async function myGameState(playerUuid: string, gameCode: string) {
+  const gameClient = getClient(playerUuid);
+  const resp = await gameClient.query({
+    variables: {gameCode: gameCode},
+    query: myGameStateQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.game;
+}
+
+export async function tableGameState(playerUuid: string, gameCode: string) {
+  const gameClient = getClient(playerUuid);
+  const resp = await gameClient.query({
+    variables: {gameCode: gameCode},
+    query: tableGameStateQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.game;
 }
