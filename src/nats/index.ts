@@ -3,8 +3,8 @@ import {getLogger} from '@src/utils/log';
 import {PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
-import {GameServer} from '@src/entity/gameserver';
 import {GameStatus} from '@src/entity/types';
+import {GameRepository} from '@src/repositories/game';
 
 let natsEnabled = false;
 let natsServer = 'nats://localhost:4222';
@@ -38,19 +38,22 @@ export function initializeNats() {
   }
 }
 
-export function publishNewGame(gameServer: number, game: any) {
+export async function publishNewGame(game: any) {
   if (!natsEnabled) {
     return;
   }
+  const gameType = game.gameType;
+  // get game server of this game
+  const gameServerNo = await getGameServerNumber(game.id);
 
   const message = {
     type: 'NewGame',
-    gameServer: gameServer,
+    gameServer: gameServerNo,
     clubId: game.club.id,
     gameId: game.id,
     clubCode: game.club.clubCode,
     gameCode: game.gameCode,
-    gameType: game.gameType,
+    gameType: gameType,
     title: game.title,
     smallBlind: game.smallBlind,
     bigBlind: game.bigBlind,
@@ -75,7 +78,6 @@ export function publishNewGame(gameServer: number, game: any) {
 }
 
 export async function newPlayerSat(
-  gameServer: GameServer,
   game: PokerGame,
   player: Player,
   seatNo: number,
@@ -85,9 +87,12 @@ export async function newPlayerSat(
     return;
   }
 
+  // get game server of this game
+  const gameServerNo = await getGameServerNumber(game.id);
+
   const message = {
     type: 'PlayerUpdate',
-    gameServer: gameServer.serverNumber,
+    gameServer: gameServerNo,
     gameId: game.id,
     playerId: player.id,
     playerUuid: player.uuid,
@@ -101,7 +106,6 @@ export async function newPlayerSat(
 }
 
 export async function playerBuyIn(
-  gameServer: GameServer,
   game: PokerGame,
   player: Player,
   playerGameInfo: PlayerGameTracker
@@ -110,9 +114,12 @@ export async function playerBuyIn(
     return;
   }
 
+  // get game server of this game
+  const gameServerNo = await getGameServerNumber(game.id);
+
   const message = {
     type: 'PlayerUpdate',
-    gameServer: gameServer.serverNumber,
+    gameServer: gameServerNo,
     gameId: game.id,
     playerId: player.id,
     playerUuid: player.uuid,
@@ -125,20 +132,27 @@ export async function playerBuyIn(
   nc.publish(APISERVER_TO_GAMESERVER, message);
 }
 
-export async function changeGameStatus(
-  gameServer: GameServer,
-  game: PokerGame,
-  status: GameStatus
-) {
+export async function changeGameStatus(game: PokerGame, status: GameStatus) {
   if (!natsEnabled) {
     return;
   }
+  // get game server of this game
+  const gameServerNo = await getGameServerNumber(game.id);
 
   const message = {
     type: 'GameStatus',
-    gameServer: gameServer.serverNumber,
+    gameServer: gameServerNo,
     gameId: game.id,
     gameStatus: status,
   };
   nc.publish(APISERVER_TO_GAMESERVER, message);
+}
+
+async function getGameServerNumber(gameId: number): Promise<number> {
+  // get game server of this game
+  const gameServer = await GameRepository.getGameServer(gameId);
+  if (!gameServer) {
+    return 0;
+  }
+  return gameServer.serverNumber;
 }

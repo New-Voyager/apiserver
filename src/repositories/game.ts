@@ -120,7 +120,7 @@ class GameRepositoryImpl {
 
       if (!game.isTemplate) {
         // publish a message to NATS topic
-        publishNewGame(gameServerId, game);
+        publishNewGame(game);
       }
     } catch (err) {
       logger.error("Couldn't create game and retry again");
@@ -347,11 +347,7 @@ class GameRepositoryImpl {
     const resp = await playerGameTrackerRepository.save(thisPlayerInSeat);
 
     // send a message to gameserver
-    // get game server of this game
-    const gameServer = await this.getGameServer(game.id);
-    if (gameServer) {
-      newPlayerSat(gameServer, game, player, seatNo, thisPlayerInSeat);
-    }
+    newPlayerSat(game, player, seatNo, thisPlayerInSeat);
 
     return thisPlayerInSeat.status;
   }
@@ -429,10 +425,7 @@ class GameRepositoryImpl {
 
     // send a message to gameserver
     // get game server of this game
-    const gameServer = await this.getGameServer(game.id);
-    if (gameServer) {
-      playerBuyIn(gameServer, game, player, playerInGame);
-    }
+    playerBuyIn(game, player, playerInGame);
 
     return playerInGame.status;
   }
@@ -487,10 +480,7 @@ class GameRepositoryImpl {
       .execute();
 
     // update the game server with new status
-    const gameServer = await this.getGameServer(game.id);
-    if (gameServer) {
-      changeGameStatus(gameServer, game, status);
-    }
+    changeGameStatus(game, status);
     return status;
   }
 
