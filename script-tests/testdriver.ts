@@ -521,7 +521,7 @@ class GameScript {
           startGame(gameCode: $gameCode)
         }
       `;
-      const club = this.clubCreated[input.club]
+      const club = this.clubCreated[input.club];
       const gameCode = this.gameCreated[input.game].gameCode;
       const client = await getClient(
         this.registeredPlayers[club.owner].playerUuid

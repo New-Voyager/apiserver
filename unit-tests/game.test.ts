@@ -3,8 +3,13 @@ import {createGameServer} from '@src/internal/gameserver';
 import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/resolvers/reset';
 import {createPlayer} from '@src/resolvers/player';
-import {createClub} from '@src/resolvers/club';
-import {configureGame, configureGameByPlayer} from '@src/resolvers/game';
+import {createClub, updateClubMember} from '@src/resolvers/club';
+import {
+  configureGame,
+  configureGameByPlayer,
+  joinGame,
+  buyIn,
+} from '@src/resolvers/game';
 import {getGame} from '@src/cache/index';
 
 const logger = getLogger('game unit-test');
@@ -33,6 +38,16 @@ const holdemGameInput = {
   actionTime: 30,
   muckLosingHand: true,
 };
+
+enum ClubMemberStatus {
+  UNKNOWN,
+  INVITED,
+  PENDING,
+  DENIED,
+  ACTIVE,
+  LEFT,
+  KICKEDOUT,
+}
 
 beforeAll(async done => {
   await initializeSqlLite();
@@ -167,6 +182,129 @@ describe('Game APIs', () => {
       const startedGame = await configureGame(player, club, holdemGameInput);
       const gameData = await getGame(startedGame.gameCode);
       expect(gameData.id).not.toBe(null);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
+
+  test('Join a game', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.1.5',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    try {
+      await createGameServer(gameServer1);
+      const owner = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+      const club = await createClub(owner, {
+        name: 'club_name',
+        description: 'poker players gather',
+        ownerUuid: owner,
+      });
+      const game = await configureGame(owner, club, holdemGameInput);
+      const player1 = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+      const player2 = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+
+      // Join a game
+      const data = await joinGame(player1, game.gameCode, 1);
+      expect(data).toBe('WAIT_FOR_BUYIN');
+      const data1 = await joinGame(player2, game.gameCode, 2);
+      expect(data1).toBe('WAIT_FOR_BUYIN');
+
+      // change seat before buyin
+      const data3 = await joinGame(player1, game.gameCode, 3);
+      expect(data3).toBe('WAIT_FOR_BUYIN');
+
+      // buyin
+      const resp = await buyIn(player1, game.gameCode, 100);
+      expect(resp).toBe('APPROVED');
+
+      // change seat after buyin
+      const data4 = await joinGame(player1, game.gameCode, 1);
+      expect(data4).toBe('PLAYING');
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
+
+  test('Buyin for a game', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.1.6',
+      currentMemory: 100,
+      status: 'ACTIVE',
+    };
+    try {
+      await createGameServer(gameServer1);
+      const owner = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+      const club = await createClub(owner, {
+        name: 'club_name',
+        description: 'poker players gather',
+        ownerUuid: owner,
+      });
+      const game = await configureGame(owner, club, holdemGameInput);
+      const player1 = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+      const player2 = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+
+      // Join a game
+      const data = await joinGame(player1, game.gameCode, 1);
+      expect(data).toBe('WAIT_FOR_BUYIN');
+      const data1 = await joinGame(player2, game.gameCode, 2);
+      expect(data1).toBe('WAIT_FOR_BUYIN');
+
+      // Buyin with autoBuyinApproval true
+      const resp = await buyIn(player1, game.gameCode, 100);
+      expect(resp).toBe('APPROVED');
+
+      // setting autoBuyinApproval false and creditLimit
+      const resp1 = await updateClubMember(owner, player1, club, {
+        balance: 10,
+        creditLimit: 200,
+        notes: 'Added credit limit',
+        status: ClubMemberStatus['ACTIVE'],
+        isManager: false,
+        autoBuyinApproval: false,
+      });
+      expect(resp1).toBe(ClubMemberStatus['ACTIVE']);
+
+      // Buyin within credit limit and autoBuyinApproval false
+      const resp2 = await buyIn(player1, game.gameCode, 100);
+      expect(resp2).toBe('APPROVED');
+
+      // Buyin more than credit limit and autoBuyinApproval false
+      const resp3 = await buyIn(player1, game.gameCode, 100);
+      expect(resp3).toBe('WAITING_FOR_APPROVAL');
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();

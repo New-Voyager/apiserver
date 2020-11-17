@@ -184,4 +184,75 @@ describe('Game APIs', () => {
     });
     expect(clubGames).toHaveLength(5);
   });
+
+  test('join a club game', async () => {
+    const [clubCode, ownerId] = await clubutils.createClub('brady', 'yatzee');
+    await createGameServer('1.2.0.7');
+    const game = await gameutils.configureGame(
+      ownerId,
+      clubCode,
+      holdemGameInput
+    );
+    const player1Id = await clubutils.createPlayer('player1', 'abc123');
+    const player2Id = await clubutils.createPlayer('adam', '1243ABC');
+
+    // Join a game
+    const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
+    expect(data).toBe('WAIT_FOR_BUYIN');
+    const data1 = await gameutils.joinGame(player2Id, game.gameCode, 2);
+    expect(data1).toBe('WAIT_FOR_BUYIN');
+
+    // change seat before buyin
+    const data3 = await gameutils.joinGame(player1Id, game.gameCode, 3);
+    expect(data3).toBe('WAIT_FOR_BUYIN');
+
+    // buyin
+    const resp = await gameutils.buyin(player1Id, game.gameCode, 100);
+    expect(resp).toBe('APPROVED');
+
+    // change seat after buyin
+    const data4 = await gameutils.joinGame(player1Id, game.gameCode, 1);
+    expect(data4).toBe('PLAYING');
+  });
+
+  test('buyIn for a club game', async () => {
+    const [clubCode, ownerId] = await clubutils.createClub('brady', 'yatzee');
+    await createGameServer('1.2.0.8');
+    const game = await gameutils.configureGame(
+      ownerId,
+      clubCode,
+      holdemGameInput
+    );
+    const player1Id = await clubutils.createPlayer('player1', 'abc123');
+    const player2Id = await clubutils.createPlayer('adam', '1243ABC');
+
+    const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
+    expect(data).toBe('WAIT_FOR_BUYIN');
+    const data1 = await gameutils.joinGame(player2Id, game.gameCode, 2);
+    expect(data1).toBe('WAIT_FOR_BUYIN');
+
+    // Buyin with autoBuyinApproval true
+    const resp = await gameutils.buyin(player1Id, game.gameCode, 100);
+    expect(resp).toBe('APPROVED');
+
+    // setting autoBuyinApproval false and creditLimit
+    const resp1 = await clubutils.updateClubMember(
+      clubCode,
+      ownerId,
+      player1Id,
+      {
+        autoBuyinApproval: false,
+        creditLimit: 200,
+      }
+    );
+    expect(resp1.status).toBe('ACTIVE');
+
+    // Buyin within credit limit and autoBuyinApproval false
+    const resp2 = await gameutils.buyin(player1Id, game.gameCode, 100);
+    expect(resp2).toBe('APPROVED');
+
+    // Buyin more than credit limit and autoBuyinApproval false
+    const resp3 = await gameutils.buyin(player1Id, game.gameCode, 100);
+    expect(resp3).toBe('WAITING_FOR_APPROVAL');
+  });
 });

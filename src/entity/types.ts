@@ -74,6 +74,12 @@ export enum PromotionType {
   SPECIFIC_CARDS,
 }
 
+export enum BuyInApprovalStatus {
+  WAITING_FOR_APPROVAL,
+  APPROVED,
+  DENIED,
+}
+
 export enum ClubStatus {
   UNKNOWN,
   ACTIVE,

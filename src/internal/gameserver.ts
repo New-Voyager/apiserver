@@ -192,10 +192,15 @@ export async function getParticularGameServer(
   clubCode: string,
   gameCode: string
 ) {
+  const game = await GameRepository.getGameById(gameCode);
+  if (!game) {
+    throw new Error('Game not found');
+  }
   const trackGameServerRepository = getRepository(TrackGameServer);
   const trackGameServer = await trackGameServerRepository.findOne({
-    relations: ['gameServer'],
-    where: {game: {gameCode: gameCode}},
+    where: {
+      game: {id: game.id},
+    },
   });
   return trackGameServer;
 }

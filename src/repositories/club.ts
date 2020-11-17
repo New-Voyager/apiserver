@@ -34,6 +34,7 @@ export interface ClubMemberUpdateInput {
   balance: number;
   status: ClubMemberStatus;
   creditLimit: number;
+  autoBuyinApproval: boolean;
 }
 
 class ClubRepositoryImpl {
@@ -93,6 +94,12 @@ class ClubRepositoryImpl {
       clubMember.status = (ClubMemberStatus[
         updateData.status
       ] as unknown) as ClubMemberStatus;
+    }
+    if (updateData.isManager !== null) {
+      clubMember.isManager = updateData.isManager;
+    }
+    if (updateData.autoBuyinApproval !== null) {
+      clubMember.autoBuyinApproval = updateData.autoBuyinApproval;
     }
 
     // Save the data

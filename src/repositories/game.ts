@@ -6,6 +6,7 @@ import {
   ClubMemberStatus,
   ClubStatus,
   PlayerStatus,
+  BuyInApprovalStatus,
   TableStatus,
 } from '@src/entity/types';
 import {Club, ClubMember} from '@src/entity/club';
@@ -320,10 +321,11 @@ class GameRepositoryImpl {
     }
     // if this player has already played this game before, we should have his record
     let thisPlayerInSeat = await playerGameTrackerRepository.findOne({
+      relations: ['player', 'club', 'game'],
       where: {
         game: {id: game.id},
         player: {id: player.id},
-        seatNo: seatNo,
+        // seatNo: seatNo,
       },
     });
     if (thisPlayerInSeat) {
@@ -337,6 +339,7 @@ class GameRepositoryImpl {
       thisPlayerInSeat.buyIn = 0;
       thisPlayerInSeat.seatNo = seatNo;
       thisPlayerInSeat.noOfBuyins = 0;
+      thisPlayerInSeat.buyinNotes = '';
     }
     if (thisPlayerInSeat.stack > 0) {
       thisPlayerInSeat.status = PlayerStatus.PLAYING;
@@ -360,7 +363,7 @@ class GameRepositoryImpl {
     game: PokerGame,
     amount: number,
     reload: boolean
-  ): Promise<PlayerStatus> {
+  ): Promise<BuyInApprovalStatus> {
     // player must be already in a seat or waiting list
     // if credit limit is set, make sure his buyin amount is within the credit limit
     // if auto approval is set, add the buyin
@@ -381,17 +384,6 @@ class GameRepositoryImpl {
       throw new Error(`Player ${player.name} is not in the game`);
     }
 
-    // NOTE TO SANJAY: Add other functionalities
-
-    if (reload) {
-      // if reload is set to true, if stack exceeds game.maxBuyIn
-      if (playerInGame.stack + amount > game.buyInMax) {
-        amount = game.buyInMax - playerInGame.stack;
-      }
-    } else {
-      playerInGame.noOfBuyins++;
-    }
-
     // check amount should be between game.minBuyIn and game.maxBuyIn
     if (
       playerInGame.stack + amount < game.buyInMin ||
@@ -402,27 +394,66 @@ class GameRepositoryImpl {
       );
     }
 
-    playerInGame.stack = playerInGame.stack + amount;
-    playerInGame.buyIn = playerInGame.buyIn + amount;
-
-    // if the player is in the seat and waiting for buyin
-    // then mark his status as playing
-    if (
-      playerInGame.seatNo !== 0 &&
-      playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN
-    ) {
-      playerInGame.status = PlayerStatus.PLAYING;
+    // NOTE TO SANJAY: Add other functionalities
+    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+    const clubMember = await clubMemberRepository.findOne({
+      where: {
+        club: {id: game.club.id},
+        player: {id: player.id},
+      },
+    });
+    if (!clubMember) {
+      throw new Error(`The player ${player.name} is not in the club`);
     }
+
+    if (clubMember.autoBuyinApproval) {
+      playerInGame.buyInStatus = BuyInApprovalStatus.APPROVED;
+      playerInGame.noOfBuyins++;
+      playerInGame.stack += amount;
+      playerInGame.buyIn += amount;
+    } else {
+      const query =
+        'SELECT SUM(buy_in) current_buyin FROM player_game_tracker pgt, poker_game pg WHERE pgt.pgt_player_id = ' +
+        player.id +
+        ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
+        GameStatus.ENDED;
+      const resp = await getConnection().query(query);
+
+      const currentBuyin = resp[0]['current_buyin'];
+
+      let outstandingBalance = playerInGame.buyIn;
+      if (currentBuyin) {
+        outstandingBalance += currentBuyin;
+      }
+
+      let availableCredit = 0.0;
+      if (clubMember.creditLimit >= 0) {
+        availableCredit = clubMember.creditLimit - outstandingBalance;
+      }
+
+      if (amount <= availableCredit) {
+        // player is within the credit limit
+        playerInGame.buyInStatus = BuyInApprovalStatus.APPROVED;
+        playerInGame.noOfBuyins++;
+        playerInGame.stack += amount;
+        playerInGame.buyIn += amount;
+      } else {
+        playerInGame.buyinNotes = `Player ${player.name} has ${outstandingBalance} outstanding balance and Requested: ${amount}`;
+        playerInGame.buyInStatus = BuyInApprovalStatus.WAITING_FOR_APPROVAL;
+      }
+    }
+
     await playerGameTrackerRepository.update(
       {
         game: {id: game.id},
         player: {id: player.id},
       },
       {
-        status: playerInGame.status,
+        buyInStatus: playerInGame.buyInStatus,
         stack: playerInGame.stack,
         buyIn: playerInGame.buyIn,
         noOfBuyins: playerInGame.noOfBuyins,
+        buyinNotes: playerInGame.buyinNotes,
       }
     );
 
@@ -433,7 +464,25 @@ class GameRepositoryImpl {
       playerBuyIn(gameServer, game, player, playerInGame);
     }
 
-    return playerInGame.status;
+    return playerInGame.buyInStatus;
+
+    // if (reload) {
+    //   // if reload is set to true, if stack exceeds game.maxBuyIn
+    //   if (playerInGame.stack + amount > game.buyInMax) {
+    //     amount = game.buyInMax - playerInGame.stack;
+    //   }
+    // } else {
+    //   playerInGame.noOfBuyins++;
+    // }
+
+    // // if the player is in the seat and waiting for buyin
+    // // then mark his status as playing
+    // if (
+    //   playerInGame.seatNo !== 0 &&
+    //   playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN
+    // ) {
+    //   playerInGame.status = PlayerStatus.PLAYING;
+    // }
   }
 
   public async getGameServer(gameId: number): Promise<GameServer | null> {

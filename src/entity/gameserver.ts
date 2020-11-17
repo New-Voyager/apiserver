@@ -68,7 +68,7 @@ export class TrackGameServer {
   public gameServer!: GameServer;
 
   @Index('gameserver-game-idx')
-  @ManyToOne(type => PokerGame, {nullable: false})
+  @ManyToOne(type => PokerGame, {eager: true, nullable: false})
   @JoinColumn({name: 'game_id'})
   public game!: PokerGame;
 }

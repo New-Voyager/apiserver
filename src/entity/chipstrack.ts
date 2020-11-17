@@ -12,7 +12,7 @@ import {Player} from './player';
 import {Club} from './club';
 import {PokerGame} from './game';
 import {DbAwareColumn, DbAwareUpdateDateColumn} from './dbaware';
-import {PlayerStatus} from './types';
+import {BuyInApprovalStatus, PlayerStatus} from './types';
 
 @Entity({name: 'player_game_tracker'})
 export class PlayerGameTracker {
@@ -43,6 +43,12 @@ export class PlayerGameTracker {
 
   @Column({name: 'status', nullable: false, type: 'int'})
   public status!: PlayerStatus;
+
+  @Column({name: 'buyIn_status', nullable: true, type: 'int'})
+  public buyInStatus!: BuyInApprovalStatus;
+
+  @Column({name: 'buyin_notes', type: 'text', nullable: true})
+  public buyinNotes!: string;
 
   @Column({name: 'seat_no', nullable: false})
   public seatNo!: number;
