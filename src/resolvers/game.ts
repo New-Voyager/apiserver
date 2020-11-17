@@ -231,11 +231,7 @@ export async function approveBuyIn(
     }
 
     const player = await getPlayer(playerUuid);
-    const status = await GameRepository.approveBuyIn(
-      player,
-      game,
-      amount,
-    );
+    const status = await GameRepository.approveBuyIn(player, game, amount);
     // player is good to go
     return BuyInApprovalStatus[status];
   } catch (err) {
@@ -270,7 +266,7 @@ export async function myGameState(playerUuid: string, gameCode: string) {
     const player = await getPlayer(playerUuid);
     const data = await GameRepository.myGameState(player, game);
 
-    let gameState = {
+    const gameState = {
       playerUuid: data.player.uuid,
       buyIn: data.buyIn,
       stack: data.stack,
@@ -279,7 +275,7 @@ export async function myGameState(playerUuid: string, gameCode: string) {
       playingFrom: data.satAt,
       waitlistNo: data.queueNo,
       seatNo: data.seatNo,
-    }
+    };
 
     return gameState;
   } catch (err) {
@@ -313,9 +309,9 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
 
     const gameState = await GameRepository.tableGameState(game);
 
-    let tableGameState = new Array();
+    const tableGameState = [];
     gameState.map(data => {
-      let gameState = {
+      const gameState = {
         playerUuid: data.player.uuid,
         buyIn: data.buyIn,
         stack: data.stack,
@@ -324,10 +320,10 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
         playingFrom: data.satAt,
         waitlistNo: data.queueNo,
         seatNo: data.seatNo,
-      }
+      };
       tableGameState.push(gameState);
     });
-    
+
     return tableGameState;
   } catch (err) {
     logger.error(err);
@@ -364,7 +360,12 @@ const resolvers: any = {
       return buyIn(ctx.req.playerId, args.gameCode, args.amount);
     },
     approveBuyIn: async (parent, args, ctx, info) => {
-      return approveBuyIn(ctx.req.playerId, args.playerUuid, args.gameCode, args.amount);
+      return approveBuyIn(
+        ctx.req.playerId,
+        args.playerUuid,
+        args.gameCode,
+        args.amount
+      );
     },
     startGame: async (parent, args, ctx, info) => {
       return startGame(ctx.req.playerId, args.gameCode);

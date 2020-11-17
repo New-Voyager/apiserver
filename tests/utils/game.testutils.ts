@@ -129,20 +129,24 @@ export const buyinQuery = gql`
 
 export const approveBuyInQuery = gql`
   mutation($gameCode: String!, $playerUuid: String!, $amount: Float!) {
-    status: approveBuyIn(gameCode: $gameCode, playerUuid: $playerUuid,  amount: $amount)
+    status: approveBuyIn(
+      gameCode: $gameCode
+      playerUuid: $playerUuid
+      amount: $amount
+    )
   }
 `;
 
 export const tableGameStateQuery = gql`
   query($gameCode: String!) {
     game: tableGameState(gameCode: $gameCode) {
-      playerUuid,
-      buyIn,
-      stack,
-      status,
-      buyInStatus,
-      playingFrom,
-      waitlistNo,
+      playerUuid
+      buyIn
+      stack
+      status
+      buyInStatus
+      playingFrom
+      waitlistNo
       seatNo
     }
   }
@@ -151,13 +155,13 @@ export const tableGameStateQuery = gql`
 export const myGameStateQuery = gql`
   query($gameCode: String!) {
     game: myGameState(gameCode: $gameCode) {
-      playerUuid,
-      buyIn,
-      stack,
-      status,
-      buyInStatus,
-      playingFrom,
-      waitlistNo,
+      playerUuid
+      buyIn
+      stack
+      status
+      buyInStatus
+      playingFrom
+      waitlistNo
       seatNo
     }
   }

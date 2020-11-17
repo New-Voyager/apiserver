@@ -446,7 +446,7 @@ class GameRepositoryImpl {
         playerInGame.noOfBuyins++;
         playerInGame.stack += amount;
         playerInGame.buyIn += amount;
-        
+
         // if the player is in the seat and waiting for buyin
         // then mark his status as playing
         if (
@@ -498,9 +498,8 @@ class GameRepositoryImpl {
   public async approveBuyIn(
     player: Player,
     game: PokerGame,
-    amount: number,
+    amount: number
   ): Promise<BuyInApprovalStatus> {
-    
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
       where: {
@@ -567,9 +566,8 @@ class GameRepositoryImpl {
 
   public async myGameState(
     player: Player,
-    game: PokerGame,
+    game: PokerGame
   ): Promise<PlayerGameTracker> {
-    
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
       where: {
@@ -588,21 +586,16 @@ class GameRepositoryImpl {
     return playerInGame;
   }
 
-  public async tableGameState(
-    game: PokerGame,
-  ): Promise<PlayerGameTracker[]> {
-    
+  public async tableGameState(game: PokerGame): Promise<PlayerGameTracker[]> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.find({
       where: {
-        game: {id: game.id}
+        game: {id: game.id},
       },
     });
 
     if (!playerInGame) {
-      logger.error(
-        `Game: ${game.gameCode} not available`
-      );
+      logger.error(`Game: ${game.gameCode} not available`);
       throw new Error(`Game: ${game.gameCode} not available`);
     }
 

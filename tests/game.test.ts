@@ -288,12 +288,22 @@ describe('Game APIs', () => {
     expect(resp3).toBe('WAITING_FOR_APPROVAL');
 
     // Approve a buyin as host
-    const resp4 = await gameutils.approveBuyIn(ownerId, player1Id, game.gameCode, 100);
+    const resp4 = await gameutils.approveBuyIn(
+      ownerId,
+      player1Id,
+      game.gameCode,
+      100
+    );
     expect(resp4).toBe('APPROVED');
 
     try {
       // Approve a buyin as player
-      const resp5 = await gameutils.approveBuyIn(player2Id, player1Id, game.gameCode, 100);
+      const resp5 = await gameutils.approveBuyIn(
+        player2Id,
+        player1Id,
+        game.gameCode,
+        100
+      );
       expect(false).toBeTruthy();
     } catch (error) {
       expect(error.toString()).toContain('Failed to update buyin');
@@ -359,7 +369,9 @@ describe('Game APIs', () => {
     const data2 = await gameutils.tableGameState(player1Id, game.gameCode);
     data2.map(resp => {
       expect(resp.buyInStatus).toBeNull();
-      expect(resp.playerUuid == player1Id || resp.playerUuid == player2Id).toBeTruthy();
+      expect(
+        resp.playerUuid == player1Id || resp.playerUuid == player2Id
+      ).toBeTruthy();
       expect(resp.buyIn).toBe(0);
       expect(resp.stack).toBe(0);
       expect(resp.status).toBe('WAIT_FOR_BUYIN');
