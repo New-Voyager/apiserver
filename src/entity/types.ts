@@ -66,6 +66,9 @@ export enum PlayerStatus {
   BLOCKED,
   LOST_CONNECTION,
   WAIT_FOR_BUYIN,
+  LEAVING_GAME,
+  TAKING_BREAK,
+  JOINING,
 }
 
 export enum PromotionType {

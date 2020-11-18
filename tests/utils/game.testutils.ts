@@ -186,6 +186,18 @@ export async function configureGame(
   return startedGame;
 }
 
+export const takeBreakQuery = gql`
+  mutation($gameCode: String!) {
+    status: takeBreak(gameCode: $gameCode)
+  }
+`;
+
+export const leaveGameQuery = gql`
+  mutation($gameCode: String!) {
+    status: leaveGame(gameCode: $gameCode)
+  }
+`;
+
 export async function configureFriendsGame(
   playerId: string,
   gameInput: GameInput
@@ -316,4 +328,34 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
   return resp.data.game;
+}
+
+export async function takeBreak(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+    },
+    mutation: takeBreakQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+export async function leaveGame(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+    },
+    mutation: leaveGameQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
 }

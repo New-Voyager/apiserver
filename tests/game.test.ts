@@ -380,4 +380,44 @@ describe('Game APIs', () => {
       expect(resp.seatNo == 1 || resp.seatNo == 2).toBeTruthy();
     });
   });
+
+  test('take a break', async () => {
+    const [clubCode, ownerId] = await clubutils.createClub('brady', 'yatzee');
+    await createGameServer('1.2.1.3');
+    const game = await gameutils.configureGame(
+      ownerId,
+      clubCode,
+      holdemGameInput
+    );
+    const player1Id = await clubutils.createPlayer('player1', 'abc123');
+    const player2Id = await clubutils.createPlayer('adam', '1243ABC');
+
+    const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
+    expect(data).toBe('WAIT_FOR_BUYIN');
+    const data1 = await gameutils.joinGame(player2Id, game.gameCode, 2);
+    expect(data1).toBe('WAIT_FOR_BUYIN');
+
+    const resp3 = await gameutils.takeBreak(player1Id, game.gameCode);
+    expect(resp3).toBe('TAKING_BREAK');
+  });
+
+  test('leave a game', async () => {
+    const [clubCode, ownerId] = await clubutils.createClub('brady', 'yatzee');
+    await createGameServer('1.2.1.4');
+    const game = await gameutils.configureGame(
+      ownerId,
+      clubCode,
+      holdemGameInput
+    );
+    const player1Id = await clubutils.createPlayer('player1', 'abc123');
+    const player2Id = await clubutils.createPlayer('adam', '1243ABC');
+
+    const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
+    expect(data).toBe('WAIT_FOR_BUYIN');
+    const data1 = await gameutils.joinGame(player2Id, game.gameCode, 2);
+    expect(data1).toBe('WAIT_FOR_BUYIN');
+
+    const resp3 = await gameutils.leaveGame(player1Id, game.gameCode);
+    expect(resp3).toBe('LEAVING_GAME');
+  });
 });
