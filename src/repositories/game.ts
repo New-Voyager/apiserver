@@ -342,6 +342,7 @@ class GameRepositoryImpl {
       thisPlayerInSeat.noOfBuyins = 0;
       thisPlayerInSeat.buyinNotes = '';
     }
+    thisPlayerInSeat.gameToken = require('crypto').randomBytes(16).toString();
     if (thisPlayerInSeat.stack > 0) {
       thisPlayerInSeat.status = PlayerStatus.PLAYING;
     } else {
@@ -390,6 +391,13 @@ class GameRepositoryImpl {
         `Buyin must be between ${game.buyInMin} and ${game.buyInMax}`
       );
     }
+
+    if (reload) {
+      // if reload is set to true, if stack exceeds game.maxBuyIn
+      if (playerInGame.stack + amount > game.buyInMax) {
+        amount = game.buyInMax - playerInGame.stack;
+      }
+    } 
 
     // NOTE TO SANJAY: Add other functionalities
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);
@@ -481,15 +489,6 @@ class GameRepositoryImpl {
     }
 
     return playerInGame.buyInStatus;
-
-    // if (reload) {
-    //   // if reload is set to true, if stack exceeds game.maxBuyIn
-    //   if (playerInGame.stack + amount > game.buyInMax) {
-    //     amount = game.buyInMax - playerInGame.stack;
-    //   }
-    // } else {
-    //   playerInGame.noOfBuyins++;
-    // }
   }
 
   public async approveBuyIn(

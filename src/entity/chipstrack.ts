@@ -50,6 +50,9 @@ export class PlayerGameTracker {
   @Column({name: 'buyin_notes', type: 'text', nullable: true})
   public buyinNotes!: string;
 
+  @Column({name: 'game_token', type: 'text', nullable: false})
+  public gameToken!: string;
+
   @Column({name: 'seat_no', nullable: false})
   public seatNo!: number;
 

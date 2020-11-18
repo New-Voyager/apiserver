@@ -58,6 +58,7 @@ class ChipsTrackRepositoryImpl {
       playerSetIn.seatNo = playerChipsData.seatNo;
       playerSetIn.hhRank = 0;
       playerSetIn.hhHandNum = 0;
+      playerSetIn.gameToken = require('crypto').randomBytes(16).toString();
       playerSetIn.status = PlayerStatus.PLAYING;
       playerSetIn.noOfBuyins = INITIAL_BUYIN_COUNT;
       playerSetIn.satAt = new Date();
