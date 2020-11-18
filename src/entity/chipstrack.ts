@@ -79,6 +79,14 @@ export class PlayerGameTracker {
   public satAt!: Date;
 
   @DbAwareColumn({
+    name: 'break_time_at',
+    type: 'timestamp',
+    nullable: true,
+    default: null,
+  })
+  public breakTimeAt!: Date;
+
+  @DbAwareColumn({
     name: 'waiting_from',
     type: 'timestamp',
     nullable: true,

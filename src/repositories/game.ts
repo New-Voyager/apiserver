@@ -595,6 +595,54 @@ class GameRepositoryImpl {
     return playerInGame;
   }
 
+  public async leaveGame(
+    player: Player,
+    game: PokerGame,
+  ): Promise<PlayerStatus> {
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerInGame = await playerGameTrackerRepository.findOne({
+      relations: ['player', 'club', 'game'],
+      where: {
+        game: {id: game.id},
+        player: {id: player.id},
+      },
+    });
+
+    if (!playerInGame) {
+      logger.error(`Game: ${game.gameCode} not available`);
+      throw new Error(`Game: ${game.gameCode} not available`);
+    }
+
+    playerInGame.status = PlayerStatus.LEAVING_GAME;
+
+    const resp = await playerGameTrackerRepository.save(playerInGame);
+    return resp.status;
+  }
+
+  public async takeBreak(
+    player: Player,
+    game: PokerGame,
+  ): Promise<PlayerStatus> {
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerInGame = await playerGameTrackerRepository.findOne({
+      relations: ['player', 'club', 'game'],
+      where: {
+        game: {id: game.id},
+        player: {id: player.id},
+      },
+    });
+
+    if (!playerInGame) {
+      logger.error(`Game: ${game.gameCode} not available`);
+      throw new Error(`Game: ${game.gameCode} not available`);
+    }
+
+    playerInGame.status = PlayerStatus.TAKING_BREAK;
+
+    const resp = await playerGameTrackerRepository.save(playerInGame);
+    return resp.status;
+  }
+
   public async getGameServer(gameId: number): Promise<GameServer | null> {
     const trackgameServerRepository = getRepository(TrackGameServer);
     const gameServer = await trackgameServerRepository.findOne({

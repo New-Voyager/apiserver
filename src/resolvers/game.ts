@@ -363,6 +363,69 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
   }
 }
 
+export async function leaveGame(playerUuid: string, gameCode: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
+        );
+      }
+    }
+    const player = await getPlayer(playerUuid);
+    const status = await GameRepository.leaveGame(player, game);
+    return PlayerStatus[status];
+  } catch (err) {
+    logger.error(err);
+    throw new Error(`Failed to leave game. ${JSON.stringify(err)}`);
+  }
+}
+
+export async function takeBreak(playerUuid: string, gameCode: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
+        );
+      }
+    }
+    const player = await getPlayer(playerUuid);
+    const status = await GameRepository.takeBreak(player, game);
+    return PlayerStatus[status];
+  } catch (err) {
+    logger.error(err);
+    throw new Error(`Failed to take break. ${JSON.stringify(err)}`);
+  }
+}
+
+
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -421,6 +484,12 @@ const resolvers: any = {
     },
     startGame: async (parent, args, ctx, info) => {
       return startGame(ctx.req.playerId, args.gameCode);
+    },
+    takeBreak: async (parent, args, ctx, info) => {
+      return takeBreak(ctx.req.playerId, args.gameCode);
+    },
+    leaveGame: async (parent, args, ctx, info) => {
+      return leaveGame(ctx.req.playerId, args.gameCode);
     },
   },
 };

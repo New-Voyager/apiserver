@@ -35,6 +35,9 @@ enum PlayerGameStatus {
   BLOCKED
   LOST_CONNECTION
   WAIT_FOR_BUYIN
+  LEAVING_GAME
+  TAKING_BREAK
+  JOINING
 }
 
 enum BuyInApprovalStatus {
@@ -158,6 +161,8 @@ type Mutation {
   buyIn(gameCode: String!, amount: Float!): BuyInApprovalStatus!
   approveBuyIn(gameCode: String!, playerUuid: String!, amount: Float!): BuyInApprovalStatus!
   startGame(gameCode: String!): GameStatus!
+  takeBreak(gameCode: String!): PlayerGameStatus!
+  leaveGame(gameCode: String): PlayerGameStatus!
   #pauseGame(gameCode: String!): GameStatus!
   #endGame(gameCode: String!): GameStatus!
   #resumeGame(gameCode: String!): GameStatus!
