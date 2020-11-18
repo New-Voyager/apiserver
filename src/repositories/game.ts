@@ -397,7 +397,7 @@ class GameRepositoryImpl {
       if (playerInGame.stack + amount > game.buyInMax) {
         amount = game.buyInMax - playerInGame.stack;
       }
-    } 
+    }
 
     // NOTE TO SANJAY: Add other functionalities
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);
@@ -597,7 +597,7 @@ class GameRepositoryImpl {
 
   public async leaveGame(
     player: Player,
-    game: PokerGame,
+    game: PokerGame
   ): Promise<PlayerStatus> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
@@ -621,7 +621,7 @@ class GameRepositoryImpl {
 
   public async takeBreak(
     player: Player,
-    game: PokerGame,
+    game: PokerGame
   ): Promise<PlayerStatus> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
