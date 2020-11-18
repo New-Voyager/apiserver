@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import {getRepository, getManager, getConnection} from 'typeorm';
 import {PokerGame} from '@src/entity/game';
 import {
@@ -342,7 +343,11 @@ class GameRepositoryImpl {
       thisPlayerInSeat.noOfBuyins = 0;
       thisPlayerInSeat.buyinNotes = '';
     }
-    thisPlayerInSeat.gameToken = require('crypto').randomBytes(16).toString();
+
+    // we need 5 bytes to scramble 5 cards
+    const randomBytes = Buffer.from(crypto.randomBytes(5));
+
+    thisPlayerInSeat.gameToken = randomBytes.toString('hex');
     if (thisPlayerInSeat.stack > 0) {
       thisPlayerInSeat.status = PlayerStatus.PLAYING;
     } else {

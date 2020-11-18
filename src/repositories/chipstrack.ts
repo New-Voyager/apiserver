@@ -4,6 +4,7 @@ import {Club, ClubMember} from '@src/entity/club';
 import {getConnection, getRepository, getManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {isPostgres} from '@src/utils';
+import * as crypto from 'crypto';
 import {
   PlayerGameTracker,
   ClubChipsTransaction,
@@ -58,7 +59,7 @@ class ChipsTrackRepositoryImpl {
       playerSetIn.seatNo = playerChipsData.seatNo;
       playerSetIn.hhRank = 0;
       playerSetIn.hhHandNum = 0;
-      playerSetIn.gameToken = require('crypto').randomBytes(16).toString();
+
       playerSetIn.status = PlayerStatus.PLAYING;
       playerSetIn.noOfBuyins = INITIAL_BUYIN_COUNT;
       playerSetIn.satAt = new Date();
