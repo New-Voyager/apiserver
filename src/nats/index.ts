@@ -101,6 +101,7 @@ export async function newPlayerSat(
     stack: playerGameInfo.stack,
     status: playerGameInfo.status,
     buyIn: playerGameInfo.buyIn,
+    gameToken: playerGameInfo.gameToken,
   };
   nc.publish(APISERVER_TO_GAMESERVER, message);
 }
