@@ -45,7 +45,7 @@ class GameAPIs {
     await GameRepository.markPlayerGameState(playerID, gameID, gameStatus);
     resp.status(200).send({status: 'OK'});
   }
-  
+
   public async updateGameStatus(req: any, resp: any) {
     const gameID = req.body.gameId;
     if (!gameID) {

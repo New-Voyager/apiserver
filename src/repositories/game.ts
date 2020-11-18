@@ -661,7 +661,11 @@ class GameRepositoryImpl {
     return resp.status;
   }
 
-  public async markPlayerGameState(playerId: number, gameId: number, status: PlayerStatus) {
+  public async markPlayerGameState(
+    playerId: number,
+    gameId: number,
+    status: PlayerStatus
+  ) {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
       relations: ['player', 'club', 'game'],

@@ -405,15 +405,13 @@ describe('Game APIs', () => {
     const player1ID = await handutils.getPlayerById(player1Id);
     try {
       await axios.post(
-        `${GAMESERVER_API}/update-break-time/gameId/${gameID}/playerId/${player1ID}`, 
+        `${GAMESERVER_API}/update-break-time/gameId/${gameID}/playerId/${player1ID}`
       );
-      await axios.post(
-        `${GAMESERVER_API}/update-player-game-state`, {
-          playerId: player1ID,
-          gameId: gameID,
-          status: 'IN_BREAK'
-        }
-      );
+      await axios.post(`${GAMESERVER_API}/update-player-game-state`, {
+        playerId: player1ID,
+        gameId: gameID,
+        status: 'IN_BREAK',
+      });
     } catch (err) {
       console.error(JSON.stringify(err));
       expect(true).toBeFalsy();
@@ -442,13 +440,11 @@ describe('Game APIs', () => {
     const gameID = await gameutils.getGameById(game.gameCode);
     const player1ID = await handutils.getPlayerById(player1Id);
     try {
-      await axios.post(
-        `${GAMESERVER_API}/update-player-game-state`, {
-          playerId: player1ID,
-          gameId: gameID,
-          status: 'LEFT'
-        }
-      );
+      await axios.post(`${GAMESERVER_API}/update-player-game-state`, {
+        playerId: player1ID,
+        gameId: gameID,
+        status: 'LEFT',
+      });
     } catch (err) {
       console.error(JSON.stringify(err));
       expect(true).toBeFalsy();

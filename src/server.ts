@@ -110,7 +110,10 @@ function addInternalRoutes(app: any) {
   app.post('/internal/delete-club-by-name/:clubName', AdminAPI.deleteClub);
   // app.post('/internal/update-game-status', GameAPI.updateGameStatus);
   app.post('/internal/update-player-game-state', GameAPI.updatePlayerGameState);
-  app.post('/internal/update-break-time/gameId/:gameId/playerId/:playerId', GameAPI.updateBreakTime);
+  app.post(
+    '/internal/update-break-time/gameId/:gameId/playerId/:playerId',
+    GameAPI.updateBreakTime
+  );
   app.post('/internal/update-table-status', GameAPI.updateTableStatus);
 
   app.get(
