@@ -425,7 +425,6 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
   }
 }
 
-
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {

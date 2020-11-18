@@ -188,17 +188,13 @@ export async function configureGame(
 
 export const takeBreakQuery = gql`
   mutation($gameCode: String!) {
-    status: takeBreak(
-      gameCode: $gameCode
-    )
+    status: takeBreak(gameCode: $gameCode)
   }
 `;
 
 export const leaveGameQuery = gql`
   mutation($gameCode: String!) {
-    status: leaveGame(
-      gameCode: $gameCode
-    )
+    status: leaveGame(gameCode: $gameCode)
   }
 `;
 
@@ -336,7 +332,7 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
 
 export async function takeBreak(
   playerId: string,
-  gameCode: string,
+  gameCode: string
 ): Promise<any> {
   const resp = await getClient(playerId).mutate({
     variables: {
@@ -351,7 +347,7 @@ export async function takeBreak(
 
 export async function leaveGame(
   playerId: string,
-  gameCode: string,
+  gameCode: string
 ): Promise<any> {
   const resp = await getClient(playerId).mutate({
     variables: {
