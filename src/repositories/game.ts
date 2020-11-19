@@ -648,6 +648,46 @@ class GameRepositoryImpl {
     return resp.status;
   }
 
+  public async updateBreakTime(playerId: number, gameId: number) {
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerInGame = await playerGameTrackerRepository.findOne({
+      relations: ['player', 'club', 'game'],
+      where: {
+        game: {id: gameId},
+        player: {id: playerId},
+      },
+    });
+    if (!playerInGame) {
+      logger.error(`Game: ${gameId} not available`);
+      throw new Error(`Game: ${gameId} not available`);
+    }
+    playerInGame.breakTimeAt = new Date();
+    const resp = await playerGameTrackerRepository.save(playerInGame);
+    return resp.status;
+  }
+
+  public async markPlayerGameState(
+    playerId: number,
+    gameId: number,
+    status: PlayerStatus
+  ) {
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerInGame = await playerGameTrackerRepository.findOne({
+      relations: ['player', 'club', 'game'],
+      where: {
+        game: {id: gameId},
+        player: {id: playerId},
+      },
+    });
+    if (!playerInGame) {
+      logger.error(`Game: ${gameId} not available`);
+      throw new Error(`Game: ${gameId} not available`);
+    }
+    playerInGame.status = (PlayerStatus[status] as unknown) as PlayerStatus;
+    const resp = await playerGameTrackerRepository.save(playerInGame);
+    return resp.status;
+  }
+
   public async getGameServer(gameId: number): Promise<GameServer | null> {
     const trackgameServerRepository = getRepository(TrackGameServer);
     const gameServer = await trackgameServerRepository.findOne({

@@ -1,6 +1,7 @@
 import {resetDatabase, getClient, PORT_NUMBER} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
+import * as handutils from './utils/hand.testutils';
 import {default as axios} from 'axios';
 import {getLogger} from '../src/utils/log';
 const logger = getLogger('game');
@@ -399,6 +400,22 @@ describe('Game APIs', () => {
 
     const resp3 = await gameutils.takeBreak(player1Id, game.gameCode);
     expect(resp3).toBe('TAKING_BREAK');
+
+    const gameID = await gameutils.getGameById(game.gameCode);
+    const player1ID = await handutils.getPlayerById(player1Id);
+    try {
+      await axios.post(
+        `${GAMESERVER_API}/update-break-time/gameId/${gameID}/playerId/${player1ID}`
+      );
+      await axios.post(`${GAMESERVER_API}/update-player-game-state`, {
+        playerId: player1ID,
+        gameId: gameID,
+        status: 'IN_BREAK',
+      });
+    } catch (err) {
+      console.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
   });
 
   test('leave a game', async () => {
@@ -419,5 +436,18 @@ describe('Game APIs', () => {
 
     const resp3 = await gameutils.leaveGame(player1Id, game.gameCode);
     expect(resp3).toBe('LEAVING_GAME');
+
+    const gameID = await gameutils.getGameById(game.gameCode);
+    const player1ID = await handutils.getPlayerById(player1Id);
+    try {
+      await axios.post(`${GAMESERVER_API}/update-player-game-state`, {
+        playerId: player1ID,
+        gameId: gameID,
+        status: 'LEFT',
+      });
+    } catch (err) {
+      console.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
   });
 });

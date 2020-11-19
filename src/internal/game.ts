@@ -6,6 +6,46 @@ import {getLogger} from '@src/utils/log';
  * These APIs are only available for game server.
  */
 class GameAPIs {
+  public async updateBreakTime(req: any, resp: any) {
+    const gameID = req.params.gameId;
+    if (!gameID) {
+      const res = {error: 'Invalid game id'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    const playerID = req.params.playerId;
+    if (!playerID) {
+      const res = {error: 'Invalid player id'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    await GameRepository.updateBreakTime(playerID, gameID);
+    resp.status(200).send({status: 'OK'});
+  }
+
+  public async updatePlayerGameState(req: any, resp: any) {
+    const gameID = req.body.gameId;
+    if (!gameID) {
+      const res = {error: 'Invalid game id'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    const gameStatus = req.body.status;
+    if (!gameStatus) {
+      const res = {error: 'Invalid game status'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    const playerID = req.body.playerId;
+    if (!playerID) {
+      const res = {error: 'Invalid player id'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    await GameRepository.markPlayerGameState(playerID, gameID, gameStatus);
+    resp.status(200).send({status: 'OK'});
+  }
+
   public async updateGameStatus(req: any, resp: any) {
     const gameID = req.body.gameId;
     if (!gameID) {
