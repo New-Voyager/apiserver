@@ -35,7 +35,7 @@ export interface ClubMemberUpdateInput {
   status?: ClubMemberStatus;
   creditLimit?: number;
   autoBuyinApproval?: boolean;
-  referredBy?: String;
+  referredBy?: string;
 }
 
 class ClubRepositoryImpl {
@@ -99,7 +99,10 @@ class ClubRepositoryImpl {
     if (updateData.isManager || updateData.isManager === false) {
       clubMember.isManager = updateData.isManager;
     }
-    if (updateData.autoBuyinApproval || updateData.autoBuyinApproval === false) {
+    if (
+      updateData.autoBuyinApproval ||
+      updateData.autoBuyinApproval === false
+    ) {
       clubMember.autoBuyinApproval = updateData.autoBuyinApproval;
     }
     if (updateData.referredBy) {
