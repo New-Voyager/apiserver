@@ -85,6 +85,9 @@ export class ClubMember {
   @Column({name: 'contact_info', default: ''})
   public contactInfo!: string;
 
+  @Column({name: 'referred_by', default: ''})
+  public referredBy!: string;
+
   @Column({name: 'owner_notes', default: ''})
   public ownerNotes!: string;
 

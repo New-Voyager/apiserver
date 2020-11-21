@@ -29,12 +29,13 @@ export interface ClubUpdateInput {
 }
 
 export interface ClubMemberUpdateInput {
-  isManager: boolean;
-  notes: string;
-  balance: number;
-  status: ClubMemberStatus;
-  creditLimit: number;
-  autoBuyinApproval: boolean;
+  isManager?: boolean;
+  notes?: string;
+  balance?: number;
+  status?: ClubMemberStatus;
+  creditLimit?: number;
+  autoBuyinApproval?: boolean;
+  referredBy?: string;
 }
 
 class ClubRepositoryImpl {
@@ -95,11 +96,17 @@ class ClubRepositoryImpl {
         updateData.status
       ] as unknown) as ClubMemberStatus;
     }
-    if (updateData.isManager !== null) {
+    if (updateData.isManager || updateData.isManager === false) {
       clubMember.isManager = updateData.isManager;
     }
-    if (updateData.autoBuyinApproval !== null) {
+    if (
+      updateData.autoBuyinApproval ||
+      updateData.autoBuyinApproval === false
+    ) {
       clubMember.autoBuyinApproval = updateData.autoBuyinApproval;
+    }
+    if (updateData.referredBy) {
+      clubMember.referredBy = updateData.referredBy.toString();
     }
 
     // Save the data
