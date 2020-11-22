@@ -17,6 +17,7 @@ const GQL_PORT = 9501;
 import {getLogger} from '@src/utils/log';
 import {AdminAPI} from './internal/admin';
 import {Player} from './entity/player';
+import {initializeGameServer} from './gameserver';
 const logger = getLogger('server');
 const JWT_EXPIRY_DAYS = 3;
 const requestContext = async ({req}) => {
@@ -73,7 +74,8 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     await createConnection({...options, name: 'default'});
   }
 
-  initializeNats();
+  //initializeNats();
+  initializeGameServer();
 
   // get config vars
   dotenv.config();

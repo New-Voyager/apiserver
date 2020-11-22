@@ -21,7 +21,7 @@ import {
   publishNewGame,
   playerBuyIn,
   changeGameStatus,
-} from '@src/nats/index';
+} from '@src/gameserver';
 import {isPostgres} from '@src/utils';
 
 const logger = getLogger('game');
@@ -93,7 +93,6 @@ class GameRepositoryImpl {
     game.startedAt = new Date();
     game.startedBy = player;
 
-    let gameServerId = 0;
     try {
       const gameRespository = getRepository(PokerGame);
       await getManager().transaction(async () => {
@@ -108,7 +107,6 @@ class GameRepositoryImpl {
         trackServer.game = savedGame;
         trackServer.gameServer = gameServers[pick];
         const gameServer = gameServers[pick];
-        gameServerId = gameServer.serverNumber;
         await trackgameServerRepository.save(trackServer);
 
         const clubRake = new ClubGameRake();
@@ -118,12 +116,19 @@ class GameRepositoryImpl {
         clubRake.promotion = 0;
         clubRake.rake = 0;
         await clubGameRakeRepository.save(clubRake);
-      });
 
-      if (!game.isTemplate) {
-        // publish a message to NATS topic
-        publishNewGame(game);
-      }
+        // create a new game in game server within the transcation
+        if (!game.isTemplate) {
+          const tableStatus = await publishNewGame(game);
+          game.tableStatus = tableStatus;
+          await gameRespository.update(
+            {
+              id: game.id,
+            },
+            {tableStatus: tableStatus}
+          );
+        }
+      });
     } catch (err) {
       logger.error("Couldn't create game and retry again");
       throw new Error("Couldn't create the game, please retry again");
