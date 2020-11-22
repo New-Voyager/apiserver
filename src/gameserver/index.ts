@@ -21,6 +21,10 @@ export function initializeGameServer() {
   }
 }
 
+export function isGameServerEnabled() {
+  return notifyGameServer;
+}
+
 export async function publishNewGame(game: any) {
   if (!notifyGameServer) {
     return;
