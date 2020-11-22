@@ -118,6 +118,8 @@ type GameInfo {
   status: GameStatus
   tableStatus: TableStatus
   seatInfo: TableSeats
+  gameToken: String
+  playerGameStatus: PlayerGameStatus
 }
 
 input GameUpdateInput {

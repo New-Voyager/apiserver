@@ -459,6 +459,38 @@ const resolvers: any = {
         availableSeats: availableSeats,
       };
     },
+    gameToken: async (parent, args, ctx, info) => {
+      const game = await getGame(parent.gameCode);
+      let playerState = ctx['playerState'];
+      if (!playerState) {
+        // get player's game state
+        playerState = await GameRepository.getGamePlayerState(
+          game.id,
+          ctx.req.playerId
+        );
+        ctx['playerState'] = playerState;
+      }
+      if (playerState) {
+        return playerState.gameToken;
+      }
+      return null;
+    },
+    playerGameStatus: async (parent, args, ctx, info) => {
+      const game = await getGame(parent.gameCode);
+      let playerState = ctx['playerState'];
+      if (!playerState) {
+        // get player's game state
+        playerState = await GameRepository.getGamePlayerState(
+          game.id,
+          ctx.req.playerId
+        );
+        ctx['playerState'] = playerState;
+      }
+      if (playerState) {
+        return PlayerStatus[playerState.playerStatus];
+      }
+      return PlayerStatus.NOT_PLAYING;
+    },
   },
   Mutation: {
     configureGame: async (parent, args, ctx, info) => {

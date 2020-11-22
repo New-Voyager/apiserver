@@ -26,13 +26,13 @@ input ClubUpdateInput {
 }
 
 input ClubMemberUpdateInput {
-isManager: Boolean
-notes: String
-balance: Float
-status: ClubMemberStatus
-creditLimit: Float
-autoBuyinApproval: Boolean
-referredBy: String
+  isManager: Boolean
+  notes: String
+  balance: Float
+  status: ClubMemberStatus
+  creditLimit: Float
+  autoBuyinApproval: Boolean
+  referredBy: String
 }
 
 type Mutation {
