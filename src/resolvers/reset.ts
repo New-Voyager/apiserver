@@ -1,6 +1,7 @@
 import {getConnection} from 'typeorm';
 import {getManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
+import {isGameServerEnabled} from '@src/gameserver';
 const logger = getLogger('reset');
 
 const resolvers: any = {
@@ -33,7 +34,9 @@ export async function resetDB() {
     await deleteAll('ClubMember');
     await deleteAll('Club');
     await deleteAll('Player');
-    await deleteAll('game_server');
+    if (!isGameServerEnabled()) {
+      await deleteAll('game_server');
+    }
     await deleteAll('starred_hands');
     await deleteAll('hand_winners');
     await deleteAll('hand_history');

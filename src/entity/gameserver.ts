@@ -57,6 +57,9 @@ export class GameServer {
 
   @DbAwareColumn({type: 'int8', name: 'server_num', unique: true})
   public serverNumber!: number;
+
+  @DbAwareColumn({name: 'url', unique: true})
+  public url!: string;
 }
 
 @Entity({name: 'game_gameserver'})

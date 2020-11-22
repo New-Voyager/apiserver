@@ -10,7 +10,6 @@ import {GameAPI} from './internal/game';
 import * as jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
 import {getJwtSecret} from './index';
-import {initializeNats} from './nats/index';
 
 const bodyParser = require('body-parser');
 const GQL_PORT = 9501;
