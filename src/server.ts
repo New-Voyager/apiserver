@@ -147,28 +147,42 @@ async function login(req: any, resp: any) {
   const repository = getRepository(Player);
 
   const errors = new Array<string>();
+  const name = payload['name'];
   const uuid = payload['uuid'];
   const deviceId = payload['device-id'];
   const email = payload['email'];
   const password = payload['password'];
 
+  let player;
   if (email && password) {
     // use email and password to login
   } else {
-    if (!uuid || !deviceId) {
-      errors.push('uuid and deviceId should be specified to login');
+    if (name) {
+      // in test mode only
+      logger.info(`[test] Player ${name} tries to login using name`);
+      player = await repository.findOne({where: {name: name}});
+      if (!player) {
+        logger.error(`[test] Player ${name} does not exist`);
+        throw new Error(`${name} user is not found`);
+      }
+    } else {
+      if (!uuid || !deviceId) {
+        errors.push('uuid and deviceId should be specified to login');
+      }
     }
   }
+
   if (errors.length) {
     resp.status(500).send(JSON.stringify({errors: errors}));
     return;
   }
 
-  let player;
-  if (email) {
-    player = await repository.findOne({where: {email: email}});
-  } else {
-    player = await repository.findOne({where: {uuid: uuid}});
+  if (!player) {
+    if (email) {
+      player = await repository.findOne({where: {email: email}});
+    } else {
+      player = await repository.findOne({where: {uuid: uuid}});
+    }
   }
 
   if (!player) {
@@ -176,15 +190,17 @@ async function login(req: any, resp: any) {
     return;
   }
 
-  if (email) {
-    if (password !== player.password) {
-      resp.status(401).send(JSON.stringify({errors: ['Invalid password']}));
-      return;
-    }
-  } else {
-    if (deviceId !== player.deviceId) {
-      resp.status(401).send(JSON.stringify({errors: ['Invalid device id']}));
-      return;
+  if (!name) {
+    if (email) {
+      if (password !== player.password) {
+        resp.status(401).send(JSON.stringify({errors: ['Invalid password']}));
+        return;
+      }
+    } else {
+      if (deviceId !== player.deviceId) {
+        resp.status(401).send(JSON.stringify({errors: ['Invalid device id']}));
+        return;
+      }
     }
   }
 

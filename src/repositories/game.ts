@@ -775,6 +775,33 @@ class GameRepositoryImpl {
     const resp = await getConnection().query(query, [gameId]);
     return resp;
   }
+
+  public async getGamePlayerState(
+    gameId: number,
+    playerUuid: string
+  ): Promise<any | null> {
+    let placeHolder1 = '$1';
+    let placeHolder2 = '$2';
+    if (!isPostgres()) {
+      placeHolder1 = '?';
+      placeHolder2 = '?';
+    }
+    const query = `SELECT game_token AS "gameToken", 
+      status AS "playerStatus",
+      stack AS stack,
+      "buyIn_status" as "buyInStatus",
+      seat_no as "seatNo",
+      queue_no as "queueNo"
+    FROM  player_game_tracker pgt 
+    JOIN player p ON pgt.pgt_player_id = p.id 
+    AND p.uuid = ${placeHolder1} 
+    AND pgt.pgt_game_id = ${placeHolder2}`;
+    const resp = await getConnection().query(query, [playerUuid, gameId]);
+    if (resp.length === 0) {
+      return null;
+    }
+    return resp[0];
+  }
 }
 
 export const GameRepository = new GameRepositoryImpl();
