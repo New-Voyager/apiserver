@@ -1,5 +1,5 @@
 test:
-  disabled: true
+  disabled: false
 
 # Cleanup steps
 cleanup:
