@@ -91,14 +91,16 @@ setup:
             - name: bala
               status: ACTIVE
 
-      # create game servers if does not exist
-    - create-game-servers:
-        - ipAddress: 10.1.1.5
-          currentMemory: 100
-          status: ACTIVE
-        - ipAddress: 10.1.1.6
-          currentMemory: 100
-          status: ACTIVE
+    #   # create game servers if does not exist
+    # - create-game-servers:
+    #     - ipAddress: 10.1.1.5
+    #       currentMemory: 100
+    #       status: ACTIVE
+    #       url: http://server1:8080
+    #     - ipAddress: 10.1.1.6
+    #       currentMemory: 100
+    #       status: ACTIVE
+    #       url: http://server2:8080
 
 # Game steps
 game:

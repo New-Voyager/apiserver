@@ -70,9 +70,15 @@ debug:
 .PHONY: run-server
 run-server:
 	yarn run-pg &
-	yarn watch-debug
+	yarn watch-debug-nats
 	echo "Running server...."
 
 .PHONY: watch-debug
 watch-debug:
 	yarn watch-debug
+
+.PHONY: run-server-nats
+run-server-nats:
+	yarn run-pg &
+	yarn watch-debug-nats
+	echo "Running server...."

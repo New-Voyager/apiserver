@@ -26,6 +26,11 @@ class GameServerAPIs {
       if (!registerPayload.currentMemory) {
         errors.push('currentMemory field is missing');
       }
+      if (!registerPayload.url) {
+        //errors.push('url field is missing');
+        registerPayload['url'] = `http://${registerPayload.ipAddress}/url`;
+      }
+
       if (!registerPayload.status) {
         errors.push('status is missing');
       } else {
@@ -114,15 +119,20 @@ export async function createGameServer(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<[any, any]> {
   try {
+    if (!registerPayload.url) {
+      registerPayload.url = `http://${registerPayload.ipAddress}:8080`;
+    }
+
     const gameServerRepository = getRepository(GameServer);
     let gameServer = await gameServerRepository.findOne({
-      ipAddress: registerPayload.ip_address,
+      url: registerPayload.url,
     });
     if (!gameServer) {
       gameServer = new GameServer();
       gameServer.noGamesHandled = 0;
       gameServer.noPlayersHandled = 0;
     }
+
     logger.debug('Getting next game server number');
     // get next game server number
     gameServer.serverNumber = await GameRepository.getNextGameServer();
@@ -137,6 +147,8 @@ export async function createGameServer(
     gameServer.lastHeartBeatTime = new Date();
     gameServer.noActiveGames = 0;
     gameServer.noActivePlayers = 0;
+    gameServer.url = registerPayload.url;
+
     //gameServer.serverNumber = 1;
     await gameServerRepository.save(gameServer);
     return [gameServer, null];
