@@ -158,6 +158,5 @@ async function getGameServerUrl(gameId: number): Promise<string> {
   if (!gameServer) {
     return '';
   }
-  //return gameServerUrl;
   return gameServer.url;
 }
