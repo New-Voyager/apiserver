@@ -50,6 +50,7 @@ describe('Game server APIs', () => {
       ipAddress: '10.1.1.1',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.1:8080',
     };
     try {
       const resp = await axios.post(
@@ -70,6 +71,7 @@ describe('Game server APIs', () => {
       ipAddress: '10.1.1.2',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.2:8080',
     };
     try {
       const resp = await axios.post(
@@ -101,11 +103,13 @@ describe('Game server APIs', () => {
       ipAddress: '10.1.1.3',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.3:8080',
     };
     const gameServer2 = {
       ipAddress: '10.1.1.4',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.4:8080',
     };
     try {
       await axios.post(`${GAMESERVER_API}/register-game-server`, gameServer1);
@@ -136,16 +140,19 @@ describe('Game server APIs', () => {
       ipAddress: '10.1.1.3',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.3:8080',
     };
     const gameServer2 = {
       ipAddress: '10.1.1.4',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.4:8080',
     };
     const gameServer3 = {
       ipAddress: '10.1.1.5',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.5:8080',
     };
     try {
       await axios.post(`${GAMESERVER_API}/register-game-server`, gameServer1);
@@ -186,16 +193,19 @@ describe('Game server APIs', () => {
       ipAddress: '10.1.1.3',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.3:8080',
     };
     const gameServer2 = {
       ipAddress: '10.1.1.4',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.3:8080',
     };
     const gameServer3 = {
       ipAddress: '10.1.1.5',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.3:8080',
     };
     try {
       await axios.post(`${GAMESERVER_API}/register-game-server`, gameServer1);

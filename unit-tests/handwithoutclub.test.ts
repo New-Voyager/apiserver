@@ -252,6 +252,7 @@ async function createPlayerStartFriendsGame(): Promise<
     ipAddress: '10.1.1.1',
     currentMemory: 100,
     status: 'ACTIVE',
+    url: 'htto://localhost:8080',
   };
   await createGameServer(gameServer);
   const game = await configureGameByPlayer(owner, holdemGameInput);

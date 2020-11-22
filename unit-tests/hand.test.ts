@@ -259,6 +259,7 @@ async function createClubAndStartGame(): Promise<
     ipAddress: '10.1.1.1',
     currentMemory: 100,
     status: 'ACTIVE',
+    url: 'htto://localhost:8080',
   };
   await createGameServer(gameServer);
   const game = await configureGame(owner, club, holdemGameInput);
@@ -345,6 +346,7 @@ describe('Hand server APIs', () => {
         ipAddress: '10.1.1.1',
         currentMemory: 100,
         status: 'ACTIVE',
+        url: 'htto://localhost:8080',
       };
       await createGameServer(gameServer);
       const game = await configureGameByPlayer(ownerId, holdemGameInput);

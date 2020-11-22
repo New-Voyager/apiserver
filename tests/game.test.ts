@@ -47,6 +47,7 @@ async function createGameServer(ipAddress: string) {
     ipAddress: ipAddress,
     currentMemory: 100,
     status: 'ACTIVE',
+    url: `http://${ipAddress}:8080/`,
   };
   try {
     await axios.post(`${GAMESERVER_API}/register-game-server`, gameServer1);
@@ -439,6 +440,12 @@ describe('Game APIs', () => {
 
     const gameID = await gameutils.getGameById(game.gameCode);
     const player1ID = await handutils.getPlayerById(player1Id);
+    await axios.post(`${GAMESERVER_API}/update-player-game-state`, {
+      playerId: player1ID,
+      gameId: gameID,
+      status: 'LEFT',
+    });
+    
     try {
       await axios.post(`${GAMESERVER_API}/update-player-game-state`, {
         playerId: player1ID,

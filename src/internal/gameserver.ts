@@ -27,7 +27,8 @@ class GameServerAPIs {
         errors.push('currentMemory field is missing');
       }
       if (!registerPayload.url) {
-        errors.push('url field is missing');
+        //errors.push('url field is missing');
+        registerPayload['url'] = `http://${registerPayload.ipAddress}/url`;
       }
 
       if (!registerPayload.status) {
@@ -118,6 +119,10 @@ export async function createGameServer(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<[any, any]> {
   try {
+    if (!registerPayload.url) {
+      registerPayload.url = `http://${registerPayload.ipAddress}:8080`;
+    }
+
     const gameServerRepository = getRepository(GameServer);
     let gameServer = await gameServerRepository.findOne({
       url: registerPayload.url,

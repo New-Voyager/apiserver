@@ -78,6 +78,7 @@ describe('Game APIs', () => {
       ipAddress: '10.1.1.1',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.1:8080',
     };
     try {
       await createGameServer(gameServer1);
@@ -126,6 +127,7 @@ describe('Game APIs', () => {
       ipAddress: '10.1.1.1',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.1:8080',
     };
     try {
       await createGameServer(gameServer1);
@@ -170,6 +172,7 @@ describe('Game APIs', () => {
       ipAddress: '10.1.1.1',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.1:8080',
     };
     try {
       await createGameServer(gameServer1);
@@ -198,6 +201,7 @@ describe('Game APIs', () => {
       ipAddress: '10.1.1.5',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.5:8080',
     };
     try {
       await createGameServer(gameServer1);
@@ -254,6 +258,7 @@ describe('Game APIs', () => {
       ipAddress: '10.1.1.6',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.6:8080',
     };
     try {
       await createGameServer(gameServer1);
@@ -321,6 +326,7 @@ describe('Game APIs', () => {
       ipAddress: '10.1.1.7',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.7:8080',
     };
     try {
       await createGameServer(gameServer1);
@@ -384,6 +390,7 @@ describe('Game APIs', () => {
       ipAddress: '10.1.1.8',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.8:8080',
     };
     try {
       await createGameServer(gameServer1);
@@ -451,6 +458,7 @@ describe('Game APIs', () => {
       ipAddress: '10.1.1.9',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.1.9:8080',
     };
     try {
       await createGameServer(gameServer1);
@@ -509,6 +517,7 @@ describe('Game APIs', () => {
       ipAddress: '10.1.2.1',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.2.1:8080',
     };
     try {
       await createGameServer(gameServer1);
@@ -556,6 +565,7 @@ describe('Game APIs', () => {
       ipAddress: '10.1.2.2',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'http://10.1.2.2:8080',
     };
     try {
       await createGameServer(gameServer1);

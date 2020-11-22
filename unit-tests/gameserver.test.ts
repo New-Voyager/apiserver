@@ -62,6 +62,7 @@ describe('Game server APIs', () => {
       ipAddress: '10.1.1.1',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'htto://10.1.1.1:8080',
     };
     try {
       const [resp, _] = await createGameServer(gameServer);
@@ -77,6 +78,7 @@ describe('Game server APIs', () => {
       ipAddress: '10.1.1.2',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'htto://localhost:8080',
     };
     const gameServerUpdate1 = {
       ipAddress: '10.1.1.2',
@@ -91,6 +93,7 @@ describe('Game server APIs', () => {
       ipAddress: '10.1.2.2',
       currentMemory: 200,
       noActiveGames: 2,
+      url: 'htto://localhost:8080',
     };
     try {
       const [resp, error] = await createGameServer(gameServer);
@@ -110,11 +113,13 @@ describe('Game server APIs', () => {
       ipAddress: '10.1.1.3',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'htto://10.1.1.3:8080',
     };
     const gameServer2 = {
       ipAddress: '10.1.1.4',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'htto://10.1.1.4:8080',
     };
     const [resp1, error] = await createGameServer(gameServer1);
     const [resp2, error2] = await createGameServer(gameServer2);
@@ -135,11 +140,13 @@ describe('Game server APIs', () => {
       ipAddress: '10.1.1.5',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'htto://10.1.1.5:8080',
     };
     const gameServer2 = {
       ipAddress: '10.1.1.6',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'htto://10.1.1.6:8080',
     };
     const [resp1, error1] = await createGameServer(gameServer1);
     const [resp2, error2] = await createGameServer(gameServer2);
@@ -172,11 +179,13 @@ describe('Game server APIs', () => {
       ipAddress: '10.1.1.5',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'htto://localhost-1:8080',
     };
     const gameServer2 = {
       ipAddress: '10.1.1.6',
       currentMemory: 100,
       status: 'ACTIVE',
+      url: 'htto://localhost-2:8080',
     };
     const [resp1, error1] = await createGameServer(gameServer1);
     const [resp2, error2] = await createGameServer(gameServer2);
