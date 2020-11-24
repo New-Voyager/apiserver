@@ -209,6 +209,7 @@ async function login(req: any, resp: any) {
   const jwtClaims = {
     user: player.name,
     uuid: player.uuid,
+    id: player.id,
     // iat: new Date(),
     // exp: expiryTime,
   };
