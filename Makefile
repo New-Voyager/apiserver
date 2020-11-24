@@ -1,6 +1,8 @@
 DEFAULT_DOCKER_NET := game
 GCP_PROJECT_ID := voyager-01-285603
 
+POSTGRES_VERSION := 12.5
+
 ifeq ($(OS), Windows_NT)
 	BUILD_NO := $(file < build_number.txt)
 else
@@ -54,6 +56,11 @@ up: create-network
 
 .PHONY: publish
 publish:
+	# publish postgres so that we don't have to pull from the docker hub
+	docker pull postgres:${POSTGRES_VERSION}
+	docker tag postgres:${POSTGRES_VERSION} gcr.io/${GCP_PROJECT_ID}/postgres:${POSTGRES_VERSION}
+	docker push gcr.io/${GCP_PROJECT_ID}/postgres:${POSTGRES_VERSION}
+	# publish api server
 	docker tag api-server gcr.io/${GCP_PROJECT_ID}/api-server:$(BUILD_NO)
 	docker tag api-server gcr.io/${GCP_PROJECT_ID}/api-server:latest
 	docker push gcr.io/${GCP_PROJECT_ID}/api-server:$(BUILD_NO)
