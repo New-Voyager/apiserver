@@ -122,8 +122,7 @@ class HandRepositoryImpl {
       const potWinners = handData.handResult.potWinners[0];
       const seatingArrangements = handData.handResult.playersInSeats;
 
-      handHistory.clubId = handData.clubId;
-      handHistory.gameNum = handData.gameNum;
+      handHistory.gameId = handData.gameId;
       handHistory.handNum = handData.handNum;
       handHistory.gameType = game.gameType;
       handHistory.wonAt = WonAtStatus[wonAt];
@@ -165,8 +164,7 @@ class HandRepositoryImpl {
       const allHandWinners = new Array<HandWinners>();
       for await (const hiWinner of potWinners.hiWinners) {
         const handWinners = new HandWinners();
-        handWinners.clubId = handData.clubId;
-        handWinners.gameNum = handData.gameNum;
+        handWinners.gameId = handData.gameNum;
         handWinners.handNum = handData.handNum;
         if (wonAt === 'SHOW_DOWN') {
           handWinners.winningCards = hiWinner.winningCardsStr;
@@ -179,8 +177,7 @@ class HandRepositoryImpl {
       if (potWinners.loWinners) {
         for await (const loWinner of potWinners.loWinners) {
           const handWinners = new HandWinners();
-          handWinners.clubId = handData.clubId;
-          handWinners.gameNum = handData.gameNum;
+          handWinners.gameId = handData.gameNum;
           handWinners.handNum = handData.handNum;
           if (wonAt === 'SHOW_DOWN') {
             handWinners.winningCards = loWinner.winningCardsStr;
@@ -440,7 +437,7 @@ class HandRepositoryImpl {
 
   public async saveStarredHand(
     clubId: number,
-    gameNum: number,
+    gameId: number,
     handNum: number,
     playerId: number,
     handHistory: HandHistory
@@ -459,8 +456,7 @@ class HandRepositoryImpl {
         await starredHandsRepository.delete(previousHands[0].id);
       }
       const starredHand = new StarredHands();
-      starredHand.clubId = clubId;
-      starredHand.gameNum = gameNum;
+      starredHand.gameId = gameId;
       starredHand.handNum = handNum;
       starredHand.playerId = playerId;
       starredHand.handHistory = handHistory;

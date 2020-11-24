@@ -41,9 +41,8 @@ export function getResolvers() {
 async function generateHandHistoryData(handHistory: HandHistory) {
   return {
     pageId: handHistory.id,
-    clubId: handHistory.clubId,
     data: handHistory.data,
-    gameNum: handHistory.gameNum,
+    gameId: handHistory.gameId,
     gameType: GameType[handHistory.gameType],
     handNum: handHistory.handNum,
     loWinningCards: handHistory.loWinningCards,
@@ -61,8 +60,7 @@ async function generateHandHistoryData(handHistory: HandHistory) {
 async function generateHandWinnersData(hand: HandWinners) {
   return {
     pageId: hand.id,
-    clubId: hand.clubId,
-    gameNum: hand.gameNum,
+    gameNum: hand.gameId,
     handNum: hand.handNum,
     playerId: hand.playerId,
     isHigh: hand.isHigh,

@@ -87,14 +87,45 @@ class GameRepositoryImpl {
     }
     let savedGame;
     // use current time as the game id for now
-    game.gameCode = await getGameCodeForClub(clubCode, club.id);
+    //game.gameCode = await getGameCodeForClub(clubCode, club.id);
+    const gameRespository = getRepository(PokerGame);
+
+    /*
+    ///NOTE: TEST CODE
+    game.gameCode = 'LEJRYK';
+    await getConnection()
+      .createQueryBuilder()
+      .delete()
+      .from(TrackGameServer)
+      .execute();
+
+    await getConnection()
+      .createQueryBuilder()
+      .delete()
+      .from(ClubGameRake)
+      .execute();
+
+    await getConnection()
+      .createQueryBuilder()
+      .delete()
+      .from(PlayerGameTracker)
+      .execute();
+
+    await getConnection()
+      .createQueryBuilder()
+      .delete()
+      .from(PokerGame)
+      .where('gameCode = :gameCode', {gameCode: game.gameCode})
+      .execute();
+    ///NOTE: TEST CODE
+    */
+
     game.privateGame = true;
 
     game.startedAt = new Date();
     game.startedBy = player;
 
     try {
-      const gameRespository = getRepository(PokerGame);
       await getManager().transaction(async () => {
         savedGame = await gameRespository.save(game);
 
