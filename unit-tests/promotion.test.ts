@@ -44,7 +44,7 @@ const holdemGameInput = {
 
 const flopHandWithPromotions = {
   clubId: 1,
-  gameNum: 2,
+  gameId: 2,
   handNum: 1,
   messageType: 'RESULT',
   handStatus: 'RESULT',
@@ -396,7 +396,7 @@ describe('Promotion APIs', () => {
         owner
       );
       flopHandWithPromotions.handNum = 1;
-      flopHandWithPromotions.gameNum = gameId;
+      flopHandWithPromotions.gameId = gameId;
       flopHandWithPromotions.clubId = clubId;
       flopHandWithPromotions.handResult.potWinners[0].hiWinners[0].seatNo = 1;
       flopHandWithPromotions.handResult.balanceAfterHand[0].playerId = playerId;

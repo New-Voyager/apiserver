@@ -87,7 +87,8 @@ class GameRepositoryImpl {
     }
     let savedGame;
     // use current time as the game id for now
-    //game.gameCode = await getGameCodeForClub(clubCode, club.id);
+    game.gameCode = await getGameCodeForClub(clubCode, club.id);
+    // game.gameCode = Date.now().toString();
     const gameRespository = getRepository(PokerGame);
 
     /*

@@ -49,11 +49,11 @@ class HandRepositoryImpl {
       }
 
       const game = await gameRepository.findOne({
-        where: {id: handData.gameNum},
+        where: {id: handData.gameId},
       });
       if (!game) {
-        logger.error(`Game ID ${handData.gameNum} not found`);
-        return new Error(`Game ID ${handData.gameNum} not found`);
+        logger.error(`Game ID ${handData.gameId} not found`);
+        return new Error(`Game ID ${handData.gameId} not found`);
       }
       let clubRake;
       if (handData.clubId !== 0) {
@@ -164,7 +164,7 @@ class HandRepositoryImpl {
       const allHandWinners = new Array<HandWinners>();
       for await (const hiWinner of potWinners.hiWinners) {
         const handWinners = new HandWinners();
-        handWinners.gameId = handData.gameNum;
+        handWinners.gameId = handData.gameId;
         handWinners.handNum = handData.handNum;
         if (wonAt === 'SHOW_DOWN') {
           handWinners.winningCards = hiWinner.winningCardsStr;
@@ -177,7 +177,7 @@ class HandRepositoryImpl {
       if (potWinners.loWinners) {
         for await (const loWinner of potWinners.loWinners) {
           const handWinners = new HandWinners();
-          handWinners.gameId = handData.gameNum;
+          handWinners.gameId = handData.gameId;
           handWinners.handNum = handData.handNum;
           if (wonAt === 'SHOW_DOWN') {
             handWinners.winningCards = loWinner.winningCardsStr;
@@ -302,32 +302,29 @@ class HandRepositoryImpl {
   }
 
   public async getSpecificHandHistory(
-    clubId: number,
-    gameNum: number,
+    gameId: number,
     handNum: number
   ): Promise<HandHistory | undefined> {
     const handHistoryRepository = getRepository(HandHistory);
     const handHistory = await handHistoryRepository.findOne({
-      where: {clubId: clubId, gameNum: gameNum, handNum: handNum},
+      where: {gameId: gameId, handNum: handNum},
     });
     return handHistory;
   }
 
   public async getLastHandHistory(
-    clubId: number,
-    gameNum: number
+    gameId: number
   ): Promise<HandHistory | undefined> {
     const handHistoryRepository = getRepository(HandHistory);
     const hands = await handHistoryRepository.find({
-      where: {clubId: clubId, gameNum: gameNum},
+      where: {gameId: gameId},
       order: {handNum: 'DESC'},
     });
     return hands[0];
   }
 
   public async getAllHandHistory(
-    clubId: number,
-    gameNum: number,
+    gameId: number,
     pageOptions?: PageOptions
   ): Promise<Array<HandHistory>> {
     if (!pageOptions) {
@@ -364,8 +361,7 @@ class HandRepositoryImpl {
 
     const findOptions: any = {
       where: {
-        clubId: clubId,
-        gameNum: gameNum,
+        gameId: gameId,
       },
       order: order,
       take: take,
@@ -380,8 +376,7 @@ class HandRepositoryImpl {
   }
 
   public async getMyWinningHands(
-    clubId: number,
-    gameNum: number,
+    gameId: number,
     playerId: number,
     pageOptions?: PageOptions
   ): Promise<Array<HandWinners>> {
@@ -419,8 +414,7 @@ class HandRepositoryImpl {
 
     const findOptions: any = {
       where: {
-        clubId: clubId,
-        gameNum: gameNum,
+        gameId: gameId,
         playerId: playerId,
       },
       order: order,
@@ -436,7 +430,6 @@ class HandRepositoryImpl {
   }
 
   public async saveStarredHand(
-    clubId: number,
     gameId: number,
     handNum: number,
     playerId: number,

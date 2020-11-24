@@ -615,8 +615,8 @@ class GameScript {
           buyIn(gameCode: $gameCode, amount: $amount)
         }
       `;
-      console.log(this.registeredPlayers);
-      console.log(buyinInput.players);
+      // console.log(this.registeredPlayers);
+      // console.log(buyinInput.players);
       for (const player of buyinInput.players) {
         const client = await getClient(
           this.registeredPlayers[player.playerId].playerUuid
@@ -739,7 +739,7 @@ class GameScript {
     this.log(`save hand: ${JSON.stringify(handData)}`);
     const saveHandData = handData;
     saveHandData.clubId = this.clubCreated[handData.clubId].clubId;
-    saveHandData.gameNum = this.gameCreated[handData.gameNum].gameId;
+    saveHandData.gameId = this.gameCreated[handData.gameId].gameId;
     for (let i = 0; i < handData.handResult.playersInSeats.length; i++) {
       if (handData.handResult.playersInSeats[i] !== 0) {
         saveHandData.handResult.playersInSeats[i] = this.registeredPlayers[

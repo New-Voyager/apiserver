@@ -12,7 +12,7 @@ const SERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
 const flopHandWithPromotions = {
   clubId: 1,
-  gameNum: 2,
+  gameId: 2,
   handNum: 1,
   messageType: 'RESULT',
   handStatus: 'RESULT',
@@ -342,7 +342,7 @@ describe('Promotion APIs', () => {
     });
 
     flopHandWithPromotions.handNum = 1;
-    flopHandWithPromotions.gameNum = gameID;
+    flopHandWithPromotions.gameId = gameID;
     flopHandWithPromotions.clubId = clubID;
     flopHandWithPromotions.handResult.potWinners[0].hiWinners[0].seatNo = 1;
     flopHandWithPromotions.handResult.balanceAfterHand[0].playerId = player;

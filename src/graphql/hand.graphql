@@ -17,8 +17,7 @@ enum GameType {
 
 type HandHistory {
   pageId: Int
-  clubId: Int!
-  gameNum: Int!
+  gameId: Int!
   handNum: Int!
   gameType: GameType!
   wonAt: WonAtStatus!
@@ -35,8 +34,7 @@ type HandHistory {
 
 type HandWinners {
   pageId: Int
-  clubId: Int!
-  gameNum: Int!
+  gameId: Int!
   handNum: Int!
   isHigh: Boolean!
   winningCards: String
@@ -47,8 +45,7 @@ type HandWinners {
 
 type StarredHands {
   playerId: Int!
-  clubId: Int!
-  gameNum: Int!
+  gameId: Int!
   handNum: Int!
   handHistory: HandHistory!
 }
@@ -68,24 +65,24 @@ type Mutation {
 }
 
 type Query {
-  # To get the last hand history for a given gameNum and clubId
+  # To get the last hand history for a given gameId and clubId
   lastHandHistory(clubCode: String!, gameCode: String!): HandHistory!
 
-  # To get specific hand history for a given gameNum, clubId and handNum
+  # To get specific hand history for a given gameId, clubId and handNum
   specificHandHistory(
     clubCode: String!
     gameCode: String!
     handNum: String!
   ): HandHistory!
 
-  # To get all hand history for a given gameNum and clubId
+  # To get all hand history for a given gameId and clubId
   allHandHistory(
     clubCode: String!
     gameCode: String!
     page: PageInput
   ): [HandHistory!]
 
-  # To get a specific user's last 10 winning hands for a given gameNum and clubId
+  # To get a specific user's last 10 winning hands for a given gameId and clubId
   myWinningHands(
     clubCode: String!
     gameCode: String!
