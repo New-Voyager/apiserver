@@ -7,8 +7,8 @@ function validateHandData(handData: any): Array<string> {
     if (!handData.clubId && handData.clubId !== 0) {
       errors.push('clubId is missing');
     }
-    if (!handData.gameNum) {
-      errors.push('gameNum is missing');
+    if (!handData.gameId) {
+      errors.push('gameId is missing');
     }
     if (!handData.handNum) {
       errors.push('handNum is missing');

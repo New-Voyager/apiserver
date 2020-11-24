@@ -41,9 +41,8 @@ export function getResolvers() {
 async function generateHandHistoryData(handHistory: HandHistory) {
   return {
     pageId: handHistory.id,
-    clubId: handHistory.clubId,
     data: handHistory.data,
-    gameNum: handHistory.gameNum,
+    gameId: handHistory.gameId,
     gameType: GameType[handHistory.gameType],
     handNum: handHistory.handNum,
     loWinningCards: handHistory.loWinningCards,
@@ -61,8 +60,7 @@ async function generateHandHistoryData(handHistory: HandHistory) {
 async function generateHandWinnersData(hand: HandWinners) {
   return {
     pageId: hand.id,
-    clubId: hand.clubId,
-    gameNum: hand.gameNum,
+    gameId: hand.gameId,
     handNum: hand.handNum,
     playerId: hand.playerId,
     isHigh: hand.isHigh,
@@ -120,7 +118,7 @@ export async function getLastHandHistory(playerId: string, args: any) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
 
-  const handHistory = await HandRepository.getLastHandHistory(club.id, game.id);
+  const handHistory = await HandRepository.getLastHandHistory(game.id);
   if (!handHistory) {
     throw new Error('No hand found');
   }
@@ -172,7 +170,6 @@ export async function getSpecificHandHistory(playerId: string, args: any) {
   }
 
   const handHistory = await HandRepository.getSpecificHandHistory(
-    club.id,
     game.id,
     args.handNum
   );
@@ -231,7 +228,6 @@ export async function getAllHandHistory(playerId: string, args: any) {
   }
 
   const handHistory = await HandRepository.getAllHandHistory(
-    club.id,
     game.id,
     args.page
   );
@@ -291,7 +287,6 @@ export async function getMyWinningHands(playerId: string, args: any) {
   }
 
   const handwinners = await HandRepository.getMyWinningHands(
-    club.id,
     game.id,
     player.id,
     args.page
@@ -382,7 +377,6 @@ export async function saveStarredHand(playerId: string, args: any) {
   }
 
   const handHistory = await HandRepository.getSpecificHandHistory(
-    club.id,
     game.id,
     args.handNum
   );
@@ -392,7 +386,6 @@ export async function saveStarredHand(playerId: string, args: any) {
   }
 
   const resp = await HandRepository.saveStarredHand(
-    club.id,
     game.id,
     args.handNum,
     player.id,

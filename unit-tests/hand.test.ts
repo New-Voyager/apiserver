@@ -47,7 +47,7 @@ const holdemGameInput = {
 
 const allInHand = {
   clubId: 1,
-  gameNum: 1,
+  gameId: 1,
   handNum: 1,
   messageType: 'RESULT',
   handStatus: 'RESULT',
@@ -131,7 +131,7 @@ const allInHand = {
 
 const flopHand = {
   clubId: 1,
-  gameNum: 2,
+  gameId: 2,
   handNum: 1,
   messageType: 'RESULT',
   handStatus: 'RESULT',
@@ -299,7 +299,7 @@ describe('Hand server APIs', () => {
         gameCode,
       ] = await createClubAndStartGame();
       allInHand.handNum = 1;
-      allInHand.gameNum = gameId;
+      allInHand.gameId = gameId;
       allInHand.clubId = clubId;
       allInHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
       allInHand.handResult.potWinners[0].loWinners[0].seatNo = 1;
@@ -324,7 +324,7 @@ describe('Hand server APIs', () => {
         gameCode,
       ] = await createClubAndStartGame();
       flopHand.handNum = 1;
-      flopHand.gameNum = gameId;
+      flopHand.gameId = gameId;
       flopHand.clubId = clubId;
       flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
       flopHand.handResult.balanceAfterHand[0].playerId = playerId;
@@ -369,7 +369,7 @@ describe('Hand server APIs', () => {
         expect(true).toBeFalsy();
       }
       allInHand.handNum = 1;
-      allInHand.gameNum = gameID.id;
+      allInHand.gameId = gameID.id;
       allInHand.clubId = 0;
       allInHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
       allInHand.handResult.potWinners[0].loWinners[0].seatNo = 1;
@@ -394,7 +394,7 @@ describe('Hand server APIs', () => {
         gameCode,
       ] = await createClubAndStartGame();
       flopHand.handNum = 1;
-      flopHand.gameNum = gameId;
+      flopHand.gameId = gameId;
       flopHand.clubId = clubId;
       flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
       flopHand.handResult.balanceAfterHand[0].playerId = playerId;
@@ -424,7 +424,7 @@ describe('Hand server APIs', () => {
         gameCode,
       ] = await createClubAndStartGame();
       flopHand.handNum = 1;
-      flopHand.gameNum = gameId;
+      flopHand.gameId = gameId;
       flopHand.clubId = clubId;
       flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
       flopHand.handResult.balanceAfterHand[0].playerId = playerId;
@@ -457,7 +457,7 @@ describe('Hand server APIs', () => {
         gameCode,
       ] = await createClubAndStartGame();
       flopHand.handNum = 1;
-      flopHand.gameNum = gameId;
+      flopHand.gameId = gameId;
       flopHand.clubId = clubId;
       flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
       flopHand.handResult.balanceAfterHand[0].playerId = playerId;
@@ -488,7 +488,7 @@ describe('Hand server APIs', () => {
         gameCode,
       ] = await createClubAndStartGame();
       flopHand.handNum = 1;
-      flopHand.gameNum = gameId;
+      flopHand.gameId = gameId;
       flopHand.clubId = clubId;
       flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
       flopHand.handResult.balanceAfterHand[0].playerId = playerId;
@@ -529,7 +529,7 @@ describe('Hand server APIs', () => {
         gameCode,
       ] = await createClubAndStartGame();
       flopHand.handNum = 1;
-      flopHand.gameNum = gameId;
+      flopHand.gameId = gameId;
       flopHand.clubId = clubId;
       flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
       flopHand.handResult.balanceAfterHand[0].playerId = playerId;
@@ -563,7 +563,7 @@ describe('Hand server APIs', () => {
         gameCode,
       ] = await createClubAndStartGame();
       flopHand.handNum = 1;
-      flopHand.gameNum = gameId;
+      flopHand.gameId = gameId;
       flopHand.clubId = clubId;
       flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
       flopHand.handResult.balanceAfterHand[0].playerId = playerId;
@@ -604,7 +604,7 @@ describe('Hand server APIs', () => {
         gameCode,
       ] = await createClubAndStartGame();
       flopHand.handNum = 1;
-      flopHand.gameNum = gameId;
+      flopHand.gameId = gameId;
       flopHand.clubId = clubId;
       flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
       flopHand.handResult.balanceAfterHand[0].playerId = playerId;
@@ -634,7 +634,7 @@ describe('Hand server APIs', () => {
         clubCode,
         gameCode,
       ] = await createClubAndStartGame();
-      flopHand.gameNum = gameId;
+      flopHand.gameId = gameId;
       flopHand.clubId = clubId;
       flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
       flopHand.handResult.balanceAfterHand[0].playerId = playerId;

@@ -9,8 +9,7 @@ export const getSpecificHandHistoryQuery = gql`
       handNum: $handNum
     ) {
       pageId
-      clubId
-      gameNum
+      gameId
       handNum
       gameType
       wonAt
@@ -31,8 +30,7 @@ export const getLastHandHistoryQuery = gql`
   query($clubCode: String!, $gameCode: String!) {
     handHistory: lastHandHistory(clubCode: $clubCode, gameCode: $gameCode) {
       pageId
-      clubId
-      gameNum
+      gameId
       handNum
       gameType
       wonAt
@@ -57,8 +55,7 @@ export const getAllHandHistoryQuery = gql`
       page: $page
     ) {
       pageId
-      clubId
-      gameNum
+      gameId
       handNum
       gameType
       wonAt
@@ -83,8 +80,7 @@ export const getMyWinningHandsQuery = gql`
       page: $page
     ) {
       pageId
-      clubId
-      gameNum
+      gameId
       handNum
       winningCards
       winningRank
@@ -108,8 +104,7 @@ export const playerByIdQuery = gql`
 export const getStarredHandsQuery = gql`
   query {
     hands: allStarredHands {
-      clubId
-      gameNum
+      gameId
       handNum
       playerId
       handHistory {

@@ -14,11 +14,9 @@ export class HandWinners {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @Column({name: 'club_id'})
-  public clubId!: number;
-
-  @Column({name: 'game_num'})
-  public gameNum!: number;
+  @Index()
+  @Column({name: 'game_id'})
+  public gameId!: number;
 
   @Column({name: 'hand_num'})
   public handNum!: number;
@@ -45,11 +43,9 @@ export class HandHistory {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @Column({name: 'club_id'})
-  public clubId!: number;
-
-  @Column({name: 'game_num'})
-  public gameNum!: number;
+  @Index()
+  @Column({name: 'game_id'})
+  public gameId!: number;
 
   @Column({name: 'hand_num'})
   public handNum!: number;
@@ -99,11 +95,9 @@ export class StarredHands {
   @Column({name: 'player_id'})
   public playerId!: number;
 
-  @Column({name: 'club_id'})
-  public clubId!: number;
-
-  @Column({name: 'game_num'})
-  public gameNum!: number;
+  @Index()
+  @Column({name: 'game_id'})
+  public gameId!: number;
 
   @Column({name: 'hand_num'})
   public handNum!: number;

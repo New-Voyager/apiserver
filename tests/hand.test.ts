@@ -7,7 +7,7 @@ import * as gameutils from './utils/game.testutils';
 
 const allInHand = {
   clubId: 1,
-  gameNum: 1,
+  gameId: 1,
   handNum: 1,
   messageType: 'RESULT',
   handStatus: 'RESULT',
@@ -91,7 +91,7 @@ const allInHand = {
 
 const flopHand = {
   clubId: 1,
-  gameNum: 2,
+  gameId: 2,
   handNum: 1,
   messageType: 'RESULT',
   handStatus: 'RESULT',
@@ -270,7 +270,7 @@ describe('Hand Server', () => {
     const [clubId, playerId, gameId] = await createClubAndStartGame();
 
     allInHand.handNum = 1;
-    allInHand.gameNum = gameId;
+    allInHand.gameId = gameId;
     allInHand.clubId = clubId;
     allInHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
     allInHand.handResult.potWinners[0].loWinners[0].seatNo = 1;
@@ -281,7 +281,7 @@ describe('Hand Server', () => {
     expect(resp.data.status).toBe('OK');
 
     flopHand.handNum = 2;
-    flopHand.gameNum = gameId;
+    flopHand.gameId = gameId;
     flopHand.clubId = clubId;
     flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
     flopHand.handResult.balanceAfterHand[0].playerId = playerId;
@@ -302,7 +302,7 @@ describe('Hand Server', () => {
     ] = await createClubAndStartGame();
 
     allInHand.handNum = 1;
-    allInHand.gameNum = gameId;
+    allInHand.gameId = gameId;
     allInHand.clubId = clubId;
     allInHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
     allInHand.handResult.potWinners[0].loWinners[0].seatNo = 1;
@@ -330,7 +330,7 @@ describe('Hand Server', () => {
       gameCode,
     ] = await createClubAndStartGame();
 
-    allInHand.gameNum = gameId;
+    allInHand.gameId = gameId;
     allInHand.clubId = clubId;
     allInHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
     allInHand.handResult.potWinners[0].loWinners[0].seatNo = 1;
@@ -361,7 +361,7 @@ describe('Hand Server', () => {
       gameCode,
     ] = await createClubAndStartGame();
 
-    allInHand.gameNum = gameId;
+    allInHand.gameId = gameId;
     allInHand.clubId = clubId;
     allInHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
     allInHand.handResult.potWinners[0].loWinners[0].seatNo = 1;
@@ -389,7 +389,7 @@ describe('Hand Server', () => {
       gameCode,
     ] = await createClubAndStartGame();
 
-    allInHand.gameNum = gameId;
+    allInHand.gameId = gameId;
     allInHand.clubId = clubId;
     allInHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
     allInHand.handResult.potWinners[0].loWinners[0].seatNo = 1;
@@ -429,7 +429,7 @@ describe('Hand Server', () => {
       gameCode,
     ] = await createClubAndStartGame();
 
-    allInHand.gameNum = gameId;
+    allInHand.gameId = gameId;
     allInHand.clubId = clubId;
     allInHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
     allInHand.handResult.potWinners[0].loWinners[0].seatNo = 1;
@@ -460,7 +460,7 @@ describe('Hand Server', () => {
       gameCode,
     ] = await createClubAndStartGame();
 
-    allInHand.gameNum = gameId;
+    allInHand.gameId = gameId;
     allInHand.clubId = clubId;
     allInHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
     allInHand.handResult.potWinners[0].loWinners[0].seatNo = 1;
@@ -500,7 +500,7 @@ describe('Hand Server', () => {
       gameCode,
     ] = await createClubAndStartGame();
 
-    allInHand.gameNum = gameId;
+    allInHand.gameId = gameId;
     allInHand.clubId = clubId;
     allInHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
     allInHand.handResult.potWinners[0].loWinners[0].seatNo = 1;
@@ -528,7 +528,7 @@ describe('Hand Server', () => {
       gameCode,
     ] = await createClubAndStartGame();
 
-    allInHand.gameNum = gameId;
+    allInHand.gameId = gameId;
     allInHand.clubId = clubId;
     allInHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
     allInHand.handResult.potWinners[0].loWinners[0].seatNo = 1;

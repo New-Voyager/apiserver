@@ -13,6 +13,7 @@ type Player {
   clubs: [PlayerClub!]
 }
 
+
 type Mutation {
   createPlayer(player: PlayerCreateInput!): String!
   authenticatePlayer(name: String!, uuid: String!, deviceId: String!): Boolean

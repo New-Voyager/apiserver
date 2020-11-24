@@ -445,7 +445,7 @@ describe('Game APIs', () => {
       gameId: gameID,
       status: 'LEFT',
     });
-    
+
     try {
       await axios.post(`${GAMESERVER_API}/update-player-game-state`, {
         playerId: player1ID,
