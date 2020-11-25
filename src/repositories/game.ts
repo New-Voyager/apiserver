@@ -352,7 +352,8 @@ class GameRepositoryImpl {
         seatNo: seatNo,
       },
     });
-    if (playerInSeat) {
+
+    if (playerInSeat && playerInSeat.player.id !== player.id) {
       // there is a player in the seat (unexpected)
       throw new Error(
         `A player ${playerInSeat.player.name}:${playerInSeat.player.uuid} is sitting in seat: ${seatNo}`
