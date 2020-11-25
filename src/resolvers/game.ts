@@ -1,4 +1,4 @@
-import {GameRepository} from '@src/repositories/game';
+import {GameRepository, SeatChangeInput} from '@src/repositories/game';
 import {
   GameStatus,
   GameType,
@@ -425,6 +425,42 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
   }
 }
 
+export async function applySeatChange(
+  hostUuid: string,
+  gameCode: string,
+  playerSeats: SeatChangeInput[]
+) {
+  if (!hostUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubHost = await getClubMember(hostUuid, game.club.clubCode);
+      if (!clubHost || !(clubHost.isManager || clubHost.isOwner)) {
+        logger.error(
+          `Player: ${hostUuid} is not authorized to approve buyIn in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${hostUuid} is not authorized to approve buyIn in club ${game.club.name}`
+        );
+      }
+    }
+
+    const status = await GameRepository.applySeatChange(game, playerSeats);
+    // player is good to go
+    return status;
+  } catch (err) {
+    logger.error(err);
+    throw new Error(`Failed to update seat change. ${JSON.stringify(err)}`);
+  }
+}
+
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -521,6 +557,9 @@ const resolvers: any = {
     },
     leaveGame: async (parent, args, ctx, info) => {
       return leaveGame(ctx.req.playerId, args.gameCode);
+    },
+    applySeatChange: async (parent, args, ctx, info) => {
+      return applySeatChange(ctx.req.playerId, args.gameCode, args.playerSeats);
     },
   },
 };

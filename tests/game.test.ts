@@ -457,4 +457,49 @@ describe('Game APIs', () => {
       expect(true).toBeFalsy();
     }
   });
+
+  test('change seat', async () => {
+    const [clubCode, ownerId] = await clubutils.createClub('brady', 'yatzee');
+    await createGameServer('1.2.1.3');
+    const game = await gameutils.configureGame(
+      ownerId,
+      clubCode,
+      holdemGameInput
+    );
+    const player1Id = await clubutils.createPlayer('player1', 'abc123');
+    const player2Id = await clubutils.createPlayer('adam', '12435ABC');
+
+    const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
+    expect(data).toBe('WAIT_FOR_BUYIN');
+    const data1 = await gameutils.joinGame(player2Id, game.gameCode, 2);
+    expect(data1).toBe('WAIT_FOR_BUYIN');
+
+    const resp = await gameutils.applySeatChange(ownerId, game.gameCode, [
+      {
+        playerUuid: player1Id,
+        newSeatNo: 2,
+      },
+      {
+        playerUuid: player2Id,
+        newSeatNo: 1,
+      },
+    ]);
+    expect(resp).toBe(true);
+
+    try {
+      await gameutils.applySeatChange(player2Id, game.gameCode, [
+        {
+          playerUuid: player1Id,
+          newSeatNo: 2,
+        },
+        {
+          playerUuid: player2Id,
+          newSeatNo: 1,
+        },
+      ]);
+      expect(false).toBeTruthy();
+    } catch (error) {
+      expect(error.toString()).toContain('Failed to update seat change');
+    }
+  });
 });

@@ -23,6 +23,12 @@ import {
   changeGameStatus,
 } from '@src/gameserver';
 import {isPostgres} from '@src/utils';
+import {getPlayer} from '@src/cache';
+
+export interface SeatChangeInput {
+  playerUuid: string;
+  newSeatNo: number;
+}
 
 const logger = getLogger('game');
 
@@ -743,6 +749,50 @@ class GameRepositoryImpl {
     }
     await this.markGameStatus(game.id, GameStatus.ACTIVE);
     return GameStatus.ACTIVE;
+  }
+
+  public async applySeatChange(
+    game: PokerGame,
+    playerSeats: SeatChangeInput[]
+  ): Promise<boolean> {
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+
+    await getManager()
+      .transaction(async transactionalEntityManager => {
+        for await (const playerInfo of playerSeats) {
+          const player = await getPlayer(playerInfo.playerUuid);
+          const playerInGame = await playerGameTrackerRepository.findOne({
+            where: {
+              game: {id: game.id},
+              player: {id: player.id},
+            },
+          });
+
+          if (!playerInGame) {
+            logger.error(
+              `Player ${player.name} is not in the game: ${game.gameCode}`
+            );
+            throw new Error(`Player ${player.name} is not in the game`);
+          }
+
+          await playerGameTrackerRepository.update(
+            {
+              game: {id: game.id},
+              player: {id: player.id},
+            },
+            {
+              seatNo: playerInfo.newSeatNo,
+            }
+          );
+        }
+      })
+      .catch(err => {
+        logger.error(`Error when trying to change seats: ${err.toString()}`);
+        throw new Error(
+          `Error when trying to save starred hands: ${err.toString()}`
+        );
+      });
+    return true;
   }
 
   public async markGameActive(gameId: number): Promise<GameStatus> {

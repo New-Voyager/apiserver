@@ -143,6 +143,11 @@ type PlayerGameState {
   seatNo: Int
 }
 
+input SeatChangeInput {
+playerUuid: String
+newSeatNo: Int
+}
+
 type Mutation {
   # Not implemented
   configureGameFromTemplate(clubCode: String!, templateId: Int!): GameInfo!
@@ -165,6 +170,7 @@ type Mutation {
   startGame(gameCode: String!): GameStatus!
   takeBreak(gameCode: String!): PlayerGameStatus!
   leaveGame(gameCode: String): PlayerGameStatus!
+  applySeatChange(gameCode: String!, playerSeats: [SeatChangeInput!]): Boolean! 
   #pauseGame(gameCode: String!): GameStatus!
   #endGame(gameCode: String!): GameStatus!
   #resumeGame(gameCode: String!): GameStatus!

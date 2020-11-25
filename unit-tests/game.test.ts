@@ -3,7 +3,7 @@ import {createGameServer} from '@src/internal/gameserver';
 import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/resolvers/reset';
 import {createPlayer} from '@src/resolvers/player';
-import {createClub, updateClubMember} from '@src/resolvers/club';
+import {createClub, updateClubMember, joinClub} from '@src/resolvers/club';
 import {
   configureGame,
   configureGameByPlayer,
@@ -14,6 +14,7 @@ import {
   tableGameState,
   takeBreak,
   leaveGame,
+  applySeatChange,
 } from '@src/resolvers/game';
 import {getGame} from '@src/cache/index';
 
@@ -602,6 +603,67 @@ describe('Game APIs', () => {
 
       const resp3 = await leaveGame(player1, game.gameCode);
       expect(resp3).toBe('LEAVING_GAME');
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
+
+  test('Apply seat change', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.2.3',
+      currentMemory: 100,
+      status: 'ACTIVE',
+      url: 'http://10.1.1.7:8080',
+    };
+    try {
+      await createGameServer(gameServer1);
+      const owner = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+      const club = await createClub(owner, {
+        name: 'club_name',
+        description: 'poker players gather',
+        ownerUuid: owner,
+      });
+      const game = await configureGame(owner, club, holdemGameInput);
+      const player1 = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc1234',
+        },
+      });
+      const player2 = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc1235',
+        },
+      });
+
+      // join a club
+      await joinClub(player1, club);
+      await joinClub(player2, club);
+
+      // Join a game
+      const data = await joinGame(player1, game.gameCode, 1);
+      expect(data).toBe('WAIT_FOR_BUYIN');
+      const data1 = await joinGame(player2, game.gameCode, 2);
+      expect(data1).toBe('WAIT_FOR_BUYIN');
+
+      const resp = await applySeatChange(owner, game.gameCode, [
+        {
+          playerUuid: player1,
+          newSeatNo: 2,
+        },
+        {
+          playerUuid: player2,
+          newSeatNo: 1,
+        },
+      ]);
+      expect(resp).toBe(true);
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();

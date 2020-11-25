@@ -115,6 +115,11 @@ export interface GameInput {
   muckLosingHand?: boolean;
 }
 
+export interface SeatChangeInput {
+  playerUuid: string;
+  newSeatNo: number;
+}
+
 export const joinGameQuery = gql`
   mutation($gameCode: String!, $seatNo: Int!) {
     status: joinGame(gameCode: $gameCode, seatNo: $seatNo)
@@ -197,6 +202,29 @@ export const leaveGameQuery = gql`
     status: leaveGame(gameCode: $gameCode)
   }
 `;
+
+export const applySeatChangeQuery = gql`
+  mutation($gameCode: String!, $playerSeats: [SeatChangeInput!]) {
+    status: applySeatChange(gameCode: $gameCode, playerSeats: $playerSeats)
+  }
+`;
+
+export async function applySeatChange(
+  hostId: string,
+  gameCode: string,
+  playerSeats: SeatChangeInput[]
+): Promise<any> {
+  const resp = await getClient(hostId).mutate({
+    variables: {
+      gameCode: gameCode,
+      playerSeats: playerSeats,
+    },
+    mutation: applySeatChangeQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
 
 export async function configureFriendsGame(
   playerId: string,
