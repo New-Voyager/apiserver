@@ -193,7 +193,7 @@ class HandRepositoryImpl {
       const sessionTime =
         new Date(handData.handResult.handEndedAt).getTime() -
         new Date(handData.handResult.handStartedAt).getTime();
-      
+
       /**
        * Assigning player chips values
        */
