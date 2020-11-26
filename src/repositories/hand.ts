@@ -1,5 +1,5 @@
 import {HandHistory, HandWinners, StarredHands} from '@src/entity/hand';
-import {WonAtStatus} from '@src/entity/types';
+import {PlayerStatus, WonAtStatus} from '@src/entity/types';
 import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {PokerGame} from '@src/entity/game';
@@ -190,6 +190,10 @@ class HandRepositoryImpl {
         }
       }
 
+      const sessionTime =
+        new Date(handData.handResult.handEndedAt).getTime() -
+        new Date(handData.handResult.handStartedAt).getTime();
+
       /**
        * Assigning player chips values
        */
@@ -224,6 +228,9 @@ class HandRepositoryImpl {
         }
         playerChips.stack = playerData.balance;
         allPlayerChips.push(playerChips);
+        if (playerChips.status === PlayerStatus.PLAYING) {
+          playerChips.sessionTime += sessionTime;
+        }
       }
 
       /**
