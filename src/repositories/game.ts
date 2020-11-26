@@ -380,12 +380,11 @@ class GameRepositoryImpl {
       thisPlayerInSeat.seatNo = seatNo;
       thisPlayerInSeat.noOfBuyins = 0;
       thisPlayerInSeat.buyinNotes = '';
+      const randomBytes = Buffer.from(crypto.randomBytes(5));
+      thisPlayerInSeat.gameToken = randomBytes.toString('hex');
     }
 
     // we need 5 bytes to scramble 5 cards
-    const randomBytes = Buffer.from(crypto.randomBytes(5));
-
-    thisPlayerInSeat.gameToken = randomBytes.toString('hex');
     if (thisPlayerInSeat.stack > 0) {
       thisPlayerInSeat.status = PlayerStatus.PLAYING;
     } else {

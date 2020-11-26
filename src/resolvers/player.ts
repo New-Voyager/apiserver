@@ -212,6 +212,9 @@ async function getLiveGames(playerId: string) {
     game.elapsedTime = Math.floor(game.elapsedTime);
     game.status = GameStatus[game['gameStatus']];
     game.gameType = GameType[game['gameType']];
+    if (!game['playerStatus']) {
+      game.playerStatus = PlayerStatus.NOT_PLAYING;
+    }
     game.playerStatus = PlayerStatus[game['playerStatus']];
   }
   return liveGames;
