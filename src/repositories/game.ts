@@ -132,28 +132,38 @@ class GameRepositoryImpl {
       await getManager().transaction(async () => {
         savedGame = await gameRespository.save(game);
 
-        let pick = 0;
-        if (gameServers.length > 0) {
-          pick = Number.parseInt(savedGame.id) % gameServers.length;
-        }
-        const trackgameServerRepository = getRepository(TrackGameServer);
-        const trackServer = new TrackGameServer();
-        trackServer.game = savedGame;
-        trackServer.gameServer = gameServers[pick];
-        const gameServer = gameServers[pick];
-        await trackgameServerRepository.save(trackServer);
-
-        const clubRake = new ClubGameRake();
-        clubRake.club = club;
-        clubRake.game = savedGame;
-        clubRake.lastHandNum = 0;
-        clubRake.promotion = 0;
-        clubRake.rake = 0;
-        await clubGameRakeRepository.save(clubRake);
-
-        // create a new game in game server within the transcation
         if (!game.isTemplate) {
-          const tableStatus = await publishNewGame(game);
+          let pick = 0;
+          if (gameServers.length > 0) {
+            pick = Number.parseInt(savedGame.id) % gameServers.length;
+          }
+
+          let scanServer = 0;
+          let gameServer;
+          let tableStatus;
+          for (scanServer = 0; scanServer < gameServers.length; scanServer++) {
+            // create a new game in game server within the transcation
+            try {
+              gameServer = gameServers[pick];
+              tableStatus = await publishNewGame(game, gameServer);
+              break;
+            } catch (err) {
+              logger.warn(
+                `Game Id: ${savedGame.id} cannot be hosted by game server: ${gameServer.url}`
+              );
+            }
+            gameServer = null;
+            pick++;
+            if (pick === gameServer.length) {
+              pick = 0;
+            }
+          }
+
+          if (!gameServer) {
+            // could not assign game server for the game
+            throw new Error('No game server is accepting this game');
+          }
+
           game.tableStatus = tableStatus;
           await gameRespository.update(
             {
@@ -161,10 +171,25 @@ class GameRepositoryImpl {
             },
             {tableStatus: tableStatus}
           );
+          const clubRake = new ClubGameRake();
+          clubRake.club = club;
+          clubRake.game = savedGame;
+          clubRake.lastHandNum = 0;
+          clubRake.promotion = 0;
+          clubRake.rake = 0;
+          await clubGameRakeRepository.save(clubRake);
+
+          const trackgameServerRepository = getRepository(TrackGameServer);
+          const trackServer = new TrackGameServer();
+          trackServer.game = savedGame;
+          trackServer.gameServer = gameServers[pick];
+          await trackgameServerRepository.save(trackServer);
         }
       });
     } catch (err) {
-      logger.error("Couldn't create game and retry again");
+      logger.error(
+        `Couldn't create game and retry again. Error: ${err.toString()}`
+      );
       throw new Error("Couldn't create the game, please retry again");
     }
     return savedGame;

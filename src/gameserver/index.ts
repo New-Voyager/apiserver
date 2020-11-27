@@ -25,13 +25,13 @@ export function isGameServerEnabled() {
   return notifyGameServer;
 }
 
-export async function publishNewGame(game: any) {
+export async function publishNewGame(game: any, gameServer: any) {
   if (!notifyGameServer) {
     return;
   }
   const gameType = game.gameType;
   // get game server of this game
-  const gameServerUrl = await getGameServerUrl(game.id);
+  const gameServerUrl = gameServer.url;
 
   const message = {
     type: 'NewGame',
