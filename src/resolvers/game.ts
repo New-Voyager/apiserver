@@ -353,9 +353,18 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
         );
       }
     }
+
+    const player = await getPlayer(playerUuid);
+
     const ret = game as any;
     ret.gameType = GameType[game.gameType];
     ret.tableStatus = TableStatus[game.tableStatus];
+
+    ret.gameToPlayerChannel = `game.${game.gameCode}.player`;
+    ret.playerToHandChannel = `player.${game.gameCode}.hand`;
+    ret.handToAllChannel = `hand.${game.gameCode}.player.all`;
+    ret.handToPlayerChannel = `hand.${game.gameCode}.player.${player.id}`;
+
     return ret;
   } catch (err) {
     logger.error(err);
@@ -605,7 +614,7 @@ const resolvers: any = {
       if (playerState) {
         return PlayerStatus[playerState.playerStatus];
       }
-      return PlayerStatus.NOT_PLAYING;
+      return PlayerStatus[PlayerStatus.NOT_PLAYING];
     },
   },
   Mutation: {

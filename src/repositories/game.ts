@@ -354,7 +354,8 @@ class GameRepositoryImpl {
         seatNo: seatNo,
       },
     });
-    if (playerInSeat) {
+
+    if (playerInSeat && playerInSeat.player.id !== player.id) {
       // there is a player in the seat (unexpected)
       throw new Error(
         `A player ${playerInSeat.player.name}:${playerInSeat.player.uuid} is sitting in seat: ${seatNo}`
@@ -381,12 +382,11 @@ class GameRepositoryImpl {
       thisPlayerInSeat.seatNo = seatNo;
       thisPlayerInSeat.noOfBuyins = 0;
       thisPlayerInSeat.buyinNotes = '';
+      const randomBytes = Buffer.from(crypto.randomBytes(5));
+      thisPlayerInSeat.gameToken = randomBytes.toString('hex');
     }
 
     // we need 5 bytes to scramble 5 cards
-    const randomBytes = Buffer.from(crypto.randomBytes(5));
-
-    thisPlayerInSeat.gameToken = randomBytes.toString('hex');
     if (thisPlayerInSeat.stack > 0) {
       thisPlayerInSeat.status = PlayerStatus.PLAYING;
     } else {
