@@ -72,6 +72,17 @@ export class PlayerGameTracker {
   public sessionTime!: number;
 
   @DbAwareColumn({
+    name: 'seat_change_requested_at',
+    type: 'timestamp',
+    nullable: true,
+    default: null,
+  })
+  public seatChangeRequestedAt!: Date;
+
+  @Column({name: 'seat_change_confirmed', default: false})
+  public seatChangeConfirmed!: boolean;
+
+  @DbAwareColumn({
     name: 'sat_at',
     type: 'timestamp',
     nullable: true,

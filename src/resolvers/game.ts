@@ -434,6 +434,119 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
   }
 }
 
+export async function requestSeatChange(playerUuid: string, gameCode: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
+        );
+      }
+    }
+    const player = await getPlayer(playerUuid);
+    const requestedAt = await GameRepository.requestSeatChange(player, game);
+    return requestedAt;
+  } catch (err) {
+    logger.error(err);
+    throw new Error(`Failed to request seat change. ${JSON.stringify(err)}`);
+  }
+}
+
+export async function seatChangeRequests(playerUuid: string, gameCode: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
+        );
+      }
+    }
+    const player = await getPlayer(playerUuid);
+    const allPlayers = await GameRepository.seatChangeRequests(player, game);
+
+    const playerSeatChange = new Array<any>();
+    allPlayers.map(player => {
+      const data = {
+        playerUuid: player.player.uuid,
+        name: player.player.name,
+        status: PlayerStatus[player.status],
+        seatNo: player.satAt,
+        sessionTime: player.sessionTime,
+        seatChangeRequestedAt: player.seatChangeRequestedAt,
+        seatChangeConfirmed: player.seatChangeConfirmed,
+      };
+      playerSeatChange.push(data);
+    });
+
+    return playerSeatChange;
+  } catch (err) {
+    logger.error(err);
+    throw new Error(
+      `Failed to get seat change requests. ${JSON.stringify(err)}`
+    );
+  }
+}
+
+export async function confirmSeatChange(playerUuid: string, gameCode: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
+        );
+      }
+    }
+    const player = await getPlayer(playerUuid);
+    const seatChangeStatus = await GameRepository.confirmSeatChange(
+      player,
+      game
+    );
+    return seatChangeStatus;
+  } catch (err) {
+    logger.error(err);
+    throw new Error(`Failed to confirm seat change. ${JSON.stringify(err)}`);
+  }
+}
+
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -450,6 +563,9 @@ const resolvers: any = {
     },
     gameInfo: async (parent, args, ctx, info) => {
       return await getGameInfo(ctx.req.playerId, args.gameCode);
+    },
+    seatChangeRequests: async (parent, args, ctx, info) => {
+      return await seatChangeRequests(ctx.req.playerId, args.gameCode);
     },
   },
   GameInfo: {
@@ -530,6 +646,12 @@ const resolvers: any = {
     },
     leaveGame: async (parent, args, ctx, info) => {
       return leaveGame(ctx.req.playerId, args.gameCode);
+    },
+    requestSeatChange: async (parent, args, ctx, info) => {
+      return requestSeatChange(ctx.req.playerId, args.gameCode);
+    },
+    confirmSeatChange: async (parent, args, ctx, info) => {
+      return confirmSeatChange(ctx.req.playerId, args.gameCode);
     },
   },
 };

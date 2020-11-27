@@ -198,6 +198,32 @@ export const leaveGameQuery = gql`
   }
 `;
 
+export const requestSeatChangeQuery = gql`
+  mutation($gameCode: String!) {
+    date: requestSeatChange(gameCode: $gameCode)
+  }
+`;
+
+export const seatChangeRequestsQuery = gql`
+  query($gameCode: String!) {
+    players: seatChangeRequests(gameCode: $gameCode) {
+      playerUuid
+      name
+      status
+      seatNo
+      sessionTime
+      seatChangeRequestedAt
+      seatChangeConfirmed
+    }
+  }
+`;
+
+export const confirmSeatChangeQuery = gql`
+  mutation($gameCode: String!) {
+    status: confirmSeatChange(gameCode: $gameCode)
+  }
+`;
+
 export async function configureFriendsGame(
   playerId: string,
   gameInput: GameInput
@@ -358,4 +384,49 @@ export async function leaveGame(
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
   return resp.data.status;
+}
+
+export async function confirmSeatChange(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+    },
+    mutation: confirmSeatChangeQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+export async function seatChangeRequests(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const resp = await getClient(playerId).query({
+    variables: {
+      gameCode: gameCode,
+    },
+    query: seatChangeRequestsQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.players;
+}
+
+export async function requestSeatChange(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+    },
+    mutation: requestSeatChangeQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.date;
 }

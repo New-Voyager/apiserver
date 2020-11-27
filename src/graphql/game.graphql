@@ -139,7 +139,7 @@ input GameUpdateInput {
 }
 
 type PlayerGameState {
-  playerUuid: String!
+  playerUuid: String
   buyIn: Float
   stack: Float
   status: PlayerGameStatus
@@ -147,6 +147,16 @@ type PlayerGameState {
   playingFrom: DateTime
   waitlistNo: Int
   seatNo: Int
+}
+
+type PlayerSeatChange{
+  playerUuid: String!
+  name: String
+  status: PlayerGameStatus
+  seatNo: Int
+  sessionTime: Int
+  seatChangeRequestedAt: DateTime
+  seatChangeConfirmed: Boolean
 }
 
 type Mutation {
@@ -171,6 +181,8 @@ type Mutation {
   startGame(gameCode: String!): GameStatus!
   takeBreak(gameCode: String!): PlayerGameStatus!
   leaveGame(gameCode: String): PlayerGameStatus!
+  requestSeatChange(gameCode: String!): DateTime!
+  confirmSeatChange(gameCode: String): Boolean!
   #pauseGame(gameCode: String!): GameStatus!
   #endGame(gameCode: String!): GameStatus!
   #resumeGame(gameCode: String!): GameStatus!
@@ -189,4 +201,5 @@ type Query {
   gameInfo(gameCode: String!): GameInfo
   myGameState(gameCode: String!): PlayerGameState
   tableGameState(gameCode: String!): [PlayerGameState!]
+  seatChangeRequests(gameCode: String!): [PlayerSeatChange]
 }
