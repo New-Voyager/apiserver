@@ -154,7 +154,7 @@ class GameRepositoryImpl {
             }
             gameServer = null;
             pick++;
-            if (pick === gameServer.length) {
+            if (pick === gameServers.length) {
               pick = 0;
             }
           }
