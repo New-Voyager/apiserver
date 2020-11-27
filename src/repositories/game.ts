@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import {getRepository, getManager, getConnection} from 'typeorm';
+import {getRepository, getManager, getConnection, Not, IsNull} from 'typeorm';
 import {PokerGame} from '@src/entity/game';
 import {
   GameType,
@@ -23,6 +23,8 @@ import {
   changeGameStatus,
 } from '@src/gameserver';
 import {isPostgres} from '@src/utils';
+import {isNull} from 'lodash';
+import {isNonNullType} from 'graphql';
 
 const logger = getLogger('game');
 
@@ -683,6 +685,102 @@ class GameRepositoryImpl {
 
     const resp = await playerGameTrackerRepository.save(playerInGame);
     return resp.status;
+  }
+
+  public async requestSeatChange(
+    player: Player,
+    game: PokerGame
+  ): Promise<Date> {
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerInGame = await playerGameTrackerRepository.findOne({
+      relations: ['player', 'club', 'game'],
+      where: {
+        game: {id: game.id},
+        player: {id: player.id},
+      },
+    });
+
+    if (!playerInGame) {
+      logger.error(`Game: ${game.gameCode} not available`);
+      throw new Error(`Game: ${game.gameCode} not available`);
+    }
+
+    if (playerInGame.status !== PlayerStatus.PLAYING) {
+      logger.error(`player status is ${PlayerStatus[playerInGame.status]}`);
+      throw new Error(`player status is ${PlayerStatus[playerInGame.status]}`);
+    }
+
+    playerInGame.seatChangeRequestedAt = new Date();
+    playerInGame.seatChangeConfirmed = false;
+
+    const resp = await playerGameTrackerRepository.save(playerInGame);
+    return resp.seatChangeRequestedAt;
+  }
+
+  public async seatChangeRequests(
+    player: Player,
+    game: PokerGame
+  ): Promise<PlayerGameTracker[]> {
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerInGame = await playerGameTrackerRepository.findOne({
+      relations: ['player', 'club', 'game'],
+      where: {
+        game: {id: game.id},
+        player: {id: player.id},
+      },
+    });
+
+    if (!playerInGame) {
+      logger.error(`Game: ${game.gameCode} not available`);
+      throw new Error(`Game: ${game.gameCode} not available`);
+    }
+
+    if (playerInGame.status !== PlayerStatus.PLAYING) {
+      logger.error(`player status is ${PlayerStatus[playerInGame.status]}`);
+      throw new Error(`player status is ${PlayerStatus[playerInGame.status]}`);
+    }
+
+    const allPlayersInGame = await playerGameTrackerRepository.find({
+      relations: ['player', 'club', 'game'],
+      order: {
+        seatChangeRequestedAt: 'ASC',
+      },
+      where: {
+        game: {id: game.id},
+        status: PlayerStatus.PLAYING,
+        seatChangeRequestedAt: Not(IsNull()),
+      },
+    });
+
+    return allPlayersInGame;
+  }
+
+  public async confirmSeatChange(
+    player: Player,
+    game: PokerGame
+  ): Promise<boolean> {
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerInGame = await playerGameTrackerRepository.findOne({
+      relations: ['player', 'club', 'game'],
+      where: {
+        game: {id: game.id},
+        player: {id: player.id},
+      },
+    });
+
+    if (!playerInGame) {
+      logger.error(`Game: ${game.gameCode} not available`);
+      throw new Error(`Game: ${game.gameCode} not available`);
+    }
+
+    if (playerInGame.status !== PlayerStatus.PLAYING) {
+      logger.error(`player status is ${PlayerStatus[playerInGame.status]}`);
+      throw new Error(`player status is ${PlayerStatus[playerInGame.status]}`);
+    }
+
+    playerInGame.seatChangeConfirmed = true;
+    const resp = await playerGameTrackerRepository.save(playerInGame);
+    return resp.seatChangeConfirmed;
   }
 
   public async updateBreakTime(playerId: number, gameId: number) {
