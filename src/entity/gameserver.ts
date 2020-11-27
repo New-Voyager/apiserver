@@ -17,7 +17,7 @@ export class GameServer {
   public id!: number;
 
   @Index()
-  @Column({unique: true, name: 'ip_address'})
+  @Column({name: 'ip_address'})
   public ipAddress!: string;
 
   @DbAwareColumn({
