@@ -77,7 +77,7 @@ export class PlayerGameTracker {
     nullable: true,
     default: null,
   })
-  public seatChangeRequestedAt!: Date;
+  public seatChangeRequestedAt!: Date | null;
 
   @Column({name: 'seat_change_confirmed', default: false})
   public seatChangeConfirmed!: boolean;

@@ -492,4 +492,66 @@ describe('Game APIs', () => {
     const resp5 = await gameutils.seatChangeRequests(player1Id, game.gameCode);
     expect(resp5[0].seatChangeConfirmed).toBe(true);
   });
+
+  test('confirm seat change', async () => {
+    // Create club and owner
+    const [clubCode, ownerId] = await clubutils.createClub('brady', 'yatzee');
+
+    // create gameserver and game
+    await createGameServer('1.2.1.6');
+    const game = await gameutils.configureGame(
+      ownerId,
+      clubCode,
+      holdemGameInput
+    );
+
+    // Create players
+    const player1Id = await clubutils.createPlayer('player1', 'abc1234');
+    const player2Id = await clubutils.createPlayer('player2', 'abc1235');
+    const player3Id = await clubutils.createPlayer('player3', 'abc1236');
+    const player4Id = await clubutils.createPlayer('player4', 'abc1237');
+
+    // joins the club
+    await clubutils.playerJoinsClub(clubCode, player1Id);
+    await clubutils.playerJoinsClub(clubCode, player2Id);
+    await clubutils.playerJoinsClub(clubCode, player3Id);
+    await clubutils.playerJoinsClub(clubCode, player4Id);
+
+    // approve joining
+    await clubutils.approvePlayer(clubCode, ownerId, player1Id);
+    await clubutils.approvePlayer(clubCode, ownerId, player2Id);
+    await clubutils.approvePlayer(clubCode, ownerId, player3Id);
+    await clubutils.approvePlayer(clubCode, ownerId, player4Id);
+
+    // join a game
+    await gameutils.joinGame(player1Id, game.gameCode, 1);
+    await gameutils.joinGame(player2Id, game.gameCode, 2);
+    await gameutils.joinGame(player3Id, game.gameCode, 3);
+    await gameutils.joinGame(player4Id, game.gameCode, 4);
+
+    // buyin
+    await gameutils.buyin(player1Id, game.gameCode, 100);
+    await gameutils.buyin(player2Id, game.gameCode, 100);
+    await gameutils.buyin(player3Id, game.gameCode, 100);
+    await gameutils.buyin(player4Id, game.gameCode, 100);
+
+    // request seat change
+    await gameutils.requestSeatChange(player1Id, game.gameCode);
+    await gameutils.requestSeatChange(player2Id, game.gameCode);
+
+    // confirm seat change
+    await gameutils.confirmSeatChange(player1Id, game.gameCode);
+    await gameutils.confirmSeatChange(player2Id, game.gameCode);
+
+    // make seat change
+    try {
+      await axios.post(
+        `${GAMESERVER_API}/handle-seat-change?gameCode=` + game.gameCode,
+        {}
+      );
+    } catch (error) {
+      logger.error(error.toString());
+      expect(true).toBeFalsy();
+    }
+  });
 });
