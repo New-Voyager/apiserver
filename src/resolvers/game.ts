@@ -357,8 +357,12 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
     const player = await getPlayer(playerUuid);
 
     const ret = game as any;
+    if (ret.startedBy) {
+      ret.startedBy = ret.startedBy.name; 
+    }
     ret.gameType = GameType[game.gameType];
     ret.tableStatus = TableStatus[game.tableStatus];
+    ret.status = GameStatus[game.status];
 
     ret.gameToPlayerChannel = `game.${game.gameCode}.player`;
     ret.playerToHandChannel = `player.${game.gameCode}.hand`;
