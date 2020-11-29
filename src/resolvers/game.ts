@@ -496,7 +496,7 @@ export async function seatChangeRequests(playerUuid: string, gameCode: string) {
         playerUuid: player.player.uuid,
         name: player.player.name,
         status: PlayerStatus[player.status],
-        seatNo: player.satAt,
+        seatNo: player.seatNo,
         sessionTime: player.sessionTime,
         seatChangeRequestedAt: player.seatChangeRequestedAt,
         seatChangeConfirmed: player.seatChangeConfirmed,
