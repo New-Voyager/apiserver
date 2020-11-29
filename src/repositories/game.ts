@@ -812,7 +812,8 @@ class GameRepositoryImpl {
     const game = await getGame(gameCode);
     if (!game) {
       logger.error(`Game ${gameCode} is not found`);
-      throw new Error(`Game ${gameCode} is not found`);
+      // throw new Error(`Game ${gameCode} is not found`);
+      return true;
     }
 
     const playersInSeats = await this.getPlayersInSeats(game.id);
@@ -827,7 +828,8 @@ class GameRepositoryImpl {
     const pickedSeat = min(availableSeats);
     if (!pickedSeat) {
       logger.error('No seats available');
-      throw new Error('No seats available');
+      // throw new Error('No seats available');
+      return true;
     }
 
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
@@ -844,7 +846,8 @@ class GameRepositoryImpl {
 
     if (!playerInGame.length || !playerInGame[0]) {
       logger.error('No player found');
-      throw new Error('No player found');
+      // throw new Error('No player found');
+      return true;
     }
     const selectedPlayer = playerInGame[0];
 
