@@ -358,7 +358,7 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
 
     const ret = game as any;
     if (ret.startedBy) {
-      ret.startedBy = ret.startedBy.name; 
+      ret.startedBy = ret.startedBy.name;
     }
     ret.gameType = GameType[game.gameType];
     ret.tableStatus = TableStatus[game.tableStatus];
