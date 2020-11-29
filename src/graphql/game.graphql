@@ -113,7 +113,7 @@ type GameInfo {
   startedBy: String
   startedAt: DateTime
   endedBy: String
-  endedAt: String
+  endedAt: DateTime
   template: Boolean
   status: GameStatus
   tableStatus: TableStatus
