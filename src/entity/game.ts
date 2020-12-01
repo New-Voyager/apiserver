@@ -13,7 +13,7 @@ import {
   DbAwareCreateDateColumn,
   DbAwareUpdateDateColumn,
 } from './dbaware';
-import {GameStatus, GameType, TableStatus} from './types';
+import {GameStatus, GameType, TableStatus, NextHandUpdate} from './types';
 
 @Entity({name: 'poker_game'})
 export class PokerGame {
@@ -203,6 +203,29 @@ export class PokerGame {
     onUpdate: 'CURRENT_TIMESTAMP',
   })
   public updatedAt!: Date;
+}
+
+@Entity({name: 'next_hand_updates'})
+export class NextHandUpdates {
+  @ManyToOne(() => Player, player => player.id, {primary: true, eager: true})
+  @JoinColumn({name: 'player_id'})
+  public player!: Player;
+
+  @ManyToOne(() => PokerGame, game => game.id, {primary: true, eager: true})
+  @JoinColumn({name: 'game_id'})
+  public game!: PokerGame;
+
+  @Column({name: 'new_update', type: 'int', nullable: true})
+  public newUpdate!: NextHandUpdate;
+
+  @Column({name: 'reload_amount', type: 'decimal', nullable: true})
+  public reloadAmount!: number;
+
+  @Column({name: 'reload_approved', default: false})
+  public reloadApproved!: number;
+
+  @Column({name: 'new_seat', nullable: true})
+  public newSeat!: number;
 }
 
 @Entity({name: 'poker_game_players'})

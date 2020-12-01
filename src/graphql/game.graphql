@@ -41,9 +41,18 @@ enum PlayerGameStatus {
 }
 
 enum BuyInApprovalStatus {
-WAITING_FOR_APPROVAL
-APPROVED
-DENIED    
+  WAITING_FOR_APPROVAL
+  APPROVED
+  DENIED    
+}
+
+enum NextHandUpdate {
+  UNKNOWN,
+  SWITCH_SEAT,
+  TAKE_BREAK,
+  RELOAD_CHIPS,
+  BACK_FROM_BREAK,
+  LEAVE
 }
 
 input GameCreateInput {

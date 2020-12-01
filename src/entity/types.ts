@@ -25,6 +25,15 @@ export enum TableStatus {
   GAME_RUNNING,
 }
 
+export enum NextHandUpdate {
+  UNKNOWN,
+  SWITCH_SEAT,
+  TAKE_BREAK,
+  RELOAD_CHIPS,
+  BACK_FROM_BREAK,
+  LEAVE,
+}
+
 export enum WonAtStatus {
   PREFLOP,
   FLOP,
