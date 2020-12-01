@@ -66,6 +66,52 @@ export async function configureGameByPlayer(playerId: string, game: any) {
   }
 }
 
+export async function endGame(playerId: string, gameCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const errors = new Array<string>();
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+  try {
+    const game = await getGame(gameCode);
+
+    if (game.club) {
+      // is the player club member
+      const clubMember = await getClubMember(playerId, game.club.clubCode);
+      if (!clubMember) {
+        throw new Error('Player is not a club member');
+      }
+
+      // only manager and owner can end the game
+      if (!(clubMember.isManager || clubMember.isOwner)) {
+        throw new Error('Player is not a club owner or manager');
+      }
+    } else {
+      // only club owner or host can end the game
+      if (playerId !== game.startedBy.uuid) {
+        throw new Error('Game can be ended up by the host');
+      }
+    }
+
+    if (
+      game.status === GameStatus.ACTIVE &&
+      game.tableStatus === TableStatus.GAME_RUNNING
+    ) {
+      // the game will be stopped in the next hand
+      GameRepository.endGameNextHand(game.id);
+    } else {
+      const status = await GameRepository.markGameEnded(game.id);
+      return GameStatus[status];
+    }
+    return GameStatus[game.status];
+  } catch (err) {
+    logger.error(err.message);
+    throw new Error('Failed to end the game. ' + err.message);
+  }
+}
+
 export async function joinGame(
   playerUuid: string,
   gameCode: string,
@@ -630,6 +676,9 @@ const resolvers: any = {
     },
     joinGame: async (parent, args, ctx, info) => {
       return joinGame(ctx.req.playerId, args.gameCode, args.seatNo);
+    },
+    endGame: async (parent, args, ctx, info) => {
+      return endGame(ctx.req.playerId, args.gameCode);
     },
     buyIn: async (parent, args, ctx, info) => {
       return buyIn(ctx.req.playerId, args.gameCode, args.amount);

@@ -1,6 +1,6 @@
 import * as crypto from 'crypto';
 import {getRepository, getManager, getConnection, Not, IsNull} from 'typeorm';
-import {PokerGame} from '@src/entity/game';
+import {NextHandUpdates, PokerGame} from '@src/entity/game';
 import {
   GameType,
   GameStatus,
@@ -9,6 +9,7 @@ import {
   PlayerStatus,
   BuyInApprovalStatus,
   TableStatus,
+  NextHandUpdate,
 } from '@src/entity/types';
 import {Club, ClubMember} from '@src/entity/club';
 import {Player} from '@src/entity/player';
@@ -940,6 +941,51 @@ class GameRepositoryImpl {
 
   public async markGameEnded(gameId: number): Promise<GameStatus> {
     return this.markGameStatus(gameId, GameStatus.ENDED);
+  }
+
+  public async anyPendingUpdates(gameId: number): Promise<boolean> {
+    let placeHolder1 = '$1';
+    let placeHolder2 = '$2';
+    if (!isPostgres()) {
+      placeHolder1 = '?';
+      placeHolder2 = '?';
+    }
+    const query = `SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ${placeHolder1} AND new_update = ${placeHolder2}`;
+    const resp = await getConnection().query(query, [
+      gameId,
+      NextHandUpdate.END_GAME,
+    ]);
+    if (resp[0]['updates'] > 0) {
+      return true;
+    }
+    return false;
+  }
+
+  public async endGameNextHand(gameId: number) {
+    // check to see if the game is already marked to be ended
+    const repository = getRepository(NextHandUpdates);
+
+    let placeHolder1 = '$1';
+    let placeHolder2 = '$2';
+    if (!isPostgres()) {
+      placeHolder1 = '?';
+      placeHolder2 = '?';
+    }
+    const query = `SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ${placeHolder1} AND new_update = ${placeHolder2}`;
+    const resp = await getConnection().query(query, [
+      gameId,
+      NextHandUpdate.END_GAME,
+    ]);
+    if (resp[0]['updates'] === 0) {
+      const nextHandUpdate = new NextHandUpdates();
+      const game = new PokerGame();
+      game.id = gameId;
+      nextHandUpdate.game = game;
+      nextHandUpdate.newUpdate = NextHandUpdate.END_GAME;
+      repository.save(nextHandUpdate);
+
+      // notify users that the game will end in the next hand
+    }
   }
 
   public async markGameStatus(gameId: number, status: GameStatus) {

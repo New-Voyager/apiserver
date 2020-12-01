@@ -32,6 +32,8 @@ export enum NextHandUpdate {
   RELOAD_CHIPS,
   BACK_FROM_BREAK,
   LEAVE,
+  PAUSE_GAME,
+  END_GAME,
 }
 
 export enum WonAtStatus {

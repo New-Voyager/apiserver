@@ -193,7 +193,7 @@ type Mutation {
   requestSeatChange(gameCode: String!): DateTime!
   confirmSeatChange(gameCode: String): Boolean!
   #pauseGame(gameCode: String!): GameStatus!
-  #endGame(gameCode: String!): GameStatus!
+  endGame(gameCode: String!): GameStatus!
   #resumeGame(gameCode: String!): GameStatus!
 }
 
