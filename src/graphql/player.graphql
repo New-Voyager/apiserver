@@ -3,6 +3,7 @@ input PlayerCreateInput {
   email: String
   password: String
   deviceId: String
+  isBot: Boolean
 }
 
 type Player {

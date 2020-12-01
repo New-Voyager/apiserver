@@ -207,11 +207,14 @@ export class PokerGame {
 
 @Entity({name: 'next_hand_updates'})
 export class NextHandUpdates {
-  @ManyToOne(() => Player, player => player.id, {primary: true, eager: true})
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @ManyToOne(() => Player, player => player.id, {eager: true, nullable: true})
   @JoinColumn({name: 'player_id'})
   public player!: Player;
 
-  @ManyToOne(() => PokerGame, game => game.id, {primary: true, eager: true})
+  @ManyToOne(() => PokerGame, game => game.id, {eager: true})
   @JoinColumn({name: 'game_id'})
   public game!: PokerGame;
 
@@ -222,7 +225,7 @@ export class NextHandUpdates {
   public reloadAmount!: number;
 
   @Column({name: 'reload_approved', default: false})
-  public reloadApproved!: number;
+  public reloadApproved!: boolean;
 
   @Column({name: 'new_seat', nullable: true})
   public newSeat!: number;

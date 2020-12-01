@@ -42,4 +42,7 @@ export class Player {
     onUpdate: 'CURRENT_TIMESTAMP',
   })
   public updatedAt!: Date;
+
+  @Column({name: 'is_bot', nullable: true, default: false})
+  public bot!: boolean;
 }

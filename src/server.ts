@@ -117,6 +117,10 @@ function addInternalRoutes(app: any) {
     GameAPI.updateBreakTime
   );
   app.post('/internal/update-table-status', GameAPI.updateTableStatus);
+  app.get(
+    '/internal/any-pending-updates/gameId/:gameId',
+    GameAPI.anyPendingUpdates
+  );
 
   app.get(
     '/internal/get-game-server/club_id/:clubCode/game_num/:gameCode',
