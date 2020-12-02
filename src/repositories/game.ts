@@ -961,6 +961,41 @@ class GameRepositoryImpl {
     return false;
   }
 
+  public async processPendingUpdates(gameId: number) {
+
+    // if there is an end game update, let us end the game first
+    let placeHolder1 = '$1';
+    let placeHolder2 = '$2';
+    if (!isPostgres()) {
+      placeHolder1 = '?';
+      placeHolder2 = '?';
+    }
+    const query = `SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ${placeHolder1} AND new_update = ${placeHolder2}`;
+    const resp = await getConnection().query(query, [
+      gameId,
+      NextHandUpdate.END_GAME,
+    ]);
+    if (resp[0]['updates'] > 0) {
+      // game ended
+      await this.markGameStatus(gameId, GameStatus.ENDED);
+      return;
+    }
+    /*
+    const updates = await getRepository(NextHandUpdates).find({
+      relations: ['game'],
+      where: {
+        game: {id: gameId},
+      },
+    });
+    // is there an end game in the update
+    for(const update of updates) {
+
+    }*/
+
+
+    //return false;
+  }
+
   public async endGameNextHand(gameId: number) {
     // check to see if the game is already marked to be ended
     const repository = getRepository(NextHandUpdates);
