@@ -446,7 +446,7 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
     }
     const player = await getPlayer(playerUuid);
     const status = await GameRepository.leaveGame(player, game);
-    return PlayerStatus[status];
+    return status;
   } catch (err) {
     logger.error(err);
     throw new Error(`Failed to leave game. ${JSON.stringify(err)}`);
@@ -477,7 +477,7 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
     }
     const player = await getPlayer(playerUuid);
     const status = await GameRepository.takeBreak(player, game);
-    return PlayerStatus[status];
+    return status;
   } catch (err) {
     logger.error(err);
     throw new Error(`Failed to take break. ${JSON.stringify(err)}`);

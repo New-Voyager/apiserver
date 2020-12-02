@@ -665,11 +665,9 @@ class GameRepositoryImpl {
     return playerInGame;
   }
 
-  public async leaveGame(
-    player: Player,
-    game: PokerGame
-  ): Promise<PlayerStatus> {
+  public async leaveGame(player: Player, game: PokerGame): Promise<boolean> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const nextHandUpdatesRepository = getRepository(NextHandUpdates);
     const playerInGame = await playerGameTrackerRepository.findOne({
       relations: ['player', 'club', 'game'],
       where: {
@@ -683,17 +681,22 @@ class GameRepositoryImpl {
       throw new Error(`Game: ${game.gameCode} not available`);
     }
 
-    playerInGame.status = PlayerStatus.LEAVING_GAME;
-
-    const resp = await playerGameTrackerRepository.save(playerInGame);
-    return resp.status;
+    if (playerInGame.status !== PlayerStatus.PLAYING) {
+      playerInGame.status = PlayerStatus.NOT_PLAYING;
+      await playerGameTrackerRepository.save(playerInGame);
+    } else {
+      const update = new NextHandUpdates();
+      update.game = game;
+      update.player = player;
+      update.newUpdate = NextHandUpdate.LEAVE;
+      await nextHandUpdatesRepository.save(update);
+    }
+    return true;
   }
 
-  public async takeBreak(
-    player: Player,
-    game: PokerGame
-  ): Promise<PlayerStatus> {
+  public async takeBreak(player: Player, game: PokerGame): Promise<boolean> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const nextHandUpdatesRepository = getRepository(NextHandUpdates);
     const playerInGame = await playerGameTrackerRepository.findOne({
       relations: ['player', 'club', 'game'],
       where: {
@@ -707,10 +710,21 @@ class GameRepositoryImpl {
       throw new Error(`Game: ${game.gameCode} not available`);
     }
 
-    playerInGame.status = PlayerStatus.TAKING_BREAK;
-
-    const resp = await playerGameTrackerRepository.save(playerInGame);
-    return resp.status;
+    if (playerInGame.status !== PlayerStatus.PLAYING) {
+      logger.error(
+        `Player in game status is ${PlayerStatus[playerInGame.status]}`
+      );
+      throw new Error(
+        `Player in game status is ${PlayerStatus[playerInGame.status]}`
+      );
+    } else {
+      const update = new NextHandUpdates();
+      update.game = game;
+      update.player = player;
+      update.newUpdate = NextHandUpdate.TAKE_BREAK;
+      await nextHandUpdatesRepository.save(update);
+    }
+    return true;
   }
 
   public async requestSeatChange(
