@@ -962,7 +962,6 @@ class GameRepositoryImpl {
   }
 
   public async processPendingUpdates(gameId: number) {
-
     // if there is an end game update, let us end the game first
     let placeHolder1 = '$1';
     let placeHolder2 = '$2';
@@ -991,7 +990,6 @@ class GameRepositoryImpl {
     for(const update of updates) {
 
     }*/
-
 
     //return false;
   }
