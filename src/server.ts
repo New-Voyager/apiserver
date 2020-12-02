@@ -121,7 +121,10 @@ function addInternalRoutes(app: any) {
     '/internal/any-pending-updates/gameId/:gameId',
     GameAPI.anyPendingUpdates
   );
-
+  app.post(
+    '/internal/process-pending-updates/gameId/:gameId',
+    GameAPI.processPendingUpdates
+  );
   app.get(
     '/internal/get-game-server/club_id/:clubCode/game_num/:gameCode',
     GameServerAPI.getSpecificGameServer

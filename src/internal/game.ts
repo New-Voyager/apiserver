@@ -105,6 +105,17 @@ class GameAPIs {
     resp.status(200).send({pendingUpdates: pendingUpdates});
   }
 
+  public async processPendingUpdates(req: any, resp: any) {
+    const gameID = req.params.gameId;
+    if (!gameID) {
+      const res = {error: 'Invalid game id'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    await GameRepository.processPendingUpdates(gameID);
+    resp.status(200).send({status: 'OK'});
+  }
+
   public async getGame(req: any, resp: any) {
     const clubID = req.params.clubID;
     if (!clubID) {
