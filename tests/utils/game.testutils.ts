@@ -121,6 +121,12 @@ export const joinGameQuery = gql`
   }
 `;
 
+export const startGameQuery = gql`
+  mutation($gameCode: String!) {
+    status: startGame(gameCode: $gameCode)
+  }
+`;
+
 export const buyinQuery = gql`
   mutation($gameCode: String!, $amount: Float!) {
     status: buyIn(gameCode: $gameCode, amount: $amount)
@@ -429,4 +435,19 @@ export async function requestSeatChange(
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
   return resp.data.date;
+}
+
+export async function startGame(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+    },
+    mutation: startGameQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
 }

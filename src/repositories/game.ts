@@ -681,15 +681,18 @@ class GameRepositoryImpl {
       throw new Error(`Game: ${game.gameCode} not available`);
     }
 
-    if (playerInGame.status !== PlayerStatus.PLAYING) {
-      playerInGame.status = PlayerStatus.NOT_PLAYING;
-      await playerGameTrackerRepository.save(playerInGame);
-    } else {
+    if (
+      game.status === GameStatus.ACTIVE &&
+      playerInGame.status === PlayerStatus.PLAYING
+    ) {
       const update = new NextHandUpdates();
       update.game = game;
       update.player = player;
       update.newUpdate = NextHandUpdate.LEAVE;
       await nextHandUpdatesRepository.save(update);
+    } else {
+      playerInGame.status = PlayerStatus.NOT_PLAYING;
+      await playerGameTrackerRepository.save(playerInGame);
     }
     return true;
   }
@@ -717,6 +720,11 @@ class GameRepositoryImpl {
       throw new Error(
         `Player in game status is ${PlayerStatus[playerInGame.status]}`
       );
+    }
+
+    if (game.status !== GameStatus.ACTIVE) {
+      playerInGame.status = PlayerStatus.IN_BREAK;
+      await playerGameTrackerRepository.save(playerInGame);
     } else {
       const update = new NextHandUpdates();
       update.game = game;

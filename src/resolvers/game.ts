@@ -13,6 +13,8 @@ import {
   getPlayer,
   isClubMember,
 } from '@src/cache/index';
+import {getRepository} from 'typeorm';
+import {PokerGame} from '@src/entity/game';
 
 const logger = getLogger('game');
 
@@ -151,7 +153,7 @@ export async function joinGame(
   }
 }
 
-async function startGame(
+export async function startGame(
   playerUuid: string,
   gameCode: string
 ): Promise<string> {
@@ -428,7 +430,8 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await GameRepository.getGameByCode(gameCode);
+
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
@@ -459,7 +462,7 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await GameRepository.getGameByCode(gameCode);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }

@@ -8,6 +8,7 @@ import {
   configureGame,
   configureGameByPlayer,
   joinGame,
+  startGame,
   buyIn,
   approveBuyIn,
   myGameState,
@@ -543,6 +544,9 @@ describe('Game APIs', () => {
         },
       });
 
+      const data2 = await startGame(player1, game.gameCode);
+      expect(data2).toBe('ACTIVE');
+
       // Join a game
       const data = await joinGame(player1, game.gameCode, 1);
       expect(data).toBe('WAIT_FOR_BUYIN');
@@ -584,6 +588,9 @@ describe('Game APIs', () => {
           deviceId: 'abc123',
         },
       });
+
+      const data3 = await startGame(player1, game.gameCode);
+      expect(data3).toBe('ACTIVE');
 
       // Leave game with status !== Playing
       const data = await joinGame(player1, game.gameCode, 1);

@@ -392,7 +392,9 @@ describe('Game APIs', () => {
       holdemGameInput
     );
     const player1Id = await clubutils.createPlayer('player1', 'abc123');
-    const player2Id = await clubutils.createPlayer('adam', '1243ABC');
+
+    const data4 = await gameutils.startGame(ownerId, game.gameCode);
+    expect(data4).toBe('ACTIVE');
 
     const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
     expect(data).toBe('WAIT_FOR_BUYIN');
@@ -429,6 +431,9 @@ describe('Game APIs', () => {
       holdemGameInput
     );
     const player1Id = await clubutils.createPlayer('player1', 'abc123');
+
+    const data4 = await gameutils.startGame(ownerId, game.gameCode);
+    expect(data4).toBe('ACTIVE');
 
     // Leave game with status !== Playing
     const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
