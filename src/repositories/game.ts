@@ -22,6 +22,7 @@ import {
   publishNewGame,
   playerBuyIn,
   changeGameStatus,
+  playerKickedOut,
 } from '@src/gameserver';
 import {isPostgres} from '@src/utils';
 import {getGame} from '@src/cache';
@@ -967,53 +968,15 @@ class GameRepositoryImpl {
 
   public async anyPendingUpdates(gameId: number): Promise<boolean> {
     let placeHolder1 = '$1';
-    let placeHolder2 = '$2';
     if (!isPostgres()) {
       placeHolder1 = '?';
-      placeHolder2 = '?';
     }
-    const query = `SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ${placeHolder1} AND new_update = ${placeHolder2}`;
-    const resp = await getConnection().query(query, [
-      gameId,
-      NextHandUpdate.END_GAME,
-    ]);
+    const query = `SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ${placeHolder1}`;
+    const resp = await getConnection().query(query, [gameId]);
     if (resp[0]['updates'] > 0) {
       return true;
     }
     return false;
-  }
-
-  public async processPendingUpdates(gameId: number) {
-    // if there is an end game update, let us end the game first
-    let placeHolder1 = '$1';
-    let placeHolder2 = '$2';
-    if (!isPostgres()) {
-      placeHolder1 = '?';
-      placeHolder2 = '?';
-    }
-    const query = `SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ${placeHolder1} AND new_update = ${placeHolder2}`;
-    const resp = await getConnection().query(query, [
-      gameId,
-      NextHandUpdate.END_GAME,
-    ]);
-    if (resp[0]['updates'] > 0) {
-      // game ended
-      await this.markGameStatus(gameId, GameStatus.ENDED);
-      return;
-    }
-    /*
-    const updates = await getRepository(NextHandUpdates).find({
-      relations: ['game'],
-      where: {
-        game: {id: gameId},
-      },
-    });
-    // is there an end game in the update
-    for(const update of updates) {
-
-    }*/
-
-    //return false;
   }
 
   public async endGameNextHand(gameId: number) {
@@ -1123,6 +1086,52 @@ class GameRepositoryImpl {
       return null;
     }
     return resp[0];
+  }
+
+  public async kickOutPlayer(gameCode: string, player: Player) {
+    // find game
+    const game = await this.getGameByCode(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerInGame = await playerGameTrackerRepository.findOne({
+      where: {
+        game: {id: game.id},
+        player: {id: player.id},
+      },
+    });
+
+    if (!playerInGame) {
+      // player is not in game
+      throw new Error(`Player ${player.name} is not in the game`);
+    }
+
+    if (game.tableStatus !== TableStatus.GAME_RUNNING) {
+      // we can mark the user as KICKED_OUT from the player game tracker
+
+      await playerGameTrackerRepository.update(
+        {
+          game: {id: game.id},
+          player: {id: player.id},
+        },
+        {
+          status: PlayerStatus.KICKED_OUT,
+        }
+      );
+
+      // notify game server, player is kicked out
+      playerKickedOut(game, player, playerInGame.seatNo);
+    } else {
+      // game is running, so kickout the user in next hand
+      // deal with this in the next hand update
+      const nextHandUpdatesRepository = getRepository(NextHandUpdates);
+      const update = new NextHandUpdates();
+      update.game = game;
+      update.player = player;
+      update.newUpdate = NextHandUpdate.KICKOUT;
+      await nextHandUpdatesRepository.save(update);
+    }
   }
 }
 

@@ -3,7 +3,7 @@ import {getLogger} from '@src/utils/log';
 import {PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
-import {GameStatus} from '@src/entity/types';
+import {GameStatus, PlayerStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 
 let notifyGameServer = false;
@@ -159,4 +159,47 @@ async function getGameServerUrl(gameId: number): Promise<string> {
     return '';
   }
   return gameServer.url;
+}
+
+export async function playerKickedOut(
+  game: PokerGame,
+  player: Player,
+  seatNo: number
+) {
+  if (!notifyGameServer) {
+    return;
+  }
+
+  const gameServerUrl = await getGameServerUrl(game.id);
+
+  const message = {
+    type: 'PlayerUpdate',
+    gameId: game.id,
+    playerId: player.id,
+    playerUuid: player.uuid,
+    name: player.name,
+    seatNo: seatNo,
+    status: PlayerStatus.KICKED_OUT,
+  };
+
+  const newGameUrl = `${gameServerUrl}/player-update`;
+  const resp = await axios.post(newGameUrl, message);
+  if (resp.status !== 200) {
+    logger.error(`Failed to update plater status: ${newGameUrl}`);
+    throw new Error(`Failed to update plater status: ${newGameUrl}`);
+  }
+}
+
+export async function pendingProcessDone(gameId: number) {
+  if (!notifyGameServer) {
+    return;
+  }
+
+  const gameServerUrl = await getGameServerUrl(gameId);
+  const newGameUrl = `${gameServerUrl}/pending-updates?game-id=${gameId}&done=1`;
+  const resp = await axios.post(newGameUrl);
+  if (resp.status !== 200) {
+    logger.error(`Failed to update pending updates: ${newGameUrl}`);
+    throw new Error(`Failed to update pending updates: ${newGameUrl}`);
+  }
 }

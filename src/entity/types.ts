@@ -34,6 +34,7 @@ export enum NextHandUpdate {
   LEAVE,
   PAUSE_GAME,
   END_GAME,
+  KICKOUT,
 }
 
 export enum WonAtStatus {

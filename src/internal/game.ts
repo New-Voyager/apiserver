@@ -1,5 +1,6 @@
 import {GameStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
+import { processPendingUpdates } from '@src/repositories/pendingupdates';
 import {getLogger} from '@src/utils/log';
 
 /**
@@ -106,13 +107,14 @@ class GameAPIs {
   }
 
   public async processPendingUpdates(req: any, resp: any) {
-    const gameID = req.params.gameId;
-    if (!gameID) {
+    const gameIDStr = req.params.gameId;
+    if (!gameIDStr) {
       const res = {error: 'Invalid game id'};
       resp.status(500).send(JSON.stringify(res));
       return;
     }
-    await GameRepository.processPendingUpdates(gameID);
+    const gameID = parseInt(gameIDStr);
+    await processPendingUpdates(gameID);
     resp.status(200).send({status: 'OK'});
   }
 

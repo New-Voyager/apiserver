@@ -13,8 +13,6 @@ import {
   getPlayer,
   isClubMember,
 } from '@src/cache/index';
-import {getRepository} from 'typeorm';
-import {PokerGame} from '@src/entity/game';
 
 const logger = getLogger('game');
 
@@ -581,10 +579,10 @@ export async function confirmSeatChange(playerUuid: string, gameCode: string) {
       const clubMember = await getClubMember(playerUuid, game.club.clubCode);
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not a club member in club ${game.club.name}`
         );
         throw new Error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
+          `Player: ${playerUuid} is not authorized to make seat change ${gameCode}`
         );
       }
     }
@@ -597,6 +595,62 @@ export async function confirmSeatChange(playerUuid: string, gameCode: string) {
   } catch (err) {
     logger.error(err);
     throw new Error(`Failed to confirm seat change. ${JSON.stringify(err)}`);
+  }
+}
+
+export async function kickOutPlayer(requestUser: string, gameCode: string, kickedOutPlayer: string): Promise<boolean> {
+  if (!requestUser) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      // club game
+      const clubMember = await getClubMember(requestUser, game.club.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${requestUser} is not a club member in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${requestUser} is not authorized to kick out a user`
+        );
+      }
+
+      if (!(clubMember.isOwner || clubMember.isManager)) {
+        // player is not a owner or a manager
+        // did this user start the game?
+        if (game.startedBy.uuid !== requestUser) {
+          logger.error(
+            `Player: ${requestUser} cannot kick out a player in ${gameCode}`
+          );
+          throw new Error(
+            `Player: ${requestUser} cannot kick out a player in ${gameCode}`
+          );
+        }
+      }
+    } else {
+      // hosted by individual user
+      if (game.startedBy.uuid !== requestUser) {
+        logger.error(
+          `Player: ${requestUser} cannot kick out a player in ${gameCode}`
+        );
+        throw new Error(
+          `Player: ${requestUser} cannot kick out a player in ${gameCode}`
+        );
+      }
+    }
+
+    const player = await getPlayer(kickedOutPlayer);
+    await GameRepository.kickOutPlayer(gameCode, player);
+    return true;
+  } catch (err) {
+    logger.error(err);
+    throw new Error(`Failed to kick out player`);
   }
 }
 
@@ -708,6 +762,9 @@ const resolvers: any = {
     },
     confirmSeatChange: async (parent, args, ctx, info) => {
       return confirmSeatChange(ctx.req.playerId, args.gameCode);
+    },
+    kickOut: async (parent, args, ctx, info) => {
+      return kickOutPlayer(ctx.req.playerId, args.gameCode, args.playerUuid);
     },
   },
 };
