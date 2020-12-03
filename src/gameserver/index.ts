@@ -186,7 +186,7 @@ export async function playerKickedOut(
   const resp = await axios.post(newGameUrl, message);
   if (resp.status !== 200) {
     logger.error(`Failed to update player status: ${newGameUrl}`);
-    throw new Error(`Failed to update plater status: ${newGameUrl}`);
+    throw new Error(`Failed to update player status: ${newGameUrl}`);
   }
 }
 
