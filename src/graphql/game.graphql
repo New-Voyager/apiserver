@@ -195,6 +195,7 @@ type Mutation {
   #pauseGame(gameCode: String!): GameStatus!
   endGame(gameCode: String!): GameStatus!
   #resumeGame(gameCode: String!): GameStatus!
+  kickOut(gameCode: String!, playerUuid: String!): Boolean!
 }
 
 type gameId{
