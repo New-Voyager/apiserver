@@ -598,7 +598,11 @@ export async function confirmSeatChange(playerUuid: string, gameCode: string) {
   }
 }
 
-export async function kickOutPlayer(requestUser: string, gameCode: string, kickedOutPlayer: string): Promise<boolean> {
+export async function kickOutPlayer(
+  requestUser: string,
+  gameCode: string,
+  kickedOutPlayer: string
+): Promise<boolean> {
   if (!requestUser) {
     throw new Error('Unauthorized');
   }

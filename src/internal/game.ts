@@ -1,6 +1,6 @@
 import {GameStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
-import { processPendingUpdates } from '@src/repositories/pendingupdates';
+import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {getLogger} from '@src/utils/log';
 
 /**
