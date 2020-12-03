@@ -392,15 +392,18 @@ describe('Game APIs', () => {
       holdemGameInput
     );
     const player1Id = await clubutils.createPlayer('player1', 'abc123');
-    const player2Id = await clubutils.createPlayer('adam', '1243ABC');
+
+    const data4 = await gameutils.startGame(ownerId, game.gameCode);
+    expect(data4).toBe('ACTIVE');
 
     const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
     expect(data).toBe('WAIT_FOR_BUYIN');
-    const data1 = await gameutils.joinGame(player2Id, game.gameCode, 2);
-    expect(data1).toBe('WAIT_FOR_BUYIN');
+
+    const data2 = await gameutils.buyin(player1Id, game.gameCode, 100);
+    expect(data2).toBe('APPROVED');
 
     const resp3 = await gameutils.takeBreak(player1Id, game.gameCode);
-    expect(resp3).toBe('TAKING_BREAK');
+    expect(resp3).toBe(true);
 
     const gameID = await gameutils.getGameById(game.gameCode);
     const player1ID = await handutils.getPlayerById(player1Id);
@@ -428,15 +431,23 @@ describe('Game APIs', () => {
       holdemGameInput
     );
     const player1Id = await clubutils.createPlayer('player1', 'abc123');
-    const player2Id = await clubutils.createPlayer('adam', '1243ABC');
 
+    const data4 = await gameutils.startGame(ownerId, game.gameCode);
+    expect(data4).toBe('ACTIVE');
+
+    // Leave game with status !== Playing
     const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
     expect(data).toBe('WAIT_FOR_BUYIN');
-    const data1 = await gameutils.joinGame(player2Id, game.gameCode, 2);
-    expect(data1).toBe('WAIT_FOR_BUYIN');
-
     const resp3 = await gameutils.leaveGame(player1Id, game.gameCode);
-    expect(resp3).toBe('LEAVING_GAME');
+    expect(resp3).toBe(true);
+
+    // Leave Game with status === Playing
+    const data1 = await gameutils.joinGame(player1Id, game.gameCode, 1);
+    expect(data1).toBe('WAIT_FOR_BUYIN');
+    const data2 = await gameutils.buyin(player1Id, game.gameCode, 100);
+    expect(data2).toBe('APPROVED');
+    const resp4 = await gameutils.leaveGame(player1Id, game.gameCode);
+    expect(resp4).toBe(true);
 
     const gameID = await gameutils.getGameById(game.gameCode);
     const player1ID = await handutils.getPlayerById(player1Id);

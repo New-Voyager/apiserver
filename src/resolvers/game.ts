@@ -13,6 +13,8 @@ import {
   getPlayer,
   isClubMember,
 } from '@src/cache/index';
+import {getRepository} from 'typeorm';
+import {PokerGame} from '@src/entity/game';
 
 const logger = getLogger('game');
 
@@ -151,7 +153,7 @@ export async function joinGame(
   }
 }
 
-async function startGame(
+export async function startGame(
   playerUuid: string,
   gameCode: string
 ): Promise<string> {
@@ -428,7 +430,8 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await GameRepository.getGameByCode(gameCode);
+
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
@@ -446,7 +449,7 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
     }
     const player = await getPlayer(playerUuid);
     const status = await GameRepository.leaveGame(player, game);
-    return PlayerStatus[status];
+    return status;
   } catch (err) {
     logger.error(err);
     throw new Error(`Failed to leave game. ${JSON.stringify(err)}`);
@@ -459,7 +462,7 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await GameRepository.getGameByCode(gameCode);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
@@ -477,7 +480,7 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
     }
     const player = await getPlayer(playerUuid);
     const status = await GameRepository.takeBreak(player, game);
-    return PlayerStatus[status];
+    return status;
   } catch (err) {
     logger.error(err);
     throw new Error(`Failed to take break. ${JSON.stringify(err)}`);

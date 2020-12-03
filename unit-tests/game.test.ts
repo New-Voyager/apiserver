@@ -8,6 +8,7 @@ import {
   configureGame,
   configureGameByPlayer,
   joinGame,
+  startGame,
   buyIn,
   approveBuyIn,
   myGameState,
@@ -542,21 +543,18 @@ describe('Game APIs', () => {
           deviceId: 'abc123',
         },
       });
-      const player2 = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc1235',
-        },
-      });
+
+      const data2 = await startGame(player1, game.gameCode);
+      expect(data2).toBe('ACTIVE');
 
       // Join a game
       const data = await joinGame(player1, game.gameCode, 1);
       expect(data).toBe('WAIT_FOR_BUYIN');
-      const data1 = await joinGame(player2, game.gameCode, 2);
-      expect(data1).toBe('WAIT_FOR_BUYIN');
+      const data1 = await buyIn(player1, game.gameCode, 100);
+      expect(data1).toBe('APPROVED');
 
       const resp3 = await takeBreak(player1, game.gameCode);
-      expect(resp3).toBe('TAKING_BREAK');
+      expect(resp3).toBe(true);
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();
@@ -590,21 +588,23 @@ describe('Game APIs', () => {
           deviceId: 'abc123',
         },
       });
-      const player2 = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc1235',
-        },
-      });
 
-      // Join a game
+      const data3 = await startGame(player1, game.gameCode);
+      expect(data3).toBe('ACTIVE');
+
+      // Leave game with status !== Playing
       const data = await joinGame(player1, game.gameCode, 1);
       expect(data).toBe('WAIT_FOR_BUYIN');
-      const data1 = await joinGame(player2, game.gameCode, 2);
-      expect(data1).toBe('WAIT_FOR_BUYIN');
-
       const resp3 = await leaveGame(player1, game.gameCode);
-      expect(resp3).toBe('LEAVING_GAME');
+      expect(resp3).toBe(true);
+
+      // Leave game with status === Playing
+      const data2 = await joinGame(player1, game.gameCode, 1);
+      expect(data2).toBe('WAIT_FOR_BUYIN');
+      const data1 = await buyIn(player1, game.gameCode, 100);
+      expect(data1).toBe('APPROVED');
+      const resp = await leaveGame(player1, game.gameCode);
+      expect(resp).toBe(true);
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();
