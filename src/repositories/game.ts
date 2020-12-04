@@ -453,7 +453,7 @@ class GameRepositoryImpl {
     reload: boolean
   ): Promise<BuyInApprovalStatus> {
     const status = await getManager().transaction(async () => {
-        // player must be already in a seat or waiting list
+      // player must be already in a seat or waiting list
       // if credit limit is set, make sure his buyin amount is within the credit limit
       // if auto approval is set, add the buyin
       // make sure buyin within min and maxBuyin
