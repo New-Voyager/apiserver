@@ -129,7 +129,7 @@ type GameInfo {
   seatInfo: TableSeats
   gameToken: String
   playerGameStatus: PlayerGameStatus
-
+  
   # NATS channels
   gameToPlayerChannel: String
   handToAllChannel: String

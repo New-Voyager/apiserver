@@ -1,6 +1,6 @@
 import * as crypto from 'crypto';
 import {getRepository, getManager, getConnection, Not, IsNull} from 'typeorm';
-import {NextHandUpdates, PokerGame} from '@src/entity/game';
+import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {
   GameType,
   GameStatus,
@@ -27,7 +27,6 @@ import {
 import {isPostgres} from '@src/utils';
 import {getGame, getPlayer} from '@src/cache';
 import {min} from 'lodash';
-import {EEXIST} from 'constants';
 
 const logger = getLogger('game');
 
@@ -136,6 +135,11 @@ class GameRepositoryImpl {
         savedGame = await gameRespository.save(game);
 
         if (!game.isTemplate) {
+          // create a entry in PokerGameUpdates
+          const gameUpdatesRepo = getRepository(PokerGameUpdates);
+          const gameUpdates = new PokerGameUpdates();
+          gameUpdates.gameID = savedGame.id;
+          gameUpdatesRepo.save(gameUpdates);
           let pick = 0;
           if (gameServers.length > 0) {
             pick = Number.parseInt(savedGame.id) % gameServers.length;
@@ -296,19 +300,18 @@ class GameRepositoryImpl {
             g.started_at as "startedAt", 
             g.max_players as "maxPlayers", 
             g.max_waitlist as "maxWaitList", 
-            g.players_in_waitlist as "playersInWaitList", 
-            g.players_in_seats as "playersInSeats", 
+            pgu.players_in_waitlist as "waitlistCount", 
+            pgu.players_in_seats as "tableCount", 
             g.game_status as "gameStatus",
             pgt.status as "playerStatus"
-          FROM poker_game g JOIN my_clubs c 
-          ON 
+          FROM poker_game g JOIN poker_game_updates pgu ON 
+          g.id = pgu.game_id JOIN my_clubs c ON 
             g.club_id = c.id 
             AND g.game_status NOT IN (${GameStatus.ENDED})
           LEFT OUTER JOIN 
             player_game_tracker pgt ON
             pgt.pgt_player_id = c.player_id AND
-            pgt.pgt_game_id  = g.id;
-        `;
+            pgt.pgt_game_id  = g.id`;
     const resp = await getConnection().query(query);
     return resp;
   }
@@ -370,62 +373,77 @@ class GameRepositoryImpl {
     game: PokerGame,
     seatNo: number
   ): Promise<PlayerStatus> {
-    // player is taking a seat in the game
-    // ensure the seat is available
-    // create a record in the player_game_tracker
-    // set the player status to waiting_for_buyin
-    // send a message to game server that a new player is in the seat
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-    const playerInSeat = await playerGameTrackerRepository.findOne({
-      where: {
-        game: {id: game.id},
-        seatNo: seatNo,
-      },
-    });
+    const status = await getManager().transaction(async () => {
+      // player is taking a seat in the game
+      // ensure the seat is available
+      // create a record in the player_game_tracker
+      // set the player status to waiting_for_buyin
+      // send a message to game server that a new player is in the seat
+      const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+      const playerInSeat = await playerGameTrackerRepository.findOne({
+        where: {
+          game: {id: game.id},
+          seatNo: seatNo,
+        },
+      });
 
-    if (playerInSeat && playerInSeat.player.id !== player.id) {
-      // there is a player in the seat (unexpected)
-      throw new Error(
-        `A player ${playerInSeat.player.name}:${playerInSeat.player.uuid} is sitting in seat: ${seatNo}`
+      if (playerInSeat && playerInSeat.player.id !== player.id) {
+        // there is a player in the seat (unexpected)
+        throw new Error(
+          `A player ${playerInSeat.player.name}:${playerInSeat.player.uuid} is sitting in seat: ${seatNo}`
+        );
+      }
+      // if this player has already played this game before, we should have his record
+      let thisPlayerInSeat = await playerGameTrackerRepository.findOne({
+        relations: ['player', 'club', 'game'],
+        where: {
+          game: {id: game.id},
+          player: {id: player.id},
+          // seatNo: seatNo,
+        },
+      });
+      if (thisPlayerInSeat) {
+        thisPlayerInSeat.seatNo = seatNo;
+      } else {
+        thisPlayerInSeat = new PlayerGameTracker();
+        thisPlayerInSeat.player = player;
+        thisPlayerInSeat.club = game.club;
+        thisPlayerInSeat.game = game;
+        thisPlayerInSeat.stack = 0;
+        thisPlayerInSeat.buyIn = 0;
+        thisPlayerInSeat.seatNo = seatNo;
+        thisPlayerInSeat.noOfBuyins = 0;
+        thisPlayerInSeat.buyinNotes = '';
+        const randomBytes = Buffer.from(crypto.randomBytes(5));
+        thisPlayerInSeat.gameToken = randomBytes.toString('hex');
+      }
+
+      // we need 5 bytes to scramble 5 cards
+      if (thisPlayerInSeat.stack > 0) {
+        thisPlayerInSeat.status = PlayerStatus.PLAYING;
+      } else {
+        thisPlayerInSeat.status = PlayerStatus.WAIT_FOR_BUYIN;
+      }
+      const resp = await playerGameTrackerRepository.save(thisPlayerInSeat);
+      const count = await playerGameTrackerRepository.count({
+        where: {
+          game: {id: game.id},
+          status: PlayerStatus.PLAYING,
+        },
+      });
+
+      const gameUpdatesRepo = getRepository(PokerGameUpdates);
+      await gameUpdatesRepo.update(
+        {
+          gameID: game.id,
+        },
+        {playersInSeats: count}
       );
-    }
-    // if this player has already played this game before, we should have his record
-    let thisPlayerInSeat = await playerGameTrackerRepository.findOne({
-      relations: ['player', 'club', 'game'],
-      where: {
-        game: {id: game.id},
-        player: {id: player.id},
-        // seatNo: seatNo,
-      },
+      // send a message to gameserver
+      newPlayerSat(game, player, seatNo, thisPlayerInSeat);
+      return thisPlayerInSeat.status;
     });
-    if (thisPlayerInSeat) {
-      thisPlayerInSeat.seatNo = seatNo;
-    } else {
-      thisPlayerInSeat = new PlayerGameTracker();
-      thisPlayerInSeat.player = player;
-      thisPlayerInSeat.club = game.club;
-      thisPlayerInSeat.game = game;
-      thisPlayerInSeat.stack = 0;
-      thisPlayerInSeat.buyIn = 0;
-      thisPlayerInSeat.seatNo = seatNo;
-      thisPlayerInSeat.noOfBuyins = 0;
-      thisPlayerInSeat.buyinNotes = '';
-      const randomBytes = Buffer.from(crypto.randomBytes(5));
-      thisPlayerInSeat.gameToken = randomBytes.toString('hex');
-    }
-
-    // we need 5 bytes to scramble 5 cards
-    if (thisPlayerInSeat.stack > 0) {
-      thisPlayerInSeat.status = PlayerStatus.PLAYING;
-    } else {
-      thisPlayerInSeat.status = PlayerStatus.WAIT_FOR_BUYIN;
-    }
-    const resp = await playerGameTrackerRepository.save(thisPlayerInSeat);
-
-    // send a message to gameserver
-    newPlayerSat(game, player, seatNo, thisPlayerInSeat);
-
-    return thisPlayerInSeat.status;
+    return status;
   }
 
   public async buyIn(
@@ -434,91 +452,57 @@ class GameRepositoryImpl {
     amount: number,
     reload: boolean
   ): Promise<BuyInApprovalStatus> {
-    // player must be already in a seat or waiting list
-    // if credit limit is set, make sure his buyin amount is within the credit limit
-    // if auto approval is set, add the buyin
-    // make sure buyin within min and maxBuyin
-    // send a message to game server that buyer stack has been updated
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-    const playerInGame = await playerGameTrackerRepository.findOne({
-      where: {
-        game: {id: game.id},
-        player: {id: player.id},
-      },
-    });
+    const status = await getManager().transaction(async () => {
+        // player must be already in a seat or waiting list
+      // if credit limit is set, make sure his buyin amount is within the credit limit
+      // if auto approval is set, add the buyin
+      // make sure buyin within min and maxBuyin
+      // send a message to game server that buyer stack has been updated
+      const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+      const playerInGame = await playerGameTrackerRepository.findOne({
+        where: {
+          game: {id: game.id},
+          player: {id: player.id},
+        },
+      });
 
-    if (!playerInGame) {
-      logger.error(
-        `Player ${player.name} is not in the game: ${game.gameCode}`
-      );
-      throw new Error(`Player ${player.name} is not in the game`);
-    }
-
-    // check amount should be between game.minBuyIn and game.maxBuyIn
-    if (
-      playerInGame.stack + amount < game.buyInMin ||
-      playerInGame.stack + amount > game.buyInMax
-    ) {
-      throw new Error(
-        `Buyin must be between ${game.buyInMin} and ${game.buyInMax}`
-      );
-    }
-
-    if (reload) {
-      // if reload is set to true, if stack exceeds game.maxBuyIn
-      if (playerInGame.stack + amount > game.buyInMax) {
-        amount = game.buyInMax - playerInGame.stack;
+      if (!playerInGame) {
+        logger.error(
+          `Player ${player.name} is not in the game: ${game.gameCode}`
+        );
+        throw new Error(`Player ${player.name} is not in the game`);
       }
-    }
 
-    // NOTE TO SANJAY: Add other functionalities
-    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
-    const clubMember = await clubMemberRepository.findOne({
-      where: {
-        club: {id: game.club.id},
-        player: {id: player.id},
-      },
-    });
-    if (!clubMember) {
-      throw new Error(`The player ${player.name} is not in the club`);
-    }
-
-    if (clubMember.autoBuyinApproval) {
-      playerInGame.buyInStatus = BuyInApprovalStatus.APPROVED;
-      playerInGame.noOfBuyins++;
-      playerInGame.stack += amount;
-      playerInGame.buyIn += amount;
-
-      // if the player is in the seat and waiting for buyin
-      // then mark his status as playing
+      // check amount should be between game.minBuyIn and game.maxBuyIn
       if (
-        playerInGame.seatNo !== 0 &&
-        playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN
+        playerInGame.stack + amount < game.buyInMin ||
+        playerInGame.stack + amount > game.buyInMax
       ) {
-        playerInGame.status = PlayerStatus.PLAYING;
-      }
-    } else {
-      const query =
-        'SELECT SUM(buy_in) current_buyin FROM player_game_tracker pgt, poker_game pg WHERE pgt.pgt_player_id = ' +
-        player.id +
-        ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
-        GameStatus.ENDED;
-      const resp = await getConnection().query(query);
-
-      const currentBuyin = resp[0]['current_buyin'];
-
-      let outstandingBalance = playerInGame.buyIn;
-      if (currentBuyin) {
-        outstandingBalance += currentBuyin;
+        throw new Error(
+          `Buyin must be between ${game.buyInMin} and ${game.buyInMax}`
+        );
       }
 
-      let availableCredit = 0.0;
-      if (clubMember.creditLimit >= 0) {
-        availableCredit = clubMember.creditLimit - outstandingBalance;
+      if (reload) {
+        // if reload is set to true, if stack exceeds game.maxBuyIn
+        if (playerInGame.stack + amount > game.buyInMax) {
+          amount = game.buyInMax - playerInGame.stack;
+        }
       }
 
-      if (amount <= availableCredit) {
-        // player is within the credit limit
+      // NOTE TO SANJAY: Add other functionalities
+      const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+      const clubMember = await clubMemberRepository.findOne({
+        where: {
+          club: {id: game.club.id},
+          player: {id: player.id},
+        },
+      });
+      if (!clubMember) {
+        throw new Error(`The player ${player.name} is not in the club`);
+      }
+
+      if (clubMember.autoBuyinApproval) {
         playerInGame.buyInStatus = BuyInApprovalStatus.APPROVED;
         playerInGame.noOfBuyins++;
         playerInGame.stack += amount;
@@ -533,34 +517,86 @@ class GameRepositoryImpl {
           playerInGame.status = PlayerStatus.PLAYING;
         }
       } else {
-        playerInGame.buyinNotes = `Player ${player.name} has ${outstandingBalance} outstanding balance and Requested: ${amount}`;
-        playerInGame.buyInStatus = BuyInApprovalStatus.WAITING_FOR_APPROVAL;
+        const query =
+          'SELECT SUM(buy_in) current_buyin FROM player_game_tracker pgt, poker_game pg WHERE pgt.pgt_player_id = ' +
+          player.id +
+          ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
+          GameStatus.ENDED;
+        const resp = await getConnection().query(query);
+
+        const currentBuyin = resp[0]['current_buyin'];
+
+        let outstandingBalance = playerInGame.buyIn;
+        if (currentBuyin) {
+          outstandingBalance += currentBuyin;
+        }
+
+        let availableCredit = 0.0;
+        if (clubMember.creditLimit >= 0) {
+          availableCredit = clubMember.creditLimit - outstandingBalance;
+        }
+
+        if (amount <= availableCredit) {
+          // player is within the credit limit
+          playerInGame.buyInStatus = BuyInApprovalStatus.APPROVED;
+          playerInGame.noOfBuyins++;
+          playerInGame.stack += amount;
+          playerInGame.buyIn += amount;
+
+          // if the player is in the seat and waiting for buyin
+          // then mark his status as playing
+          if (
+            playerInGame.seatNo !== 0 &&
+            playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN
+          ) {
+            playerInGame.status = PlayerStatus.PLAYING;
+          }
+        } else {
+          playerInGame.buyinNotes = `Player ${player.name} has ${outstandingBalance} outstanding balance and Requested: ${amount}`;
+          playerInGame.buyInStatus = BuyInApprovalStatus.WAITING_FOR_APPROVAL;
+        }
       }
-    }
 
-    await playerGameTrackerRepository.update(
-      {
-        game: {id: game.id},
-        player: {id: player.id},
-      },
-      {
-        buyInStatus: playerInGame.buyInStatus,
-        stack: playerInGame.stack,
-        buyIn: playerInGame.buyIn,
-        noOfBuyins: playerInGame.noOfBuyins,
-        buyinNotes: playerInGame.buyinNotes,
-        status: playerInGame.status,
+      await playerGameTrackerRepository.update(
+        {
+          game: {id: game.id},
+          player: {id: player.id},
+        },
+        {
+          buyInStatus: playerInGame.buyInStatus,
+          stack: playerInGame.stack,
+          buyIn: playerInGame.buyIn,
+          noOfBuyins: playerInGame.noOfBuyins,
+          buyinNotes: playerInGame.buyinNotes,
+          status: playerInGame.status,
+        }
+      );
+
+      const count = await playerGameTrackerRepository.count({
+        where: {
+          game: {id: game.id},
+          status: PlayerStatus.PLAYING,
+        },
+      });
+
+      const gameUpdatesRepo = getRepository(PokerGameUpdates);
+      await gameUpdatesRepo.update(
+        {
+          gameID: game.id,
+        },
+        {playersInSeats: count}
+      );
+
+      // send a message to gameserver
+      // get game server of this game
+      const gameServer = await this.getGameServer(game.id);
+      if (gameServer) {
+        playerBuyIn(game, player, playerInGame);
       }
-    );
 
-    // send a message to gameserver
-    // get game server of this game
-    const gameServer = await this.getGameServer(game.id);
-    if (gameServer) {
-      playerBuyIn(game, player, playerInGame);
-    }
-
-    return playerInGame.buyInStatus;
+      return playerInGame.buyInStatus;
+    });
+    return status;
   }
 
   public async approveBuyIn(
@@ -1090,125 +1126,178 @@ class GameRepositoryImpl {
   }
 
   public async kickOutPlayer(gameCode: string, player: Player) {
-    // find game
-    const game = await this.getGameByCode(gameCode);
-    if (!game) {
-      throw new Error(`Game ${gameCode} is not found`);
-    }
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-    const playerInGame = await playerGameTrackerRepository.findOne({
-      where: {
-        game: {id: game.id},
-        player: {id: player.id},
-      },
-    });
-
-    if (!playerInGame) {
-      // player is not in game
-      throw new Error(`Player ${player.name} is not in the game`);
-    }
-
-    if (game.tableStatus !== TableStatus.GAME_RUNNING) {
-      // we can mark the user as KICKED_OUT from the player game tracker
-      await playerGameTrackerRepository.update(
-        {
+    await getManager().transaction(async () => {
+      // find game
+      const game = await this.getGameByCode(gameCode);
+      if (!game) {
+        throw new Error(`Game ${gameCode} is not found`);
+      }
+      const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+      const playerInGame = await playerGameTrackerRepository.findOne({
+        where: {
           game: {id: game.id},
           player: {id: player.id},
         },
-        {
-          status: PlayerStatus.KICKED_OUT,
-        }
-      );
+      });
 
-      // notify game server, player is kicked out
-      playerKickedOut(game, player, playerInGame.seatNo);
-    } else {
-      // game is running, so kickout the user in next hand
-      // deal with this in the next hand update
-      const nextHandUpdatesRepository = getRepository(NextHandUpdates);
-      const update = new NextHandUpdates();
-      update.game = game;
-      update.player = player;
-      update.newUpdate = NextHandUpdate.KICKOUT;
-      await nextHandUpdatesRepository.save(update);
-    }
+      if (!playerInGame) {
+        // player is not in game
+        throw new Error(`Player ${player.name} is not in the game`);
+      }
+
+      if (game.tableStatus !== TableStatus.GAME_RUNNING) {
+        // we can mark the user as KICKED_OUT from the player game tracker
+        await playerGameTrackerRepository.update(
+          {
+            game: {id: game.id},
+            player: {id: player.id},
+          },
+          {
+            status: PlayerStatus.KICKED_OUT,
+          }
+        );
+        const count = await playerGameTrackerRepository.count({
+          where: {
+            game: {id: game.id},
+            status: PlayerStatus.PLAYING,
+          },
+        });
+
+        const gameUpdatesRepo = getRepository(PokerGameUpdates);
+        await gameUpdatesRepo.update(
+          {
+            gameID: game.id,
+          },
+          {playersInSeats: count}
+        );
+        // notify game server, player is kicked out
+        playerKickedOut(game, player, playerInGame.seatNo);
+      } else {
+        // game is running, so kickout the user in next hand
+        // deal with this in the next hand update
+        const nextHandUpdatesRepository = getRepository(NextHandUpdates);
+        const update = new NextHandUpdates();
+        update.game = game;
+        update.player = player;
+        update.newUpdate = NextHandUpdate.KICKOUT;
+        await nextHandUpdatesRepository.save(update);
+      }
+    });
   }
 
   public async addToWaitingList(playerUuid: string, game: PokerGame) {
-    // add this user to waiting list
-    // if this user is already playing, then he cannot be in the waiting list
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    await getManager().transaction(async () => {
+      // add this user to waiting list
+      // if this user is already playing, then he cannot be in the waiting list
+      const playerGameTrackerRepository = getRepository(PlayerGameTracker);
 
-    const player = await getPlayer(playerUuid);
-    let playerInGame = await playerGameTrackerRepository.findOne({
-      where: {
-        game: {id: game.id},
-        player: {id: player.id},
-      },
-    });
+      const player = await getPlayer(playerUuid);
+      let playerInGame = await playerGameTrackerRepository.findOne({
+        where: {
+          game: {id: game.id},
+          player: {id: player.id},
+        },
+      });
 
-    if (playerInGame) {
-      // if the player is already playing, the user cannot add himself to the waiting list
-      if (playerInGame.status === PlayerStatus.PLAYING) {
-        throw new Error('Playing in the seat cannot be added to waiting list');
+      if (playerInGame) {
+        // if the player is already playing, the user cannot add himself to the waiting list
+        if (playerInGame.status === PlayerStatus.PLAYING) {
+          throw new Error(
+            'Playing in the seat cannot be added to waiting list'
+          );
+        }
+
+        await playerGameTrackerRepository.update(
+          {
+            game: {id: game.id},
+            player: {id: player.id},
+          },
+          {
+            status: PlayerStatus.IN_QUEUE,
+            waitingFrom: new Date(),
+          }
+        );
+      } else {
+        // player is not in the game
+        playerInGame = new PlayerGameTracker();
+        playerInGame.player = await getPlayer(playerUuid);
+        playerInGame.club = game.club;
+        playerInGame.game = game;
+        playerInGame.buyIn = 0;
+        playerInGame.stack = 0;
+        playerInGame.seatNo = 0;
+        const randomBytes = Buffer.from(crypto.randomBytes(5));
+        playerInGame.gameToken = randomBytes.toString('hex');
+        playerInGame.status = PlayerStatus.IN_QUEUE;
+        playerInGame.waitingFrom = new Date();
+        await playerGameTrackerRepository.save(playerInGame);
       }
 
+      // update players in waiting list column
+      const count = await playerGameTrackerRepository.count({
+        where: {
+          game: {id: game.id},
+          status: PlayerStatus.IN_QUEUE,
+        },
+      });
+
+      const gameUpdatesRepo = getRepository(PokerGameUpdates);
+      await gameUpdatesRepo.update(
+        {
+          gameID: game.id,
+        },
+        {playersInWaitList: count}
+      );
+    });
+  }
+
+  public async removeFromWaitingList(playerUuid: string, game: PokerGame) {
+    await getManager().transaction(async () => {
+      // remove this user from waiting list
+      const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+      const player = await getPlayer(playerUuid);
+      const playerInGame = await playerGameTrackerRepository.findOne({
+        where: {
+          game: {id: game.id},
+          player: {id: player.id},
+        },
+      });
+
+      if (!playerInGame) {
+        // this user is not in the game, nothing to do
+        throw new Error('Player is not in the waiting list');
+      }
+      if (playerInGame.status !== PlayerStatus.IN_QUEUE) {
+        throw new Error(`Player: ${player.name} is not in the waiting list`);
+      }
+      // only waiting list users should be here
       await playerGameTrackerRepository.update(
         {
           game: {id: game.id},
           player: {id: player.id},
         },
         {
-          status: PlayerStatus.IN_QUEUE,
-          waitingFrom: new Date(),
+          status: PlayerStatus.NOT_PLAYING,
+          waitingFrom: null,
         }
       );
-    } else {
-      // player is not in the game
-      playerInGame = new PlayerGameTracker();
-      playerInGame.player = await getPlayer(playerUuid);
-      playerInGame.club = game.club;
-      playerInGame.game = game;
-      playerInGame.buyIn = 0;
-      playerInGame.stack = 0;
-      playerInGame.seatNo = 0;
-      const randomBytes = Buffer.from(crypto.randomBytes(5));
-      playerInGame.gameToken = randomBytes.toString('hex');
-      playerInGame.status = PlayerStatus.IN_QUEUE;
-      playerInGame.waitingFrom = new Date();
-      await playerGameTrackerRepository.save(playerInGame);
-    }
-  }
 
-  public async removeFromWaitingList(playerUuid: string, game: PokerGame) {
-    // remove this user from waiting list
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-    const player = await getPlayer(playerUuid);
-    const playerInGame = await playerGameTrackerRepository.findOne({
-      where: {
-        game: {id: game.id},
-        player: {id: player.id},
-      },
+      // update players in waiting list column
+      const count = await playerGameTrackerRepository.count({
+        where: {
+          game: {id: game.id},
+          status: PlayerStatus.IN_QUEUE,
+        },
+      });
+
+      const gameUpdatesRepo = getRepository(PokerGameUpdates);
+      await gameUpdatesRepo.update(
+        {
+          gameID: game.id,
+        },
+        {playersInWaitList: count}
+      );
     });
-
-    if (!playerInGame) {
-      // this user is not in the game, nothing to do
-      throw new Error('Player is not in the waiting list');
-    }
-    if (playerInGame.status !== PlayerStatus.IN_QUEUE) {
-      throw new Error(`Player: ${player.name} is not in the waiting list`);
-    }
-    // only waiting list users should be here
-    await playerGameTrackerRepository.update(
-      {
-        game: {id: game.id},
-        player: {id: player.id},
-      },
-      {
-        status: PlayerStatus.NOT_PLAYING,
-        waitingFrom: null,
-      }
-    );
   }
 
   public async getWaitingListUsers(game: PokerGame) {

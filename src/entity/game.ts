@@ -15,6 +15,21 @@ import {
 } from './dbaware';
 import {GameStatus, GameType, TableStatus, NextHandUpdate} from './types';
 
+@Entity({name: 'poker_game_updates'})
+export class PokerGameUpdates {
+  @Column({primary: true, name: 'game_id'})
+  public gameID!: number;
+
+  @Column({name: 'players_in_seats', type: 'int', default: 0})
+  public playersInSeats!: number;
+
+  @Column({name: 'players_in_waitlist', type: 'int', default: 0})
+  public playersInWaitList!: number;
+
+  @Column({name: 'waitlist_seating_inprogress', default: false})
+  public waitlistSeatingInprogress!: boolean;
+}
+
 @Entity({name: 'poker_game'})
 export class PokerGame {
   @PrimaryGeneratedColumn()
