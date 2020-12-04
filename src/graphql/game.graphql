@@ -168,6 +168,12 @@ type PlayerSeatChange{
   seatChangeConfirmed: Boolean
 }
 
+type WaitingListPlayer {
+  playerUuid: String
+  name: String
+  waitingFrom: DateTime
+}
+
 type Mutation {
   # Not implemented
   configureGameFromTemplate(clubCode: String!, templateId: Int!): GameInfo!
@@ -196,6 +202,8 @@ type Mutation {
   endGame(gameCode: String!): GameStatus!
   #resumeGame(gameCode: String!): GameStatus!
   kickOut(gameCode: String!, playerUuid: String!): Boolean!
+  addToWaitingList(gameCode: String!): Boolean!
+  removeFromWaitingList(gameCode: String!): Boolean!
 }
 
 type gameId{
@@ -212,4 +220,5 @@ type Query {
   myGameState(gameCode: String!): PlayerGameState
   tableGameState(gameCode: String!): [PlayerGameState!]
   seatChangeRequests(gameCode: String!): [PlayerSeatChange]
+  waitingList(gameCode: String!): [WaitingListPlayer!]
 }

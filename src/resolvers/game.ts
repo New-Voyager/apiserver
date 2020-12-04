@@ -654,7 +654,108 @@ export async function kickOutPlayer(
     return true;
   } catch (err) {
     logger.error(err);
-    throw new Error(`Failed to kick out player`);
+    throw new Error('Failed to kick out player');
+  }
+}
+
+export async function addToWaitingList(playerId: string, gameCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      // club game
+      const clubMember = await getClubMember(playerId, game.club.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerId} is not a club member in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerId} is not authorized to kick out a user`
+        );
+      }
+    }
+
+    GameRepository.addToWaitingList(playerId, game);
+    return true;
+  } catch (err) {
+    logger.error(err);
+    throw new Error('Failed to kick out player');
+  }
+}
+
+export async function removeFromWaitingList(
+  playerId: string,
+  gameCode: string
+) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      // club game
+      const clubMember = await getClubMember(playerId, game.club.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerId} is not a club member in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerId} is not authorized to kick out a user`
+        );
+      }
+    }
+
+    GameRepository.removeFromWaitingList(playerId, game);
+    return true;
+  } catch (err) {
+    logger.error(err);
+    throw new Error('Failed to kick out player');
+  }
+}
+
+export async function waitingList(
+  playerId: string,
+  gameCode: string
+): Promise<Array<any>> {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      // club game
+      const clubMember = await getClubMember(playerId, game.club.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerId} is not a club member in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerId} is not authorized to kick out a user`
+        );
+      }
+    }
+
+    return GameRepository.getWaitingListUsers(game);
+  } catch (err) {
+    logger.error(err);
+    throw new Error('Failed to kick out player');
   }
 }
 
@@ -677,6 +778,9 @@ const resolvers: any = {
     },
     seatChangeRequests: async (parent, args, ctx, info) => {
       return await seatChangeRequests(ctx.req.playerId, args.gameCode);
+    },
+    waitingList: async (parent, args, ctx, info) => {
+      return await waitingList(ctx.req.playerId, args.gameCode);
     },
   },
   GameInfo: {
@@ -769,6 +873,12 @@ const resolvers: any = {
     },
     kickOut: async (parent, args, ctx, info) => {
       return kickOutPlayer(ctx.req.playerId, args.gameCode, args.playerUuid);
+    },
+    addToWaitingList: async (parent, args, ctx, info) => {
+      return addToWaitingList(ctx.req.playerId, args.gameCode);
+    },
+    removeFromWaitingList: async (parent, args, ctx, info) => {
+      return removeFromWaitingList(ctx.req.playerId, args.gameCode);
     },
   },
 };
