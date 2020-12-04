@@ -686,7 +686,7 @@ export async function addToWaitingList(playerId: string, gameCode: string) {
     return true;
   } catch (err) {
     logger.error(err);
-    throw new Error('Failed to kick out player');
+    throw new Error('Failed to add player to waiting list');
   }
 }
 
@@ -721,7 +721,7 @@ export async function removeFromWaitingList(
     return true;
   } catch (err) {
     logger.error(err);
-    throw new Error('Failed to kick out player');
+    throw new Error('Failed to remove player from waiting list');
   }
 }
 

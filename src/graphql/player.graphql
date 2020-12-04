@@ -43,6 +43,8 @@ type LiveGame {
   elapsedTime: Int!
   startedAt: DateTime!
   status: GameStatus!
+  waitlistCount: Int!     # number of players in waiting list
+  tableCount: Int!      # number of players playing
   playerStatus: PlayerGameStatus!
 }
 

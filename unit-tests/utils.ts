@@ -6,6 +6,7 @@ import {
   PokerGamePlayers,
   PokerHand,
   NextHandUpdates,
+  PokerGameUpdates,
 } from '@src/entity/game';
 import {HandWinners, HandHistory, StarredHands} from '@src/entity/hand';
 import {
@@ -53,6 +54,7 @@ export async function sqlliteConnection() {
       Promotion,
       GamePromotion,
       PromotionWinners,
+      PokerGameUpdates,
     ],
     dropSchema: true,
     synchronize: true,
