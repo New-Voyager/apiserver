@@ -27,7 +27,7 @@ import {
 import {isPostgres} from '@src/utils';
 import {getGame, getPlayer} from '@src/cache';
 import {min} from 'lodash';
-import { EEXIST } from 'constants';
+import {EEXIST} from 'constants';
 
 const logger = getLogger('game');
 
