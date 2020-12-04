@@ -422,6 +422,40 @@ describe('Game APIs', () => {
     }
   });
 
+  test('sit back after break', async () => {
+    const [clubCode, ownerId] = await clubutils.createClub('brady', 'yatzee');
+    await createGameServer('1.2.1.6');
+    const game = await gameutils.configureGame(
+      ownerId,
+      clubCode,
+      holdemGameInput
+    );
+    const player1Id = await clubutils.createPlayer('player1', 'abc123');
+
+    // Sit back with player status = IN_BREAK & game status != ACTIVE
+    await gameutils.joinGame(player1Id, game.gameCode, 1);
+    await gameutils.buyin(player1Id, game.gameCode, 100);
+    await gameutils.takeBreak(player1Id, game.gameCode);
+    const resp2 = await gameutils.sitBack(player1Id, game.gameCode);
+    expect(resp2).toBe(true);
+
+    // Sit back with player status = IN_BREAK & game status = ACTIVE
+    await gameutils.joinGame(player1Id, game.gameCode, 1);
+    await gameutils.buyin(player1Id, game.gameCode, 100);
+    await gameutils.takeBreak(player1Id, game.gameCode);
+    await gameutils.startGame(ownerId, game.gameCode);
+    const resp1 = await gameutils.sitBack(player1Id, game.gameCode);
+    expect(resp1).toBe(true);
+
+    // Sit back with player status != IN_BREAK
+    await gameutils.startGame(ownerId, game.gameCode);
+    await gameutils.joinGame(player1Id, game.gameCode, 1);
+    await gameutils.buyin(player1Id, game.gameCode, 100);
+    await gameutils.takeBreak(player1Id, game.gameCode);
+    const resp3 = await gameutils.sitBack(player1Id, game.gameCode);
+    expect(resp3).toBe(true);
+  });
+
   test('leave a game', async () => {
     const [clubCode, ownerId] = await clubutils.createClub('brady', 'yatzee');
     await createGameServer('1.2.1.4');
