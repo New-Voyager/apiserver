@@ -53,13 +53,13 @@ export class PlayerGameTracker {
   @Column({name: 'game_token', type: 'text', nullable: false, default: ''})
   public gameToken!: string;
 
-  @Column({name: 'seat_no', nullable: false})
+  @Column({name: 'seat_no', nullable: true})
   public seatNo!: number;
 
   @Column({name: 'queue_no', nullable: false, default: 0})
   public queueNo!: number;
 
-  @Column({name: 'no_of_buyins'})
+  @Column({name: 'no_of_buyins', default: 0})
   public noOfBuyins!: number;
 
   @Column({name: 'hh_rank', nullable: true})
@@ -102,7 +102,7 @@ export class PlayerGameTracker {
     type: 'timestamp',
     nullable: true,
   })
-  public waitingFrom!: Date;
+  public waitingFrom!: Date | null;
 }
 
 @Entity({name: 'club_game_rake'})
