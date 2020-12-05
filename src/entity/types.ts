@@ -35,6 +35,7 @@ export enum NextHandUpdate {
   PAUSE_GAME,
   END_GAME,
   KICKOUT,
+  JOIN_GAME,
 }
 
 export enum WonAtStatus {

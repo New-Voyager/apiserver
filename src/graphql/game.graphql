@@ -38,6 +38,7 @@ enum PlayerGameStatus {
   LEAVING_GAME
   TAKING_BREAK
   JOINING
+  WAITLIST_SEATING
 }
 
 enum BuyInApprovalStatus {

@@ -13,6 +13,7 @@ import {
   getPlayer,
   isClubMember,
 } from '@src/cache/index';
+import {WaitListMgmt} from '@src/repositories/waitlist';
 
 const logger = getLogger('game');
 
@@ -39,7 +40,7 @@ export async function configureGame(
     ret.tableStatus = TableStatus[gameInfo.tableStatus];
     return ret;
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error(`Failed to create a new game. ${JSON.stringify(err)}`);
   }
 }
@@ -61,7 +62,7 @@ export async function configureGameByPlayer(playerId: string, game: any) {
     ret.gameType = GameType[gameInfo.gameType];
     return ret;
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error(`Failed to create a new game. ${JSON.stringify(err)}`);
   }
 }
@@ -142,9 +143,10 @@ export async function joinGame(
     const player = await getPlayer(playerUuid);
     const status = await GameRepository.joinGame(player, game, seatNo);
     // player is good to go
-    return PlayerStatus[status];
+    const playerStatus = PlayerStatus[status];
+    return playerStatus;
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error(
       `Player: ${playerUuid} Failed to join the game. ${JSON.stringify(err)}`
     );
@@ -191,7 +193,7 @@ export async function startGame(
     // game is started
     return GameStatus[status];
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error(`Failed to start the game. ${JSON.stringify(err)}`);
   }
 }
@@ -233,7 +235,7 @@ export async function buyIn(
     // player is good to go
     return BuyInApprovalStatus[status];
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error(`Failed to update buyin. ${JSON.stringify(err)}`);
   }
 }
@@ -281,7 +283,7 @@ export async function approveBuyIn(
     // player is good to go
     return BuyInApprovalStatus[status];
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error(`Failed to update buyin. ${JSON.stringify(err)}`);
   }
 }
@@ -325,7 +327,7 @@ export async function myGameState(playerUuid: string, gameCode: string) {
 
     return gameState;
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error(`Failed to get game state. ${JSON.stringify(err)}`);
   }
 }
@@ -372,7 +374,7 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
 
     return tableGameState;
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error(`Failed to get game state. ${JSON.stringify(err)}`);
   }
 }
@@ -417,7 +419,7 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
 
     return ret;
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error(`Failed to update buyin. ${JSON.stringify(err)}`);
   }
 }
@@ -449,7 +451,7 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
     const status = await GameRepository.leaveGame(player, game);
     return status;
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error(`Failed to leave game. ${JSON.stringify(err)}`);
   }
 }
@@ -480,7 +482,7 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
     const status = await GameRepository.takeBreak(player, game);
     return status;
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error(`Failed to take break. ${JSON.stringify(err)}`);
   }
 }
@@ -542,7 +544,7 @@ export async function requestSeatChange(playerUuid: string, gameCode: string) {
     const requestedAt = await GameRepository.requestSeatChange(player, game);
     return requestedAt;
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error(`Failed to request seat change. ${JSON.stringify(err)}`);
   }
 }
@@ -588,7 +590,7 @@ export async function seatChangeRequests(playerUuid: string, gameCode: string) {
 
     return playerSeatChange;
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error(
       `Failed to get seat change requests. ${JSON.stringify(err)}`
     );
@@ -624,7 +626,7 @@ export async function confirmSeatChange(playerUuid: string, gameCode: string) {
     );
     return seatChangeStatus;
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error(`Failed to confirm seat change. ${JSON.stringify(err)}`);
   }
 }
@@ -684,7 +686,7 @@ export async function kickOutPlayer(
     await GameRepository.kickOutPlayer(gameCode, player);
     return true;
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error('Failed to kick out player');
   }
 }
@@ -712,11 +714,11 @@ export async function addToWaitingList(playerId: string, gameCode: string) {
         );
       }
     }
-
-    GameRepository.addToWaitingList(playerId, game);
+    const waitlistMgmt = new WaitListMgmt(game);
+    waitlistMgmt.addToWaitingList(playerId);
     return true;
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error('Failed to add player to waiting list');
   }
 }
@@ -747,11 +749,11 @@ export async function removeFromWaitingList(
         );
       }
     }
-
-    GameRepository.removeFromWaitingList(playerId, game);
+    const waitlistMgmt = new WaitListMgmt(game);
+    waitlistMgmt.removeFromWaitingList(playerId);
     return true;
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error('Failed to remove player from waiting list');
   }
 }
@@ -782,10 +784,10 @@ export async function waitingList(
         );
       }
     }
-
-    return GameRepository.getWaitingListUsers(game);
+    const waitlistMgmt = new WaitListMgmt(game);
+    return waitlistMgmt.getWaitingListUsers();
   } catch (err) {
-    logger.error(err);
+    logger.error(JSON.stringify(err));
     throw new Error('Failed to kick out player');
   }
 }
