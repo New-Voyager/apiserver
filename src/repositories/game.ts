@@ -1135,13 +1135,18 @@ class GameRepositoryImpl {
 
   public async getPlayersInSeats(gameId: number): Promise<any> {
     let placeHolder1 = '$1';
+    let placeHolder2 = '$2';
     if (!isPostgres()) {
       placeHolder1 = '?';
+      placeHolder2 = '?';
     }
     const query = `SELECT name, uuid as "playerUuid", buy_in as "buyIn", stack, status, seat_no as "seatNo" FROM 
           player_game_tracker pgt JOIN player p ON pgt.pgt_player_id = p.id
-          AND pgt.pgt_game_id = ${placeHolder1} AND seat_no IS NOT NULL`;
-    const resp = await getConnection().query(query, [gameId]);
+          AND pgt.pgt_game_id = ${placeHolder1} AND pgt.status = ${placeHolder2}`;
+    const resp = await getConnection().query(query, [
+      gameId,
+      PlayerStatus.PLAYING,
+    ]);
     return resp;
   }
 

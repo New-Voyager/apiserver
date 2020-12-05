@@ -81,6 +81,7 @@ export enum PlayerStatus {
   LEAVING_GAME,
   TAKING_BREAK,
   JOINING,
+  WAITLIST_SEATING,
 }
 
 export enum PromotionType {

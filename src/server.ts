@@ -17,6 +17,7 @@ import {getLogger} from '@src/utils/log';
 import {AdminAPI} from './internal/admin';
 import {Player} from './entity/player';
 import {initializeGameServer} from './gameserver';
+import {timerCallback} from './repositories/timer';
 const logger = getLogger('server');
 const JWT_EXPIRY_DAYS = 3;
 const requestContext = async ({req}) => {
@@ -133,6 +134,11 @@ function addInternalRoutes(app: any) {
   app.get(
     '/internal/get-game-server/club_id/:clubCode/game_num/:gameCode',
     GameAPI.getGame
+  );
+
+  app.post(
+    '/internal/timer-callback/gameId/:gameID/playerId/:playerID/purpose/:purpose',
+    timerCallback
   );
 
   app.post('/auth/login', login);
