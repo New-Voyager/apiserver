@@ -1,3 +1,4 @@
 type Mutation {
   resetDB: Boolean
+  testTimer(gameID: Int!, playerId: Int!, purpose: String, exp: Int!): Boolean
 }

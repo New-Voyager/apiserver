@@ -103,6 +103,14 @@ export class PlayerGameTracker {
     nullable: true,
   })
   public waitingFrom!: Date | null;
+
+  // this user is notified to take a seat and the time will expire at this time
+  @DbAwareColumn({
+    name: 'waitlist_sitting_exp',
+    type: 'timestamp',
+    nullable: true,
+  })
+  public waitingListTimeExp!: Date | null;
 }
 
 @Entity({name: 'club_game_rake'})

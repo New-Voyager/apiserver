@@ -5,3 +5,5 @@ export interface PlayerSitInput {
   buyIn: number;
   seatNo: number;
 }
+
+export const WAITLIST_SEATING = 'WAITLIST_SEATING';

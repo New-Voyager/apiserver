@@ -152,6 +152,31 @@ export async function changeGameStatus(game: PokerGame, status: GameStatus) {
   }
 }
 
+export async function gameUpdate(
+  game: PokerGame,
+  update: string,
+  contextData: any
+) {
+  if (!notifyGameServer) {
+    return;
+  }
+  const gameServerUrl = await getGameServerUrl(game.id);
+
+  const message = {
+    type: 'GameStatus',
+    gameId: game.id,
+    update: update,
+    context: contextData,
+  };
+  /*
+  const newGameUrl = `${gameServerUrl}/game-update`;
+  const resp = await axios.post(newGameUrl, message);
+  if (resp.status !== 200) {
+    logger.error(`Failed to update game status: ${newGameUrl}`);
+    throw new Error(`Failed to update game status: ${newGameUrl}`);
+  }*/
+}
+
 async function getGameServerUrl(gameId: number): Promise<string> {
   // get game server of this game
   const gameServer = await GameRepository.getGameServer(gameId);
@@ -201,5 +226,26 @@ export async function pendingProcessDone(gameId: number) {
   if (resp.status !== 200) {
     logger.error(`Failed to update pending updates: ${newGameUrl}`);
     throw new Error(`Failed to update pending updates: ${newGameUrl}`);
+  }
+}
+
+export async function startTimer(
+  gameId: number,
+  playerId: number,
+  purpose: string,
+  expAt: Date
+) {
+  if (!notifyGameServer) {
+    return;
+  }
+
+  // time in seconds
+  const expSeconds = Math.round(expAt.getTime() / 1000);
+  const gameServerUrl = await getGameServerUrl(gameId);
+  const newGameUrl = `${gameServerUrl}/start-timer?game-id=${gameId}&player-id=${playerId}&purpose=${purpose}&timeout-at=${expSeconds}`;
+  const resp = await axios.post(newGameUrl);
+  if (resp.status !== 200) {
+    logger.error(`Failed to start a timer: ${newGameUrl}`);
+    throw new Error(`Failed to start a timer: ${newGameUrl}`);
   }
 }

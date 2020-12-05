@@ -1,7 +1,7 @@
 import {getConnection} from 'typeorm';
 import {getManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
-import {isGameServerEnabled} from '@src/gameserver';
+import {isGameServerEnabled, startTimer} from '@src/gameserver';
 const logger = getLogger('reset');
 
 const resolvers: any = {
@@ -14,6 +14,13 @@ const resolvers: any = {
       const resp = await resetDB();
       logger.info('Database reset is complete');
       return resp;
+    },
+
+    testTimer: async (parent, args, ctx, info) => {
+      const t = new Date();
+      t.setSeconds(t.getSeconds() + args.exp);
+      await startTimer(args.gameID, args.playerId, args.purpose, t);
+      return true;
     },
   },
 };
@@ -31,6 +38,7 @@ export async function resetDB() {
     await deleteAll('PokerHand');
     await deleteAll('ClubGameRake');
     await deleteAll('game_gameserver');
+    await deleteAll('poker_game_updates');
     await deleteAll('PokerGame');
     await deleteAll('ClubMember');
     await deleteAll('Club');
