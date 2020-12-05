@@ -1,5 +1,12 @@
 import * as crypto from 'crypto';
-import {getRepository, getManager, getConnection, Not, IsNull} from 'typeorm';
+import {
+  getRepository,
+  getManager,
+  getConnection,
+  Not,
+  IsNull,
+  In,
+} from 'typeorm';
 import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {
   GameType,
@@ -418,41 +425,57 @@ class GameRepositoryImpl {
         );
       }
       // if this player has already played this game before, we should have his record
-      let thisPlayerInSeat = await playerGameTrackerRepository.findOne({
+      let playerInGame = await playerGameTrackerRepository.findOne({
         relations: ['player', 'club', 'game'],
         where: {
           game: {id: game.id},
           player: {id: player.id},
-          // seatNo: seatNo,
         },
       });
-      if (thisPlayerInSeat) {
-        thisPlayerInSeat.seatNo = seatNo;
+      if (playerInGame) {
+        playerInGame.seatNo = seatNo;
       } else {
-        thisPlayerInSeat = new PlayerGameTracker();
-        thisPlayerInSeat.player = player;
-        thisPlayerInSeat.club = game.club;
-        thisPlayerInSeat.game = game;
-        thisPlayerInSeat.stack = 0;
-        thisPlayerInSeat.buyIn = 0;
-        thisPlayerInSeat.seatNo = seatNo;
-        thisPlayerInSeat.noOfBuyins = 0;
-        thisPlayerInSeat.buyinNotes = '';
+        playerInGame = new PlayerGameTracker();
+        playerInGame.player = player;
+        playerInGame.club = game.club;
+        playerInGame.game = game;
+        playerInGame.stack = 0;
+        playerInGame.buyIn = 0;
+        playerInGame.seatNo = seatNo;
+        playerInGame.noOfBuyins = 0;
+        playerInGame.buyinNotes = '';
         const randomBytes = Buffer.from(crypto.randomBytes(5));
-        thisPlayerInSeat.gameToken = randomBytes.toString('hex');
+        playerInGame.gameToken = randomBytes.toString('hex');
+        playerInGame.status = PlayerStatus.NOT_PLAYING;
+        await playerGameTrackerRepository.save(playerInGame);
       }
 
       // we need 5 bytes to scramble 5 cards
-      if (thisPlayerInSeat.stack > 0) {
-        thisPlayerInSeat.status = PlayerStatus.PLAYING;
+      if (playerInGame.stack > 0) {
+        playerInGame.status = PlayerStatus.PLAYING;
       } else {
-        thisPlayerInSeat.status = PlayerStatus.WAIT_FOR_BUYIN;
+        playerInGame.status = PlayerStatus.WAIT_FOR_BUYIN;
       }
-      const resp = await playerGameTrackerRepository.save(thisPlayerInSeat);
+
+      await playerGameTrackerRepository.update(
+        {
+          game: {id: game.id},
+        },
+        {
+          seatNo: playerInGame.seatNo,
+          status: playerInGame.status,
+        }
+      );
+
+      // get number of players in the seats
       const count = await playerGameTrackerRepository.count({
         where: {
           game: {id: game.id},
-          status: PlayerStatus.PLAYING,
+          status: In([
+            PlayerStatus.PLAYING,
+            PlayerStatus.IN_BREAK,
+            PlayerStatus.WAIT_FOR_BUYIN,
+          ]),
         },
       });
 
@@ -464,27 +487,16 @@ class GameRepositoryImpl {
         {playersInSeats: count}
       );
 
-      /*
-      // if the game is active and table is running
-      // we will activate the player in the next hand
-      if (
-        game.status === GameStatus.ACTIVE &&
-        game.tableStatus === TableStatus.GAME_RUNNING
-      ) {
-        const nextHandUpdatesRepository = getRepository(NextHandUpdates);
-        const update = new NextHandUpdates();
-        update.game = game;
-        update.player = player;
-        update.newUpdate = NextHandUpdate.JOIN_GAME;
-        await nextHandUpdatesRepository.save(update);
-      }*/
+      if (playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN) {
+        // TODO: start a buy-in timer
+      }
 
       // send a message to gameserver
-      newPlayerSat(game, player, seatNo, thisPlayerInSeat);
+      newPlayerSat(game, player, seatNo, playerInGame);
 
       // continue to run wait list seating
       waitlistMgmt.runWaitList();
-      return thisPlayerInSeat.status;
+      return playerInGame.status;
     });
     return status;
   }
@@ -773,7 +785,17 @@ class GameRepositoryImpl {
       await nextHandUpdatesRepository.save(update);
     } else {
       playerInGame.status = PlayerStatus.NOT_PLAYING;
-      await playerGameTrackerRepository.save(playerInGame);
+      playerInGame.seatNo = 0;
+      playerGameTrackerRepository.update(
+        {
+          game: {id: game.id},
+          player: {id: player.id},
+        },
+        {
+          status: PlayerStatus.NOT_PLAYING,
+          seatNo: 0,
+        }
+      );
     }
     return true;
   }

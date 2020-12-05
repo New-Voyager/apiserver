@@ -143,7 +143,8 @@ export async function joinGame(
     const player = await getPlayer(playerUuid);
     const status = await GameRepository.joinGame(player, game, seatNo);
     // player is good to go
-    return PlayerStatus[status];
+    const playerStatus = PlayerStatus[status];
+    return playerStatus;
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error(
