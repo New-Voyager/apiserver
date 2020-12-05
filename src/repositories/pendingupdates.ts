@@ -5,13 +5,7 @@ import {GameRepository} from './game';
 import {getLogger} from '@src/utils/log';
 import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
-import {
-  gameUpdate,
-  pendingProcessDone,
-  playerKickedOut,
-  startTimer,
-} from '@src/gameserver';
-import {WAITLIST_SEATING} from './types';
+import {pendingProcessDone, playerKickedOut} from '@src/gameserver';
 import {WaitListMgmt} from './waitlist';
 
 const logger = getLogger('pending-updates');

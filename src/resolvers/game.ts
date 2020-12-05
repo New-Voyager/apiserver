@@ -486,6 +486,37 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
   }
 }
 
+export async function sitBack(playerUuid: string, gameCode: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await GameRepository.getGameByCode(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
+        );
+      }
+    }
+    const player = await getPlayer(playerUuid);
+    const status = await GameRepository.sitBack(player, game);
+    return status;
+  } catch (err) {
+    logger.error(err);
+    throw new Error(`Failed to take break. ${JSON.stringify(err)}`);
+  }
+}
+
 export async function requestSeatChange(playerUuid: string, gameCode: string) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
@@ -862,6 +893,9 @@ const resolvers: any = {
     },
     takeBreak: async (parent, args, ctx, info) => {
       return takeBreak(ctx.req.playerId, args.gameCode);
+    },
+    sitBack: async (parent, args, ctx, info) => {
+      return sitBack(ctx.req.playerId, args.gameCode);
     },
     leaveGame: async (parent, args, ctx, info) => {
       return leaveGame(ctx.req.playerId, args.gameCode);
