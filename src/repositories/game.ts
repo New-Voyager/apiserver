@@ -823,6 +823,10 @@ class GameRepositoryImpl {
       throw new Error(`Game: ${game.gameCode} not available`);
     }
 
+    if (playerInGame.status === PlayerStatus.IN_BREAK) {
+      return true;
+    }
+
     if (playerInGame.status !== PlayerStatus.PLAYING) {
       logger.error(
         `Player in game status is ${PlayerStatus[playerInGame.status]}`
