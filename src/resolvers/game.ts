@@ -13,6 +13,7 @@ import {
   getPlayer,
   isClubMember,
 } from '@src/cache/index';
+import {WaitListMgmt} from '@src/repositories/waitlist';
 
 const logger = getLogger('game');
 
@@ -681,8 +682,8 @@ export async function addToWaitingList(playerId: string, gameCode: string) {
         );
       }
     }
-
-    GameRepository.addToWaitingList(playerId, game);
+    const waitlistMgmt = new WaitListMgmt(game);
+    waitlistMgmt.addToWaitingList(playerId);
     return true;
   } catch (err) {
     logger.error(err);
@@ -716,8 +717,8 @@ export async function removeFromWaitingList(
         );
       }
     }
-
-    GameRepository.removeFromWaitingList(playerId, game);
+    const waitlistMgmt = new WaitListMgmt(game);
+    waitlistMgmt.removeFromWaitingList(playerId);
     return true;
   } catch (err) {
     logger.error(err);
@@ -751,8 +752,8 @@ export async function waitingList(
         );
       }
     }
-
-    return GameRepository.getWaitingListUsers(game);
+    const waitlistMgmt = new WaitListMgmt(game);
+    return waitlistMgmt.getWaitingListUsers();
   } catch (err) {
     logger.error(err);
     throw new Error('Failed to kick out player');

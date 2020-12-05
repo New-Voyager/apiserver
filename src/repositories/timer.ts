@@ -1,6 +1,8 @@
+import {PokerGame} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
-import {runWaitList} from './pendingupdates';
+import {getRepository} from 'typeorm';
 import {WAITLIST_SEATING} from './types';
+import {WaitListMgmt} from './waitlist';
 
 const logger = getLogger('timer');
 
@@ -41,5 +43,12 @@ async function handleWaitList(gameID: number, playerID: number) {
   logger.info(
     `Wait list timer expired. GameID: ${gameID}, PlayerID: ${playerID}. Go to next player`
   );
-  await runWaitList(gameID);
+  const gameRepository = getRepository(PokerGame);
+  const game = await gameRepository.findOne({id: gameID});
+  if (!game) {
+    throw new Error(`Game: ${gameID} is not found`);
+  }
+
+  const waitlistMgmt = new WaitListMgmt(game);
+  await waitlistMgmt.runWaitList();
 }
