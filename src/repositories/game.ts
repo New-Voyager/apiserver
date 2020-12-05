@@ -460,9 +460,10 @@ class GameRepositoryImpl {
       await playerGameTrackerRepository.update(
         {
           game: {id: game.id},
+          player: {id: player.id},
         },
         {
-          seatNo: playerInGame.seatNo,
+          seatNo: seatNo,
           status: playerInGame.status,
         }
       );
@@ -729,6 +730,12 @@ class GameRepositoryImpl {
       where: {
         game: {id: game.id},
         player: {id: player.id},
+      },
+    });
+    const allPlayers = await playerGameTrackerRepository.find({
+      relations: ['player'],
+      where: {
+        game: {id: game.id},
       },
     });
 

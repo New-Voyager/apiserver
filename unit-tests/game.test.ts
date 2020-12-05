@@ -397,65 +397,60 @@ describe('Game APIs', () => {
       status: 'ACTIVE',
       url: 'http://10.1.1.8:8080',
     };
-    try {
-      await createGameServer(gameServer1);
-      const owner = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc123',
-        },
-      });
-      const club = await createClub(owner, {
-        name: 'club_name',
-        description: 'poker players gather',
-        ownerUuid: owner,
-      });
-      const game = await configureGame(owner, club, holdemGameInput);
-      const player1 = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc123',
-        },
-      });
-      const player2 = await createPlayer({
-        player: {
-          name: 'player_name1',
-          deviceId: 'abc1234',
-        },
-      });
+    await createGameServer(gameServer1);
+    const owner = await createPlayer({
+      player: {
+        name: 'player_name',
+        deviceId: 'abc123',
+      },
+    });
+    const club = await createClub(owner, {
+      name: 'club_name',
+      description: 'poker players gather',
+      ownerUuid: owner,
+    });
+    const game = await configureGame(owner, club, holdemGameInput);
+    const player1 = await createPlayer({
+      player: {
+        name: 'player_name',
+        deviceId: 'abc123',
+      },
+    });
+    const player2 = await createPlayer({
+      player: {
+        name: 'player_name1',
+        deviceId: 'abc1234',
+      },
+    });
 
-      // Join a game
-      const data = await joinGame(player1, game.gameCode, 1);
-      expect(data).toBe('WAIT_FOR_BUYIN');
-      const data1 = await joinGame(player2, game.gameCode, 2);
-      expect(data1).toBe('WAIT_FOR_BUYIN');
+    // Join a game
+    const data = await joinGame(player1, game.gameCode, 1);
+    expect(data).toBe('WAIT_FOR_BUYIN');
+    const data1 = await joinGame(player2, game.gameCode, 2);
+    expect(data1).toBe('WAIT_FOR_BUYIN');
 
-      const resp = await myGameState(player1, game.gameCode);
-      expect(resp.buyInStatus).toBeUndefined();
-      expect(resp.playerUuid).toBe(player1);
-      expect(resp.buyIn).toBe(0);
-      expect(resp.stack).toBe(0);
-      expect(resp.status).toBe('WAIT_FOR_BUYIN');
-      expect(resp.playingFrom).toBeNull();
-      expect(resp.waitlistNo).toBe(0);
-      expect(resp.seatNo).toBe(1);
+    const resp = await myGameState(player1, game.gameCode);
+    expect(resp.buyInStatus).toBeUndefined();
+    expect(resp.playerUuid).toBe(player1);
+    expect(resp.buyIn).toBe(0);
+    expect(resp.stack).toBe(0);
+    expect(resp.status).toBe('WAIT_FOR_BUYIN');
+    expect(resp.playingFrom).toBeNull();
+    expect(resp.waitlistNo).toBe(0);
+    expect(resp.seatNo).toBe(1);
 
-      const resp1 = await buyIn(player1, game.gameCode, 100);
-      expect(resp1).toBe('APPROVED');
+    const resp1 = await buyIn(player1, game.gameCode, 100);
+    expect(resp1).toBe('APPROVED');
 
-      const resp2 = await myGameState(player1, game.gameCode);
-      expect(resp2.buyInStatus).toBe('APPROVED');
-      expect(resp2.playerUuid).toBe(player1);
-      expect(resp2.buyIn).toBe(100);
-      expect(resp2.stack).toBe(100);
-      expect(resp2.status).toBe('PLAYING');
-      expect(resp2.playingFrom).toBeNull();
-      expect(resp2.waitlistNo).toBe(0);
-      expect(resp2.seatNo).toBe(1);
-    } catch (err) {
-      logger.error(JSON.stringify(err));
-      expect(true).toBeFalsy();
-    }
+    const resp2 = await myGameState(player1, game.gameCode);
+    expect(resp2.buyInStatus).toBe('APPROVED');
+    expect(resp2.playerUuid).toBe(player1);
+    expect(resp2.buyIn).toBe(100);
+    expect(resp2.stack).toBe(100);
+    expect(resp2.status).toBe('PLAYING');
+    expect(resp2.playingFrom).toBeNull();
+    expect(resp2.waitlistNo).toBe(0);
+    expect(resp2.seatNo).toBe(1);
   });
 
   test('Get table game state', async () => {
@@ -569,53 +564,48 @@ describe('Game APIs', () => {
       status: 'ACTIVE',
       url: 'http://10.1.2.1:8080',
     };
-    try {
-      await createGameServer(gameServer1);
-      const owner = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc123',
-        },
-      });
-      const club = await createClub(owner, {
-        name: 'club_name',
-        description: 'poker players gather',
-        ownerUuid: owner,
-      });
-      const game = await configureGame(owner, club, holdemGameInput);
-      const player1 = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc123',
-        },
-      });
+    await createGameServer(gameServer1);
+    const owner = await createPlayer({
+      player: {
+        name: 'player_name',
+        deviceId: 'abc123',
+      },
+    });
+    const club = await createClub(owner, {
+      name: 'club_name',
+      description: 'poker players gather',
+      ownerUuid: owner,
+    });
+    const game = await configureGame(owner, club, holdemGameInput);
+    const player1 = await createPlayer({
+      player: {
+        name: 'player_name',
+        deviceId: 'abc123',
+      },
+    });
 
-      // Sit back with player status = IN_BREAK & game status != ACTIVE
-      await joinGame(player1, game.gameCode, 1);
-      await buyIn(player1, game.gameCode, 100);
-      await takeBreak(player1, game.gameCode);
-      const resp1 = await sitBack(player1, game.gameCode);
-      expect(resp1).toBe(true);
+    // Sit back with player status = IN_BREAK & game status != ACTIVE
+    await joinGame(player1, game.gameCode, 1);
+    await buyIn(player1, game.gameCode, 100);
+    await takeBreak(player1, game.gameCode);
+    const resp1 = await sitBack(player1, game.gameCode);
+    expect(resp1).toBe(true);
 
-      // Sit back with player status = IN_BREAK & game status = ACTIVE
-      await joinGame(player1, game.gameCode, 1);
-      await buyIn(player1, game.gameCode, 100);
-      await takeBreak(player1, game.gameCode);
-      await startGame(player1, game.gameCode);
-      const resp2 = await sitBack(player1, game.gameCode);
-      expect(resp2).toBe(true);
+    // Sit back with player status = IN_BREAK & game status = ACTIVE
+    await joinGame(player1, game.gameCode, 1);
+    await buyIn(player1, game.gameCode, 100);
+    await takeBreak(player1, game.gameCode);
+    await startGame(player1, game.gameCode);
+    const resp2 = await sitBack(player1, game.gameCode);
+    expect(resp2).toBe(true);
 
-      // Sit back with player status != IN_BREAK
-      await startGame(player1, game.gameCode);
-      await joinGame(player1, game.gameCode, 1);
-      await buyIn(player1, game.gameCode, 100);
-      await takeBreak(player1, game.gameCode);
-      const resp3 = await sitBack(player1, game.gameCode);
-      expect(resp3).toBe(true);
-    } catch (err) {
-      logger.error(JSON.stringify(err));
-      expect(true).toBeFalsy();
-    }
+    // Sit back with player status != IN_BREAK
+    await startGame(player1, game.gameCode);
+    await joinGame(player1, game.gameCode, 1);
+    await buyIn(player1, game.gameCode, 100);
+    await takeBreak(player1, game.gameCode);
+    const resp3 = await sitBack(player1, game.gameCode);
+    expect(resp3).toBe(true);
   });
 
   test('leave a game', async () => {
