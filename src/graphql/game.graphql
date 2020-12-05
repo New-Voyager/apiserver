@@ -88,6 +88,7 @@ type SeatInfo {
   name: String!
   buyIn: Float
   stack: Float
+  status: PlayerGameStatus
 }
 
 type TableSeats {

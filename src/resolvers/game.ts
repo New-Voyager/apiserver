@@ -820,6 +820,10 @@ const resolvers: any = {
     seatInfo: async (parent, args, ctx, info) => {
       const game = await getGame(parent.gameCode);
       const playersInSeats = await GameRepository.getPlayersInSeats(game.id);
+      for (const player of playersInSeats) {
+        player.status = PlayerStatus[player.status];
+      }
+
       const takenSeats = playersInSeats.map(x => x.seatNo);
       const availableSeats: Array<number> = [];
       for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {

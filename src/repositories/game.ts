@@ -381,6 +381,10 @@ class GameRepositoryImpl {
     game: PokerGame,
     seatNo: number
   ): Promise<PlayerStatus> {
+    if (seatNo > game.maxPlayers) {
+      throw new Error('Invalid seat number');
+    }
+
     const status = await getManager().transaction(async () => {
       // get game updates
       const gameUpdateRepo = getRepository(PokerGameUpdates);
@@ -1211,18 +1215,14 @@ class GameRepositoryImpl {
 
   public async getPlayersInSeats(gameId: number): Promise<any> {
     let placeHolder1 = '$1';
-    let placeHolder2 = '$2';
     if (!isPostgres()) {
       placeHolder1 = '?';
-      placeHolder2 = '?';
     }
-    const query = `SELECT name, uuid as "playerUuid", buy_in as "buyIn", stack, status, seat_no as "seatNo" FROM 
+
+    const query = `SELECT name, uuid as "playerUuid", buy_in as "buyIn", stack, status, seat_no as "seatNo", status FROM 
           player_game_tracker pgt JOIN player p ON pgt.pgt_player_id = p.id
-          AND pgt.pgt_game_id = ${placeHolder1} AND pgt.status = ${placeHolder2}`;
-    const resp = await getConnection().query(query, [
-      gameId,
-      PlayerStatus.PLAYING,
-    ]);
+          AND pgt.pgt_game_id = ${placeHolder1} AND pgt.seat_no <> 0`;
+    const resp = await getConnection().query(query, [gameId]);
     return resp;
   }
 
