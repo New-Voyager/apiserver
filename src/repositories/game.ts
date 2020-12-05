@@ -773,6 +773,53 @@ class GameRepositoryImpl {
     return true;
   }
 
+  public async sitBack(player: Player, game: PokerGame): Promise<boolean> {
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const nextHandUpdatesRepository = getRepository(NextHandUpdates);
+    const playerInGame = await playerGameTrackerRepository.findOne({
+      relations: ['player', 'club', 'game'],
+      where: {
+        game: {id: game.id},
+        player: {id: player.id},
+      },
+    });
+
+    if (!playerInGame) {
+      logger.error(`Game: ${game.gameCode} not available`);
+      throw new Error(`Game: ${game.gameCode} not available`);
+    }
+
+    if (playerInGame.status === PlayerStatus.IN_BREAK) {
+      if (game.status === GameStatus.ACTIVE) {
+        const update = new NextHandUpdates();
+        update.game = game;
+        update.player = player;
+        update.newUpdate = NextHandUpdate.BACK_FROM_BREAK;
+        await nextHandUpdatesRepository.save(update);
+      } else {
+        playerInGame.status = PlayerStatus.PLAYING;
+        await playerGameTrackerRepository.save(playerInGame);
+      }
+    } else {
+      const nextHandUpdate = await nextHandUpdatesRepository.findOne({
+        where: {
+          game: {id: game.id},
+          player: {id: player.id},
+          newUpdate: NextHandUpdate.TAKE_BREAK,
+        },
+      });
+
+      if (!nextHandUpdate) {
+        logger.error('The player has not taken a break');
+        throw new Error('The player has not taken a break');
+      }
+
+      await nextHandUpdatesRepository.delete({id: nextHandUpdate.id});
+    }
+
+    return true;
+  }
+
   public async requestSeatChange(
     player: Player,
     game: PokerGame

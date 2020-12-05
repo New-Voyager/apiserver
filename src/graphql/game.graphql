@@ -195,6 +195,7 @@ type Mutation {
   approveBuyIn(gameCode: String!, playerUuid: String!, amount: Float!): BuyInApprovalStatus!
   startGame(gameCode: String!): GameStatus!
   takeBreak(gameCode: String!): Boolean!
+  sitBack(gameCode: String!): Boolean!
   leaveGame(gameCode: String!): Boolean!
   requestSeatChange(gameCode: String!): DateTime!
   confirmSeatChange(gameCode: String): Boolean!

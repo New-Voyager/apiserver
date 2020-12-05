@@ -198,6 +198,12 @@ export const takeBreakQuery = gql`
   }
 `;
 
+export const sitBackQuery = gql`
+  mutation($gameCode: String!) {
+    status: sitBack(gameCode: $gameCode)
+  }
+`;
+
 export const leaveGameQuery = gql`
   mutation($gameCode: String!) {
     status: leaveGame(gameCode: $gameCode)
@@ -371,6 +377,21 @@ export async function takeBreak(
       gameCode: gameCode,
     },
     mutation: takeBreakQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+export async function sitBack(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+    },
+    mutation: sitBackQuery,
   });
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();

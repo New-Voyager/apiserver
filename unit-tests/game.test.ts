@@ -14,6 +14,7 @@ import {
   myGameState,
   tableGameState,
   takeBreak,
+  sitBack,
   leaveGame,
   requestSeatChange,
   confirmSeatChange,
@@ -554,6 +555,62 @@ describe('Game APIs', () => {
       expect(data1).toBe('APPROVED');
 
       const resp3 = await takeBreak(player1, game.gameCode);
+      expect(resp3).toBe(true);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
+
+  test('Sit back after break', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.2.1',
+      currentMemory: 100,
+      status: 'ACTIVE',
+      url: 'http://10.1.2.1:8080',
+    };
+    try {
+      await createGameServer(gameServer1);
+      const owner = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+      const club = await createClub(owner, {
+        name: 'club_name',
+        description: 'poker players gather',
+        ownerUuid: owner,
+      });
+      const game = await configureGame(owner, club, holdemGameInput);
+      const player1 = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc123',
+        },
+      });
+
+      // Sit back with player status = IN_BREAK & game status != ACTIVE
+      await joinGame(player1, game.gameCode, 1);
+      await buyIn(player1, game.gameCode, 100);
+      await takeBreak(player1, game.gameCode);
+      const resp1 = await sitBack(player1, game.gameCode);
+      expect(resp1).toBe(true);
+
+      // Sit back with player status = IN_BREAK & game status = ACTIVE
+      await joinGame(player1, game.gameCode, 1);
+      await buyIn(player1, game.gameCode, 100);
+      await takeBreak(player1, game.gameCode);
+      await startGame(player1, game.gameCode);
+      const resp2 = await sitBack(player1, game.gameCode);
+      expect(resp2).toBe(true);
+
+      // Sit back with player status != IN_BREAK
+      await startGame(player1, game.gameCode);
+      await joinGame(player1, game.gameCode, 1);
+      await buyIn(player1, game.gameCode, 100);
+      await takeBreak(player1, game.gameCode);
+      const resp3 = await sitBack(player1, game.gameCode);
       expect(resp3).toBe(true);
     } catch (err) {
       logger.error(JSON.stringify(err));
