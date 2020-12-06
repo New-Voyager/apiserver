@@ -22,6 +22,7 @@
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "npm",
+      "outputCapture": "std",
       "runtimeArgs": ["run-script", "watch-debug-nats"],
       "port": 9235
     },    
@@ -85,7 +86,7 @@
         "--runInBand",
         "./unit-tests",
         "--testNamePattern",
-        "get club members"
+        "Sit back after break"
       ],
       "env": {
         "NODE_ENV": "test",
