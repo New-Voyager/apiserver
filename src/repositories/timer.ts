@@ -33,13 +33,13 @@ export async function timerCallback(req: any, resp: any) {
   );
 
   if (purpose === WAITLIST_SEATING) {
-    handleWaitList(gameID, playerID);
+    waitlistTimeoutExpired(gameID, playerID);
   }
 
   resp.status(200).send({status: 'OK'});
 }
 
-async function handleWaitList(gameID: number, playerID: number) {
+export async function waitlistTimeoutExpired(gameID: number, playerID: number) {
   logger.info(
     `Wait list timer expired. GameID: ${gameID}, PlayerID: ${playerID}. Go to next player`
   );
