@@ -530,16 +530,12 @@ describe('Game APIs', () => {
     expect(resp3[0].seatChangeConfirmed).toBe(false);
 
     // confirm seat change
-    const resp4 = await gameutils.confirmSeatChange(player1Id, game.gameCode);
-    expect(resp4).toBe(true);
-
-    // get all requested seat change
-    const resp5 = await gameutils.seatChangeRequests(
+    const resp4 = await gameutils.confirmSeatChange(
       player1Id,
       game.gameCode,
-      1
+      2
     );
-    expect(resp5[0].seatChangeConfirmed).toBe(true);
+    expect(resp4).toBe(true);
   });
 
   test('confirm seat change', async () => {
@@ -589,18 +585,18 @@ describe('Game APIs', () => {
     await gameutils.requestSeatChange(player2Id, game.gameCode);
 
     // confirm seat change
-    await gameutils.confirmSeatChange(player1Id, game.gameCode);
-    await gameutils.confirmSeatChange(player2Id, game.gameCode);
+    await gameutils.confirmSeatChange(player1Id, game.gameCode, 5);
+    await gameutils.confirmSeatChange(player2Id, game.gameCode, 6);
 
     // make seat change
-    try {
-      await axios.post(
-        `${GAMESERVER_API}/handle-seat-change?gameCode=` + game.gameCode,
-        {}
-      );
-    } catch (error) {
-      logger.error(error.toString());
-      expect(true).toBeFalsy();
-    }
+    // try {
+    //   await axios.post(
+    //     `${GAMESERVER_API}/handle-seat-change?gameCode=` + game.gameCode,
+    //     {}
+    //   );
+    // } catch (error) {
+    //   logger.error(error.toString());
+    //   expect(true).toBeFalsy();
+    // }
   });
 });
