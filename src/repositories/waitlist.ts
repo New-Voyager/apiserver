@@ -12,6 +12,23 @@ import * as crypto from 'crypto';
 
 const logger = getLogger('waitlist');
 
+export async function occupiedSeats(gameId: number): Promise<number> {
+  logger.info(`Processing pending updates for game id: ${gameId}`);
+  // if there is an end game update, let us end the game first
+  let placeHolder1 = '$1';
+  let placeHolder2 = '$2';
+  if (!isPostgres()) {
+    placeHolder1 = '?';
+    placeHolder2 = '?';
+  }
+  const query = `SELECT COUNT(*) as occupied FROM player_game_tracker WHERE pgt_game_id = ${placeHolder1} AND status = ${placeHolder2}`;
+  const resp = await getConnection().query(query, [
+    gameId,
+    PlayerStatus.PLAYING,
+  ]);
+  return resp[0]['occupied'];
+}
+
 // Handles all the functionalities related to waitlist management
 export class WaitListMgmt {
   private game: PokerGame;
@@ -72,23 +89,6 @@ export class WaitListMgmt {
     }
   }
 
-  async occupiedSeats(gameId: number): Promise<number> {
-    logger.info(`Processing pending updates for game id: ${gameId}`);
-    // if there is an end game update, let us end the game first
-    let placeHolder1 = '$1';
-    let placeHolder2 = '$2';
-    if (!isPostgres()) {
-      placeHolder1 = '?';
-      placeHolder2 = '?';
-    }
-    const query = `SELECT COUNT(*) as occupied FROM player_game_tracker WHERE pgt_game_id = ${placeHolder1} AND status = ${placeHolder2}`;
-    const resp = await getConnection().query(query, [
-      gameId,
-      PlayerStatus.PLAYING,
-    ]);
-    return resp[0]['occupied'];
-  }
-
   // get the first guy from the wait list
   // if the timer expired, cancel the timer and change the user to status, NOT_PLAYING, waitingFrom: null, waitlist_sitting_exp: null
   // if no-one is in the wait list, set waitlist seating in progress to false
@@ -98,7 +98,7 @@ export class WaitListMgmt {
   // notify game server to send message to players
   public async runWaitList() {
     const gameId = this.game.id;
-    const seatsTaken = await this.occupiedSeats(gameId);
+    const seatsTaken = await occupiedSeats(gameId);
     if (seatsTaken === this.game.maxPlayers) {
       logger.info(`No open seats in game: ${this.game.gameCode}`);
       return;

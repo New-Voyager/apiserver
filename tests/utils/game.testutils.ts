@@ -231,8 +231,8 @@ export const seatChangeRequestsQuery = gql`
 `;
 
 export const confirmSeatChangeQuery = gql`
-  mutation($gameCode: String!) {
-    status: confirmSeatChange(gameCode: $gameCode)
+  mutation($gameCode: String!, $seatNo: Int!) {
+    status: confirmSeatChange(gameCode: $gameCode, seatNo: $seatNo)
   }
 `;
 
@@ -415,11 +415,13 @@ export async function leaveGame(
 
 export async function confirmSeatChange(
   playerId: string,
-  gameCode: string
+  gameCode: string,
+  seatNo: number
 ): Promise<any> {
   const resp = await getClient(playerId).mutate({
     variables: {
       gameCode: gameCode,
+      seatNo: seatNo,
     },
     mutation: confirmSeatChangeQuery,
   });

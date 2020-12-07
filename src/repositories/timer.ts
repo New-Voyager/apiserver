@@ -1,7 +1,8 @@
 import {PokerGame} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
 import {getRepository} from 'typeorm';
-import {WAITLIST_SEATING} from './types';
+import {SeatChangeProcess} from './seatchange';
+import {SEATCHANGE_PROGRSS, WAITLIST_SEATING} from './types';
 import {WaitListMgmt} from './waitlist';
 
 const logger = getLogger('timer');
@@ -34,6 +35,8 @@ export async function timerCallback(req: any, resp: any) {
 
   if (purpose === WAITLIST_SEATING) {
     waitlistTimeoutExpired(gameID, playerID);
+  } else if (purpose === SEATCHANGE_PROGRSS) {
+    seatChangeTimeoutExpired(gameID);
   }
 
   resp.status(200).send({status: 'OK'});
@@ -51,4 +54,15 @@ export async function waitlistTimeoutExpired(gameID: number, playerID: number) {
 
   const waitlistMgmt = new WaitListMgmt(game);
   await waitlistMgmt.runWaitList();
+}
+
+export async function seatChangeTimeoutExpired(gameID: number) {
+  logger.info(`Seat change timeout expired. GameID: ${gameID}`);
+  const gameRepository = getRepository(PokerGame);
+  const game = await gameRepository.findOne({id: gameID});
+  if (!game) {
+    throw new Error(`Game: ${gameID} is not found`);
+  }
+  const seatChange = new SeatChangeProcess(game);
+  await seatChange.finish();
 }

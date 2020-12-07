@@ -698,12 +698,8 @@ describe('Game APIs', () => {
       expect(resp3[0].seatChangeConfirmed).toBe(false);
 
       // confirm seat change
-      const resp4 = await confirmSeatChange(player1, game.gameCode);
+      const resp4 = await confirmSeatChange(player1, game.gameCode, 2);
       expect(resp4).toBe(true);
-
-      // get all requested seat changes
-      const resp5 = await seatChangeRequests(player1, game.gameCode);
-      expect(resp5[0].seatChangeConfirmed).toBe(true);
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();

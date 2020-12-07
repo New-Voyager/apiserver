@@ -14,6 +14,7 @@ import {
   isClubMember,
 } from '@src/cache/index';
 import {WaitListMgmt} from '@src/repositories/waitlist';
+import {SeatChangeProcess} from '@src/repositories/seatchange';
 
 const logger = getLogger('game');
 
@@ -541,7 +542,8 @@ export async function requestSeatChange(playerUuid: string, gameCode: string) {
       }
     }
     const player = await getPlayer(playerUuid);
-    const requestedAt = await GameRepository.requestSeatChange(player, game);
+    const seatChange = new SeatChangeProcess(game);
+    const requestedAt = await seatChange.requestSeatChange(player);
     return requestedAt;
   } catch (err) {
     logger.error(JSON.stringify(err));
@@ -572,7 +574,8 @@ export async function seatChangeRequests(playerUuid: string, gameCode: string) {
       }
     }
     const player = await getPlayer(playerUuid);
-    const allPlayers = await GameRepository.seatChangeRequests(player, game);
+    const seatChange = new SeatChangeProcess(game);
+    const allPlayers = await seatChange.seatChangeRequests(player);
 
     const playerSeatChange = new Array<any>();
     allPlayers.map(player => {
@@ -597,7 +600,11 @@ export async function seatChangeRequests(playerUuid: string, gameCode: string) {
   }
 }
 
-export async function confirmSeatChange(playerUuid: string, gameCode: string) {
+export async function confirmSeatChange(
+  playerUuid: string,
+  gameCode: string,
+  seatNo: number
+) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }
@@ -620,10 +627,8 @@ export async function confirmSeatChange(playerUuid: string, gameCode: string) {
       }
     }
     const player = await getPlayer(playerUuid);
-    const seatChangeStatus = await GameRepository.confirmSeatChange(
-      player,
-      game
-    );
+    const seatChange = new SeatChangeProcess(game);
+    const seatChangeStatus = await seatChange.confirmSeatChange(player, seatNo);
     return seatChangeStatus;
   } catch (err) {
     logger.error(JSON.stringify(err));
@@ -909,7 +914,7 @@ const resolvers: any = {
       return requestSeatChange(ctx.req.playerId, args.gameCode);
     },
     confirmSeatChange: async (parent, args, ctx, info) => {
-      return confirmSeatChange(ctx.req.playerId, args.gameCode);
+      return confirmSeatChange(ctx.req.playerId, args.gameCode, args.seatNo);
     },
     kickOut: async (parent, args, ctx, info) => {
       return kickOutPlayer(ctx.req.playerId, args.gameCode, args.playerUuid);
