@@ -1,8 +1,8 @@
-import {getRepository} from 'typeorm';
+import {getConnection, getRepository} from 'typeorm';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
-import {GameServerStatus} from '@src/entity/types';
-import {STATUS_CODES} from 'http';
+import {GameServerStatus, GameStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
+import {isPostgres} from '@src/utils';
 import {getLogger} from '@src/utils/log';
 const logger = getLogger('internal::gameserver');
 
@@ -110,6 +110,21 @@ class GameServerAPIs {
     const response = await getParticularGameServer(clubCode, gameCode);
     resp.status(200).send(JSON.stringify({server: response}));
   }
+
+  public async restartGames(req: any, resp: any) {
+    const gameServer = req.params.gameServer;
+    const errors = new Array<string>();
+    if (!gameServer) {
+      errors.push('gameServer parameter is missing');
+    }
+    if (errors.length) {
+      resp.status(400).send(JSON.stringify({errors: errors}));
+      return;
+    }
+    const url = `http://${gameServer}:8080`;
+    const gameCodes = await getGamesForGameServer(url);
+    resp.status(200).send(JSON.stringify({gameCodes: gameCodes}));
+  }
 }
 
 export const GameServerAPI = new GameServerAPIs();
@@ -215,4 +230,25 @@ export async function getParticularGameServer(
     },
   });
   return trackGameServer;
+}
+
+export async function getGamesForGameServer(
+  gameServerUrl: string
+): Promise<Array<string>> {
+  let query = `SELECT pg.game_code FROM poker_game pg 
+      INNER JOIN game_gameserver gg ON pg.id = gg.game_id 
+      INNER JOIN game_server gs ON gg."gameServerId" = gs.id
+      WHERE gs.url = ?
+      AND pg.game_status = ?;`;
+  if (isPostgres()) {
+    for (var i = 1; query.includes('?'); i++) {
+      query = query.replace('?', '$' + i);
+    }
+  }
+  const res = await getConnection().query(query, [
+    gameServerUrl,
+    GameStatus.ACTIVE,
+  ]);
+
+  return res.map(g => g.game_code);
 }

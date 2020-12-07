@@ -141,6 +141,11 @@ function addInternalRoutes(app: any) {
     timerCallback
   );
 
+  app.post(
+    '/internal/restart-my-games/:gameServer',
+    GameServerAPI.restartGames
+  );
+
   app.post('/auth/login', login);
 }
 
