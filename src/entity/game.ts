@@ -28,6 +28,9 @@ export class PokerGameUpdates {
 
   @Column({name: 'waitlist_seating_inprogress', default: false})
   public waitlistSeatingInprogress!: boolean;
+
+  @Column({name: 'seat_change_inprogress', default: false})
+  public seatChangeInProgress!: boolean;
 }
 
 @Entity({name: 'poker_game'})
@@ -117,6 +120,12 @@ export class PokerGame {
 
   @Column({name: 'break_length', default: 15})
   public breakLength!: number;
+
+  @Column({name: 'seat_change_allowed', default: true})
+  public seatChangeAllowed!: boolean;
+
+  @Column({name: 'waitlist_allowed', default: true})
+  public waitlistAllowed!: boolean;
 
   @Column({name: 'auto_kick_after_break', default: true})
   public autoKickAfterBreak!: boolean;

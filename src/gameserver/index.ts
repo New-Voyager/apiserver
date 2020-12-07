@@ -219,7 +219,6 @@ export async function pendingProcessDone(gameId: number) {
   if (!notifyGameServer) {
     return;
   }
-
   const gameServerUrl = await getGameServerUrl(gameId);
   const newGameUrl = `${gameServerUrl}/pending-updates?game-id=${gameId}&done=1`;
   const resp = await axios.post(newGameUrl);
@@ -266,5 +265,35 @@ export async function cancelTimer(
   if (resp.status !== 200) {
     logger.error(`Failed to cancel a timer: ${newGameUrl}`);
     throw new Error(`Failed to cancel a timer: ${newGameUrl}`);
+  }
+}
+
+export async function playerSwitchSeat(
+  game: PokerGame,
+  player: Player,
+  playerGameInfo: PlayerGameTracker
+) {
+  if (!notifyGameServer) {
+    return;
+  }
+
+  const gameServerUrl = await getGameServerUrl(game.id);
+
+  const message = {
+    type: 'PlayerUpdate',
+    gameId: game.id,
+    playerId: player.id,
+    playerUuid: player.uuid,
+    name: player.name,
+    seatNo: playerGameInfo.seatNo,
+    stack: playerGameInfo.stack,
+    status: playerGameInfo.status,
+    buyIn: playerGameInfo.buyIn,
+  };
+  const newGameUrl = `${gameServerUrl}/player-update`;
+  const resp = await axios.post(newGameUrl, message);
+  if (resp.status !== 200) {
+    logger.error(`Failed to update plater status: ${newGameUrl}`);
+    throw new Error(`Failed to update plater status: ${newGameUrl}`);
   }
 }

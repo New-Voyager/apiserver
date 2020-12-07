@@ -22,6 +22,7 @@ export async function getGameCodeForClub(
   // let us get the count of total clubs
   const gameCount = await GameRepository.getGameCountByClubId(clubId);
   const gameCode = hashIds.encode(clubId, gameCount);
+  //gameCode = 'EXZ6T4';
   return gameCode;
 }
 

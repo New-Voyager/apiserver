@@ -6,17 +6,35 @@ import {getLogger} from '@src/utils/log';
 import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {pendingProcessDone, playerKickedOut} from '@src/gameserver';
-import {WaitListMgmt} from './waitlist';
+import {occupiedSeats, WaitListMgmt} from './waitlist';
+import {SeatChangeProcess} from './seatchange';
 
 const logger = getLogger('pending-updates');
 
 export async function processPendingUpdates(gameId: number) {
+  // this flag indicates whether we need to start seat change process or not
+  // seat change is done, only if a player leaves, kicked out, or left due to connection issues
+  let newOpenSeat = false;
+
   const gameRespository = getRepository(PokerGame);
   const game = await gameRespository.findOne({id: gameId});
   if (!game) {
     throw new Error(`Game: ${gameId} is not found`);
   }
+  const gameUpdatesRepo = getRepository(PokerGameUpdates);
+  const gameUpdate = await gameUpdatesRepo.findOne({gameID: game.id});
+  if (!gameUpdate) {
+    return;
+  }
+
   logger.info(`Processing pending updates for game id: ${game.gameCode}`);
+  if (gameUpdate.seatChangeInProgress) {
+    logger.info(
+      `Seat change is in progress for game id: ${game.gameCode}. No updates will be performed.`
+    );
+    return;
+  }
+
   // if there is an end game update, let us end the game first
   let placeHolder1 = '$1';
   let placeHolder2 = '$2';
@@ -58,12 +76,31 @@ export async function processPendingUpdates(gameId: number) {
         update,
         pendingUpdatesRepo
       );
+      newOpenSeat = true;
     }
   }
-  const waitlistMgmt = new WaitListMgmt(game);
-  await waitlistMgmt.runWaitList();
 
-  await pendingProcessDone(gameId);
+  let endPendingProcess = true;
+  let seatChangeInProgress = false;
+  const seats = await occupiedSeats(game.id);
+  if (game.seatChangeAllowed) {
+    if (newOpenSeat && seats < game.maxPlayers) {
+      // open seat
+      endPendingProcess = false;
+      const seatChangeProcess = new SeatChangeProcess(game);
+      await seatChangeProcess.start();
+      seatChangeInProgress = true;
+    }
+  }
+
+  if (!seatChangeInProgress && game.waitlistAllowed) {
+    const waitlistMgmt = new WaitListMgmt(game);
+    await waitlistMgmt.runWaitList();
+  }
+
+  if (endPendingProcess) {
+    await pendingProcessDone(gameId);
+  }
 }
 
 async function kickoutPlayer(

@@ -7,6 +7,7 @@ import {getLogger} from '@src/utils/log';
  * These APIs are only available for game server.
  */
 class GameAPIs {
+  /*
   public async handleSeatChange(req: any, resp: any) {
     const gameCode = req.query.gameCode;
     if (!gameCode) {
@@ -17,7 +18,7 @@ class GameAPIs {
     const status = await GameRepository.handleSeatChange(gameCode);
     if (status === true) return resp.status(200).send({status: 'OK'});
     else return resp.status(500).send({status: 'Failed'});
-  }
+  }*/
 
   public async updateBreakTime(req: any, resp: any) {
     const gameID = req.params.gameId;

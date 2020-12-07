@@ -200,7 +200,7 @@ type Mutation {
   sitBack(gameCode: String!): Boolean!
   leaveGame(gameCode: String!): Boolean!
   requestSeatChange(gameCode: String!): DateTime!
-  confirmSeatChange(gameCode: String): Boolean!
+  confirmSeatChange(gameCode: String!, seatNo: Int!): Boolean!
   #pauseGame(gameCode: String!): GameStatus!
   endGame(gameCode: String!): GameStatus!
   #resumeGame(gameCode: String!): GameStatus!

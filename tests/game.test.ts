@@ -534,7 +534,11 @@ describe('Game APIs', () => {
     expect(resp4).toBe(true);
 
     // get all requested seat change
-    const resp5 = await gameutils.seatChangeRequests(player1Id, game.gameCode);
+    const resp5 = await gameutils.seatChangeRequests(
+      player1Id,
+      game.gameCode,
+      1
+    );
     expect(resp5[0].seatChangeConfirmed).toBe(true);
   });
 

@@ -7,3 +7,4 @@ export interface PlayerSitInput {
 }
 
 export const WAITLIST_SEATING = 'WAITLIST_SEATING';
+export const SEATCHANGE_PROGRSS = 'SEATCHANGE_INPROGRESS';
