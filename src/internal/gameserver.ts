@@ -1,6 +1,6 @@
 import {getRepository} from 'typeorm';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
-import {GameServerStatus} from '@src/entity/types';
+import {GameServerStatus, GameStatus} from '@src/entity/types';
 import {STATUS_CODES} from 'http';
 import {GameRepository} from '@src/repositories/game';
 import {getLogger} from '@src/utils/log';
@@ -110,6 +110,21 @@ class GameServerAPIs {
     const response = await getParticularGameServer(clubCode, gameCode);
     resp.status(200).send(JSON.stringify({server: response}));
   }
+
+  public async restartGames(req: any, resp: any) {
+    const gameServer = req.params.gameServer;
+    const errors = new Array<string>();
+    if (!gameServer) {
+      errors.push('gameServer parameter is missing');
+    }
+    if (errors.length) {
+      resp.status(400).send(JSON.stringify({errors: errors}));
+      return;
+    }
+    const url = `http://${gameServer}:8080`;
+    const gameCodes = await getGamesForGameServer(url);
+    resp.status(200).send(JSON.stringify({gameCodes: gameCodes}));
+  }
 }
 
 export const GameServerAPI = new GameServerAPIs();
@@ -215,4 +230,24 @@ export async function getParticularGameServer(
     },
   });
   return trackGameServer;
+}
+
+export async function getGamesForGameServer(
+  gameServerUrl: string
+): Promise<Array<string>> {
+  const gameServerRepository = getRepository(GameServer);
+  const gameServer = await gameServerRepository.findOne({
+    where: {url: gameServerUrl},
+  });
+  if (!gameServer) {
+    return [];
+  }
+  const trackGameServerRepository = getRepository(TrackGameServer);
+  const res = await trackGameServerRepository.find({
+    where: {gameServer: gameServer},
+  });
+
+  return res
+    .filter(g => g.game.status == GameStatus.ACTIVE)
+    .map(g => g.game.gameCode);
 }
