@@ -1,8 +1,8 @@
-import {getRepository} from 'typeorm';
+import {getConnection, getRepository} from 'typeorm';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {GameServerStatus, GameStatus} from '@src/entity/types';
-import {STATUS_CODES} from 'http';
 import {GameRepository} from '@src/repositories/game';
+import {isPostgres} from '@src/utils';
 import {getLogger} from '@src/utils/log';
 const logger = getLogger('internal::gameserver');
 
@@ -235,19 +235,20 @@ export async function getParticularGameServer(
 export async function getGamesForGameServer(
   gameServerUrl: string
 ): Promise<Array<string>> {
-  const gameServerRepository = getRepository(GameServer);
-  const gameServer = await gameServerRepository.findOne({
-    where: {url: gameServerUrl},
-  });
-  if (!gameServer) {
-    return [];
+  let query = `SELECT pg.game_code FROM poker_game pg 
+      INNER JOIN game_gameserver gg ON pg.id = gg.game_id 
+      INNER JOIN game_server gs ON gg."gameServerId" = gs.id
+      WHERE gs.url = ?
+      AND pg.game_status = ?;`;
+  if (isPostgres()) {
+    for (var i = 1; query.includes('?'); i++) {
+      query = query.replace('?', '$' + i);
+    }
   }
-  const trackGameServerRepository = getRepository(TrackGameServer);
-  const res = await trackGameServerRepository.find({
-    where: {gameServer: gameServer},
-  });
+  const res = await getConnection().query(query, [
+    gameServerUrl,
+    GameStatus.ACTIVE,
+  ]);
 
-  return res
-    .filter(g => g.game.status == GameStatus.ACTIVE)
-    .map(g => g.game.gameCode);
+  return res.map(g => g.game_code);
 }
