@@ -5,6 +5,7 @@ import {Player} from '@src/entity/player';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {GameStatus, PlayerStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
+import {NewUpdate} from '@src/repositories/types';
 
 let notifyGameServer = false;
 const logger = getLogger('gameServer');
@@ -93,6 +94,7 @@ export async function newPlayerSat(
     status: playerGameInfo.status,
     buyIn: playerGameInfo.buyIn,
     gameToken: playerGameInfo.gameToken,
+    newUpdate: NewUpdate.NEW_PLAYER,
   };
 
   const newGameUrl = `${gameServerUrl}/player-update`;
@@ -124,6 +126,7 @@ export async function playerBuyIn(
     stack: playerGameInfo.stack,
     status: playerGameInfo.status,
     buyIn: playerGameInfo.buyIn,
+    newUpdate: NewUpdate.NEW_BUYIN,
   };
   const newGameUrl = `${gameServerUrl}/player-update`;
   const resp = await axios.post(newGameUrl, message);
@@ -205,6 +208,7 @@ export async function playerKickedOut(
     name: player.name,
     seatNo: seatNo,
     status: PlayerStatus.KICKED_OUT,
+    newUpdate: NewUpdate.LEFT_THE_GAME,
   };
 
   const newGameUrl = `${gameServerUrl}/player-update`;
@@ -289,11 +293,42 @@ export async function playerSwitchSeat(
     stack: playerGameInfo.stack,
     status: playerGameInfo.status,
     buyIn: playerGameInfo.buyIn,
+    newUpdate: NewUpdate.SWITCH_SEAT,
   };
   const newGameUrl = `${gameServerUrl}/player-update`;
   const resp = await axios.post(newGameUrl, message);
   if (resp.status !== 200) {
     logger.error(`Failed to update plater status: ${newGameUrl}`);
     throw new Error(`Failed to update plater status: ${newGameUrl}`);
+  }
+}
+
+export async function playerLeftGame(
+  game: PokerGame,
+  player: Player,
+  seatNo: number
+) {
+  if (!notifyGameServer) {
+    return;
+  }
+
+  const gameServerUrl = await getGameServerUrl(game.id);
+
+  const message = {
+    type: 'PlayerUpdate',
+    gameId: game.id,
+    playerId: player.id,
+    playerUuid: player.uuid,
+    name: player.name,
+    seatNo: seatNo,
+    status: PlayerStatus.LEFT,
+    newUpdate: NewUpdate.LEFT_THE_GAME,
+  };
+
+  const newGameUrl = `${gameServerUrl}/player-update`;
+  const resp = await axios.post(newGameUrl, message);
+  if (resp.status !== 200) {
+    logger.error(`Failed to update player status: ${newGameUrl}`);
+    throw new Error(`Failed to update player status: ${newGameUrl}`);
   }
 }

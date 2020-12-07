@@ -32,8 +32,6 @@ import {
   playerKickedOut,
 } from '@src/gameserver';
 import {isPostgres} from '@src/utils';
-import {getGame, getPlayer} from '@src/cache';
-import {min} from 'lodash';
 import {WaitListMgmt} from './waitlist';
 
 const logger = getLogger('game');

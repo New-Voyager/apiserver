@@ -1,11 +1,15 @@
-import {getRepository, getConnection, Not, IsNull} from 'typeorm';
+import {getRepository, getConnection} from 'typeorm';
 import {isPostgres} from '@src/utils';
 import {GameStatus, NextHandUpdate, PlayerStatus} from '@src/entity/types';
 import {GameRepository} from './game';
 import {getLogger} from '@src/utils/log';
 import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
-import {pendingProcessDone, playerKickedOut} from '@src/gameserver';
+import {
+  pendingProcessDone,
+  playerKickedOut,
+  playerLeftGame,
+} from '@src/gameserver';
 import {occupiedSeats, WaitListMgmt} from './waitlist';
 import {SeatChangeProcess} from './seatchange';
 
@@ -77,6 +81,13 @@ export async function processPendingUpdates(gameId: number) {
         pendingUpdatesRepo
       );
       newOpenSeat = true;
+    } else if (update.newUpdate === NextHandUpdate.LEAVE) {
+      await leaveGame(
+        playerGameTrackerRepository,
+        game,
+        update,
+        pendingUpdatesRepo
+      );
     }
   }
 
@@ -145,6 +156,53 @@ async function kickoutPlayer(
   if (playerInGame) {
     // notify game server, player is kicked out
     playerKickedOut(game, update.player, playerInGame.seatNo);
+  }
+  // delete this update
+  pendingUpdatesRepo.delete({id: update.id});
+}
+
+async function leaveGame(
+  playerGameTrackerRepository: any,
+  game: PokerGame,
+  update: NextHandUpdates,
+  pendingUpdatesRepo
+) {
+  await playerGameTrackerRepository.update(
+    {
+      game: {id: game.id},
+      player: {id: update.player.id},
+    },
+    {
+      status: PlayerStatus.LEFT,
+      seatNo: 0,
+    }
+  );
+
+  const playerInGame = await playerGameTrackerRepository.findOne({
+    where: {
+      game: {id: game.id},
+      player: {id: update.player.id},
+    },
+  });
+
+  const count = await playerGameTrackerRepository.count({
+    where: {
+      game: {id: game.id},
+      status: PlayerStatus.PLAYING,
+    },
+  });
+
+  const gameUpdatesRepo = getRepository(PokerGameUpdates);
+  await gameUpdatesRepo.update(
+    {
+      gameID: game.id,
+    },
+    {playersInSeats: count}
+  );
+
+  if (playerInGame) {
+    // notify game server, player is kicked out
+    playerLeftGame(game, update.player, playerInGame.seatNo);
   }
   // delete this update
   pendingUpdatesRepo.delete({id: update.id});
