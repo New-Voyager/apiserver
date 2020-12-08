@@ -2,8 +2,8 @@ import {initializeSqlLite} from './utils';
 import {createGameServer} from '@src/internal/gameserver';
 import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/resolvers/reset';
-import {createPlayer} from '@src/resolvers/player';
-import {createClub, updateClubMember} from '@src/resolvers/club';
+import {createPlayer, getPlayerById} from '@src/resolvers/player';
+import {createClub, updateClubMember, joinClub} from '@src/resolvers/club';
 import {
   configureGame,
   configureGameByPlayer,
@@ -19,8 +19,13 @@ import {
   requestSeatChange,
   confirmSeatChange,
   seatChangeRequests,
+  addToWaitingList,
+  removeFromWaitingList,
+  waitingList,
 } from '@src/resolvers/game';
 import {getGame} from '@src/cache/index';
+import {processPendingUpdates} from '@src/repositories/pendingupdates';
+import {waitlistTimeoutExpired} from '@src/repositories/timer';
 
 const logger = getLogger('game unit-test');
 const holdemGameInput = {
@@ -67,6 +72,12 @@ beforeAll(async done => {
 afterAll(async done => {
   done();
 });
+
+function sleep(ms: number) {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+}
 
 describe('Game APIs', () => {
   beforeEach(async done => {
@@ -700,6 +711,254 @@ describe('Game APIs', () => {
       // confirm seat change
       const resp4 = await confirmSeatChange(player1, game.gameCode, 2);
       expect(resp4).toBe(true);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
+
+  test('wait list seating - success case', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.2.6',
+      currentMemory: 100,
+      status: 'ACTIVE',
+      url: 'http://10.1.2.2:8080',
+    };
+    try {
+      await createGameServer(gameServer1);
+
+      // create players
+      const owner = await createPlayer({
+        player: {
+          name: 'owner',
+          deviceId: 'abc123',
+        },
+      });
+      const player1 = await createPlayer({
+        player: {
+          name: 'player_1',
+          deviceId: 'abc1234',
+        },
+      });
+      const player2 = await createPlayer({
+        player: {
+          name: 'player_2',
+          deviceId: 'abc12345',
+        },
+      });
+      const player3 = await createPlayer({
+        player: {
+          name: 'player_3',
+          deviceId: 'abc123456',
+        },
+      });
+      const john = await createPlayer({
+        player: {
+          name: 'john',
+          deviceId: 'abc1235',
+        },
+      });
+      const bob = await createPlayer({
+        player: {
+          name: 'bob',
+          deviceId: 'abc1236',
+        },
+      });
+
+      // create club
+      const club = await createClub(owner, {
+        name: 'club_name',
+        description: 'poker players gather',
+        ownerUuid: owner,
+      });
+
+      // Join a club
+      await joinClub(player1, club);
+      await joinClub(player2, club);
+      await joinClub(player3, club);
+      await joinClub(john, club);
+      await joinClub(bob, club);
+
+      // start a game
+      const gameInput = holdemGameInput;
+      gameInput.maxPlayers = 3;
+      gameInput.minPlayers = 2;
+      const game = await configureGame(owner, club, holdemGameInput);
+      await startGame(owner, game.gameCode);
+
+      // Join a game
+      await joinGame(player1, game.gameCode, 1);
+      await joinGame(player2, game.gameCode, 2);
+      await joinGame(player3, game.gameCode, 3);
+
+      // buyin
+      await buyIn(player1, game.gameCode, 100);
+      await buyIn(player2, game.gameCode, 100);
+      await buyIn(player3, game.gameCode, 100);
+
+      // add john & bob to waitlist
+      await addToWaitingList(john, game.gameCode);
+      await addToWaitingList(bob, game.gameCode);
+
+      // verify waitlist count
+      const waitlist1 = await waitingList(owner, game.gameCode);
+      expect(waitlist1).toHaveLength(2);
+      waitlist1.forEach(element => {
+        expect(element.status).toBe('IN_QUEUE');
+      });
+
+      // player1 leaves a game
+      await leaveGame(player1, game.gameCode);
+
+      // process pending updates
+      await processPendingUpdates(game.id);
+
+      // verify waitlist count and status
+      const waitlist2 = await waitingList(owner, game.gameCode);
+      expect(waitlist2).toHaveLength(2);
+      waitlist2.forEach(element => {
+        if (element.playerUuid === john) {
+          expect(element.status).toBe('WAITLIST_SEATING');
+        } else {
+          expect(element.status).toBe('IN_QUEUE');
+        }
+      });
+
+      try {
+        await joinGame(bob, game.gameCode, 1);
+        expect(true).toBeFalsy();
+      } catch (error) {
+        logger.error(JSON.stringify(error));
+      }
+
+      const resp = await joinGame(john, game.gameCode, 1);
+      expect(resp).toBe('WAIT_FOR_BUYIN');
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
+
+  test('wait list seating - timeout case', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.2.5',
+      currentMemory: 100,
+      status: 'ACTIVE',
+      url: 'http://10.1.2.2:8080',
+    };
+    try {
+      await createGameServer(gameServer1);
+
+      // create players
+      const owner = await createPlayer({
+        player: {
+          name: 'owner',
+          deviceId: 'abc123',
+        },
+      });
+      const player1 = await createPlayer({
+        player: {
+          name: 'player_1',
+          deviceId: 'abc1234',
+        },
+      });
+      const player2 = await createPlayer({
+        player: {
+          name: 'player_2',
+          deviceId: 'abc12345',
+        },
+      });
+      const player3 = await createPlayer({
+        player: {
+          name: 'player_3',
+          deviceId: 'abc123456',
+        },
+      });
+      const john = await createPlayer({
+        player: {
+          name: 'john',
+          deviceId: 'abc1235',
+        },
+      });
+      const bob = await createPlayer({
+        player: {
+          name: 'bob',
+          deviceId: 'abc1236',
+        },
+      });
+
+      // create club
+      const club = await createClub(owner, {
+        name: 'club_name',
+        description: 'poker players gather',
+        ownerUuid: owner,
+      });
+
+      // Join a club
+      await joinClub(player1, club);
+      await joinClub(player2, club);
+      await joinClub(player3, club);
+      await joinClub(john, club);
+      await joinClub(bob, club);
+
+      // start a game
+      const gameInput = holdemGameInput;
+      gameInput.maxPlayers = 3;
+      gameInput.minPlayers = 2;
+      const game = await configureGame(owner, club, holdemGameInput);
+      await startGame(owner, game.gameCode);
+
+      // Join a game
+      await joinGame(player1, game.gameCode, 1);
+      await joinGame(player2, game.gameCode, 2);
+      await joinGame(player3, game.gameCode, 3);
+
+      // buyin
+      await buyIn(player1, game.gameCode, 100);
+      await buyIn(player2, game.gameCode, 100);
+      await buyIn(player3, game.gameCode, 100);
+
+      // add john & bob to waitlist
+      await addToWaitingList(john, game.gameCode);
+      await addToWaitingList(bob, game.gameCode);
+
+      // verify waitlist count
+      const waitlist1 = await waitingList(owner, game.gameCode);
+      expect(waitlist1).toHaveLength(2);
+      waitlist1.forEach(element => {
+        expect(element.status).toBe('IN_QUEUE');
+      });
+
+      // player1 leaves a game
+      await leaveGame(player1, game.gameCode);
+
+      // process pending updates
+      await processPendingUpdates(game.id);
+
+      // verify waitlist count and status
+      const waitlist2 = await waitingList(owner, game.gameCode);
+      expect(waitlist2).toHaveLength(2);
+      waitlist2.forEach(element => {
+        if (element.playerUuid === john) {
+          expect(element.status).toBe('WAITLIST_SEATING');
+        } else {
+          expect(element.status).toBe('IN_QUEUE');
+        }
+      });
+
+      // wait for 6 seconds
+      await sleep(6000);
+
+      // call waitlistTimeoutExpired
+      const ownerID = (await getPlayerById(owner)).id;
+      await waitlistTimeoutExpired(game.id, ownerID);
+
+      // verify wailist count and status
+      const waitlist3 = await waitingList(owner, game.gameCode);
+      expect(waitlist3).toHaveLength(1);
+      expect(waitlist3[0].playerUuid).not.toBe(john);
+      expect(waitlist3[0].playerUuid).toBe(bob);
+      expect(waitlist3[0].status).toBe('WAITLIST_SEATING');
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();

@@ -241,7 +241,7 @@ export async function getGamesForGameServer(
       WHERE gs.url = ?
       AND pg.game_status = ?;`;
   if (isPostgres()) {
-    for (var i = 1; query.includes('?'); i++) {
+    for (let i = 1; query.includes('?'); i++) {
       query = query.replace('?', '$' + i);
     }
   }
