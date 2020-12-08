@@ -755,7 +755,7 @@ export async function removeFromWaitingList(
       }
     }
     const waitlistMgmt = new WaitListMgmt(game);
-    waitlistMgmt.removeFromWaitingList(playerId);
+    await waitlistMgmt.removeFromWaitingList(playerId);
     return true;
   } catch (err) {
     logger.error(JSON.stringify(err));

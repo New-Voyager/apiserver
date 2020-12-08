@@ -236,6 +236,29 @@ export const confirmSeatChangeQuery = gql`
   }
 `;
 
+export const addToWaitingListQuery = gql`
+  mutation($gameCode: String!) {
+    status: addToWaitingList(gameCode: $gameCode)
+  }
+`;
+
+export const removeFromWaitingListQuery = gql`
+  mutation($gameCode: String!) {
+    status: removeFromWaitingList(gameCode: $gameCode)
+  }
+`;
+
+export const waitingListQuery = gql`
+  query($gameCode: String!) {
+    status: waitingList(gameCode: $gameCode) {
+      playerUuid
+      name
+      waitingFrom
+      status
+    }
+  }
+`;
+
 export async function configureFriendsGame(
   playerId: string,
   gameInput: GameInput
@@ -469,6 +492,51 @@ export async function startGame(
       gameCode: gameCode,
     },
     mutation: startGameQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+export async function addToWaitingList(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+    },
+    mutation: addToWaitingListQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+export async function removeFromWaitingList(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+    },
+    mutation: removeFromWaitingListQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+export async function waitingList(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const resp = await getClient(playerId).query({
+    variables: {
+      gameCode: gameCode,
+    },
+    query: waitingListQuery,
   });
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();

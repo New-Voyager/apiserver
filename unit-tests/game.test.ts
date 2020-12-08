@@ -717,6 +717,112 @@ describe('Game APIs', () => {
     }
   });
 
+  test('wait list seating APIs', async () => {
+    const gameServer1 = {
+      ipAddress: '10.1.2.7',
+      currentMemory: 100,
+      status: 'ACTIVE',
+      url: 'http://10.1.2.2:8080',
+    };
+    try {
+      await createGameServer(gameServer1);
+
+      // create players
+      const owner = await createPlayer({
+        player: {
+          name: 'owner',
+          deviceId: 'abc123',
+        },
+      });
+      const player1 = await createPlayer({
+        player: {
+          name: 'player_1',
+          deviceId: 'abc1234',
+        },
+      });
+      const player2 = await createPlayer({
+        player: {
+          name: 'player_2',
+          deviceId: 'abc12345',
+        },
+      });
+      const player3 = await createPlayer({
+        player: {
+          name: 'player_3',
+          deviceId: 'abc123456',
+        },
+      });
+      const john = await createPlayer({
+        player: {
+          name: 'john',
+          deviceId: 'abc1235',
+        },
+      });
+      const bob = await createPlayer({
+        player: {
+          name: 'bob',
+          deviceId: 'abc1236',
+        },
+      });
+
+      // create club
+      const club = await createClub(owner, {
+        name: 'club_name',
+        description: 'poker players gather',
+        ownerUuid: owner,
+      });
+
+      // Join a club
+      await joinClub(player1, club);
+      await joinClub(player2, club);
+      await joinClub(player3, club);
+      await joinClub(john, club);
+      await joinClub(bob, club);
+
+      // start a game
+      const gameInput = holdemGameInput;
+      gameInput.maxPlayers = 3;
+      gameInput.minPlayers = 2;
+      const game = await configureGame(owner, club, gameInput);
+      await startGame(owner, game.gameCode);
+
+      // Join a game
+      await joinGame(player1, game.gameCode, 1);
+      await joinGame(player2, game.gameCode, 2);
+      await joinGame(player3, game.gameCode, 3);
+
+      // buyin
+      await buyIn(player1, game.gameCode, 100);
+      await buyIn(player2, game.gameCode, 100);
+      await buyIn(player3, game.gameCode, 100);
+
+      // add john & bob to waitlist
+      const resp1 = await addToWaitingList(john, game.gameCode);
+      expect(resp1).toBe(true);
+      const resp2 = await addToWaitingList(bob, game.gameCode);
+      expect(resp2).toBe(true);
+
+      // verify waitlist count
+      const waitlist1 = await waitingList(owner, game.gameCode);
+      expect(waitlist1).toHaveLength(2);
+      waitlist1.forEach(element => {
+        expect(element.status).toBe('IN_QUEUE');
+      });
+
+      // remove john from wailist
+      const resp3 = await removeFromWaitingList(john, game.gameCode);
+      expect(resp3).toBe(true);
+
+      // verify waitlist count
+      const waitlist2 = await waitingList(owner, game.gameCode);
+      expect(waitlist2).toHaveLength(1);
+      expect(waitlist2[0].status).toBe('IN_QUEUE');
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
+
   test('wait list seating - success case', async () => {
     const gameServer1 = {
       ipAddress: '10.1.2.6',
@@ -783,7 +889,7 @@ describe('Game APIs', () => {
       const gameInput = holdemGameInput;
       gameInput.maxPlayers = 3;
       gameInput.minPlayers = 2;
-      const game = await configureGame(owner, club, holdemGameInput);
+      const game = await configureGame(owner, club, gameInput);
       await startGame(owner, game.gameCode);
 
       // Join a game
@@ -905,7 +1011,7 @@ describe('Game APIs', () => {
       const gameInput = holdemGameInput;
       gameInput.maxPlayers = 3;
       gameInput.minPlayers = 2;
-      const game = await configureGame(owner, club, holdemGameInput);
+      const game = await configureGame(owner, club, gameInput);
       await startGame(owner, game.gameCode);
 
       // Join a game
