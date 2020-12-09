@@ -80,6 +80,7 @@ input GameCreateInput {
   actionTime: Int! # default 20 secs
   muckLosingHand: Boolean
   waitForBigBlind: Boolean
+  waitlistSittingTimeout: Int
 }
 
 type SeatInfo {
@@ -131,6 +132,7 @@ type GameInfo {
   seatInfo: TableSeats
   gameToken: String
   playerGameStatus: PlayerGameStatus
+  waitlistSittingTimeout: Int
   
   # NATS channels
   gameToPlayerChannel: String

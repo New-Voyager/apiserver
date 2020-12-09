@@ -182,7 +182,7 @@ export class WaitListMgmt {
     }
 
     const waitingListTimeExp = new Date();
-    const timeout = 5; // nextPlayer.game.waitListSittingTimeout
+    const timeout = this.game.waitlistSittingTimeout;
     waitingListTimeExp.setSeconds(waitingListTimeExp.getSeconds() + timeout);
     await playerGameTrackerRepository.update(
       {

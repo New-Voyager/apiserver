@@ -52,6 +52,7 @@ const holdemGameInput = {
   buyInMax: 600,
   actionTime: 30,
   muckLosingHand: true,
+  waitlistSittingTimeout: 5,
 };
 
 enum ClubMemberStatus {
