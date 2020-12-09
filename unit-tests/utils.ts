@@ -1,27 +1,28 @@
 import {createConnection, getConnectionOptions} from 'typeorm';
-import {Player} from '@src/entity/player';
-import {Club, ClubMember} from '@src/entity/club';
+import {Player} from '../src/entity/player';
+import {Club, ClubMember} from '../src/entity/club';
 import {
   PokerGame,
   PokerGamePlayers,
   PokerHand,
   NextHandUpdates,
   PokerGameUpdates,
-} from '@src/entity/game';
-import {HandWinners, HandHistory, StarredHands} from '@src/entity/hand';
+} from '../src/entity/game';
+import {HandWinners, HandHistory, StarredHands} from '../src/entity/hand';
 import {
   PlayerGameTracker,
   ClubGameRake,
   ClubChipsTransaction,
-} from '@src/entity/chipstrack';
-import {FavouriteMessage} from '@src/entity/clubfreqmessage';
-import {ClubMessageInput} from '@src/entity/clubmessage';
-import {GameServer, TrackGameServer} from '@src/entity/gameserver';
+} from '../src/entity/chipstrack';
+import {Reward} from '../src/entity/reward';
+import {FavouriteMessage} from '../src/entity/clubfreqmessage';
+import {ClubMessageInput} from '../src/entity/clubmessage';
+import {GameServer, TrackGameServer} from '../src/entity/gameserver';
 import {
   Promotion,
   GamePromotion,
   PromotionWinners,
-} from '@src/entity/promotion';
+} from '../src/entity/promotion';
 
 export async function initializeSqlLite() {
   process.env.DB_USED = 'sqllite';
@@ -55,6 +56,7 @@ export async function sqlliteConnection() {
       GamePromotion,
       PromotionWinners,
       PokerGameUpdates,
+      Reward,
     ],
     dropSchema: true,
     synchronize: true,

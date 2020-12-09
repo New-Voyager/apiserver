@@ -102,3 +102,15 @@ export enum ClubStatus {
   ACTIVE,
   DEFUNCT,
 }
+
+export enum RewardType {
+  HIGH_HAND,
+  BAD_BEAT,
+  HEAD_HUNTING,
+}
+
+export enum ScheduleType {
+  ENTIRE_GAME,
+  HOURLY,
+  TWO_HOURS,
+}
