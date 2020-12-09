@@ -720,7 +720,7 @@ export async function addToWaitingList(playerId: string, gameCode: string) {
       }
     }
     const waitlistMgmt = new WaitListMgmt(game);
-    waitlistMgmt.addToWaitingList(playerId);
+    await waitlistMgmt.addToWaitingList(playerId);
     return true;
   } catch (err) {
     logger.error(JSON.stringify(err));
@@ -755,7 +755,7 @@ export async function removeFromWaitingList(
       }
     }
     const waitlistMgmt = new WaitListMgmt(game);
-    waitlistMgmt.removeFromWaitingList(playerId);
+    await waitlistMgmt.removeFromWaitingList(playerId);
     return true;
   } catch (err) {
     logger.error(JSON.stringify(err));

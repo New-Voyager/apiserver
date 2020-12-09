@@ -40,6 +40,7 @@ const holdemGameInput = {
   buyInMax: 600,
   actionTime: 30,
   muckLosingHand: true,
+  waitlistSittingTimeout: 5,
 };
 
 async function createGameServer(ipAddress: string) {
@@ -598,5 +599,74 @@ describe('Game APIs', () => {
     //   logger.error(error.toString());
     //   expect(true).toBeFalsy();
     // }
+  });
+
+  test('wait list seating APIs', async () => {
+    // Create club and owner
+    const [clubCode, ownerId] = await clubutils.createClub('brady', 'yatzee');
+
+    // create gameserver and game
+    await createGameServer('1.2.1.9');
+    const gameInput = holdemGameInput;
+    gameInput.maxPlayers = 3;
+    gameInput.minPlayers = 2;
+    const game = await gameutils.configureGame(ownerId, clubCode, gameInput);
+    await gameutils.startGame(ownerId, game.gameCode);
+
+    // Create players
+    const player1Id = await clubutils.createPlayer('player1', 'abc1234');
+    const player2Id = await clubutils.createPlayer('player2', 'abc1235');
+    const player3Id = await clubutils.createPlayer('player3', 'abc1236');
+    const player4Id = await clubutils.createPlayer('player4', 'abc1237');
+    const player5Id = await clubutils.createPlayer('player4', 'abc1238');
+
+    // joins the club
+    await clubutils.playerJoinsClub(clubCode, player1Id);
+    await clubutils.playerJoinsClub(clubCode, player2Id);
+    await clubutils.playerJoinsClub(clubCode, player3Id);
+    await clubutils.playerJoinsClub(clubCode, player4Id);
+    await clubutils.playerJoinsClub(clubCode, player5Id);
+
+    // approve joining
+    await clubutils.approvePlayer(clubCode, ownerId, player1Id);
+    await clubutils.approvePlayer(clubCode, ownerId, player2Id);
+    await clubutils.approvePlayer(clubCode, ownerId, player3Id);
+    await clubutils.approvePlayer(clubCode, ownerId, player4Id);
+    await clubutils.approvePlayer(clubCode, ownerId, player5Id);
+
+    // join a game
+    await gameutils.joinGame(player1Id, game.gameCode, 1);
+    await gameutils.joinGame(player2Id, game.gameCode, 2);
+    await gameutils.joinGame(player3Id, game.gameCode, 3);
+
+    // buyin
+    await gameutils.buyin(player1Id, game.gameCode, 100);
+    await gameutils.buyin(player2Id, game.gameCode, 100);
+    await gameutils.buyin(player3Id, game.gameCode, 100);
+
+    // add player 4&5 to waitlist
+    const resp1 = await gameutils.addToWaitingList(player4Id, game.gameCode);
+    expect(resp1).toBe(true);
+    const resp2 = await gameutils.addToWaitingList(player5Id, game.gameCode);
+    expect(resp2).toBe(true);
+
+    // verify waitlist count
+    const waitlist1 = await gameutils.waitingList(ownerId, game.gameCode);
+    expect(waitlist1).toHaveLength(2);
+    waitlist1.forEach(element => {
+      expect(element.status).toBe('IN_QUEUE');
+    });
+
+    // remove player 4 from wailist
+    const resp3 = await gameutils.removeFromWaitingList(
+      player4Id,
+      game.gameCode
+    );
+    expect(resp3).toBe(true);
+
+    // verify waitlist count
+    const waitlist2 = await gameutils.waitingList(ownerId, game.gameCode);
+    expect(waitlist2).toHaveLength(1);
+    expect(waitlist2[0].status).toBe('IN_QUEUE');
   });
 });
