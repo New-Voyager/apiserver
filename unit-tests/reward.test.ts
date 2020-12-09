@@ -34,13 +34,9 @@ describe('Reward APIs', () => {
       type: 'HIGH_HAND',
       schedule: 'HOURLY',
     };
-    try {
-      const resp = await saveReward(ownerId, clubCode, rewardInput);
-      expect(resp).not.toBeNull();
-    } catch (e) {
-      logger.error(JSON.stringify(e));
-      expect(true).toBeFalsy();
-    }
+    const resp = await saveReward(ownerId, clubCode, rewardInput);
+    expect(resp).toStrictEqual(expect.any(Number));
+    expect(resp).not.toBeNull();
   });
 
   test('get rewards', async () => {
@@ -66,13 +62,8 @@ describe('Reward APIs', () => {
     for (let i = 0; i < rewardCount; i++) {
       await saveReward(ownerId, clubCode, rewardInput);
     }
-    try {
-      const resp = await getRewards(ownerId, clubCode);
-      expect(resp).not.toBeNull();
-      expect(resp).toHaveLength(25);
-    } catch (e) {
-      logger.error(JSON.stringify(e));
-      expect(true).toBeFalsy();
-    }
+    const resp = await getRewards(ownerId, clubCode);
+    expect(resp).not.toBeNull();
+    expect(resp).toHaveLength(25);
   });
 });
