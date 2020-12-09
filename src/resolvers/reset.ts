@@ -27,6 +27,7 @@ const resolvers: any = {
 
 export async function resetDB() {
   await getManager().transaction(async transactionalEntityManager => {
+    await deleteAll('reward');
     await deleteAll('next_hand_updates');
     await deleteAll('promotion_winners');
     await deleteAll('game_promotion');
