@@ -1,0 +1,40 @@
+enum RewardType {
+  HIGH_HAND 
+  BAD_BEAT 
+  HEAD_HUNTING 
+}
+
+enum ScheduleType{
+  ENTIRE_GAME, 
+  HOURLY, 
+  TWO_HOURS
+}
+
+input RewardInput {
+  name: String!
+  type: RewardType!
+  amount: Float!
+  schedule: ScheduleType!
+  minRank: Int
+  startHour: Int
+  endHour: Int  
+}
+
+type Mutation {
+  createReward(clubCode: String!, input: RewardInput!): Int!
+}
+
+type Reward {
+  id: Int!
+  name: String!
+  type: RewardType!
+  schedule: ScheduleType!
+  amount: Float!
+  minRank: Int
+  startHour: Int
+  endHour: Int  
+}
+
+type Query {
+  rewards(clubCode: String!): [Reward!]
+}
