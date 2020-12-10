@@ -1,7 +1,7 @@
 {
 	"handResult": {
 		"preflopActions": {
-			"pot": 7,
+			"pot": 3,
 			"actions": [{
 				"seatNo": 5,
 				"amount": 1
@@ -11,84 +11,54 @@
 				"amount": 2
 			}, {
 				"seatNo": 1,
-				"action": "CALL",
-				"amount": 2
-			}, {
-				"seatNo": 5,
-				"action": "CALL",
-				"amount": 2
-			}, {
-				"seatNo": 8,
-				"action": "CHECK"
-			}]
-		},
-		"flopActions": {
-			"pot": 8,
-			"actions": [{
-				"seatNo": 5,
-				"action": "CHECK"
-			}, {
-				"seatNo": 8,
-				"action": "BET",
-				"amount": 2
-			}, {
-				"seatNo": 1,
-				"action": "CALL",
-				"amount": 2
-			}, {
-				"seatNo": 5,
-				"action": "RAISE",
-				"amount": 4
-			}, {
-				"seatNo": 8,
 				"action": "FOLD"
 			}, {
-				"seatNo": 1,
+				"seatNo": 5,
 				"action": "FOLD"
 			}]
 		},
+		"flopActions": {},
 		"turnActions": {},
 		"riverActions": {},
 		"potWinners": {
 			"0": {
 				"hiWinners": [{
-					"seatNo": 5,
-					"amount": 14
+					"seatNo": 8,
+					"amount": 3
 				}]
 			}
 		},
-		"wonAt": "FLOP",
+		"wonAt": "PREFLOP",
 		"balanceAfterHand": [{
 			"seatNo": 1,
 			"playerId": "1",
-			"balance": 96
+			"balance": 50
 		}, {
 			"seatNo": 5,
 			"playerId": "2",
-			"balance": 108
+			"balance": 49
 		}, {
 			"seatNo": 8,
 			"playerId": "3",
-			"balance": 96
+			"balance": 51
 		}],
-		"handStartedAt": "1607552694",
+		"handStartedAt": "1607568181",
 		"balanceBeforeHand": [{
 			"seatNo": 1,
 			"playerId": "1",
-			"balance": 100
+			"balance": 50
 		}, {
 			"seatNo": 5,
 			"playerId": "2",
-			"balance": 100
+			"balance": 50
 		}, {
 			"seatNo": 8,
 			"playerId": "3",
-			"balance": 100
+			"balance": 50
 		}],
-		"handEndedAt": "1607552697",
+		"handEndedAt": "1607568182",
 		"playersInSeats": ["1", "0", "0", "0", "2", "0", "0", "3", "0"]
 	},
-	"boardCards": [200, 196, 8],
 	"flop": [200, 196, 8],
 	"turn": 132,
 	"river": 33,
@@ -96,18 +66,17 @@
 		"1": {
 			"cards": [114, 1],
 			"rank": 4294967295,
-			"playedUntil": "FLOP"
+			"playedUntil": "PREFLOP"
 		},
 		"5": {
 			"cards": [178, 164],
-			"bestCards": [200, 196, 8, 178, 164],
-			"rank": 3335,
-			"playedUntil": "FLOP"
+			"rank": 4294967295,
+			"playedUntil": "PREFLOP"
 		},
 		"8": {
 			"cards": [17, 81],
 			"rank": 4294967295,
-			"playedUntil": "FLOP"
+			"playedUntil": "PREFLOP"
 		}
 	}
 }

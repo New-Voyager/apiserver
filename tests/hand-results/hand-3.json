@@ -46,7 +46,7 @@
 			"seatNo": 8,
 			"playerId": "3"
 		}],
-		"handStartedAt": "1607552355",
+		"handStartedAt": "1607568322",
 		"balanceBeforeHand": [{
 			"seatNo": 1,
 			"playerId": "1",
@@ -60,7 +60,7 @@
 			"playerId": "3",
 			"balance": 50
 		}],
-		"handEndedAt": "1607552357",
+		"handEndedAt": "1607568324",
 		"playersInSeats": ["1", "0", "0", "0", "2", "0", "0", "3", "0"]
 	},
 	"boardCards": [24, 20, 8, 56, 178],
