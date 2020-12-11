@@ -2,7 +2,7 @@ import {PokerGame} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
 import {getRepository} from 'typeorm';
 import {SeatChangeProcess} from './seatchange';
-import {SEATCHANGE_PROGRSS, WAITLIST_SEATING} from './types';
+import {SEATCHANGE_PROGRSS, WAITLIST_SEATING, BUYIN_TIMEOUT} from './types';
 import {WaitListMgmt} from './waitlist';
 
 const logger = getLogger('timer');
@@ -37,6 +37,8 @@ export async function timerCallback(req: any, resp: any) {
     waitlistTimeoutExpired(gameID, playerID);
   } else if (purpose === SEATCHANGE_PROGRSS) {
     seatChangeTimeoutExpired(gameID);
+  } else if (purpose === BUYIN_TIMEOUT) {
+    buyInTimeoutExpired(gameID, playerID);
   }
 
   resp.status(200).send({status: 'OK'});
@@ -65,4 +67,17 @@ export async function seatChangeTimeoutExpired(gameID: number) {
   }
   const seatChange = new SeatChangeProcess(game);
   await seatChange.finish();
+}
+
+export async function buyInTimeoutExpired(gameID: number, playerID: number) {
+  logger.info(
+    `Buyin timeout expired. GameID: ${gameID}, playerID: ${playerID}`
+  );
+  const gameRepository = getRepository(PokerGame);
+  const game = await gameRepository.findOne({id: gameID});
+  if (!game) {
+    throw new Error(`Game: ${gameID} is not found`);
+  }
+
+  // handle buyin timeout
 }
