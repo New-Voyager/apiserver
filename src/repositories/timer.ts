@@ -2,7 +2,7 @@ import {PokerGame} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
 import {getRepository} from 'typeorm';
 import {SeatChangeProcess} from './seatchange';
-import {SEATCHANGE_PROGRSS, WAITLIST_SEATING} from './types';
+import {SEATCHANGE_PROGRSS, WAITLIST_SEATING, BUYIN_TIMEOUT} from './types';
 import {WaitListMgmt} from './waitlist';
 
 const logger = getLogger('timer');
