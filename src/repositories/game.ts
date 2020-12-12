@@ -1,12 +1,5 @@
 import * as crypto from 'crypto';
-import {
-  getRepository,
-  getManager,
-  getConnection,
-  Not,
-  IsNull,
-  In,
-} from 'typeorm';
+import {getRepository, getManager, getConnection, In} from 'typeorm';
 import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {
   GameType,
@@ -30,10 +23,12 @@ import {
   playerBuyIn,
   changeGameStatus,
   playerKickedOut,
+  startTimer,
 } from '@src/gameserver';
 import {isPostgres} from '@src/utils';
 import {WaitListMgmt} from './waitlist';
 import {ChipsTrackRepository} from './chipstrack';
+import {BUYIN_TIMEOUT} from './types';
 
 const logger = getLogger('game');
 
@@ -371,8 +366,16 @@ class GameRepositoryImpl {
         },
       });
       if (!gameUpdate) {
+        console.log(`Game status is not found for game: ${game.gameCode}`);
         throw new Error(`Game status is not found for game: ${game.gameCode}`);
       }
+
+      if (gameUpdate.seatChangeInProgress) {
+        throw new Error(
+          `Seat change is in progress for game: ${game.gameCode}`
+        );
+      }
+
       const waitlistMgmt = new WaitListMgmt(game);
 
       const playerGameTrackerRepository = getRepository(PlayerGameTracker);
@@ -471,6 +474,15 @@ class GameRepositoryImpl {
 
       if (playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN) {
         // TODO: start a buy-in timer
+        const buyinTimeExp = new Date();
+        const timeout = 60;
+        buyinTimeExp.setSeconds(buyinTimeExp.getSeconds() + timeout);
+        startTimer(
+          playerInGame.game.id,
+          playerInGame.player.id,
+          BUYIN_TIMEOUT,
+          buyinTimeExp
+        );
       }
 
       // send a message to gameserver
