@@ -5,10 +5,9 @@ import {getConnection, getRepository, getManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {isPostgres} from '@src/utils';
 import {PlayerGameTracker, ClubChipsTransaction} from '@src/entity/chipstrack';
-import {GameRepository} from '@src/repositories/game';
-import {GameStatus, PlayerStatus} from '@src/entity/types';
+import {PlayerStatus} from '@src/entity/types';
 import {PlayerSitInput} from './types';
-import { getGame } from '@src/cache';
+import {getGame} from '@src/cache';
 
 const logger = getLogger('chipstrack');
 const INITIAL_BUYIN_COUNT = 1;

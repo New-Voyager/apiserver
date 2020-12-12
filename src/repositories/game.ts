@@ -33,7 +33,7 @@ import {
 } from '@src/gameserver';
 import {isPostgres} from '@src/utils';
 import {WaitListMgmt} from './waitlist';
-import { ChipsTrackRepository } from './chipstrack';
+import {ChipsTrackRepository} from './chipstrack';
 
 const logger = getLogger('game');
 

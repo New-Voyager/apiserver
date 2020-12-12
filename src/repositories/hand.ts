@@ -134,7 +134,7 @@ class HandRepositoryImpl {
         }
       }
 
-      // get the total rake collected from the hand and track each player paid the rake 
+      // get the total rake collected from the hand and track each player paid the rake
       let handRake = 0.0;
       const rakePaid = {};
       if (result.rake) {
