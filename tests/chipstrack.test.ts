@@ -7,7 +7,6 @@ import {resetDatabase, getClient} from './utils/utils';
 import * as gameutils from './utils/game.testutils';
 import {getLogger} from '../src/utils/log';
 const logger = getLogger('chipstrack');
-import {ChipsTrackRepository} from '../src/repositories/chipstrack';
 
 const SERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
