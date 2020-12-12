@@ -293,7 +293,7 @@ describe('Promotion APIs', () => {
     expect(result).toHaveLength(20);
   });
 
-  test('Save hand with promotion', async () => {
+  test.skip('Save hand with promotion', async () => {
     const gameServer = {
       ipAddress: '10.1.1.5',
       currentMemory: 100,

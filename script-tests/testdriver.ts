@@ -133,22 +133,22 @@ class GameScript {
         await this.startGames(step['start-games']);
       }
       if (step['verify-club-game-stack']) {
-        await this.verifyClubGameStacks(step['verify-club-game-stack']);
+        // await this.verifyClubGameStacks(step['verify-club-game-stack']);
       }
       if (step['verify-player-game-stack']) {
-        await this.verifyPlayerGameStacks(step['verify-player-game-stack']);
+        // await this.verifyPlayerGameStacks(step['verify-player-game-stack']);
       }
       if (step['save-hands']) {
-        await this.saveHands(step['save-hands']);
+        // await this.saveHands(step['save-hands']);
       }
       if (step['end-games']) {
         await this.endGames(step['end-games']);
       }
       if (step['verify-club-balance']) {
-        await this.verifyClubBalances(step['verify-club-balance']);
+        // await this.verifyClubBalances(step['verify-club-balance']);
       }
       if (step['verify-player-balance']) {
-        await this.verifyPlayerBalances(step['verify-player-balance']);
+        // await this.verifyPlayerBalances(step['verify-player-balance']);
       }
       if (step['messages']) {
         await this.sendClubMessages(step['messages']);
@@ -238,17 +238,17 @@ class GameScript {
     }
   }
 
-  protected async verifyClubGameStacks(params: any) {
-    for (const clubStack of params) {
-      await this.verifyClubGameStack(clubStack);
-    }
-  }
+  // protected async verifyClubGameStacks(params: any) {
+  //   for (const clubStack of params) {
+  //     await this.verifyClubGameStack(clubStack);
+  //   }
+  // }
 
-  protected async verifyPlayerGameStacks(params: any) {
-    for (const playerStack of params) {
-      await this.verifyPlayerGameStack(playerStack);
-    }
-  }
+  // protected async verifyPlayerGameStacks(params: any) {
+  //   for (const playerStack of params) {
+  //     await this.verifyPlayerGameStack(playerStack);
+  //   }
+  // }
 
   protected async saveHands(params: any) {
     for (const handData of params) {
@@ -659,81 +659,81 @@ class GameScript {
     }
   }
 
-  protected async verifyClubGameStack(balance: any): Promise<any> {
-    this.log(`verify club stack: ${JSON.stringify(balance)}`);
-    const queryClubTrack = gql`
-      query($clubCode: String!, $gameCode: String!) {
-        balance: clubGameRake(clubCode: $clubCode, gameCode: $gameCode) {
-          rake
-          promotion
-          lastHandNum
-        }
-      }
-    `;
-    try {
-      const resp = await getClient(
-        this.registeredPlayers[this.clubCreated[balance.club].owner].playerUuid
-      ).query({
-        variables: {
-          clubCode: this.clubCreated[balance.club].clubCode,
-          gameCode: this.gameCreated[balance.game].gameCode,
-        },
-        query: queryClubTrack,
-      });
-      if (resp.data.balance.rake !== balance.balance) {
-        this.log(
-          `Expected ${balance.balance} but received ${resp.data.balance.rake}`
-        );
-        throw new Error('Club stack verification failed');
-      }
-    } catch (err) {
-      this.log(err.toString());
-      throw err;
-    }
-  }
+  // protected async verifyClubGameStack(balance: any): Promise<any> {
+  //   this.log(`verify club stack: ${JSON.stringify(balance)}`);
+  //   const queryClubTrack = gql`
+  //     query($clubCode: String!, $gameCode: String!) {
+  //       balance: clubGameRake(clubCode: $clubCode, gameCode: $gameCode) {
+  //         rake
+  //         promotion
+  //         lastHandNum
+  //       }
+  //     }
+  //   `;
+  //   try {
+  //     const resp = await getClient(
+  //       this.registeredPlayers[this.clubCreated[balance.club].owner].playerUuid
+  //     ).query({
+  //       variables: {
+  //         clubCode: this.clubCreated[balance.club].clubCode,
+  //         gameCode: this.gameCreated[balance.game].gameCode,
+  //       },
+  //       query: queryClubTrack,
+  //     });
+  //     if (resp.data.balance.rake !== balance.balance) {
+  //       this.log(
+  //         `Expected ${balance.balance} but received ${resp.data.balance.rake}`
+  //       );
+  //       throw new Error('Club stack verification failed');
+  //     }
+  //   } catch (err) {
+  //     this.log(err.toString());
+  //     throw err;
+  //   }
+  // }
 
-  protected async verifyPlayerGameStack(balance: any): Promise<any> {
-    this.log(`Verify player stack: ${JSON.stringify(balance)}`);
-    const queryPlayerTrack = gql`
-      query($playerId: String!, $clubCode: String!, $gameCode: String!) {
-        balance: playerGametrack(
-          clubCode: $clubCode
-          gameCode: $gameCode
-          playerId: $playerId
-        ) {
-          buyIn
-          stack
-          seatNo
-          noOfBuyins
-          hhRank
-          hhHandNum
-        }
-      }
-    `;
-    try {
-      for (const player of balance.players) {
-        const resp = await getClient(
-          this.registeredPlayers[player.name].playerUuid
-        ).query({
-          variables: {
-            playerId: this.registeredPlayers[player.name].playerUuid,
-            clubCode: this.clubCreated[balance.club].clubCode,
-            gameCode: this.gameCreated[balance.game].gameCode,
-          },
-          query: queryPlayerTrack,
-        });
-        if (resp.data.balance.stack != player.balance) {
-          this.log(
-            `Expected ${player.balance} but received ${resp.data.balance.stack}`
-          );
-          throw new Error('Player stack verification failed');
-        }
-      }
-    } catch (err) {
-      this.log(err.toString());
-      throw err;
-    }
-  }
+  // protected async verifyPlayerGameStack(balance: any): Promise<any> {
+  //   this.log(`Verify player stack: ${JSON.stringify(balance)}`);
+  //   const queryPlayerTrack = gql`
+  //     query($playerId: String!, $clubCode: String!, $gameCode: String!) {
+  //       balance: playerGametrack(
+  //         clubCode: $clubCode
+  //         gameCode: $gameCode
+  //         playerId: $playerId
+  //       ) {
+  //         buyIn
+  //         stack
+  //         seatNo
+  //         noOfBuyins
+  //         hhRank
+  //         hhHandNum
+  //       }
+  //     }
+  //   `;
+  //   try {
+  //     for (const player of balance.players) {
+  //       const resp = await getClient(
+  //         this.registeredPlayers[player.name].playerUuid
+  //       ).query({
+  //         variables: {
+  //           playerId: this.registeredPlayers[player.name].playerUuid,
+  //           clubCode: this.clubCreated[balance.club].clubCode,
+  //           gameCode: this.gameCreated[balance.game].gameCode,
+  //         },
+  //         query: queryPlayerTrack,
+  //       });
+  //       if (resp.data.balance.stack != player.balance) {
+  //         this.log(
+  //           `Expected ${player.balance} but received ${resp.data.balance.stack}`
+  //         );
+  //         throw new Error('Player stack verification failed');
+  //       }
+  //     }
+  //   } catch (err) {
+  //     this.log(err.toString());
+  //     throw err;
+  //   }
+  // }
 
   protected async saveHand(handData: any): Promise<any> {
     this.log(`save hand: ${JSON.stringify(handData)}`);
