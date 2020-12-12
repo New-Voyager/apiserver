@@ -8,8 +8,8 @@ export async function saveChipsData(registerPayload: any) {
 }
 
 export async function endGameData(data: any) {
-  const res = await ChipsTrackRepository.endGame(data);
-  return res;
+  //const res = await ChipsTrackRepository.endGame(data);
+  return null;
 }
 
 export async function buyChipsData(registerPayload: any) {

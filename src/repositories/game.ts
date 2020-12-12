@@ -22,7 +22,7 @@ import {Club, ClubMember} from '@src/entity/club';
 import {Player} from '@src/entity/player';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {getLogger} from '@src/utils/log';
-import {ClubGameRake, PlayerGameTracker} from '@src/entity/chipstrack';
+import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
 import {
   newPlayerSat,
@@ -33,6 +33,7 @@ import {
 } from '@src/gameserver';
 import {isPostgres} from '@src/utils';
 import {WaitListMgmt} from './waitlist';
+import { ChipsTrackRepository } from './chipstrack';
 
 const logger = getLogger('game');
 
@@ -78,7 +79,6 @@ class GameRepositoryImpl {
         `The player ${playerId} is not an approved manager to create a game`
       );
     }
-    const clubGameRakeRepository = getRepository(ClubGameRake);
     const gameServerRepository = getRepository(GameServer);
     const gameServers = await gameServerRepository.find();
     if (gameServers.length === 0) {
@@ -108,12 +108,6 @@ class GameRepositoryImpl {
       .createQueryBuilder()
       .delete()
       .from(TrackGameServer)
-      .execute();
-
-    await getConnection()
-      .createQueryBuilder()
-      .delete()
-      .from(ClubGameRake)
       .execute();
 
     await getConnection()
@@ -184,13 +178,6 @@ class GameRepositoryImpl {
             },
             {tableStatus: tableStatus}
           );
-          const clubRake = new ClubGameRake();
-          clubRake.club = club;
-          clubRake.game = savedGame;
-          clubRake.lastHandNum = 0;
-          clubRake.promotion = 0;
-          clubRake.rake = 0;
-          await clubGameRakeRepository.save(clubRake);
 
           const trackgameServerRepository = getRepository(TrackGameServer);
           const trackServer = new TrackGameServer();
@@ -250,14 +237,6 @@ class GameRepositoryImpl {
         trackServer.game = savedGame;
         trackServer.gameServer = gameServers[pick];
         await trackgameServerRepository.save(trackServer);
-
-        const clubGameRakeRepository = getRepository(ClubGameRake);
-        const clubRake = new ClubGameRake();
-        clubRake.game = savedGame;
-        clubRake.lastHandNum = 0;
-        clubRake.promotion = 0;
-        clubRake.rake = 0;
-        await clubGameRakeRepository.save(clubRake);
       });
     } catch (err) {
       logger.error("Couldn't create game and retry again");
@@ -1029,6 +1008,12 @@ class GameRepositoryImpl {
 
     // update the game server with new status
     changeGameStatus(game, status);
+
+    // if game ended
+    if (status === GameStatus.ENDED) {
+      // complete books
+      ChipsTrackRepository.settleClubBalances(game);
+    }
     return status;
   }
 

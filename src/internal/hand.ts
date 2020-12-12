@@ -84,6 +84,24 @@ function validateHandData(handData: any): Array<string> {
  * Hand Server API class
  */
 class HandServerAPIs {
+  public async postHand(req: any, resp: any) {
+    const gameID = parseInt(req.params.gameId, 10);
+    if (!gameID) {
+      const res = {error: 'Invalid game id'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    const handNum = parseInt(req.params.handNum, 10);
+    if (!handNum) {
+      const res = {error: 'Invalid hand number'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    const result = req.body;
+    await HandRepository.saveHandNew(gameID, handNum, result); //GameRepository.updateBreakTime(playerID, gameID);
+    resp.status(200).send({status: 'OK'});
+  }
+
   public async saveHand(req: any, resp: any) {
     const handData = req.body;
 
@@ -110,11 +128,7 @@ class HandServerAPIs {
      * Saving the data
      */
     const response = await saveHandData(handData);
-    if (response === true) {
-      resp.status(200).send(JSON.stringify({status: 'OK'}));
-    } else {
-      resp.status(500).send(JSON.stringify(response));
-    }
+    resp.status(500).send(JSON.stringify({status: 'FAILED'}));
   }
 }
 

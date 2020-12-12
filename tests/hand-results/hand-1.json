@@ -106,22 +106,30 @@
 	"river": 178,
 	"playerCards": {
 		"1": {
+			"playerId": "1",
 			"cards": [4, 33],
 			"bestCards": [200, 196, 184, 56, 178],
 			"rank": 2475,
 			"playedUntil": "RIVER"
 		},
 		"5": {
+			"playerId": "2",
 			"cards": [194, 49],
 			"bestCards": [200, 196, 184, 178, 194],
 			"rank": 167,
 			"playedUntil": "RIVER"
 		},
 		"8": {
+			"playerId": "3",
 			"cards": [180, 177],
 			"bestCards": [196, 184, 178, 180, 177],
 			"rank": 23,
 			"playedUntil": "RIVER"
 		}
-	}
+	},
+	"rake": {
+		"amount": 5,
+		"playerPaid": "8"
+	},
+	"gameType": 1
 }

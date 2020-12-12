@@ -4,9 +4,7 @@ import {
   Column,
   Index,
   ManyToOne,
-  OneToOne,
   JoinColumn,
-  PrimaryColumn,
 } from 'typeorm';
 import {Player} from './player';
 import {Club} from './club';
@@ -71,6 +69,27 @@ export class PlayerGameTracker {
   @Column({name: 'session_time', default: 0})
   public sessionTime!: number;
 
+  @Column({name: 'no_hands_played', default: 0})
+  public noHandsPlayed!: number;
+
+  @Column({name: 'no_hands_won', default: 0})
+  public noHandsWon!: number;
+
+  @Column({name: 'seen_flop', default: 0})
+  public seenFlop!: number;
+
+  @Column({name: 'seen_turn', default: 0})
+  public seenTurn!: number;
+
+  @Column({name: 'seen_river', default: 0})
+  public seenRiver!: number;
+
+  @Column({name: 'in_showdown', default: 0})
+  public inShowDown!: number;
+
+  @Column({name: 'rake_paid', type: 'decimal', default: 0})
+  public rakePaid!: number;
+
   @DbAwareColumn({
     name: 'seat_change_requested_at',
     type: 'timestamp',
@@ -111,26 +130,6 @@ export class PlayerGameTracker {
     nullable: true,
   })
   public waitingListTimeExp!: Date | null;
-}
-
-@Entity({name: 'club_game_rake'})
-export class ClubGameRake {
-  @ManyToOne(() => Club, club => club.id, {nullable: true})
-  @JoinColumn({name: 'club_id'})
-  public club!: Club;
-
-  @ManyToOne(() => PokerGame, game => game.id, {primary: true})
-  @JoinColumn({name: 'game_id'})
-  public game!: PokerGame;
-
-  @Column({name: 'rake', type: 'decimal', precision: 8, scale: 2, default: 0.0})
-  public rake!: number;
-
-  @Column({type: 'decimal', name: 'promotion'})
-  public promotion!: number;
-
-  @Column({name: 'last_hand_num', nullable: false})
-  public lastHandNum!: number;
 }
 
 @Entity({name: 'club_chips_transaction'})
