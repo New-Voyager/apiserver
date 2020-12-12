@@ -49,43 +49,50 @@ export class GameRewardTracking {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @ManyToOne(() => Club, clubId => clubId.id, {eager: true, nullable: false})
+  @ManyToOne(() => Club, clubId => clubId.id, {eager: true, nullable: true})
   @JoinColumn({name: 'club_id'})
   public clubId!: Club;
 
   @Column({name: 'day', nullable: false})
   public day!: Date;
 
-  @Column({name: 'hh_rank', nullable: false})
+  @Column({name: 'hh_rank', nullable: true})
   public hhRank!: number;
 
   @ManyToOne(() => PokerGame, gameId => gameId.id, {
     eager: true,
-    nullable: false,
+    nullable: true,
   })
   @JoinColumn({name: 'game_id'})
   public gameId!: PokerGame;
 
-  @ManyToOne(() => Player, playerId => playerId.id, {
+  @ManyToOne(() => Reward, rewardId => rewardId.id, {
     eager: true,
     nullable: false,
+  })
+  @JoinColumn({name: 'reward_id'})
+  public rewardId!: Reward;
+
+  @ManyToOne(() => Player, playerId => playerId.id, {
+    eager: true,
+    nullable: true,
   })
   @JoinColumn({name: 'player_id'})
   public playerId!: Player;
 
-  @Column({name: 'player_cards', nullable: false})
+  @Column({name: 'player_cards', nullable: true})
   public playerCards!: string;
 
-  @Column({name: 'board_cards', nullable: false})
+  @Column({name: 'board_cards', nullable: true})
   public boardCards!: string;
 
-  @Column({name: 'high_hand', nullable: false})
+  @Column({name: 'high_hand', nullable: true})
   public highHand!: string;
 
-  @Column({name: 'hand_num', nullable: false})
+  @Column({name: 'hand_num', nullable: true})
   public handNum!: number;
 
-  @Column({name: 'hit_time', nullable: false})
+  @Column({name: 'hit_time', nullable: true})
   public hitTime!: Date;
 
   @Column({name: 'start_time', nullable: true})
@@ -94,7 +101,7 @@ export class GameRewardTracking {
   @Column({name: 'end_time', nullable: true})
   public endTime!: Date;
 
-  @Column({name: 'active', nullable: true})
+  @Column({name: 'active', nullable: true, default: true})
   public active!: boolean;
 }
 

@@ -1,8 +1,9 @@
-import {PORT_NUMBER} from './utils/utils';
+import {PORT_NUMBER, getClient} from './utils/utils';
 import {default as axios} from 'axios';
 import {resetDatabase} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
+import * as rewardutils from './utils/reward.testutils';
 import {getLogger} from '../src/utils/log';
 const logger = getLogger('gameserver');
 
@@ -32,7 +33,28 @@ const holdemGameInput = {
   buyInMax: 600,
   actionTime: 30,
   muckLosingHand: true,
+  rewardIds: [] as any,
 };
+
+async function saveReward(playerId, clubCode) {
+  const rewardInput = {
+    amount: 100.4,
+    endHour: 4,
+    minRank: 1,
+    name: 'brady',
+    startHour: 4,
+    type: 'HIGH_HAND',
+    schedule: 'HOURLY',
+  };
+  const rewardId = await getClient(playerId).mutate({
+    variables: {
+      clubCode: clubCode,
+      input: rewardInput,
+    },
+    mutation: rewardutils.createReward,
+  });
+  holdemGameInput.rewardIds.push(rewardId.data.rewardId);
+}
 
 describe('Game server APIs', () => {
   beforeEach(async done => {
@@ -162,9 +184,10 @@ describe('Game server APIs', () => {
       console.error(JSON.stringify(err));
       expect(true).toBeFalsy();
     }
-    const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
-
+    const [clubCode, playerId] = await clubutils.createClub('bradyy', 'yatzee');
+    console.log(clubCode);
     for (let i = 0; i < 3; i++) {
+      await saveReward(playerId, clubCode);
       const game1 = await gameutils.configureGame(
         playerId,
         clubCode,

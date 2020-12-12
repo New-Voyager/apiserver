@@ -7,6 +7,8 @@ import * as gameutils from './utils/game.testutils';
 import {getLogger} from '../src/utils/log';
 import * as handutils from './utils/hand.testutils';
 const logger = getLogger('promotion');
+import * as rewardutils from './utils/reward.testutils';
+import {ScalarLeafs} from 'graphql/validation/rules/ScalarLeafs';
 
 const SERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
@@ -142,6 +144,7 @@ const holdemGameInput = {
   buyInMax: 600,
   actionTime: 30,
   muckLosingHand: true,
+  rewardIds: [] as any,
 };
 
 beforeAll(async done => {
@@ -152,6 +155,27 @@ beforeAll(async done => {
 afterAll(async done => {
   done();
 });
+
+async function saveReward(playerId, clubCode) {
+  const rewardInput = {
+    amount: 100.4,
+    endHour: 4,
+    minRank: 1,
+    name: 'brady',
+    startHour: 4,
+    type: 'HIGH_HAND',
+    schedule: 'HOURLY',
+  };
+  const rewardId = await getClient(playerId).mutate({
+    variables: {
+      clubCode: clubCode,
+      input: rewardInput,
+    },
+    mutation: rewardutils.createReward,
+  });
+  holdemGameInput.rewardIds.splice(0);
+  holdemGameInput.rewardIds.push(rewardId.data.rewardId);
+}
 
 describe('Promotion APIs', () => {
   test('Create a promotion', async () => {
@@ -188,6 +212,7 @@ describe('Promotion APIs', () => {
       expect(true).toBeFalsy();
     }
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
+    saveReward(playerId, clubCode);
     const game = await gameutils.configureGame(
       playerId,
       clubCode,
@@ -256,6 +281,7 @@ describe('Promotion APIs', () => {
       expect(true).toBeFalsy();
     }
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
+    saveReward(playerId, clubCode);
     const game = await gameutils.configureGame(
       playerId,
       clubCode,
@@ -301,6 +327,7 @@ describe('Promotion APIs', () => {
     };
     await axios.post(`${SERVER_API}/register-game-server`, gameServer);
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
+    saveReward(playerId, clubCode);
     const game = await gameutils.configureGame(
       playerId,
       clubCode,

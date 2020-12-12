@@ -24,6 +24,7 @@ import {
   waitingList,
 } from '@src/resolvers/game';
 import {getGame} from '@src/cache/index';
+import {saveReward} from '../src/resolvers/reward';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {waitlistTimeoutExpired} from '@src/repositories/timer';
 
@@ -53,6 +54,7 @@ const holdemGameInput = {
   actionTime: 30,
   muckLosingHand: true,
   waitlistSittingTimeout: 5,
+  rewardIds: [] as any,
 };
 
 enum ClubMemberStatus {
@@ -73,6 +75,21 @@ beforeAll(async done => {
 afterAll(async done => {
   done();
 });
+
+async function createReward(playerId, clubCode) {
+  const rewardInput = {
+    amount: 100.4,
+    endHour: 4,
+    minRank: 1,
+    name: 'brady',
+    startHour: 4,
+    type: 'HIGH_HAND',
+    schedule: 'HOURLY',
+  };
+  const resp = await saveReward(playerId, clubCode, rewardInput);
+  holdemGameInput.rewardIds.splice(0);
+  holdemGameInput.rewardIds.push(resp);
+}
 
 function sleep(ms: number) {
   return new Promise(resolve => {
@@ -110,6 +127,7 @@ describe('Game APIs', () => {
         description: 'poker players gather',
         ownerUuid: player,
       });
+      await createReward(player, club);
       const startedGame = await configureGame(player, club, holdemGameInput);
       expect(startedGame).not.toBeNull();
       expect(startedGame.gameType).toEqual('HOLDEM');
@@ -204,6 +222,7 @@ describe('Game APIs', () => {
         description: 'poker players gather',
         ownerUuid: player,
       });
+      await createReward(player, club);
       const startedGame = await configureGame(player, club, holdemGameInput);
       const gameData = await getGame(startedGame.gameCode);
       expect(gameData.id).not.toBe(null);
@@ -233,6 +252,7 @@ describe('Game APIs', () => {
         description: 'poker players gather',
         ownerUuid: owner,
       });
+      await createReward(owner, club);
       const game = await configureGame(owner, club, holdemGameInput);
       const player1 = await createPlayer({
         player: {
@@ -290,6 +310,7 @@ describe('Game APIs', () => {
         description: 'poker players gather',
         ownerUuid: owner,
       });
+      await createReward(owner, club);
       const game = await configureGame(owner, club, holdemGameInput);
       const player1 = await createPlayer({
         player: {
@@ -358,6 +379,7 @@ describe('Game APIs', () => {
         description: 'poker players gather',
         ownerUuid: owner,
       });
+      await createReward(owner, club);
       const game = await configureGame(owner, club, holdemGameInput);
       const player1 = await createPlayer({
         player: {
@@ -421,6 +443,7 @@ describe('Game APIs', () => {
       description: 'poker players gather',
       ownerUuid: owner,
     });
+    await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
     const player1 = await createPlayer({
       player: {
@@ -485,6 +508,7 @@ describe('Game APIs', () => {
         description: 'poker players gather',
         ownerUuid: owner,
       });
+      await createReward(owner, club);
       const game = await configureGame(owner, club, holdemGameInput);
       const player1 = await createPlayer({
         player: {
@@ -544,6 +568,7 @@ describe('Game APIs', () => {
         description: 'poker players gather',
         ownerUuid: owner,
       });
+      await createReward(owner, club);
       const game = await configureGame(owner, club, holdemGameInput);
       const player1 = await createPlayer({
         player: {
@@ -588,6 +613,7 @@ describe('Game APIs', () => {
       description: 'poker players gather',
       ownerUuid: owner,
     });
+    await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
     const player1 = await createPlayer({
       player: {
@@ -639,6 +665,7 @@ describe('Game APIs', () => {
       description: 'poker players gather',
       ownerUuid: owner,
     });
+    await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
     const player1 = await createPlayer({
       player: {
@@ -685,6 +712,7 @@ describe('Game APIs', () => {
         description: 'poker players gather',
         ownerUuid: owner,
       });
+      await createReward(owner, club);
       const game = await configureGame(owner, club, holdemGameInput);
       const player1 = await createPlayer({
         player: {
@@ -784,6 +812,7 @@ describe('Game APIs', () => {
       const gameInput = holdemGameInput;
       gameInput.maxPlayers = 3;
       gameInput.minPlayers = 2;
+      await createReward(owner, club);
       const game = await configureGame(owner, club, gameInput);
       await startGame(owner, game.gameCode);
 
@@ -890,6 +919,7 @@ describe('Game APIs', () => {
       const gameInput = holdemGameInput;
       gameInput.maxPlayers = 3;
       gameInput.minPlayers = 2;
+      await createReward(owner, club);
       const game = await configureGame(owner, club, gameInput);
       await startGame(owner, game.gameCode);
 
@@ -1012,6 +1042,7 @@ describe('Game APIs', () => {
       const gameInput = holdemGameInput;
       gameInput.maxPlayers = 3;
       gameInput.minPlayers = 2;
+      await createReward(owner, club);
       const game = await configureGame(owner, club, gameInput);
       await startGame(owner, game.gameCode);
 

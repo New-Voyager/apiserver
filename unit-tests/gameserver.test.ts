@@ -8,6 +8,7 @@ import {
 import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/resolvers/reset';
 import {createPlayer} from '@src/resolvers/player';
+import {saveReward} from '../src/resolvers/reward';
 import {createClub} from '@src/resolvers/club';
 import {configureGame, configureGameByPlayer} from '@src/resolvers/game';
 
@@ -36,6 +37,7 @@ const holdemGameInput = {
   buyInMax: 600,
   actionTime: 30,
   muckLosingHand: true,
+  rewardIds: [] as any,
 };
 
 beforeAll(async done => {
@@ -46,6 +48,21 @@ beforeAll(async done => {
 afterAll(async done => {
   done();
 });
+
+async function createReward(playerId, clubCode) {
+  const rewardInput = {
+    amount: 100.4,
+    endHour: 4,
+    minRank: 1,
+    name: 'brady',
+    startHour: 4,
+    type: 'HIGH_HAND',
+    schedule: 'HOURLY',
+  };
+  const resp = await saveReward(playerId, clubCode, rewardInput);
+  holdemGameInput.rewardIds.splice(0);
+  holdemGameInput.rewardIds.push(resp);
+}
 
 describe('Game server APIs', () => {
   beforeEach(async done => {
@@ -163,6 +180,7 @@ describe('Game server APIs', () => {
       description: 'poker players gather',
       ownerUuid: player,
     });
+    await createReward(player, club);
     const game = await configureGame(player, club, holdemGameInput);
     const server = await getParticularGameServer(club, game.gameCode);
     if (!server) {

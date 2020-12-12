@@ -1,9 +1,10 @@
 import {PORT_NUMBER} from './utils/utils';
 import {default as axios} from 'axios';
-import {resetDatabase} from './utils/utils';
+import {resetDatabase, getClient} from './utils/utils';
 import * as handutils from './utils/hand.testutils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
+import * as rewardutils from './utils/reward.testutils';
 
 const allInHand = {
   clubId: 1,
@@ -86,6 +87,118 @@ const allInHand = {
     ],
     handEndedAt: '1595385735',
     playersInSeats: [1, 0, 0, 0, 2, 0, 0, 3, 0],
+  },
+};
+
+const rewardHandData = {
+  clubId: 1,
+  gameId: 1,
+  handNum: 1,
+  messageType: 'RESULT',
+  handStatus: 'RESULT',
+  handResult: {
+    preflopActions: {
+      pot: 3,
+      actions: [
+        {
+          seatNo: 5,
+          amount: 1,
+        },
+        {
+          seatNo: 8,
+          action: 'BB',
+          amount: 2,
+        },
+        {
+          seatNo: 1,
+          action: 'ALLIN',
+        },
+        {
+          seatNo: 5,
+          action: 'ALLIN',
+        },
+        {
+          seatNo: 8,
+          action: 'ALLIN',
+        },
+      ],
+    },
+    flopActions: {},
+    turnActions: {},
+    riverActions: {},
+    potWinners: {
+      '0': {
+        hiWinners: [
+          {
+            seatNo: 1,
+            amount: 150,
+            winningCards: [200, 196, 8, 132, 1],
+            winningCardsStr: '[ A♣  A♦  2♣  T♦  2♠ ]',
+            rankStr: 'Two Pair',
+            rank: 1000,
+          },
+        ],
+        loWinners: [
+          {
+            seatNo: 1,
+            amount: 150,
+            winningCards: [200, 196, 8, 132, 1],
+            winningCardsStr: '[ A♣  A♦  2♣  T♦  2♠ ]',
+            rankStr: 'Two Pair',
+            rank: 1000,
+          },
+        ],
+      },
+    },
+    wonAt: 'SHOW_DOWN',
+    rank: 1000,
+    tips: 2.0,
+    totalPot: 150,
+    balanceAfterHand: [
+      {
+        seatNo: 1,
+        playerId: 1,
+        balance: 150,
+      },
+    ],
+    handStartedAt: '1595385733',
+    balanceBeforeHand: [
+      {
+        seatNo: 1,
+        playerId: 1,
+        balance: 50,
+      },
+    ],
+    handEndedAt: '1595385735',
+    playersInSeats: [1, 0, 0, 0, 2, 0, 0, 3, 0],
+  },
+  rewardTrackingIds: [4],
+  boardCards: [200, 196, 184, 56, 178],
+  flop: [200, 196, 184],
+  turn: 56,
+  river: 178,
+  playerCards: {
+    1: {
+      playerId: '1',
+      cards: [4, 33],
+      bestCards: [200, 196, 184, 56, 178],
+      rank: 2475,
+      playedUntil: 'RIVER',
+    },
+    5: {
+      playerId: '2',
+      cards: [194, 49],
+      bestCards: [200, 196, 184, 178, 194],
+      rank: 167,
+      playedUntil: 'RIVER',
+    },
+    8: {
+      playerId: '16',
+      cards: [180, 177],
+      bestCards: [196, 184, 178, 180, 177],
+      rank: 23,
+      playedUntil: 'RIVER',
+    },
   },
 };
 
@@ -214,7 +327,29 @@ const holdemGameInput = {
   buyInMax: 600,
   actionTime: 30,
   muckLosingHand: true,
+  rewardIds: [] as any,
 };
+
+async function saveReward(playerId, clubCode) {
+  const rewardInput = {
+    amount: 100.4,
+    endHour: 4,
+    minRank: 1,
+    name: 'brady',
+    startHour: 4,
+    type: 'HIGH_HAND',
+    schedule: 'HOURLY',
+  };
+  const rewardId = await getClient(playerId).mutate({
+    variables: {
+      clubCode: clubCode,
+      input: rewardInput,
+    },
+    mutation: rewardutils.createReward,
+  });
+  holdemGameInput.rewardIds.splice(0);
+  holdemGameInput.rewardIds.push(rewardId.data.rewardId);
+}
 
 const SERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
@@ -237,6 +372,9 @@ async function createClubAndStartGame(): Promise<
   const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
   const player = await handutils.getPlayerById(playerId);
   await createGameServer('1.2.0.1');
+
+  await saveReward(playerId, clubCode);
+
   const game1 = await gameutils.configureGame(
     playerId,
     clubCode,
@@ -252,6 +390,7 @@ async function createClubAndStartGame(): Promise<
     status: 'PLAYING',
     seatNo: 1,
   };
+
   await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
   return [clubID, player, gameID, playerId, clubCode, game1.gameCode];
 }
@@ -266,9 +405,19 @@ describe('Hand Server', () => {
     done();
   });
 
+  test('Save Post hand data', async () => {
+    await createClubAndStartGame();
+    rewardHandData.handNum = 1;
+    const resp = await axios.post(
+      `${SERVER_API}/post-save-hand`,
+      rewardHandData
+    );
+    expect(resp.status).toBe(200);
+    expect(resp.data.status).toBe('OK');
+  });
+
   test('Save hand data', async () => {
     const [clubId, playerId, gameId] = await createClubAndStartGame();
-
     allInHand.handNum = 1;
     allInHand.gameId = gameId;
     allInHand.clubId = clubId;
@@ -300,7 +449,6 @@ describe('Hand Server', () => {
       clubCode,
       gameCode,
     ] = await createClubAndStartGame();
-
     allInHand.handNum = 1;
     allInHand.gameId = gameId;
     allInHand.clubId = clubId;

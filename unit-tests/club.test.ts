@@ -15,6 +15,7 @@ import {
 } from '../src/resolvers/club';
 import {createPlayer} from '../src/resolvers/player';
 import {configureGame} from '../src/resolvers/game';
+import {saveReward} from '../src/resolvers/reward';
 import {createGameServer} from '../src/internal/gameserver';
 import {getLogger} from '../src/utils/log';
 
@@ -53,6 +54,7 @@ const holdemGameInput = {
   buyInMax: 600,
   actionTime: 30,
   muckLosingHand: true,
+  rewardIds: [] as any,
 };
 
 enum ClubMemberStatus {
@@ -63,6 +65,21 @@ enum ClubMemberStatus {
   ACTIVE,
   LEFT,
   KICKEDOUT,
+}
+
+async function createReward(playerId, clubCode) {
+  const rewardInput = {
+    amount: 100.4,
+    endHour: 4,
+    minRank: 1,
+    name: 'brady',
+    startHour: 4,
+    type: 'HIGH_HAND',
+    schedule: 'HOURLY',
+  };
+  const resp = await saveReward(playerId, clubCode, rewardInput);
+  holdemGameInput.rewardIds.splice(0);
+  holdemGameInput.rewardIds.push(resp);
 }
 
 describe('Club APIs', () => {
@@ -363,8 +380,9 @@ describe('Club APIs', () => {
       status: 'ACTIVE',
     };
     await createGameServer(gameServer);
-
+    await createReward(ownerId, clubCode);
     await configureGame(ownerId, clubCode, holdemGameInput);
+    await createReward(ownerId, clubCode);
     await configureGame(ownerId, clubCode, holdemGameInput);
 
     try {

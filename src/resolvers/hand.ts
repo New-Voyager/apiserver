@@ -311,6 +311,29 @@ export async function getAllStarredHands(playerId: string, args: any) {
   return handHistory;
 }
 
+export async function postSaveHand(playerId: string, args: any) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const errors = new Array<string>();
+  try {
+    if (!args.handNum) {
+      errors.push('HandNum is missing');
+    }
+  } catch (err) {
+    throw new Error('Internal server error');
+  }
+  if (errors.length) {
+    throw new Error(JSON.stringify(errors));
+  }
+  const player = await PlayerRepository.getPlayerById(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+  const resp = await HandRepository.postSaveHand(args);
+  return resp;
+}
+
 export async function saveStarredHand(playerId: string, args: any) {
   if (!playerId) {
     throw new Error('Unauthorized');

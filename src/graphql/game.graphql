@@ -81,6 +81,7 @@ input GameCreateInput {
   muckLosingHand: Boolean
   waitForBigBlind: Boolean
   waitlistSittingTimeout: Int
+  rewardIds: [Int]
 }
 
 type SeatInfo {

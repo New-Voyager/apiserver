@@ -6,7 +6,9 @@ import {createClub, getClubById} from '@src/resolvers/club';
 import {createGameServer} from '@src/internal/gameserver';
 import {configureGame, configureGameByPlayer} from '@src/resolvers/game';
 import {saveChipsData} from '@src/internal/chipstrack';
+import {saveReward} from '../src/resolvers/reward';
 import {saveHandData} from '@src/internal/hand';
+import {postSaveHandData} from '../src/internal/hand';
 import {
   getLastHandHistory,
   getSpecificHandHistory,
@@ -14,6 +16,7 @@ import {
   getMyWinningHands,
   getAllStarredHands,
   saveStarredHand,
+  postSaveHand,
 } from '@src/resolvers/hand';
 import {getGame} from '@src/cache/index';
 
@@ -43,6 +46,119 @@ const holdemGameInput = {
   buyInMax: 600,
   actionTime: 30,
   muckLosingHand: true,
+  rewardIds: [] as any,
+};
+
+const rewardHandData = {
+  clubId: 1,
+  gameId: 1,
+  handNum: 1,
+  messageType: 'RESULT',
+  handStatus: 'RESULT',
+  handResult: {
+    preflopActions: {
+      pot: 3,
+      actions: [
+        {
+          seatNo: 5,
+          amount: 1,
+        },
+        {
+          seatNo: 8,
+          action: 'BB',
+          amount: 2,
+        },
+        {
+          seatNo: 1,
+          action: 'ALLIN',
+        },
+        {
+          seatNo: 5,
+          action: 'ALLIN',
+        },
+        {
+          seatNo: 8,
+          action: 'ALLIN',
+        },
+      ],
+    },
+    flopActions: {},
+    turnActions: {},
+    riverActions: {},
+    potWinners: {
+      '0': {
+        hiWinners: [
+          {
+            seatNo: 1,
+            amount: 150,
+            winningCards: [200, 196, 8, 132, 1],
+            winningCardsStr: '[ A♣  A♦  2♣  T♦  2♠ ]',
+            rankStr: 'Two Pair',
+            rank: 1000,
+          },
+        ],
+        loWinners: [
+          {
+            seatNo: 1,
+            amount: 150,
+            winningCards: [200, 196, 8, 132, 1],
+            winningCardsStr: '[ A♣  A♦  2♣  T♦  2♠ ]',
+            rankStr: 'Two Pair',
+            rank: 1000,
+          },
+        ],
+      },
+    },
+    wonAt: 'SHOW_DOWN',
+    rank: 1000,
+    tips: 2.0,
+    totalPot: 150,
+    balanceAfterHand: [
+      {
+        seatNo: 1,
+        playerId: 1,
+        balance: 150,
+      },
+    ],
+    handStartedAt: '1595385733',
+    balanceBeforeHand: [
+      {
+        seatNo: 1,
+        playerId: 1,
+        balance: 50,
+      },
+    ],
+    handEndedAt: '1595385735',
+    playersInSeats: [1, 0, 0, 0, 2, 0, 0, 3, 0],
+  },
+  rewardTrackingIds: [4],
+  boardCards: [200, 196, 184, 56, 178],
+  flop: [200, 196, 184],
+  turn: 56,
+  river: 178,
+  playerCards: {
+    1: {
+      playerId: '1',
+      cards: [4, 33],
+      bestCards: [200, 196, 184, 56, 178],
+      rank: 2475,
+      playedUntil: 'RIVER',
+    },
+    5: {
+      playerId: '2',
+      cards: [194, 49],
+      bestCards: [200, 196, 184, 178, 194],
+      rank: 167,
+      playedUntil: 'RIVER',
+    },
+    8: {
+      playerId: '16',
+      cards: [180, 177],
+      bestCards: [196, 184, 178, 180, 177],
+      rank: 23,
+      playedUntil: 'RIVER',
+    },
+  },
 };
 
 const allInHand = {
@@ -239,6 +355,21 @@ afterAll(async done => {
   done();
 });
 
+async function createReward(playerId, clubCode) {
+  const rewardInput = {
+    amount: 100.4,
+    endHour: 4,
+    minRank: 1,
+    name: 'brady',
+    startHour: 4,
+    type: 'HIGH_HAND',
+    schedule: 'HOURLY',
+  };
+  const resp = await saveReward(playerId, clubCode, rewardInput);
+  holdemGameInput.rewardIds.splice(0);
+  holdemGameInput.rewardIds.push(resp);
+}
+
 async function createClubAndStartGame(): Promise<
   [number, number, number, string, string, string]
 > {
@@ -262,6 +393,7 @@ async function createClubAndStartGame(): Promise<
     url: 'htto://localhost:8080',
   };
   await createGameServer(gameServer);
+  await createReward(owner, club);
   const game = await configureGame(owner, club, holdemGameInput);
   const playerId = (await getPlayerById(owner)).id;
   const gameId = (await getGame(game.gameCode)).id;
@@ -311,6 +443,13 @@ describe('Hand server APIs', () => {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();
     }
+  });
+
+  test('Save Post hand data', async () => {
+    await createClubAndStartGame();
+    rewardHandData.handNum = 1;
+    const resp = await postSaveHandData(rewardHandData);
+    expect(resp).toBe(true);
   });
 
   test('Save hand data Flop', async () => {
