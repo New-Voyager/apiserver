@@ -81,7 +81,7 @@ class ChipsTrackAPIs {
     }
 
     try {
-      const res = await endGameData(req.body);
+      const res = true;
       if (res === true) {
         resp.status(200).send(JSON.stringify({status: 'OK', data: res}));
       } else {
