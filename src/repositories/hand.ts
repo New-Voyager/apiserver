@@ -1,10 +1,19 @@
 import {HandHistory, HandWinners, StarredHands} from '@src/entity/hand';
+import {PokerGame} from '@src/entity/game';
 import {GameType, WonAtStatus} from '@src/entity/types';
 import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {PokerGameUpdates} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
+import {
+  GamePromotion,
+  Promotion,
+  PromotionWinners,
+} from '@src/entity/promotion';
+import {Player} from '@src/entity/player';
+import {Club} from '@src/entity/club';
+import {Reward, GameRewardTracking} from '@src/entity/reward';
 
 const logger = getLogger('hand');
 
@@ -382,6 +391,45 @@ class HandRepositoryImpl {
 
     const starredHands = await starredHandsRepository.find(findOptions);
     return starredHands;
+  }
+
+  public async postSaveHand(input: any) {
+    try {
+      const rank: number[] = [];
+      Object.keys(input.players).forEach(async card => {
+        rank.push(parseInt(input.players[card.toString()].rank));
+      });
+      const index = rank.indexOf(Math.min.apply(Math, rank));
+      const data = input.players[Object.keys(input.players)[index].toString()];
+      await getManager().transaction(async () => {
+        for await (const rewardTrackId of input.rewardTrackingIds) {
+          const rewardTrack = getRepository(GameRewardTracking);
+          const playerRepo = getRepository(Player);
+          const gameRepo = getRepository(PokerGame);
+          const player = await playerRepo.findOne({id: data.playerId});
+          const game = await gameRepo.findOne({id: parseInt(input.gameId)});
+          const res = await rewardTrack.update(
+            {id: rewardTrackId},
+            {
+              handNum: input.handNum,
+              gameId: game,
+              playerId: player,
+              hhRank: data.rank,
+              boardCards: input.boardCards,
+              playerCards: data.cards,
+              highHand: data.bestCards,
+            }
+          );
+          const playerRes = await rewardTrack.findOne({id: rewardTrackId});
+        }
+      });
+      return true;
+    } catch (err) {
+      logger.error(
+        `Couldn't update reward. retry again. Error: ${err.toString()}`
+      );
+      throw new Error("Couldn't update reward, please retry again");
+    }
   }
 }
 

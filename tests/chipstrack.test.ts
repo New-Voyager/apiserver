@@ -7,6 +7,8 @@ import {resetDatabase, getClient} from './utils/utils';
 import * as gameutils from './utils/game.testutils';
 import {getLogger} from '../src/utils/log';
 const logger = getLogger('chipstrack');
+import * as rewardutils from './utils/reward.testutils';
+import {ChipsTrackRepository} from '../src/repositories/chipstrack';
 
 const SERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
@@ -34,7 +36,29 @@ const holdemGameInput = {
   buyInMax: 600,
   actionTime: 30,
   muckLosingHand: true,
+  rewardIds: [] as any,
 };
+
+async function saveReward(playerId, clubCode) {
+  const rewardInput = {
+    amount: 100.4,
+    endHour: 4,
+    minRank: 1,
+    name: 'brady',
+    startHour: 4,
+    type: 'HIGH_HAND',
+    schedule: 'HOURLY',
+  };
+  const rewardId = await getClient(playerId).mutate({
+    variables: {
+      clubCode: clubCode,
+      input: rewardInput,
+    },
+    mutation: rewardutils.createReward,
+  });
+  holdemGameInput.rewardIds.splice(0);
+  holdemGameInput.rewardIds.push(rewardId.data.rewardId);
+}
 
 beforeAll(async done => {
   await resetDatabase();
@@ -59,6 +83,7 @@ describe('Player Chips tracking APIs', () => {
       expect(true).toBeFalsy();
     }
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
+    saveReward(playerId, clubCode);
     let game, resp;
 
     game = await gameutils.configureGame(playerId, clubCode, holdemGameInput);
@@ -105,8 +130,12 @@ describe('Player Chips tracking APIs', () => {
       console.log(JSON.stringify(err));
       expect(true).toBeFalsy();
     }
-    const playerUuid = await clubutils.createPlayer('player1', 'abc123');
-
+    const [clubCode, playerUuid] = await clubutils.createClub(
+      'brady',
+      'yatzee'
+    );
+    // const playerUuid = await clubutils.createPlayer('player1', 'abc123');
+    await saveReward(playerUuid, clubCode);
     let resp;
 
     const game = await gameutils.configureFriendsGame(
@@ -156,6 +185,7 @@ describe('Player Chips tracking APIs', () => {
       expect(true).toBeFalsy();
     }
     const [clubId, playerId] = await clubutils.createClub('brady', 'yatzee');
+    saveReward(playerId, clubId);
     let game, resp, response;
 
     game = await gameutils.configureGame(playerId, clubId, holdemGameInput);
@@ -212,8 +242,12 @@ describe('Player Chips tracking APIs', () => {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();
     }
-    const playerUuid = await clubutils.createPlayer('player1', 'abc123');
-
+    const [clubCode, playerUuid] = await clubutils.createClub(
+      'brady',
+      'yatzee'
+    );
+    // const playerUuid = await clubutils.createPlayer('player1', 'abc123');
+    await saveReward(playerUuid, clubCode);
     let resp, response;
 
     const game = await gameutils.configureFriendsGame(
@@ -269,6 +303,7 @@ describe('Player Chips tracking APIs', () => {
 
     await axios.post(`${SERVER_API}/register-game-server`, gameServer1);
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
+    await saveReward(playerId, clubCode);
     const game = await gameutils.configureGame(
       playerId,
       clubCode,
@@ -309,6 +344,7 @@ describe('Player Chips tracking APIs', () => {
       expect(true).toBeFalsy();
     }
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
+    await saveReward(playerId, clubCode);
     let game;
 
     game = await gameutils.configureGame(playerId, clubCode, holdemGameInput);
@@ -358,6 +394,7 @@ describe('Player Chips tracking APIs', () => {
       expect(true).toBeFalsy();
     }
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
+    await saveReward(playerId, clubCode);
     let game;
 
     game = await gameutils.configureGame(playerId, clubCode, holdemGameInput);
@@ -403,7 +440,12 @@ describe('Player Chips tracking APIs', () => {
       status: 'ACTIVE',
     };
     await axios.post(`${SERVER_API}/register-game-server`, gameServer1);
-    const playerUuid = await clubutils.createPlayer('player1', 'abc123');
+    const [clubCode, playerUuid] = await clubutils.createClub(
+      'brady',
+      'yatzee'
+    );
+    //    const playerUuid = await clubutils.createPlayer('player1', 'abc123');
+    await saveReward(playerUuid, clubCode);
     const game = await gameutils.configureFriendsGame(
       playerUuid,
       holdemGameInput
@@ -446,7 +488,12 @@ describe('Player Chips tracking APIs', () => {
       status: 'ACTIVE',
     };
     await axios.post(`${SERVER_API}/register-game-server`, gameServer1);
-    const playerUuid = await clubutils.createPlayer('player1', 'abc123');
+    const [clubCode, playerUuid] = await clubutils.createClub(
+      'brady',
+      'yatzee'
+    );
+    //const playerUuid = await clubutils.createPlayer('player1', 'abc123');
+    await saveReward(playerUuid, clubCode);
     const game = await gameutils.configureFriendsGame(
       playerUuid,
       holdemGameInput

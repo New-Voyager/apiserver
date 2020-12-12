@@ -27,6 +27,7 @@ import {
 } from '@src/gameserver';
 import {isPostgres} from '@src/utils';
 import {WaitListMgmt} from './waitlist';
+import {Reward, GameRewardTracking, GameReward} from '@src/entity/reward';
 import {ChipsTrackRepository} from './chipstrack';
 import {BUYIN_TIMEOUT} from './types';
 
@@ -138,6 +139,44 @@ class GameRepositoryImpl {
           let pick = 0;
           if (gameServers.length > 0) {
             pick = Number.parseInt(savedGame.id) % gameServers.length;
+          }
+
+          for await (const rewardId of input.rewardIds) {
+            const rewardRepository = getRepository(Reward);
+            await rewardRepository.findOne({id: rewardId});
+
+            const rewardTrackRepo = getRepository(GameRewardTracking);
+            const rewardTrack = await rewardTrackRepo.findOne({
+              rewardId: rewardId,
+              active: true,
+            });
+
+            if (!rewardTrack) {
+              const createRewardTrack = new GameRewardTracking();
+              createRewardTrack.rewardId = rewardId;
+              createRewardTrack.day = new Date();
+
+              const rewardTrackRepository = getRepository(GameRewardTracking);
+              const rewardTrackResponse = await rewardTrackRepository.save(
+                createRewardTrack
+              );
+
+              const createGameReward = new GameReward();
+              createGameReward.gameId = game;
+              createGameReward.rewardId = rewardId;
+              createGameReward.rewardTrackingId = rewardTrackResponse;
+
+              const gameRewardRepository = getRepository(GameReward);
+              await gameRewardRepository.save(createGameReward);
+            } else {
+              const createGameReward = new GameReward();
+              createGameReward.gameId = game;
+              createGameReward.rewardId = rewardId;
+              createGameReward.rewardTrackingId = rewardTrack;
+
+              const gameRewardRepository = getRepository(GameReward);
+              await gameRewardRepository.save(createGameReward);
+            }
           }
 
           let scanServer = 0;

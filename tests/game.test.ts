@@ -2,6 +2,7 @@ import {resetDatabase, getClient, PORT_NUMBER} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
 import * as handutils from './utils/hand.testutils';
+import * as rewardutils from './utils/reward.testutils';
 import {default as axios} from 'axios';
 import {getLogger} from '../src/utils/log';
 const logger = getLogger('game');
@@ -41,7 +42,29 @@ const holdemGameInput = {
   actionTime: 30,
   muckLosingHand: true,
   waitlistSittingTimeout: 5,
+  rewardIds: [] as any,
 };
+
+async function saveReward(playerId, clubCode) {
+  const rewardInput = {
+    amount: 100.4,
+    endHour: 4,
+    minRank: 1,
+    name: 'brady',
+    startHour: 4,
+    type: 'HIGH_HAND',
+    schedule: 'HOURLY',
+  };
+  const rewardId = await getClient(playerId).mutate({
+    variables: {
+      clubCode: clubCode,
+      input: rewardInput,
+    },
+    mutation: rewardutils.createReward,
+  });
+  holdemGameInput.rewardIds.splice(0);
+  holdemGameInput.rewardIds.push(rewardId.data.rewardId);
+}
 
 async function createGameServer(ipAddress: string) {
   const gameServer1 = {
@@ -64,6 +87,7 @@ describe('Game APIs', () => {
   test('start a new game', async () => {
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
     await createGameServer('1.2.0.1');
+    saveReward(playerId, clubCode);
     const resp = await getClient(playerId).mutate({
       variables: {
         clubCode: clubCode,
@@ -140,11 +164,13 @@ describe('Game APIs', () => {
       'yatzee2'
     );
     await createGameServer('1.2.0.2');
+    saveReward(playerId, clubCode);
     const game1 = await gameutils.configureGame(
       playerId,
       clubCode,
       holdemGameInput
     );
+    saveReward(playerId, clubCode);
     const game2 = await gameutils.configureGame(
       playerId,
       clubCode,
@@ -191,6 +217,7 @@ describe('Game APIs', () => {
   test('join a club game', async () => {
     const [clubCode, ownerId] = await clubutils.createClub('brady', 'yatzee');
     await createGameServer('1.2.0.7');
+    await saveReward(ownerId, clubCode);
     const game = await gameutils.configureGame(
       ownerId,
       clubCode,
@@ -221,6 +248,7 @@ describe('Game APIs', () => {
   test('buyIn for a club game', async () => {
     const [clubCode, ownerId] = await clubutils.createClub('brady', 'yatzee');
     await createGameServer('1.2.0.8');
+    await saveReward(ownerId, clubCode);
     const game = await gameutils.configureGame(
       ownerId,
       clubCode,

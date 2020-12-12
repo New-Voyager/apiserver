@@ -105,10 +105,11 @@ function addInternalRoutes(app: any) {
   app.post('/internal/update-game-server', GameServerAPI.updateGameServer);
   app.get('/internal/game-servers', GameServerAPI.getGameServers);
   app.post('/internal/save-hand', HandServerAPI.saveHand);
-  app.post(
-    '/internal/post-hand/gameId/:gameId/handNum/:handNum',
-    HandServerAPI.postHand
-  );
+  app.post('/internal/post-save-hand', HandServerAPI.postSaveHand);
+  // app.post(
+  //   '/internal/post-hand/gameId/:gameId/handNum/:handNum',
+  //   HandServerAPI.postHand
+  // );
 
   app.post('/internal/start-game', GameAPI.startGame);
   app.post('/internal/player-sit-in', ChipsTrackSeverAPI.playerSitsIn);

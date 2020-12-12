@@ -11,6 +11,7 @@ import {
   getPlayerBalanceAmount,
 } from '../src/resolvers/chipstrack';
 import {getClubById, createClub} from '../src/resolvers/club';
+import {saveReward} from '../src/resolvers/reward';
 import {getPlayerById, createPlayer} from '../src/resolvers/player';
 import {saveChipsData, buyChipsData} from '../src/internal/chipstrack';
 import {getGame} from '@src/cache/index';
@@ -44,6 +45,7 @@ const holdemGameInput = {
   buyInMax: 600,
   actionTime: 30,
   muckLosingHand: true,
+  rewardIds: [] as any,
 };
 
 beforeAll(async done => {
@@ -54,6 +56,21 @@ beforeAll(async done => {
 afterAll(async done => {
   done();
 });
+
+async function createReward(playerId, clubCode) {
+  const rewardInput = {
+    amount: 100.4,
+    endHour: 4,
+    minRank: 1,
+    name: 'brady',
+    startHour: 4,
+    type: 'HIGH_HAND',
+    schedule: 'HOURLY',
+  };
+  const resp = await saveReward(playerId, clubCode, rewardInput);
+  holdemGameInput.rewardIds.splice(0);
+  holdemGameInput.rewardIds.push(resp);
+}
 
 describe('Player Chips tracking APIs', () => {
   test('Create a player chips tracker when player sits in', async () => {
@@ -72,6 +89,7 @@ describe('Player Chips tracking APIs', () => {
       status: 'ACTIVE',
     };
     await createGameServer(gameServer);
+    await createReward(ownerId, clubCode);
     const game = await configureGame(ownerId, clubCode, holdemGameInput);
 
     const playerID = await getPlayerById(ownerId);
@@ -141,6 +159,7 @@ describe('Player Chips tracking APIs', () => {
       status: 'ACTIVE',
     };
     await createGameServer(gameServer);
+    await createReward(ownerId, clubCode);
     const game = await configureGame(ownerId, clubCode, holdemGameInput);
 
     const playerID = await getPlayerById(ownerId);
@@ -190,12 +209,19 @@ describe('Player Chips tracking APIs', () => {
     const ownerId = await createPlayer({
       player: {name: 'player1', deviceId: 'test', page: {count: 20}},
     });
+    const clubInput = {
+      name: 'bbc',
+      description: 'poker players gather',
+      ownerUuid: ownerId,
+    };
+    const clubCode = await createClub(ownerId, clubInput);
     const gameServer = {
       ipAddress: '10.1.1.1',
       currentMemory: 100,
       status: 'ACTIVE',
     };
     await createGameServer(gameServer);
+    await createReward(ownerId, clubCode);
     const game = await configureGameByPlayer(ownerId, holdemGameInput);
 
     const playerID = await getPlayerById(ownerId);
@@ -256,6 +282,7 @@ describe('Player Chips tracking APIs', () => {
       status: 'ACTIVE',
     };
     await createGameServer(gameServer);
+    await createReward(ownerId, clubCode);
     const game = await configureGame(ownerId, clubCode, holdemGameInput);
 
     const playerID = await getPlayerById(ownerId);
@@ -303,6 +330,7 @@ describe('Player Chips tracking APIs', () => {
       status: 'ACTIVE',
     };
     await createGameServer(gameServer);
+    await createReward(ownerId, clubCode);
     const game = await configureGame(ownerId, clubCode, holdemGameInput);
 
     const playerID = await getPlayerById(ownerId);
@@ -343,6 +371,7 @@ describe('Player Chips tracking APIs', () => {
       status: 'ACTIVE',
     };
     await createGameServer(gameServer);
+    await createReward(ownerId, clubCode);
     const game = await configureGame(ownerId, clubCode, holdemGameInput);
 
     const playerID = await getPlayerById(ownerId);

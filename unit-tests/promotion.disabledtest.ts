@@ -5,6 +5,7 @@ import {resetDB} from '@src/resolvers/reset';
 import {createPlayer, getPlayerById} from '@src/resolvers/player';
 import {createClub, getClubById} from '@src/resolvers/club';
 import {configureGame} from '@src/resolvers/game';
+import {saveReward} from '../src/resolvers/reward';
 import {saveChipsData} from '@src/internal/chipstrack';
 import {saveHandData} from '@src/internal/hand';
 import {
@@ -40,6 +41,7 @@ const holdemGameInput = {
   buyInMax: 600,
   actionTime: 30,
   muckLosingHand: true,
+  rewardIds: [] as any,
 };
 
 const flopHandWithPromotions = {
@@ -150,6 +152,21 @@ const flopHandWithPromotions = {
   },
 };
 
+async function createReward(playerId, clubCode) {
+  const rewardInput = {
+    amount: 100.4,
+    endHour: 4,
+    minRank: 1,
+    name: 'brady',
+    startHour: 4,
+    type: 'HIGH_HAND',
+    schedule: 'HOURLY',
+  };
+  const resp = await saveReward(playerId, clubCode, rewardInput);
+  holdemGameInput.rewardIds.splice(0);
+  holdemGameInput.rewardIds.push(resp);
+}
+
 beforeAll(async done => {
   await initializeSqlLite();
   done();
@@ -223,6 +240,7 @@ describe('Promotion APIs', () => {
         description: 'poker players gather',
         ownerUuid: player,
       });
+      await createReward(player, club);
       const game = await configureGame(player, club, holdemGameInput);
       const promotion = await createPromotion(
         {
@@ -305,6 +323,7 @@ describe('Promotion APIs', () => {
         description: 'poker players gather',
         ownerUuid: player,
       });
+      await createReward(player, club);
       const game = await configureGame(player, club, holdemGameInput);
       for (let i = 0; i < 20; i++) {
         const promotion = await createPromotion(
@@ -361,6 +380,7 @@ describe('Promotion APIs', () => {
         status: 'ACTIVE',
       };
       await createGameServer(gameServer);
+      await createReward(owner, club);
       const game = await configureGame(owner, club, holdemGameInput);
       const playerId = (await getPlayerById(owner)).id;
       const gameId = (await getGame(game.gameCode)).id;
