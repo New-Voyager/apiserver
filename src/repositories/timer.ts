@@ -1,4 +1,7 @@
+import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {PokerGame} from '@src/entity/game';
+import {Player} from '@src/entity/player';
+import {PlayerStatus} from '@src/entity/types';
 import {getLogger} from '@src/utils/log';
 import {getRepository} from 'typeorm';
 import {SeatChangeProcess} from './seatchange';
@@ -79,5 +82,22 @@ export async function buyInTimeoutExpired(gameID: number, playerID: number) {
     throw new Error(`Game: ${gameID} is not found`);
   }
 
+  const playerRepository = getRepository(Player);
+  const player = await playerRepository.findOne({id: playerID});
+  if (!player) {
+    throw new Error(`Player: ${playerID} is not found`);
+  }
+
   // handle buyin timeout
+  const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+  playerGameTrackerRepository.update(
+    {
+      game: {id: game.id},
+      player: {id: player.id},
+    },
+    {
+      status: PlayerStatus.NOT_PLAYING,
+      seatNo: 0,
+    }
+  );
 }

@@ -22,32 +22,32 @@ export const queryPlayerBalance = gql`
   }
 `;
 
-export const queryPlayerTrack = gql`
-  query($playerId: String!, $clubCode: String!, $gameCode: String!) {
-    balance: playerGametrack(
-      clubCode: $clubCode
-      gameCode: $gameCode
-      playerId: $playerId
-    ) {
-      buyIn
-      stack
-      seatNo
-      noOfBuyins
-      hhRank
-      hhHandNum
-    }
-  }
-`;
+// export const queryPlayerTrack = gql`
+//   query($playerId: String!, $clubCode: String!, $gameCode: String!) {
+//     balance: playerGametrack(
+//       clubCode: $clubCode
+//       gameCode: $gameCode
+//       playerId: $playerId
+//     ) {
+//       buyIn
+//       stack
+//       seatNo
+//       noOfBuyins
+//       hhRank
+//       hhHandNum
+//     }
+//   }
+// `;
 
-export const queryClubTrack = gql`
-  query($clubCode: String!, $gameCode: String!) {
-    balance: clubGameRake(clubCode: $clubCode, gameCode: $gameCode) {
-      rake
-      promotion
-      lastHandNum
-    }
-  }
-`;
+// export const queryClubTrack = gql`
+//   query($clubCode: String!, $gameCode: String!) {
+//     balance: clubGameRake(clubCode: $clubCode, gameCode: $gameCode) {
+//       rake
+//       promotion
+//       lastHandNum
+//     }
+//   }
+// `;
 
 export async function getClubBalance(
   playerId: string,
@@ -75,30 +75,30 @@ export async function getClubPlayerBalance(
   return resp.data.balance.balance;
 }
 
-export async function getPlayerTrack(
-  playerId: string,
-  clubCode: string,
-  gameCode: string
-) {
-  const playerClient = getClient(playerId);
-  const resp = await playerClient.query({
-    variables: {playerId: playerId, clubCode: clubCode, gameCode: gameCode},
-    query: queryPlayerTrack,
-  });
+// export async function getPlayerTrack(
+//   playerId: string,
+//   clubCode: string,
+//   gameCode: string
+// ) {
+//   const playerClient = getClient(playerId);
+//   const resp = await playerClient.query({
+//     variables: {playerId: playerId, clubCode: clubCode, gameCode: gameCode},
+//     query: queryPlayerTrack,
+//   });
 
-  return resp.data.balance.stack;
-}
+//   return resp.data.balance.stack;
+// }
 
-export async function getClubTrack(
-  playerId: string,
-  clubCode: string,
-  gameCode: string
-) {
-  const playerClient = getClient(playerId);
-  const resp = await playerClient.query({
-    variables: {clubCode: clubCode, gameCode: gameCode},
-    query: queryClubTrack,
-  });
+// export async function getClubTrack(
+//   playerId: string,
+//   clubCode: string,
+//   gameCode: string
+// ) {
+//   const playerClient = getClient(playerId);
+//   const resp = await playerClient.query({
+//     variables: {clubCode: clubCode, gameCode: gameCode},
+//     query: queryClubTrack,
+//   });
 
-  return resp.data.balance.rake;
-}
+//   return resp.data.balance.rake;
+// }
