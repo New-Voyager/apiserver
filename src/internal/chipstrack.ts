@@ -7,11 +7,6 @@ export async function saveChipsData(registerPayload: any) {
   return res;
 }
 
-export async function endGameData(data: any) {
-  //const res = await ChipsTrackRepository.endGame(data);
-  return null;
-}
-
 export async function buyChipsData(registerPayload: any) {
   const res = await ChipsTrackRepository.buyChips(registerPayload);
   return res;
