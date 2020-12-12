@@ -123,8 +123,8 @@ class HandServerAPIs {
     /**
      * Checking for errors
      */
-    let errors = new Array<string>();
-    errors = validateHandData(handData);
+    const errors = new Array<string>();
+    // errors = validateHandData(handData);
 
     /**
      * If any data is missing throwing errors

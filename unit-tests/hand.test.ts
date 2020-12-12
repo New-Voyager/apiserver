@@ -50,113 +50,116 @@ const holdemGameInput = {
 };
 
 const rewardHandData = {
-  clubId: 1,
-  gameId: 1,
+  gameId: '1',
   handNum: 1,
-  messageType: 'RESULT',
-  handStatus: 'RESULT',
-  handResult: {
+  gameType: 'HOLDEM',
+  handLog: {
     preflopActions: {
       pot: 3,
       actions: [
         {
           seatNo: 5,
+          action: 'SB',
           amount: 1,
+          timedOut: false,
         },
         {
           seatNo: 8,
           action: 'BB',
           amount: 2,
+          timedOut: false,
         },
         {
           seatNo: 1,
           action: 'ALLIN',
+          amount: 0,
+          timedOut: false,
         },
         {
           seatNo: 5,
           action: 'ALLIN',
+          amount: 0,
+          timedOut: false,
         },
         {
           seatNo: 8,
           action: 'ALLIN',
+          amount: 0,
+          timedOut: false,
         },
       ],
     },
-    flopActions: {},
-    turnActions: {},
-    riverActions: {},
+    flopActions: {
+      pot: 0,
+      actions: [],
+    },
+    turnActions: {
+      pot: 0,
+      actions: [],
+    },
+    riverActions: {
+      pot: 0,
+      actions: [],
+    },
     potWinners: {
-      '0': {
+      0: {
         hiWinners: [
           {
             seatNo: 1,
+            loCard: false,
             amount: 150,
-            winningCards: [200, 196, 8, 132, 1],
-            winningCardsStr: '[ A♣  A♦  2♣  T♦  2♠ ]',
-            rankStr: 'Two Pair',
-            rank: 1000,
+            winningCards: [24, 8, 56, 200, 40],
+            winningCardsStr: '[ 3♣  2♣  5♣  A♣  4♣ ]',
+            rankStr: 'Straight Flush',
           },
         ],
-        loWinners: [
-          {
-            seatNo: 1,
-            amount: 150,
-            winningCards: [200, 196, 8, 132, 1],
-            winningCardsStr: '[ A♣  A♦  2♣  T♦  2♠ ]',
-            rankStr: 'Two Pair',
-            rank: 1000,
-          },
-        ],
+        lowWinners: [],
       },
     },
     wonAt: 'SHOW_DOWN',
-    rank: 1000,
-    tips: 2.0,
-    totalPot: 150,
-    balanceAfterHand: [
-      {
-        seatNo: 1,
-        playerId: 1,
-        balance: 150,
-      },
-    ],
-    handStartedAt: '1595385733',
-    balanceBeforeHand: [
-      {
-        seatNo: 1,
-        playerId: 1,
-        balance: 50,
-      },
-    ],
-    handEndedAt: '1595385735',
-    playersInSeats: [1, 0, 0, 0, 2, 0, 0, 3, 0],
+    showDown: null,
+    handStartedAt: '1607771393',
+    handEndedAt: '1607771395',
   },
-  rewardTrackingIds: [4],
-  boardCards: [200, 196, 184, 56, 178],
-  flop: [200, 196, 184],
+  rewardTrackingIds: ['10', '20'],
+  boardCards: [4],
+  boardCards2: [],
+  flop: [24, 20, 8],
   turn: 56,
   river: 178,
-  playerCards: {
+  players: {
     1: {
-      playerId: '1',
-      cards: [4, 33],
-      bestCards: [200, 196, 184, 56, 178],
-      rank: 2475,
+      id: '1',
+      cards: [200, 40],
+      bestCards: [24, 8, 56, 200, 40],
+      rank: 10,
       playedUntil: 'RIVER',
+      balance: {
+        before: 50,
+        after: 150,
+      },
     },
     5: {
-      playerId: '2',
-      cards: [194, 49],
-      bestCards: [200, 196, 184, 178, 194],
-      rank: 167,
+      id: '2',
+      cards: [18, 17],
+      bestCards: [24, 20, 178, 18, 17],
+      rank: 144,
       playedUntil: 'RIVER',
+      balance: {
+        before: 50,
+        after: 0,
+      },
     },
     8: {
-      playerId: '16',
-      cards: [180, 177],
-      bestCards: [196, 184, 178, 180, 177],
-      rank: 23,
+      id: '3',
+      cards: [4, 1],
+      bestCards: [24, 20, 8, 4, 1],
+      rank: 322,
       playedUntil: 'RIVER',
+      balance: {
+        before: 50,
+        after: 0,
+      },
     },
   },
 };

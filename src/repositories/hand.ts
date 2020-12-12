@@ -491,19 +491,18 @@ class HandRepositoryImpl {
   public async postSaveHand(input: any) {
     try {
       const rank: number[] = [];
-      Object.keys(input.playerCards).forEach(async card => {
-        rank.push(parseInt(input.playerCards[card.toString()].rank));
+      Object.keys(input.players).forEach(async card => {
+        rank.push(parseInt(input.players[card.toString()].rank));
       });
       const index = rank.indexOf(Math.min.apply(Math, rank));
-      const data =
-        input.playerCards[Object.keys(input.playerCards)[index].toString()];
+      const data = input.players[Object.keys(input.players)[index].toString()];
       await getManager().transaction(async () => {
         for await (const rewardTrackId of input.rewardTrackingIds) {
           const rewardTrack = getRepository(GameRewardTracking);
           const playerRepo = getRepository(Player);
           const gameRepo = getRepository(PokerGame);
           const player = await playerRepo.findOne({id: data.playerId});
-          const game = await playerRepo.findOne({id: input.gameId});
+          const game = await gameRepo.findOne({id: parseInt(input.gameId)});
           const res = await rewardTrack.update(
             {id: rewardTrackId},
             {
