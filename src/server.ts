@@ -106,7 +106,7 @@ function addInternalRoutes(app: any) {
   app.get('/internal/game-servers', GameServerAPI.getGameServers);
   app.post('/internal/save-hand', HandServerAPI.saveHand);
   app.post(
-    '/internal//internal/post-hand/gameId/:gameId/handNum/:handNum',
+    '/internal/post-hand/gameId/:gameId/handNum/:handNum',
     HandServerAPI.postHand
   );
   // app.post(

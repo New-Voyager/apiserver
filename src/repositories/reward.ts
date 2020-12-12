@@ -1,7 +1,7 @@
 import {Club} from '@src/entity/club';
-import {getRepository} from 'typeorm';
+import {getManager, getRepository} from 'typeorm';
 import {RewardType, ScheduleType} from '@src/entity/types';
-import {Reward} from '@src/entity/reward';
+import {GameRewardTracking, Reward} from '@src/entity/reward';
 export interface RewardInputFormat {
   name: string;
   type: RewardType;
@@ -12,6 +12,9 @@ export interface RewardInputFormat {
   schedule: ScheduleType;
 }
 import {getLogger} from '@src/utils/log';
+import {MIN_FULLHOUSE_RANK} from './types';
+import {getGame} from '@src/cache';
+import _ from 'lodash';
 const logger = getLogger('rewardRepo');
 
 class RewardRepositoryImpl {
@@ -72,6 +75,104 @@ class RewardRepositoryImpl {
         )}`
       );
       throw e;
+    }
+  }
+
+  public async handleRewards(gameCode: string, input: any) {
+    return this.handleHighHand(gameCode, input);
+  }
+
+  public async handleHighHand(gameCode: string, input: any) {
+    try {
+      if (!input.rewardTrackingIds || input.rewardTrackingIds.length === 0) {
+        return;
+      }
+
+      const rank: number[] = [];
+      Object.keys(input.players).forEach(async card => {
+        rank.push(parseInt(input.players[card.toString()].rank));
+      });
+      const highHandRank = _.min(rank);
+      if (!highHandRank) {
+        return;
+      }
+
+      if (highHandRank > MIN_FULLHOUSE_RANK) {
+        return;
+      }
+
+      // TODO: multiple players can have the same hand (we need to deal with this)
+      // May be store the winning player information in a json
+      // get the players who had this rank
+      // right now, we handle only one reward
+      if (input.rewardTrackingIds.length > 1) {
+        logger.error(`Game: ${gameCode} Cannot track more than one reward`);
+        throw new Error('Not implemented');
+      }
+
+      const trackingId = input.rewardTrackingIds[0];
+      const rewardTrackRepo = getRepository(GameRewardTracking);
+
+      const existingTracking = await rewardTrackRepo.findOne({
+        id: trackingId,
+        active: true,
+      });
+      if (!existingTracking) {
+        logger.error(
+          `No existing active reward tracking found for id: ${trackingId}`
+        );
+        return;
+      }
+
+      let existingHighHandRank = Number.MAX_SAFE_INTEGER;
+      if (existingTracking && existingTracking.highHandRank) {
+        existingHighHandRank = existingTracking.highHandRank;
+      }
+
+      const highHandPlayers = new Array<any>();
+      let hhCards = '';
+      for (const seatNo of Object.keys(input.players)) {
+        const player = input.players[seatNo];
+        if (player.rank === highHandRank) {
+          highHandPlayers.push(player);
+          hhCards = player.bestCards;
+        }
+      }
+      if (highHandRank > existingHighHandRank) {
+        logger.error(`Hand: ${hhCards} is not a high hand.`);
+        return;
+      }
+
+      const game = await getGame(gameCode);
+
+      // get existing high hand from the database
+
+      // TODO: we need to handle multiple players with high hands
+      await getManager().transaction(async () => {
+        if (highHandPlayers.length > 0) {
+          const highHandPlayer = highHandPlayers[0];
+          const rewardTrackRepo = getRepository(GameRewardTracking);
+          await rewardTrackRepo
+            .createQueryBuilder()
+            .update()
+            .set({
+              handNum: input.handNum,
+              gameId: game,
+              playerId: highHandPlayer.id,
+              boardCards: JSON.stringify(input.boardCards),
+              playerCards: JSON.stringify(highHandPlayer.cards),
+              highHand: JSON.stringify(highHandPlayer.bestCards),
+              highHandRank: highHandRank,
+            })
+            .execute();
+        }
+      });
+      return true;
+    } catch (err) {
+      logger.error(
+        `Couldn't update reward. retry again. Error: ${err.toString()}`
+      );
+      throw new Error("Couldn't update reward, please retry again");
     }
   }
 }

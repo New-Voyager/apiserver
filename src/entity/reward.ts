@@ -83,6 +83,9 @@ export class GameRewardTracking {
   @Column({name: 'player_cards', nullable: true})
   public playerCards!: string;
 
+  @Column({name: 'high_hand_rank', nullable: true})
+  public highHandRank!: number;
+
   @Column({name: 'board_cards', nullable: true})
   public boardCards!: string;
 

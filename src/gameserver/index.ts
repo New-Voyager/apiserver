@@ -59,6 +59,7 @@ export async function publishNewGame(game: any, gameServer: any) {
     startedByUuid: game.startedBy.uuid,
     breakLength: game.breakLength,
     autoKickAfterBreak: game.autoKickAfterBreak,
+    rewardTrackingIds: game.rewardTrackingIds,
   };
 
   const newGameUrl = `${gameServerUrl}/new-game`;

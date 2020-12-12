@@ -141,6 +141,7 @@ class GameRepositoryImpl {
             pick = Number.parseInt(savedGame.id) % gameServers.length;
           }
 
+          const rewardTrackingIds = new Array<number>();
           for await (const rewardId of input.rewardIds) {
             const rewardRepository = getRepository(Reward);
             await rewardRepository.findOne({id: rewardId});
@@ -165,6 +166,7 @@ class GameRepositoryImpl {
               createGameReward.gameId = game;
               createGameReward.rewardId = rewardId;
               createGameReward.rewardTrackingId = rewardTrackResponse;
+              rewardTrackingIds.push(rewardTrackResponse.id);
 
               const gameRewardRepository = getRepository(GameReward);
               await gameRewardRepository.save(createGameReward);
@@ -187,7 +189,7 @@ class GameRepositoryImpl {
             try {
               gameServer = gameServers[pick];
               const gameInput = game as any;
-              gameInput.rewardIds = input.rewardIds;
+              gameInput.rewardTrackingIds = rewardTrackingIds;
               tableStatus = await publishNewGame(gameInput, gameServer);
               break;
             } catch (err) {
