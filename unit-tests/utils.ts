@@ -11,7 +11,6 @@ import {
 import {HandWinners, HandHistory, StarredHands} from '../src/entity/hand';
 import {
   PlayerGameTracker,
-  ClubGameRake,
   ClubChipsTransaction,
 } from '../src/entity/chipstrack';
 import {Reward, GameReward, GameRewardTracking} from '../src/entity/reward';
@@ -46,7 +45,6 @@ export async function sqlliteConnection() {
       NextHandUpdates,
       StarredHands,
       PlayerGameTracker,
-      ClubGameRake,
       ClubChipsTransaction,
       FavouriteMessage,
       ClubMessageInput,

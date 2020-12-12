@@ -40,5 +40,5 @@ type Query {
   clubBalance(clubCode: String!): clubAmount!
   playerBalance(playerId: String!, clubCode: String!): ClubMember!
   playerGametrack(clubCode: String!, gameCode: String!, playerId: String!): playerTrack!
-  clubGameRake(clubCode: String!, gameCode: String!): clubTrack!
+  rakeCollected(gameCode: String!): Float!
 }

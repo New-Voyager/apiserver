@@ -319,92 +319,92 @@ describe('Promotion APIs', () => {
     expect(result).toHaveLength(20);
   });
 
-  test('Save hand with promotion', async () => {
-    const gameServer = {
-      ipAddress: '10.1.1.5',
-      currentMemory: 100,
-      status: 'ACTIVE',
-    };
-    await axios.post(`${SERVER_API}/register-game-server`, gameServer);
-    const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
-    saveReward(playerId, clubCode);
-    const game = await gameutils.configureGame(
-      playerId,
-      clubCode,
-      holdemGameInput
-    );
-    const clubID = await clubutils.getClubById(clubCode);
-    const gameID = await gameutils.getGameById(game.gameCode);
-    const player = await handutils.getPlayerById(playerId);
-    const messageInput = {
-      clubId: clubID,
-      playerId: player,
-      gameId: gameID,
-      buyIn: 100.0,
-      status: 'PLAYING',
-      seatNo: 1,
-    };
-    await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
-    const input = {
-      cardRank: 5,
-      bonus: 4,
-      promotionType: 'HIGH_HAND',
-    };
-    const promotion = await getClient(playerId).mutate({
-      variables: {
-        clubCode: clubCode,
-        input: input,
-      },
-      mutation: promotionutils.createPromotion,
-    });
-    await getClient(playerId).mutate({
-      variables: {
-        clubCode: clubCode,
-        promotionId: promotion.data.data.id,
-        gameCode: game.gameCode,
-        startAt: 1594919334244,
-        endAt: 1594919334244,
-      },
-      mutation: promotionutils.assignPromotion,
-    });
+  // test('Save hand with promotion', async () => {
+  //   const gameServer = {
+  //     ipAddress: '10.1.1.5',
+  //     currentMemory: 100,
+  //     status: 'ACTIVE',
+  //   };
+  //   await axios.post(`${SERVER_API}/register-game-server`, gameServer);
+  //   const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
+  //   saveReward(playerId, clubCode);
+  //   const game = await gameutils.configureGame(
+  //     playerId,
+  //     clubCode,
+  //     holdemGameInput
+  //   );
+  //   const clubID = await clubutils.getClubById(clubCode);
+  //   const gameID = await gameutils.getGameById(game.gameCode);
+  //   const player = await handutils.getPlayerById(playerId);
+  //   const messageInput = {
+  //     clubId: clubID,
+  //     playerId: player,
+  //     gameId: gameID,
+  //     buyIn: 100.0,
+  //     status: 'PLAYING',
+  //     seatNo: 1,
+  //   };
+  //   await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
+  //   const input = {
+  //     cardRank: 5,
+  //     bonus: 4,
+  //     promotionType: 'HIGH_HAND',
+  //   };
+  //   const promotion = await getClient(playerId).mutate({
+  //     variables: {
+  //       clubCode: clubCode,
+  //       input: input,
+  //     },
+  //     mutation: promotionutils.createPromotion,
+  //   });
+  //   await getClient(playerId).mutate({
+  //     variables: {
+  //       clubCode: clubCode,
+  //       promotionId: promotion.data.data.id,
+  //       gameCode: game.gameCode,
+  //       startAt: 1594919334244,
+  //       endAt: 1594919334244,
+  //     },
+  //     mutation: promotionutils.assignPromotion,
+  //   });
 
-    flopHandWithPromotions.handNum = 1;
-    flopHandWithPromotions.gameId = gameID;
-    flopHandWithPromotions.clubId = clubID;
-    flopHandWithPromotions.handResult.potWinners[0].hiWinners[0].seatNo = 1;
-    flopHandWithPromotions.handResult.balanceAfterHand[0].playerId = player;
-    flopHandWithPromotions.handResult.playersInSeats = [player];
-    flopHandWithPromotions.handResult.qualifyingPromotionWinner.playerId = player;
-    flopHandWithPromotions.handResult.qualifyingPromotionWinner.promoId =
-      promotion.data.data.id;
-    flopHandWithPromotions.handResult.qualifyingPromotionWinner.rank = 4;
+  //   flopHandWithPromotions.handNum = 1;
+  //   flopHandWithPromotions.gameId = gameID;
+  //   flopHandWithPromotions.clubId = clubID;
+  //   flopHandWithPromotions.handResult.potWinners[0].hiWinners[0].seatNo = 1;
+  //   flopHandWithPromotions.handResult.balanceAfterHand[0].playerId = player;
+  //   flopHandWithPromotions.handResult.playersInSeats = [player];
+  //   flopHandWithPromotions.handResult.qualifyingPromotionWinner.playerId = player;
+  //   flopHandWithPromotions.handResult.qualifyingPromotionWinner.promoId =
+  //     promotion.data.data.id;
+  //   flopHandWithPromotions.handResult.qualifyingPromotionWinner.rank = 4;
 
-    try {
-      const resp = await axios.post(
-        `${SERVER_API}/save-hand`,
-        flopHandWithPromotions
-      );
-      expect(resp.status).toBe(200);
-      expect(resp.data.status).toBe('OK');
+  //   try {
+  //     const resp = await axios.post(
+  //       `${SERVER_API}/save-hand`,
+  //       flopHandWithPromotions
+  //     );
+  //     expect(resp.status).toBe(200);
+  //     expect(resp.data.status).toBe('OK');
 
-      flopHandWithPromotions.handNum = 2;
-      const resp1 = await axios.post(
-        `${SERVER_API}/save-hand`,
-        flopHandWithPromotions
-      );
-      expect(resp1.status).toBe(200);
-      expect(resp1.data.status).toBe('OK');
+  //     flopHandWithPromotions.handNum = 2;
+  //     const resp1 = await axios.post(
+  //       `${SERVER_API}/save-hand`,
+  //       flopHandWithPromotions
+  //     );
+  //     expect(resp1.status).toBe(200);
+  //     expect(resp1.data.status).toBe('OK');
 
-      flopHandWithPromotions.handNum = 3;
-      flopHandWithPromotions.handResult.qualifyingPromotionWinner.rank = 3;
-      const resp3 = await axios.post(
-        `${SERVER_API}/save-hand`,
-        flopHandWithPromotions
-      );
-      expect(resp3.status).toBe(200);
-      expect(resp3.data.status).toBe('OK');
-    } catch (err) {
-      expect(true).toBeFalsy();
-    }
-  });
+  //     flopHandWithPromotions.handNum = 3;
+  //     flopHandWithPromotions.handResult.qualifyingPromotionWinner.rank = 3;
+  //     const resp3 = await axios.post(
+  //       `${SERVER_API}/save-hand`,
+  //       flopHandWithPromotions
+  //     );
+  //     expect(resp3.status).toBe(200);
+  //     expect(resp3.data.status).toBe('OK');
+  //   } catch (err) {
+  //     expect(true).toBeFalsy();
+  //   }
+  // });
 });

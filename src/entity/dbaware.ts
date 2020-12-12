@@ -25,6 +25,12 @@ export function DbAwareColumn(columnOptions: ColumnOptions) {
   if (columnOptions.type) {
     columnOptions.type = setAppropriateColumnType(columnOptions.type);
   }
+
+  if (columnOptions.array) {
+    columnOptions.type = 'text';
+    columnOptions.array = false;
+  }
+
   return Column(columnOptions);
 }
 

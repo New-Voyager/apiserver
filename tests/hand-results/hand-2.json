@@ -1,0 +1,82 @@
+{
+	"handResult": {
+		"preflopActions": {
+			"pot": 3,
+			"actions": [{
+				"seatNo": 5,
+				"amount": 1
+			}, {
+				"seatNo": 8,
+				"action": "BB",
+				"amount": 2
+			}, {
+				"seatNo": 1,
+				"action": "FOLD"
+			}, {
+				"seatNo": 5,
+				"action": "FOLD"
+			}]
+		},
+		"flopActions": {},
+		"turnActions": {},
+		"riverActions": {},
+		"potWinners": {
+			"0": {
+				"hiWinners": [{
+					"seatNo": 8,
+					"amount": 3
+				}]
+			}
+		},
+		"wonAt": "PREFLOP",
+		"balanceAfterHand": [{
+			"seatNo": 1,
+			"playerId": "1",
+			"balance": 50
+		}, {
+			"seatNo": 5,
+			"playerId": "2",
+			"balance": 49
+		}, {
+			"seatNo": 8,
+			"playerId": "3",
+			"balance": 51
+		}],
+		"handStartedAt": "1607568181",
+		"balanceBeforeHand": [{
+			"seatNo": 1,
+			"playerId": "1",
+			"balance": 50
+		}, {
+			"seatNo": 5,
+			"playerId": "2",
+			"balance": 50
+		}, {
+			"seatNo": 8,
+			"playerId": "3",
+			"balance": 50
+		}],
+		"handEndedAt": "1607568182",
+		"playersInSeats": ["1", "0", "0", "0", "2", "0", "0", "3", "0"]
+	},
+	"flop": [200, 196, 8],
+	"turn": 132,
+	"river": 33,
+	"playerCards": {
+		"1": {
+			"cards": [114, 1],
+			"rank": 4294967295,
+			"playedUntil": "PREFLOP"
+		},
+		"5": {
+			"cards": [178, 164],
+			"rank": 4294967295,
+			"playedUntil": "PREFLOP"
+		},
+		"8": {
+			"cards": [17, 81],
+			"rank": 4294967295,
+			"playedUntil": "PREFLOP"
+		}
+	}
+}
