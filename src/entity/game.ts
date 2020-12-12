@@ -31,6 +31,12 @@ export class PokerGameUpdates {
 
   @Column({name: 'seat_change_inprogress', default: false})
   public seatChangeInProgress!: boolean;
+
+  @Column({name: 'rake', type: 'decimal', precision: 8, scale: 2, default: 0.0})
+  public rake!: number;
+
+  @Column({name: 'last_hand_num', nullable: false, default: 0})
+  public lastHandNum!: number;
 }
 
 @Entity({name: 'poker_game'})
@@ -138,12 +144,6 @@ export class PokerGame {
 
   @Column({name: 'waitlist_sitting_timeout', type: 'int', default: 10})
   public waitlistSittingTimeout!: number;
-
-  @Column({name: 'players_in_seats', type: 'int', default: 0})
-  public playersInSeats!: number;
-
-  @Column({name: 'players_in_waitlist', type: 'int', default: 0})
-  public playersInWaitList!: number;
 
   @Column({
     name: 'rake_percentage',
@@ -339,42 +339,3 @@ export class PokerHand {
   @DbAwareColumn({type: 'json', name: 'hand_log'})
   public handLog!: any;
 }
-
-/*
-{
-    pre_flop: {
-            sb: player_id,
-            bb: player_id,
-            utg_straddle: player_id
-            button_straddle: player_id,
-            betting: [
-              {
-                sequence_no: 1
-                type: RAISE
-                player: { "id": player_id, balance: "balance" }
-              },
-              {
-                sequence_no: 2
-                type: FOLD
-                player: { "id": player_id, balance: "balance" }
-              }
-            ],
-            pot: value
-        },
-        flop: {
-          community_cards: [],
-            betting: [
-              {
-                sequence_no: 1
-                type: RAISE
-                player: { "id": player_id, balance: "balance" }
-              },
-              {
-                sequence_no: 2
-                type: FOLD
-                player: { "id": player_id, balance: "balance" }
-              }
-            ],
-            pot: value
-        },
-*/

@@ -1,19 +1,18 @@
 import {initializeSqlLite} from './utils';
 import {createGameServer} from '../src/internal/gameserver';
-import {configureGame, configureGameByPlayer} from '../src/resolvers/game';
+import {
+  configureGame,
+  configureGameByPlayer,
+  endGame,
+} from '../src/resolvers/game';
 import {
   getClubBalanceAmount,
-  getClubTrack,
-  getPlayerTrack,
+  getRakeCollected,
   getPlayerBalanceAmount,
 } from '../src/resolvers/chipstrack';
 import {getClubById, createClub} from '../src/resolvers/club';
 import {getPlayerById, createPlayer} from '../src/resolvers/player';
-import {
-  saveChipsData,
-  buyChipsData,
-  endGameData,
-} from '../src/internal/chipstrack';
+import {saveChipsData, buyChipsData} from '../src/internal/chipstrack';
 import {getGame} from '@src/cache/index';
 
 import {getLogger} from '../src/utils/log';
@@ -278,7 +277,7 @@ describe('Player Chips tracking APIs', () => {
       expect(true).toBeFalsy();
     }
     try {
-      const resp = await endGameData({club_id: clubID.id, game_id: gameID.id});
+      const resp = await endGame(ownerId, game.gameCode);
       logger.debug(resp);
       expect(resp).not.toBeNull();
       expect(resp).toBe(true);
@@ -324,21 +323,8 @@ describe('Player Chips tracking APIs', () => {
       logger.error(JSON.stringify(e));
       expect(true).toBeFalsy();
     }
-
-    const playerTrack = await getPlayerTrack(ownerId, {
-      clubCode: clubCode,
-      playerId: ownerId,
-      gameCode: game.gameCode,
-    });
-    const clubTrack = await getClubTrack(ownerId, {
-      clubCode: clubCode,
-      gameCode: game.gameCode,
-    });
-    expect(playerTrack.stack).not.toBeUndefined();
-    expect(playerTrack.stack).toBe(100);
-    expect(clubTrack.rake).not.toBeNull();
-    expect(clubTrack.rake).not.toBeUndefined();
-    expect(clubTrack.rake).toBe(0);
+    const rake = await getRakeCollected(ownerId, game.gameCode);
+    expect(rake).not.toBeUndefined();
   });
 
   test('Club and Player Balance', async () => {
@@ -378,7 +364,7 @@ describe('Player Chips tracking APIs', () => {
       expect(true).toBeFalsy();
     }
 
-    await endGameData({club_id: clubID.id, game_id: gameID.id});
+    await endGame(ownerId, game.gameCode);
     const clubBalance = await getClubBalanceAmount(ownerId, {
       clubCode: clubCode,
     });
@@ -392,46 +378,6 @@ describe('Player Chips tracking APIs', () => {
     expect(playerBalance.balance).not.toBeNull();
     expect(playerBalance.balance).not.toBeUndefined();
     expect(playerBalance.balance).toBe(0);
-  });
-
-  test('Track Club and Players game Balance without club', async () => {
-    const ownerId = await createPlayer({
-      player: {name: 'player1', deviceId: 'test', page: {count: 20}},
-    });
-    const gameServer = {
-      ipAddress: '10.1.1.1',
-      currentMemory: 100,
-      status: 'ACTIVE',
-    };
-    await createGameServer(gameServer);
-    const game = await configureGameByPlayer(ownerId, holdemGameInput);
-
-    const playerID = await getPlayerById(ownerId);
-    const gameID = await getGame(game.gameCode);
-    const input = {
-      clubId: 0,
-      playerId: playerID.id,
-      gameId: gameID.id,
-      buyIn: 100.0,
-      status: 'PLAYING',
-      seatNo: 5,
-    };
-    await saveChipsData(input);
-
-    const playerTrack = await getPlayerTrack(ownerId, {
-      clubCode: '000000',
-      playerId: ownerId,
-      gameCode: game.gameCode,
-    });
-    const clubTrack = await getClubTrack(ownerId, {
-      clubCode: '000000',
-      gameCode: game.gameCode,
-    });
-    expect(playerTrack.stack).not.toBeUndefined();
-    expect(playerTrack.stack).toBe(100);
-    expect(clubTrack.rake).not.toBeNull();
-    expect(clubTrack.rake).not.toBeUndefined();
-    expect(clubTrack.rake).toBe(0);
   });
 
   test('End game without club', async () => {
@@ -458,7 +404,7 @@ describe('Player Chips tracking APIs', () => {
     };
     await saveChipsData(input);
     try {
-      const resp = await endGameData({club_id: 0, game_id: gameID.id});
+      const resp = await endGame(ownerId, game.gameCode);
       logger.debug(resp);
       expect(resp).toBe(true);
     } catch (e) {

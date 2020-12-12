@@ -71,6 +71,9 @@ export class HandHistory {
   @Column({name: 'lo_winning_rank', type: 'int', nullable: true})
   public loWinningRank!: number;
 
+  @DbAwareColumn({name: 'players', type: 'int', array: true, nullable: true})
+  public players!: Array<number>;
+
   @Index()
   @DbAwareColumn({name: 'time_started', type: 'timestamp'})
   public timeStarted!: Date;
@@ -82,8 +85,14 @@ export class HandHistory {
   @DbAwareColumn({name: 'data', type: 'text'})
   public data!: string;
 
-  @Column({name: 'total_pot', type: 'float', default: 0})
+  @Column({name: 'total_pot', type: 'float', default: 0, nullable: true})
   public totalPot!: number;
+
+  @Column({name: 'rake', type: 'float', default: 0, nullable: true})
+  public rake!: number;
+
+  @Column({name: 'player_paid_rake', type: 'int', nullable: true})
+  public playerPaidRake!: number;
 }
 
 @Entity({name: 'starred_hands'})

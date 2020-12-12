@@ -7,11 +7,6 @@ export async function saveChipsData(registerPayload: any) {
   return res;
 }
 
-export async function endGameData(data: any) {
-  const res = await ChipsTrackRepository.endGame(data);
-  return res;
-}
-
 export async function buyChipsData(registerPayload: any) {
   const res = await ChipsTrackRepository.buyChips(registerPayload);
   return res;
@@ -86,7 +81,7 @@ class ChipsTrackAPIs {
     }
 
     try {
-      const res = await endGameData(req.body);
+      const res = true;
       if (res === true) {
         resp.status(200).send(JSON.stringify({status: 'OK', data: res}));
       } else {

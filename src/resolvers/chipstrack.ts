@@ -37,48 +37,11 @@ export async function getPlayerBalanceAmount(playerId: string, data: any) {
   );
 }
 
-export async function getPlayerTrack(playerId: string, data: any) {
-  const errors = new Array<string>();
+export async function getRakeCollected(playerId: string, gameCode: string) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  if (data.clubCode === '') {
-    errors.push('ClubCode is mandatory field');
-  }
-  if (data.playerId === '') {
-    errors.push('PlayerId is mandatory field');
-  }
-  if (data.gameCode === '') {
-    errors.push('gameCode is mandatory field');
-  }
-  if (errors.length > 0) {
-    throw new Error(errors.join('\n'));
-  }
-  return await ChipsTrackRepository.getPlayerGametrack(
-    data.playerId,
-    data.clubCode,
-    data.gameCode
-  );
-}
-
-export async function getClubTrack(playerId: string, data: any) {
-  const errors = new Array<string>();
-  if (!playerId) {
-    throw new Error('Unauthorized');
-  }
-  if (data.clubCode === '') {
-    errors.push('ClubCode is mandatory field');
-  }
-  if (data.gameCode === '') {
-    errors.push('gameCode is mandatory field');
-  }
-  if (errors.length > 0) {
-    throw new Error(errors.join('\n'));
-  }
-  return await ChipsTrackRepository.getClubGametrack(
-    data.clubCode,
-    data.gameCode
-  );
+  return await ChipsTrackRepository.getRakeCollected(playerId, gameCode);
 }
 
 const resolvers: any = {
@@ -90,13 +53,8 @@ const resolvers: any = {
     playerBalance: async (parent, args, ctx, info) => {
       return getPlayerBalanceAmount(ctx.req.playerId, args);
     },
-
-    playerGametrack: async (parent, args, ctx, info) => {
-      return getPlayerTrack(ctx.req.playerId, args);
-    },
-
-    clubGameRake: async (parent, args, ctx, info) => {
-      return getClubTrack(ctx.req.playerId, args);
+    rakeCollected: async (parent, args, ctx, info) => {
+      return getRakeCollected(ctx.req.playerId, args.gameCode);
     },
   },
 };
