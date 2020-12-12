@@ -277,7 +277,7 @@ describe('Player Chips tracking APIs', () => {
       expect(true).toBeFalsy();
     }
     try {
-      const resp = await endGameData({club_id: clubID.id, game_id: gameID.id});
+      const resp = await endGame(ownerId, game.gameCode);
       logger.debug(resp);
       expect(resp).not.toBeNull();
       expect(resp).toBe(true);
@@ -364,7 +364,7 @@ describe('Player Chips tracking APIs', () => {
       expect(true).toBeFalsy();
     }
 
-    await endGameData({club_id: clubID.id, game_id: gameID.id});
+    await endGame(ownerId, game.gameCode);
     const clubBalance = await getClubBalanceAmount(ownerId, {
       clubCode: clubCode,
     });
