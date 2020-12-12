@@ -186,7 +186,9 @@ class GameRepositoryImpl {
             // create a new game in game server within the transcation
             try {
               gameServer = gameServers[pick];
-              tableStatus = await publishNewGame(game, gameServer);
+              const gameInput = game as any;
+              gameInput.rewardIds = input.rewardIds;
+              tableStatus = await publishNewGame(gameInput, gameServer);
               break;
             } catch (err) {
               logger.warn(

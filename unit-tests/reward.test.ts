@@ -15,7 +15,7 @@ afterAll(async done => {
 });
 
 describe('Reward APIs', () => {
-  test('create a reward', async () => {
+  test('reward: create a reward', async () => {
     const ownerId = await createPlayer({
       player: {name: 'player1', deviceId: 'test', page: {count: 20}},
     });
@@ -39,7 +39,7 @@ describe('Reward APIs', () => {
     expect(resp).not.toBeNull();
   });
 
-  test('get rewards', async () => {
+  test('reward: get rewards', async () => {
     const rewardCount = 25;
     const ownerId = await createPlayer({
       player: {name: 'player1', deviceId: 'test', page: {count: 20}},

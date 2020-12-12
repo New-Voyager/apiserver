@@ -29,15 +29,20 @@ class RewardRepositoryImpl {
         createReward.amount = reward.amount;
         createReward.endHour = reward.endHour;
         createReward.minRank = reward.minRank;
-        createReward.schedule = reward.schedule;
+        createReward.schedule =
+          ScheduleType[
+            (reward.schedule as unknown) as keyof typeof ScheduleType
+          ];
         createReward.name = reward.name;
         createReward.startHour = reward.startHour;
-        createReward.type = reward.type;
+        createReward.type =
+          RewardType[(reward.type as unknown) as keyof typeof RewardType];
         const repository = getRepository(Reward);
         const response = await repository.save(createReward);
         return response.id;
       }
     } catch (e) {
+      logger.error(`Creating reward failed. Error: ${JSON.stringify(e)}`);
       throw e;
     }
   }
@@ -61,6 +66,11 @@ class RewardRepositoryImpl {
         return rewards;
       }
     } catch (e) {
+      logger.error(
+        `Gettings rewards for club ${clubCode} failed. Error: ${JSON.stringify(
+          e
+        )}`
+      );
       throw e;
     }
   }

@@ -92,3 +92,13 @@ export async function isClubMember(
   }
   return true;
 }
+
+export async function getGameById(
+  gameID: number
+): Promise<PokerGame | undefined> {
+  const game = await getRepository(PokerGame).findOne({
+    where: {id: gameID},
+    cache: true,
+  });
+  return game;
+}

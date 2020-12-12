@@ -37,10 +37,10 @@ export class Reward {
   @Column({name: 'min_rank', nullable: true})
   public minRank!: number;
 
-  @Column({name: 'start_hour', nullable: false})
+  @Column({name: 'start_hour', nullable: true})
   public startHour!: number;
 
-  @Column({name: 'end_hour', nullable: false})
+  @Column({name: 'end_hour', nullable: true})
   public endHour!: number;
 }
 

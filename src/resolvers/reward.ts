@@ -1,6 +1,7 @@
 import * as _ from 'lodash';
 import {RewardRepository} from '@src/repositories/reward';
 import {getLogger} from '@src/utils/log';
+import { RewardType, ScheduleType } from '@src/entity/types';
 const logger = getLogger('clubfreqmessage');
 
 export async function saveReward(
@@ -38,12 +39,12 @@ export async function getRewards(playerId: string, clubCode: string) {
     return {
       id: x.id,
       name: x.name,
-      type: x.type,
+      type: RewardType[x.type],
       amount: x.amount,
       minRank: x.minRank,
       startHour: x.startHour,
       endHour: x.endHour,
-      schedule: x.schedule,
+      schedule: ScheduleType[x.schedule],
     };
   });
 }

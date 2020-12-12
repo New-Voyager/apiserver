@@ -1,3 +1,4 @@
+import * as _ from 'lodash';
 import {HandHistory, HandWinners, StarredHands} from '@src/entity/hand';
 import {PokerGame} from '@src/entity/game';
 import {GameType, WonAtStatus} from '@src/entity/types';
@@ -6,14 +7,11 @@ import {PageOptions} from '@src/types';
 import {PokerGameUpdates} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
-import {
-  GamePromotion,
-  Promotion,
-  PromotionWinners,
-} from '@src/entity/promotion';
+import {GameRewardTracking} from '@src/entity/reward';
 import {Player} from '@src/entity/player';
-import {Club} from '@src/entity/club';
-import {Reward, GameRewardTracking} from '@src/entity/reward';
+import { MIN_FULLHOUSE_RANK } from './types';
+import { getGame, getGameById } from '@src/cache';
+import { playerBuyIn } from '@src/gameserver';
 
 const logger = getLogger('hand');
 
@@ -33,6 +31,10 @@ class HandRepositoryImpl {
       const playersChipsRepository = getRepository(PlayerGameTracker);
       const handHistoryRepository = getRepository(HandHistory);
       const gameUpdatesRepo = getRepository(PokerGameUpdates);
+      const game = await getGameById(gameID);
+      if (!game) {
+        throw new Error(`Game ${gameID} is not found`);
+      }
       const playersInHand = result.players;
       /**
        * Assigning hand history values
@@ -206,6 +208,8 @@ class HandRepositoryImpl {
             gameID: gameID,
           })
           .execute();
+
+        await this.handleHighHand(game.gameCode, result);
       });
       return true;
     } catch (err) {
@@ -421,6 +425,66 @@ class HandRepositoryImpl {
             }
           );
           const playerRes = await rewardTrack.findOne({id: rewardTrackId});
+        }
+      });
+      return true;
+    } catch (err) {
+      logger.error(
+        `Couldn't update reward. retry again. Error: ${err.toString()}`
+      );
+      throw new Error("Couldn't update reward, please retry again");
+    }
+  }
+
+  public async handleHighHand(gameCode: string, input: any) {
+    try {
+      const rank: number[] = [];
+      Object.keys(input.players).forEach(async card => {
+        rank.push(parseInt(input.players[card.toString()].rank));
+      });
+      const highHandRank = _.min(rank);
+      if (!highHandRank) {
+        return;
+      }
+
+      if (highHandRank > MIN_FULLHOUSE_RANK) {
+        return;
+      }
+
+      // TODO: multiple players can have the same hand (we need to deal with this)
+      // May be store the winning player information in a json
+      // get the players who had this rank
+      // right now, we handle only one reward
+      if (input.rewardTrackingIds.length > 1) {
+        logger.error(`Game: ${gameCode} Cannot track more than one reward`);
+        throw new Error('Not implemented');
+      }
+
+      const highHandPlayers = new Array<any>();
+      for (const player of input.players) {
+        if (player.rank === highHandRank) {
+          highHandPlayers.push(player);
+        }
+      }
+      const game = await getGame(gameCode);
+
+      // TODO: we need to handle multiple players with high hands
+      await getManager().transaction(async () => {
+        if (highHandPlayers.length > 0) {
+          const highHandPlayer = highHandPlayers[0];
+          const rewardTrackRepo = getRepository(GameRewardTracking);
+          await rewardTrackRepo
+            .createQueryBuilder()
+            .update()
+            .set({
+              handNum: input.handNum,
+              gameId: game,
+              playerId: highHandPlayer.id,
+              boardCards: input.boardCards,
+              playerCards: highHandPlayer.cards,
+              highHand: highHandPlayer.bestCards,
+            })
+            .execute();
         }
       });
       return true;

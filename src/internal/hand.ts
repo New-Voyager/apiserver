@@ -98,7 +98,7 @@ class HandServerAPIs {
       return;
     }
     const result = req.body;
-    await HandRepository.saveHandNew(gameID, handNum, result); //GameRepository.updateBreakTime(playerID, gameID);
+    await HandRepository.saveHandNew(gameID, handNum, result);
     resp.status(200).send({status: 'OK'});
   }
 
