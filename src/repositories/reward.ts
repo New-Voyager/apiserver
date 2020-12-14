@@ -13,7 +13,7 @@ export interface RewardInputFormat {
 }
 import {getLogger} from '@src/utils/log';
 import {MIN_FULLHOUSE_RANK} from './types';
-import {getGame} from '@src/cache';
+import {Cache} from '@src/cache';
 import _ from 'lodash';
 const logger = getLogger('rewardRepo');
 
@@ -143,30 +143,27 @@ class RewardRepositoryImpl {
         return;
       }
 
-      const game = await getGame(gameCode);
+      const game = await Cache.getGame(gameCode);
 
       // get existing high hand from the database
-
       // TODO: we need to handle multiple players with high hands
-      await getManager().transaction(async () => {
-        if (highHandPlayers.length > 0) {
-          const highHandPlayer = highHandPlayers[0];
-          const rewardTrackRepo = getRepository(GameRewardTracking);
-          await rewardTrackRepo
-            .createQueryBuilder()
-            .update()
-            .set({
-              handNum: input.handNum,
-              gameId: game,
-              playerId: highHandPlayer.id,
-              boardCards: JSON.stringify(input.boardCards),
-              playerCards: JSON.stringify(highHandPlayer.cards),
-              highHand: JSON.stringify(highHandPlayer.bestCards),
-              highHandRank: highHandRank,
-            })
-            .execute();
-        }
-      });
+      if (highHandPlayers.length > 0) {
+        const highHandPlayer = highHandPlayers[0];
+        const rewardTrackRepo = getRepository(GameRewardTracking);
+        await rewardTrackRepo
+          .createQueryBuilder()
+          .update()
+          .set({
+            handNum: input.handNum,
+            gameId: game,
+            playerId: highHandPlayer.id,
+            boardCards: JSON.stringify(input.boardCards),
+            playerCards: JSON.stringify(highHandPlayer.cards),
+            highHand: JSON.stringify(highHandPlayer.bestCards),
+            highHandRank: highHandRank,
+          })
+          .execute();
+      }
       return true;
     } catch (err) {
       logger.error(

@@ -9,8 +9,7 @@ import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {GameRewardTracking} from '@src/entity/reward';
 import {Player} from '@src/entity/player';
-import {MIN_FULLHOUSE_RANK} from './types';
-import {getGame, getGameById} from '@src/cache';
+import {Cache} from '@src/cache';
 import {playerBuyIn} from '@src/gameserver';
 import {RewardRepository} from './reward';
 
@@ -32,7 +31,7 @@ class HandRepositoryImpl {
       const playersChipsRepository = getRepository(PlayerGameTracker);
       const handHistoryRepository = getRepository(HandHistory);
       const gameUpdatesRepo = getRepository(PokerGameUpdates);
-      const game = await getGameById(gameID);
+      const game = await Cache.getGameById(gameID);
       if (!game) {
         throw new Error(`Game ${gameID} is not found`);
       }
@@ -158,6 +157,7 @@ class HandRepositoryImpl {
           rakePaid[playerId] = playerRake.amount;
         }
       }
+      logger.info('****** STARTING TRANSACTION TO SAVE a hand result');
 
       await getManager().transaction(async transactionManager => {
         /**
@@ -212,6 +212,7 @@ class HandRepositoryImpl {
 
         await RewardRepository.handleHighHand(game.gameCode, result);
       });
+      logger.info('****** ENDING TRANSACTION TO SAVE a hand result');
       return true;
     } catch (err) {
       logger.error(`Error when trying to save hand log: ${err.toString()}`);

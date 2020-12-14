@@ -9,6 +9,7 @@ import {Player} from '@src/entity/player';
 import {PageOptions} from '@src/types';
 import * as _ from 'lodash';
 import {getLogger} from '@src/utils/log';
+import {Cache} from '@src/cache';
 const logger = getLogger('clubresolvers');
 
 export async function getClubMembers(playerId: string, args: any) {
@@ -100,7 +101,8 @@ export async function getClubById(
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  const club = await ClubRepository.getClubById(clubCode);
+  //const club = await ClubRepository.getClubById(clubCode);
+  const club = await Cache.getClub(clubCode);
   if (!club) {
     throw new Error('Club not found');
   }

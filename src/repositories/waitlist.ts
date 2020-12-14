@@ -1,4 +1,4 @@
-import {getPlayer} from '@src/cache';
+import {Cache} from '@src/cache';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {Player} from '@src/entity/player';
@@ -226,12 +226,13 @@ export class WaitListMgmt {
   }
 
   public async addToWaitingList(playerUuid: string) {
+    logger.info('****** STARTING TRANSACTION TO ADD a player to waitlist');
     await getManager().transaction(async () => {
       // add this user to waiting list
       // if this user is already playing, then he cannot be in the waiting list
       const playerGameTrackerRepository = getRepository(PlayerGameTracker);
 
-      const player = await getPlayer(playerUuid);
+      const player = await Cache.getPlayer(playerUuid);
       let playerInGame = await playerGameTrackerRepository.findOne({
         where: {
           game: {id: this.game.id},
@@ -260,8 +261,7 @@ export class WaitListMgmt {
       } else {
         // player is not in the game
         playerInGame = new PlayerGameTracker();
-        playerInGame.player = await getPlayer(playerUuid);
-        playerInGame.club = this.game.club;
+        playerInGame.player = await Cache.getPlayer(playerUuid);
         playerInGame.game = this.game;
         playerInGame.buyIn = 0;
         playerInGame.stack = 0;
@@ -289,13 +289,14 @@ export class WaitListMgmt {
         {playersInWaitList: count}
       );
     });
+    logger.info('****** ENDING TRANSACTION TO ADD a player to waitlist');
   }
 
   public async removeFromWaitingList(playerUuid: string) {
     await getManager().transaction(async () => {
       // remove this user from waiting list
       const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-      const player = await getPlayer(playerUuid);
+      const player = await Cache.getPlayer(playerUuid);
       const playerInGame = await playerGameTrackerRepository.findOne({
         where: {
           game: {id: this.game.id},
@@ -343,7 +344,7 @@ export class WaitListMgmt {
   public async getWaitingListUsers() {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const waitListPlayers = await playerGameTrackerRepository.find({
-      relations: ['player', 'club', 'game'],
+      relations: ['player', 'game'],
       where: {
         game: {id: this.game.id},
         waitingFrom: Not(IsNull()),

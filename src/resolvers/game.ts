@@ -7,14 +7,10 @@ import {
   BuyInApprovalStatus,
 } from '@src/entity/types';
 import {getLogger} from '@src/utils/log';
-import {
-  getClubMember,
-  getGame,
-  getPlayer,
-  isClubMember,
-} from '@src/cache/index';
+import {Cache} from '@src/cache/index';
 import {WaitListMgmt} from '@src/repositories/waitlist';
 import {SeatChangeProcess} from '@src/repositories/seatchange';
+import {default as _} from 'lodash';
 
 const logger = getLogger('game');
 
@@ -77,11 +73,14 @@ export async function endGame(playerId: string, gameCode: string) {
     throw new Error(errors.join('\n'));
   }
   try {
-    const game = await getGame(gameCode);
+    const game = await Cache.getGame(gameCode);
 
     if (game.club) {
       // is the player club member
-      const clubMember = await getClubMember(playerId, game.club.clubCode);
+      const clubMember = await Cache.getClubMember(
+        playerId,
+        game.club.clubCode
+      );
       if (!clubMember) {
         throw new Error('Player is not a club member');
       }
@@ -124,13 +123,16 @@ export async function joinGame(
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await Cache.getGame(gameCode);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
     if (game.club) {
-      const clubMember = await isClubMember(playerUuid, game.club.clubCode);
+      const clubMember = await Cache.isClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.club.name}`
@@ -141,7 +143,7 @@ export async function joinGame(
       }
     }
 
-    const player = await getPlayer(playerUuid);
+    const player = await Cache.getPlayer(playerUuid);
     const status = await GameRepository.joinGame(player, game, seatNo);
     // player is good to go
     const playerStatus = PlayerStatus[status];
@@ -163,13 +165,16 @@ export async function startGame(
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await Cache.getGame(gameCode);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
     if (game.club) {
-      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      const clubMember = await Cache.getClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
@@ -209,13 +214,16 @@ export async function buyIn(
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await Cache.getGame(gameCode);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
     if (game.club) {
-      const clubMember = await isClubMember(playerUuid, game.club.clubCode);
+      const clubMember = await Cache.isClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.club.name}`
@@ -226,7 +234,7 @@ export async function buyIn(
       }
     }
 
-    const player = await getPlayer(playerUuid);
+    const player = await Cache.getPlayer(playerUuid);
     const status = await GameRepository.buyIn(
       player,
       game,
@@ -252,13 +260,16 @@ export async function approveBuyIn(
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await Cache.getGame(gameCode);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
     if (game.club) {
-      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      const clubMember = await Cache.getClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
@@ -268,7 +279,7 @@ export async function approveBuyIn(
         );
       }
 
-      const clubHost = await getClubMember(hostUuid, game.club.clubCode);
+      const clubHost = await Cache.getClubMember(hostUuid, game.club.clubCode);
       if (!clubHost || !(clubHost.isManager || clubHost.isOwner)) {
         logger.error(
           `Player: ${hostUuid} is not authorized to approve buyIn in club ${game.club.name}`
@@ -279,7 +290,7 @@ export async function approveBuyIn(
       }
     }
 
-    const player = await getPlayer(playerUuid);
+    const player = await Cache.getPlayer(playerUuid);
     const status = await GameRepository.approveBuyIn(player, game, amount);
     // player is good to go
     return BuyInApprovalStatus[status];
@@ -295,13 +306,16 @@ export async function myGameState(playerUuid: string, gameCode: string) {
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await Cache.getGame(gameCode);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
     if (game.club) {
-      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      const clubMember = await Cache.getClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
@@ -312,17 +326,16 @@ export async function myGameState(playerUuid: string, gameCode: string) {
       }
     }
 
-    const player = await getPlayer(playerUuid);
+    const player = await Cache.getPlayer(playerUuid);
     const data = await GameRepository.myGameState(player, game);
 
     const gameState = {
-      playerUuid: data.player.uuid,
+      playerUuid: player.uuid,
       buyIn: data.buyIn,
       stack: data.stack,
       status: PlayerStatus[data.status],
       buyInStatus: BuyInApprovalStatus[data.status],
       playingFrom: data.satAt,
-      waitlistNo: data.queueNo,
       seatNo: data.seatNo,
     };
 
@@ -339,13 +352,16 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await Cache.getGame(gameCode);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
     if (game.club) {
-      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      const clubMember = await Cache.getClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
@@ -355,19 +371,18 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
         );
       }
     }
-
+    const player = await Cache.getPlayer(playerUuid);
     const gameState = await GameRepository.tableGameState(game);
 
     const tableGameState = new Array<any>();
     gameState.map(data => {
       const gameState = {
-        playerUuid: data.player.uuid,
+        playerUuid: player.uuid,
         buyIn: data.buyIn,
         stack: data.stack,
         status: PlayerStatus[data.status],
         buyInStatus: BuyInApprovalStatus[data.status],
         playingFrom: data.satAt,
-        waitlistNo: data.queueNo,
         seatNo: data.seatNo,
       };
       tableGameState.push(gameState);
@@ -386,13 +401,16 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await Cache.getGame(gameCode);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
     if (game.club) {
-      const clubMember = await isClubMember(playerUuid, game.club.clubCode);
+      const clubMember = await Cache.isClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.club.name}`
@@ -403,9 +421,9 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
       }
     }
 
-    const player = await getPlayer(playerUuid);
+    const player = await Cache.getPlayer(playerUuid);
 
-    const ret = game as any;
+    const ret = _.cloneDeep(game) as any;
     if (ret.startedBy) {
       ret.startedBy = ret.startedBy.name;
     }
@@ -438,7 +456,10 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
     }
 
     if (game.club) {
-      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      const clubMember = await Cache.getClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
@@ -448,7 +469,7 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
         );
       }
     }
-    const player = await getPlayer(playerUuid);
+    const player = await Cache.getPlayer(playerUuid);
     const status = await GameRepository.leaveGame(player, game);
     return status;
   } catch (err) {
@@ -463,13 +484,16 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
   }
   try {
     // get game using game code
-    const game = await GameRepository.getGameByCode(gameCode);
+    const game = await Cache.getGame(gameCode);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
     if (game.club) {
-      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      const clubMember = await Cache.getClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
@@ -479,7 +503,7 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
         );
       }
     }
-    const player = await getPlayer(playerUuid);
+    const player = await Cache.getPlayer(playerUuid);
     const status = await GameRepository.takeBreak(player, game);
     return status;
   } catch (err) {
@@ -500,7 +524,10 @@ export async function sitBack(playerUuid: string, gameCode: string) {
     }
 
     if (game.club) {
-      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      const clubMember = await Cache.getClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
@@ -510,7 +537,7 @@ export async function sitBack(playerUuid: string, gameCode: string) {
         );
       }
     }
-    const player = await getPlayer(playerUuid);
+    const player = await Cache.getPlayer(playerUuid);
     const status = await GameRepository.sitBack(player, game);
     return status;
   } catch (err) {
@@ -525,13 +552,16 @@ export async function requestSeatChange(playerUuid: string, gameCode: string) {
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await Cache.getGame(gameCode);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
     if (game.club) {
-      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      const clubMember = await Cache.getClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
@@ -541,7 +571,7 @@ export async function requestSeatChange(playerUuid: string, gameCode: string) {
         );
       }
     }
-    const player = await getPlayer(playerUuid);
+    const player = await Cache.getPlayer(playerUuid);
     const seatChange = new SeatChangeProcess(game);
     const requestedAt = await seatChange.requestSeatChange(player);
     return requestedAt;
@@ -557,13 +587,16 @@ export async function seatChangeRequests(playerUuid: string, gameCode: string) {
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await Cache.getGame(gameCode);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
     if (game.club) {
-      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      const clubMember = await Cache.getClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
@@ -573,7 +606,7 @@ export async function seatChangeRequests(playerUuid: string, gameCode: string) {
         );
       }
     }
-    const player = await getPlayer(playerUuid);
+    const player = await Cache.getPlayer(playerUuid);
     const seatChange = new SeatChangeProcess(game);
     const allPlayers = await seatChange.seatChangeRequests(player);
 
@@ -610,13 +643,16 @@ export async function confirmSeatChange(
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await Cache.getGame(gameCode);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
     if (game.club) {
-      const clubMember = await getClubMember(playerUuid, game.club.clubCode);
+      const clubMember = await Cache.getClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not a club member in club ${game.club.name}`
@@ -626,7 +662,7 @@ export async function confirmSeatChange(
         );
       }
     }
-    const player = await getPlayer(playerUuid);
+    const player = await Cache.getPlayer(playerUuid);
     const seatChange = new SeatChangeProcess(game);
     const seatChangeStatus = await seatChange.confirmSeatChange(player, seatNo);
     return seatChangeStatus;
@@ -646,14 +682,17 @@ export async function kickOutPlayer(
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await Cache.getGame(gameCode);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
     if (game.club) {
       // club game
-      const clubMember = await getClubMember(requestUser, game.club.clubCode);
+      const clubMember = await Cache.getClubMember(
+        requestUser,
+        game.club.clubCode
+      );
       if (!clubMember) {
         logger.error(
           `Player: ${requestUser} is not a club member in club ${game.club.name}`
@@ -687,7 +726,7 @@ export async function kickOutPlayer(
       }
     }
 
-    const player = await getPlayer(kickedOutPlayer);
+    const player = await Cache.getPlayer(kickedOutPlayer);
     await GameRepository.kickOutPlayer(gameCode, player);
     return true;
   } catch (err) {
@@ -702,14 +741,17 @@ export async function addToWaitingList(playerId: string, gameCode: string) {
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await Cache.getGame(gameCode);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
     if (game.club) {
       // club game
-      const clubMember = await getClubMember(playerId, game.club.clubCode);
+      const clubMember = await Cache.getClubMember(
+        playerId,
+        game.club.clubCode
+      );
       if (!clubMember) {
         logger.error(
           `Player: ${playerId} is not a club member in club ${game.club.name}`
@@ -737,14 +779,17 @@ export async function removeFromWaitingList(
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await Cache.getGame(gameCode);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
     if (game.club) {
       // club game
-      const clubMember = await getClubMember(playerId, game.club.clubCode);
+      const clubMember = await Cache.getClubMember(
+        playerId,
+        game.club.clubCode
+      );
       if (!clubMember) {
         logger.error(
           `Player: ${playerId} is not a club member in club ${game.club.name}`
@@ -772,14 +817,17 @@ export async function waitingList(
   }
   try {
     // get game using game code
-    const game = await getGame(gameCode);
+    const game = await Cache.getGame(gameCode);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
     if (game.club) {
       // club game
-      const clubMember = await getClubMember(playerId, game.club.clubCode);
+      const clubMember = await Cache.getClubMember(
+        playerId,
+        game.club.clubCode
+      );
       if (!clubMember) {
         logger.error(
           `Player: ${playerId} is not a club member in club ${game.club.name}`
@@ -800,7 +848,7 @@ export async function waitingList(
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
-      const game = await getGame(args.gameCode);
+      const game = await Cache.getGame(args.gameCode);
       return {
         id: game.id,
       };
@@ -823,7 +871,7 @@ const resolvers: any = {
   },
   GameInfo: {
     seatInfo: async (parent, args, ctx, info) => {
-      const game = await getGame(parent.gameCode);
+      const game = await Cache.getGame(parent.gameCode);
       const playersInSeats = await GameRepository.getPlayersInSeats(game.id);
       for (const player of playersInSeats) {
         player.status = PlayerStatus[player.status];
@@ -842,7 +890,7 @@ const resolvers: any = {
       };
     },
     gameToken: async (parent, args, ctx, info) => {
-      const game = await getGame(parent.gameCode);
+      const game = await Cache.getGame(parent.gameCode);
       let playerState = ctx['playerState'];
       if (!playerState) {
         // get player's game state
@@ -858,7 +906,7 @@ const resolvers: any = {
       return null;
     },
     playerGameStatus: async (parent, args, ctx, info) => {
-      const game = await getGame(parent.gameCode);
+      const game = await Cache.getGame(parent.gameCode);
       let playerState = ctx['playerState'];
       if (!playerState) {
         // get player's game state

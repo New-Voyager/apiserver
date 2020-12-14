@@ -7,7 +7,7 @@ import {isPostgres} from '@src/utils';
 import {PlayerGameTracker, ClubChipsTransaction} from '@src/entity/chipstrack';
 import {PlayerStatus} from '@src/entity/types';
 import {PlayerSitInput} from './types';
-import {getGame} from '@src/cache';
+import {Cache} from '@src/cache';
 
 const logger = getLogger('chipstrack');
 const INITIAL_BUYIN_COUNT = 1;
@@ -44,9 +44,6 @@ class ChipsTrackRepositoryImpl {
         throw new Error(`Player ${playerChipsData.playerId} is not found`);
       }
       const playerSetIn = new PlayerGameTracker();
-      if (playerChipsData.clubId !== 0) {
-        playerSetIn.club = club;
-      }
       playerSetIn.game = game;
       playerSetIn.player = player;
       playerSetIn.buyIn = playerChipsData.buyIn;
@@ -108,7 +105,7 @@ class ChipsTrackRepositoryImpl {
         let playerGameTrack;
         if (playerChipsData.clubId !== 0) {
           playerGameTrack = await playerGameTrackrepository.findOne({
-            relations: ['club', 'game', 'player'],
+            relations: ['game', 'player'],
             where: {
               game: playerChipsData.gameId,
               player: playerChipsData.playerId,
@@ -167,7 +164,7 @@ class ChipsTrackRepositoryImpl {
       if (!gameUpdates) {
         throw new Error(`Game Updates for ${gameId} is not found`);
       }
-
+      logger.info('****** STARTING TRANSACTION FOR RAKE CALCULATION');
       await getManager().transaction(async _ => {
         const clubChipsTransaction = new ClubChipsTransaction();
         clubChipsTransaction.club = game.club;
@@ -210,6 +207,7 @@ class ChipsTrackRepositoryImpl {
             .execute();
         }
       });
+      logger.info('****** ENDING TRANSACTION FOR RAKE CALCULATION');
       return true;
     } catch (e) {
       logger.error(`Error: ${JSON.stringify(e)}`);
@@ -260,54 +258,6 @@ class ChipsTrackRepositoryImpl {
     return clubPlayerBalance;
   }
 
-  // public async getPlayerGametrack(
-  //   playerId: string,
-  //   clubCode: string,
-  //   gameCode: string
-  // ): Promise<PlayerGameTracker> {
-  //   const clubRepository = getRepository(Club);
-  //   const gameRepository = getRepository(PokerGame);
-  //   const playerRepository = getRepository(Player);
-  //   const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-  //   let club = await clubRepository.findOne({
-  //     where: {clubCode: clubCode},
-  //   });
-  //   const game = await gameRepository.findOne({
-  //     where: {gameCode: gameCode},
-  //   });
-  //   const player = await playerRepository.findOne({
-  //     where: {uuid: playerId},
-  //   });
-  //   if (clubCode === '000000') {
-  //     club = new Club();
-  //     club.id = 0;
-  //   }
-  //   if (!club) {
-  //     throw new Error(`Club ${clubCode} is not found`);
-  //   }
-  //   if (!game) {
-  //     throw new Error(`Game ${gameCode} is not found`);
-  //   }
-  //   if (!player) {
-  //     throw new Error(`Player ${playerId} is not found`);
-  //   }
-  //   let playerTrack;
-  //   if (clubCode === '000000') {
-  //     playerTrack = await playerGameTrackerRepository.findOne({
-  //       where: {player: player.id, game: game.id},
-  //     });
-  //   } else {
-  //     playerTrack = await playerGameTrackerRepository.findOne({
-  //       where: {club: club.id, player: player.id, game: game.id},
-  //     });
-  //   }
-  //   if (!playerTrack) {
-  //     logger.error('Error in retreiving data');
-  //     throw new Error('Error in retreiving data');
-  //   }
-  //   return playerTrack;
-  // }
-
   public async getRakeCollected(
     playerId: string,
     gameCode: string
@@ -315,7 +265,7 @@ class ChipsTrackRepositoryImpl {
     // only club owner or game host can get the rake
     // verify it here
 
-    const game = await getGame(gameCode);
+    const game = await Cache.getGame(gameCode);
     const gameUpdatesRepo = getRepository(PokerGameUpdates);
     const gameUpdates = await gameUpdatesRepo.find({
       where: {gameID: game.id},
