@@ -13,7 +13,7 @@ export interface RewardInputFormat {
 }
 import {getLogger} from '@src/utils/log';
 import {MIN_FULLHOUSE_RANK} from './types';
-import {getGame} from '@src/cache';
+import {Cache} from '@src/cache';
 import _ from 'lodash';
 const logger = getLogger('rewardRepo');
 
@@ -143,7 +143,7 @@ class RewardRepositoryImpl {
         return;
       }
 
-      const game = await getGame(gameCode);
+      const game = await Cache.getGame(gameCode);
 
       // get existing high hand from the database
 

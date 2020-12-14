@@ -1,4 +1,4 @@
-import {getPlayer} from '@src/cache';
+import {Cache} from '@src/cache';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {Player} from '@src/entity/player';
@@ -231,7 +231,7 @@ export class WaitListMgmt {
       // if this user is already playing, then he cannot be in the waiting list
       const playerGameTrackerRepository = getRepository(PlayerGameTracker);
 
-      const player = await getPlayer(playerUuid);
+      const player = await Cache.getPlayer(playerUuid);
       let playerInGame = await playerGameTrackerRepository.findOne({
         where: {
           game: {id: this.game.id},
@@ -260,7 +260,7 @@ export class WaitListMgmt {
       } else {
         // player is not in the game
         playerInGame = new PlayerGameTracker();
-        playerInGame.player = await getPlayer(playerUuid);
+        playerInGame.player = await Cache.getPlayer(playerUuid);
         playerInGame.club = this.game.club;
         playerInGame.game = this.game;
         playerInGame.buyIn = 0;
@@ -295,7 +295,7 @@ export class WaitListMgmt {
     await getManager().transaction(async () => {
       // remove this user from waiting list
       const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-      const player = await getPlayer(playerUuid);
+      const player = await Cache.getPlayer(playerUuid);
       const playerInGame = await playerGameTrackerRepository.findOne({
         where: {
           game: {id: this.game.id},

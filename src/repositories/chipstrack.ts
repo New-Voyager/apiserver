@@ -7,7 +7,7 @@ import {isPostgres} from '@src/utils';
 import {PlayerGameTracker, ClubChipsTransaction} from '@src/entity/chipstrack';
 import {PlayerStatus} from '@src/entity/types';
 import {PlayerSitInput} from './types';
-import {getGame} from '@src/cache';
+import {Cache} from '@src/cache';
 
 const logger = getLogger('chipstrack');
 const INITIAL_BUYIN_COUNT = 1;
@@ -315,7 +315,7 @@ class ChipsTrackRepositoryImpl {
     // only club owner or game host can get the rake
     // verify it here
 
-    const game = await getGame(gameCode);
+    const game = await Cache.getGame(gameCode);
     const gameUpdatesRepo = getRepository(PokerGameUpdates);
     const gameUpdates = await gameUpdatesRepo.find({
       where: {gameID: game.id},
