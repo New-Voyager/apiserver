@@ -104,28 +104,16 @@ function addInternalRoutes(app: any) {
   app.post('/internal/register-game-server', GameServerAPI.registerGameServer);
   app.post('/internal/update-game-server', GameServerAPI.updateGameServer);
   app.get('/internal/game-servers', GameServerAPI.getGameServers);
-  app.post('/internal/save-hand', HandServerAPI.saveHand);
   app.post(
     '/internal/post-hand/gameId/:gameId/handNum/:handNum',
     HandServerAPI.postHand
   );
-  // app.post(
-  //   '/internal/post-hand/gameId/:gameId/handNum/:handNum',
-  //   HandServerAPI.postHand
-  // );
-
   app.post('/internal/start-game', GameAPI.startGame);
   app.post('/internal/player-sit-in', ChipsTrackSeverAPI.playerSitsIn);
   app.post('/internal/game-ended', ChipsTrackSeverAPI.endGame);
   app.post('/internal/buy-chips', ChipsTrackSeverAPI.buyChips);
   app.post('/internal/delete-club-by-name/:clubName', AdminAPI.deleteClub);
-  // app.post('/internal/update-game-status', GameAPI.updateGameStatus);
   app.post('/internal/update-player-game-state', GameAPI.updatePlayerGameState);
-  //app.post('/internal/handle-seat-change', GameAPI.handleSeatChange);
-  app.post(
-    '/internal/update-break-time/gameId/:gameId/playerId/:playerId',
-    GameAPI.updateBreakTime
-  );
   app.post('/internal/update-table-status', GameAPI.updateTableStatus);
   app.get(
     '/internal/any-pending-updates/gameId/:gameId',

@@ -18,10 +18,6 @@ const logger = getLogger('hand');
 const MAX_STARRED_HAND = 25;
 
 class HandRepositoryImpl {
-  public async saveHand(handData: any) {
-    throw new Error('Not implemented');
-  }
-
   public async saveHandNew(
     gameID: number,
     handNum: number,
@@ -397,45 +393,6 @@ class HandRepositoryImpl {
 
     const starredHands = await starredHandsRepository.find(findOptions);
     return starredHands;
-  }
-
-  public async postSaveHand(input: any) {
-    try {
-      const rank: number[] = [];
-      Object.keys(input.players).forEach(async card => {
-        rank.push(parseInt(input.players[card.toString()].rank));
-      });
-      const index = rank.indexOf(Math.min.apply(Math, rank));
-      const data = input.players[Object.keys(input.players)[index].toString()];
-      await getManager().transaction(async () => {
-        for await (const rewardTrackId of input.rewardTrackingIds) {
-          const rewardTrack = getRepository(GameRewardTracking);
-          const playerRepo = getRepository(Player);
-          const gameRepo = getRepository(PokerGame);
-          const player = await playerRepo.findOne({id: data.playerId});
-          const game = await gameRepo.findOne({id: parseInt(input.gameId)});
-          const res = await rewardTrack.update(
-            {id: rewardTrackId},
-            {
-              handNum: input.handNum,
-              gameId: game,
-              playerId: player,
-              hhRank: data.rank,
-              boardCards: input.boardCards,
-              playerCards: data.cards,
-              highHand: data.bestCards,
-            }
-          );
-          const playerRes = await rewardTrack.findOne({id: rewardTrackId});
-        }
-      });
-      return true;
-    } catch (err) {
-      logger.error(
-        `Couldn't update reward. retry again. Error: ${err.toString()}`
-      );
-      throw new Error("Couldn't update reward, please retry again");
-    }
   }
 }
 

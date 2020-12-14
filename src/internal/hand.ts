@@ -98,81 +98,14 @@ class HandServerAPIs {
       return;
     }
     const result = req.body;
-    await HandRepository.saveHandNew(gameID, handNum, result);
+    await postHand(gameID, handNum, result);
     resp.status(200).send({status: 'OK'});
-  }
-
-  public async saveHand(req: any, resp: any) {
-    const handData = req.body;
-
-    /**
-     * Checking for errors
-     */
-    let errors = new Array<string>();
-    errors = validateHandData(handData);
-
-    /**
-     * If any data is missing throwing errors
-     */
-    if (errors.length) {
-      if (errors[errors.length - 1] === 'INTERNAL') {
-        resp.status(500).send('Internal service error');
-        return;
-      } else {
-        resp.status(500).send(JSON.stringify(errors));
-        return;
-      }
-    }
-
-    /**
-     * Saving the data
-     */
-    const response = await saveHandData(handData);
-    resp.status(500).send(JSON.stringify({status: 'FAILED'}));
-  }
-
-  public async postSaveHand(req: any, resp: any) {
-    const handData = req.body;
-
-    /**
-     * Checking for errors
-     */
-    const errors = new Array<string>();
-    // errors = validateHandData(handData);
-
-    /**
-     * If any data is missing throwing errors
-     */
-    if (errors.length) {
-      if (errors[errors.length - 1] === 'INTERNAL') {
-        resp.status(500).send('Internal service error');
-        return;
-      } else {
-        resp.status(500).send(JSON.stringify(errors));
-        return;
-      }
-    }
-
-    /**
-     * Saving the data
-     */
-    const response = await postSaveHandData(handData);
-    if (response === true) {
-      resp.status(200).send(JSON.stringify({status: 'OK'}));
-    } else {
-      resp.status(500).send(JSON.stringify(response));
-    }
   }
 }
 
 export const HandServerAPI = new HandServerAPIs();
 
-export async function saveHandData(handData: any) {
-  const res = await HandRepository.saveHand(handData);
-  return res;
-}
-
-export async function postSaveHandData(handData: any) {
-  const res = await HandRepository.postSaveHand(handData);
+export async function postHand(gameID: number, handNum: number, result: any) {
+  const res = await HandRepository.saveHandNew(gameID, handNum, result);
   return res;
 }
