@@ -314,6 +314,9 @@ class ClubRepositoryImpl {
       .set({
         status: ClubMemberStatus.ACTIVE,
       })
+      .where({
+        id: clubMember.id,
+      })
       .execute();
     return ClubMemberStatus.ACTIVE;
   }
@@ -352,6 +355,9 @@ class ClubRepositoryImpl {
       .set({
         status: ClubMemberStatus.DENIED,
       })
+      .where({
+        id: clubMember.id,
+      })
       .execute();
     return ClubMemberStatus.DENIED;
   }
@@ -389,6 +395,9 @@ class ClubRepositoryImpl {
       .update()
       .set({
         status: ClubMemberStatus.KICKEDOUT,
+      })
+      .where({
+        id: clubMember.id,
       })
       .execute();
     return ClubMemberStatus.KICKEDOUT;
@@ -517,6 +526,10 @@ class ClubRepositoryImpl {
 
     if (clubMember.status === ClubMemberStatus.LEFT) {
       return clubMember.status;
+    }
+
+    if (clubMember.isOwner) {
+      throw new Error('Player is the owner. Owner cannot leave the club');
     }
 
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);
