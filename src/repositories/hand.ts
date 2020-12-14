@@ -157,6 +157,7 @@ class HandRepositoryImpl {
           rakePaid[playerId] = playerRake.amount;
         }
       }
+      logger.info('****** STARTING TRANSACTION TO SAVE a hand result');
 
       await getManager().transaction(async transactionManager => {
         /**
@@ -211,6 +212,7 @@ class HandRepositoryImpl {
 
         await RewardRepository.handleHighHand(game.gameCode, result);
       });
+      logger.info('****** ENDING TRANSACTION TO SAVE a hand result');
       return true;
     } catch (err) {
       logger.error(`Error when trying to save hand log: ${err.toString()}`);

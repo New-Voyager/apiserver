@@ -127,6 +127,8 @@ class GameRepositoryImpl {
     game.startedBy = player;
 
     try {
+      logger.info('****** STARTING TRANSACTION TO CREATE a private game');
+
       await getManager().transaction(async () => {
         savedGame = await gameRespository.save(game);
 
@@ -224,6 +226,7 @@ class GameRepositoryImpl {
           await trackgameServerRepository.save(trackServer);
         }
       });
+      logger.info('****** ENDING TRANSACTION TO CREATE a private game');
     } catch (err) {
       logger.error(
         `Couldn't create game and retry again. Error: ${err.toString()}`

@@ -44,6 +44,7 @@ export class SeatChangeProcess {
 
   // called from the seat change timer callback to finish seat change processing
   public async finish() {
+    logger.info('****** STARTING TRANSACTION TO FINISH seat change');
     const switchedSeats = await getManager().transaction(async () => {
       // get all the switch seat requests
       const nextHandUpdatesRepository = getRepository(NextHandUpdates);
@@ -113,6 +114,7 @@ export class SeatChangeProcess {
 
       return switchedSeats;
     });
+    logger.info('****** ENDING TRANSACTION TO FINISH seat change');
 
     // send message to game server with new updates
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);

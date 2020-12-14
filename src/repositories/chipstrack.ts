@@ -167,7 +167,7 @@ class ChipsTrackRepositoryImpl {
       if (!gameUpdates) {
         throw new Error(`Game Updates for ${gameId} is not found`);
       }
-
+      logger.info('****** STARTING TRANSACTION FOR RAKE CALCULATION');
       await getManager().transaction(async _ => {
         const clubChipsTransaction = new ClubChipsTransaction();
         clubChipsTransaction.club = game.club;
@@ -210,6 +210,7 @@ class ChipsTrackRepositoryImpl {
             .execute();
         }
       });
+      logger.info('****** ENDING TRANSACTION FOR RAKE CALCULATION');
       return true;
     } catch (e) {
       logger.error(`Error: ${JSON.stringify(e)}`);
@@ -259,54 +260,6 @@ class ChipsTrackRepositoryImpl {
     }
     return clubPlayerBalance;
   }
-
-  // public async getPlayerGametrack(
-  //   playerId: string,
-  //   clubCode: string,
-  //   gameCode: string
-  // ): Promise<PlayerGameTracker> {
-  //   const clubRepository = getRepository(Club);
-  //   const gameRepository = getRepository(PokerGame);
-  //   const playerRepository = getRepository(Player);
-  //   const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-  //   let club = await clubRepository.findOne({
-  //     where: {clubCode: clubCode},
-  //   });
-  //   const game = await gameRepository.findOne({
-  //     where: {gameCode: gameCode},
-  //   });
-  //   const player = await playerRepository.findOne({
-  //     where: {uuid: playerId},
-  //   });
-  //   if (clubCode === '000000') {
-  //     club = new Club();
-  //     club.id = 0;
-  //   }
-  //   if (!club) {
-  //     throw new Error(`Club ${clubCode} is not found`);
-  //   }
-  //   if (!game) {
-  //     throw new Error(`Game ${gameCode} is not found`);
-  //   }
-  //   if (!player) {
-  //     throw new Error(`Player ${playerId} is not found`);
-  //   }
-  //   let playerTrack;
-  //   if (clubCode === '000000') {
-  //     playerTrack = await playerGameTrackerRepository.findOne({
-  //       where: {player: player.id, game: game.id},
-  //     });
-  //   } else {
-  //     playerTrack = await playerGameTrackerRepository.findOne({
-  //       where: {club: club.id, player: player.id, game: game.id},
-  //     });
-  //   }
-  //   if (!playerTrack) {
-  //     logger.error('Error in retreiving data');
-  //     throw new Error('Error in retreiving data');
-  //   }
-  //   return playerTrack;
-  // }
 
   public async getRakeCollected(
     playerId: string,

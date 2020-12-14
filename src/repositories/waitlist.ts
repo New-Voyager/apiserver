@@ -226,6 +226,7 @@ export class WaitListMgmt {
   }
 
   public async addToWaitingList(playerUuid: string) {
+    logger.info('****** STARTING TRANSACTION TO ADD a player to waitlist');
     await getManager().transaction(async () => {
       // add this user to waiting list
       // if this user is already playing, then he cannot be in the waiting list
@@ -289,6 +290,7 @@ export class WaitListMgmt {
         {playersInWaitList: count}
       );
     });
+    logger.info('****** ENDING TRANSACTION TO ADD a player to waitlist');
   }
 
   public async removeFromWaitingList(playerUuid: string) {
