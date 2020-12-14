@@ -105,7 +105,7 @@ class ChipsTrackRepositoryImpl {
         let playerGameTrack;
         if (playerChipsData.clubId !== 0) {
           playerGameTrack = await playerGameTrackrepository.findOne({
-            relations: ['club', 'game', 'player'],
+            relations: ['game', 'player'],
             where: {
               game: playerChipsData.gameId,
               player: playerChipsData.playerId,

@@ -120,7 +120,7 @@ export class SeatChangeProcess {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     for (const switchedSeat of switchedSeats) {
       const playerInGame = await playerGameTrackerRepository.findOne({
-        relations: ['player', 'club', 'game'],
+        relations: ['player', 'game'],
         where: {
           game: {id: this.game.id},
           player: {id: switchedSeat.player.id},
@@ -155,7 +155,7 @@ export class SeatChangeProcess {
   public async requestSeatChange(player: Player): Promise<Date | null> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
-      relations: ['player', 'club', 'game'],
+      relations: ['player', 'game'],
       where: {
         game: {id: this.game.id},
         player: {id: player.id},
@@ -184,7 +184,7 @@ export class SeatChangeProcess {
   ): Promise<PlayerGameTracker[]> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
-      relations: ['player', 'club', 'game'],
+      relations: ['player', 'game'],
       where: {
         game: {id: this.game.id},
         player: {id: player.id},
@@ -202,7 +202,7 @@ export class SeatChangeProcess {
     }
 
     const allPlayersInGame = await playerGameTrackerRepository.find({
-      relations: ['player', 'club', 'game'],
+      relations: ['player', 'game'],
       order: {
         seatChangeRequestedAt: 'ASC',
       },
@@ -222,7 +222,7 @@ export class SeatChangeProcess {
   ): Promise<boolean> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     let playerInGame = await playerGameTrackerRepository.findOne({
-      relations: ['player', 'club', 'game'],
+      relations: ['player', 'game'],
       where: {
         game: {id: this.game.id},
         player: {id: player.id},
@@ -241,7 +241,7 @@ export class SeatChangeProcess {
 
     // make sure this seat is open
     playerInGame = await playerGameTrackerRepository.findOne({
-      relations: ['player', 'club', 'game'],
+      relations: ['player', 'game'],
       where: {
         game: {id: this.game.id},
         seatNo: seatNo,
@@ -289,72 +289,4 @@ export class SeatChangeProcess {
     });
     return players.map(x => x.player);
   }
-
-  /*
-  public async handleSeatChange(gameCode: string) {
-    const game = await getGame(gameCode);
-    if (!game) {
-      logger.error(`Game ${gameCode} is not found`);
-      // throw new Error(`Game ${gameCode} is not found`);
-      return true;
-    }
-
-    const playersInSeats = await this.getPlayersInSeats(game.id);
-    const takenSeats = playersInSeats.map(x => x.seatNo);
-    const availableSeats: Array<number> = [];
-    for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
-      if (takenSeats.indexOf(seatNo) === -1) {
-        availableSeats.push(seatNo);
-      }
-    }
-
-    const pickedSeat = min(availableSeats);
-    if (!pickedSeat) {
-      logger.error('No seats available');
-      // throw new Error('No seats available');
-      return true;
-    }
-
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-    const playerInGame = await playerGameTrackerRepository.find({
-      relations: ['player', 'club', 'game'],
-      order: {seatChangeRequestedAt: 'ASC'},
-      where: {
-        game: {id: game.id},
-        seatChangeConfirmed: true,
-        seatChangeRequestedAt: Not(IsNull()),
-        status: PlayerStatus.PLAYING,
-      },
-    });
-
-    if (!playerInGame.length || !playerInGame[0]) {
-      logger.error('No player found');
-      // throw new Error('No player found');
-      return true;
-    }
-    const selectedPlayer = playerInGame[0];
-
-    await playerGameTrackerRepository.update(
-      {
-        game: {id: game.id},
-      },
-      {
-        seatChangeConfirmed: false,
-      }
-    );
-
-    await playerGameTrackerRepository.update(
-      {
-        game: {id: game.id},
-        player: {id: selectedPlayer.player.id},
-      },
-      {
-        seatChangeRequestedAt: null,
-        seatNo: pickedSeat,
-      }
-    );
-
-    return true;
-  }
-  */
 }

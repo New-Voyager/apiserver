@@ -438,6 +438,7 @@ class GameRepositoryImpl {
       // set the player status to waiting_for_buyin
       // send a message to game server that a new player is in the seat
       const playerInSeat = await playerGameTrackerRepository.findOne({
+        relations: ['player'],
         where: {
           game: {id: game.id},
           seatNo: seatNo,
@@ -828,18 +829,19 @@ class GameRepositoryImpl {
   public async leaveGame(player: Player, game: PokerGame): Promise<boolean> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const nextHandUpdatesRepository = getRepository(NextHandUpdates);
-    const playerInGame = await playerGameTrackerRepository.findOne({
-      relations: ['player', 'club', 'game'],
-      where: {
+    const rows = await playerGameTrackerRepository
+      .createQueryBuilder()
+      .where({
         game: {id: game.id},
         player: {id: player.id},
-      },
-    });
-
-    if (!playerInGame) {
-      logger.error(`Game: ${game.gameCode} not available`);
-      throw new Error(`Game: ${game.gameCode} not available`);
+      })
+      .select('status')
+      .execute();
+    if (!rows && rows.length === 0) {
+      throw new Error('Player is not found in the game');
     }
+
+    const playerInGame = rows[0];
 
     if (
       game.status === GameStatus.ACTIVE &&
@@ -870,14 +872,19 @@ class GameRepositoryImpl {
   public async takeBreak(player: Player, game: PokerGame): Promise<boolean> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const nextHandUpdatesRepository = getRepository(NextHandUpdates);
-    const playerInGame = await playerGameTrackerRepository.findOne({
-      relations: ['player', 'club', 'game'],
-      where: {
+    const rows = await playerGameTrackerRepository
+      .createQueryBuilder()
+      .where({
         game: {id: game.id},
         player: {id: player.id},
-      },
-    });
+      })
+      .select('status')
+      .execute();
+    if (!rows && rows.length === 0) {
+      throw new Error('Player is not found in the game');
+    }
 
+    const playerInGame = rows[0];
     if (!playerInGame) {
       logger.error(`Game: ${game.gameCode} not available`);
       throw new Error(`Game: ${game.gameCode} not available`);
@@ -898,7 +905,15 @@ class GameRepositoryImpl {
 
     if (game.status !== GameStatus.ACTIVE) {
       playerInGame.status = PlayerStatus.IN_BREAK;
-      await playerGameTrackerRepository.save(playerInGame);
+      playerGameTrackerRepository.update(
+        {
+          game: {id: game.id},
+          player: {id: player.id},
+        },
+        {
+          status: playerInGame.status,
+        }
+      );
     } else {
       const update = new NextHandUpdates();
       update.game = game;
@@ -912,14 +927,19 @@ class GameRepositoryImpl {
   public async sitBack(player: Player, game: PokerGame): Promise<boolean> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const nextHandUpdatesRepository = getRepository(NextHandUpdates);
-    const playerInGame = await playerGameTrackerRepository.findOne({
-      relations: ['player', 'club', 'game'],
-      where: {
+    const rows = await playerGameTrackerRepository
+      .createQueryBuilder()
+      .where({
         game: {id: game.id},
         player: {id: player.id},
-      },
-    });
+      })
+      .select('status')
+      .execute();
+    if (!rows && rows.length === 0) {
+      throw new Error('Player is not found in the game');
+    }
 
+    const playerInGame = rows[0];
     if (!playerInGame) {
       logger.error(`Game: ${game.gameCode} not available`);
       throw new Error(`Game: ${game.gameCode} not available`);
@@ -934,7 +954,15 @@ class GameRepositoryImpl {
         await nextHandUpdatesRepository.save(update);
       } else {
         playerInGame.status = PlayerStatus.PLAYING;
-        await playerGameTrackerRepository.save(playerInGame);
+        playerGameTrackerRepository.update(
+          {
+            game: {id: game.id},
+            player: {id: player.id},
+          },
+          {
+            status: playerInGame.status,
+          }
+        );
       }
     } else {
       const nextHandUpdate = await nextHandUpdatesRepository.findOne({
@@ -958,20 +986,32 @@ class GameRepositoryImpl {
 
   public async updateBreakTime(playerId: number, gameId: number) {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-    const playerInGame = await playerGameTrackerRepository.findOne({
-      relations: ['player', 'club', 'game'],
-      where: {
+    const rows = await playerGameTrackerRepository
+      .createQueryBuilder()
+      .where({
         game: {id: gameId},
         player: {id: playerId},
-      },
-    });
+      })
+      .select('status')
+      .execute();
+    if (!rows && rows.length === 0) {
+      throw new Error('Player is not found in the game');
+    }
+
+    const playerInGame = rows[0];
     if (!playerInGame) {
       logger.error(`Game: ${gameId} not available`);
       throw new Error(`Game: ${gameId} not available`);
     }
-    playerInGame.breakTimeAt = new Date();
-    const resp = await playerGameTrackerRepository.save(playerInGame);
-    return resp.status;
+    await playerGameTrackerRepository
+      .createQueryBuilder()
+      .update()
+      .set({
+        breakTimeAt: new Date(),
+      })
+      .execute();
+
+    return playerInGame.status;
   }
 
   public async markPlayerGameState(
@@ -980,20 +1020,33 @@ class GameRepositoryImpl {
     status: PlayerStatus
   ) {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-    const playerInGame = await playerGameTrackerRepository.findOne({
-      relations: ['player', 'club', 'game'],
-      where: {
+
+    const rows = await playerGameTrackerRepository
+      .createQueryBuilder()
+      .where({
         game: {id: gameId},
         player: {id: playerId},
-      },
-    });
+      })
+      .select('status')
+      .execute();
+    if (!rows && rows.length === 0) {
+      throw new Error('Player is not found in the game');
+    }
+
+    const playerInGame = rows[0];
     if (!playerInGame) {
       logger.error(`Game: ${gameId} not available`);
       throw new Error(`Game: ${gameId} not available`);
     }
-    playerInGame.status = (PlayerStatus[status] as unknown) as PlayerStatus;
-    const resp = await playerGameTrackerRepository.save(playerInGame);
-    return resp.status;
+    const playerStatus = (PlayerStatus[status] as unknown) as PlayerStatus;
+    await playerGameTrackerRepository
+      .createQueryBuilder()
+      .update()
+      .set({
+        status: playerStatus,
+      })
+      .execute();
+    return playerStatus;
   }
 
   public async getGameServer(gameId: number): Promise<GameServer | null> {

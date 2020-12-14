@@ -14,6 +14,7 @@ import {PageOptions} from '@src/types';
 import {getLogger} from '@src/utils/log';
 import {getClubCode} from '@src/utils/uniqueid';
 import {isPostgres} from '@src/utils';
+import {Cache} from '@src/cache';
 
 const logger = getLogger('club-repository');
 
@@ -248,7 +249,7 @@ class ClubRepositoryImpl {
       throw new Error('Unexpected. There is no owner for the club');
     }
 
-    if (owner.uuid == playerId) {
+    if (owner.uuid === playerId) {
       return true;
     }
     return false;
@@ -258,16 +259,7 @@ class ClubRepositoryImpl {
     clubCode: string,
     playerId: string
   ): Promise<ClubMemberStatus> {
-    let [club, player, clubMember] = await this.getClubMember(
-      clubCode,
-      playerId
-    );
-
-    const owner: Player | undefined = await Promise.resolve(club.owner);
-    if (!owner) {
-      throw new Error('Unexpected. There is no owner for the club');
-    }
-
+    let clubMember = await Cache.getClubMember(playerId, clubCode);
     if (clubMember) {
       throw new Error(
         `The player is already in the club. Member status: ${
@@ -278,8 +270,8 @@ class ClubRepositoryImpl {
 
     // create a new membership
     clubMember = new ClubMember();
-    clubMember.club = club;
-    clubMember.player = player;
+    clubMember.club = await Cache.getClub(clubCode);
+    clubMember.player = await Cache.getPlayer(playerId);
     clubMember.joinedDate = new Date();
     clubMember.status = ClubMemberStatus.PENDING;
 
@@ -293,48 +285,12 @@ class ClubRepositoryImpl {
     clubCode: string,
     playerId: string
   ): Promise<ClubMemberStatus> {
-    const [club, player, clubMember] = await this.getClubMember(
-      clubCode,
-      playerId
-    );
-
-    const owner: Player | undefined = await Promise.resolve(club.owner);
-    if (!owner) {
-      throw new Error('Unexpected. There is no owner for the club');
-    }
-
-    if (owner.uuid != ownerId) {
-      // TODO: make sure the ownerId is matching with club owner
-      if (ownerId !== '') {
-        throw new Error('Unauthorized');
-      }
-    }
-
+    const clubMember = await Cache.getClubMember(playerId, clubCode);
     if (!clubMember) {
-      throw new Error(`The player ${player.name} is not in the club`);
+      throw new Error('The player is not in the club');
     }
 
-    if (clubMember.status === ClubMemberStatus.ACTIVE) {
-      return clubMember.status;
-    }
-
-    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
-    // create a new membership
-    clubMember.status = ClubMemberStatus.ACTIVE;
-    await clubMemberRepository.save(clubMember);
-    return clubMember.status;
-  }
-
-  public async rejectMember(
-    ownerId: string,
-    clubCode: string,
-    playerId: string
-  ): Promise<ClubMemberStatus> {
-    const [club, player, clubMember] = await this.getClubMember(
-      clubCode,
-      playerId
-    );
-
+    const club = await Cache.getClub(clubCode);
     const owner: Player | undefined = await Promise.resolve(club.owner);
     if (!owner) {
       throw new Error('Unexpected. There is no owner for the club');
@@ -347,8 +303,42 @@ class ClubRepositoryImpl {
       }
     }
 
+    if (clubMember.status === ClubMemberStatus.ACTIVE) {
+      return clubMember.status;
+    }
+
+    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+    await clubMemberRepository
+      .createQueryBuilder()
+      .update()
+      .set({
+        status: ClubMemberStatus.ACTIVE,
+      })
+      .execute();
+    return ClubMemberStatus.ACTIVE;
+  }
+
+  public async rejectMember(
+    ownerId: string,
+    clubCode: string,
+    playerId: string
+  ): Promise<ClubMemberStatus> {
+    const clubMember = await Cache.getClubMember(playerId, clubCode);
     if (!clubMember) {
-      throw new Error(`The player ${player.name} is not in the club`);
+      throw new Error('The player is not in the club');
+    }
+
+    const club = await Cache.getClub(clubCode);
+    const owner: Player | undefined = await Promise.resolve(club.owner);
+    if (!owner) {
+      throw new Error('Unexpected. There is no owner for the club');
+    }
+
+    if (owner.uuid !== ownerId) {
+      // TODO: make sure the ownerId is matching with club owner
+      if (ownerId !== '') {
+        throw new Error('Unauthorized');
+      }
     }
 
     if (clubMember.status === ClubMemberStatus.DENIED) {
@@ -356,10 +346,14 @@ class ClubRepositoryImpl {
     }
 
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);
-    // create a new membership
-    clubMember.status = ClubMemberStatus.DENIED;
-    await clubMemberRepository.save(clubMember);
-    return clubMember.status;
+    await clubMemberRepository
+      .createQueryBuilder()
+      .update()
+      .set({
+        status: ClubMemberStatus.DENIED,
+      })
+      .execute();
+    return ClubMemberStatus.DENIED;
   }
 
   public async kickMember(
@@ -367,24 +361,22 @@ class ClubRepositoryImpl {
     clubCode: string,
     playerId: string
   ): Promise<ClubMemberStatus> {
-    const [club, player, clubMember] = await this.getClubMember(
-      clubCode,
-      playerId
-    );
+    const clubMember = await Cache.getClubMember(playerId, clubCode);
+    if (!clubMember) {
+      throw new Error('The player is not in the club');
+    }
+
+    const club = await Cache.getClub(clubCode);
     const owner: Player | undefined = await Promise.resolve(club.owner);
     if (!owner) {
       throw new Error('Unexpected. There is no owner for the club');
     }
 
-    if (owner.uuid != ownerId) {
+    if (owner.uuid !== ownerId) {
       // TODO: make sure the ownerId is matching with club owner
       if (ownerId !== '') {
         throw new Error('Unauthorized');
       }
-    }
-
-    if (!clubMember) {
-      throw new Error(`The player ${player.name} is not in the club`);
     }
 
     if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
@@ -392,36 +384,23 @@ class ClubRepositoryImpl {
     }
 
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);
-    // create a new membership
-    clubMember.status = ClubMemberStatus.KICKEDOUT;
-    await clubMemberRepository.save(clubMember);
-    return clubMember.status;
+    await clubMemberRepository
+      .createQueryBuilder()
+      .update()
+      .set({
+        status: ClubMemberStatus.KICKEDOUT,
+      })
+      .execute();
+    return ClubMemberStatus.KICKEDOUT;
   }
 
   public async getClubMemberStatus(
     clubCode: string,
     playerId: string
   ): Promise<ClubMember> {
-    const clubRepository = getRepository<Club>(Club);
-    const playerRepository = getRepository<Player>(Player);
-
-    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
-    const player = await playerRepository.findOne({where: {uuid: playerId}});
-    if (!club) {
-      throw new Error(`Club ${clubCode} is not found`);
-    }
-    if (!player) {
-      throw new Error(`Player ${playerId} is not found`);
-    }
-    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
-    const clubMember = await clubMemberRepository.findOne({
-      where: {
-        club: {id: club.id},
-        player: {id: player.id},
-      },
-    });
+    const clubMember = await Cache.getClubMember(playerId, clubCode);
     if (!clubMember) {
-      throw new Error('No data found');
+      throw new Error('Club membership not found');
     }
     return clubMember;
   }
@@ -525,30 +504,30 @@ class ClubRepositoryImpl {
     clubCode: string,
     playerId: string
   ): Promise<ClubMemberStatus> {
-    const [club, player, clubMember] = await this.getClubMember(
-      clubCode,
-      playerId
-    );
+    const clubMember = await Cache.getClubMember(playerId, clubCode);
+    if (!clubMember) {
+      throw new Error('The player is not in the club');
+    }
 
+    const club = await Cache.getClub(clubCode);
     const owner: Player | undefined = await Promise.resolve(club.owner);
     if (!owner) {
       throw new Error('Unexpected. There is no owner for the club');
     }
 
-    if (owner.uuid === player.uuid) {
-      // owner cannot leave the club
-      throw new Error('Owner cannot leave the club');
-    }
-
-    // the player is not a club member, probably already left
-    if (!clubMember) {
-      return ClubMemberStatus.LEFT;
+    if (clubMember.status === ClubMemberStatus.LEFT) {
+      return clubMember.status;
     }
 
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);
-    clubMember.status = ClubMemberStatus.LEFT;
-    await clubMemberRepository.save(clubMember);
-    return clubMember.status;
+    await clubMemberRepository
+      .createQueryBuilder()
+      .update()
+      .set({
+        status: ClubMemberStatus.LEFT,
+      })
+      .execute();
+    return ClubMemberStatus.LEFT;
   }
 
   public async getClubGames(

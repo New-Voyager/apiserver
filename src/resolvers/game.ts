@@ -330,7 +330,7 @@ export async function myGameState(playerUuid: string, gameCode: string) {
     const data = await GameRepository.myGameState(player, game);
 
     const gameState = {
-      playerUuid: data.player.uuid,
+      playerUuid: player.uuid,
       buyIn: data.buyIn,
       stack: data.stack,
       status: PlayerStatus[data.status],
@@ -371,13 +371,13 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
         );
       }
     }
-
+    const player = await Cache.getPlayer(playerUuid);
     const gameState = await GameRepository.tableGameState(game);
 
     const tableGameState = new Array<any>();
     gameState.map(data => {
       const gameState = {
-        playerUuid: data.player.uuid,
+        playerUuid: player.uuid,
         buyIn: data.buyIn,
         stack: data.stack,
         status: PlayerStatus[data.status],

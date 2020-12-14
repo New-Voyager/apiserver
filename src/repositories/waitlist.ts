@@ -344,7 +344,7 @@ export class WaitListMgmt {
   public async getWaitingListUsers() {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const waitListPlayers = await playerGameTrackerRepository.find({
-      relations: ['player', 'club', 'game'],
+      relations: ['player', 'game'],
       where: {
         game: {id: this.game.id},
         waitingFrom: Not(IsNull()),

@@ -67,7 +67,7 @@ class GameCache {
   public async getClubMember(
     playerUuid: string,
     clubCode: string
-  ): Promise<ClubMember> {
+  ): Promise<ClubMember | null> {
     const key = `${clubCode}:${playerUuid}`;
     let clubMember = this.clubMemberCache.get(key);
     if (!clubMember) {
@@ -83,9 +83,7 @@ class GameCache {
       });
 
       if (!clubMembers || clubMembers.length === 0) {
-        throw new Error(
-          `Cannot find with club member club code: ${clubCode}, player: ${playerUuid}`
-        );
+        return null;
       }
       clubMember = clubMembers[0];
       this.clubMemberCache.set(key, clubMember);
