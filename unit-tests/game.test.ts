@@ -107,7 +107,7 @@ describe('Game APIs', () => {
     done();
   });
 
-  test('Start a new game', async () => {
+  test('gametest: Start a new game', async () => {
     const gameServer1 = {
       ipAddress: '10.1.1.1',
       currentMemory: 100,
@@ -157,7 +157,7 @@ describe('Game APIs', () => {
     }
   });
 
-  test('Start a new game by player', async () => {
+  test('gametest: Start a new game by player', async () => {
     const gameServer1 = {
       ipAddress: '10.1.1.1',
       currentMemory: 100,
@@ -202,7 +202,7 @@ describe('Game APIs', () => {
     }
   });
 
-  test('Get game by uuid', async () => {
+  test('gametest: Get game by uuid', async () => {
     const gameServer1 = {
       ipAddress: '10.1.1.1',
       currentMemory: 100,
@@ -232,65 +232,60 @@ describe('Game APIs', () => {
     }
   });
 
-  test('Join a game', async () => {
+  test('gametest: Join a game', async () => {
     const gameServer1 = {
       ipAddress: '10.1.1.5',
       currentMemory: 100,
       status: 'ACTIVE',
       url: 'http://10.1.1.5:8080',
     };
-    try {
-      await createGameServer(gameServer1);
-      const owner = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc123',
-        },
-      });
-      const club = await createClub(owner, {
-        name: 'club_name',
-        description: 'poker players gather',
-        ownerUuid: owner,
-      });
-      await createReward(owner, club);
-      const game = await configureGame(owner, club, holdemGameInput);
-      const player1 = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc123',
-        },
-      });
-      const player2 = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc123',
-        },
-      });
+    await createGameServer(gameServer1);
+    const owner = await createPlayer({
+      player: {
+        name: 'player_name',
+        deviceId: 'abc123',
+      },
+    });
+    const club = await createClub(owner, {
+      name: 'club_name',
+      description: 'poker players gather',
+      ownerUuid: owner,
+    });
+    await createReward(owner, club);
+    const game = await configureGame(owner, club, holdemGameInput);
+    const player1 = await createPlayer({
+      player: {
+        name: 'player_name',
+        deviceId: 'abc123',
+      },
+    });
+    const player2 = await createPlayer({
+      player: {
+        name: 'player_name',
+        deviceId: 'abc123',
+      },
+    });
 
-      // Join a game
-      const data = await joinGame(player1, game.gameCode, 1);
-      expect(data).toBe('WAIT_FOR_BUYIN');
-      const data1 = await joinGame(player2, game.gameCode, 2);
-      expect(data1).toBe('WAIT_FOR_BUYIN');
+    // Join a game
+    const data = await joinGame(player1, game.gameCode, 1);
+    expect(data).toBe('WAIT_FOR_BUYIN');
+    const data1 = await joinGame(player2, game.gameCode, 2);
+    expect(data1).toBe('WAIT_FOR_BUYIN');
 
-      // change seat before buyin
-      const data3 = await joinGame(player1, game.gameCode, 3);
-      expect(data3).toBe('WAIT_FOR_BUYIN');
+    // change seat before buyin
+    const data3 = await joinGame(player1, game.gameCode, 3);
+    expect(data3).toBe('WAIT_FOR_BUYIN');
 
-      // buyin
-      const resp = await buyIn(player1, game.gameCode, 100);
-      expect(resp).toBe('APPROVED');
+    // buyin
+    const resp = await buyIn(player1, game.gameCode, 100);
+    expect(resp).toBe('APPROVED');
 
-      // change seat after buyin
-      const data4 = await joinGame(player1, game.gameCode, 1);
-      expect(data4).toBe('PLAYING');
-    } catch (err) {
-      logger.error(JSON.stringify(err));
-      expect(true).toBeFalsy();
-    }
+    // change seat after buyin
+    const data4 = await joinGame(player1, game.gameCode, 1);
+    expect(data4).toBe('PLAYING');
   });
 
-  test('Buyin for a game', async () => {
+  test('gametest: Buyin for a game', async () => {
     await resetDB();
     const gameServer1 = {
       ipAddress: '10.1.1.6',
@@ -355,7 +350,7 @@ describe('Game APIs', () => {
     expect(resp3).toBe('WAITING_FOR_APPROVAL');
   });
 
-  test('Approve Buyin for a game', async () => {
+  test('gametest: Approve Buyin for a game', async () => {
     await resetDB();
     const gameServer1 = {
       ipAddress: '10.1.1.7',
@@ -416,7 +411,7 @@ describe('Game APIs', () => {
     expect(resp3).toBe('APPROVED');
   });
 
-  test('Get my game state', async () => {
+  test('gametest: Get my game state', async () => {
     const gameServer1 = {
       ipAddress: '10.1.1.8',
       currentMemory: 100,
@@ -478,7 +473,7 @@ describe('Game APIs', () => {
     expect(resp2.seatNo).toBe(1);
   });
 
-  test('Get table game state', async () => {
+  test('gametest: Get table game state', async () => {
     const gameServer1 = {
       ipAddress: '10.1.1.9',
       currentMemory: 100,
@@ -538,7 +533,7 @@ describe('Game APIs', () => {
     }
   });
 
-  test('Take a break', async () => {
+  test('gametest: Take a break', async () => {
     const gameServer1 = {
       ipAddress: '10.1.2.1',
       currentMemory: 100,
@@ -584,7 +579,7 @@ describe('Game APIs', () => {
     }
   });
 
-  test('Sit back after break', async () => {
+  test('gametest: Sit back after break', async () => {
     const gameServer1 = {
       ipAddress: '10.1.2.1',
       currentMemory: 100,
@@ -636,7 +631,7 @@ describe('Game APIs', () => {
     expect(resp3).toBe(true);
   });
 
-  test('leave a game', async () => {
+  test('gametest: leave a game', async () => {
     const gameServer1 = {
       ipAddress: '10.1.2.2',
       currentMemory: 100,
@@ -682,7 +677,7 @@ describe('Game APIs', () => {
     expect(resp).toBe(true);
   });
 
-  test('seat change functionality', async () => {
+  test('gametest: seat change functionality', async () => {
     const gameServer1 = {
       ipAddress: '10.1.2.3',
       currentMemory: 100,
@@ -736,7 +731,7 @@ describe('Game APIs', () => {
     }
   });
 
-  test('wait list seating APIs', async () => {
+  test('gametest: wait list seating APIs', async () => {
     const gameServer1 = {
       ipAddress: '10.1.2.7',
       currentMemory: 100,
@@ -843,7 +838,7 @@ describe('Game APIs', () => {
     }
   });
 
-  test('wait list seating - success case', async () => {
+  test('gametest: wait list seating - success case', async () => {
     const gameServer1 = {
       ipAddress: '10.1.2.6',
       currentMemory: 100,
@@ -966,7 +961,7 @@ describe('Game APIs', () => {
     }
   });
 
-  test('wait list seating - timeout case', async () => {
+  test('gametest: wait list seating - timeout case', async () => {
     const gameServer1 = {
       ipAddress: '10.1.2.5',
       currentMemory: 100,

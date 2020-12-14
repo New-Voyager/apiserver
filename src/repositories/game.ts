@@ -463,9 +463,9 @@ class GameRepositoryImpl {
           player: {id: player.id},
         })
         .select('stack')
-        .select('status')
-        .select('buy_in')
-        .select('game_token')
+        .addSelect('status')
+        .addSelect('buy_in', 'buyIn')
+        .addSelect('game_token', 'gameToken')
         .execute();
 
       let playerInGame: any = null;
