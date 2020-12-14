@@ -262,7 +262,6 @@ export class WaitListMgmt {
         // player is not in the game
         playerInGame = new PlayerGameTracker();
         playerInGame.player = await Cache.getPlayer(playerUuid);
-        playerInGame.club = this.game.club;
         playerInGame.game = this.game;
         playerInGame.buyIn = 0;
         playerInGame.stack = 0;

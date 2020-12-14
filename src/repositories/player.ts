@@ -52,6 +52,13 @@ class PlayerRepositoryImpl {
     return player;
   }
 
+  public async getPlayerByDBId(id: number): Promise<Player | undefined> {
+    const repository = getRepository(Player);
+    // get player by id (testing only)
+    const player = await repository.findOne({where: {id: id}});
+    return player;
+  }
+
   public async getPlayerInfo(playerId: string): Promise<Player | undefined> {
     const repository = getRepository(Player);
     // get player by id (testing only)

@@ -139,6 +139,14 @@ class GameCache {
     const key = `${clubCode}:${playerUuid}`;
     this.clubMemberCache.delete(key);
   }
+
+  public reset() {
+    this.gameCache = new Map<string, PokerGame>();
+    this.clubCache = new Map<string, Club>();
+    this.playerCache = new Map<string, Player>();
+    this.clubMemberCache = new Map<string, ClubMember>();
+    this.gameIdGameCodeCache = new Map<number, string>();
+  }
 }
 
 /*

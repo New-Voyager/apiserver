@@ -30,6 +30,7 @@ import {WaitListMgmt} from './waitlist';
 import {Reward, GameRewardTracking, GameReward} from '@src/entity/reward';
 import {ChipsTrackRepository} from './chipstrack';
 import {BUYIN_TIMEOUT} from './types';
+import {PlayerRepository} from './player';
 
 const logger = getLogger('game');
 
@@ -455,19 +456,28 @@ class GameRepositoryImpl {
         );
       }
       // if this player has already played this game before, we should have his record
-      let playerInGame = await playerGameTrackerRepository.findOne({
-        relations: ['player', 'club', 'game'],
-        where: {
+      const playerInGames = await playerGameTrackerRepository
+        .createQueryBuilder()
+        .where({
           game: {id: game.id},
           player: {id: player.id},
-        },
-      });
+        })
+        .select('stack')
+        .select('status')
+        .select('buy_in')
+        .select('game_token')
+        .execute();
+
+      let playerInGame: any = null;
+      if (playerInGames.length > 0) {
+        playerInGame = playerInGames[0];
+      }
+
       if (playerInGame) {
         playerInGame.seatNo = seatNo;
       } else {
         playerInGame = new PlayerGameTracker();
         playerInGame.player = player;
-        playerInGame.club = game.club;
         playerInGame.game = game;
         playerInGame.stack = 0;
         playerInGame.buyIn = 0;
@@ -477,7 +487,23 @@ class GameRepositoryImpl {
         const randomBytes = Buffer.from(crypto.randomBytes(5));
         playerInGame.gameToken = randomBytes.toString('hex');
         playerInGame.status = PlayerStatus.NOT_PLAYING;
-        await playerGameTrackerRepository.save(playerInGame);
+        try {
+          await playerGameTrackerRepository.save(playerInGame);
+        } catch (err) {
+          const doesPlayerExist = await PlayerRepository.getPlayerByDBId(
+            player.id
+          );
+
+          const doesGameExist = await this.getGameByCode(game.gameCode);
+          if (doesGameExist) {
+            logger.error(
+              `Failed to update player_game_tracker table ${err.toString()} Game: ${
+                doesGameExist.id
+              }`
+            );
+          }
+          throw err;
+        }
       }
 
       // we need 5 bytes to scramble 5 cards
@@ -523,12 +549,7 @@ class GameRepositoryImpl {
         const buyinTimeExp = new Date();
         const timeout = 60;
         buyinTimeExp.setSeconds(buyinTimeExp.getSeconds() + timeout);
-        startTimer(
-          playerInGame.game.id,
-          playerInGame.player.id,
-          BUYIN_TIMEOUT,
-          buyinTimeExp
-        );
+        startTimer(game.id, player.id, BUYIN_TIMEOUT, buyinTimeExp);
       }
 
       // send a message to gameserver

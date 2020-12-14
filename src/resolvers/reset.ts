@@ -2,6 +2,7 @@ import {getConnection} from 'typeorm';
 import {getManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {isGameServerEnabled, startTimer} from '@src/gameserver';
+import {Cache} from '@src/cache';
 const logger = getLogger('reset');
 
 const resolvers: any = {
@@ -52,6 +53,7 @@ export async function resetDB() {
     await deleteAll('hand_winners');
     await deleteAll('hand_history');
   });
+  Cache.reset();
   logger.info('****** ENDING TRANSACTION TO RESET tables');
   return true;
 }

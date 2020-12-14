@@ -336,7 +336,6 @@ export async function myGameState(playerUuid: string, gameCode: string) {
       status: PlayerStatus[data.status],
       buyInStatus: BuyInApprovalStatus[data.status],
       playingFrom: data.satAt,
-      waitlistNo: data.queueNo,
       seatNo: data.seatNo,
     };
 
@@ -384,7 +383,6 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
         status: PlayerStatus[data.status],
         buyInStatus: BuyInApprovalStatus[data.status],
         playingFrom: data.satAt,
-        waitlistNo: data.queueNo,
         seatNo: data.seatNo,
       };
       tableGameState.push(gameState);

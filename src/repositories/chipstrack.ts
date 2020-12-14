@@ -44,9 +44,6 @@ class ChipsTrackRepositoryImpl {
         throw new Error(`Player ${playerChipsData.playerId} is not found`);
       }
       const playerSetIn = new PlayerGameTracker();
-      if (playerChipsData.clubId !== 0) {
-        playerSetIn.club = club;
-      }
       playerSetIn.game = game;
       playerSetIn.player = player;
       playerSetIn.buyIn = playerChipsData.buyIn;
