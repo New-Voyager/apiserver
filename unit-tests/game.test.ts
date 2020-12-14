@@ -23,7 +23,7 @@ import {
   removeFromWaitingList,
   waitingList,
 } from '@src/resolvers/game';
-import {getGame} from '@src/cache/index';
+import {Cache} from '@src/cache/index';
 import {saveReward} from '../src/resolvers/reward';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {waitlistTimeoutExpired} from '@src/repositories/timer';
@@ -224,7 +224,7 @@ describe('Game APIs', () => {
       });
       await createReward(player, club);
       const startedGame = await configureGame(player, club, holdemGameInput);
-      const gameData = await getGame(startedGame.gameCode);
+      const gameData = await Cache.getGame(startedGame.gameCode);
       expect(gameData.id).not.toBe(null);
     } catch (err) {
       logger.error(JSON.stringify(err));
