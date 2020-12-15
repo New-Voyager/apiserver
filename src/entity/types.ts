@@ -36,6 +36,10 @@ export enum NextHandUpdate {
   END_GAME,
   KICKOUT,
   JOIN_GAME,
+  WAIT_BUYIN_APPROVAL,
+  WAIT_RELOAD_APPROVAL,
+  BUYIN_APPROVED,
+  RELOAD_APPROVED,
 }
 
 export enum WonAtStatus {
@@ -83,6 +87,7 @@ export enum PlayerStatus {
   TAKING_BREAK,
   JOINING,
   WAITLIST_SEATING,
+  PENDING_UPDATES,
 }
 
 export enum PromotionType {

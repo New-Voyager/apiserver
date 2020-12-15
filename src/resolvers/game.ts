@@ -11,6 +11,7 @@ import {Cache} from '@src/cache/index';
 import {WaitListMgmt} from '@src/repositories/waitlist';
 import {SeatChangeProcess} from '@src/repositories/seatchange';
 import {default as _} from 'lodash';
+import {approveBuyInRequest, buyInRequest} from '@src/repositories/buyin';
 
 const logger = getLogger('game');
 
@@ -235,14 +236,9 @@ export async function buyIn(
     }
 
     const player = await Cache.getPlayer(playerUuid);
-    const status = await GameRepository.buyIn(
-      player,
-      game,
-      amount,
-      false /*reload*/
-    );
+    const status = await buyInRequest(player, game, amount);
     // player is good to go
-    return BuyInApprovalStatus[status];
+    return PlayerStatus[status];
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error(`Failed to update buyin. ${JSON.stringify(err)}`);
@@ -291,12 +287,12 @@ export async function approveBuyIn(
     }
 
     const player = await Cache.getPlayer(playerUuid);
-    const status = await GameRepository.approveBuyIn(player, game, amount);
+    const status = await approveBuyInRequest(player, game, amount);
     // player is good to go
     return BuyInApprovalStatus[status];
   } catch (err) {
     logger.error(JSON.stringify(err));
-    throw new Error(`Failed to update buyin. ${JSON.stringify(err)}`);
+    throw new Error(`Failed to approve buyin. ${JSON.stringify(err)}`);
   }
 }
 

@@ -248,6 +248,9 @@ export class NextHandUpdates {
   @Column({name: 'new_update', type: 'int', nullable: true})
   public newUpdate!: NextHandUpdate;
 
+  @Column({name: 'buyin_amount', type: 'decimal', nullable: true})
+  public buyinAmount!: number;
+
   @Column({name: 'reload_amount', type: 'decimal', nullable: true})
   public reloadAmount!: number;
 

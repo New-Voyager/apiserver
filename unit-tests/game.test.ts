@@ -27,7 +27,7 @@ import {Cache} from '@src/cache/index';
 import {saveReward} from '../src/resolvers/reward';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {waitlistTimeoutExpired} from '@src/repositories/timer';
-import { approveMember } from '../src/resolvers/club';
+import {approveMember} from '../src/resolvers/club';
 
 const logger = getLogger('game unit-test');
 const holdemGameInput = {

@@ -39,6 +39,7 @@ enum PlayerGameStatus {
   TAKING_BREAK
   JOINING
   WAITLIST_SEATING
+  PENDING_UPDATES
 }
 
 enum BuyInApprovalStatus {
@@ -197,7 +198,7 @@ type Mutation {
   configureGame(clubCode: String!, game: GameCreateInput!): GameInfo!
   configureFriendsGame(game: GameCreateInput!): GameInfo!
   joinGame(gameCode: String!, seatNo: Int!): PlayerGameStatus!
-  buyIn(gameCode: String!, amount: Float!): BuyInApprovalStatus!
+  buyIn(gameCode: String!, amount: Float!): PlayerGameStatus!
   approveBuyIn(gameCode: String!, playerUuid: String!, amount: Float!): BuyInApprovalStatus!
   startGame(gameCode: String!): GameStatus!
   takeBreak(gameCode: String!): Boolean!
