@@ -227,10 +227,12 @@ export class WaitListMgmt {
 
   public async addToWaitingList(playerUuid: string) {
     logger.info('****** STARTING TRANSACTION TO ADD a player to waitlist');
-    await getManager().transaction(async () => {
+    await getManager().transaction(async transactionEntityManager => {
       // add this user to waiting list
       // if this user is already playing, then he cannot be in the waiting list
-      const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+      const playerGameTrackerRepository = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
 
       const player = await Cache.getPlayer(playerUuid);
       let playerInGame = await playerGameTrackerRepository.findOne({
@@ -281,7 +283,9 @@ export class WaitListMgmt {
         },
       });
 
-      const gameUpdatesRepo = getRepository(PokerGameUpdates);
+      const gameUpdatesRepo = transactionEntityManager.getRepository(
+        PokerGameUpdates
+      );
       await gameUpdatesRepo.update(
         {
           gameID: this.game.id,
@@ -293,9 +297,11 @@ export class WaitListMgmt {
   }
 
   public async removeFromWaitingList(playerUuid: string) {
-    await getManager().transaction(async () => {
+    await getManager().transaction(async transactionEntityManager => {
       // remove this user from waiting list
-      const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+      const playerGameTrackerRepository = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
       const player = await Cache.getPlayer(playerUuid);
       const playerInGame = await playerGameTrackerRepository.findOne({
         where: {
@@ -331,7 +337,9 @@ export class WaitListMgmt {
         },
       });
 
-      const gameUpdatesRepo = getRepository(PokerGameUpdates);
+      const gameUpdatesRepo = transactionEntityManager.getRepository(
+        PokerGameUpdates
+      );
       await gameUpdatesRepo.update(
         {
           gameID: this.game.id,
