@@ -66,11 +66,12 @@ class GameCache {
 
   public async getClubMember(
     playerUuid: string,
-    clubCode: string
+    clubCode: string,
+    update = false
   ): Promise<ClubMember | null> {
     const key = `${clubCode}:${playerUuid}`;
     let clubMember = this.clubMemberCache.get(key);
-    if (!clubMember) {
+    if (!clubMember || update) {
       const club = await this.getClub(clubCode);
       const player = await this.getPlayer(playerUuid);
 

@@ -31,6 +31,7 @@ import {Reward, GameRewardTracking, GameReward} from '@src/entity/reward';
 import {ChipsTrackRepository} from './chipstrack';
 import {BUYIN_TIMEOUT} from './types';
 import {PlayerRepository} from './player';
+import {Cache} from '@src/cache';
 
 const logger = getLogger('game');
 
@@ -145,42 +146,44 @@ class GameRepositoryImpl {
           }
 
           const rewardTrackingIds = new Array<number>();
-          for await (const rewardId of input.rewardIds) {
-            const rewardRepository = getRepository(Reward);
-            await rewardRepository.findOne({id: rewardId});
+          if (input.rewardIds) {
+            for await (const rewardId of input.rewardIds) {
+              const rewardRepository = getRepository(Reward);
+              await rewardRepository.findOne({id: rewardId});
 
-            const rewardTrackRepo = getRepository(GameRewardTracking);
-            const rewardTrack = await rewardTrackRepo.findOne({
-              rewardId: rewardId,
-              active: true,
-            });
+              const rewardTrackRepo = getRepository(GameRewardTracking);
+              const rewardTrack = await rewardTrackRepo.findOne({
+                rewardId: rewardId,
+                active: true,
+              });
 
-            if (!rewardTrack) {
-              const createRewardTrack = new GameRewardTracking();
-              createRewardTrack.rewardId = rewardId;
-              createRewardTrack.day = new Date();
+              if (!rewardTrack) {
+                const createRewardTrack = new GameRewardTracking();
+                createRewardTrack.rewardId = rewardId;
+                createRewardTrack.day = new Date();
 
-              const rewardTrackRepository = getRepository(GameRewardTracking);
-              const rewardTrackResponse = await rewardTrackRepository.save(
-                createRewardTrack
-              );
+                const rewardTrackRepository = getRepository(GameRewardTracking);
+                const rewardTrackResponse = await rewardTrackRepository.save(
+                  createRewardTrack
+                );
 
-              const createGameReward = new GameReward();
-              createGameReward.gameId = game;
-              createGameReward.rewardId = rewardId;
-              createGameReward.rewardTrackingId = rewardTrackResponse;
-              rewardTrackingIds.push(rewardTrackResponse.id);
+                const createGameReward = new GameReward();
+                createGameReward.gameId = game;
+                createGameReward.rewardId = rewardId;
+                createGameReward.rewardTrackingId = rewardTrackResponse;
+                rewardTrackingIds.push(rewardTrackResponse.id);
 
-              const gameRewardRepository = getRepository(GameReward);
-              await gameRewardRepository.save(createGameReward);
-            } else {
-              const createGameReward = new GameReward();
-              createGameReward.gameId = game;
-              createGameReward.rewardId = rewardId;
-              createGameReward.rewardTrackingId = rewardTrack;
+                const gameRewardRepository = getRepository(GameReward);
+                await gameRewardRepository.save(createGameReward);
+              } else {
+                const createGameReward = new GameReward();
+                createGameReward.gameId = game;
+                createGameReward.rewardId = rewardId;
+                createGameReward.rewardTrackingId = rewardTrack;
 
-              const gameRewardRepository = getRepository(GameReward);
-              await gameRewardRepository.save(createGameReward);
+                const gameRewardRepository = getRepository(GameReward);
+                await gameRewardRepository.save(createGameReward);
+              }
             }
           }
 
@@ -607,18 +610,21 @@ class GameRepositoryImpl {
         }
       }
 
-      // NOTE TO SANJAY: Add other functionalities
-      const clubMemberRepository = getRepository<ClubMember>(ClubMember);
-      const clubMember = await clubMemberRepository.findOne({
-        where: {
-          club: {id: game.club.id},
-          player: {id: player.id},
-        },
-      });
+      const clubMember = await Cache.getClubMember(
+        player.uuid,
+        game.club.clubCode
+      );
       if (!clubMember) {
         throw new Error(`The player ${player.name} is not in the club`);
       }
 
+      // we need to get game status and table status
+      // if (
+      //   game.status === GameStatus.ACTIVE &&
+      //   game.tableStatus === TableStatus.GAME_RUNNING
+      // ) {
+      // add buyin to next hand update
+      //} else {
       if (clubMember.autoBuyinApproval) {
         playerInGame.buyInStatus = BuyInApprovalStatus.APPROVED;
         playerInGame.noOfBuyins++;

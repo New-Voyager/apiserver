@@ -25,6 +25,16 @@
       "outputCapture": "std",
       "runtimeArgs": ["run-script", "watch-debug-nats"],
       "port": 9235
+    },     
+    {
+      "name": "Watch debug No Gameserver",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "outputCapture": "std",
+      "runtimeArgs": ["run-script", "watch-debug-nats-gs-disabled"],
+      "port": 9235
     },    
     {
       "name": "Watch debug",
@@ -86,7 +96,7 @@
         "--runInBand",
         "./unit-tests",
         "--testNamePattern",
-        "Sit back after break"
+        "owner rejects a new member request"
       ],
       "env": {
         "NODE_ENV": "test",
