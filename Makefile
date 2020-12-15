@@ -1,5 +1,7 @@
 DEFAULT_DOCKER_NET := game
 GCP_PROJECT_ID := voyager-01-285603
+DO_REGISTRY := registry.digitalocean.com/voyager
+GCP_REGISTRY := gcr.io/${GCP_PROJECT_ID}
 
 POSTGRES_VERSION := 12.5
 
@@ -54,18 +56,6 @@ docker-build:
 up: create-network
 	docker-compose up
 
-.PHONY: publish
-publish:
-	# publish postgres so that we don't have to pull from the docker hub
-	docker pull postgres:${POSTGRES_VERSION}
-	docker tag postgres:${POSTGRES_VERSION} gcr.io/${GCP_PROJECT_ID}/postgres:${POSTGRES_VERSION}
-	docker push gcr.io/${GCP_PROJECT_ID}/postgres:${POSTGRES_VERSION}
-	# publish api server
-	docker tag api-server gcr.io/${GCP_PROJECT_ID}/api-server:$(BUILD_NO)
-	docker tag api-server gcr.io/${GCP_PROJECT_ID}/api-server:latest
-	docker push gcr.io/${GCP_PROJECT_ID}/api-server:$(BUILD_NO)
-	docker push gcr.io/${GCP_PROJECT_ID}/api-server:latest
-
 .PHONY: run-pg
 run-pg:
 	yarn run-pg
@@ -89,3 +79,24 @@ run-server-nats:
 	yarn run-pg &
 	yarn watch-debug-nats
 	echo "Running server...."
+
+
+.PHONY: publish
+publish: export REGISTRY=${GCP_REGISTRY}
+publish:  publish-common
+
+.PHONY: do-publish
+do-publish: export REGISTRY=${DO_REGISTRY}
+do-publish: publish-common
+
+.PHONY: publish-common
+publish-common:
+	# publish postgres so that we don't have to pull from the docker hub
+	docker pull postgres:${POSTGRES_VERSION}
+	docker tag postgres:${POSTGRES_VERSION} ${REGISTRY}/postgres:${POSTGRES_VERSION}
+	docker push ${REGISTRY}/postgres:${POSTGRES_VERSION}
+	# publish api server
+	docker tag api-server ${REGISTRY}/api-server:$(BUILD_NO)
+	docker tag api-server ${REGISTRY}/api-server:latest
+	docker push ${REGISTRY}/api-server:$(BUILD_NO)
+	docker push ${REGISTRY}/api-server:latest

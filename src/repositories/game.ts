@@ -1193,8 +1193,7 @@ class GameRepositoryImpl {
       status AS "playerStatus",
       stack AS stack,
       "buyIn_status" as "buyInStatus",
-      seat_no as "seatNo",
-      queue_no as "queueNo"
+      seat_no as "seatNo"
     FROM  player_game_tracker pgt 
     JOIN player p ON pgt.pgt_player_id = p.id 
     AND p.uuid = ${placeHolder1} 
