@@ -318,6 +318,7 @@ class ClubRepositoryImpl {
         id: clubMember.id,
       })
       .execute();
+    await Cache.getClubMember(playerId, clubCode, true /* update cache */);
     return ClubMemberStatus.ACTIVE;
   }
 
@@ -359,6 +360,7 @@ class ClubRepositoryImpl {
         id: clubMember.id,
       })
       .execute();
+    await Cache.getClubMember(playerId, clubCode, true /* update cache */);
     return ClubMemberStatus.DENIED;
   }
 
@@ -400,6 +402,7 @@ class ClubRepositoryImpl {
         id: clubMember.id,
       })
       .execute();
+    await Cache.getClubMember(playerId, clubCode, true /* update cache */);
     return ClubMemberStatus.KICKEDOUT;
   }
 

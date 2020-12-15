@@ -145,42 +145,44 @@ class GameRepositoryImpl {
           }
 
           const rewardTrackingIds = new Array<number>();
-          for await (const rewardId of input.rewardIds) {
-            const rewardRepository = getRepository(Reward);
-            await rewardRepository.findOne({id: rewardId});
+          if (input.rewardIds) {
+            for await (const rewardId of input.rewardIds) {
+              const rewardRepository = getRepository(Reward);
+              await rewardRepository.findOne({id: rewardId});
 
-            const rewardTrackRepo = getRepository(GameRewardTracking);
-            const rewardTrack = await rewardTrackRepo.findOne({
-              rewardId: rewardId,
-              active: true,
-            });
+              const rewardTrackRepo = getRepository(GameRewardTracking);
+              const rewardTrack = await rewardTrackRepo.findOne({
+                rewardId: rewardId,
+                active: true,
+              });
 
-            if (!rewardTrack) {
-              const createRewardTrack = new GameRewardTracking();
-              createRewardTrack.rewardId = rewardId;
-              createRewardTrack.day = new Date();
+              if (!rewardTrack) {
+                const createRewardTrack = new GameRewardTracking();
+                createRewardTrack.rewardId = rewardId;
+                createRewardTrack.day = new Date();
 
-              const rewardTrackRepository = getRepository(GameRewardTracking);
-              const rewardTrackResponse = await rewardTrackRepository.save(
-                createRewardTrack
-              );
+                const rewardTrackRepository = getRepository(GameRewardTracking);
+                const rewardTrackResponse = await rewardTrackRepository.save(
+                  createRewardTrack
+                );
 
-              const createGameReward = new GameReward();
-              createGameReward.gameId = game;
-              createGameReward.rewardId = rewardId;
-              createGameReward.rewardTrackingId = rewardTrackResponse;
-              rewardTrackingIds.push(rewardTrackResponse.id);
+                const createGameReward = new GameReward();
+                createGameReward.gameId = game;
+                createGameReward.rewardId = rewardId;
+                createGameReward.rewardTrackingId = rewardTrackResponse;
+                rewardTrackingIds.push(rewardTrackResponse.id);
 
-              const gameRewardRepository = getRepository(GameReward);
-              await gameRewardRepository.save(createGameReward);
-            } else {
-              const createGameReward = new GameReward();
-              createGameReward.gameId = game;
-              createGameReward.rewardId = rewardId;
-              createGameReward.rewardTrackingId = rewardTrack;
+                const gameRewardRepository = getRepository(GameReward);
+                await gameRewardRepository.save(createGameReward);
+              } else {
+                const createGameReward = new GameReward();
+                createGameReward.gameId = game;
+                createGameReward.rewardId = rewardId;
+                createGameReward.rewardTrackingId = rewardTrack;
 
-              const gameRewardRepository = getRepository(GameReward);
-              await gameRewardRepository.save(createGameReward);
+                const gameRewardRepository = getRepository(GameReward);
+                await gameRewardRepository.save(createGameReward);
+              }
             }
           }
 
