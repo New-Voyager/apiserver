@@ -1,7 +1,7 @@
 import {Club, ClubMember} from '@src/entity/club';
 import {PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
-import {getRepository} from 'typeorm';
+import {EntityManager, getRepository, Repository} from 'typeorm';
 
 class GameCache {
   private gameCache = new Map<string, PokerGame>();
@@ -10,13 +10,23 @@ class GameCache {
   private clubMemberCache = new Map<string, ClubMember>();
   private gameIdGameCodeCache = new Map<number, string>();
 
-  public async getGame(gameCode: string, update = false): Promise<PokerGame> {
+  public async getGame(
+    gameCode: string,
+    update = false,
+    transactionManager?: EntityManager
+  ): Promise<PokerGame> {
     let game = this.gameCache.get(gameCode);
     if (update) {
       game = undefined;
     }
     if (!game) {
-      game = await getRepository(PokerGame).findOne({
+      let repo: Repository<PokerGame>;
+      if (transactionManager) {
+        repo = transactionManager.getRepository(PokerGame);
+      } else {
+        repo = getRepository(PokerGame);
+      }
+      game = await repo.findOne({
         where: {gameCode: gameCode},
       });
       if (!game) {

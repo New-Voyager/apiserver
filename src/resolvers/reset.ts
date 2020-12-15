@@ -1,4 +1,4 @@
-import {getConnection} from 'typeorm';
+import {EntityManager, getConnection, SelectQueryBuilder} from 'typeorm';
 import {getManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {isGameServerEnabled, startTimer} from '@src/gameserver';
@@ -28,43 +28,44 @@ const resolvers: any = {
 
 export async function resetDB() {
   logger.info('****** STARTING TRANSACTION TO RESET tables');
-  await getManager().transaction(async transactionalEntityManager => {
-    await deleteAll('game_reward');
-    await deleteAll('game_reward_tracking');
-    await deleteAll('reward');
-    await deleteAll('next_hand_updates');
-    await deleteAll('promotion_winners');
-    await deleteAll('game_promotion');
-    await deleteAll('promotion');
-    await deleteAll('player_game_tracker');
-    await deleteAll('club_chips_transaction');
-    await deleteAll('PokerGamePlayers');
-    await deleteAll('PokerHand');
-    await deleteAll('game_gameserver');
-    await deleteAll('poker_game_updates');
-    await deleteAll('PokerGame');
-    await deleteAll('ClubMember');
-    await deleteAll('Club');
-    await deleteAll('Player');
+  await getManager().transaction(async transactionEntityManager => {
+    await deleteAll('game_reward', transactionEntityManager);
+    await deleteAll('game_reward_tracking', transactionEntityManager);
+    await deleteAll('reward', transactionEntityManager);
+    await deleteAll('next_hand_updates', transactionEntityManager);
+    await deleteAll('promotion_winners', transactionEntityManager);
+    await deleteAll('game_promotion', transactionEntityManager);
+    await deleteAll('promotion', transactionEntityManager);
+    await deleteAll('player_game_tracker', transactionEntityManager);
+    await deleteAll('club_chips_transaction', transactionEntityManager);
+    await deleteAll('PokerGamePlayers', transactionEntityManager);
+    await deleteAll('PokerHand', transactionEntityManager);
+    await deleteAll('game_gameserver', transactionEntityManager);
+    await deleteAll('poker_game_updates', transactionEntityManager);
+    await deleteAll('PokerGame', transactionEntityManager);
+    await deleteAll('ClubMember', transactionEntityManager);
+    await deleteAll('Club', transactionEntityManager);
+    await deleteAll('Player', transactionEntityManager);
     if (!isGameServerEnabled()) {
-      await deleteAll('game_server');
+      await deleteAll('game_server', transactionEntityManager);
     }
-    await deleteAll('starred_hands');
-    await deleteAll('hand_winners');
-    await deleteAll('hand_history');
+    await deleteAll('starred_hands', transactionEntityManager);
+    await deleteAll('hand_winners', transactionEntityManager);
+    await deleteAll('hand_history', transactionEntityManager);
   });
   Cache.reset();
   logger.info('****** ENDING TRANSACTION TO RESET tables');
   return true;
 }
 
-async function deleteAll(table: string) {
-  await getConnection()
-    .createQueryBuilder()
-    .delete()
-    .from(table)
-    .where('')
-    .execute();
+async function deleteAll(table: string, transactionManager?: EntityManager) {
+  let queryBuilder: SelectQueryBuilder<any>;
+  if (transactionManager) {
+    queryBuilder = transactionManager.createQueryBuilder();
+  } else {
+    queryBuilder = getConnection().createQueryBuilder();
+  }
+  await queryBuilder.delete().from(table).where('').execute();
 }
 
 export function getResolvers() {

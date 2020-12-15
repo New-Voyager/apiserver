@@ -1,4 +1,4 @@
-import {getRepository} from 'typeorm';
+import {EntityManager, Repository, getRepository} from 'typeorm';
 import {v4 as uuidv4} from 'uuid';
 import {Player} from '@src/entity/player';
 
@@ -52,8 +52,17 @@ class PlayerRepositoryImpl {
     return player;
   }
 
-  public async getPlayerByDBId(id: number): Promise<Player | undefined> {
-    const repository = getRepository(Player);
+  public async getPlayerByDBId(
+    id: number,
+    transactionManager?: EntityManager
+  ): Promise<Player | undefined> {
+    let repository: Repository<Player>;
+    if (transactionManager) {
+      repository = transactionManager.getRepository(Player);
+    } else {
+      repository = getRepository(Player);
+    }
+
     // get player by id (testing only)
     const player = await repository.findOne({where: {id: id}});
     return player;

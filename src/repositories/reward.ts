@@ -1,5 +1,5 @@
 import {Club} from '@src/entity/club';
-import {getManager, getRepository} from 'typeorm';
+import {EntityManager, getManager, getRepository, Repository} from 'typeorm';
 import {RewardType, ScheduleType} from '@src/entity/types';
 import {GameRewardTracking, Reward} from '@src/entity/reward';
 export interface RewardInputFormat {
@@ -82,7 +82,11 @@ class RewardRepositoryImpl {
     return this.handleHighHand(gameCode, input);
   }
 
-  public async handleHighHand(gameCode: string, input: any) {
+  public async handleHighHand(
+    gameCode: string,
+    input: any,
+    transactionManager?: EntityManager
+  ) {
     try {
       if (!input.rewardTrackingIds || input.rewardTrackingIds.length === 0) {
         return;
@@ -111,7 +115,12 @@ class RewardRepositoryImpl {
       }
 
       const trackingId = input.rewardTrackingIds[0];
-      const rewardTrackRepo = getRepository(GameRewardTracking);
+      let rewardTrackRepo: Repository<GameRewardTracking>;
+      if (transactionManager) {
+        rewardTrackRepo = transactionManager.getRepository(GameRewardTracking);
+      } else {
+        rewardTrackRepo = getRepository(GameRewardTracking);
+      }
 
       const existingTracking = await rewardTrackRepo.findOne({
         id: trackingId,
@@ -143,13 +152,20 @@ class RewardRepositoryImpl {
         return;
       }
 
-      const game = await Cache.getGame(gameCode);
+      const game = await Cache.getGame(gameCode, false, transactionManager);
 
       // get existing high hand from the database
       // TODO: we need to handle multiple players with high hands
       if (highHandPlayers.length > 0) {
         const highHandPlayer = highHandPlayers[0];
-        const rewardTrackRepo = getRepository(GameRewardTracking);
+        let rewardTrackRepo: Repository<GameRewardTracking>;
+        if (transactionManager) {
+          rewardTrackRepo = transactionManager.getRepository(
+            GameRewardTracking
+          );
+        } else {
+          rewardTrackRepo = getRepository(GameRewardTracking);
+        }
         await rewardTrackRepo
           .createQueryBuilder()
           .update()

@@ -195,11 +195,12 @@ class ClubRepositoryImpl {
     clubMember.joinedDate = new Date();
     clubMember.status = ClubMemberStatus.ACTIVE;
 
-    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
     logger.info('****** STARTING TRANSACTION TO SAVE club and club member');
-    await getManager().transaction(async transactionalEntityManager => {
-      await clubRepository.save(club);
-      await clubMemberRepository.save(clubMember);
+    await getManager().transaction(async transactionEntityManager => {
+      await transactionEntityManager.getRepository(Club).save(club);
+      await transactionEntityManager
+        .getRepository<ClubMember>(ClubMember)
+        .save(clubMember);
     });
     logger.info('****** ENDING TRANSACTION  SAVE club and club member');
 
@@ -224,14 +225,14 @@ class ClubRepositoryImpl {
     const club = await clubRepository.findOne({where: {name: clubName}});
     if (club) {
       logger.info('****** STARTING TRANSACTION TO delete club');
-      await getManager().transaction(async transactionalEntityManager => {
-        await getConnection()
+      await getManager().transaction(async transactionEntityManager => {
+        await transactionEntityManager
           .createQueryBuilder()
           .delete()
           .from(ClubMember)
           .where('club_id = :id', {id: club.id})
           .execute();
-        clubRepository.delete(club);
+        transactionEntityManager.getRepository(Club).delete(club);
       });
       logger.info('****** ENDING TRANSACTION TO delete club');
     }

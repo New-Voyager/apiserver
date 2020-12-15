@@ -155,7 +155,7 @@ class HandRepositoryImpl {
       }
       logger.info('****** STARTING TRANSACTION TO SAVE a hand result');
 
-      await getManager().transaction(async transactionManager => {
+      await getManager().transaction(async transactionEntityManager => {
         /**
          * Assigning player chips values
          */
@@ -172,7 +172,8 @@ class HandRepositoryImpl {
             rakePaidByPlayer = rakePaid[playerId];
           }
 
-          await playersChipsRepository
+          await transactionEntityManager
+            .getRepository(PlayerGameTracker)
             .createQueryBuilder()
             .update()
             .set({
@@ -192,9 +193,12 @@ class HandRepositoryImpl {
             })
             .execute();
         }
-        await handHistoryRepository.save(handHistory);
+        await transactionEntityManager
+          .getRepository(HandHistory)
+          .save(handHistory);
         // update game rake and last hand number
-        await gameUpdatesRepo
+        await transactionEntityManager
+          .getRepository(PokerGameUpdates)
           .createQueryBuilder()
           .update()
           .set({
@@ -206,7 +210,11 @@ class HandRepositoryImpl {
           })
           .execute();
 
-        await RewardRepository.handleHighHand(game.gameCode, result);
+        await RewardRepository.handleHighHand(
+          game.gameCode,
+          result,
+          transactionEntityManager
+        );
       });
       logger.info('****** ENDING TRANSACTION TO SAVE a hand result');
       return true;
@@ -368,8 +376,10 @@ class HandRepositoryImpl {
       starredHand.handNum = handNum;
       starredHand.playerId = playerId;
       starredHand.handHistory = handHistory;
-      await getManager().transaction(async transactionalEntityManager => {
-        await starredHandsRepository.save(starredHand);
+      await getManager().transaction(async transactionEntityManager => {
+        await transactionEntityManager
+          .getRepository(StarredHands)
+          .save(starredHand);
       });
       return true;
     } catch (error) {
