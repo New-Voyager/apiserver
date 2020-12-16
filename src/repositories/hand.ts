@@ -206,7 +206,11 @@ class HandRepositoryImpl {
             gameID: gameID,
           })
           .execute();
-        await RewardRepository.handleHighHand(game.gameCode, result, handHistory.timeEnded);
+        await RewardRepository.handleHighHand(
+          game.gameCode,
+          result,
+          handHistory.timeEnded
+        );
       });
       logger.info('****** ENDING TRANSACTION TO SAVE a hand result');
       return true;

@@ -136,9 +136,8 @@ export class GameReward {
   public rewardTrackingId!: GameRewardTracking;
 }
 
-
 @Entity({name: 'high_hand'})
-export class HighHand   {
+export class HighHand {
   @PrimaryGeneratedColumn()
   public id!: number;
 
@@ -196,6 +195,5 @@ export class HighHand   {
   public startHour!: boolean;
 
   @Column({name: 'end_hour', nullable: true})
-  public endHour!: boolean;  
+  public endHour!: boolean;
 }
-

@@ -67,5 +67,4 @@ describe('Reward APIs', () => {
     const result = await rewardutils.getRewards(playerId, clubCode);
     expect(result).toHaveLength(25);
   });
-
 });

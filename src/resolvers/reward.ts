@@ -49,7 +49,7 @@ export async function getRewards(playerId: string, clubCode: string) {
   });
 }
 
-export async function getHighHandsByGame(playerId: string, gameCode: string){
+export async function getHighHandsByGame(playerId: string, gameCode: string) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
@@ -64,12 +64,16 @@ export async function getHighHandsByGame(playerId: string, gameCode: string){
       boardCards: x.boardCards,
       highHand: x.highHand,
       rank: x.rank,
-      handTime: x.handTime
+      handTime: x.handTime,
     };
   });
 }
 
-export async function getHighHandsByReward(playerId: string, gameCode: string, rewardId: string){
+export async function getHighHandsByReward(
+  playerId: string,
+  gameCode: string,
+  rewardId: string
+) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
@@ -84,7 +88,7 @@ export async function getHighHandsByReward(playerId: string, gameCode: string, r
       boardCards: x.boardCards,
       highHand: x.highHand,
       rank: x.rank,
-      handTime: x.handTime
+      handTime: x.handTime,
     };
   });
 }
@@ -104,7 +108,11 @@ const resolvers: any = {
       return getHighHandsByGame(ctx.req.playerId, args.gameCode);
     },
     highHandsByReward: async (parent, args, ctx, info) => {
-      return getHighHandsByReward(ctx.req.playerId, args.gameCode, args.rewardId);
+      return getHighHandsByReward(
+        ctx.req.playerId,
+        args.gameCode,
+        args.rewardId
+      );
     },
   },
 };

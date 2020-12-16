@@ -131,7 +131,7 @@ export async function joinGame(
     if (game.club) {
       const clubMember = await Cache.isClubMember(
         playerUuid,
-        game.club.clubCode,
+        game.club.clubCode
       );
       if (!clubMember) {
         logger.error(

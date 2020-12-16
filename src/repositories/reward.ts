@@ -16,8 +16,8 @@ import {MIN_FULLHOUSE_RANK} from './types';
 import {Cache} from '@src/cache';
 import _ from 'lodash';
 import {HighHand} from '@src/entity/reward';
-import { Player } from '@src/entity/player';
-import { PokerGame } from '@src/entity/game';
+import {Player} from '@src/entity/player';
+import {PokerGame} from '@src/entity/game';
 const logger = getLogger('rewardRepo');
 
 class RewardRepositoryImpl {
@@ -128,7 +128,7 @@ class RewardRepositoryImpl {
 
       const rewardRepo = getRepository(Reward);
       const reward = await rewardRepo.findOne({id: existingTracking.id});
-      if(!reward){
+      if (!reward) {
         throw new Error(`Reward ${existingTracking.id} Not found`);
       }
 
@@ -154,30 +154,59 @@ class RewardRepositoryImpl {
       if (highHandPlayers.length > 0) {
         const highHandPlayer = highHandPlayers[0];
         const playerRepo = getRepository(Player);
-        const player = await playerRepo.findOne({id: parseInt(highHandPlayer.id)});
-        if(!player){
+        const player = await playerRepo.findOne({
+          id: parseInt(highHandPlayer.id),
+        });
+        if (!player) {
           throw new Error('Player not found');
         }
         if (highHandRank > existingHighHandRank) {
           logger.error(`Hand: ${hhCards} is not a high hand.`);
           console.log('1');
-          await this.logHighHand(existingTracking, game, player, input.handNum, JSON.stringify(highHandPlayer.cards), JSON.stringify(input.boardCards), JSON.stringify(highHandPlayer.bestCards), highHandRank, handTime, false, reward)
+          await this.logHighHand(
+            existingTracking,
+            game,
+            player,
+            input.handNum,
+            JSON.stringify(highHandPlayer.cards),
+            JSON.stringify(input.boardCards),
+            JSON.stringify(highHandPlayer.bestCards),
+            highHandRank,
+            handTime,
+            false,
+            reward
+          );
           return;
         }
         const rewardTrackRepo = getRepository(GameRewardTracking);
-        const rewardTrackResp = await rewardTrackRepo.update({id: trackingId},{
-          handNum: input.handNum,
-          gameId: game,
-          playerId: player,
-          boardCards: JSON.stringify(input.boardCards),
-          playerCards: JSON.stringify(highHandPlayer.cards),
-          highHand: JSON.stringify(highHandPlayer.bestCards),
-          highHandRank: highHandRank,
-        });
-        await this.logHighHand(existingTracking, game, player, input.handNum, JSON.stringify(highHandPlayer.cards), JSON.stringify(input.boardCards), JSON.stringify(highHandPlayer.bestCards), highHandRank, handTime, true, reward)        
+        const rewardTrackResp = await rewardTrackRepo.update(
+          {id: trackingId},
+          {
+            handNum: input.handNum,
+            gameId: game,
+            playerId: player,
+            boardCards: JSON.stringify(input.boardCards),
+            playerCards: JSON.stringify(highHandPlayer.cards),
+            highHand: JSON.stringify(highHandPlayer.bestCards),
+            highHandRank: highHandRank,
+          }
+        );
+        await this.logHighHand(
+          existingTracking,
+          game,
+          player,
+          input.handNum,
+          JSON.stringify(highHandPlayer.cards),
+          JSON.stringify(input.boardCards),
+          JSON.stringify(highHandPlayer.bestCards),
+          highHandRank,
+          handTime,
+          true,
+          reward
+        );
       }
       return true;
-    } catch (err) { 
+    } catch (err) {
       logger.error(
         `Couldn't update reward. retry again. Error: ${err.toString()}`
       );
@@ -185,7 +214,19 @@ class RewardRepositoryImpl {
     }
   }
 
-  public async logHighHand(rewardTrackingId: GameRewardTracking, gameId: PokerGame, playerId: Player, handNum: number, playerCards: string, boardCards: string, highhand: string, rank: number, handTime: Date, winner: boolean, reward: Reward){
+  public async logHighHand(
+    rewardTrackingId: GameRewardTracking,
+    gameId: PokerGame,
+    playerId: Player,
+    handNum: number,
+    playerCards: string,
+    boardCards: string,
+    highhand: string,
+    rank: number,
+    handTime: Date,
+    winner: boolean,
+    reward: Reward
+  ) {
     const logHighHandRepo = getRepository(HighHand);
     const logHighHand = new HighHand();
     logHighHand.rewardId = reward;
@@ -202,19 +243,19 @@ class RewardRepositoryImpl {
     await logHighHandRepo.save(logHighHand);
   }
 
-  public async highHandByGame(gameCode){
-    if(!gameCode){
-      return
+  public async highHandByGame(gameCode) {
+    if (!gameCode) {
+      return;
     }
-    console.log("1");
-    const highHand = new Array();
-    var logHighHand :any;
+    console.log('1');
+    const highHand = [];
+    let logHighHand: any;
     const highHandRepo = getRepository(HighHand);
     const gameRepo = getRepository(PokerGame);
     const game = await gameRepo.findOne({id: parseInt(gameCode)});
     const loggedHighHand = await highHandRepo.find({gameId: game});
-    try{
-      for await (logHighHand of loggedHighHand){
+    try {
+      for await (logHighHand of loggedHighHand) {
         await highHand.push({
           gameCode: gameCode,
           handNum: logHighHand.handNum,
@@ -224,49 +265,49 @@ class RewardRepositoryImpl {
           boardCards: logHighHand.boardCards,
           highHand: logHighHand.highHand,
           rank: logHighHand.rank,
-          handTime: logHighHand.handTime
-        })
+          handTime: logHighHand.handTime,
+        });
       }
       return highHand;
-    }catch(err){
+    } catch (err) {
       logger.error(
         `Couldn't retrieve Highhand. retry again. Error: ${err.toString()}`
       );
       throw new Error("Couldn't retrieve highhand, please retry again");
-    } 
+    }
   }
 
-
-  public async highHandByReward(gameCode, rewardId){
-    if(!gameCode || !rewardId ){
-      return
+  public async highHandByReward(gameCode, rewardId) {
+    if (!gameCode || !rewardId) {
+      return;
     }
-    const highHand = new Array();
-    var logHighHand :any;
+    const highHand = [];
+    let logHighHand: any;
     const highHandRepo = getRepository(HighHand);
     const rewardTrackIdRepo = getRepository(GameRewardTracking);
     const gameRepo = getRepository(PokerGame);
-    const rewardRepo = getRepository(Reward); 
+    const rewardRepo = getRepository(Reward);
     const playerRepo = getRepository(Player);
     const game = await gameRepo.findOne({gameCode: gameCode});
-    if(!game){
-      logger.error(
-        `Invalid gameCode`
-      );
-      throw new Error("Invalid gameCode"); 
+    if (!game) {
+      logger.error('Invalid gameCode');
+      throw new Error('Invalid gameCode');
     }
     const reward = await rewardRepo.findOne({id: rewardId});
-    if(!reward){
-      logger.error(
-        `Invalid RewardId}`
-      );
-      throw new Error("Invalid RewardId");
+    if (!reward) {
+      logger.error('Invalid RewardId}');
+      throw new Error('Invalid RewardId');
     }
-    const loggedHighHand = await highHandRepo.find({gameId: gameCode, rewardId: reward });
-    try{
-      for await (logHighHand of loggedHighHand){
-        var player = await playerRepo.findOne({id: parseInt(logHighHand.playerId)});
-        if(!player){
+    const loggedHighHand = await highHandRepo.find({
+      gameId: gameCode,
+      rewardId: reward,
+    });
+    try {
+      for await (logHighHand of loggedHighHand) {
+        const player = await playerRepo.findOne({
+          id: parseInt(logHighHand.playerId),
+        });
+        if (!player) {
           throw new Error('Player not Found Error');
         }
         highHand.push({
@@ -278,16 +319,16 @@ class RewardRepositoryImpl {
           boardCards: logHighHand.boardCards,
           highHand: logHighHand.highHand,
           rank: logHighHand.rank,
-          handTime: logHighHand.handTime
-        })
-      } 
+          handTime: logHighHand.handTime,
+        });
+      }
       return highHand;
-    }catch(err){
+    } catch (err) {
       logger.error(
         `Couldn't retrieve Highhand. retry again. Error: ${err.toString()}`
       );
       throw new Error("Couldn't retrieve highhand, please retry again");
-    } 
+    }
   }
 }
 

@@ -228,7 +228,7 @@ describe('Game APIs', () => {
 
     const player2Id = await clubutils.createPlayer('adam', '1243ABC');
     logger.info(player2Id);
-    
+
     // Join a game
     const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
     expect(data).toBe('WAIT_FOR_BUYIN');
@@ -393,7 +393,7 @@ describe('Game APIs', () => {
     expect(resp2.stack).toBe(100);
     expect(resp2.status).toBe('PLAYING');
     expect(resp2.playingFrom).toBeNull();
-  //  expect(resp2.waitlistNo).toBe(0);
+    //  expect(resp2.waitlistNo).toBe(0);
     expect(resp2.seatNo).toBe(1);
   });
 
@@ -426,7 +426,7 @@ describe('Game APIs', () => {
       expect(resp.stack).toBe(0);
       expect(resp.status).toBe('WAIT_FOR_BUYIN');
       expect(resp.playingFrom).toBeNull();
-     // expect(resp.waitlistNo).toBe(0);
+      // expect(resp.waitlistNo).toBe(0);
       expect(resp.seatNo == 1 || resp.seatNo == 2).toBeTruthy();
     });
   });

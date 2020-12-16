@@ -23,36 +23,35 @@ export const getRewardsQuery = gql`
 `;
 
 export const highHandsByGameQuery = gql`
-query($gameCode: String!) {
-  logdata: highHandsByGame(gameCode: $gameCode) {
-    gameCode
-    handNum
-    playerUuid
-    playerName
-    playerCards
-    boardCards
-    highHand
-    rank
-    handTime
+  query($gameCode: String!) {
+    logdata: highHandsByGame(gameCode: $gameCode) {
+      gameCode
+      handNum
+      playerUuid
+      playerName
+      playerCards
+      boardCards
+      highHand
+      rank
+      handTime
+    }
   }
-}
 `;
 
-
 export const highHandsByRewardQuery = gql`
-query($gameCode: String!, $rewardId: String!) {
-  logdata: highHandsByReward(gameCode: $gameCode, rewardId: $rewardId) {
-    gameCode
-    handNum
-    playerUuid
-    playerName
-    playerCards
-    boardCards
-    highHand
-    rank
-    handTime
+  query($gameCode: String!, $rewardId: String!) {
+    logdata: highHandsByReward(gameCode: $gameCode, rewardId: $rewardId) {
+      gameCode
+      handNum
+      playerUuid
+      playerName
+      playerCards
+      boardCards
+      highHand
+      rank
+      handTime
+    }
   }
-}
 `;
 
 export async function getRewards(
@@ -98,7 +97,7 @@ export async function getlogDatabyReward(
   const variables: any = {
     playerId: playerId,
     gameCode: gameCode,
-    rewardId: rewardId
+    rewardId: rewardId,
   };
   const resp = await getClient(playerId).query({
     variables: variables,

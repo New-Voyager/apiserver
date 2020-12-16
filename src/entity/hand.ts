@@ -38,7 +38,6 @@ export class HandWinners {
   public received!: number;
 }
 
-
 @Entity({name: 'hand_history'})
 export class HandHistory {
   @PrimaryGeneratedColumn()
