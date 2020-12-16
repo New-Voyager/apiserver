@@ -156,7 +156,10 @@ class RewardRepositoryImpl {
           hhCards = player.bestCards;
         }
       }
-
+      if (highHandRank > existingHighHandRank) {
+        logger.error(`Hand: ${hhCards} is not a high hand.`);
+        return;
+      }
       const game = await Cache.getGame(gameCode, false, transactionManager);
 
       // get existing high hand from the database
@@ -169,23 +172,6 @@ class RewardRepositoryImpl {
         });
         if (!player) {
           throw new Error('Player not found');
-        }
-        if (highHandRank > existingHighHandRank) {
-          logger.error(`Hand: ${hhCards} is not a high hand.`);
-          await this.logHighHand(
-            existingTracking,
-            game,
-            player,
-            input.handNum,
-            JSON.stringify(highHandPlayer.cards),
-            JSON.stringify(input.boardCards),
-            JSON.stringify(highHandPlayer.bestCards),
-            highHandRank,
-            handTime,
-            false,
-            reward
-          );
-          return;
         }
         let rewardTrackRepo: Repository<GameRewardTracking>;
         if (transactionManager) {
