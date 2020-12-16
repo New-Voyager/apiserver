@@ -37,7 +37,7 @@ import {WaitListMgmt} from './waitlist';
 import {Reward, GameRewardTracking, GameReward} from '@src/entity/reward';
 import {ChipsTrackRepository} from './chipstrack';
 import {BUYIN_TIMEOUT} from './types';
-import {PlayerRepository} from './player';
+import {Cache} from '@src/cache/index';
 
 const logger = getLogger('game');
 
@@ -1200,6 +1200,9 @@ class GameRepositoryImpl {
       // complete books
       ChipsTrackRepository.settleClubBalances(game);
     }
+
+    // update cached game
+    Cache.getGame(game.gameCode, true /** update */);
     return status;
   }
 
@@ -1216,7 +1219,8 @@ class GameRepositoryImpl {
       .set({tableStatus: status})
       .where('id = :id', {id: gameId})
       .execute();
-
+    // update cached game
+    Cache.getGame(game.gameCode, true /** update */);
     return status;
   }
 

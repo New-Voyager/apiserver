@@ -88,6 +88,10 @@ export async function buyInTimeoutExpired(gameID: number, playerID: number) {
     throw new Error(`Player: ${playerID} is not found`);
   }
 
+  // SOMA: This is buggy
+  // Check the status of the player. If the player is playing, then cancel timer was not called
+  // We forgot to cancel the timer
+  /*
   // handle buyin timeout
   const playerGameTrackerRepository = getRepository(PlayerGameTracker);
   playerGameTrackerRepository.update(
@@ -100,4 +104,5 @@ export async function buyInTimeoutExpired(gameID: number, playerID: number) {
       seatNo: 0,
     }
   );
+  */
 }
