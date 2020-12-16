@@ -3,7 +3,14 @@ import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {NextHandUpdate, PlayerStatus} from '@src/entity/types';
 import {getLogger} from '@src/utils/log';
-import {getManager, getRepository, IsNull, Not} from 'typeorm';
+import {
+  EntityManager,
+  getManager,
+  getRepository,
+  IsNull,
+  Not,
+  Repository,
+} from 'typeorm';
 import * as _ from 'lodash';
 import {
   pendingProcessDone,
@@ -45,75 +52,81 @@ export class SeatChangeProcess {
   // called from the seat change timer callback to finish seat change processing
   public async finish() {
     logger.info('****** STARTING TRANSACTION TO FINISH seat change');
-    const switchedSeats = await getManager().transaction(async () => {
-      // get all the switch seat requests
-      const nextHandUpdatesRepository = getRepository(NextHandUpdates);
-      const requests = await nextHandUpdatesRepository.find({
-        where: {
-          game: {id: this.game.id},
-          newUpdate: NextHandUpdate.SWITCH_SEAT,
-        },
-      });
-      const switchedSeats: Array<any> = new Array<any>();
+    const switchedSeats = await getManager().transaction(
+      async transactionEntityManager => {
+        // get all the switch seat requests
+        const nextHandUpdatesRepository = transactionEntityManager.getRepository(
+          NextHandUpdates
+        );
+        const requests = await nextHandUpdatesRepository.find({
+          where: {
+            game: {id: this.game.id},
+            newUpdate: NextHandUpdate.SWITCH_SEAT,
+          },
+        });
+        const switchedSeats: Array<any> = new Array<any>();
 
-      if (requests.length !== 0) {
-        // get list of players ids who have confirmed to change seat
-        const playerIDs = requests.map(x => x.player.id);
-        const seatChangePlayers = await this.getSeatChangeRequestedPlayers();
-        const seatsTaken = new Array<number>();
-        for (const player of seatChangePlayers) {
-          if (playerIDs.indexOf(player.id) !== -1) {
-            // find the seat the user requested
-            const playerRequests = _.filter(
-              requests,
-              x => x.player.id === player.id
-            );
-            // there should be only one
-            if (playerRequests.length !== 1) {
-              continue;
-            }
-            // if the requested seat is already taken, skip this player
-            const requestedSeat = playerRequests[0].newSeat;
-            if (seatsTaken.indexOf(requestedSeat) !== -1) {
-              logger.info(
-                `Player: ${player.name} (${player.id}) is already taken by antoher player`
+        if (requests.length !== 0) {
+          // get list of players ids who have confirmed to change seat
+          const playerIDs = requests.map(x => x.player.id);
+          const seatChangePlayers = await this.getSeatChangeRequestedPlayers(
+            transactionEntityManager
+          );
+          const seatsTaken = new Array<number>();
+          for (const player of seatChangePlayers) {
+            if (playerIDs.indexOf(player.id) !== -1) {
+              // find the seat the user requested
+              const playerRequests = _.filter(
+                requests,
+                x => x.player.id === player.id
               );
-              continue;
-            }
-
-            // this user will be granted to switch seat
-            logger.info(
-              `Player: ${player.name} (${player.id}) will switch to new seat: ${requestedSeat}`
-            );
-            const playerGameTrackerRepository = getRepository(
-              PlayerGameTracker
-            );
-            playerGameTrackerRepository.update(
-              {
-                game: {id: this.game.id},
-                player: {id: player.id},
-              },
-              {
-                seatNo: requestedSeat,
+              // there should be only one
+              if (playerRequests.length !== 1) {
+                continue;
               }
-            );
-            seatsTaken.push(requestedSeat);
-            switchedSeats.push({
-              player: player,
-              seatNo: requestedSeat,
-            });
+              // if the requested seat is already taken, skip this player
+              const requestedSeat = playerRequests[0].newSeat;
+              if (seatsTaken.indexOf(requestedSeat) !== -1) {
+                logger.info(
+                  `Player: ${player.name} (${player.id}) is already taken by antoher player`
+                );
+                continue;
+              }
+
+              // this user will be granted to switch seat
+              logger.info(
+                `Player: ${player.name} (${player.id}) will switch to new seat: ${requestedSeat}`
+              );
+              const playerGameTrackerRepository = transactionEntityManager.getRepository(
+                PlayerGameTracker
+              );
+              playerGameTrackerRepository.update(
+                {
+                  game: {id: this.game.id},
+                  player: {id: player.id},
+                },
+                {
+                  seatNo: requestedSeat,
+                }
+              );
+              seatsTaken.push(requestedSeat);
+              switchedSeats.push({
+                player: player,
+                seatNo: requestedSeat,
+              });
+            }
           }
         }
+
+        // remove switch seat updates for the game
+        await nextHandUpdatesRepository.delete({
+          game: {id: this.game.id},
+          newUpdate: NextHandUpdate.SWITCH_SEAT,
+        });
+
+        return switchedSeats;
       }
-
-      // remove switch seat updates for the game
-      await nextHandUpdatesRepository.delete({
-        game: {id: this.game.id},
-        newUpdate: NextHandUpdate.SWITCH_SEAT,
-      });
-
-      return switchedSeats;
-    });
+    );
     logger.info('****** ENDING TRANSACTION TO FINISH seat change');
 
     // send message to game server with new updates
@@ -276,8 +289,15 @@ export class SeatChangeProcess {
     return true;
   }
 
-  async getSeatChangeRequestedPlayers() {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+  async getSeatChangeRequestedPlayers(transactionManager?: EntityManager) {
+    let playerGameTrackerRepository: Repository<PlayerGameTracker>;
+    if (transactionManager) {
+      playerGameTrackerRepository = transactionManager.getRepository(
+        PlayerGameTracker
+      );
+    } else {
+      playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    }
     const players = await playerGameTrackerRepository.find({
       relations: ['player'],
       order: {seatChangeRequestedAt: 'ASC'},
