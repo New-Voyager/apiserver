@@ -165,15 +165,18 @@ class ChipsTrackRepositoryImpl {
         throw new Error(`Game Updates for ${gameId} is not found`);
       }
       logger.info('****** STARTING TRANSACTION FOR RAKE CALCULATION');
-      await getManager().transaction(async _ => {
+      await getManager().transaction(async transactionEntityManager => {
         const clubChipsTransaction = new ClubChipsTransaction();
         clubChipsTransaction.club = game.club;
         clubChipsTransaction.amount = gameUpdates.rake;
         clubChipsTransaction.balance = game.club.balance + gameUpdates.rake;
         clubChipsTransaction.description = `rake collected from game #${game.gameCode}`;
-        await clubChipsTransactionRepository.save(clubChipsTransaction);
+        await transactionEntityManager
+          .getRepository(ClubChipsTransaction)
+          .save(clubChipsTransaction);
         const clubId = game.club.id;
-        await clubRepository
+        await transactionEntityManager
+          .getRepository(Club)
           .createQueryBuilder()
           .update()
           .set({
@@ -185,13 +188,16 @@ class ChipsTrackRepositoryImpl {
           .execute();
 
         // update club member balance
-        const playerChips = await playerGameTrackRepository.find({
-          relations: ['game', 'player'],
-          where: {game: {id: gameId}},
-        });
+        const playerChips = await transactionEntityManager
+          .getRepository(PlayerGameTracker)
+          .find({
+            relations: ['game', 'player'],
+            where: {game: {id: gameId}},
+          });
         for await (const playerChip of playerChips) {
           const profit = playerChip.stack - playerChip.buyIn;
-          clubMemberRepository
+          transactionEntityManager
+            .getRepository(ClubMember)
             .createQueryBuilder()
             .update()
             .set({

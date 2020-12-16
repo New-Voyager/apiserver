@@ -1,5 +1,12 @@
 import * as crypto from 'crypto';
-import {getRepository, getManager, getConnection, In} from 'typeorm';
+import {
+  getRepository,
+  getManager,
+  getConnection,
+  In,
+  Repository,
+  EntityManager,
+} from 'typeorm';
 import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {
   GameType,
@@ -130,12 +137,16 @@ class GameRepositoryImpl {
     try {
       logger.info('****** STARTING TRANSACTION TO CREATE a private game');
 
-      await getManager().transaction(async () => {
-        savedGame = await gameRespository.save(game);
+      await getManager().transaction(async transactionEntityManager => {
+        savedGame = await transactionEntityManager
+          .getRepository(PokerGame)
+          .save(game);
 
         if (!game.isTemplate) {
           // create a entry in PokerGameUpdates
-          const gameUpdatesRepo = getRepository(PokerGameUpdates);
+          const gameUpdatesRepo = transactionEntityManager.getRepository(
+            PokerGameUpdates
+          );
           const gameUpdates = new PokerGameUpdates();
           gameUpdates.gameID = savedGame.id;
           await gameUpdatesRepo.save(gameUpdates);
@@ -145,42 +156,54 @@ class GameRepositoryImpl {
           }
 
           const rewardTrackingIds = new Array<number>();
-          for await (const rewardId of input.rewardIds) {
-            const rewardRepository = getRepository(Reward);
-            await rewardRepository.findOne({id: rewardId});
-
-            const rewardTrackRepo = getRepository(GameRewardTracking);
-            const rewardTrack = await rewardTrackRepo.findOne({
-              rewardId: rewardId,
-              active: true,
-            });
-
-            if (!rewardTrack) {
-              const createRewardTrack = new GameRewardTracking();
-              createRewardTrack.rewardId = rewardId;
-              createRewardTrack.day = new Date();
-
-              const rewardTrackRepository = getRepository(GameRewardTracking);
-              const rewardTrackResponse = await rewardTrackRepository.save(
-                createRewardTrack
+          if (input.rewardIds) {
+            for await (const rewardId of input.rewardIds) {
+              const rewardRepository = transactionEntityManager.getRepository(
+                Reward
               );
+              await rewardRepository.findOne({id: rewardId});
 
-              const createGameReward = new GameReward();
-              createGameReward.gameId = game;
-              createGameReward.rewardId = rewardId;
-              createGameReward.rewardTrackingId = rewardTrackResponse;
-              rewardTrackingIds.push(rewardTrackResponse.id);
+              const rewardTrackRepo = transactionEntityManager.getRepository(
+                GameRewardTracking
+              );
+              const rewardTrack = await rewardTrackRepo.findOne({
+                rewardId: rewardId,
+                active: true,
+              });
 
-              const gameRewardRepository = getRepository(GameReward);
-              await gameRewardRepository.save(createGameReward);
-            } else {
-              const createGameReward = new GameReward();
-              createGameReward.gameId = game;
-              createGameReward.rewardId = rewardId;
-              createGameReward.rewardTrackingId = rewardTrack;
+              if (!rewardTrack) {
+                const createRewardTrack = new GameRewardTracking();
+                createRewardTrack.rewardId = rewardId;
+                createRewardTrack.day = new Date();
 
-              const gameRewardRepository = getRepository(GameReward);
-              await gameRewardRepository.save(createGameReward);
+                const rewardTrackRepository = transactionEntityManager.getRepository(
+                  GameRewardTracking
+                );
+                const rewardTrackResponse = await rewardTrackRepository.save(
+                  createRewardTrack
+                );
+
+                const createGameReward = new GameReward();
+                createGameReward.gameId = game;
+                createGameReward.rewardId = rewardId;
+                createGameReward.rewardTrackingId = rewardTrackResponse;
+                rewardTrackingIds.push(rewardTrackResponse.id);
+
+                const gameRewardRepository = transactionEntityManager.getRepository(
+                  GameReward
+                );
+                await gameRewardRepository.save(createGameReward);
+              } else {
+                const createGameReward = new GameReward();
+                createGameReward.gameId = game;
+                createGameReward.rewardId = rewardId;
+                createGameReward.rewardTrackingId = rewardTrack;
+
+                const gameRewardRepository = transactionEntityManager.getRepository(
+                  GameReward
+                );
+                await gameRewardRepository.save(createGameReward);
+              }
             }
           }
 
@@ -213,14 +236,16 @@ class GameRepositoryImpl {
           }
 
           game.tableStatus = tableStatus;
-          await gameRespository.update(
+          await transactionEntityManager.getRepository(PokerGame).update(
             {
               id: game.id,
             },
             {tableStatus: tableStatus}
           );
 
-          const trackgameServerRepository = getRepository(TrackGameServer);
+          const trackgameServerRepository = transactionEntityManager.getRepository(
+            TrackGameServer
+          );
           const trackServer = new TrackGameServer();
           trackServer.game = savedGame;
           trackServer.gameServer = gameServers[pick];
@@ -270,15 +295,18 @@ class GameRepositoryImpl {
     let savedGame;
     try {
       const gameRespository = getRepository(PokerGame);
-      await getManager().transaction(async transactionalEntityManager => {
-        savedGame = await gameRespository.save(game);
+      await getManager().transaction(async transactionEntityManager => {
+        savedGame = await transactionEntityManager
+          .getRepository(PokerGame)
+          .save(game);
 
         const pick = savedGame.id % gameServers.length;
-        const trackgameServerRepository = getRepository(TrackGameServer);
         const trackServer = new TrackGameServer();
         trackServer.game = savedGame;
         trackServer.gameServer = gameServers[pick];
-        await trackgameServerRepository.save(trackServer);
+        await transactionEntityManager
+          .getRepository(TrackGameServer)
+          .save(trackServer);
       });
     } catch (err) {
       logger.error("Couldn't create game and retry again");
@@ -287,8 +315,17 @@ class GameRepositoryImpl {
     return savedGame;
   }
 
-  public async getGameByCode(gameCode: string): Promise<PokerGame | undefined> {
-    const repository = getRepository(PokerGame);
+  public async getGameByCode(
+    gameCode: string,
+    transactionManager?: EntityManager
+  ): Promise<PokerGame | undefined> {
+    let repository: Repository<PokerGame>;
+    if (transactionManager) {
+      repository = transactionManager.getRepository(PokerGame);
+    } else {
+      repository = getRepository(PokerGame);
+    }
+
     // get game by id (testing only)
     const game = await repository.findOne({where: {gameCode: gameCode}});
     return game;
@@ -404,162 +441,171 @@ class GameRepositoryImpl {
       throw new Error('Invalid seat number');
     }
 
-    const status = await getManager().transaction(async () => {
-      // get game updates
-      const gameUpdateRepo = getRepository(PokerGameUpdates);
-      const gameUpdate = await gameUpdateRepo.findOne({
-        where: {
-          gameID: game.id,
-        },
-      });
-      if (!gameUpdate) {
-        console.log(`Game status is not found for game: ${game.gameCode}`);
-        throw new Error(`Game status is not found for game: ${game.gameCode}`);
-      }
-
-      if (gameUpdate.seatChangeInProgress) {
-        throw new Error(
-          `Seat change is in progress for game: ${game.gameCode}`
+    const status = await getManager().transaction(
+      async transactionEntityManager => {
+        // get game updates
+        const gameUpdateRepo = transactionEntityManager.getRepository(
+          PokerGameUpdates
         );
-      }
-
-      const waitlistMgmt = new WaitListMgmt(game);
-
-      const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-      if (gameUpdate.waitlistSeatingInprogress) {
-        // wait list seating in progress
-        // only the player who is asked from the waiting list can sit here
-        await waitlistMgmt.seatPlayer(player);
-      }
-
-      // player is taking a seat in the game
-      // ensure the seat is available
-      // create a record in the player_game_tracker
-      // set the player status to waiting_for_buyin
-      // send a message to game server that a new player is in the seat
-      const playerInSeat = await playerGameTrackerRepository.findOne({
-        relations: ['player'],
-        where: {
-          game: {id: game.id},
-          seatNo: seatNo,
-        },
-      });
-
-      // if the current player in seat tried to sit in the same seat, do nothing
-      if (playerInSeat && playerInSeat.player.id === player.id) {
-        return playerInSeat.status;
-      }
-
-      if (playerInSeat && playerInSeat.player.id !== player.id) {
-        // there is a player in the seat (unexpected)
-        throw new Error(
-          `A player ${playerInSeat.player.name}:${playerInSeat.player.uuid} is sitting in seat: ${seatNo}`
-        );
-      }
-      // if this player has already played this game before, we should have his record
-      const playerInGames = await playerGameTrackerRepository
-        .createQueryBuilder()
-        .where({
-          game: {id: game.id},
-          player: {id: player.id},
-        })
-        .select('stack')
-        .addSelect('status')
-        .addSelect('buy_in', 'buyIn')
-        .addSelect('game_token', 'gameToken')
-        .execute();
-
-      let playerInGame: any = null;
-      if (playerInGames.length > 0) {
-        playerInGame = playerInGames[0];
-      }
-
-      if (playerInGame) {
-        playerInGame.seatNo = seatNo;
-      } else {
-        playerInGame = new PlayerGameTracker();
-        playerInGame.player = player;
-        playerInGame.game = game;
-        playerInGame.stack = 0;
-        playerInGame.buyIn = 0;
-        playerInGame.seatNo = seatNo;
-        playerInGame.noOfBuyins = 0;
-        playerInGame.buyinNotes = '';
-        const randomBytes = Buffer.from(crypto.randomBytes(5));
-        playerInGame.gameToken = randomBytes.toString('hex');
-        playerInGame.status = PlayerStatus.NOT_PLAYING;
-        try {
-          await playerGameTrackerRepository.save(playerInGame);
-        } catch (err) {
-          const doesPlayerExist = await PlayerRepository.getPlayerByDBId(
-            player.id
+        const gameUpdate = await gameUpdateRepo.findOne({
+          where: {
+            gameID: game.id,
+          },
+        });
+        if (!gameUpdate) {
+          console.log(`Game status is not found for game: ${game.gameCode}`);
+          throw new Error(
+            `Game status is not found for game: ${game.gameCode}`
           );
+        }
 
-          const doesGameExist = await this.getGameByCode(game.gameCode);
-          if (doesGameExist) {
-            logger.error(
-              `Failed to update player_game_tracker table ${err.toString()} Game: ${
-                doesGameExist.id
-              }`
+        if (gameUpdate.seatChangeInProgress) {
+          throw new Error(
+            `Seat change is in progress for game: ${game.gameCode}`
+          );
+        }
+
+        const waitlistMgmt = new WaitListMgmt(game);
+
+        const playerGameTrackerRepository = transactionEntityManager.getRepository(
+          PlayerGameTracker
+        );
+        if (gameUpdate.waitlistSeatingInprogress) {
+          // wait list seating in progress
+          // only the player who is asked from the waiting list can sit here
+          await waitlistMgmt.seatPlayer(player);
+        }
+
+        // player is taking a seat in the game
+        // ensure the seat is available
+        // create a record in the player_game_tracker
+        // set the player status to waiting_for_buyin
+        // send a message to game server that a new player is in the seat
+        const playerInSeat = await playerGameTrackerRepository.findOne({
+          relations: ['player'],
+          where: {
+            game: {id: game.id},
+            seatNo: seatNo,
+          },
+        });
+
+        // if the current player in seat tried to sit in the same seat, do nothing
+        if (playerInSeat && playerInSeat.player.id === player.id) {
+          return playerInSeat.status;
+        }
+
+        if (playerInSeat && playerInSeat.player.id !== player.id) {
+          // there is a player in the seat (unexpected)
+          throw new Error(
+            `A player ${playerInSeat.player.name}:${playerInSeat.player.uuid} is sitting in seat: ${seatNo}`
+          );
+        }
+        // if this player has already played this game before, we should have his record
+        const playerInGames = await playerGameTrackerRepository
+          .createQueryBuilder()
+          .where({
+            game: {id: game.id},
+            player: {id: player.id},
+          })
+          .select('stack')
+          .addSelect('status')
+          .addSelect('buy_in', 'buyIn')
+          .addSelect('game_token', 'gameToken')
+          .execute();
+
+        let playerInGame: any = null;
+        if (playerInGames.length > 0) {
+          playerInGame = playerInGames[0];
+        }
+
+        if (playerInGame) {
+          playerInGame.seatNo = seatNo;
+        } else {
+          playerInGame = new PlayerGameTracker();
+          playerInGame.player = player;
+          playerInGame.game = game;
+          playerInGame.stack = 0;
+          playerInGame.buyIn = 0;
+          playerInGame.seatNo = seatNo;
+          playerInGame.noOfBuyins = 0;
+          playerInGame.buyinNotes = '';
+          const randomBytes = Buffer.from(crypto.randomBytes(5));
+          playerInGame.gameToken = randomBytes.toString('hex');
+          playerInGame.status = PlayerStatus.NOT_PLAYING;
+          try {
+            await playerGameTrackerRepository.save(playerInGame);
+          } catch (err) {
+            const doesGameExist = await this.getGameByCode(
+              game.gameCode,
+              transactionEntityManager
             );
+            if (doesGameExist) {
+              logger.error(
+                `Failed to update player_game_tracker table ${err.toString()} Game: ${
+                  doesGameExist.id
+                }`
+              );
+            }
+            throw err;
           }
-          throw err;
         }
-      }
 
-      // we need 5 bytes to scramble 5 cards
-      if (playerInGame.stack > 0) {
-        playerInGame.status = PlayerStatus.PLAYING;
-      } else {
-        playerInGame.status = PlayerStatus.WAIT_FOR_BUYIN;
-      }
-
-      await playerGameTrackerRepository.update(
-        {
-          game: {id: game.id},
-          player: {id: player.id},
-        },
-        {
-          seatNo: seatNo,
-          status: playerInGame.status,
+        // we need 5 bytes to scramble 5 cards
+        if (playerInGame.stack > 0) {
+          playerInGame.status = PlayerStatus.PLAYING;
+        } else {
+          playerInGame.status = PlayerStatus.WAIT_FOR_BUYIN;
         }
-      );
 
-      // get number of players in the seats
-      const count = await playerGameTrackerRepository.count({
-        where: {
-          game: {id: game.id},
-          status: In([
-            PlayerStatus.PLAYING,
-            PlayerStatus.IN_BREAK,
-            PlayerStatus.WAIT_FOR_BUYIN,
-          ]),
-        },
-      });
+        await playerGameTrackerRepository.update(
+          {
+            game: {id: game.id},
+            player: {id: player.id},
+          },
+          {
+            seatNo: seatNo,
+            status: playerInGame.status,
+          }
+        );
 
-      const gameUpdatesRepo = getRepository(PokerGameUpdates);
-      await gameUpdatesRepo.update(
-        {
-          gameID: game.id,
-        },
-        {playersInSeats: count}
-      );
+        // get number of players in the seats
+        const count = await playerGameTrackerRepository.count({
+          where: {
+            game: {id: game.id},
+            status: In([
+              PlayerStatus.PLAYING,
+              PlayerStatus.IN_BREAK,
+              PlayerStatus.WAIT_FOR_BUYIN,
+            ]),
+          },
+        });
 
-      if (playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN) {
-        // TODO: start a buy-in timer
-        const buyinTimeExp = new Date();
-        const timeout = 60;
-        buyinTimeExp.setSeconds(buyinTimeExp.getSeconds() + timeout);
-        startTimer(game.id, player.id, BUYIN_TIMEOUT, buyinTimeExp);
+        const gameUpdatesRepo = transactionEntityManager.getRepository(
+          PokerGameUpdates
+        );
+        await gameUpdatesRepo.update(
+          {
+            gameID: game.id,
+          },
+          {playersInSeats: count}
+        );
+
+        if (playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN) {
+          // TODO: start a buy-in timer
+          const buyinTimeExp = new Date();
+          const timeout = 60;
+          buyinTimeExp.setSeconds(buyinTimeExp.getSeconds() + timeout);
+          startTimer(game.id, player.id, BUYIN_TIMEOUT, buyinTimeExp);
+        }
+
+        // send a message to gameserver
+        newPlayerSat(game, player, seatNo, playerInGame);
+
+        // continue to run wait list seating
+        waitlistMgmt.runWaitList();
+        return playerInGame.status;
       }
-
-      // send a message to gameserver
-      newPlayerSat(game, player, seatNo, playerInGame);
-
-      // continue to run wait list seating
-      waitlistMgmt.runWaitList();
-      return playerInGame.status;
-    });
+    );
     return status;
   }
 
@@ -569,92 +615,62 @@ class GameRepositoryImpl {
     amount: number,
     reload: boolean
   ): Promise<BuyInApprovalStatus> {
-    const status = await getManager().transaction(async () => {
-      // player must be already in a seat or waiting list
-      // if credit limit is set, make sure his buyin amount is within the credit limit
-      // if auto approval is set, add the buyin
-      // make sure buyin within min and maxBuyin
-      // send a message to game server that buyer stack has been updated
-      const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-      const playerInGame = await playerGameTrackerRepository.findOne({
-        where: {
-          game: {id: game.id},
-          player: {id: player.id},
-        },
-      });
-
-      if (!playerInGame) {
-        logger.error(
-          `Player ${player.name} is not in the game: ${game.gameCode}`
+    const status = await getManager().transaction(
+      async transactionEntityManager => {
+        // player must be already in a seat or waiting list
+        // if credit limit is set, make sure his buyin amount is within the credit limit
+        // if auto approval is set, add the buyin
+        // make sure buyin within min and maxBuyin
+        // send a message to game server that buyer stack has been updated
+        const playerGameTrackerRepository = transactionEntityManager.getRepository(
+          PlayerGameTracker
         );
-        throw new Error(`Player ${player.name} is not in the game`);
-      }
+        const playerInGame = await playerGameTrackerRepository.findOne({
+          where: {
+            game: {id: game.id},
+            player: {id: player.id},
+          },
+        });
 
-      // check amount should be between game.minBuyIn and game.maxBuyIn
-      if (
-        playerInGame.stack + amount < game.buyInMin ||
-        playerInGame.stack + amount > game.buyInMax
-      ) {
-        throw new Error(
-          `Buyin must be between ${game.buyInMin} and ${game.buyInMax}`
-        );
-      }
-
-      if (reload) {
-        // if reload is set to true, if stack exceeds game.maxBuyIn
-        if (playerInGame.stack + amount > game.buyInMax) {
-          amount = game.buyInMax - playerInGame.stack;
+        if (!playerInGame) {
+          logger.error(
+            `Player ${player.name} is not in the game: ${game.gameCode}`
+          );
+          throw new Error(`Player ${player.name} is not in the game`);
         }
-      }
 
-      // NOTE TO SANJAY: Add other functionalities
-      const clubMemberRepository = getRepository<ClubMember>(ClubMember);
-      const clubMember = await clubMemberRepository.findOne({
-        where: {
-          club: {id: game.club.id},
-          player: {id: player.id},
-        },
-      });
-      if (!clubMember) {
-        throw new Error(`The player ${player.name} is not in the club`);
-      }
-
-      if (clubMember.autoBuyinApproval) {
-        playerInGame.buyInStatus = BuyInApprovalStatus.APPROVED;
-        playerInGame.noOfBuyins++;
-        playerInGame.stack += amount;
-        playerInGame.buyIn += amount;
-
-        // if the player is in the seat and waiting for buyin
-        // then mark his status as playing
+        // check amount should be between game.minBuyIn and game.maxBuyIn
         if (
-          playerInGame.seatNo !== 0 &&
-          playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN
+          playerInGame.stack + amount < game.buyInMin ||
+          playerInGame.stack + amount > game.buyInMax
         ) {
-          playerInGame.status = PlayerStatus.PLAYING;
-        }
-      } else {
-        const query =
-          'SELECT SUM(buy_in) current_buyin FROM player_game_tracker pgt, poker_game pg WHERE pgt.pgt_player_id = ' +
-          player.id +
-          ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
-          GameStatus.ENDED;
-        const resp = await getConnection().query(query);
-
-        const currentBuyin = resp[0]['current_buyin'];
-
-        let outstandingBalance = playerInGame.buyIn;
-        if (currentBuyin) {
-          outstandingBalance += currentBuyin;
+          throw new Error(
+            `Buyin must be between ${game.buyInMin} and ${game.buyInMax}`
+          );
         }
 
-        let availableCredit = 0.0;
-        if (clubMember.creditLimit >= 0) {
-          availableCredit = clubMember.creditLimit - outstandingBalance;
+        if (reload) {
+          // if reload is set to true, if stack exceeds game.maxBuyIn
+          if (playerInGame.stack + amount > game.buyInMax) {
+            amount = game.buyInMax - playerInGame.stack;
+          }
         }
 
-        if (amount <= availableCredit) {
-          // player is within the credit limit
+        // NOTE TO SANJAY: Add other functionalities
+        const clubMemberRepository = transactionEntityManager.getRepository<
+          ClubMember
+        >(ClubMember);
+        const clubMember = await clubMemberRepository.findOne({
+          where: {
+            club: {id: game.club.id},
+            player: {id: player.id},
+          },
+        });
+        if (!clubMember) {
+          throw new Error(`The player ${player.name} is not in the club`);
+        }
+
+        if (clubMember.autoBuyinApproval) {
           playerInGame.buyInStatus = BuyInApprovalStatus.APPROVED;
           playerInGame.noOfBuyins++;
           playerInGame.stack += amount;
@@ -669,50 +685,88 @@ class GameRepositoryImpl {
             playerInGame.status = PlayerStatus.PLAYING;
           }
         } else {
-          playerInGame.buyinNotes = `Player ${player.name} has ${outstandingBalance} outstanding balance and Requested: ${amount}`;
-          playerInGame.buyInStatus = BuyInApprovalStatus.WAITING_FOR_APPROVAL;
+          const query =
+            'SELECT SUM(buy_in) current_buyin FROM player_game_tracker pgt, poker_game pg WHERE pgt.pgt_player_id = ' +
+            player.id +
+            ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
+            GameStatus.ENDED;
+          const resp = await transactionEntityManager.query(query);
+
+          const currentBuyin = resp[0]['current_buyin'];
+
+          let outstandingBalance = playerInGame.buyIn;
+          if (currentBuyin) {
+            outstandingBalance += currentBuyin;
+          }
+
+          let availableCredit = 0.0;
+          if (clubMember.creditLimit >= 0) {
+            availableCredit = clubMember.creditLimit - outstandingBalance;
+          }
+
+          if (amount <= availableCredit) {
+            // player is within the credit limit
+            playerInGame.buyInStatus = BuyInApprovalStatus.APPROVED;
+            playerInGame.noOfBuyins++;
+            playerInGame.stack += amount;
+            playerInGame.buyIn += amount;
+
+            // if the player is in the seat and waiting for buyin
+            // then mark his status as playing
+            if (
+              playerInGame.seatNo !== 0 &&
+              playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN
+            ) {
+              playerInGame.status = PlayerStatus.PLAYING;
+            }
+          } else {
+            playerInGame.buyinNotes = `Player ${player.name} has ${outstandingBalance} outstanding balance and Requested: ${amount}`;
+            playerInGame.buyInStatus = BuyInApprovalStatus.WAITING_FOR_APPROVAL;
+          }
         }
-      }
 
-      await playerGameTrackerRepository.update(
-        {
-          game: {id: game.id},
-          player: {id: player.id},
-        },
-        {
-          buyInStatus: playerInGame.buyInStatus,
-          stack: playerInGame.stack,
-          buyIn: playerInGame.buyIn,
-          noOfBuyins: playerInGame.noOfBuyins,
-          buyinNotes: playerInGame.buyinNotes,
-          status: playerInGame.status,
+        await playerGameTrackerRepository.update(
+          {
+            game: {id: game.id},
+            player: {id: player.id},
+          },
+          {
+            buyInStatus: playerInGame.buyInStatus,
+            stack: playerInGame.stack,
+            buyIn: playerInGame.buyIn,
+            noOfBuyins: playerInGame.noOfBuyins,
+            buyinNotes: playerInGame.buyinNotes,
+            status: playerInGame.status,
+          }
+        );
+
+        const count = await playerGameTrackerRepository.count({
+          where: {
+            game: {id: game.id},
+            status: PlayerStatus.PLAYING,
+          },
+        });
+
+        const gameUpdatesRepo = transactionEntityManager.getRepository(
+          PokerGameUpdates
+        );
+        await gameUpdatesRepo.update(
+          {
+            gameID: game.id,
+          },
+          {playersInSeats: count}
+        );
+
+        // send a message to gameserver
+        // get game server of this game
+        const gameServer = await this.getGameServer(game.id);
+        if (gameServer) {
+          playerBuyIn(game, player, playerInGame);
         }
-      );
 
-      const count = await playerGameTrackerRepository.count({
-        where: {
-          game: {id: game.id},
-          status: PlayerStatus.PLAYING,
-        },
-      });
-
-      const gameUpdatesRepo = getRepository(PokerGameUpdates);
-      await gameUpdatesRepo.update(
-        {
-          gameID: game.id,
-        },
-        {playersInSeats: count}
-      );
-
-      // send a message to gameserver
-      // get game server of this game
-      const gameServer = await this.getGameServer(game.id);
-      if (gameServer) {
-        playerBuyIn(game, player, playerInGame);
+        return playerInGame.buyInStatus;
       }
-
-      return playerInGame.buyInStatus;
-    });
+    );
     return status;
   }
 
@@ -1205,13 +1259,15 @@ class GameRepositoryImpl {
   }
 
   public async kickOutPlayer(gameCode: string, player: Player) {
-    await getManager().transaction(async () => {
+    await getManager().transaction(async transactionEntityManager => {
       // find game
-      const game = await this.getGameByCode(gameCode);
+      const game = await this.getGameByCode(gameCode, transactionEntityManager);
       if (!game) {
         throw new Error(`Game ${gameCode} is not found`);
       }
-      const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+      const playerGameTrackerRepository = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
       const playerInGame = await playerGameTrackerRepository.findOne({
         where: {
           game: {id: game.id},
@@ -1243,7 +1299,9 @@ class GameRepositoryImpl {
           },
         });
 
-        const gameUpdatesRepo = getRepository(PokerGameUpdates);
+        const gameUpdatesRepo = transactionEntityManager.getRepository(
+          PokerGameUpdates
+        );
         await gameUpdatesRepo.update(
           {
             gameID: game.id,
@@ -1255,7 +1313,9 @@ class GameRepositoryImpl {
       } else {
         // game is running, so kickout the user in next hand
         // deal with this in the next hand update
-        const nextHandUpdatesRepository = getRepository(NextHandUpdates);
+        const nextHandUpdatesRepository = transactionEntityManager.getRepository(
+          NextHandUpdates
+        );
         const update = new NextHandUpdates();
         update.game = game;
         update.player = player;

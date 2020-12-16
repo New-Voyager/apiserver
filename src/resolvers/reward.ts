@@ -72,7 +72,7 @@ export async function getHighHandsByGame(playerId: string, gameCode: string) {
 export async function getHighHandsByReward(
   playerId: string,
   gameCode: string,
-  rewardId: string
+  rewardId: number
 ) {
   if (!playerId) {
     throw new Error('Unauthorized');

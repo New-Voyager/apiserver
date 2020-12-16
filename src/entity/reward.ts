@@ -146,29 +146,29 @@ export class HighHand {
     nullable: false,
   })
   @JoinColumn({name: 'game_id'})
-  public gameId!: PokerGame;
+  public game!: PokerGame;
 
   @ManyToOne(() => Player, playerId => playerId.id, {
     eager: true,
     nullable: false,
   })
   @JoinColumn({name: 'player_id'})
-  public playerId!: Player;
+  public player!: Player;
 
   @ManyToOne(() => Reward, rewardId => rewardId.id, {
     eager: true,
-    nullable: false,
+    nullable: true,
   })
   @JoinColumn({name: 'reward_id'})
-  public rewardId!: Reward;
+  public reward!: Reward;
 
   @ManyToOne(
     () => GameRewardTracking,
     rewardTrackingId => rewardTrackingId.id,
-    {eager: true, nullable: true}
+    {eager: false, nullable: true}
   )
   @JoinColumn({name: 'reward_tracking_id'})
-  public rewardTrackingId!: GameRewardTracking;
+  public rewardTracking!: GameRewardTracking;
 
   @Column({name: 'hand_num', nullable: false})
   public handNum!: number;

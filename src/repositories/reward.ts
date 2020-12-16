@@ -1,5 +1,5 @@
 import {Club} from '@src/entity/club';
-import {getManager, getRepository} from 'typeorm';
+import {EntityManager, getManager, getRepository, Repository} from 'typeorm';
 import {RewardType, ScheduleType} from '@src/entity/types';
 import {GameRewardTracking, Reward} from '@src/entity/reward';
 export interface RewardInputFormat {
@@ -85,7 +85,12 @@ class RewardRepositoryImpl {
     return await this.handleHighHand(gameCode, input, handTime);
   }
 
-  public async handleHighHand(gameCode: string, input: any, handTime: Date) {
+  public async handleHighHand(
+    gameCode: string,
+    input: any,
+    handTime: Date,
+    transactionManager?: EntityManager
+  ) {
     try {
       if (!input.rewardTrackingIds || input.rewardTrackingIds.length === 0) {
         return;
@@ -113,7 +118,12 @@ class RewardRepositoryImpl {
       }
 
       const trackingId = input.rewardTrackingIds[0];
-      const rewardTrackRepo = getRepository(GameRewardTracking);
+      let rewardTrackRepo: Repository<GameRewardTracking>;
+      if (transactionManager) {
+        rewardTrackRepo = transactionManager.getRepository(GameRewardTracking);
+      } else {
+        rewardTrackRepo = getRepository(GameRewardTracking);
+      }
 
       const existingTracking = await rewardTrackRepo.findOne({
         id: trackingId,
@@ -147,7 +157,7 @@ class RewardRepositoryImpl {
         }
       }
 
-      const game = await Cache.getGame(gameCode);
+      const game = await Cache.getGame(gameCode, false, transactionManager);
 
       // get existing high hand from the database
       // TODO: we need to handle multiple players with high hands
@@ -162,7 +172,6 @@ class RewardRepositoryImpl {
         }
         if (highHandRank > existingHighHandRank) {
           logger.error(`Hand: ${hhCards} is not a high hand.`);
-          console.log('1');
           await this.logHighHand(
             existingTracking,
             game,
@@ -178,10 +187,18 @@ class RewardRepositoryImpl {
           );
           return;
         }
-        const rewardTrackRepo = getRepository(GameRewardTracking);
-        const rewardTrackResp = await rewardTrackRepo.update(
-          {id: trackingId},
-          {
+        let rewardTrackRepo: Repository<GameRewardTracking>;
+        if (transactionManager) {
+          rewardTrackRepo = transactionManager.getRepository(
+            GameRewardTracking
+          );
+        } else {
+          rewardTrackRepo = getRepository(GameRewardTracking);
+        }
+        await rewardTrackRepo
+          .createQueryBuilder()
+          .update()
+          .set({
             handNum: input.handNum,
             gameId: game,
             playerId: player,
@@ -189,8 +206,7 @@ class RewardRepositoryImpl {
             playerCards: JSON.stringify(highHandPlayer.cards),
             highHand: JSON.stringify(highHandPlayer.bestCards),
             highHandRank: highHandRank,
-          }
-        );
+          });
         await this.logHighHand(
           existingTracking,
           game,
@@ -215,35 +231,41 @@ class RewardRepositoryImpl {
   }
 
   public async logHighHand(
-    rewardTrackingId: GameRewardTracking,
-    gameId: PokerGame,
-    playerId: Player,
+    rewardTracking: GameRewardTracking,
+    game: PokerGame,
+    player: Player,
     handNum: number,
     playerCards: string,
     boardCards: string,
-    highhand: string,
+    highhandRank: string,
     rank: number,
     handTime: Date,
     winner: boolean,
-    reward: Reward
+    reward: Reward,
+    transactionManager?: EntityManager
   ) {
-    const logHighHandRepo = getRepository(HighHand);
-    const logHighHand = new HighHand();
-    logHighHand.rewardId = reward;
-    logHighHand.rewardTrackingId = rewardTrackingId;
-    logHighHand.gameId = gameId;
-    logHighHand.playerId = playerId;
-    logHighHand.highHand = highhand;
-    logHighHand.handNum = handNum;
-    logHighHand.playerCards = playerCards;
-    logHighHand.boardCards = boardCards;
-    logHighHand.rank = rank;
-    logHighHand.handTime = handTime;
-    logHighHand.winner = winner;
-    await logHighHandRepo.save(logHighHand);
+    let logHighHandRepo: Repository<HighHand>;
+    if (transactionManager) {
+      logHighHandRepo = transactionManager.getRepository(HighHand);
+    } else {
+      logHighHandRepo = getRepository(HighHand);
+    }
+    const highhand = new HighHand();
+    highhand.reward = reward;
+    highhand.rewardTracking = rewardTracking;
+    highhand.game = game;
+    highhand.player = player;
+    highhand.highHand = highhandRank;
+    highhand.handNum = handNum;
+    highhand.playerCards = playerCards;
+    highhand.boardCards = boardCards;
+    highhand.rank = rank;
+    highhand.handTime = handTime;
+    highhand.winner = winner;
+    await logHighHandRepo.save(highhand);
   }
 
-  public async highHandByGame(gameCode) {
+  public async highHandByGame(gameCode: string) {
     if (!gameCode) {
       return;
     }
@@ -251,9 +273,8 @@ class RewardRepositoryImpl {
     const highHand = [] as any;
     let logHighHand: any;
     const highHandRepo = getRepository(HighHand);
-    const gameRepo = getRepository(PokerGame);
-    const game = await gameRepo.findOne({id: parseInt(gameCode)});
-    const loggedHighHand = await highHandRepo.find({gameId: game});
+    const game = await Cache.getGame(gameCode);
+    const loggedHighHand = await highHandRepo.find({game: {id: game.id}});
     try {
       for await (logHighHand of loggedHighHand) {
         await highHand.push({
@@ -277,7 +298,7 @@ class RewardRepositoryImpl {
     }
   }
 
-  public async highHandByReward(gameCode, rewardId) {
+  public async highHandByReward(gameCode: string, rewardId: number) {
     if (!gameCode || !rewardId) {
       return;
     }
@@ -299,8 +320,8 @@ class RewardRepositoryImpl {
       throw new Error('Invalid RewardId');
     }
     const loggedHighHand = await highHandRepo.find({
-      gameId: gameCode,
-      rewardId: reward,
+      game: {id: game.id},
+      reward: {id: rewardId},
     });
     try {
       for await (logHighHand of loggedHighHand) {
