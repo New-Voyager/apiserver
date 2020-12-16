@@ -20,6 +20,7 @@ export enum NewUpdate {
 export const WAITLIST_SEATING = 'WAITLIST_SEATING';
 export const SEATCHANGE_PROGRSS = 'SEATCHANGE_INPROGRESS';
 export const BUYIN_TIMEOUT = 'BUYIN_TIMEOUT';
+export const BUYIN_APPROVAL_TIMEOUT = 'BUYIN_APPROVAL_TIMEOUT';
 
 // full house rank
 export const MIN_FULLHOUSE_RANK = 322;

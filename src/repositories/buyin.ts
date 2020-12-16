@@ -12,7 +12,8 @@ import {
 } from '@src/entity/types';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {GameRepository} from './game';
-import {playerBuyIn} from '@src/gameserver';
+import {playerBuyIn, startTimer} from '@src/gameserver';
+import {BUYIN_APPROVAL_TIMEOUT} from './types';
 
 const logger = getLogger('buyin');
 
@@ -148,6 +149,17 @@ export async function buyInRequest(
           game,
           amount,
           NextHandUpdate.WAIT_BUYIN_APPROVAL
+        );
+        const buyinApprovalTimeExp = new Date();
+        const timeout = 60;
+        buyinApprovalTimeExp.setSeconds(
+          buyinApprovalTimeExp.getSeconds() + timeout
+        );
+        startTimer(
+          game.id,
+          player.id,
+          BUYIN_APPROVAL_TIMEOUT,
+          buyinApprovalTimeExp
         );
         playerInGame.status = PlayerStatus.PENDING_UPDATES;
       }
