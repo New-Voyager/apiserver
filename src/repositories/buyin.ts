@@ -21,7 +21,9 @@ export async function buyInRequest(
   player: Player,
   game: PokerGame,
   amount: number
-): Promise<PlayerStatus> {
+): Promise<any> {
+  let timeout = 0,
+    approved = false;
   const status = await getManager().transaction(async () => {
     // player must be already in a seat or waiting list
     // if credit limit is set, make sure his buyin amount is within the credit limit
@@ -70,6 +72,7 @@ export async function buyInRequest(
     }
 
     if (clubMember.autoBuyinApproval) {
+      approved = true;
       if (
         game.status === GameStatus.ACTIVE &&
         game.tableStatus === TableStatus.GAME_RUNNING
@@ -116,6 +119,7 @@ export async function buyInRequest(
       }
 
       if (amount <= availableCredit) {
+        approved = true;
         if (
           game.status === GameStatus.ACTIVE &&
           game.tableStatus === TableStatus.GAME_RUNNING
@@ -151,7 +155,7 @@ export async function buyInRequest(
           NextHandUpdate.WAIT_BUYIN_APPROVAL
         );
         const buyinApprovalTimeExp = new Date();
-        const timeout = 60;
+        timeout = 60;
         buyinApprovalTimeExp.setSeconds(
           buyinApprovalTimeExp.getSeconds() + timeout
         );
@@ -162,6 +166,7 @@ export async function buyInRequest(
           buyinApprovalTimeExp
         );
         playerInGame.status = PlayerStatus.PENDING_UPDATES;
+        approved = false;
       }
     }
 
@@ -208,7 +213,10 @@ export async function buyInRequest(
 
     return playerInGame.status;
   });
-  return status;
+  return {
+    expireSeconds: timeout,
+    approved: approved,
+  };
 }
 
 async function addBuyInToNextHand(

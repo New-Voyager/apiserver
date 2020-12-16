@@ -238,7 +238,7 @@ export async function buyIn(
     const player = await Cache.getPlayer(playerUuid);
     const status = await buyInRequest(player, game, amount);
     // player is good to go
-    return PlayerStatus[status];
+    return status;
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error(`Failed to update buyin. ${JSON.stringify(err)}`);

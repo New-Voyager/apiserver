@@ -612,7 +612,10 @@ class GameScript {
     try {
       const query = gql`
         mutation($gameCode: String!, $amount: Float!) {
-          buyIn(gameCode: $gameCode, amount: $amount)
+          buyIn(gameCode: $gameCode, amount: $amount) {
+            expireSeconds
+            approved
+          }
         }
       `;
       // console.log(this.registeredPlayers);
