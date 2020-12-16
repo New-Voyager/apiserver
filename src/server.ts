@@ -143,6 +143,8 @@ function addInternalRoutes(app: any) {
     GameServerAPI.restartGames
   );
 
+  app.post('/internal/save-hand/gameId/:gameId/handNum/:handNum', HandServerAPI.postHand);
+
   app.post('/auth/login', login);
 }
 

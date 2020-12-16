@@ -224,11 +224,18 @@ describe('Game APIs', () => {
       holdemGameInput
     );
     const player1Id = await clubutils.createPlayer('player1', 'abc123');
-    const player2Id = await clubutils.createPlayer('adam', '1243ABC');
+    logger.info(player1Id);
 
+    const player2Id = await clubutils.createPlayer('adam', '1243ABC');
+    logger.info(player2Id);
+    
     // Join a game
     const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
     expect(data).toBe('WAIT_FOR_BUYIN');
+
+    await clubutils.playerJoinsClub(clubCode, player2Id);
+    await clubutils.approvePlayer(clubCode, ownerId, player2Id);
+
     const data1 = await gameutils.joinGame(player2Id, game.gameCode, 2);
     expect(data1).toBe('WAIT_FOR_BUYIN');
 
@@ -256,6 +263,9 @@ describe('Game APIs', () => {
     );
     const player1Id = await clubutils.createPlayer('player1', 'abc123');
     const player2Id = await clubutils.createPlayer('adam', '1243ABC');
+
+    await clubutils.playerJoinsClub(clubCode, player2Id);
+    await clubutils.approvePlayer(clubCode, ownerId, player2Id);
 
     const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
     expect(data).toBe('WAIT_FOR_BUYIN');
@@ -297,6 +307,9 @@ describe('Game APIs', () => {
     );
     const player1Id = await clubutils.createPlayer('player1', 'abc123');
     const player2Id = await clubutils.createPlayer('adam', '1243ABC');
+
+    await clubutils.playerJoinsClub(clubCode, player2Id);
+    await clubutils.approvePlayer(clubCode, ownerId, player2Id);
 
     const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
     expect(data).toBe('WAIT_FOR_BUYIN');
@@ -352,6 +365,9 @@ describe('Game APIs', () => {
     const player1Id = await clubutils.createPlayer('player1', 'abc123');
     const player2Id = await clubutils.createPlayer('adam', '1243ABC');
 
+    await clubutils.playerJoinsClub(clubCode, player2Id);
+    await clubutils.approvePlayer(clubCode, ownerId, player2Id);
+
     const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
     expect(data).toBe('WAIT_FOR_BUYIN');
     const data1 = await gameutils.joinGame(player2Id, game.gameCode, 2);
@@ -364,7 +380,7 @@ describe('Game APIs', () => {
     expect(resp.stack).toBe(0);
     expect(resp.status).toBe('WAIT_FOR_BUYIN');
     expect(resp.playingFrom).toBeNull();
-    expect(resp.waitlistNo).toBe(0);
+    //expect(resp.waitlistNo).toBe(0);
     expect(resp.seatNo).toBe(1);
 
     const resp1 = await gameutils.buyin(player1Id, game.gameCode, 100);
@@ -377,7 +393,7 @@ describe('Game APIs', () => {
     expect(resp2.stack).toBe(100);
     expect(resp2.status).toBe('PLAYING');
     expect(resp2.playingFrom).toBeNull();
-    expect(resp2.waitlistNo).toBe(0);
+  //  expect(resp2.waitlistNo).toBe(0);
     expect(resp2.seatNo).toBe(1);
   });
 
@@ -391,6 +407,9 @@ describe('Game APIs', () => {
     );
     const player1Id = await clubutils.createPlayer('player1', 'abc123');
     const player2Id = await clubutils.createPlayer('adam', '1243ABC');
+
+    await clubutils.playerJoinsClub(clubCode, player2Id);
+    await clubutils.approvePlayer(clubCode, ownerId, player2Id);
 
     const data = await gameutils.joinGame(player1Id, game.gameCode, 1);
     expect(data).toBe('WAIT_FOR_BUYIN');
@@ -407,7 +426,7 @@ describe('Game APIs', () => {
       expect(resp.stack).toBe(0);
       expect(resp.status).toBe('WAIT_FOR_BUYIN');
       expect(resp.playingFrom).toBeNull();
-      expect(resp.waitlistNo).toBe(0);
+     // expect(resp.waitlistNo).toBe(0);
       expect(resp.seatNo == 1 || resp.seatNo == 2).toBeTruthy();
     });
   });
@@ -437,9 +456,9 @@ describe('Game APIs', () => {
     const gameID = await gameutils.getGameById(game.gameCode);
     const player1ID = await handutils.getPlayerById(player1Id);
     try {
-      await axios.post(
-        `${GAMESERVER_API}/update-break-time/gameId/${gameID}/playerId/${player1ID}`
-      );
+      // await axios.post(
+      //   `${GAMESERVER_API}/update-break-time/gameId/${gameID}/playerId/${player1ID}`
+      // );
       await axios.post(`${GAMESERVER_API}/update-player-game-state`, {
         playerId: player1ID,
         gameId: gameID,

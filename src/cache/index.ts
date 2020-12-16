@@ -73,7 +73,6 @@ class GameCache {
     if (!clubMember) {
       const club = await this.getClub(clubCode);
       const player = await this.getPlayer(playerUuid);
-
       const clubMembers = await getRepository(ClubMember).find({
         relations: ['player', 'club'],
         where: {
@@ -81,7 +80,6 @@ class GameCache {
           player: {id: player.id},
         },
       });
-
       if (!clubMembers || clubMembers.length === 0) {
         return null;
       }

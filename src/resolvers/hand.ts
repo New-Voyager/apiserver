@@ -170,7 +170,7 @@ export async function getSpecificHandHistory(playerId: string, args: any) {
 
   const handHistory = await HandRepository.getSpecificHandHistory(
     game.id,
-    args.handNum
+    parseInt(args.handNum)
   );
   if (!handHistory) {
     throw new Error('No hand found');
@@ -377,7 +377,7 @@ export async function saveStarredHand(playerId: string, args: any) {
 
   const handHistory = await HandRepository.getSpecificHandHistory(
     game.id,
-    args.handNum
+    parseInt(args.handNum)
   );
   if (!handHistory) {
     logger.error(`The hand ${args.handNum} is not found`);

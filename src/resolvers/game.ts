@@ -131,7 +131,7 @@ export async function joinGame(
     if (game.club) {
       const clubMember = await Cache.isClubMember(
         playerUuid,
-        game.club.clubCode
+        game.club.clubCode,
       );
       if (!clubMember) {
         logger.error(
@@ -150,6 +150,7 @@ export async function joinGame(
     return playerStatus;
   } catch (err) {
     logger.error(JSON.stringify(err));
+    console.log(err);
     throw new Error(
       `Player: ${playerUuid} Failed to join the game. ${JSON.stringify(err)}`
     );

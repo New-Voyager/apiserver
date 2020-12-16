@@ -95,7 +95,6 @@ class ChipsTrackAPIs {
 
   public async buyChips(req: any, resp: any) {
     const registerPayload = req.body;
-
     const errors = new Array<string>();
     if (!registerPayload.clubId && registerPayload.clubId !== 0) {
       errors.push('ClubId is missing');
@@ -126,6 +125,7 @@ class ChipsTrackAPIs {
       logger.error(`
         Error when buying chips. Message: ${err.message}
       `);
+      console.log(err);
       resp.status(500).send(JSON.stringify({error: err.message}));
       return;
     }
