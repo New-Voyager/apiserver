@@ -40,6 +40,8 @@ export enum NextHandUpdate {
   WAIT_RELOAD_APPROVAL,
   BUYIN_APPROVED,
   RELOAD_APPROVED,
+  BUYIN_DENIED,
+  RELOAD_DENIED,
 }
 
 export enum WonAtStatus {
@@ -118,4 +120,14 @@ export enum ScheduleType {
   ENTIRE_GAME,
   HOURLY,
   TWO_HOURS,
+}
+
+export enum ApprovalType {
+  BUYIN_REQUEST,
+  RELOAD_REQUEST,
+}
+
+export enum ApprovalStatus {
+  APPROVED,
+  DENIED,
 }

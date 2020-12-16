@@ -186,6 +186,16 @@ type BuyInStatus {
   approved: Boolean
 }
 
+enum ApprovalType {
+  BUYIN_REQUEST
+  RELOAD_REQUEST
+}
+
+enum ApprovalStatus {
+  APPROVED
+  DENIED
+}
+
 type Mutation {
   # Not implemented
   configureGameFromTemplate(clubCode: String!, templateId: Int!): GameInfo!
@@ -204,7 +214,12 @@ type Mutation {
   configureFriendsGame(game: GameCreateInput!): GameInfo!
   joinGame(gameCode: String!, seatNo: Int!): PlayerGameStatus!
   buyIn(gameCode: String!, amount: Float!): BuyInStatus!
-  approveBuyIn(gameCode: String!, playerUuid: String!, amount: Float!): BuyInApprovalStatus!
+  approveRequest(
+    gameCode: String!, 
+    playerUuid: String!,
+    type: ApprovalType!, 
+    status: ApprovalStatus!
+  ): Boolean!
   startGame(gameCode: String!): GameStatus!
   takeBreak(gameCode: String!): Boolean!
   sitBack(gameCode: String!): Boolean!

@@ -10,7 +10,7 @@ import {
   joinGame,
   startGame,
   buyIn,
-  approveBuyIn,
+  approveRequest,
   myGameState,
   tableGameState,
   takeBreak,
@@ -66,6 +66,16 @@ enum ClubMemberStatus {
   ACTIVE,
   LEFT,
   KICKEDOUT,
+}
+
+export enum ApprovalType {
+  BUYIN_REQUEST,
+  RELOAD_REQUEST,
+}
+
+export enum ApprovalStatus {
+  APPROVED,
+  DENIED,
 }
 
 beforeAll(async done => {
@@ -425,8 +435,14 @@ describe('Game APIs', () => {
     expect(resp2.approved).toBe(false);
 
     // Approve a buyin as host
-    const resp3 = await approveBuyIn(owner, player1, game.gameCode, 100);
-    expect(resp3).toBe('APPROVED');
+    const resp3 = await approveRequest(
+      owner,
+      player1,
+      game.gameCode,
+      ApprovalType.BUYIN_REQUEST,
+      ApprovalStatus.APPROVED
+    );
+    expect(resp3).toBe(true);
   });
 
   test('gametest: Get my game state', async () => {
