@@ -150,6 +150,7 @@ export async function joinGame(
     return playerStatus;
   } catch (err) {
     logger.error(JSON.stringify(err));
+    console.log(err);
     throw new Error(
       `Player: ${playerUuid} Failed to join the game. ${JSON.stringify(err)}`
     );

@@ -149,7 +149,7 @@ class GameRepositoryImpl {
           );
           const gameUpdates = new PokerGameUpdates();
           gameUpdates.gameID = savedGame.id;
-          gameUpdatesRepo.save(gameUpdates);
+          await gameUpdatesRepo.save(gameUpdates);
           let pick = 0;
           if (gameServers.length > 0) {
             pick = Number.parseInt(savedGame.id) % gameServers.length;
@@ -857,7 +857,6 @@ class GameRepositoryImpl {
       );
       throw new Error(`Player ${player.name} is not in the game`);
     }
-
     return playerInGame;
   }
 

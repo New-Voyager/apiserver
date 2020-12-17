@@ -49,6 +49,50 @@ export async function getRewards(playerId: string, clubCode: string) {
   });
 }
 
+export async function getHighHandsByGame(playerId: string, gameCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const messages = await RewardRepository.highHandByGame(gameCode);
+  return _.map(messages, x => {
+    return {
+      gameCode: x.gameCode,
+      handNum: x.handNum,
+      playerUuid: x.playerUuid,
+      playerName: x.playerName,
+      playerCards: x.playerCards,
+      boardCards: x.boardCards,
+      highHand: x.highHand,
+      rank: x.rank,
+      handTime: x.handTime,
+    };
+  });
+}
+
+export async function getHighHandsByReward(
+  playerId: string,
+  gameCode: string,
+  rewardId: number
+) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const messages = await RewardRepository.highHandByReward(gameCode, rewardId);
+  return _.map(messages, x => {
+    return {
+      gameCode: x.gameCode,
+      handNum: x.handNum,
+      playerUuid: x.playerUuid,
+      playerName: x.playerName,
+      playerCards: x.playerCards,
+      boardCards: x.boardCards,
+      highHand: x.highHand,
+      rank: x.rank,
+      handTime: x.handTime,
+    };
+  });
+}
+
 const resolvers: any = {
   Mutation: {
     createReward: async (parent, args, ctx, info) => {
@@ -59,6 +103,16 @@ const resolvers: any = {
   Query: {
     rewards: async (parent, args, ctx, info) => {
       return getRewards(ctx.req.playerId, args.clubCode);
+    },
+    highHandsByGame: async (parent, args, ctx, info) => {
+      return getHighHandsByGame(ctx.req.playerId, args.gameCode);
+    },
+    highHandsByReward: async (parent, args, ctx, info) => {
+      return getHighHandsByReward(
+        ctx.req.playerId,
+        args.gameCode,
+        args.rewardId
+      );
     },
   },
 };

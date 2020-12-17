@@ -32,6 +32,7 @@ class HandRepositoryImpl {
         throw new Error(`Game ${gameID} is not found`);
       }
       const playersInHand = result.players;
+
       /**
        * Assigning hand history values
        */
@@ -209,10 +210,10 @@ class HandRepositoryImpl {
             gameID: gameID,
           })
           .execute();
-
         await RewardRepository.handleHighHand(
           game.gameCode,
           result,
+          handHistory.timeEnded,
           transactionEntityManager
         );
       });
