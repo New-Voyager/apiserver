@@ -350,7 +350,9 @@ describe('Game APIs', () => {
       );
       expect(false).toBeTruthy();
     } catch (error) {
-      expect(error.toString()).toContain('Failed to update buyin');
+      expect(error.toString()).toContain(
+        'Error: GraphQL error: Failed to approve buyin. {}'
+      );
     }
   });
 

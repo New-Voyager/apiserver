@@ -255,7 +255,6 @@ class RewardRepositoryImpl {
     if (!gameCode) {
       return;
     }
-    console.log('1');
     const highHand = [] as any;
     let logHighHand: any;
     const highHandRepo = getRepository(HighHand);
@@ -263,11 +262,12 @@ class RewardRepositoryImpl {
     const loggedHighHand = await highHandRepo.find({game: {id: game.id}});
     try {
       for await (logHighHand of loggedHighHand) {
+        console.log(logHighHand);
         await highHand.push({
-          gameCode: parseInt(gameCode),
+          gameCode: gameCode,
           handNum: logHighHand.handNum,
-          playerUuid: logHighHand.playerId.uuid,
-          playerName: logHighHand.playerId.name,
+          playerUuid: logHighHand.player.uuid,
+          playerName: logHighHand.player.name,
           playerCards: logHighHand.playerCards,
           boardCards: logHighHand.boardCards,
           highHand: logHighHand.highHand,
@@ -329,6 +329,7 @@ class RewardRepositoryImpl {
           handTime: logHighHand.handTime,
         });
       }
+      console.log(highHand);
       return highHand;
     } catch (err) {
       logger.error(

@@ -429,7 +429,14 @@ describe('Hand Server', () => {
   });
 
   test('Get logged data by game', async () => {
-    const [clubId, playerId, gameId] = await createClubAndStartGame();
+    const [
+      clubId,
+      playerId,
+      gameId,
+      player,
+      clubCode,
+      gameCode,
+    ] = await createClubAndStartGame();
     allInHand.handNum = 1;
     allInHand.gameId = gameId;
     allInHand.players['2'].id = playerId.toString();
@@ -446,14 +453,14 @@ describe('Hand Server', () => {
     expect(resp.data.status).toBe('OK');
     const resp1 = await rewardutils.getlogDatabyGame(
       playerId.toString(),
-      gameId.toString()
+      gameCode.toString()
     );
     expect(resp1).not.toBeNull();
     const resp2 = await rewardutils.getlogDatabyReward(
       playerId.toString(),
-      gameId.toString(),
+      gameCode.toString(),
       rewardId.toString()
-
+    );
   });
 
   test('Get specific hand history', async () => {
