@@ -296,7 +296,7 @@ export async function approveBuyIn(
     return BuyInApprovalStatus[status];
   } catch (err) {
     logger.error(JSON.stringify(err));
-    throw new Error(`Failed to update buyin. ${JSON.stringify(err)}`);
+    throw new Error(`Failed to approve buyin. ${JSON.stringify(err)}`);
   }
 }
 
@@ -439,7 +439,11 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
     return ret;
   } catch (err) {
     logger.error(JSON.stringify(err));
-    throw new Error(`Failed to update buyin. ${JSON.stringify(err)}`);
+    throw new Error(
+      `Failed to get game information. Message: ${
+        err.message
+      } err: ${JSON.stringify(err)}`
+    );
   }
 }
 
