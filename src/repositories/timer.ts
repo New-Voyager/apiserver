@@ -10,6 +10,7 @@ import {
   WAITLIST_SEATING,
   BUYIN_TIMEOUT,
   BUYIN_APPROVAL_TIMEOUT,
+  RELOAD_APPROVAL_TIMEOUT,
 } from './types';
 import {WaitListMgmt} from './waitlist';
 
@@ -49,6 +50,8 @@ export async function timerCallback(req: any, resp: any) {
     buyInTimeoutExpired(gameID, playerID);
   } else if (purpose === BUYIN_APPROVAL_TIMEOUT) {
     buyInApprovalTimeoutExpired(gameID, playerID);
+  } else if (purpose === RELOAD_APPROVAL_TIMEOUT) {
+    reloadApprovalTimeoutExpired(gameID, playerID);
   }
 
   resp.status(200).send({status: 'OK'});
@@ -151,4 +154,67 @@ export async function buyInApprovalTimeoutExpired(
       seatNo: 0,
     }
   );
+}
+
+export async function reloadApprovalTimeoutExpired(
+  gameID: number,
+  playerID: number
+) {
+  logger.info(
+    `Reload approval timeout expired. GameID: ${gameID}, playerID: ${playerID}`
+  );
+  const gameRepository = getRepository(PokerGame);
+  const game = await gameRepository.findOne({id: gameID});
+  if (!game) {
+    throw new Error(`Game: ${gameID} is not found`);
+  }
+
+  const playerRepository = getRepository(Player);
+  const player = await playerRepository.findOne({id: playerID});
+  if (!player) {
+    throw new Error(`Player: ${playerID} is not found`);
+  }
+
+  // handle reload approval timeout
+  const nextHandUpdatesRepository = getRepository(NextHandUpdates);
+  await nextHandUpdatesRepository
+    .createQueryBuilder()
+    .delete()
+    .where({
+      game: {id: gameID},
+      player: {id: playerID},
+      newUpdate: NextHandUpdate.WAIT_RELOAD_APPROVAL,
+    })
+    .execute();
+
+  const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+  const playerInGames = await playerGameTrackerRepository
+    .createQueryBuilder()
+    .where({
+      game: {id: game.id},
+      player: {id: player.id},
+    })
+    .select('stack')
+    .execute();
+
+  const playerInGame = playerInGames[0];
+  if (!playerInGame) {
+    logger.error(`Player ${player.uuid} is not in the game: ${game.gameCode}`);
+    throw new Error(`Player ${player.uuid} is not in the game`);
+  }
+
+  if (playerInGame.stack <= 0) {
+    await playerGameTrackerRepository
+      .createQueryBuilder()
+      .update()
+      .set({
+        status: PlayerStatus.NOT_PLAYING,
+        seatNo: 0,
+      })
+      .where({
+        game: {id: game.id},
+        player: {id: player.id},
+      })
+      .execute();
+  }
 }

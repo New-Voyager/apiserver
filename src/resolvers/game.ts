@@ -248,6 +248,47 @@ export async function buyIn(
   }
 }
 
+export async function reload(
+  playerUuid: string,
+  gameCode: string,
+  amount: number
+) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubMember = await Cache.isClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode}`
+        );
+      }
+    }
+
+    const player = await Cache.getPlayer(playerUuid);
+    const buyin = new BuyIn(game, player);
+    const status = await buyin.reloadRequest(amount);
+    // player is good to go
+    return status;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error(`Failed to update reload. ${JSON.stringify(err)}`);
+  }
+}
+
 export async function approveRequest(
   hostUuid: string,
   playerUuid: string,
@@ -938,6 +979,9 @@ const resolvers: any = {
     },
     buyIn: async (parent, args, ctx, info) => {
       return buyIn(ctx.req.playerId, args.gameCode, args.amount);
+    },
+    reload: async (parent, args, ctx, info) => {
+      return reload(ctx.req.playerId, args.gameCode, args.amount);
     },
     approveRequest: async (parent, args, ctx, info) => {
       return approveRequest(
