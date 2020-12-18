@@ -428,41 +428,6 @@ describe('Hand Server', () => {
     expect(resp1.data.status).toBe('OK');
   });
 
-  test('Get logged data by game', async () => {
-    const [
-      clubId,
-      playerId,
-      gameId,
-      player,
-      clubCode,
-      gameCode,
-    ] = await createClubAndStartGame();
-    allInHand.handNum = 1;
-    allInHand.gameId = gameId;
-    allInHand.players['2'].id = playerId.toString();
-    //  allInHand.clubId = clubId;
-    //  allInHand.handLog.potWinners["0"].hiWinners[0].seatNo = 1;
-    //  allInHand.handLog.potWinners["0"].lowWinners[0].seatNo = 1;
-    //  allInHand.handResult.balanceAfterHand[0].playerId = playerId;
-    //  allInHand.handResult.playersInSeats = [playerId];
-    const resp = await axios.post(
-      `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${allInHand.handNum}`,
-      allInHand
-    );
-    expect(resp.status).toBe(200);
-    expect(resp.data.status).toBe('OK');
-    const resp1 = await rewardutils.getlogDatabyGame(
-      playerId.toString(),
-      gameCode.toString()
-    );
-    expect(resp1).not.toBeNull();
-    const resp2 = await rewardutils.getlogDatabyReward(
-      playerId.toString(),
-      gameCode.toString(),
-      rewardId.toString()
-    );
-  });
-
   test('Get specific hand history', async () => {
     const [
       clubId,

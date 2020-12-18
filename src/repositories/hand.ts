@@ -162,7 +162,7 @@ class HandRepositoryImpl {
          */
         for await (const seatNo of Object.keys(result.players)) {
           const player = result.players[seatNo];
-          const playerId = parseInt(player.id, 10);
+          const playerId = parseInt(player.id);
           const round = playerRound[playerId];
           let wonHand = 0;
           if (winners[playerId]) {
@@ -172,7 +172,6 @@ class HandRepositoryImpl {
           if (rakePaid[playerId]) {
             rakePaidByPlayer = rakePaid[playerId];
           }
-
           await transactionEntityManager
             .getRepository(PlayerGameTracker)
             .createQueryBuilder()
@@ -210,6 +209,7 @@ class HandRepositoryImpl {
             gameID: gameID,
           })
           .execute();
+
         await RewardRepository.handleHighHand(
           game.gameCode,
           result,

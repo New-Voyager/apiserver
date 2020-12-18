@@ -53,6 +53,7 @@ async function saveReward(playerId, clubCode) {
     },
     mutation: rewardutils.createReward,
   });
+  holdemGameInput.rewardIds.splice(0);
   holdemGameInput.rewardIds.push(rewardId.data.rewardId);
 }
 

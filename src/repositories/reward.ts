@@ -248,7 +248,7 @@ class RewardRepositoryImpl {
     highhand.rank = rank;
     highhand.handTime = handTime;
     highhand.winner = winner;
-    await logHighHandRepo.save(highhand);
+    const s = await logHighHandRepo.save(highhand);
   }
 
   public async highHandByGame(gameCode: string) {
@@ -262,7 +262,6 @@ class RewardRepositoryImpl {
     const loggedHighHand = await highHandRepo.find({game: {id: game.id}});
     try {
       for await (logHighHand of loggedHighHand) {
-        console.log(logHighHand);
         await highHand.push({
           gameCode: gameCode,
           handNum: logHighHand.handNum,
@@ -275,6 +274,9 @@ class RewardRepositoryImpl {
           handTime: logHighHand.handTime,
         });
       }
+      await highHand.sort((a, b) => {
+        return b.rank - a.rank;
+      });
       return highHand;
     } catch (err) {
       logger.error(
@@ -312,7 +314,7 @@ class RewardRepositoryImpl {
     try {
       for await (logHighHand of loggedHighHand) {
         const player = await playerRepo.findOne({
-          id: parseInt(logHighHand.playerId),
+          id: logHighHand.player.id,
         });
         if (!player) {
           throw new Error('Player not Found Error');
@@ -329,7 +331,9 @@ class RewardRepositoryImpl {
           handTime: logHighHand.handTime,
         });
       }
-      console.log(highHand);
+      await highHand.sort((a, b) => {
+        return b.rank - a.rank;
+      });
       return highHand;
     } catch (err) {
       logger.error(
@@ -337,6 +341,20 @@ class RewardRepositoryImpl {
       );
       throw new Error("Couldn't retrieve highhand, please retry again");
     }
+  }
+
+  public async getTrackId(rewardId: string) {
+    if (!rewardId) {
+      throw new Error('RewardId is empty');
+    }
+    const gameTrackRepo = getRepository(GameRewardTracking);
+    const rewardRepo = getRepository(Reward);
+    const reward = await rewardRepo.findOne({id: parseInt(rewardId)});
+    const gameTrack = await gameTrackRepo.findOne({rewardId: reward});
+    if (!gameTrack) {
+      throw new Error(`Reward-id ${rewardId} not found`);
+    }
+    return gameTrack.id;
   }
 }
 

@@ -56,6 +56,7 @@ async function saveReward(playerId, clubCode) {
     },
     mutation: rewardutils.createReward,
   });
+
   holdemGameInput.rewardIds.splice(0);
   holdemGameInput.rewardIds.push(rewardId.data.rewardId);
 }
@@ -83,7 +84,7 @@ describe('Player Chips tracking APIs', () => {
       expect(true).toBeFalsy();
     }
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
-    saveReward(playerId, clubCode);
+    await saveReward(playerId, clubCode);
     let game, resp;
 
     game = await gameutils.configureGame(playerId, clubCode, holdemGameInput);
@@ -135,7 +136,6 @@ describe('Player Chips tracking APIs', () => {
       'yatzee'
     );
     // const playerUuid = await clubutils.createPlayer('player1', 'abc123');
-    await saveReward(playerUuid, clubCode);
     let resp;
 
     const game = await gameutils.configureFriendsGame(
@@ -246,7 +246,6 @@ describe('Player Chips tracking APIs', () => {
       'yatzee'
     );
     // const playerUuid = await clubutils.createPlayer('player1', 'abc123');
-    await saveReward(playerUuid, clubCode);
     let resp, response;
 
     const game = await gameutils.configureFriendsGame(
@@ -444,7 +443,6 @@ describe('Player Chips tracking APIs', () => {
       'yatzee'
     );
     //    const playerUuid = await clubutils.createPlayer('player1', 'abc123');
-    await saveReward(playerUuid, clubCode);
     const game = await gameutils.configureFriendsGame(
       playerUuid,
       holdemGameInput
@@ -492,7 +490,6 @@ describe('Player Chips tracking APIs', () => {
       'yatzee'
     );
     //const playerUuid = await clubutils.createPlayer('player1', 'abc123');
-    await saveReward(playerUuid, clubCode);
     const game = await gameutils.configureFriendsGame(
       playerUuid,
       holdemGameInput

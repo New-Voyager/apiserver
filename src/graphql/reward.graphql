@@ -47,9 +47,9 @@ type HighHand{
   handTime: DateTime!
 }
 
-
 type Query {
   rewards(clubCode: String!): [Reward!]
   highHandsByGame(gameCode: String!): [HighHand!]
-  highHandsByReward(gameCode: String!, rewardId: Int): [HighHand!]
+  highHandsByReward(gameCode: String!, rewardId: String!): [HighHand!]
+  getTrackId(rewardId: String!): Int!
 }

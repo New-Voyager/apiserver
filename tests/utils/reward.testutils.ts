@@ -54,6 +54,12 @@ export const highHandsByRewardQuery = gql`
   }
 `;
 
+export const getTrackId = gql`
+  query($rewardId: String!) {
+    trackId: getTrackId(rewardId: $rewardId)
+  }
+`;
+
 export async function getRewards(
   playerId: string,
   clubCode: string
@@ -101,7 +107,21 @@ export async function getlogDatabyReward(
   };
   const resp = await getClient(playerId).query({
     variables: variables,
-    query: highHandsByGameQuery,
+    query: highHandsByRewardQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.logdata;
+}
+
+export async function getTrackingId(playerId: string, rewardId: string) {
+  const variables: any = {
+    playerId: playerId,
+    rewardId: rewardId,
+  };
+  const resp = await getClient(playerId).query({
+    variables: variables,
+    query: getTrackId,
   });
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
