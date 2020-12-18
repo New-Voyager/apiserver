@@ -15,7 +15,6 @@ import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {GameRepository} from './game';
 import {playerBuyIn, startTimer} from '@src/gameserver';
 import {BUYIN_APPROVAL_TIMEOUT, RELOAD_APPROVAL_TIMEOUT} from './types';
-import { Club } from '@src/entity/club';
 
 const logger = getLogger('buyin');
 
