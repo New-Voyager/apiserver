@@ -40,6 +40,8 @@ type LiveGame {
   gameType: GameType!
   buyInMin: Float
   buyInMax: Float
+  smallBlind: Float
+  bigBlind: Float
   elapsedTime: Int!
   startedAt: DateTime!
   status: GameStatus!
