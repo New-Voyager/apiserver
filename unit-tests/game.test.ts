@@ -42,7 +42,7 @@ const holdemGameInput = {
   minPlayers: 3,
   maxPlayers: 9,
   gameLength: 60,
-  buyInApproval: true,
+  buyInApproval: false,
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,
@@ -169,7 +169,7 @@ describe('Game APIs', () => {
       expect(startedGame.minPlayers).toEqual(3);
       expect(startedGame.maxPlayers).toEqual(9);
       expect(startedGame.gameLength).toEqual(60);
-      expect(startedGame.buyInApproval).toEqual(true);
+      expect(startedGame.buyInApproval).toEqual(false);
       expect(startedGame.breakLength).toEqual(20);
       expect(startedGame.autoKickAfterBreak).toEqual(true);
       expect(startedGame.waitForBigBlind).toEqual(true);
@@ -214,7 +214,7 @@ describe('Game APIs', () => {
       expect(startedGame.minPlayers).toEqual(3);
       expect(startedGame.maxPlayers).toEqual(9);
       expect(startedGame.gameLength).toEqual(60);
-      expect(startedGame.buyInApproval).toEqual(true);
+      expect(startedGame.buyInApproval).toEqual(false);
       expect(startedGame.breakLength).toEqual(20);
       expect(startedGame.autoKickAfterBreak).toEqual(true);
       expect(startedGame.waitForBigBlind).toEqual(true);
@@ -357,6 +357,7 @@ describe('Game APIs', () => {
 
     // Buyin with autoBuyinApproval true
     const resp = await buyIn(player1, game.gameCode, 100);
+    console.log(JSON.stringify(resp));
     expect(resp.approved).toBe(true);
 
     // setting autoBuyinApproval false and creditLimit
@@ -372,6 +373,7 @@ describe('Game APIs', () => {
 
     // Buyin within credit limit and autoBuyinApproval false
     const resp2 = await buyIn(player1, game.gameCode, 100);
+    console.log(JSON.stringify(resp));
     expect(resp2.approved).toBe(true);
 
     // Buyin more than credit limit and autoBuyinApproval false
