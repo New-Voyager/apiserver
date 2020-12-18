@@ -149,13 +149,7 @@ class ChipsTrackRepositoryImpl {
         return true;
       }
 
-      const clubRepository = getRepository(Club);
       const gameUpdatesRepo = getRepository(PokerGameUpdates);
-      const clubChipsTransactionRepository = getRepository(
-        ClubChipsTransaction
-      );
-      const clubMemberRepository = getRepository(ClubMember);
-      const playerGameTrackRepository = getRepository(PlayerGameTracker);
 
       const gameId = game.id;
       const gameUpdates = await gameUpdatesRepo.findOne({
@@ -194,9 +188,11 @@ class ChipsTrackRepositoryImpl {
             relations: ['game', 'player'],
             where: {game: {id: gameId}},
           });
-        for await (const playerChip of playerChips) {
+
+        const chipUpdates = new Array<any>();
+        for (const playerChip of playerChips) {
           const profit = playerChip.stack - playerChip.buyIn;
-          transactionEntityManager
+          const playerGame = transactionEntityManager
             .getRepository(ClubMember)
             .createQueryBuilder()
             .update()
@@ -211,7 +207,9 @@ class ChipsTrackRepositoryImpl {
               club: {id: clubId},
             })
             .execute();
+          chipUpdates.push(playerGame);
         }
+        await Promise.all(chipUpdates);
       });
       logger.info('****** ENDING TRANSACTION FOR RAKE CALCULATION');
       return true;

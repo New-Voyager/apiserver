@@ -966,7 +966,7 @@ class GameRepositoryImpl {
     // if game ended
     if (status === GameStatus.ENDED) {
       // complete books
-      ChipsTrackRepository.settleClubBalances(game);
+      await ChipsTrackRepository.settleClubBalances(game);
     }
 
     // update cached game

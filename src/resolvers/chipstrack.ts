@@ -1,6 +1,8 @@
 import * as _ from 'lodash';
 import {ChipsTrackRepository} from '@src/repositories/chipstrack';
 import {getLogger} from '@src/utils/log';
+import {Cache} from '@src/cache/index';
+
 const logger = getLogger('chipstrack-resolver');
 
 export async function getClubBalanceAmount(playerId: string, data: any) {
@@ -25,14 +27,24 @@ export async function getPlayerBalanceAmount(playerId: string, data: any) {
   if (data.clubCode === '') {
     errors.push('ClubCode is mandatory field');
   }
+  let queryPlayerId = playerId;
   if (data.playerId === '') {
-    errors.push('PlayerId is mandatory field');
+    queryPlayerId = data.playerId;
   }
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
   }
+
+  // is the player a club member
+  const clubMember = await Cache.getClubMember(queryPlayerId, data.clubCode);
+  if (!clubMember) {
+    throw new Error(
+      `Player ${queryPlayerId} is not a club member ${data.clubCode}`
+    );
+  }
+
   return await ChipsTrackRepository.getPlayerBalance(
-    data.playerId,
+    queryPlayerId,
     data.clubCode
   );
 }

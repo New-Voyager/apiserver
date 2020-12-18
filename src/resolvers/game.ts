@@ -982,7 +982,8 @@ const resolvers: any = {
       return endGame(ctx.req.playerId, args.gameCode);
     },
     buyIn: async (parent, args, ctx, info) => {
-      return buyIn(ctx.req.playerId, args.gameCode, args.amount);
+      const status = await buyIn(ctx.req.playerId, args.gameCode, args.amount);
+      return status;
     },
     reload: async (parent, args, ctx, info) => {
       return reload(ctx.req.playerId, args.gameCode, args.amount);

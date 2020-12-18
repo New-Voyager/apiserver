@@ -15,6 +15,7 @@ import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {GameRepository} from './game';
 import {playerBuyIn, startTimer} from '@src/gameserver';
 import {BUYIN_APPROVAL_TIMEOUT, RELOAD_APPROVAL_TIMEOUT} from './types';
+import { Club } from '@src/entity/club';
 
 const logger = getLogger('buyin');
 
@@ -27,11 +28,120 @@ export class BuyIn {
     this.player = player;
   }
 
+  protected async approveBuyInRequest(
+    amount: number,
+    playerInGame: any,
+    transactionEntityManager: EntityManager
+  ) {
+    if (
+      this.game.status === GameStatus.ACTIVE &&
+      this.game.tableStatus === TableStatus.GAME_RUNNING
+    ) {
+      // add buyin to next hand update
+      await this.addBuyInToNextHand(
+        amount,
+        NextHandUpdate.BUYIN_APPROVED,
+        transactionEntityManager
+      );
+      playerInGame.status = PlayerStatus.PENDING_UPDATES;
+    } else {
+      playerInGame.noOfBuyins++;
+      playerInGame.stack += amount;
+      playerInGame.buyIn += amount;
+      // if the player is in the seat and waiting for buyin
+      // then mark his status as playing
+      if (
+        playerInGame.seatNo !== 0 &&
+        playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN
+      ) {
+        playerInGame.status = PlayerStatus.PLAYING;
+      }
+    }
+
+    return playerInGame.status;
+  }
+
+  protected async clubMemberBuyInApproval(
+    amount: number,
+    playerInGame: any,
+    transactionEntityManager: EntityManager
+  ): Promise<[PlayerStatus, boolean]> {
+    let approved = false;
+    const clubMember = await Cache.getClubMember(
+      this.player.uuid,
+      this.game.club.clubCode
+    );
+    if (!clubMember) {
+      throw new Error(`The player ${this.player.uuid} is not in the club`);
+    }
+    let playerStatus: PlayerStatus = PlayerStatus.WAIT_FOR_BUYIN;
+    if (clubMember.autoBuyinApproval || this.game.buyInApproval) {
+      approved = true;
+      playerStatus = await this.approveBuyInRequest(
+        amount,
+        playerInGame,
+        transactionEntityManager
+      );
+    } else {
+      const query =
+        'SELECT SUM(buy_in) current_buyin FROM player_game_tracker pgt, poker_game pg WHERE pgt.pgt_player_id = ' +
+        this.player.id +
+        ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
+        GameStatus.ENDED;
+      const resp = await getConnection().query(query);
+
+      const currentBuyin = resp[0]['current_buyin'];
+
+      let outstandingBalance = playerInGame.buyIn;
+      if (currentBuyin) {
+        outstandingBalance += currentBuyin;
+      }
+
+      let availableCredit = 0.0;
+      if (clubMember.creditLimit >= 0) {
+        availableCredit = clubMember.creditLimit - outstandingBalance;
+      }
+
+      if (amount <= availableCredit) {
+        approved = true;
+        await this.approveBuyInRequest(
+          amount,
+          playerInGame,
+          transactionEntityManager
+        );
+      } else {
+        await this.addBuyInToNextHand(
+          amount,
+          NextHandUpdate.WAIT_BUYIN_APPROVAL,
+          transactionEntityManager
+        );
+
+        const buyinApprovalTimeExp = new Date();
+        //const buyinTimeout = this.game.buyInTimeout;
+        const timeout = 60;
+        buyinApprovalTimeExp.setSeconds(
+          buyinApprovalTimeExp.getSeconds() + timeout
+        );
+        startTimer(
+          this.game.id,
+          this.player.id,
+          BUYIN_APPROVAL_TIMEOUT,
+          buyinApprovalTimeExp
+        );
+        playerInGame.status = PlayerStatus.PENDING_UPDATES;
+        playerStatus = PlayerStatus.WAIT_FOR_BUYIN;
+        approved = false;
+      }
+    }
+    return [playerStatus, approved];
+  }
+
   public async request(amount: number): Promise<any> {
-    let timeout = 0,
-      approved = false;
-    const status = await getManager().transaction(
+    const timeout = 60;
+    const [status, approved] = await getManager().transaction(
       async transactionEntityManager => {
+        let playerStatus: PlayerStatus;
+        let approved: boolean;
         // player must be already in a seat or waiting list
         // if credit limit is set, make sure his buyin amount is within the credit limit
         // if auto approval is set, add the buyin
@@ -71,158 +181,68 @@ export class BuyIn {
           );
         }
 
-        // NOTE TO SANJAY: Add other functionalities
-        const clubMember = await Cache.getClubMember(
-          this.player.uuid,
-          this.game.club.clubCode
-        );
-        if (!clubMember) {
-          throw new Error(`The player ${this.player.uuid} is not in the club`);
-        }
-
-        if (clubMember.autoBuyinApproval) {
-          approved = true;
-          if (
-            this.game.status === GameStatus.ACTIVE &&
-            this.game.tableStatus === TableStatus.GAME_RUNNING
-          ) {
-            // add buyin to next hand update
-            await this.addBuyInToNextHand(
-              amount,
-              NextHandUpdate.BUYIN_APPROVED,
-              transactionEntityManager
-            );
-            playerInGame.status = PlayerStatus.PENDING_UPDATES;
-          } else {
-            playerInGame.noOfBuyins++;
-            playerInGame.stack += amount;
-            playerInGame.buyIn += amount;
-            // if the player is in the seat and waiting for buyin
-            // then mark his status as playing
-            if (
-              playerInGame.seatNo !== 0 &&
-              playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN
-            ) {
-              playerInGame.status = PlayerStatus.PLAYING;
-            }
-          }
+        if (this.game.club) {
+          // club game
+          [playerStatus, approved] = await this.clubMemberBuyInApproval(
+            amount,
+            playerInGame,
+            transactionEntityManager
+          );
         } else {
-          const query =
-            'SELECT SUM(buy_in) current_buyin FROM player_game_tracker pgt, poker_game pg WHERE pgt.pgt_player_id = ' +
-            this.player.id +
-            ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
-            GameStatus.ENDED;
-          const resp = await getConnection().query(query);
+          // individual game
+          throw new Error('Individual game is not implemented yet');
+        }
+        if (approved) {
+          await playerGameTrackerRepository
+            .createQueryBuilder()
+            .update()
+            .set({
+              noOfBuyins: playerInGame.noOfBuyins,
+              stack: playerInGame.stack,
+              buyIn: playerInGame.buyIn,
+              status: playerInGame.status,
+            })
+            .where({
+              game: {id: this.game.id},
+              player: {id: this.player.id},
+            })
+            .execute();
 
-          const currentBuyin = resp[0]['current_buyin'];
+          const count = await playerGameTrackerRepository
+            .createQueryBuilder()
+            .where({
+              game: {id: this.game.id},
+              status: PlayerStatus.PLAYING,
+            })
+            .getCount();
 
-          let outstandingBalance = playerInGame.buyIn;
-          if (currentBuyin) {
-            outstandingBalance += currentBuyin;
-          }
+          const gameUpdatesRepo = transactionEntityManager.getRepository(
+            PokerGameUpdates
+          );
+          await gameUpdatesRepo
+            .createQueryBuilder()
+            .update()
+            .set({
+              playersInSeats: count,
+            })
+            .where({
+              gameID: this.game.id,
+            })
+            .execute();
 
-          let availableCredit = 0.0;
-          if (clubMember.creditLimit >= 0) {
-            availableCredit = clubMember.creditLimit - outstandingBalance;
-          }
-
-          if (amount <= availableCredit) {
-            approved = true;
-            if (
-              this.game.status === GameStatus.ACTIVE &&
-              this.game.tableStatus === TableStatus.GAME_RUNNING
-            ) {
-              // add buyin to next hand update
-              await this.addBuyInToNextHand(
-                amount,
-                NextHandUpdate.BUYIN_APPROVED,
-                transactionEntityManager
-              );
-              playerInGame.status = PlayerStatus.PENDING_UPDATES;
-            } else {
-              // player is within the credit limit
-              playerInGame.noOfBuyins++;
-              playerInGame.stack += amount;
-              playerInGame.buyIn += amount;
-
-              // if the player is in the seat and waiting for buyin
-              // then mark his status as playing
-              if (
-                playerInGame.seatNo !== 0 &&
-                playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN
-              ) {
-                playerInGame.status = PlayerStatus.PLAYING;
-              }
-            }
-          } else {
-            await this.addBuyInToNextHand(
-              amount,
-              NextHandUpdate.WAIT_BUYIN_APPROVAL,
-              transactionEntityManager
-            );
-            const buyinApprovalTimeExp = new Date();
-            timeout = 60;
-            buyinApprovalTimeExp.setSeconds(
-              buyinApprovalTimeExp.getSeconds() + timeout
-            );
-            startTimer(
-              this.game.id,
-              this.player.id,
-              BUYIN_APPROVAL_TIMEOUT,
-              buyinApprovalTimeExp
-            );
-            playerInGame.status = PlayerStatus.PENDING_UPDATES;
-            approved = false;
+          // send a message to gameserver
+          // get game server of this game
+          const gameServer = await GameRepository.getGameServer(this.game.id);
+          if (gameServer) {
+            playerBuyIn(this.game, this.player, playerInGame);
           }
         }
 
-        await playerGameTrackerRepository
-          .createQueryBuilder()
-          .update()
-          .set({
-            noOfBuyins: playerInGame.noOfBuyins,
-            stack: playerInGame.stack,
-            buyIn: playerInGame.buyIn,
-            status: playerInGame.status,
-          })
-          .where({
-            game: {id: this.game.id},
-            player: {id: this.player.id},
-          })
-          .execute();
-
-        const count = await playerGameTrackerRepository
-          .createQueryBuilder()
-          .where({
-            game: {id: this.game.id},
-            status: PlayerStatus.PLAYING,
-          })
-          .getCount();
-
-        const gameUpdatesRepo = transactionEntityManager.getRepository(
-          PokerGameUpdates
-        );
-        await gameUpdatesRepo
-          .createQueryBuilder()
-          .update()
-          .set({
-            playersInSeats: count,
-          })
-          .where({
-            gameID: this.game.id,
-          })
-          .execute();
-
-        // send a message to gameserver
-        // get game server of this game
-        const gameServer = await GameRepository.getGameServer(this.game.id);
-        if (gameServer) {
-          playerBuyIn(this.game, this.player, playerInGame);
-        }
-
-        return playerInGame.status;
+        return [playerStatus, approved];
       }
     );
+
+    logger.info(`Status: ${status}`);
     return {
       expireSeconds: timeout,
       approved: approved,

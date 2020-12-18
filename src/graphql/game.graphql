@@ -183,7 +183,7 @@ type WaitingListPlayer {
 
 type BuyInStatus {
   expireSeconds: Int
-  approved: Boolean
+  approved: Boolean!
 }
 
 enum ApprovalType {
