@@ -147,7 +147,7 @@ class GameRepositoryImpl {
           );
           const gameUpdates = new PokerGameUpdates();
           gameUpdates.gameID = savedGame.id;
-          gameUpdatesRepo.save(gameUpdates);
+          await gameUpdatesRepo.save(gameUpdates);
           let pick = 0;
           if (gameServers.length > 0) {
             pick = Number.parseInt(savedGame.id) % gameServers.length;
@@ -168,7 +168,6 @@ class GameRepositoryImpl {
                 rewardId: rewardId,
                 active: true,
               });
-
               if (!rewardTrack) {
                 const createRewardTrack = new GameRewardTracking();
                 createRewardTrack.rewardId = rewardId;
@@ -180,7 +179,6 @@ class GameRepositoryImpl {
                 const rewardTrackResponse = await rewardTrackRepository.save(
                   createRewardTrack
                 );
-
                 const createGameReward = new GameReward();
                 createGameReward.gameId = game;
                 createGameReward.rewardId = rewardId;
@@ -190,7 +188,7 @@ class GameRepositoryImpl {
                 const gameRewardRepository = transactionEntityManager.getRepository(
                   GameReward
                 );
-                await gameRewardRepository.save(createGameReward);
+                const a = await gameRewardRepository.save(createGameReward);
               } else {
                 const createGameReward = new GameReward();
                 createGameReward.gameId = game;
@@ -630,7 +628,6 @@ class GameRepositoryImpl {
       );
       throw new Error(`Player ${player.name} is not in the game`);
     }
-
     return playerInGame;
   }
 

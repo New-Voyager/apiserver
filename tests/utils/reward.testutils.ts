@@ -22,6 +22,44 @@ export const getRewardsQuery = gql`
   }
 `;
 
+export const highHandsByGameQuery = gql`
+  query($gameCode: String!) {
+    logdata: highHandsByGame(gameCode: $gameCode) {
+      gameCode
+      handNum
+      playerUuid
+      playerName
+      playerCards
+      boardCards
+      highHand
+      rank
+      handTime
+    }
+  }
+`;
+
+export const highHandsByRewardQuery = gql`
+  query($gameCode: String!, $rewardId: String!) {
+    logdata: highHandsByReward(gameCode: $gameCode, rewardId: $rewardId) {
+      gameCode
+      handNum
+      playerUuid
+      playerName
+      playerCards
+      boardCards
+      highHand
+      rank
+      handTime
+    }
+  }
+`;
+
+export const getTrackId = gql`
+  query($rewardId: String!) {
+    trackId: getTrackId(rewardId: $rewardId)
+  }
+`;
+
 export async function getRewards(
   playerId: string,
   clubCode: string
@@ -38,4 +76,54 @@ export async function getRewards(
   expect(resp.data).not.toBeNull();
   console.log(resp.data);
   return resp.data.rewards;
+}
+
+export async function getlogDatabyGame(
+  playerId: string,
+  gameCode: string
+): Promise<Array<any>> {
+  const variables: any = {
+    playerId: playerId,
+    gameCode: gameCode,
+  };
+  const resp = await getClient(playerId).query({
+    variables: variables,
+    query: highHandsByGameQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.logdata;
+}
+
+export async function getlogDatabyReward(
+  playerId: string,
+  gameCode: string,
+  rewardId: string
+): Promise<Array<any>> {
+  const variables: any = {
+    playerId: playerId,
+    gameCode: gameCode,
+    rewardId: rewardId,
+  };
+  const resp = await getClient(playerId).query({
+    variables: variables,
+    query: highHandsByRewardQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.logdata;
+}
+
+export async function getTrackingId(playerId: string, rewardId: string) {
+  const variables: any = {
+    playerId: playerId,
+    rewardId: rewardId,
+  };
+  const resp = await getClient(playerId).query({
+    variables: variables,
+    query: getTrackId,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.logdata;
 }

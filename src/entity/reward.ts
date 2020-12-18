@@ -135,3 +135,65 @@ export class GameReward {
   @JoinColumn({name: 'reward_tracking_id'})
   public rewardTrackingId!: GameRewardTracking;
 }
+
+@Entity({name: 'high_hand'})
+export class HighHand {
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @ManyToOne(() => PokerGame, gameId => gameId.id, {
+    eager: true,
+    nullable: false,
+  })
+  @JoinColumn({name: 'game_id'})
+  public game!: PokerGame;
+
+  @ManyToOne(() => Player, playerId => playerId.id, {
+    eager: true,
+    nullable: false,
+  })
+  @JoinColumn({name: 'player_id'})
+  public player!: Player;
+
+  @ManyToOne(() => Reward, rewardId => rewardId.id, {
+    eager: true,
+    nullable: true,
+  })
+  @JoinColumn({name: 'reward_id'})
+  public reward!: Reward;
+
+  @ManyToOne(
+    () => GameRewardTracking,
+    rewardTrackingId => rewardTrackingId.id,
+    {eager: false, nullable: true}
+  )
+  @JoinColumn({name: 'reward_tracking_id'})
+  public rewardTracking!: GameRewardTracking;
+
+  @Column({name: 'hand_num', nullable: false})
+  public handNum!: number;
+
+  @Column({name: 'player_cards', nullable: false})
+  public playerCards!: string;
+
+  @Column({name: 'board_cards', nullable: false})
+  public boardCards!: string;
+
+  @Column({name: 'high_hand', nullable: false})
+  public highHand!: string;
+
+  @Column({name: 'rank', nullable: false})
+  public rank!: number;
+
+  @Column({name: 'winner', nullable: false})
+  public winner!: boolean;
+
+  @Column({name: 'hand_time', nullable: false})
+  public handTime!: Date;
+
+  @Column({name: 'start_hour', nullable: true})
+  public startHour!: boolean;
+
+  @Column({name: 'end_hour', nullable: true})
+  public endHour!: boolean;
+}
