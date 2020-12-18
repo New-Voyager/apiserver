@@ -13,7 +13,12 @@ import {
   PlayerGameTracker,
   ClubChipsTransaction,
 } from '../src/entity/chipstrack';
-import {Reward, GameReward, GameRewardTracking} from '../src/entity/reward';
+import {
+  Reward,
+  GameReward,
+  GameRewardTracking,
+  HighHand,
+} from '../src/entity/reward';
 import {FavouriteMessage} from '../src/entity/clubfreqmessage';
 import {ClubMessageInput} from '../src/entity/clubmessage';
 import {GameServer, TrackGameServer} from '../src/entity/gameserver';
@@ -57,6 +62,7 @@ export async function sqlliteConnection() {
       GameReward,
       GameRewardTracking,
       Reward,
+      HighHand,
     ],
     dropSchema: true,
     synchronize: true,
