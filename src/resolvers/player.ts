@@ -53,7 +53,7 @@ const resolvers: any = {
     },
 
     liveGames: async (parent, args, ctx, info) => {
-      return getLiveGames(ctx.req.playerId);
+      return getLiveGames(ctx.req.playerId, args.clubCode);
     },
 
     pastGames: async (parent, args, ctx, info) => {
@@ -202,13 +202,18 @@ export async function getPlayerClubs(playerId: string, parent: any) {
   return getClubs(parent.playerId);
 }
 
-async function getLiveGames(playerId: string) {
+async function getLiveGames(playerId: string, clubCode: string) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
   const liveGames = await GameRepository.getLiveGames(playerId);
   let game: any;
+  const ret = new Array<any>();
   for (game of liveGames) {
+    // skip other club games
+    if (clubCode && game.clubCode !== clubCode) {
+      continue;
+    }
     game.elapsedTime = Math.floor(game.elapsedTime);
     game.status = GameStatus[game['gameStatus']];
     game.gameType = GameType[game['gameType']];
@@ -216,8 +221,13 @@ async function getLiveGames(playerId: string) {
       game.playerStatus = PlayerStatus.NOT_PLAYING;
     }
     game.playerStatus = PlayerStatus[game['playerStatus']];
+    game.isTableFull = false;
+    if (game.maxPlayers === game.tableCount) {
+      game.isTableFull = true;
+    }
+    ret.push(game);
   }
-  return liveGames;
+  return ret;
 }
 
 async function getPastGames(playerId: string) {

@@ -40,10 +40,14 @@ type LiveGame {
   gameType: GameType!
   buyInMin: Float
   buyInMax: Float
+  smallBlind: Float
+  bigBlind: Float
   elapsedTime: Int!
   startedAt: DateTime!
   status: GameStatus!
-  waitlistCount: Int!     # number of players in waiting list
+  isTableFull: Boolean!
+  maxPlayers: Int!
+  waitlistCount: Int!   # number of players in waiting list
   tableCount: Int!      # number of players playing
   playerStatus: PlayerGameStatus!
 }
@@ -82,7 +86,7 @@ type Query {
   myClubs: [PlayerClub!]
   allPlayers: [Player!]
   playerById: PlayerId!
-  liveGames: [LiveGame!]
+  liveGames (clubCode: String): [LiveGame!]
   pastGames: [PastGame!]
   myInfo: PlayerInfo!
 }
