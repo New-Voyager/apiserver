@@ -18,6 +18,7 @@ import _ from 'lodash';
 import {HighHand} from '@src/entity/reward';
 import {Player} from '@src/entity/player';
 import {PokerGame} from '@src/entity/game';
+import {stringCards} from '@src/utils';
 const logger = getLogger('rewardRepo');
 
 class RewardRepositoryImpl {
@@ -198,7 +199,7 @@ class RewardRepositoryImpl {
           input.handNum,
           JSON.stringify(highHandPlayer.cards),
           JSON.stringify(input.boardCards),
-          JSON.stringify(highHandPlayer.bestCards),
+          highHandPlayer.bestCards,
           highHandRank,
           handTime,
           true,
@@ -221,7 +222,7 @@ class RewardRepositoryImpl {
     handNum: number,
     playerCards: string,
     boardCards: string,
-    highhandRank: string,
+    highhandCards: Array<number>,
     rank: number,
     handTime: Date,
     winner: boolean,
@@ -253,13 +254,14 @@ class RewardRepositoryImpl {
     highhand.rewardTracking = rewardTracking;
     highhand.game = game;
     highhand.player = player;
-    highhand.highHand = highhandRank;
+    highhand.highHand = JSON.stringify(highhandCards);
     highhand.handNum = handNum;
     highhand.playerCards = playerCards;
     highhand.boardCards = boardCards;
     highhand.rank = rank;
     highhand.handTime = handTime;
     highhand.winner = winner;
+    highhand.highHandCards = JSON.stringify(stringCards(highhandCards));
     await logHighHandRepo.save(highhand);
   }
 
@@ -267,29 +269,29 @@ class RewardRepositoryImpl {
     if (!gameCode) {
       return;
     }
-    const highHand = [] as any;
-    let logHighHand: any;
+    const highHands = [] as any;
     const highHandRepo = getRepository(HighHand);
     const game = await Cache.getGame(gameCode);
-    const loggedHighHand = await highHandRepo.find({game: {id: game.id}});
     try {
-      for await (logHighHand of loggedHighHand) {
-        await highHand.push({
+      const gameHighHands = await highHandRepo.find({
+        where: {game: {id: game.id}},
+        order: {handTime: 'DESC'},
+      });
+      for await (const highHand of gameHighHands) {
+        highHands.push({
           gameCode: gameCode,
-          handNum: logHighHand.handNum,
-          playerUuid: logHighHand.player.uuid,
-          playerName: logHighHand.player.name,
-          playerCards: logHighHand.playerCards,
-          boardCards: logHighHand.boardCards,
-          highHand: logHighHand.highHand,
-          rank: logHighHand.rank,
-          handTime: logHighHand.handTime,
+          handNum: highHand.handNum,
+          playerUuid: highHand.player.uuid,
+          playerName: highHand.player.name,
+          playerCards: highHand.playerCards,
+          boardCards: highHand.boardCards,
+          highHand: highHand.highHand,
+          rank: highHand.rank,
+          handTime: highHand.handTime,
+          highHandCards: highHand.highHandCards,
         });
       }
-      await highHand.sort((a, b) => {
-        return b.rank - a.rank;
-      });
-      return highHand;
+      return highHands;
     } catch (err) {
       logger.error(
         `Couldn't retrieve Highhand. retry again. Error: ${err.toString()}`
@@ -302,51 +304,39 @@ class RewardRepositoryImpl {
     if (!gameCode || !rewardId) {
       return;
     }
-    const highHand = [] as any;
-    let logHighHand: any;
+    const highHands = [] as any;
     const highHandRepo = getRepository(HighHand);
-    const rewardTrackIdRepo = getRepository(GameRewardTracking);
-    const gameRepo = getRepository(PokerGame);
     const rewardRepo = getRepository(Reward);
-    const playerRepo = getRepository(Player);
-    const game = await gameRepo.findOne({gameCode: gameCode});
+    const game = await Cache.getGame(gameCode);
     if (!game) {
       logger.error('Invalid gameCode');
       throw new Error('Invalid gameCode');
     }
     const reward = await rewardRepo.findOne({id: rewardId});
     if (!reward) {
-      logger.error('Invalid RewardId}');
+      logger.error(`Invalid RewardId. ${rewardId}`);
       throw new Error('Invalid RewardId');
     }
-    const loggedHighHand = await highHandRepo.find({
-      game: {id: game.id},
-      reward: {id: rewardId},
-    });
     try {
-      for await (logHighHand of loggedHighHand) {
-        const player = await playerRepo.findOne({
-          id: logHighHand.player.id,
-        });
-        if (!player) {
-          throw new Error('Player not Found Error');
-        }
-        highHand.push({
+      const gameHighHands = await highHandRepo.find({
+        where: {game: {id: game.id}, reward: {id: rewardId}},
+        order: {handTime: 'DESC'},
+      });
+      for await (const highHand of gameHighHands) {
+        highHands.push({
           gameCode: gameCode,
-          handNum: logHighHand.handNum,
-          playerUuid: player.uuid,
-          playerName: player.name,
-          playerCards: logHighHand.playerCards,
-          boardCards: logHighHand.boardCards,
-          highHand: logHighHand.highHand,
-          rank: logHighHand.rank,
-          handTime: logHighHand.handTime,
+          handNum: highHand.handNum,
+          playerUuid: highHand.player.uuid,
+          playerName: highHand.player.name,
+          playerCards: highHand.playerCards,
+          boardCards: highHand.boardCards,
+          highHand: highHand.highHand,
+          rank: highHand.rank,
+          handTime: highHand.handTime,
+          highHandCards: highHand.highHandCards,
         });
       }
-      await highHand.sort((a, b) => {
-        return b.rank - a.rank;
-      });
-      return highHand;
+      return highHands;
     } catch (err) {
       logger.error(
         `Couldn't retrieve Highhand. retry again. Error: ${err.toString()}`

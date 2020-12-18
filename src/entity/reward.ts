@@ -182,6 +182,10 @@ export class HighHand {
   @Column({name: 'high_hand', nullable: false})
   public highHand!: string;
 
+  // cards displayed in characters
+  @Column({name: 'high_hand_cards', nullable: true})
+  public highHandCards!: string;
+
   @Column({name: 'rank', nullable: false})
   public rank!: number;
 

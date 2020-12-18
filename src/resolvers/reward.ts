@@ -65,6 +65,7 @@ export async function getHighHandsByGame(playerId: string, gameCode: string) {
       highHand: x.highHand,
       rank: x.rank,
       handTime: x.handTime,
+      highHandCards: x.highHandCards,
     };
   });
 }
@@ -89,6 +90,7 @@ export async function getHighHandsByReward(
       highHand: x.highHand,
       rank: x.rank,
       handTime: x.handTime,
+      highHandCards: x.highHandCards,
     };
   });
 }

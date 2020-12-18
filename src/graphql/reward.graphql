@@ -45,6 +45,7 @@ type HighHand{
   highHand: String!
   rank: Int!
   handTime: DateTime!
+  highHandCards: String!
 }
 
 type Query {

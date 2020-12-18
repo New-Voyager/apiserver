@@ -1,3 +1,5 @@
+import {Cards} from './cards';
+
 export function isPostgres() {
   if (process.env.DB_USED === 'sqllite') {
     return false;
@@ -12,4 +14,9 @@ export function fixQuery(query: string): string {
     }
   }
   return query;
+}
+
+export function stringCards(cards: Array<number>): Array<string | undefined> {
+  const stringCards = cards.map(x => Cards.get(x));
+  return stringCards;
 }
