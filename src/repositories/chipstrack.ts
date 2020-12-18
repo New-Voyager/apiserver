@@ -1,147 +1,14 @@
 import {PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {Club, ClubMember} from '@src/entity/club';
-import {getConnection, getRepository, getManager} from 'typeorm';
+import {getRepository, getManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
-import {isPostgres} from '@src/utils';
 import {PlayerGameTracker, ClubChipsTransaction} from '@src/entity/chipstrack';
-import {PlayerStatus} from '@src/entity/types';
-import {PlayerSitInput} from './types';
 import {Cache} from '@src/cache';
 
 const logger = getLogger('chipstrack');
-const INITIAL_BUYIN_COUNT = 1;
 
 class ChipsTrackRepositoryImpl {
-  public async saveChips(
-    playerChipsData: PlayerSitInput
-  ): Promise<PlayerGameTracker | undefined> {
-    try {
-      const clubRepository = getRepository(Club);
-      const gameRepository = getRepository(PokerGame);
-      const playerRepository = getRepository(Player);
-
-      let club = await clubRepository.findOne({
-        where: {id: playerChipsData.clubId},
-      });
-      const game = await gameRepository.findOne({
-        where: {id: playerChipsData.gameId},
-      });
-      const player = await playerRepository.findOne({
-        where: {id: playerChipsData.playerId},
-      });
-      if (playerChipsData.clubId === 0) {
-        club = new Club();
-        club.id = 0;
-      }
-      if (!club) {
-        throw new Error(`Club ${playerChipsData.clubId} is not found`);
-      }
-      if (!game) {
-        throw new Error(`Game ${playerChipsData.gameId} is not found`);
-      }
-      if (!player) {
-        throw new Error(`Player ${playerChipsData.playerId} is not found`);
-      }
-      const playerSetIn = new PlayerGameTracker();
-      playerSetIn.game = game;
-      playerSetIn.player = player;
-      playerSetIn.buyIn = playerChipsData.buyIn;
-      playerSetIn.stack = playerChipsData.buyIn;
-      playerSetIn.seatNo = playerChipsData.seatNo;
-      playerSetIn.hhRank = 0;
-      playerSetIn.hhHandNum = 0;
-
-      playerSetIn.status = PlayerStatus.PLAYING;
-      playerSetIn.noOfBuyins = INITIAL_BUYIN_COUNT;
-      playerSetIn.satAt = new Date();
-      const repository = getRepository(PlayerGameTracker);
-      const response = await repository.save(playerSetIn);
-
-      // update number of players in the seats
-      let placeHolder = '$1';
-      if (!isPostgres()) {
-        placeHolder = '?';
-      }
-      const query = `
-        UPDATE poker_game_updates SET players_in_seats = players_in_seats + 1
-        WHERE game_id = ${placeHolder}`;
-      await getConnection().query(query, [game.id]);
-
-      return response;
-    } catch (e) {
-      logger.error(
-        'Error thrown when a player sits in a seat: ' + e.toString()
-      );
-      throw e;
-    }
-  }
-
-  public async buyChips(
-    playerChipsData: any
-  ): Promise<PlayerGameTracker | undefined> {
-    try {
-      const clubRepository = getRepository(Club);
-      const playerRepository = getRepository(Player);
-      let club = await clubRepository.findOne({
-        where: {id: playerChipsData.clubId},
-      });
-      const player = await playerRepository.findOne({
-        where: {id: playerChipsData.playerId},
-      });
-      if (playerChipsData.clubId === 0) {
-        club = new Club();
-        club.id = 0;
-      }
-      if (!club) {
-        logger.debug(`Club ${playerChipsData.clubId} is not found`);
-        throw new Error(`Club ${playerChipsData.clubId} is not found`);
-      }
-      if (!player) {
-        logger.debug(`Player ${playerChipsData.playerId} is not found`);
-        throw new Error(`Player ${playerChipsData.playerId} is not found`);
-      } else {
-        const playerGameTrackrepository = getRepository(PlayerGameTracker);
-        let playerGameTrack;
-        if (playerChipsData.clubId !== 0) {
-          playerGameTrack = await playerGameTrackrepository.findOne({
-            relations: ['game', 'player'],
-            where: {
-              game: playerChipsData.gameId,
-              player: playerChipsData.playerId,
-              club: playerChipsData.clubId,
-            },
-          });
-        } else {
-          playerGameTrack = await playerGameTrackrepository.findOne({
-            relations: ['game', 'player'],
-            where: {
-              game: playerChipsData.gameId,
-              player: playerChipsData.playerId,
-            },
-          });
-        }
-        if (!playerGameTrack) {
-          logger.error('No data found');
-          throw new Error('No data found');
-        }
-        playerGameTrack.noOfBuyins =
-          parseInt(playerGameTrack.noOfBuyins.toString()) + 1;
-        playerGameTrack.buyIn =
-          parseInt(playerGameTrack.buyIn.toString()) +
-          parseInt(playerChipsData.buyChips);
-        playerGameTrack.stack =
-          parseInt(playerGameTrack.stack.toString()) +
-          parseInt(playerChipsData.buyChips);
-        const response = await playerGameTrackrepository.save(playerGameTrack);
-        return response;
-      }
-    } catch (e) {
-      logger.error(e);
-      throw e;
-    }
-  }
-
   public async settleClubBalances(game: PokerGame): Promise<any> {
     try {
       if (!game.club) {

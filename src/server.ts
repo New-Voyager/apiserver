@@ -1,11 +1,10 @@
 import {ApolloServer} from 'apollo-server-express';
 import {fileLoader, mergeTypes} from 'merge-graphql-schemas';
-import {merge, uniqueId} from 'lodash';
+import {merge} from 'lodash';
 import {authorize} from '@src/middlewares/authorization';
 import {createConnection, getConnectionOptions, getRepository} from 'typeorm';
 import {GameServerAPI} from './internal/gameserver';
 import {HandServerAPI} from './internal/hand';
-import {ChipsTrackSeverAPI} from './internal/chipstrack';
 import {GameAPI} from './internal/game';
 import * as jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
@@ -109,9 +108,6 @@ function addInternalRoutes(app: any) {
     HandServerAPI.postHand
   );
   app.post('/internal/start-game', GameAPI.startGame);
-  app.post('/internal/player-sit-in', ChipsTrackSeverAPI.playerSitsIn);
-  app.post('/internal/game-ended', ChipsTrackSeverAPI.endGame);
-  app.post('/internal/buy-chips', ChipsTrackSeverAPI.buyChips);
   app.post('/internal/delete-club-by-name/:clubName', AdminAPI.deleteClub);
   app.post('/internal/update-player-game-state', GameAPI.updatePlayerGameState);
   app.post('/internal/update-table-status', GameAPI.updateTableStatus);

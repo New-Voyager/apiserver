@@ -1,5 +1,5 @@
 import {getRepository, getConnection} from 'typeorm';
-import {isPostgres} from '@src/utils';
+import {fixQuery} from '@src/utils';
 import {GameStatus, NextHandUpdate, PlayerStatus} from '@src/entity/types';
 import {GameRepository} from './game';
 import {getLogger} from '@src/utils/log';
@@ -40,13 +40,9 @@ export async function processPendingUpdates(gameId: number) {
   }
 
   // if there is an end game update, let us end the game first
-  let placeHolder1 = '$1';
-  let placeHolder2 = '$2';
-  if (!isPostgres()) {
-    placeHolder1 = '?';
-    placeHolder2 = '?';
-  }
-  const query = `SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ${placeHolder1} AND new_update = ${placeHolder2}`;
+  const query = fixQuery(
+    'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ? AND new_update = ?'
+  );
   const resp = await getConnection().query(query, [
     gameId,
     NextHandUpdate.END_GAME,

@@ -30,7 +30,7 @@ import {
   playerKickedOut,
   startTimer,
 } from '@src/gameserver';
-import {isPostgres} from '@src/utils';
+import {fixQuery} from '@src/utils';
 import {WaitListMgmt} from './waitlist';
 import {Reward, GameRewardTracking, GameReward} from '@src/entity/reward';
 import {ChipsTrackRepository} from './chipstrack';
@@ -100,33 +100,6 @@ class GameRepositoryImpl {
     let savedGame;
     // use current time as the game id for now
     game.gameCode = await getGameCodeForClub(clubCode, club.id);
-    // game.gameCode = Date.now().toString();
-    const gameRespository = getRepository(PokerGame);
-
-    /*
-    ///NOTE: TEST CODE
-    game.gameCode = 'LEJRYK';
-    await getConnection()
-      .createQueryBuilder()
-      .delete()
-      .from(TrackGameServer)
-      .execute();
-
-    await getConnection()
-      .createQueryBuilder()
-      .delete()
-      .from(PlayerGameTracker)
-      .execute();
-
-    await getConnection()
-      .createQueryBuilder()
-      .delete()
-      .from(PokerGame)
-      .where('gameCode = :gameCode', {gameCode: game.gameCode})
-      .execute();
-    ///NOTE: TEST CODE
-    */
-
     game.privateGame = true;
 
     game.startedAt = new Date();
@@ -902,11 +875,9 @@ class GameRepositoryImpl {
   }
 
   public async anyPendingUpdates(gameId: number): Promise<boolean> {
-    let placeHolder1 = '$1';
-    if (!isPostgres()) {
-      placeHolder1 = '?';
-    }
-    const query = `SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ${placeHolder1}`;
+    const query = fixQuery(
+      'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ?'
+    );
     const resp = await getConnection().query(query, [gameId]);
     if (resp[0]['updates'] > 0) {
       return true;
@@ -917,14 +888,9 @@ class GameRepositoryImpl {
   public async endGameNextHand(gameId: number) {
     // check to see if the game is already marked to be ended
     const repository = getRepository(NextHandUpdates);
-
-    let placeHolder1 = '$1';
-    let placeHolder2 = '$2';
-    if (!isPostgres()) {
-      placeHolder1 = '?';
-      placeHolder2 = '?';
-    }
-    const query = `SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ${placeHolder1} AND new_update = ${placeHolder2}`;
+    const query = fixQuery(
+      'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ? AND new_update = ?'
+    );
     const resp = await getConnection().query(query, [
       gameId,
       NextHandUpdate.END_GAME,
@@ -995,14 +961,9 @@ class GameRepositoryImpl {
   }
 
   public async getPlayersInSeats(gameId: number): Promise<any> {
-    let placeHolder1 = '$1';
-    if (!isPostgres()) {
-      placeHolder1 = '?';
-    }
-
-    const query = `SELECT name, uuid as "playerUuid", buy_in as "buyIn", stack, status, seat_no as "seatNo", status FROM 
+    const query = fixQuery(`SELECT name, uuid as "playerUuid", buy_in as "buyIn", stack, status, seat_no as "seatNo", status FROM 
           player_game_tracker pgt JOIN player p ON pgt.pgt_player_id = p.id
-          AND pgt.pgt_game_id = ${placeHolder1} AND pgt.seat_no <> 0`;
+          AND pgt.pgt_game_id = ? AND pgt.seat_no <> 0`);
     const resp = await getConnection().query(query, [gameId]);
     return resp;
   }
@@ -1011,21 +972,15 @@ class GameRepositoryImpl {
     gameId: number,
     playerUuid: string
   ): Promise<any | null> {
-    let placeHolder1 = '$1';
-    let placeHolder2 = '$2';
-    if (!isPostgres()) {
-      placeHolder1 = '?';
-      placeHolder2 = '?';
-    }
-    const query = `SELECT game_token AS "gameToken", 
+    const query = fixQuery(`SELECT game_token AS "gameToken", 
       status AS "playerStatus",
       stack AS stack,
       "buyIn_status" as "buyInStatus",
       seat_no as "seatNo"
     FROM  player_game_tracker pgt 
     JOIN player p ON pgt.pgt_player_id = p.id 
-    AND p.uuid = ${placeHolder1} 
-    AND pgt.pgt_game_id = ${placeHolder2}`;
+    AND p.uuid = ? 
+    AND pgt.pgt_game_id = ?`);
     const resp = await getConnection().query(query, [playerUuid, gameId]);
     if (resp.length === 0) {
       return null;

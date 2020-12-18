@@ -4,3 +4,12 @@ export function isPostgres() {
   }
   return true;
 }
+
+export function fixQuery(query: string): string {
+  if (isPostgres()) {
+    for (let i = 1; query.includes('?'); i++) {
+      query = query.replace('?', '$' + i);
+    }
+  }
+  return query;
+}
