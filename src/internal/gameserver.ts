@@ -2,7 +2,7 @@ import {getConnection, getRepository} from 'typeorm';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {GameServerStatus, GameStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
-import {isPostgres} from '@src/utils';
+import {fixQuery} from '@src/utils';
 import {getLogger} from '@src/utils/log';
 const logger = getLogger('internal::gameserver');
 
@@ -240,11 +240,7 @@ export async function getGamesForGameServer(
       INNER JOIN game_server gs ON gg."gameServerId" = gs.id
       WHERE gs.url = ?
       AND pg.game_status = ?;`;
-  if (isPostgres()) {
-    for (let i = 1; query.includes('?'); i++) {
-      query = query.replace('?', '$' + i);
-    }
-  }
+  query = fixQuery(query);
   const res = await getConnection().query(query, [
     gameServerUrl,
     GameStatus.ACTIVE,

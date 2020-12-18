@@ -4,7 +4,7 @@ import {PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {PlayerStatus} from '@src/entity/types';
 import {cancelTimer, gameUpdate, startTimer} from '@src/gameserver';
-import {isPostgres} from '@src/utils';
+import {fixQuery} from '@src/utils';
 import {getLogger} from '@src/utils/log';
 import {getConnection, getManager, getRepository, IsNull, Not} from 'typeorm';
 import {WAITLIST_SEATING} from './types';
@@ -13,15 +13,9 @@ import * as crypto from 'crypto';
 const logger = getLogger('waitlist');
 
 export async function occupiedSeats(gameId: number): Promise<number> {
-  logger.info(`Processing pending updates for game id: ${gameId}`);
-  // if there is an end game update, let us end the game first
-  let placeHolder1 = '$1';
-  let placeHolder2 = '$2';
-  if (!isPostgres()) {
-    placeHolder1 = '?';
-    placeHolder2 = '?';
-  }
-  const query = `SELECT COUNT(*) as occupied FROM player_game_tracker WHERE pgt_game_id = ${placeHolder1} AND status = ${placeHolder2}`;
+  const query = fixQuery(
+    'SELECT COUNT(*) as occupied FROM player_game_tracker WHERE pgt_game_id = ? AND status = ?'
+  );
   const resp = await getConnection().query(query, [
     gameId,
     PlayerStatus.PLAYING,

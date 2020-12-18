@@ -13,7 +13,7 @@ import {PokerGame} from '@src/entity/game';
 import {PageOptions} from '@src/types';
 import {getLogger} from '@src/utils/log';
 import {getClubCode} from '@src/utils/uniqueid';
-import {isPostgres} from '@src/utils';
+import {fixQuery} from '@src/utils';
 import {Cache} from '@src/cache';
 
 const logger = getLogger('club-repository');
@@ -500,16 +500,12 @@ class ClubRepositoryImpl {
     if (!player) {
       throw new Error('Not found');
     }
-    let placeHolder = '$1';
-    if (!isPostgres()) {
-      placeHolder = '?';
-    }
-    const query = `WITH my_clubs as (
+    const query = fixQuery(`WITH my_clubs as (
       SELECT cm.club_id, count(*) member_count FROM club_member cm
-      WHERE cm.club_id in (SELECT club_id FROM club_member WHERE player_id=${placeHolder})
+      WHERE cm.club_id in (SELECT club_id FROM club_member WHERE player_id=?)
                  GROUP BY cm.club_id)
       SELECT c.club_code as "clubCode", member_count as "memberCount", c.name, c.owner_id as "ownerId" 
-      FROM club c JOIN my_clubs mc ON c.id = mc.club_id`;
+      FROM club c JOIN my_clubs mc ON c.id = mc.club_id`);
     const result = await getConnection().query(query, [player.id]);
     return result;
   }
