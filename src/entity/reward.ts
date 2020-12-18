@@ -64,21 +64,21 @@ export class GameRewardTracking {
     nullable: true,
   })
   @JoinColumn({name: 'game_id'})
-  public gameId!: PokerGame;
+  public game!: PokerGame;
 
   @ManyToOne(() => Reward, rewardId => rewardId.id, {
     eager: true,
     nullable: false,
   })
   @JoinColumn({name: 'reward_id'})
-  public rewardId!: Reward;
+  public reward!: Reward;
 
   @ManyToOne(() => Player, playerId => playerId.id, {
     eager: true,
     nullable: true,
   })
   @JoinColumn({name: 'player_id'})
-  public playerId!: Player;
+  public player!: Player;
 
   @Column({name: 'player_cards', nullable: true})
   public playerCards!: string;

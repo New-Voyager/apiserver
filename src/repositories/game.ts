@@ -132,18 +132,21 @@ class GameRepositoryImpl {
               const rewardRepository = transactionEntityManager.getRepository(
                 Reward
               );
-              await rewardRepository.findOne({id: rewardId});
+              const reward = await rewardRepository.findOne({id: rewardId});
+              if (!reward) {
+                throw new Error(`Reward: ${rewardId} is not found`);
+              }
 
               const rewardTrackRepo = transactionEntityManager.getRepository(
                 GameRewardTracking
               );
               const rewardTrack = await rewardTrackRepo.findOne({
-                rewardId: rewardId,
+                reward: {id: rewardId},
                 active: true,
               });
               if (!rewardTrack) {
                 const createRewardTrack = new GameRewardTracking();
-                createRewardTrack.rewardId = rewardId;
+                createRewardTrack.reward = reward;
                 createRewardTrack.day = new Date();
 
                 const rewardTrackRepository = transactionEntityManager.getRepository(
@@ -161,7 +164,7 @@ class GameRepositoryImpl {
                 const gameRewardRepository = transactionEntityManager.getRepository(
                   GameReward
                 );
-                const a = await gameRewardRepository.save(createGameReward);
+                await gameRewardRepository.save(createGameReward);
               } else {
                 const createGameReward = new GameReward();
                 createGameReward.gameId = game;

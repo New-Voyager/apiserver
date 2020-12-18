@@ -1,5 +1,5 @@
 import {Club} from '@src/entity/club';
-import {EntityManager, getManager, getRepository, Repository} from 'typeorm';
+import {EntityManager, getRepository, Not, Repository} from 'typeorm';
 import {RewardType, ScheduleType} from '@src/entity/types';
 import {GameRewardTracking, Reward} from '@src/entity/reward';
 export interface RewardInputFormat {
@@ -136,12 +136,6 @@ class RewardRepositoryImpl {
         return;
       }
 
-      const rewardRepo = getRepository(Reward);
-      const reward = await rewardRepo.findOne({id: existingTracking.id});
-      if (!reward) {
-        throw new Error(`Reward ${existingTracking.id} Not found`);
-      }
-
       let existingHighHandRank = Number.MAX_SAFE_INTEGER;
       if (existingTracking && existingTracking.highHandRank) {
         existingHighHandRank = existingTracking.highHandRank;
@@ -181,18 +175,22 @@ class RewardRepositoryImpl {
         } else {
           rewardTrackRepo = getRepository(GameRewardTracking);
         }
-        await rewardTrackRepo
-          .createQueryBuilder()
-          .update()
-          .set({
+        // update high hand information in the reward tracking table
+        await rewardTrackRepo.update(
+          {
+            id: existingTracking.id,
+          },
+          {
             handNum: input.handNum,
-            gameId: game,
-            playerId: player,
+            game: game,
+            player: player,
             boardCards: JSON.stringify(input.boardCards),
             playerCards: JSON.stringify(highHandPlayer.cards),
             highHand: JSON.stringify(highHandPlayer.bestCards),
             highHandRank: highHandRank,
-          });
+          }
+        );
+
         await this.logHighHand(
           existingTracking,
           game,
@@ -204,7 +202,7 @@ class RewardRepositoryImpl {
           highHandRank,
           handTime,
           true,
-          reward
+          existingTracking.reward
         );
       }
       return true;
@@ -236,6 +234,20 @@ class RewardRepositoryImpl {
     } else {
       logHighHandRepo = getRepository(HighHand);
     }
+
+    // reset previous winners
+    if (rewardTracking) {
+      logHighHandRepo.update(
+        {
+          rewardTracking: {id: rewardTracking.id},
+          rank: Not(rank),
+        },
+        {
+          winner: false,
+        }
+      );
+    }
+
     const highhand = new HighHand();
     highhand.reward = reward;
     highhand.rewardTracking = rewardTracking;
@@ -248,7 +260,7 @@ class RewardRepositoryImpl {
     highhand.rank = rank;
     highhand.handTime = handTime;
     highhand.winner = winner;
-    const s = await logHighHandRepo.save(highhand);
+    await logHighHandRepo.save(highhand);
   }
 
   public async highHandByGame(gameCode: string) {
@@ -344,13 +356,18 @@ class RewardRepositoryImpl {
   }
 
   public async getTrackId(rewardId: string) {
+    // We should use both gameCode and rewardId to get tracking id
+    // a multiple games may be associated with a rewardId
     if (!rewardId) {
       throw new Error('RewardId is empty');
     }
     const gameTrackRepo = getRepository(GameRewardTracking);
     const rewardRepo = getRepository(Reward);
     const reward = await rewardRepo.findOne({id: parseInt(rewardId)});
-    const gameTrack = await gameTrackRepo.findOne({rewardId: reward});
+    if (!reward) {
+      throw new Error(`Reward ${rewardId} is not found`);
+    }
+    const gameTrack = await gameTrackRepo.findOne({reward: {id: reward.id}});
     if (!gameTrack) {
       throw new Error(`Reward-id ${rewardId} not found`);
     }
