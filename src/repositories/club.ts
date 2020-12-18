@@ -112,6 +112,7 @@ class ClubRepositoryImpl {
 
     // Save the data
     const resp = await clubMemberRepository.save(clubMember);
+    await Cache.getClubMember(player.uuid, clubCode, true /* update cache */);
     return clubMember.status;
   }
 

@@ -39,6 +39,7 @@ enum PlayerGameStatus {
   TAKING_BREAK
   JOINING
   WAITLIST_SEATING
+  PENDING_UPDATES
 }
 
 enum BuyInApprovalStatus {
@@ -180,6 +181,21 @@ type WaitingListPlayer {
   status: PlayerGameStatus
 }
 
+type BuyInStatus {
+  expireSeconds: Int
+  approved: Boolean
+}
+
+enum ApprovalType {
+  BUYIN_REQUEST
+  RELOAD_REQUEST
+}
+
+enum ApprovalStatus {
+  APPROVED
+  DENIED
+}
+
 type Mutation {
   # Not implemented
   configureGameFromTemplate(clubCode: String!, templateId: Int!): GameInfo!
@@ -197,8 +213,14 @@ type Mutation {
   configureGame(clubCode: String!, game: GameCreateInput!): GameInfo!
   configureFriendsGame(game: GameCreateInput!): GameInfo!
   joinGame(gameCode: String!, seatNo: Int!): PlayerGameStatus!
-  buyIn(gameCode: String!, amount: Float!): BuyInApprovalStatus!
-  approveBuyIn(gameCode: String!, playerUuid: String!, amount: Float!): BuyInApprovalStatus!
+  buyIn(gameCode: String!, amount: Float!): BuyInStatus!
+  reload(gameCode: String!, amount: Float!): BuyInStatus!
+  approveRequest(
+    gameCode: String!, 
+    playerUuid: String!,
+    type: ApprovalType!, 
+    status: ApprovalStatus!
+  ): Boolean!
   startGame(gameCode: String!): GameStatus!
   takeBreak(gameCode: String!): Boolean!
   sitBack(gameCode: String!): Boolean!

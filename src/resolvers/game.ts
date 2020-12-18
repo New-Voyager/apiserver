@@ -5,12 +5,15 @@ import {
   PlayerStatus,
   TableStatus,
   BuyInApprovalStatus,
+  ApprovalType,
+  ApprovalStatus,
 } from '@src/entity/types';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
 import {WaitListMgmt} from '@src/repositories/waitlist';
 import {SeatChangeProcess} from '@src/repositories/seatchange';
 import {default as _} from 'lodash';
+import {BuyIn} from '@src/repositories/buyin';
 
 const logger = getLogger('game');
 
@@ -235,25 +238,63 @@ export async function buyIn(
     }
 
     const player = await Cache.getPlayer(playerUuid);
-    const status = await GameRepository.buyIn(
-      player,
-      game,
-      amount,
-      false /*reload*/
-    );
+    const buyin = new BuyIn(game, player);
+    const status = await buyin.request(amount);
     // player is good to go
-    return BuyInApprovalStatus[status];
+    return status;
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error(`Failed to update buyin. ${JSON.stringify(err)}`);
   }
 }
 
-export async function approveBuyIn(
-  hostUuid: string,
+export async function reload(
   playerUuid: string,
   gameCode: string,
   amount: number
+) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubMember = await Cache.isClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode}`
+        );
+      }
+    }
+
+    const player = await Cache.getPlayer(playerUuid);
+    const buyin = new BuyIn(game, player);
+    const status = await buyin.reloadRequest(amount);
+    // player is good to go
+    return status;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error(`Failed to update reload. ${JSON.stringify(err)}`);
+  }
+}
+
+export async function approveRequest(
+  hostUuid: string,
+  playerUuid: string,
+  gameCode: string,
+  type: ApprovalType,
+  status: ApprovalStatus
 ) {
   if (!hostUuid) {
     throw new Error('Unauthorized');
@@ -291,9 +332,10 @@ export async function approveBuyIn(
     }
 
     const player = await Cache.getPlayer(playerUuid);
-    const status = await GameRepository.approveBuyIn(player, game, amount);
+    const buyin = new BuyIn(game, player);
+    const resp = await buyin.approve(type, status);
     // player is good to go
-    return BuyInApprovalStatus[status];
+    return resp;
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error(`Failed to approve buyin. ${JSON.stringify(err)}`);
@@ -942,12 +984,16 @@ const resolvers: any = {
     buyIn: async (parent, args, ctx, info) => {
       return buyIn(ctx.req.playerId, args.gameCode, args.amount);
     },
-    approveBuyIn: async (parent, args, ctx, info) => {
-      return approveBuyIn(
+    reload: async (parent, args, ctx, info) => {
+      return reload(ctx.req.playerId, args.gameCode, args.amount);
+    },
+    approveRequest: async (parent, args, ctx, info) => {
+      return approveRequest(
         ctx.req.playerId,
         args.playerUuid,
         args.gameCode,
-        args.amount
+        args.type,
+        args.status
       );
     },
     startGame: async (parent, args, ctx, info) => {

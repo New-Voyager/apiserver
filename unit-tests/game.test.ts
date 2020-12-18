@@ -10,7 +10,8 @@ import {
   joinGame,
   startGame,
   buyIn,
-  approveBuyIn,
+  reload,
+  approveRequest,
   myGameState,
   tableGameState,
   takeBreak,
@@ -27,7 +28,7 @@ import {Cache} from '@src/cache/index';
 import {saveReward} from '../src/resolvers/reward';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {waitlistTimeoutExpired} from '@src/repositories/timer';
-import { approveMember } from '../src/resolvers/club';
+import {approveMember} from '../src/resolvers/club';
 
 const logger = getLogger('game unit-test');
 const holdemGameInput = {
@@ -66,6 +67,16 @@ enum ClubMemberStatus {
   ACTIVE,
   LEFT,
   KICKEDOUT,
+}
+
+export enum ApprovalType {
+  BUYIN_REQUEST,
+  RELOAD_REQUEST,
+}
+
+export enum ApprovalStatus {
+  APPROVED,
+  DENIED,
 }
 
 beforeAll(async done => {
@@ -296,7 +307,7 @@ describe('Game APIs', () => {
 
     // buyin
     const resp = await buyIn(player1, game.gameCode, 100);
-    expect(resp).toBe('APPROVED');
+    expect(resp.approved).toBe(true);
 
     // change seat after buyin
     const data4 = await joinGame(player1, game.gameCode, 1);
@@ -346,7 +357,7 @@ describe('Game APIs', () => {
 
     // Buyin with autoBuyinApproval true
     const resp = await buyIn(player1, game.gameCode, 100);
-    expect(resp).toBe('APPROVED');
+    expect(resp.approved).toBe(true);
 
     // setting autoBuyinApproval false and creditLimit
     const resp1 = await updateClubMember(owner, player1, club, {
@@ -361,11 +372,80 @@ describe('Game APIs', () => {
 
     // Buyin within credit limit and autoBuyinApproval false
     const resp2 = await buyIn(player1, game.gameCode, 100);
-    expect(resp2).toBe('APPROVED');
+    expect(resp2.approved).toBe(true);
 
     // Buyin more than credit limit and autoBuyinApproval false
     const resp3 = await buyIn(player1, game.gameCode, 100);
-    expect(resp3).toBe('WAITING_FOR_APPROVAL');
+    expect(resp3.approved).toBe(false);
+  });
+
+  test('gametest: Reload for a game', async () => {
+    await resetDB();
+    const gameServer1 = {
+      ipAddress: '10.1.1.6',
+      currentMemory: 100,
+      status: 'ACTIVE',
+      url: 'http://10.1.1.6:8080',
+    };
+    await createGameServer(gameServer1);
+    const owner = await createPlayer({
+      player: {
+        name: 'player_name',
+        deviceId: 'abc123',
+      },
+    });
+    const club = await createClub(owner, {
+      name: 'club_name',
+      description: 'poker players gather',
+      ownerUuid: owner,
+    });
+    await createReward(owner, club);
+    const game = await configureGame(owner, club, holdemGameInput);
+    const player1 = await createPlayer({
+      player: {
+        name: 'player_name',
+        deviceId: 'abc1234',
+      },
+    });
+    const player2 = await createPlayer({
+      player: {
+        name: 'player_name',
+        deviceId: 'abc1235',
+      },
+    });
+    await joinClub(player1, club);
+    await approveMember(owner, club, player1);
+    await joinClub(player2, club);
+    await approveMember(owner, club, player2);
+
+    // Join a game
+    const data = await joinGame(player1, game.gameCode, 1);
+    expect(data).toBe('WAIT_FOR_BUYIN');
+    const data1 = await joinGame(player2, game.gameCode, 2);
+    expect(data1).toBe('WAIT_FOR_BUYIN');
+
+    // reload with autoBuyinApproval true
+    const resp = await reload(player1, game.gameCode, 100);
+    expect(resp.approved).toBe(true);
+
+    // setting autoBuyinApproval false and creditLimit
+    const resp1 = await updateClubMember(owner, player1, club, {
+      balance: 10,
+      creditLimit: 200,
+      notes: 'Added credit limit',
+      status: ClubMemberStatus['ACTIVE'],
+      isManager: false,
+      autoBuyinApproval: false,
+    });
+    expect(resp1).toBe(ClubMemberStatus['ACTIVE']);
+
+    // reload within credit limit and autoBuyinApproval false
+    const resp2 = await reload(player1, game.gameCode, 100);
+    expect(resp2.approved).toBe(true);
+
+    // reload more than credit limit and autoBuyinApproval false
+    const resp3 = await reload(player1, game.gameCode, 100);
+    expect(resp3.approved).toBe(false);
   });
 
   test('gametest: Approve Buyin for a game', async () => {
@@ -420,13 +500,19 @@ describe('Game APIs', () => {
     });
     expect(resp1).toBe(ClubMemberStatus['ACTIVE']);
 
-    // Buyin within credit limit and autoBuyinApproval false
+    // Buyin more than credit limit and autoBuyinApproval false
     const resp2 = await buyIn(player1, game.gameCode, 100);
-    expect(resp2).toBe('WAITING_FOR_APPROVAL');
+    expect(resp2.approved).toBe(false);
 
     // Approve a buyin as host
-    const resp3 = await approveBuyIn(owner, player1, game.gameCode, 100);
-    expect(resp3).toBe('APPROVED');
+    const resp3 = await approveRequest(
+      owner,
+      player1,
+      game.gameCode,
+      ApprovalType.BUYIN_REQUEST,
+      ApprovalStatus.APPROVED
+    );
+    expect(resp3).toBe(true);
   });
 
   test('gametest: Get my game state', async () => {
@@ -477,7 +563,7 @@ describe('Game APIs', () => {
     expect(resp.seatNo).toBe(1);
 
     const resp1 = await buyIn(player1, game.gameCode, 100);
-    expect(resp1).toBe('APPROVED');
+    expect(resp1.approved).toBe(true);
 
     const resp2 = await myGameState(player1, game.gameCode);
     expect(resp2.buyInStatus).toBe('APPROVED');
@@ -580,7 +666,7 @@ describe('Game APIs', () => {
     const data = await joinGame(player1, game.gameCode, 1);
     expect(data).toBe('WAIT_FOR_BUYIN');
     const data1 = await buyIn(player1, game.gameCode, 100);
-    expect(data1).toBe('APPROVED');
+    expect(data1.approved).toBe(true);
 
     const resp3 = await takeBreak(player1, game.gameCode);
     expect(resp3).toBe(true);
@@ -689,7 +775,7 @@ describe('Game APIs', () => {
     const data2 = await joinGame(player1, game.gameCode, 1);
     expect(data2).toBe('WAIT_FOR_BUYIN');
     const data1 = await buyIn(player1, game.gameCode, 100);
-    expect(data1).toBe('APPROVED');
+    expect(data1.approved).toBe(true);
     const resp = await leaveGame(player1, game.gameCode);
     expect(resp).toBe(true);
   });
@@ -734,7 +820,7 @@ describe('Game APIs', () => {
 
       // buyin
       const data1 = await buyIn(player1, game.gameCode, 100);
-      expect(data1).toBe('APPROVED');
+      expect(data1.approved).toBe(true);
 
       // request seat change
       const resp1 = await requestSeatChange(player1, game.gameCode);
