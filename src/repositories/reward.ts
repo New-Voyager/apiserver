@@ -146,9 +146,9 @@ class RewardRepositoryImpl {
       let hhCards = '';
       for (const seatNo of Object.keys(input.players)) {
         const player = input.players[seatNo];
-        if (player.rank === highHandRank) {
+        if (player.hhRank === highHandRank) {
           highHandPlayers.push(player);
-          hhCards = player.bestCards;
+          hhCards = player.hhCards;
         }
       }
       if (highHandRank > existingHighHandRank) {
@@ -187,7 +187,7 @@ class RewardRepositoryImpl {
             player: player,
             boardCards: JSON.stringify(input.boardCards),
             playerCards: JSON.stringify(highHandPlayer.cards),
-            highHand: JSON.stringify(highHandPlayer.bestCards),
+            highHand: JSON.stringify(highHandPlayer.hhCards),
             highHandRank: highHandRank,
           }
         );
@@ -199,7 +199,7 @@ class RewardRepositoryImpl {
           input.handNum,
           JSON.stringify(highHandPlayer.cards),
           JSON.stringify(input.boardCards),
-          highHandPlayer.bestCards,
+          highHandPlayer.hhCards,
           highHandRank,
           handTime,
           true,
