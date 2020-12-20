@@ -141,6 +141,10 @@ type GameInfo {
   handToAllChannel: String
   playerToHandChannel: String
   handToPlayerChannel: String
+
+  # updates
+  lastHandNum: Int
+  rakeCollected: Float
 }
 
 input GameUpdateInput {
@@ -150,7 +154,6 @@ input GameUpdateInput {
   buyInMin: Float
   buyInMax: Float
   title: String
-
 }
 
 type PlayerGameState {
@@ -164,7 +167,7 @@ type PlayerGameState {
   seatNo: Int
 }
 
-type PlayerSeatChange{
+type PlayerSeatChange {
   playerUuid: String!
   name: String
   status: PlayerGameStatus
