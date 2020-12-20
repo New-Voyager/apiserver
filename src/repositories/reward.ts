@@ -151,15 +151,32 @@ class RewardRepositoryImpl {
           hhCards = player.hhCards;
         }
       }
-      if (highHandRank > existingHighHandRank) {
-        logger.error(`Hand: ${hhCards} is not a high hand.`);
+      if (hhCards === '') {
         return;
       }
+      let winner = true;
       const game = await Cache.getGame(gameCode, false, transactionManager);
+      if (highHandRank > existingHighHandRank) {
+        winner = false;
+        logger.error(`Hand: ${hhCards} is not a high hand.`);
+
+        // is this better high hand in that game?
+        let gameHighHandRank = game.highHandRank;
+        if (gameHighHandRank === 0) {
+          gameHighHandRank = await this.getGameHighHand(
+            game,
+            existingTracking.reward.id
+          );
+        }
+
+        if (highHandRank > gameHighHandRank) {
+          return;
+        }
+      }
 
       // get existing high hand from the database
       // TODO: we need to handle multiple players with high hands
-      if (highHandPlayers.length > 0) {
+      if (winner && highHandPlayers.length > 0) {
         const highHandPlayer = highHandPlayers[0];
         const playerRepo = getRepository(Player);
         const player = await playerRepo.findOne({
@@ -202,9 +219,10 @@ class RewardRepositoryImpl {
           highHandPlayer.hhCards,
           highHandRank,
           handTime,
-          true,
+          winner,
           existingTracking.reward
         );
+        Cache.updateGameHighHand(game.gameCode, highHandRank);
       }
       return true;
     } catch (err) {
@@ -343,6 +361,22 @@ class RewardRepositoryImpl {
       );
       throw new Error("Couldn't retrieve highhand, please retry again");
     }
+  }
+
+  public async getGameHighHand(
+    game: PokerGame,
+    rewardId: number
+  ): Promise<number> {
+    const highHandRepo = getRepository(HighHand);
+    const gameHighHands = await highHandRepo.find({
+      where: {game: {id: game.id}, reward: {id: rewardId}},
+      order: {handTime: 'DESC'},
+      take: 1,
+    });
+    if (gameHighHands && gameHighHands.length === 1) {
+      return gameHighHands[0].rank;
+    }
+    return 0xffffffff;
   }
 
   public async getTrackId(rewardId: string) {

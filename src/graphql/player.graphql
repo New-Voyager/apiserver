@@ -51,6 +51,8 @@ type LiveGame {
   tableCount: Int!      # number of players playing
   playerStatus: PlayerGameStatus!
   handsDealt: Int!
+  highHands: [HighHand!]
+  highHandWinners: [HighHand!]
 }
 
 type PastGame {
@@ -66,6 +68,8 @@ type PastGame {
   buyIn: Float
   stack: Float
   handsDealt: Int!
+  highHands: [HighHand!]
+  highHandWinners: [HighHand!]
 }
 
 type PlayerId {
