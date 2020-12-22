@@ -14,6 +14,7 @@ import {WaitListMgmt} from '@src/repositories/waitlist';
 import {SeatChangeProcess} from '@src/repositories/seatchange';
 import {default as _} from 'lodash';
 import {BuyIn} from '@src/repositories/buyin';
+import {PokerGame} from '@src/entity/game';
 
 const logger = getLogger('game');
 
@@ -287,6 +288,75 @@ export async function reload(
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error(`Failed to update reload. ${JSON.stringify(err)}`);
+  }
+}
+
+export async function pendingApprovalsForClub(
+  hostUuid: string,
+  clubCode: string
+) {
+  if (!hostUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    const clubHost = await Cache.getClubMember(hostUuid, clubCode);
+    if (!clubHost || !(clubHost.isManager || clubHost.isOwner)) {
+      logger.error(
+        `Player: ${hostUuid} is not authorized to approve buyIn in club ${clubCode}`
+      );
+      throw new Error(
+        `Player: ${hostUuid} is not authorized to approve buyIn in club ${clubCode}`
+      );
+    }
+
+    const player = await Cache.getPlayer(hostUuid);
+    const club = await Cache.getClub(clubCode);
+
+    const buyin = new BuyIn(new PokerGame(), player);
+    const resp = await buyin.pendingApprovalsForClub(club);
+
+    return resp;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error(`Failed to approve buyin. ${JSON.stringify(err)}`);
+  }
+}
+
+export async function pendingApprovalsForGame(
+  hostUuid: string,
+  gameCode: string
+) {
+  if (!hostUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubHost = await Cache.getClubMember(hostUuid, game.club.clubCode);
+      if (!clubHost || !(clubHost.isManager || clubHost.isOwner)) {
+        logger.error(
+          `Player: ${hostUuid} is not authorized to approve buyIn in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${hostUuid} is not authorized to approve buyIn in club ${game.club.name}`
+        );
+      }
+    }
+
+    const player = await Cache.getPlayer(hostUuid);
+
+    const buyin = new BuyIn(game, player);
+    const resp = await buyin.pendingApprovalsForGame();
+
+    return resp;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error(`Failed to approve buyin. ${JSON.stringify(err)}`);
   }
 }
 
@@ -920,6 +990,12 @@ const resolvers: any = {
     },
     waitingList: async (parent, args, ctx, info) => {
       return await waitingList(ctx.req.playerId, args.gameCode);
+    },
+    pendingApprovalsForClub: async (parent, args, ctx, info) => {
+      return await pendingApprovalsForClub(ctx.req.playerId, args.clubCode);
+    },
+    pendingApprovalsForGame: async (parent, args, ctx, info) => {
+      return await pendingApprovalsForGame(ctx.req.playerId, args.gameCode);
     },
   },
   GameInfo: {

@@ -15,6 +15,7 @@ import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {GameRepository} from './game';
 import {playerBuyIn, startTimer} from '@src/gameserver';
 import {BUYIN_APPROVAL_TIMEOUT, RELOAD_APPROVAL_TIMEOUT} from './types';
+import {Club} from '@src/entity/club';
 
 const logger = getLogger('buyin');
 
@@ -434,6 +435,91 @@ export class BuyIn {
     };
   }
 
+  public async pendingApprovalsForClub(club: Club): Promise<any> {
+    const query1 = `select 
+      g.game_code as "gameCode", 
+      g.id as "gameId", 
+      p.uuid as "playerUuid", 
+      p.name as "name", 
+      p.id as "playerId", 
+      nhu.buyin_amount as "amount", 
+      nhu.new_update as "update" 
+      from next_hand_updates nhu 
+      join poker_game g on g.club_id = ${club.id} and g.ended_at is NULL 
+      join player p on p.id = nhu.player_id 
+      where nhu.new_update in (
+        ${[
+          NextHandUpdate.WAIT_BUYIN_APPROVAL,
+          NextHandUpdate.WAIT_RELOAD_APPROVAL,
+        ]}
+      );`;
+
+    const resp1 = await getConnection().query(query1);
+
+    const result = new Array<any>();
+    for await (const data of resp1) {
+      const outstandingBalance = await this.calcOutstandingBalance(
+        data.playerId,
+        data.gameId
+      );
+      result.push({
+        gameCode: data.gameCode,
+        playerUuid: data.playerUuid,
+        name: data.name,
+        amount: data.amount,
+        approvalType:
+          data.update === NextHandUpdate.WAIT_BUYIN_APPROVAL
+            ? ApprovalType[ApprovalType.BUYIN_REQUEST]
+            : ApprovalType[ApprovalType.RELOAD_REQUEST],
+        outstandingBalance: outstandingBalance,
+      });
+    }
+
+    return result;
+  }
+
+  public async pendingApprovalsForGame(): Promise<any> {
+    const query1 = `select 
+      g.game_code as "gameCode", 
+      g.id as "gameId", 
+      p.uuid as "playerUuid", 
+      p.name as "name", 
+      p.id as "playerId", 
+      nhu.buyin_amount as "amount", 
+      nhu.new_update as "update" 
+      from poker_game g  
+      join next_hand_updates nhu on nhu.game_id = g.id and nhu.new_update in (
+        ${[
+          NextHandUpdate.WAIT_BUYIN_APPROVAL,
+          NextHandUpdate.WAIT_RELOAD_APPROVAL,
+        ]}
+      )
+      join player p on p.id = nhu.player_id 
+      where g.id = ${this.game.id};`;
+
+    const resp1 = await getConnection().query(query1);
+
+    const result = new Array<any>();
+    for await (const data of resp1) {
+      const outstandingBalance = await this.calcOutstandingBalance(
+        data.playerId,
+        data.gameId
+      );
+      result.push({
+        gameCode: data.gameCode,
+        playerUuid: data.playerUuid,
+        name: data.name,
+        amount: data.amount,
+        approvalType:
+          data.update === NextHandUpdate.WAIT_BUYIN_APPROVAL
+            ? ApprovalType[ApprovalType.BUYIN_REQUEST]
+            : ApprovalType[ApprovalType.RELOAD_REQUEST],
+        outstandingBalance: outstandingBalance,
+      });
+    }
+    return result;
+  }
+
   public async approve(
     type: ApprovalType,
     status: ApprovalStatus
@@ -464,6 +550,39 @@ export class BuyIn {
       }
     }
     return true;
+  }
+
+  private async calcOutstandingBalance(playerId: number, gameId: number) {
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerInGames = await playerGameTrackerRepository
+      .createQueryBuilder()
+      .where({
+        game: {id: gameId},
+        player: {id: playerId},
+      })
+      .addSelect('buy_in', 'buyIn')
+      .execute();
+
+    const playerInGame = playerInGames[0];
+    if (!playerInGame) {
+      logger.error(`Player ${playerId} is not in the game: ${playerId}`);
+      throw new Error(`Player ${playerId} is not in the game`);
+    }
+
+    const query =
+      'SELECT SUM(buy_in) current_buyin FROM player_game_tracker pgt, poker_game pg WHERE pgt.pgt_player_id = ' +
+      playerId +
+      ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
+      GameStatus.ENDED;
+    const resp = await getConnection().query(query);
+
+    const currentBuyin = resp[0]['current_buyin'];
+
+    let outstandingBalance = playerInGame.buyIn;
+    if (currentBuyin) {
+      outstandingBalance += currentBuyin;
+    }
+    return outstandingBalance;
   }
 
   private async updateNextHandrecord(

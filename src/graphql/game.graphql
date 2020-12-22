@@ -199,6 +199,15 @@ enum ApprovalStatus {
   DENIED
 }
 
+type PendingApproval {
+  gameCode: String!
+  playerUuid: String!
+  name: String!
+  approvalType: ApprovalType!
+  amount: Float!
+  outstandingBalance: Float!  
+}
+
 type Mutation {
   # Not implemented
   configureGameFromTemplate(clubCode: String!, templateId: Int!): GameInfo!
@@ -253,4 +262,6 @@ type Query {
   tableGameState(gameCode: String!): [PlayerGameState!]
   seatChangeRequests(gameCode: String!): [PlayerSeatChange]
   waitingList(gameCode: String!): [WaitingListPlayer!]
+  pendingApprovalsForClub(clubCode: String!): [PendingApproval!]
+  pendingApprovalsForGame(gameCode: String!): [PendingApproval!]
 }
