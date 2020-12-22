@@ -2,10 +2,15 @@ import {initializeSqlLite} from './utils';
 import {getLogger} from '../src/utils/log';
 import {resetDB} from '../src/resolvers/reset';
 import {createPlayer, getPlayerById} from '../src/resolvers/player';
-import {createClub, getClubById} from '../src/resolvers/club';
+import {
+  createClub,
+  getClubById,
+  joinClub,
+  approveMember,
+} from '../src/resolvers/club';
 import {getGame} from '../src/cache/index';
 import {createGameServer} from '../src/internal/gameserver';
-import {configureGame} from '../src/resolvers/game';
+import {configureGame, joinGame} from '../src/resolvers/game';
 import {saveReward, getHighHandWinners} from '../src/resolvers/reward';
 import {postHand} from '../src/internal/hand';
 import _ from 'lodash';
@@ -16,14 +21,6 @@ import {
 } from '../src/resolvers/reward';
 import * as fs from 'fs';
 import * as glob from 'glob';
-import {
-  getLastHandHistory,
-  getSpecificHandHistory,
-  getAllHandHistory,
-  getMyWinningHands,
-  getAllStarredHands,
-  saveStarredHand,
-} from '../src/resolvers/hand';
 
 const logger = getLogger('High-hand unit-test');
 
@@ -80,47 +77,72 @@ async function createReward(playerId, clubCode) {
   holdemGameInput.rewardIds.push(rewardId);
 }
 
-async function createClubAndStartGame(): Promise<
-  [number, number, number, string, string, string]
-> {
-  const owner = await createPlayer({
-    player: {
-      name: 'player_name',
-      deviceId: 'abc',
-    },
-  });
-  expect(owner).not.toBeNull();
-  const club = await createClub(owner, {
-    name: 'club_name',
-    description: 'poker players gather',
-    ownerUuid: owner,
-  });
-  expect(club).not.toBeNull();
+async function createClubWithMembers(
+  ownerInput: any,
+  clubInput: any,
+  players: Array<any>
+): Promise<[string, string, Array<string>, number, string, Array<number>]> {
   const gameServer = {
     ipAddress: '10.1.1.1',
     currentMemory: 100,
     status: 'ACTIVE',
     url: 'htto://localhost:8080',
   };
+  let i = 0;
   await createGameServer(gameServer);
-  await createReward(owner, club);
-  const game = await configureGame(owner, club, holdemGameInput);
-  const playerId = (await getPlayerById(owner)).id;
+  const ownerUuid = await createPlayer({player: ownerInput});
+  clubInput.ownerUuid = ownerUuid;
+  const clubCode = await createClub(ownerUuid, clubInput);
+  await createReward(ownerUuid, clubCode);
+  const game = await configureGame(ownerUuid, clubCode, holdemGameInput);
+  const playerUuids = new Array<string>();
+  const playerIds = new Array<number>();
+  for (const playerInput of players) {
+    const playerUuid = await createPlayer({player: playerInput});
+    await joinClub(playerUuid, clubCode);
+    await approveMember(ownerUuid, clubCode, playerUuid);
+    const playerId = (await getPlayerById(playerUuid)).id;
+    await joinGame(playerUuid, game.gameCode, ++i);
+    playerUuids.push(playerUuid);
+    playerIds.push(playerId);
+  }
   const gameId = (await getGame(game.gameCode)).id;
-  const clubId = (await getClubById(owner, club)).id;
-  return [clubId, playerId, gameId, owner, club, game.gameCode];
+  return [ownerUuid, clubCode, playerUuids, gameId, game.gameCode, playerIds];
 }
 
 describe('HighHand APIs', () => {
   test('Save and retreive highHands', async () => {
+    const ownerInput = {
+      name: 'player_name',
+      deviceId: 'abc123',
+    };
+    const clubInput = {
+      name: 'club_name',
+      description: 'poker players gather',
+    };
+    const playersInput = [
+      {
+        name: 'player_name1',
+        deviceId: 'abc1234',
+      },
+      {
+        name: 'player_name2',
+        deviceId: 'abc5678',
+      },
+      {
+        name: 'player_name3',
+        deviceId: 'abc4567',
+      },
+    ];
+
     const [
-      clubId,
-      playerId,
-      gameId,
-      playerUuid,
+      ownerUuid,
       clubCode,
+      playerUuids,
+      gameId,
       gameCode,
-    ] = await createClubAndStartGame();
+      playerIds,
+    ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
 
     const files = await glob.sync('**/*.json', {
       onlyFiles: false,
@@ -136,27 +158,13 @@ describe('HighHand APIs', () => {
       data.gameId = gameId.toString();
       data.rewardTrackingIds.splice(0);
       data.rewardTrackingIds.push(rewardId);
-      data.players['1'].id = playerId.toString();
-
-      const playerUuid2 = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc123',
-        },
-      });
-      const playerId2 = await getPlayerById(playerUuid2);
-      const playerUuid3 = await createPlayer({
-        player: {
-          name: 'player_name',
-          deviceId: 'abc123',
-        },
-      });
-      const playerId3 = await getPlayerById(playerUuid3);
-      data.gameId = gameId.toString();
-      data.players['2'].id = playerId2.id.toString();
+      data.players['1'].id = playerIds[0].toString();
 
       data.gameId = gameId.toString();
-      data.players['3'].id = playerId3.id.toString();
+      data.players['2'].id = playerIds[1].toString();
+
+      data.gameId = gameId.toString();
+      data.players['3'].id = playerIds[2].toString();
 
       const rank: number[] = [];
       Object.keys(data.players).forEach(async card => {
@@ -173,7 +181,7 @@ describe('HighHand APIs', () => {
       await postHand(gameId, data.handNum, data);
     }
     const resp1 = await getHighHandsByGame(
-      playerId.toString(),
+      ownerUuid.toString(),
       gameCode.toString()
     );
     const resRank = [] as any,
@@ -187,9 +195,8 @@ describe('HighHand APIs', () => {
     expect(resp1.length).toEqual(files.length);
     expect(resRank).toEqual(expect.arrayContaining(wonRank));
     expect(resId).toEqual(expect.arrayContaining(wonId));
-
     const resp2 = await getHighHandsByReward(
-      playerId.toString(),
+      ownerUuid.toString(),
       gameCode.toString(),
       rewardId.toString()
     );
@@ -206,7 +213,7 @@ describe('HighHand APIs', () => {
     expect(resByRewardId).toEqual(expect.arrayContaining(wonId));
 
     const resp3 = await getHighHandWinners(
-      playerId.toString(),
+      ownerUuid.toString(),
       gameCode.toString(),
       rewardId.toString()
     );

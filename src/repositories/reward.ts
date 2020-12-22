@@ -392,7 +392,7 @@ class RewardRepositoryImpl {
     }
     try {
       const gameHighHands = await highHandRepo.find({
-        where: {rewardTracking: rewardtrack, winner: true},
+        where: {rewardTracking: {id: rewardtrack.id}, winner: true},
       });
       for await (const highHand of gameHighHands) {
         highHands.push({

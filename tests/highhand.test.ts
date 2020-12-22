@@ -117,6 +117,11 @@ describe('Hand Server', () => {
       gameCode,
       rewardId,
     ] = await createClubAndStartGame();
+
+    const playerUuid2 = await clubutils.createPlayer('adam', 'dev1');
+    const playerId2 = await handutils.getPlayerById(playerUuid2);
+    const playerUuid3 = await clubutils.createPlayer('ajay', 'device2');
+    const playerId3 = await handutils.getPlayerById(playerUuid3);
     const files = await glob.sync('**/*.json', {
       onlyFiles: false,
       cwd: 'highhand-results',
@@ -134,10 +139,6 @@ describe('Hand Server', () => {
       data.rewardTrackingIds.push(rewardId);
       data.players['1'].id = playerId.toString();
 
-      const playerUuid2 = await clubutils.createPlayer('adam', 'dev1');
-      const playerId2 = await handutils.getPlayerById(playerUuid2);
-      const playerUuid3 = await clubutils.createPlayer('ajay', 'device2');
-      const playerId3 = await handutils.getPlayerById(playerUuid3);
       data.gameId = gameId.toString();
       data.players['2'].id = playerId2.toString();
 
