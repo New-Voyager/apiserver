@@ -154,7 +154,6 @@ describe('HighHand APIs', () => {
     for await (const file of files) {
       const obj = await fs.readFileSync(`highhand-results/${file}`, 'utf8');
       const data = JSON.parse(obj);
-      data.handNum = 1;
       data.gameId = gameId.toString();
       data.rewardTrackingIds.splice(0);
       data.rewardTrackingIds.push(rewardId);
@@ -168,7 +167,7 @@ describe('HighHand APIs', () => {
 
       const rank: number[] = [];
       Object.keys(data.players).forEach(async card => {
-        rank.push(parseInt(data.players[card.toString()].rank));
+        rank.push(parseInt(data.players[card.toString()].hhRank));
       });
       const highHandRank = _.min(rank);
       wonRank.push(highHandRank);
@@ -191,6 +190,7 @@ describe('HighHand APIs', () => {
       const id = await getPlayerById(logData.playerUuid);
       resId.push(id.id.toString());
     }
+
     expect(resp1).not.toBeNull();
     expect(resp1.length).toEqual(files.length);
     expect(resRank).toEqual(expect.arrayContaining(wonRank));

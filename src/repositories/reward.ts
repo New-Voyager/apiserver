@@ -98,7 +98,7 @@ class RewardRepositoryImpl {
       }
       const rank: number[] = [];
       Object.keys(input.players).forEach(async card => {
-        rank.push(parseInt(input.players[card.toString()].rank));
+        rank.push(parseInt(input.players[card.toString()].hhRank));
       });
       const highHandRank = _.min(rank);
       if (!highHandRank) {
@@ -141,7 +141,7 @@ class RewardRepositoryImpl {
       if (existingTracking && existingTracking.highHandRank) {
         existingHighHandRank = existingTracking.highHandRank;
       }
-
+      console.log(highHandRank);
       const highHandPlayers = new Array<any>();
       let hhCards = '';
       for (const seatNo of Object.keys(input.players)) {
@@ -154,6 +154,7 @@ class RewardRepositoryImpl {
       if (hhCards === '') {
         return;
       }
+
       let winner = true;
       const game = await Cache.getGame(gameCode, false, transactionManager);
       if (highHandRank > existingHighHandRank) {
@@ -194,6 +195,7 @@ class RewardRepositoryImpl {
           rewardTrackRepo = getRepository(GameRewardTracking);
         }
         // update high hand information in the reward tracking table
+
         await rewardTrackRepo.update(
           {
             id: existingTracking.id,
@@ -208,7 +210,6 @@ class RewardRepositoryImpl {
             highHandRank: highHandRank,
           }
         );
-
         await this.logHighHand(
           existingTracking,
           game,
@@ -266,7 +267,6 @@ class RewardRepositoryImpl {
         }
       );
     }
-
     const highhand = new HighHand();
     highhand.reward = reward;
     highhand.rewardTracking = rewardTracking;
