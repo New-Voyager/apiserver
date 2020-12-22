@@ -98,7 +98,7 @@ class RewardRepositoryImpl {
       }
       const rank: number[] = [];
       Object.keys(input.players).forEach(async card => {
-        rank.push(parseInt(input.players[card.toString()].rank));
+        rank.push(parseInt(input.players[card.toString()].hhRank));
       });
       const highHandRank = _.min(rank);
       if (!highHandRank) {
@@ -141,7 +141,7 @@ class RewardRepositoryImpl {
       if (existingTracking && existingTracking.highHandRank) {
         existingHighHandRank = existingTracking.highHandRank;
       }
-
+      console.log(highHandRank);
       const highHandPlayers = new Array<any>();
       let hhCards = '';
       for (const seatNo of Object.keys(input.players)) {
@@ -154,6 +154,7 @@ class RewardRepositoryImpl {
       if (hhCards === '') {
         return;
       }
+
       let winner = true;
       const game = await Cache.getGame(gameCode, false, transactionManager);
       if (highHandRank > existingHighHandRank) {
@@ -194,6 +195,7 @@ class RewardRepositoryImpl {
           rewardTrackRepo = getRepository(GameRewardTracking);
         }
         // update high hand information in the reward tracking table
+
         await rewardTrackRepo.update(
           {
             id: existingTracking.id,
@@ -208,7 +210,6 @@ class RewardRepositoryImpl {
             highHandRank: highHandRank,
           }
         );
-
         await this.logHighHand(
           existingTracking,
           game,
@@ -266,7 +267,6 @@ class RewardRepositoryImpl {
         }
       );
     }
-
     const highhand = new HighHand();
     highhand.reward = reward;
     highhand.rewardTracking = rewardTracking;
@@ -396,6 +396,59 @@ class RewardRepositoryImpl {
       throw new Error(`Reward-id ${rewardId} not found`);
     }
     return gameTrack.id;
+  }
+
+  public async highHandWinners(gameCode: string, rewardId: number) {
+    if (!gameCode || !rewardId) {
+      return;
+    }
+    const highHands = [] as any;
+    const highHandRepo = getRepository(HighHand);
+    const rewardRepo = getRepository(Reward);
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      logger.error('Invalid gameCode');
+      throw new Error('Invalid gameCode');
+    }
+    const reward = await rewardRepo.findOne({id: rewardId});
+    if (!reward) {
+      logger.error(`Invalid RewardId. ${rewardId}`);
+      throw new Error('Invalid RewardId');
+    }
+    const rewardTrackRepo = getRepository(GameRewardTracking);
+    const rewardtrack = await rewardTrackRepo.findOne({
+      game: game,
+      reward: reward,
+    });
+    if (!rewardtrack) {
+      logger.error('RewardTrackId not found.');
+      throw new Error('RewardTrackId not found.');
+    }
+    try {
+      const gameHighHands = await highHandRepo.find({
+        where: {rewardTracking: {id: rewardtrack.id}, winner: true},
+      });
+      for await (const highHand of gameHighHands) {
+        highHands.push({
+          gameCode: gameCode,
+          handNum: highHand.handNum,
+          playerUuid: highHand.player.uuid,
+          playerName: highHand.player.name,
+          playerCards: highHand.playerCards,
+          boardCards: highHand.boardCards,
+          highHand: highHand.highHand,
+          rank: highHand.rank,
+          handTime: highHand.handTime,
+          highHandCards: highHand.highHandCards,
+        });
+      }
+      return highHands;
+    } catch (err) {
+      logger.error(
+        `Couldn't retrieve Highhand. retry again. Error: ${err.toString()}`
+      );
+      throw new Error("Couldn't retrieve highhand, please retry again");
+    }
   }
 }
 
