@@ -1183,6 +1183,7 @@ describe('Game APIs', () => {
 
     await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
+    await startGame(owner, game.gameCode);
 
     // Join a game
     const data = await joinGame(players[0], game.gameCode, 1);
