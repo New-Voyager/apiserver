@@ -156,7 +156,6 @@ class GameCache {
   }
 }
 
-/*
 export async function getGame(gameCode: string): Promise<PokerGame> {
   const games = await getRepository(PokerGame).find({
     where: {gameCode: gameCode},
@@ -171,6 +170,9 @@ export async function getGame(gameCode: string): Promise<PokerGame> {
 
   return games[0];
 }
+
+/*
+
 
 export async function getClub(clubCode: string, update = false): Promise<Club> {
   const clubs = await getRepository(Club).find({

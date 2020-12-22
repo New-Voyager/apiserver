@@ -95,6 +95,31 @@ export async function getHighHandsByReward(
   });
 }
 
+export async function getHighHandWinners(
+  playerId: string,
+  gameCode: string,
+  rewardId: number
+) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const messages = await RewardRepository.highHandWinners(gameCode, rewardId);
+  return _.map(messages, x => {
+    return {
+      gameCode: x.gameCode,
+      handNum: x.handNum,
+      playerUuid: x.playerUuid,
+      playerName: x.playerName,
+      playerCards: x.playerCards,
+      boardCards: x.boardCards,
+      highHand: x.highHand,
+      rank: x.rank,
+      handTime: x.handTime,
+      highHandCards: x.highHandCards,
+    };
+  });
+}
+
 export async function getTrackingIdByRewardId(
   playerId: string,
   rewardId: string
@@ -129,6 +154,9 @@ const resolvers: any = {
         args.gameCode,
         args.rewardId
       );
+    },
+    highHandWinners: async (parent, args, ctx, info) => {
+      return getHighHandWinners(ctx.req.playerId, args.gameCode, args.rewardId);
     },
   },
 };
