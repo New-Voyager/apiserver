@@ -83,6 +83,11 @@ const resolvers: any = {
       return getHighHandsByGame(ctx.req.playerId, parent.gameCode);
     },
   },
+  PastGame: {
+    highHands: async (parent, args, ctx, info) => {
+      return getHighHandsByGame(ctx.req.playerId, parent.gameCode);
+    },
+  },
 };
 
 export function getResolvers() {
