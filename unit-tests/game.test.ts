@@ -10,6 +10,8 @@ import {
   joinGame,
   startGame,
   buyIn,
+  pendingApprovalsForClub,
+  pendingApprovalsForGame,
   reload,
   approveRequest,
   myGameState,
@@ -1147,5 +1149,81 @@ describe('Game APIs', () => {
     expect(waitlist3[0].playerUuid).not.toBe(john);
     expect(waitlist3[0].playerUuid).toBe(bob);
     expect(waitlist3[0].status).toBe('WAITLIST_SEATING');
+  });
+
+  test('gametest: pending approvals for a club', async () => {
+    await resetDB();
+    const gameServer1 = {
+      ipAddress: '10.1.1.7',
+      currentMemory: 100,
+      status: 'ACTIVE',
+      url: 'http://10.1.1.7:8080',
+    };
+    await createGameServer(gameServer1);
+    const [owner, club, players] = await createClubWithMembers(
+      {
+        name: 'player_name',
+        deviceId: 'abc123',
+      },
+      {
+        name: 'club_name',
+        description: 'poker players gather',
+      },
+      [
+        {
+          name: 'player_name',
+          deviceId: 'abc1234',
+        },
+        {
+          name: 'player_name',
+          deviceId: 'abc1235',
+        },
+      ]
+    );
+
+    await createReward(owner, club);
+    const game = await configureGame(owner, club, holdemGameInput);
+    await startGame(owner, game.gameCode);
+
+    // Join a game
+    const data = await joinGame(players[0], game.gameCode, 1);
+    expect(data).toBe('WAIT_FOR_BUYIN');
+    const data1 = await joinGame(players[1], game.gameCode, 2);
+    expect(data1).toBe('WAIT_FOR_BUYIN');
+
+    await buyIn(players[0], game.gameCode, 100);
+
+    // setting autoBuyinApproval false and creditLimit
+    const resp1 = await updateClubMember(owner, players[0], club, {
+      balance: 0,
+      creditLimit: 0,
+      notes: 'Added credit limit',
+      status: ClubMemberStatus['ACTIVE'],
+      isManager: false,
+      autoBuyinApproval: false,
+    });
+    expect(resp1).toBe(ClubMemberStatus['ACTIVE']);
+
+    const resp2 = await updateClubMember(owner, players[1], club, {
+      balance: 0,
+      creditLimit: 0,
+      notes: 'Added credit limit',
+      status: ClubMemberStatus['ACTIVE'],
+      isManager: false,
+      autoBuyinApproval: false,
+    });
+    expect(resp2).toBe(ClubMemberStatus['ACTIVE']);
+
+    // Buyin more than credit limit and autoBuyinApproval false
+    await buyIn(players[0], game.gameCode, 100);
+    await buyIn(players[1], game.gameCode, 100);
+
+    await reload(players[0], game.gameCode, 100);
+
+    const resp5 = await pendingApprovalsForClub(owner, club);
+    expect(resp5).toHaveLength(3);
+
+    const resp7 = await pendingApprovalsForGame(owner, game.gameCode);
+    expect(resp7).toHaveLength(3);
   });
 });
