@@ -86,6 +86,9 @@ input GameCreateInput {
   waitForBigBlind: Boolean
   waitlistSittingTimeout: Int
   rewardIds: [Int]
+  pauseAfterShowdown: Int   # default 2 seconds
+  buyInWaitTime: Int        # default 3 minutes
+  seatChangeAllowed: Boolean
 }
 
 type SeatInfo {
@@ -138,6 +141,7 @@ type GameInfo {
   gameToken: String
   playerGameStatus: PlayerGameStatus
   waitlistSittingTimeout: Int
+  hhEligible: Boolean           # true if this game is eligible for high hand
   
   # NATS channels
   gameToPlayerChannel: String
