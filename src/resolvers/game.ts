@@ -474,6 +474,12 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.tableStatus = TableStatus[game.tableStatus];
     ret.status = GameStatus[game.status];
 
+    const updates = await GameRepository.getGameUpdates(game.id);
+    if (updates) {
+      ret.rakeCollected = updates.rake;
+      ret.lastHandNum = updates.lastHandNum;
+    }
+
     ret.gameToPlayerChannel = `game.${game.gameCode}.player`;
     ret.playerToHandChannel = `player.${game.gameCode}.hand`;
     ret.handToAllChannel = `hand.${game.gameCode}.player.all`;

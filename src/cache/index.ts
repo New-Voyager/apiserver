@@ -10,6 +10,13 @@ class GameCache {
   private clubMemberCache = new Map<string, ClubMember>();
   private gameIdGameCodeCache = new Map<number, string>();
 
+  public async updateGameHighHand(gameCode: string, rank: number) {
+    const game = this.gameCache.get(gameCode);
+    if (game) {
+      game.highHandRank = rank;
+    }
+  }
+
   public async getGame(
     gameCode: string,
     update = false,

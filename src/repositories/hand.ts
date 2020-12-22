@@ -1,16 +1,12 @@
 import * as _ from 'lodash';
 import {HandHistory, HandWinners, StarredHands} from '@src/entity/hand';
-import {PokerGame} from '@src/entity/game';
 import {GameType, WonAtStatus} from '@src/entity/types';
 import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {PokerGameUpdates} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
-import {GameRewardTracking} from '@src/entity/reward';
-import {Player} from '@src/entity/player';
 import {Cache} from '@src/cache';
-import {playerBuyIn} from '@src/gameserver';
 import {RewardRepository} from './reward';
 
 const logger = getLogger('hand');
@@ -24,9 +20,6 @@ class HandRepositoryImpl {
     result: any
   ): Promise<any> {
     try {
-      const playersChipsRepository = getRepository(PlayerGameTracker);
-      const handHistoryRepository = getRepository(HandHistory);
-      const gameUpdatesRepo = getRepository(PokerGameUpdates);
       const game = await Cache.getGameById(gameID);
       if (!game) {
         throw new Error(`Game ${gameID} is not found`);

@@ -9,6 +9,7 @@ import {
   ClubMemberStatus,
   PlayerStatus,
 } from '@src/entity/types';
+import {getHighHandsByGame} from './reward';
 const logger = getLogger('player');
 
 async function getClubs(playerId: string): Promise<Array<any>> {
@@ -75,6 +76,16 @@ const resolvers: any = {
   Player: {
     clubs: async (parent, args, ctx, info) => {
       return getPlayerClubs(ctx.req.playerId, parent);
+    },
+  },
+  LiveGame: {
+    highHands: async (parent, args, ctx, info) => {
+      return getHighHandsByGame(ctx.req.playerId, parent.gameCode);
+    },
+  },
+  PastGame: {
+    highHands: async (parent, args, ctx, info) => {
+      return getHighHandsByGame(ctx.req.playerId, parent.gameCode);
     },
   },
 };

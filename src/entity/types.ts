@@ -1,9 +1,10 @@
 export enum GameType {
   UNKNOWN,
   HOLDEM,
-  OMAHA,
-  OMAHA_HILO,
-  FIVECARD_OMAHA,
+  PLO,
+  PLO_HILO,
+  FIVE_CARD_PLO,
+  FIVE_CARD_PLO_HILO,
 }
 
 // Game status track the host actions on a game
