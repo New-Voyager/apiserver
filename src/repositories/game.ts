@@ -341,7 +341,8 @@ class GameRepositoryImpl {
             pgu.players_in_waitlist as "waitlistCount", 
             pgu.players_in_seats as "tableCount", 
             g.game_status as "gameStatus",
-            pgt.status as "playerStatus"
+            pgt.status as "playerStatus",
+            pgu.last_hand_num as "handsDealt"
           FROM poker_game g JOIN poker_game_updates pgu ON 
           g.id = pgu.game_id JOIN my_clubs c ON 
             g.club_id = c.id 
@@ -379,8 +380,10 @@ class GameRepositoryImpl {
             pgt.status as "playerStatus",
             pgt.session_time as "sessionTime",
             pgt.buy_in as "buyIn",
-            pgt.stack as "stack"            
-          FROM poker_game g JOIN my_clubs c 
+            pgt.stack as "stack",
+            pgu.last_hand_num as "handsDealt"
+          FROM poker_game g JOIN poker_game_updates pgu ON 
+          g.id = pgu.game_id JOIN my_clubs c 
           ON 
             g.club_id = c.id 
             AND g.game_status = ${GameStatus.ENDED}
@@ -1053,6 +1056,12 @@ class GameRepositoryImpl {
         await nextHandUpdatesRepository.save(update);
       }
     });
+  }
+
+  public async getGameUpdates(
+    gameID: number
+  ): Promise<PokerGameUpdates | undefined> {
+    return await getRepository(PokerGameUpdates).findOne({gameID: gameID});
   }
 }
 

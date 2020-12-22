@@ -230,6 +230,9 @@ export class PokerGame {
     onUpdate: 'CURRENT_TIMESTAMP',
   })
   public updatedAt!: Date;
+
+  // This is not a database column and used for tracking highhand in the cache
+  public highHandRank = 0;
 }
 
 @Entity({name: 'next_hand_updates'})
