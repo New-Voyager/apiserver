@@ -7,7 +7,7 @@
     "username": "game",
     "password": "game",
     "database": "game",
-    "logging": true,
+    "logging": false,
     "synchronize": true,
     "entities": ["build/src/entity/**/*.js"]
 },  
@@ -19,7 +19,7 @@
     "username": "game",
     "password": "game",
     "database": "game",
-    "logging": true,
+    "logging": false,
     "synchronize": true,
     "entities": ["build/src/entity/**/*.js"]
   }, 
