@@ -19,9 +19,6 @@ import {
   takeBreak,
   sitBack,
   leaveGame,
-  requestSeatChange,
-  confirmSeatChange,
-  seatChangeRequests,
   addToWaitingList,
   removeFromWaitingList,
   waitingList,
@@ -694,58 +691,6 @@ describe('Game APIs', () => {
     expect(data1.approved).toBe(true);
     const resp = await leaveGame(player1, game.gameCode);
     expect(resp).toBe(true);
-  });
-
-  test('gametest: seat change functionality', async () => {
-    try {
-      await createGameServer(gameServer1);
-      const ownerInput = {
-        name: 'player_name',
-        deviceId: 'abc123',
-      };
-      const clubInput = {
-        name: 'club_name',
-        description: 'poker players gather',
-      };
-      const playersInput = [
-        {
-          name: 'player_name1',
-          deviceId: 'abc1234',
-        },
-      ];
-      const [owner, club, playerUuids] = await createClubWithMembers(
-        ownerInput,
-        clubInput,
-        playersInput
-      );
-      const player1 = owner;
-      const player2 = playerUuids[0];
-      await createReward(owner, club);
-      const game = await configureGame(owner, club, holdemGameInput);
-
-      // Join a game
-      const data = await joinGame(player1, game.gameCode, 1);
-      expect(data).toBe('WAIT_FOR_BUYIN');
-
-      // buyin
-      const data1 = await buyIn(player1, game.gameCode, 100);
-      expect(data1.approved).toBe(true);
-
-      // request seat change
-      const resp1 = await requestSeatChange(player1, game.gameCode);
-      expect(resp1).not.toBeNull();
-
-      // get all requested seat changes
-      const resp3 = await seatChangeRequests(player1, game.gameCode);
-      expect(resp3[0].seatChangeConfirmed).toBe(false);
-
-      // confirm seat change
-      const resp4 = await confirmSeatChange(player1, game.gameCode, 2);
-      expect(resp4).toBe(true);
-    } catch (err) {
-      logger.error(JSON.stringify(err));
-      expect(true).toBeFalsy();
-    }
   });
 
   test('gametest: wait list seating APIs', async () => {

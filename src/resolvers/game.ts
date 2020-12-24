@@ -743,7 +743,6 @@ export async function seatChangeRequests(playerUuid: string, gameCode: string) {
         seatNo: player.seatNo,
         sessionTime: player.sessionTime,
         seatChangeRequestedAt: player.seatChangeRequestedAt,
-        seatChangeConfirmed: player.seatChangeConfirmed,
       };
       playerSeatChange.push(data);
     });
