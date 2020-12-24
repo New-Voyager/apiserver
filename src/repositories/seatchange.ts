@@ -58,9 +58,6 @@ export class SeatChangeProcess {
         const nextHandUpdatesRepository = transactionEntityManager.getRepository(
           NextHandUpdates
         );
-        const playerGameTrackerRepository = transactionEntityManager.getRepository(
-          PlayerGameTracker
-        );
         const requests = await nextHandUpdatesRepository.find({
           where: {
             game: {id: this.game.id},
@@ -100,6 +97,9 @@ export class SeatChangeProcess {
               logger.info(
                 `Player: ${player.name} (${player.id}) will switch to new seat: ${requestedSeat}`
               );
+              const playerGameTrackerRepository = transactionEntityManager.getRepository(
+                PlayerGameTracker
+              );
               playerGameTrackerRepository.update(
                 {
                   game: {id: this.game.id},
@@ -119,15 +119,6 @@ export class SeatChangeProcess {
           }
         }
 
-        playerGameTrackerRepository.update(
-          {
-            game: {id: this.game.id},
-            seatChangeConfirmed: true,
-          },
-          {
-            seatChangeConfirmed: false,
-          }
-        );
         // remove switch seat updates for the game
         await nextHandUpdatesRepository.delete({
           game: {id: this.game.id},
@@ -295,16 +286,6 @@ export class SeatChangeProcess {
       existingRequest.newSeat = seatNo;
       await nextHandUpdatesRepository.save(existingRequest);
     }
-
-    await playerGameTrackerRepository.update(
-      {
-        game: {id: this.game.id},
-        player: {id: player.id},
-      },
-      {
-        seatChangeConfirmed: true,
-      }
-    );
 
     return true;
   }
