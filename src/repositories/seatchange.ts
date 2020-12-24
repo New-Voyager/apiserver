@@ -40,7 +40,7 @@ export class SeatChangeProcess {
       }
     );
     const expTime = new Date();
-    const timeout = 30; // nextPlayer.game.waitListSittingTimeout
+    const timeout = this.game.waitlistSittingTimeout;
     expTime.setSeconds(expTime.getSeconds() + timeout);
 
     // notify game server, seat change process has begun
@@ -57,6 +57,9 @@ export class SeatChangeProcess {
         // get all the switch seat requests
         const nextHandUpdatesRepository = transactionEntityManager.getRepository(
           NextHandUpdates
+        );
+        const playerGameTrackerRepository = transactionEntityManager.getRepository(
+          PlayerGameTracker
         );
         const requests = await nextHandUpdatesRepository.find({
           where: {
@@ -97,9 +100,6 @@ export class SeatChangeProcess {
               logger.info(
                 `Player: ${player.name} (${player.id}) will switch to new seat: ${requestedSeat}`
               );
-              const playerGameTrackerRepository = transactionEntityManager.getRepository(
-                PlayerGameTracker
-              );
               playerGameTrackerRepository.update(
                 {
                   game: {id: this.game.id},
@@ -119,6 +119,15 @@ export class SeatChangeProcess {
           }
         }
 
+        playerGameTrackerRepository.update(
+          {
+            game: {id: this.game.id},
+            seatChangeConfirmed: true,
+          },
+          {
+            seatChangeConfirmed: false,
+          }
+        );
         // remove switch seat updates for the game
         await nextHandUpdatesRepository.delete({
           game: {id: this.game.id},
@@ -286,6 +295,16 @@ export class SeatChangeProcess {
       existingRequest.newSeat = seatNo;
       await nextHandUpdatesRepository.save(existingRequest);
     }
+
+    await playerGameTrackerRepository.update(
+      {
+        game: {id: this.game.id},
+        player: {id: player.id},
+      },
+      {
+        seatChangeConfirmed: true,
+      }
+    );
 
     return true;
   }
