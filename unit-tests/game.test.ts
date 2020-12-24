@@ -61,6 +61,13 @@ const holdemGameInput = {
   rewardIds: [] as any,
 };
 
+const gameServer1 = {
+  ipAddress: '10.1.1.1',
+  currentMemory: 100,
+  status: 'ACTIVE',
+  url: 'http://10.1.1.1:8080',
+};
+
 enum ClubMemberStatus {
   UNKNOWN,
   INVITED,
@@ -122,6 +129,7 @@ async function createClubWithMembers(
   }
   return [ownerUuid, clubCode, playerUuids];
 }
+
 function sleep(ms: number) {
   return new Promise(resolve => {
     setTimeout(resolve, ms);
@@ -139,27 +147,21 @@ describe('Game APIs', () => {
   });
 
   test('gametest: Start a new game', async () => {
-    const gameServer1 = {
-      ipAddress: '10.1.1.1',
-      currentMemory: 100,
-      status: 'ACTIVE',
-      url: 'http://10.1.1.1:8080',
-    };
     try {
       await createGameServer(gameServer1);
-      const player = await createPlayer({
-        player: {
+      const [owner, club] = await createClubWithMembers(
+        {
           name: 'player_name',
           deviceId: 'abc123',
         },
-      });
-      const club = await createClub(player, {
-        name: 'club_name',
-        description: 'poker players gather',
-        ownerUuid: player,
-      });
-      await createReward(player, club);
-      const startedGame = await configureGame(player, club, holdemGameInput);
+        {
+          name: 'club_name',
+          description: 'poker players gather',
+        },
+        []
+      );
+      await createReward(owner, club);
+      const startedGame = await configureGame(owner, club, holdemGameInput);
       expect(startedGame).not.toBeNull();
       expect(startedGame.gameType).toEqual('HOLDEM');
       expect(startedGame.title).toEqual('Friday game');
@@ -189,12 +191,6 @@ describe('Game APIs', () => {
   });
 
   test('gametest: Start a new game by player', async () => {
-    const gameServer1 = {
-      ipAddress: '10.1.1.1',
-      currentMemory: 100,
-      status: 'ACTIVE',
-      url: 'http://10.1.1.1:8080',
-    };
     try {
       await createGameServer(gameServer1);
       const player = await createPlayer({
@@ -204,7 +200,6 @@ describe('Game APIs', () => {
         },
       });
       const startedGame = await configureGameByPlayer(player, holdemGameInput);
-      // console.log(startedGame);
       expect(startedGame).not.toBeNull();
       expect(startedGame.gameType).toEqual('HOLDEM');
       expect(startedGame.title).toEqual('Friday game');
@@ -234,27 +229,21 @@ describe('Game APIs', () => {
   });
 
   test('gametest: Get game by uuid', async () => {
-    const gameServer1 = {
-      ipAddress: '10.1.1.1',
-      currentMemory: 100,
-      status: 'ACTIVE',
-      url: 'http://10.1.1.1:8080',
-    };
     try {
       await createGameServer(gameServer1);
-      const player = await createPlayer({
-        player: {
+      const [owner, club] = await createClubWithMembers(
+        {
           name: 'player_name',
           deviceId: 'abc123',
         },
-      });
-      const club = await createClub(player, {
-        name: 'club_name',
-        description: 'poker players gather',
-        ownerUuid: player,
-      });
-      await createReward(player, club);
-      const startedGame = await configureGame(player, club, holdemGameInput);
+        {
+          name: 'club_name',
+          description: 'poker players gather',
+        },
+        []
+      );
+      await createReward(owner, club);
+      const startedGame = await configureGame(owner, club, holdemGameInput);
       const gameData = await Cache.getGame(startedGame.gameCode);
       expect(gameData.id).not.toBe(null);
     } catch (err) {
@@ -264,106 +253,86 @@ describe('Game APIs', () => {
   });
 
   test('gametest: Join a game', async () => {
-    const gameServer1 = {
-      ipAddress: '10.1.1.5',
-      currentMemory: 100,
-      status: 'ACTIVE',
-      url: 'http://10.1.1.5:8080',
-    };
     await createGameServer(gameServer1);
-    const owner = await createPlayer({
-      player: {
+    const [owner, club, players] = await createClubWithMembers(
+      {
         name: 'player_name',
         deviceId: 'abc123',
       },
-    });
-    const club = await createClub(owner, {
-      name: 'club_name',
-      description: 'poker players gather',
-      ownerUuid: owner,
-    });
+      {
+        name: 'club_name',
+        description: 'poker players gather',
+      },
+      [
+        {
+          name: 'player_name',
+          deviceId: 'abc1234',
+        },
+        {
+          name: 'player_name',
+          deviceId: 'abc1235',
+        },
+      ]
+    );
     await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
-    const player1 = await createPlayer({
-      player: {
-        name: 'player_name',
-        deviceId: 'abc123',
-      },
-    });
-    const player2 = await createPlayer({
-      player: {
-        name: 'player_name',
-        deviceId: 'abc123',
-      },
-    });
 
     // Join a game
-    const data = await joinGame(player1, game.gameCode, 1);
+    const data = await joinGame(players[0], game.gameCode, 1);
     expect(data).toBe('WAIT_FOR_BUYIN');
-    const data1 = await joinGame(player2, game.gameCode, 2);
+    const data1 = await joinGame(players[1], game.gameCode, 2);
     expect(data1).toBe('WAIT_FOR_BUYIN');
 
     // change seat before buyin
-    const data3 = await joinGame(player1, game.gameCode, 3);
+    const data3 = await joinGame(players[0], game.gameCode, 3);
     expect(data3).toBe('WAIT_FOR_BUYIN');
 
     // buyin
-    const resp = await buyIn(player1, game.gameCode, 100);
+    const resp = await buyIn(players[0], game.gameCode, 100);
     expect(resp.approved).toBe(true);
 
     // change seat after buyin
-    const data4 = await joinGame(player1, game.gameCode, 1);
+    const data4 = await joinGame(players[0], game.gameCode, 1);
     expect(data4).toBe('PLAYING');
   });
 
   test('gametest: Buyin for a game', async () => {
-    await resetDB();
-    const gameServer1 = {
-      ipAddress: '10.1.1.6',
-      currentMemory: 100,
-      status: 'ACTIVE',
-      url: 'http://10.1.1.6:8080',
-    };
     await createGameServer(gameServer1);
-    const owner = await createPlayer({
-      player: {
+    const [owner, club, players] = await createClubWithMembers(
+      {
         name: 'player_name',
         deviceId: 'abc123',
       },
-    });
-    const club = await createClub(owner, {
-      name: 'club_name',
-      description: 'poker players gather',
-      ownerUuid: owner,
-    });
+      {
+        name: 'club_name',
+        description: 'poker players gather',
+      },
+      [
+        {
+          name: 'player_name',
+          deviceId: 'abc1234',
+        },
+        {
+          name: 'player_name',
+          deviceId: 'abc1235',
+        },
+      ]
+    );
     await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
-    const player1 = await createPlayer({
-      player: {
-        name: 'player_name',
-        deviceId: 'abc123',
-      },
-    });
-    const player2 = await createPlayer({
-      player: {
-        name: 'player_name',
-        deviceId: 'abc123',
-      },
-    });
 
     // Join a game
-    const data = await joinGame(player1, game.gameCode, 1);
+    const data = await joinGame(players[0], game.gameCode, 1);
     expect(data).toBe('WAIT_FOR_BUYIN');
-    const data1 = await joinGame(player2, game.gameCode, 2);
+    const data1 = await joinGame(players[1], game.gameCode, 2);
     expect(data1).toBe('WAIT_FOR_BUYIN');
 
     // Buyin with autoBuyinApproval true
-    const resp = await buyIn(player1, game.gameCode, 100);
-    console.log(JSON.stringify(resp));
+    const resp = await buyIn(players[0], game.gameCode, 100);
     expect(resp.approved).toBe(true);
 
     // setting autoBuyinApproval false and creditLimit
-    const resp1 = await updateClubMember(owner, player1, club, {
+    const resp1 = await updateClubMember(owner, players[0], club, {
       balance: 10,
       creditLimit: 200,
       notes: 'Added credit limit',
@@ -374,66 +343,51 @@ describe('Game APIs', () => {
     expect(resp1).toBe(ClubMemberStatus['ACTIVE']);
 
     // Buyin within credit limit and autoBuyinApproval false
-    const resp2 = await buyIn(player1, game.gameCode, 100);
-    console.log(JSON.stringify(resp));
+    const resp2 = await buyIn(players[0], game.gameCode, 100);
     expect(resp2.approved).toBe(true);
 
     // Buyin more than credit limit and autoBuyinApproval false
-    const resp3 = await buyIn(player1, game.gameCode, 100);
+    const resp3 = await buyIn(players[0], game.gameCode, 100);
     expect(resp3.approved).toBe(false);
   });
 
   test('gametest: Reload for a game', async () => {
-    await resetDB();
-    const gameServer1 = {
-      ipAddress: '10.1.1.6',
-      currentMemory: 100,
-      status: 'ACTIVE',
-      url: 'http://10.1.1.6:8080',
-    };
     await createGameServer(gameServer1);
-    const owner = await createPlayer({
-      player: {
+    const [owner, club, players] = await createClubWithMembers(
+      {
         name: 'player_name',
         deviceId: 'abc123',
       },
-    });
-    const club = await createClub(owner, {
-      name: 'club_name',
-      description: 'poker players gather',
-      ownerUuid: owner,
-    });
+      {
+        name: 'club_name',
+        description: 'poker players gather',
+      },
+      [
+        {
+          name: 'player_name',
+          deviceId: 'abc1234',
+        },
+        {
+          name: 'player_name',
+          deviceId: 'abc1235',
+        },
+      ]
+    );
     await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
-    const player1 = await createPlayer({
-      player: {
-        name: 'player_name',
-        deviceId: 'abc1234',
-      },
-    });
-    const player2 = await createPlayer({
-      player: {
-        name: 'player_name',
-        deviceId: 'abc1235',
-      },
-    });
-    await joinClub(player1, club);
-    await approveMember(owner, club, player1);
-    await joinClub(player2, club);
-    await approveMember(owner, club, player2);
 
     // Join a game
-    const data = await joinGame(player1, game.gameCode, 1);
+    const data = await joinGame(players[0], game.gameCode, 1);
     expect(data).toBe('WAIT_FOR_BUYIN');
-    const data1 = await joinGame(player2, game.gameCode, 2);
+    const data1 = await joinGame(players[1], game.gameCode, 2);
     expect(data1).toBe('WAIT_FOR_BUYIN');
 
     // reload with autoBuyinApproval true
-    const resp = await reload(player1, game.gameCode, 100);
+    const resp = await reload(players[0], game.gameCode, 100);
     expect(resp.approved).toBe(true);
 
     // setting autoBuyinApproval false and creditLimit
-    const resp1 = await updateClubMember(owner, player1, club, {
+    const resp1 = await updateClubMember(owner, players[0], club, {
       balance: 10,
       creditLimit: 200,
       notes: 'Added credit limit',
@@ -444,57 +398,47 @@ describe('Game APIs', () => {
     expect(resp1).toBe(ClubMemberStatus['ACTIVE']);
 
     // reload within credit limit and autoBuyinApproval false
-    const resp2 = await reload(player1, game.gameCode, 100);
+    const resp2 = await reload(players[0], game.gameCode, 100);
     expect(resp2.approved).toBe(true);
 
     // reload more than credit limit and autoBuyinApproval false
-    const resp3 = await reload(player1, game.gameCode, 100);
+    const resp3 = await reload(players[0], game.gameCode, 100);
     expect(resp3.approved).toBe(false);
   });
 
   test('gametest: Approve Buyin for a game', async () => {
-    await resetDB();
-    const gameServer1 = {
-      ipAddress: '10.1.1.7',
-      currentMemory: 100,
-      status: 'ACTIVE',
-      url: 'http://10.1.1.7:8080',
-    };
     await createGameServer(gameServer1);
-    const owner = await createPlayer({
-      player: {
+    const [owner, club, players] = await createClubWithMembers(
+      {
         name: 'player_name',
         deviceId: 'abc123',
       },
-    });
-    const club = await createClub(owner, {
-      name: 'club_name',
-      description: 'poker players gather',
-      ownerUuid: owner,
-    });
+      {
+        name: 'club_name',
+        description: 'poker players gather',
+      },
+      [
+        {
+          name: 'player_name',
+          deviceId: 'abc1234',
+        },
+        {
+          name: 'player_name',
+          deviceId: 'abc1235',
+        },
+      ]
+    );
     await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
-    const player1 = await createPlayer({
-      player: {
-        name: 'player_name',
-        deviceId: 'abc123',
-      },
-    });
-    const player2 = await createPlayer({
-      player: {
-        name: 'player_name',
-        deviceId: 'abc123',
-      },
-    });
 
     // Join a game
-    const data = await joinGame(player1, game.gameCode, 1);
+    const data = await joinGame(players[0], game.gameCode, 1);
     expect(data).toBe('WAIT_FOR_BUYIN');
-    const data1 = await joinGame(player2, game.gameCode, 2);
+    const data1 = await joinGame(players[1], game.gameCode, 2);
     expect(data1).toBe('WAIT_FOR_BUYIN');
 
     // setting autoBuyinApproval false and creditLimit
-    const resp1 = await updateClubMember(owner, player1, club, {
+    const resp1 = await updateClubMember(owner, players[0], club, {
       balance: 0,
       creditLimit: 0,
       notes: 'Added credit limit',
@@ -505,13 +449,13 @@ describe('Game APIs', () => {
     expect(resp1).toBe(ClubMemberStatus['ACTIVE']);
 
     // Buyin more than credit limit and autoBuyinApproval false
-    const resp2 = await buyIn(player1, game.gameCode, 100);
+    const resp2 = await buyIn(players[0], game.gameCode, 100);
     expect(resp2.approved).toBe(false);
 
     // Approve a buyin as host
     const resp3 = await approveRequest(
       owner,
-      player1,
+      players[0],
       game.gameCode,
       ApprovalType.BUYIN_REQUEST,
       ApprovalStatus.APPROVED
@@ -520,12 +464,6 @@ describe('Game APIs', () => {
   });
 
   test('gametest: Get my game state', async () => {
-    const gameServer1 = {
-      ipAddress: '10.1.1.8',
-      currentMemory: 100,
-      status: 'ACTIVE',
-      url: 'http://10.1.1.8:8080',
-    };
     await createGameServer(gameServer1);
     const ownerInput = {
       name: 'player_name',
@@ -580,12 +518,6 @@ describe('Game APIs', () => {
   });
 
   test('gametest: Get table game state', async () => {
-    const gameServer1 = {
-      ipAddress: '10.1.1.9',
-      currentMemory: 100,
-      status: 'ACTIVE',
-      url: 'http://10.1.1.9:8080',
-    };
     await createGameServer(gameServer1);
     const ownerInput = {
       name: 'player_name',
@@ -632,12 +564,6 @@ describe('Game APIs', () => {
   });
 
   test('gametest: Take a break', async () => {
-    const gameServer1 = {
-      ipAddress: '10.1.2.1',
-      currentMemory: 100,
-      status: 'ACTIVE',
-      url: 'http://10.1.2.1:8080',
-    };
     await createGameServer(gameServer1);
     const ownerInput = {
       name: 'player_name',
@@ -677,13 +603,6 @@ describe('Game APIs', () => {
   });
 
   test('gametest: Sit back after break', async () => {
-    const gameServer1 = {
-      ipAddress: '10.1.2.1',
-      currentMemory: 100,
-      status: 'ACTIVE',
-      url: 'http://10.1.2.1:8080',
-    };
-    await createGameServer(gameServer1);
     await createGameServer(gameServer1);
     const ownerInput = {
       name: 'player_name',
@@ -734,13 +653,6 @@ describe('Game APIs', () => {
   });
 
   test('gametest: leave a game', async () => {
-    const gameServer1 = {
-      ipAddress: '10.1.2.2',
-      currentMemory: 100,
-      status: 'ACTIVE',
-      url: 'http://10.1.2.2:8080',
-    };
-    await createGameServer(gameServer1);
     await createGameServer(gameServer1);
     const ownerInput = {
       name: 'player_name',
@@ -785,14 +697,7 @@ describe('Game APIs', () => {
   });
 
   test('gametest: seat change functionality', async () => {
-    const gameServer1 = {
-      ipAddress: '10.1.2.3',
-      currentMemory: 100,
-      status: 'ACTIVE',
-      url: 'http://10.1.2.2:8080',
-    };
     try {
-      await createGameServer(gameServer1);
       await createGameServer(gameServer1);
       const ownerInput = {
         name: 'player_name',
@@ -844,17 +749,10 @@ describe('Game APIs', () => {
   });
 
   test('gametest: wait list seating APIs', async () => {
-    const gameServer1 = {
-      ipAddress: '10.1.2.7',
-      currentMemory: 100,
-      status: 'ACTIVE',
-      url: 'http://10.1.2.2:8080',
-    };
     try {
       await createGameServer(gameServer1);
 
       // create players
-      await createGameServer(gameServer1);
       const ownerInput = {
         name: 'player_name',
         deviceId: 'abc123',
@@ -938,12 +836,6 @@ describe('Game APIs', () => {
   });
 
   test('gametest: wait list seating - success case', async () => {
-    const gameServer1 = {
-      ipAddress: '10.1.2.6',
-      currentMemory: 100,
-      status: 'ACTIVE',
-      url: 'http://10.1.2.2:8080',
-    };
     try {
       await createGameServer(gameServer1);
       const ownerInput = {
@@ -1045,12 +937,6 @@ describe('Game APIs', () => {
   });
 
   test('gametest: wait list seating - timeout case', async () => {
-    const gameServer1 = {
-      ipAddress: '10.1.2.5',
-      currentMemory: 100,
-      status: 'ACTIVE',
-      url: 'http://10.1.2.2:8080',
-    };
     await createGameServer(gameServer1);
 
     // create players
@@ -1151,14 +1037,7 @@ describe('Game APIs', () => {
     expect(waitlist3[0].status).toBe('WAITLIST_SEATING');
   });
 
-  test('gametest: pending approvals for a club', async () => {
-    await resetDB();
-    const gameServer1 = {
-      ipAddress: '10.1.1.7',
-      currentMemory: 100,
-      status: 'ACTIVE',
-      url: 'http://10.1.1.7:8080',
-    };
+  test('gametest: pending approvals for a club and game', async () => {
     await createGameServer(gameServer1);
     const [owner, club, players] = await createClubWithMembers(
       {
