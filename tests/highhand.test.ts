@@ -58,43 +58,52 @@ async function saveReward(playerId, clubCode) {
 
   holdemGameInput.rewardIds.splice(0);
   holdemGameInput.rewardIds.push(rewardId.data.rewardId);
-
-  return rewardId.data.rewardId;
+  rewardId = rewardId.data.rewardId;
+  return rewardId;
 }
 
 const SERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
-async function createGameServer(ipAddress: string) {
-  const gameServer1 = {
-    ipAddress: ipAddress,
+async function createClubWithMembers(
+  ownerInput: any,
+  clubInput: any,
+  players: Array<any>
+): Promise<[string, string, Array<string>, number, string, Array<number>]> {
+  const gameServer = {
+    ipAddress: '10.1.1.1',
     currentMemory: 100,
     status: 'ACTIVE',
+    url: 'htto://localhost:8080',
   };
+  let i = 0;
   try {
-    await axios.post(`${SERVER_API}/register-game-server`, gameServer1);
+    await axios.post(`${SERVER_API}/register-game-server`, gameServer);
   } catch (err) {
     expect(true).toBeFalsy();
   }
-}
-
-async function createClubAndStartGame(): Promise<
-  [number, number, number, string, string, string, number]
-> {
-  const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
-  const player = await handutils.getPlayerById(playerId);
-  await createGameServer('1.2.0.1');
-
-  const rewardId = await saveReward(playerId, clubCode);
-
-  const game1 = await gameutils.configureGame(
-    playerId,
+  const [clubCode, ownerId] = await clubutils.createClub('brady', 'yatzee');
+  await saveReward(ownerId, clubCode);
+  const game = await gameutils.configureGame(
+    ownerId,
     clubCode,
     holdemGameInput
   );
-  const clubID = await clubutils.getClubById(clubCode);
-  const gameID = await gameutils.getGameById(game1.gameCode);
-
-  return [clubID, player, gameID, playerId, clubCode, game1.gameCode, rewardId];
+  const playerUuids = new Array<string>();
+  const playerIds = new Array<number>();
+  for await (const playerInput of players) {
+    const playerUuid = await clubutils.createPlayer(
+      playerInput.name,
+      playerInput.deviceId
+    );
+    await clubutils.playerJoinsClub(clubCode, playerUuid);
+    await clubutils.approvePlayer(clubCode, ownerId, playerUuid);
+    const playerId = await handutils.getPlayerById(playerUuid);
+    await gameutils.joinGame(playerUuid, game.gameCode, ++i);
+    playerUuids.push(playerUuid);
+    playerIds.push(playerId);
+  }
+  const gameId = await gameutils.getGameById(game.gameCode);
+  return [ownerId, clubCode, playerUuids, gameId, game.gameCode, playerIds];
 }
 
 describe('Hand Server', () => {
@@ -108,20 +117,36 @@ describe('Hand Server', () => {
   });
 
   test('Get logged data by game', async () => {
+    const ownerInput = {
+      name: 'player_name',
+      deviceId: 'abc123',
+    };
+    const clubInput = {
+      name: 'club_name',
+      description: 'poker players gather',
+    };
+    const playersInput = [
+      {
+        name: 'player_name1',
+        deviceId: 'abc1234',
+      },
+      {
+        name: 'player_name2',
+        deviceId: 'abc5678',
+      },
+      {
+        name: 'player_name3',
+        deviceId: 'abc4567',
+      },
+    ];
     const [
-      clubId,
-      playerId,
-      gameId,
-      player,
+      ownerUuid,
       clubCode,
+      playerUuids,
+      gameId,
       gameCode,
-      rewardId,
-    ] = await createClubAndStartGame();
-
-    const playerUuid2 = await clubutils.createPlayer('adam', 'dev1');
-    const playerId2 = await handutils.getPlayerById(playerUuid2);
-    const playerUuid3 = await clubutils.createPlayer('ajay', 'device2');
-    const playerId3 = await handutils.getPlayerById(playerUuid3);
+      playerIds,
+    ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
     const files = await glob.sync('**/*.json', {
       onlyFiles: false,
       cwd: 'highhand-results',
@@ -132,28 +157,26 @@ describe('Hand Server', () => {
     for await (const file of files) {
       const obj = await fs.readFileSync(`highhand-results/${file}`, 'utf8');
       const data = JSON.parse(obj);
-
-      data.handNum = 1;
       data.gameId = gameId.toString();
       data.rewardTrackingIds.splice(0);
       data.rewardTrackingIds.push(rewardId);
-      data.players['1'].id = playerId.toString();
+      data.players['1'].id = playerIds[0].toString();
 
       data.gameId = gameId.toString();
-      data.players['2'].id = playerId2.toString();
+      data.players['2'].id = playerIds[1].toString();
 
       data.gameId = gameId.toString();
-      data.players['3'].id = playerId3.toString();
+      data.players['3'].id = playerIds[2].toString();
 
       const rank: number[] = [];
       Object.keys(data.players).forEach(async card => {
-        rank.push(parseInt(data.players[card.toString()].rank));
+        rank.push(parseInt(data.players[card.toString()].hhRank));
       });
       const highHandRank = _.min(rank);
       wonRank.push(highHandRank);
       for await (const seatNo of Object.keys(data.players)) {
         const player = data.players[seatNo];
-        if (player.rank === highHandRank) {
+        if (player.hhRank === highHandRank) {
           wonId.push(player.id);
         }
       }
@@ -165,7 +188,7 @@ describe('Hand Server', () => {
     }
 
     const resp1 = await rewardutils.getlogDatabyGame(
-      playerId.toString(),
+      ownerUuid.toString(),
       gameCode.toString()
     );
     const resRank = [] as any,
@@ -181,7 +204,7 @@ describe('Hand Server', () => {
     expect(resId).toEqual(expect.arrayContaining(wonId));
 
     const resp2 = await rewardutils.getlogDatabyReward(
-      playerId.toString(),
+      ownerUuid.toString(),
       gameCode.toString(),
       rewardId.toString()
     );
@@ -198,7 +221,7 @@ describe('Hand Server', () => {
     expect(resByRewardId).toEqual(expect.arrayContaining(wonId));
 
     const resp3 = await rewardutils.getHighHandWinners(
-      playerId.toString(),
+      ownerUuid.toString(),
       gameCode.toString(),
       rewardId.toString()
     );
