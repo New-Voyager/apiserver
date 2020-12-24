@@ -161,15 +161,15 @@ describe('seat change APIs', () => {
       const resp3 = await seatChange.seatChangeRequests(createdPlayer1);
       expect(resp3).toHaveLength(2);
 
+      // start seat change timer
+      await seatChange.start();
+
       // confirm seat change
       const resp4 = await seatChange.confirmSeatChange(createdPlayer1, 3);
       expect(resp4).toBe(true);
       const resp5 = await seatChange.confirmSeatChange(createdPlayer2, 3);
       expect(resp5).toBe(true);
-
-      // start seat change timer
-      await seatChange.start();
-
+      
       // wait for 6 seconds
       await sleep(6000);
 
