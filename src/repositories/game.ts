@@ -91,6 +91,7 @@ class GameRepositoryImpl {
     const game: PokerGame = {...input} as PokerGame;
     const gameTypeStr: string = input['gameType'];
     const gameType: GameType = GameType[gameTypeStr];
+    logger.info(`*********** Game type: ${gameType}`);
     game.gameType = gameType;
     game.isTemplate = template;
     game.status = GameStatus.CONFIGURED;

@@ -31,6 +31,7 @@ export async function configureGame(
     throw new Error(errors.join('\n'));
   }
   try {
+    logger.info(`Game type: ${game.gameType}`);
     const gameInfo = await GameRepository.createPrivateGame(
       clubCode,
       playerId,
