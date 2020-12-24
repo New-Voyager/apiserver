@@ -40,7 +40,7 @@ export class SeatChangeProcess {
       }
     );
     const expTime = new Date();
-    const timeout = 30; // nextPlayer.game.waitListSittingTimeout
+    const timeout = this.game.waitlistSittingTimeout;
     expTime.setSeconds(expTime.getSeconds() + timeout);
 
     // notify game server, seat change process has begun
@@ -107,6 +107,7 @@ export class SeatChangeProcess {
                 },
                 {
                   seatNo: requestedSeat,
+                  seatChangeRequestedAt: null,
                 }
               );
               seatsTaken.push(requestedSeat);
