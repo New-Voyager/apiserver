@@ -26,10 +26,7 @@ import {
 import {Cache} from '@src/cache/index';
 import {saveReward} from '../src/resolvers/reward';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
-import {
-  seatChangeTimeoutExpired,
-  waitlistTimeoutExpired,
-} from '@src/repositories/timer';
+import {waitlistTimeoutExpired} from '@src/repositories/timer';
 import {approveMember} from '../src/resolvers/club';
 
 const logger = getLogger('game unit-test');

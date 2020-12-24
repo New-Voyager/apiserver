@@ -95,9 +95,6 @@ export class PlayerGameTracker {
   })
   public seatChangeRequestedAt!: Date | null;
 
-  @Column({name: 'seat_change_confirmed', default: false})
-  public seatChangeConfirmed!: boolean;
-
   @DbAwareColumn({
     name: 'sat_at',
     type: 'timestamp',

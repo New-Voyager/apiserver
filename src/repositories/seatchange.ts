@@ -100,7 +100,7 @@ export class SeatChangeProcess {
               const playerGameTrackerRepository = transactionEntityManager.getRepository(
                 PlayerGameTracker
               );
-              playerGameTrackerRepository.update(
+              await playerGameTrackerRepository.update(
                 {
                   game: {id: this.game.id},
                   player: {id: player.id},
@@ -164,6 +164,7 @@ export class SeatChangeProcess {
     // run wait list processing
     const waitlistProcess = new WaitListMgmt(this.game);
     waitlistProcess.runWaitList();
+    return switchedSeats;
   }
 
   public async requestSeatChange(player: Player): Promise<Date | null> {
@@ -187,7 +188,6 @@ export class SeatChangeProcess {
     }
 
     playerInGame.seatChangeRequestedAt = new Date();
-    playerInGame.seatChangeConfirmed = false;
 
     const resp = await playerGameTrackerRepository.save(playerInGame);
     return resp.seatChangeRequestedAt;

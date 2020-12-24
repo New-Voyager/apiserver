@@ -181,7 +181,6 @@ type PlayerSeatChange {
   seatNo: Int
   sessionTime: Int
   seatChangeRequestedAt: DateTime
-  seatChangeConfirmed: Boolean
 }
 
 type WaitingListPlayer {
