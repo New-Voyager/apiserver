@@ -210,19 +210,19 @@ export async function startGame(
     }
 
     // do we have enough players in the table
-    if (players.length <= 1) {
-      throw new Error('We need more players to start the game');
-    }
-    let playersWithStack = 0;
-    for (const player of players) {
-      if (player.status === PlayerStatus.PLAYING) {
-        playersWithStack++;
-      }
-    }
+    // if (players.length <= 1) {
+    //   throw new Error('We need more players to start the game');
+    // }
+    // let playersWithStack = 0;
+    // for (const player of players) {
+    //   if (player.status === PlayerStatus.PLAYING) {
+    //     playersWithStack++;
+    //   }
+    // }
 
-    if (playersWithStack <= 1) {
-      throw new Error('Not enough players with stack to start the game');
-    }
+    // if (playersWithStack <= 1) {
+    //   throw new Error('Not enough players with stack to start the game');
+    // }
 
     const status = await GameRepository.markGameActive(game.id);
     // game is started
