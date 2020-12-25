@@ -91,7 +91,6 @@ class GameRepositoryImpl {
     const game: PokerGame = {...input} as PokerGame;
     const gameTypeStr: string = input['gameType'];
     const gameType: GameType = GameType[gameTypeStr];
-    logger.info(`*********** Game type: ${gameType}`);
     game.gameType = gameType;
     game.isTemplate = template;
     game.status = GameStatus.CONFIGURED;
@@ -964,7 +963,7 @@ class GameRepositoryImpl {
     return status;
   }
 
-  public async getPlayersInSeats(gameId: number): Promise<any> {
+  public async getPlayersInSeats(gameId: number): Promise<Array<any>> {
     const query = fixQuery(`SELECT name, uuid as "playerUuid", buy_in as "buyIn", stack, status, seat_no as "seatNo", status FROM 
           player_game_tracker pgt JOIN player p ON pgt.pgt_player_id = p.id
           AND pgt.pgt_game_id = ? AND pgt.seat_no <> 0`);

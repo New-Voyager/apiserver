@@ -15,6 +15,7 @@ import {SeatChangeProcess} from '@src/repositories/seatchange';
 import {default as _} from 'lodash';
 import {BuyIn} from '@src/repositories/buyin';
 import {PokerGame} from '@src/entity/game';
+import {fillSeats} from '@src/botrunner';
 
 const logger = getLogger('game');
 
@@ -199,6 +200,28 @@ export async function startGame(
           `Player: ${playerUuid} is not manager or owner. The player is not authorized to start the game ${gameCode}`
         );
       }
+    }
+
+    const players = await GameRepository.getPlayersInSeats(game.id);
+    if (game.botGame && players.length < game.maxPlayers) {
+      // fill the empty seats with bots
+      await fillSeats(game.club.clubCode, game.gameCode);
+      await new Promise(r => setTimeout(r, 5000));
+    }
+
+    // do we have enough players in the table
+    if (players.length <= 1) {
+      throw new Error('We need more players to start the game');
+    }
+    let playersWithStack = 0;
+    for (const player of players) {
+      if (player.status === PlayerStatus.PLAYING) {
+        playersWithStack++;
+      }
+    }
+
+    if (playersWithStack <= 1) {
+      throw new Error('Not enough players with stack to start the game');
     }
 
     const status = await GameRepository.markGameActive(game.id);
