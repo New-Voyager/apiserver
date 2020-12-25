@@ -262,12 +262,21 @@ class ClubRepositoryImpl {
     playerId: string
   ): Promise<ClubMemberStatus> {
     let clubMember = await Cache.getClubMember(playerId, clubCode);
+    const player = await Cache.getPlayer(playerId);
     if (clubMember) {
-      throw new Error(
-        `The player is already in the club. Member status: ${
-          ClubMemberStatus[clubMember.status]
-        }`
-      );
+      if (player.bot) {
+        clubMember.status = ClubMemberStatus.ACTIVE;
+        const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+        clubMemberRepository.update(
+          {
+            id: clubMember.id,
+          },
+          {
+            status: ClubMemberStatus.ACTIVE,
+          }
+        );
+      }
+      return clubMember.status;
     }
 
     // create a new membership
@@ -276,6 +285,9 @@ class ClubRepositoryImpl {
     clubMember.player = await Cache.getPlayer(playerId);
     clubMember.joinedDate = new Date();
     clubMember.status = ClubMemberStatus.PENDING;
+    if (player.bot) {
+      clubMember.status = ClubMemberStatus.ACTIVE;
+    }
 
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);
     await clubMemberRepository.save(clubMember);

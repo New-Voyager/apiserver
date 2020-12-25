@@ -231,6 +231,9 @@ export class PokerGame {
   })
   public updatedAt!: Date;
 
+  @Column({name: 'bot_game', default: false})
+  public botGame!: boolean;
+
   // This is not a database column and used for tracking highhand in the cache
   public highHandRank = 0;
 }
