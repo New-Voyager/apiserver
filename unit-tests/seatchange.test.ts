@@ -169,7 +169,7 @@ describe('seat change APIs', () => {
       expect(resp4).toBe(true);
       const resp5 = await seatChange.confirmSeatChange(createdPlayer2, 3);
       expect(resp5).toBe(true);
-      
+
       // wait for 6 seconds
       await sleep(6000);
 

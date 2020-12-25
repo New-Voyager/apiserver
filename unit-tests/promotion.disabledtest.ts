@@ -1,20 +1,18 @@
 import {initializeSqlLite} from './utils';
-import {createGameServer} from '@src/internal/gameserver';
+import {createGameServer} from '../src/internal/gameserver';
 import {getLogger} from '../src/utils/log';
-import {resetDB} from '@src/resolvers/reset';
-import {createPlayer, getPlayerById} from '@src/resolvers/player';
-import {createClub, getClubById} from '@src/resolvers/club';
-import {configureGame} from '@src/resolvers/game';
+import {resetDB} from '../src/resolvers/reset';
+import {createPlayer, getPlayerById} from '../src/resolvers/player';
+import {createClub, getClubById} from '../src/resolvers/club';
+import {configureGame} from '../src/resolvers/game';
 import {saveReward} from '../src/resolvers/reward';
-import {saveChipsData} from '@src/internal/chipstrack';
-import {saveHandData} from '@src/internal/hand';
 import {
   createPromotion,
   assignPromotion,
   getPromotions,
   getAssignedPromotions,
-} from '@src/resolvers/promotion';
-import {getGame} from '@src/cache/index';
+} from '../src/resolvers/promotion';
+import {getGame} from '../src/cache/index';
 
 const logger = getLogger('game unit-test');
 const holdemGameInput = {
@@ -176,7 +174,11 @@ afterAll(async done => {
   done();
 });
 
-describe('Promotion APIs', () => {
+// TODO:
+// 1. Remove all promotion related tables and code from src, tests, unit-tests, script-tests
+// 2. replace it with rewards
+
+describe.skip('Promotion APIs', () => {
   beforeEach(async done => {
     await resetDB();
     done();

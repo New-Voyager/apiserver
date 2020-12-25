@@ -76,9 +76,9 @@ class HandRepositoryImpl {
         handWinners.handNum = handNum;
         if (wonAt === 'SHOW_DOWN') {
           handWinners.winningCards = hiWinner.winningCardsStr;
-          handWinners.winningRank = hiWinner.rank;
+          handWinners.winningRank = hiWinner.rank; // undefined
         }
-        handWinners.playerId = playersInHand[hiWinner.seatNo];
+        handWinners.playerId = parseInt(playersInHand[hiWinner.seatNo].id);
         handWinners.received = hiWinner.amount;
         allHandWinners.push(handWinners);
         winners[handWinners.playerId] = true;
@@ -90,9 +90,9 @@ class HandRepositoryImpl {
           handWinners.handNum = handNum;
           if (wonAt === 'SHOW_DOWN') {
             handWinners.winningCards = loWinner.winningCardsStr;
-            handWinners.winningRank = loWinner.rank;
+            handWinners.winningRank = loWinner.rank; // undefined
           }
-          handWinners.playerId = playersInHand[loWinner.seatNo];
+          handWinners.playerId = parseInt(playersInHand[loWinner.seatNo].id);
           handWinners.received = loWinner.amount;
           handWinners.isHigh = false;
           winners[handWinners.playerId] = true;
