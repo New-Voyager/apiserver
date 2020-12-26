@@ -34,9 +34,6 @@ export async function resetDB() {
     await deleteAll('game_reward_tracking', transactionEntityManager);
     await deleteAll('reward', transactionEntityManager);
     await deleteAll('next_hand_updates', transactionEntityManager);
-    await deleteAll('promotion_winners', transactionEntityManager);
-    await deleteAll('game_promotion', transactionEntityManager);
-    await deleteAll('promotion', transactionEntityManager);
     await deleteAll('player_game_tracker', transactionEntityManager);
     await deleteAll('club_chips_transaction', transactionEntityManager);
     await deleteAll('PokerGamePlayers', transactionEntityManager);

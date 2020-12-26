@@ -120,16 +120,6 @@ export async function getHighHandWinners(
   });
 }
 
-export async function getTrackingIdByRewardId(
-  playerId: string,
-  rewardId: string
-) {
-  if (!playerId) {
-    throw new Error('Unauthorized');
-  }
-  const id = await RewardRepository.getTrackId(rewardId);
-  return id;
-}
 
 const resolvers: any = {
   Mutation: {
@@ -144,9 +134,6 @@ const resolvers: any = {
     },
     highHandsByGame: async (parent, args, ctx, info) => {
       return getHighHandsByGame(ctx.req.playerId, args.gameCode);
-    },
-    getTrackId: async (parent, args, ctx, info) => {
-      return getTrackingIdByRewardId(ctx.req.playerId, args.rewardId);
     },
     highHandsByReward: async (parent, args, ctx, info) => {
       return getHighHandsByReward(
