@@ -120,7 +120,6 @@ export async function getHighHandWinners(
   });
 }
 
-
 const resolvers: any = {
   Mutation: {
     createReward: async (parent, args, ctx, info) => {

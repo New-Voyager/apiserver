@@ -70,7 +70,6 @@ export const highHandWinnersQuery = gql`
   }
 `;
 
-
 export async function getRewards(
   playerId: string,
   clubCode: string

@@ -379,7 +379,6 @@ class RewardRepositoryImpl {
     return 0xffffffff;
   }
 
-
   public async highHandWinners(gameCode: string, rewardId: number) {
     if (!gameCode || !rewardId) {
       return;
