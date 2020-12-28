@@ -5,292 +5,13 @@ import * as handutils from './utils/hand.testutils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
 import * as rewardutils from './utils/reward.testutils';
+import {getLogger} from '../src/utils/log';
+const logger = getLogger('hand-test');
+import * as fs from 'fs';
+import * as glob from 'glob';
+import _ from 'lodash';
 import {getRepository} from 'typeorm';
-
-const allInHand = {
-  gameId: 2,
-  handNum: 2,
-  gameType: 'HOLDEM',
-  handLog: {
-    preflopActions: {
-      pot: 7,
-      actions: [
-        {
-          seatNo: 2,
-          action: 'SB',
-          amount: 1,
-          timedOut: false,
-        },
-        {
-          seatNo: 3,
-          action: 'BB',
-          amount: 2,
-          timedOut: false,
-        },
-        {
-          seatNo: 1,
-          action: 'CALL',
-          amount: 2,
-          timedOut: false,
-        },
-        {
-          seatNo: 2,
-          action: 'CALL',
-          amount: 2,
-          timedOut: false,
-        },
-        {
-          seatNo: 3,
-          action: 'CHECK',
-          amount: 0,
-          timedOut: false,
-        },
-      ],
-    },
-    flopActions: {
-      pot: 12,
-      actions: [
-        {
-          seatNo: 2,
-          action: 'CHECK',
-          amount: 0,
-          timedOut: false,
-        },
-        {
-          seatNo: 3,
-          action: 'BET',
-          amount: 2,
-          timedOut: false,
-        },
-        {
-          seatNo: 1,
-          action: 'CALL',
-          amount: 2,
-          timedOut: false,
-        },
-        {
-          seatNo: 2,
-          action: 'RAISE',
-          amount: 4,
-          timedOut: false,
-        },
-        {
-          seatNo: 3,
-          action: 'FOLD',
-          amount: 0,
-          timedOut: false,
-        },
-        {
-          seatNo: 1,
-          action: 'CALL',
-          amount: 4,
-          timedOut: false,
-        },
-      ],
-    },
-    turnActions: {
-      pot: 20,
-      actions: [
-        {
-          seatNo: 2,
-          action: 'CHECK',
-          amount: 0,
-          timedOut: false,
-        },
-        {
-          seatNo: 1,
-          action: 'BET',
-          amount: 10,
-          timedOut: false,
-        },
-        {
-          seatNo: 2,
-          action: 'CALL',
-          amount: 10,
-          timedOut: false,
-        },
-      ],
-    },
-    riverActions: {
-      pot: 20,
-      actions: [
-        {
-          seatNo: 2,
-          action: 'BET',
-          amount: 10,
-          timedOut: false,
-        },
-        {
-          seatNo: 1,
-          action: 'CALL',
-          amount: 10,
-          timedOut: false,
-        },
-      ],
-    },
-    potWinners: {
-      0: {
-        hiWinners: [
-          {
-            seatNo: 2,
-            loCard: false,
-            amount: 56,
-            winningCards: [200, 184, 168, 136, 152],
-            winningCardsStr: '[ A♣  K♣  Q♣  T♣  J♣ ]',
-            rankStr: 'Straight Flush',
-          },
-        ],
-        lowWinners: [],
-      },
-    },
-    wonAt: 'SHOW_DOWN',
-    showDown: null,
-    handStartedAt: '1607817832',
-    handEndedAt: '1607817842',
-  },
-  rewardTrackingIds: [] as any,
-  boardCards: [200, 196, 184, 168, 17],
-  boardCards2: [],
-  flop: [200, 196, 184],
-  turn: 168,
-  river: 17,
-  players: {
-    1: {
-      id: '1',
-      cards: [180, 177],
-      bestCards: [200, 196, 184, 180, 177],
-      rank: 179,
-      playedUntil: 'RIVER',
-      balance: {
-        before: 100,
-        after: 74,
-      },
-    },
-    2: {
-      id: '2',
-      cards: [136, 152],
-      bestCards: [200, 184, 168, 136, 152],
-      rank: 1,
-      playedUntil: 'RIVER',
-      balance: {
-        before: 100,
-        after: 130,
-      },
-    },
-    3: {
-      id: '3',
-      cards: [193, 194],
-      bestCards: [],
-      rank: 4294967295,
-      playedUntil: 'RIVER',
-      balance: {
-        before: 100,
-        after: 96,
-      },
-    },
-  },
-};
-
-const flopHand = {
-  clubId: 1,
-  gameId: 2,
-  handNum: 1,
-  messageType: 'RESULT',
-  handStatus: 'RESULT',
-  handResult: {
-    preflopActions: {
-      pot: 7,
-      actions: [
-        {
-          seatNo: 5,
-          amount: 1,
-        },
-        {
-          seatNo: 8,
-          action: 'BB',
-          amount: 2,
-        },
-        {
-          seatNo: 1,
-          action: 'CALL',
-          amount: 2,
-        },
-        {
-          seatNo: 5,
-          action: 'CALL',
-          amount: 2,
-        },
-        {
-          seatNo: 8,
-          action: 'CHECK',
-        },
-      ],
-    },
-    flopActions: {
-      pot: 8,
-      actions: [
-        {
-          seatNo: 5,
-          action: 'CHECK',
-        },
-        {
-          seatNo: 8,
-          action: 'BET',
-          amount: 2,
-        },
-        {
-          seatNo: 1,
-          action: 'CALL',
-          amount: 2,
-        },
-        {
-          seatNo: 5,
-          action: 'RAISE',
-          amount: 4,
-        },
-        {
-          seatNo: 8,
-          action: 'FOLD',
-        },
-        {
-          seatNo: 1,
-          action: 'FOLD',
-        },
-      ],
-    },
-    turnActions: {},
-    riverActions: {},
-    potWinners: {
-      '0': {
-        hiWinners: [
-          {
-            seatNo: 5,
-            amount: 14,
-          },
-        ],
-      },
-    },
-    wonAt: 'FLOP',
-    tips: 2.0,
-    balanceAfterHand: [
-      {
-        seatNo: 1,
-        playerId: 1,
-        balance: 96,
-      },
-    ],
-    handStartedAt: '1595385736',
-    balanceBeforeHand: [
-      {
-        seatNo: 1,
-        playerId: 1,
-        balance: 100,
-      },
-    ],
-    handEndedAt: '1595385739',
-    playersInSeats: [1, 0, 0, 0, 2, 0, 0, 3, 0],
-  },
-};
+import {response} from 'express';
 
 const holdemGameInput = {
   gameType: 'HOLDEM',
@@ -319,9 +40,33 @@ const holdemGameInput = {
   rewardIds: [] as any,
 };
 
-let rewardId;
+// default player, game and club inputs
+const ownerInput = {
+  name: 'player_name',
+  deviceId: 'abc123',
+};
 
-async function saveReward(playerId, clubCode) {
+const clubInput = {
+  name: 'club_name',
+  description: 'poker players gather',
+};
+
+const playersInput = [
+  {
+    name: 'player_name1',
+    deviceId: 'abc1234',
+  },
+  {
+    name: 'player_3',
+    deviceId: 'abc123456',
+  },
+  {
+    name: 'john',
+    deviceId: 'abc1235',
+  },
+];
+
+async function createReward(playerId, clubCode) {
   const rewardInput = {
     amount: 100.4,
     endHour: 4,
@@ -331,7 +76,7 @@ async function saveReward(playerId, clubCode) {
     type: 'HIGH_HAND',
     schedule: 'HOURLY',
   };
-  rewardId = await getClient(playerId).mutate({
+  const rewardId = await getClient(playerId).mutate({
     variables: {
       clubCode: clubCode,
       input: rewardInput,
@@ -340,52 +85,82 @@ async function saveReward(playerId, clubCode) {
   });
   holdemGameInput.rewardIds.splice(0);
   holdemGameInput.rewardIds.push(rewardId.data.rewardId);
-  allInHand.rewardTrackingIds.splice(0);
-  allInHand.rewardTrackingIds.push(rewardId.data.rewardId);
+  return rewardId.data.rewardiId;
 }
 
 const SERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
-async function createGameServer(ipAddress: string) {
-  const gameServer1 = {
-    ipAddress: ipAddress,
+async function createClubWithMembers(
+  ownerInput: any,
+  clubInput: any,
+  players: Array<any>
+): Promise<[string, string, number, Array<string>, Array<number>]> {
+  const [clubCode, ownerUuid] = await clubutils.createClub('brady', 'yatzee');
+  const clubId = await clubutils.getClubById(clubCode);
+  const playerUuids = new Array<string>();
+  const playerIds = new Array<number>();
+  for (const playerInput of players) {
+    const playerUuid = await clubutils.createPlayer(
+      playerInput.name,
+      playerInput.deviceId
+    );
+    const playerId = await handutils.getPlayerById(playerUuid);
+    await clubutils.playerJoinsClub(clubCode, playerUuid);
+    await clubutils.approvePlayer(clubCode, ownerUuid, playerUuid);
+    playerUuids.push(playerUuid);
+    playerIds.push(playerId);
+  }
+  return [ownerUuid, clubCode, clubId, playerUuids, playerIds];
+}
+
+async function setupGameEnvironment(
+  owner: string,
+  club: string,
+  players: Array<string>,
+  buyin: number
+): Promise<[string, number]> {
+  const gameServer = {
+    ipAddress: '10.1.1.1',
     currentMemory: 100,
     status: 'ACTIVE',
+    url: 'htto://localhost:8080',
   };
   try {
-    await axios.post(`${SERVER_API}/register-game-server`, gameServer1);
+    await axios.post(`${SERVER_API}/register-game-server`, gameServer);
   } catch (err) {
     expect(true).toBeFalsy();
   }
+  const game = await gameutils.configureGame(owner, club, holdemGameInput);
+  let i = 1;
+  for await (const player of players) {
+    await gameutils.joinGame(player, game.gameCode, i);
+    //  await chipstrackutils.buyIn(player, game.gameCode, buyin);
+    i++;
+  }
+  await gameutils.startGame(owner, game.gameCode);
+  const gameId = await gameutils.getGameById(game.gameCode);
+  return [game.gameCode, gameId];
 }
 
-async function createClubAndStartGame(): Promise<
-  [number, number, number, string, string, string]
-> {
-  const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
-  const player = await handutils.getPlayerById(playerId);
-  await createGameServer('1.2.0.1');
+async function defaultHandData(
+  file: string,
+  gameId: number,
+  rewardId: any,
+  playerIds: Array<number>
+) {
+  const obj = await fs.readFileSync(`highhand-results/${file}`, 'utf8');
+  const data = JSON.parse(obj);
+  data.gameId = gameId.toString();
+  data.rewardTrackingIds.splice(0);
+  data.rewardTrackingIds.push(rewardId);
+  data.players['1'].id = playerIds[0].toString();
 
-  await saveReward(playerId, clubCode);
+  data.gameId = gameId.toString();
+  data.players['2'].id = playerIds[1].toString();
 
-  const game1 = await gameutils.configureGame(
-    playerId,
-    clubCode,
-    holdemGameInput
-  );
-  const clubID = await clubutils.getClubById(clubCode);
-  const gameID = await gameutils.getGameById(game1.gameCode);
-  const messageInput = {
-    clubId: clubID,
-    playerId: player,
-    gameId: gameID,
-    buyIn: 100.0,
-    status: 'PLAYING',
-    seatNo: 1,
-  };
-
-  await axios.post(`${SERVER_API}/player-sit-in`, messageInput);
-  return [clubID, player, gameID, playerId, clubCode, game1.gameCode];
+  data.gameId = gameId.toString();
+  data.players['3'].id = playerIds[2].toString();
+  return data;
 }
 
 describe('Hand Server', () => {
@@ -399,313 +174,447 @@ describe('Hand Server', () => {
   });
 
   test('Save hand data', async () => {
-    const [clubId, playerId, gameId] = await createClubAndStartGame();
-    allInHand.handNum = 1;
-    allInHand.gameId = gameId;
-    //  allInHand.clubId = clubId;
-    //  allInHand.handLog.potWinners["0"].hiWinners[0].seatNo = 1;
-    //  allInHand.handLog.potWinners["0"].lowWinners[0].seatNo = 1;
-    //  allInHand.handResult.balanceAfterHand[0].playerId = playerId;
-    //  allInHand.handResult.playersInSeats = [playerId];
-    const resp = await axios.post(
-      `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${allInHand.handNum}`,
-      allInHand
-    );
-    expect(resp.status).toBe(200);
-    expect(resp.data.status).toBe('OK');
+    try {
+      const [
+        owner,
+        clubCode,
+        clubId,
+        playerUuids,
+        playerIds,
+      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+      const rewardId = await createReward(owner, clubCode);
+      const [gameCode, gameId] = await setupGameEnvironment(
+        owner,
+        clubCode,
+        playerUuids,
+        100
+      );
+      const files = await glob.sync('**/*.json', {
+        onlyFiles: false,
+        cwd: 'highhand-results',
+        deep: 5,
+      });
 
-    flopHand.handNum = 2;
-    flopHand.gameId = gameId;
-    flopHand.clubId = clubId;
-    flopHand.handResult.potWinners[0].hiWinners[0].seatNo = 1;
-    flopHand.handResult.balanceAfterHand[0].playerId = playerId;
-    flopHand.handResult.playersInSeats = [playerId];
-    const resp1 = await axios.post(
-      `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${allInHand.handNum}`,
-      allInHand
-    );
-    expect(resp1.status).toBe(200);
-    expect(resp1.data.status).toBe('OK');
+      for await (const file of files) {
+        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        const resp = await axios.post(
+          `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
+          data
+        );
+        expect(resp.status).toBe(200);
+      }
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
   });
 
   test('Get specific hand history', async () => {
-    const [
-      clubId,
-      playerId,
-      gameId,
-      playerUuid,
-      clubCode,
-      gameCode,
-    ] = await createClubAndStartGame();
-    allInHand.handNum = 1;
-    allInHand.gameId = gameId;
-    allInHand.players['2'].id = playerId.toString();
-    //  allInHand.clubId = clubId;
-    //  allInHand.handLog.potWinners["0"].hiWinners[0].seatNo = 1;
-    //  allInHand.handLog.potWinners["0"].lowWinners[0].seatNo = 1;
-    //  allInHand.handResult.balanceAfterHand[0].playerId = playerId;
-    //  allInHand.handResult.playersInSeats = [playerId];
-    await axios.post(
-      `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${allInHand.handNum}`,
-      allInHand
-    );
+    try {
+      const [
+        owner,
+        clubCode,
+        clubId,
+        playerUuids,
+        playerIds,
+      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+      const rewardId = await createReward(owner, clubCode);
+      const [gameCode, gameId] = await setupGameEnvironment(
+        owner,
+        clubCode,
+        playerUuids,
+        100
+      );
 
-    const resp = await handutils.getSpecificHandHistory(
-      playerUuid,
-      clubCode,
-      gameCode,
-      '1'
-    );
-    expect(resp.gameType).toBe('HOLDEM');
-    expect(resp.wonAt).toBe('SHOW_DOWN');
+      const files = await glob.sync('**/*.json', {
+        onlyFiles: false,
+        cwd: 'highhand-results',
+        deep: 5,
+      });
+
+      for await (const file of files) {
+        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        await axios.post(
+          `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
+          data
+        );
+      }
+      const handHistory = await handutils.getSpecificHandHistory(
+        playerUuids[0],
+        clubCode,
+        gameCode,
+        '1'
+      );
+      expect(handHistory.gameType).toBe('HOLDEM');
+      expect(handHistory.gameId).toBe(gameId);
+      expect(handHistory.handNum).toBe(1);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
   });
 
   test('Get latest hand history', async () => {
-    const [
-      clubId,
-      playerId,
-      gameId,
-      playerUuid,
-      clubCode,
-      gameCode,
-    ] = await createClubAndStartGame();
-
-    allInHand.gameId = gameId;
-    allInHand.players['2'].id = playerId.toString();
-    //  allInHand.clubId = clubId;
-    //  allInHand.handLog.potWinners["0"].hiWinners[0].seatNo = 1;
-    //  allInHand.handLog.potWinners["0"].lowWinners[0].seatNo = 1;
-    //  allInHand.handResult.balanceAfterHand[0].playerId = playerId;
-    //  allInHand.handResult.playersInSeats = [playerId];
-
-    for (let i = 1; i < 5; i++) {
-      allInHand.handNum = i;
-      await axios.post(
-        `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${allInHand.handNum}`,
-        allInHand
+    try {
+      const [
+        owner,
+        clubCode,
+        clubId,
+        playerUuids,
+        playerIds,
+      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+      const rewardId = await createReward(owner, clubCode);
+      const [gameCode, gameId] = await setupGameEnvironment(
+        owner,
+        clubCode,
+        playerUuids,
+        100
       );
+
+      const files = await glob.sync('**/*.json', {
+        onlyFiles: false,
+        cwd: 'highhand-results',
+        deep: 5,
+      });
+
+      let lastHand = 0;
+      for await (const file of files) {
+        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        await axios.post(
+          `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
+          data
+        );
+        lastHand += 1;
+      }
+      const resp1 = await handutils.getLastHandHistory(
+        playerUuids[0],
+        clubCode,
+        gameCode
+      );
+      expect(resp1.gameType).toBe('HOLDEM');
+      expect(resp1.wonAt).toBe('SHOW_DOWN');
+      expect(resp1.handNum).toBe(lastHand);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
     }
-    const resp1 = await handutils.getLastHandHistory(
-      playerUuid,
-      clubCode,
-      gameCode
-    );
-    expect(resp1.gameType).toBe('HOLDEM');
-    expect(resp1.wonAt).toBe('SHOW_DOWN');
-    expect(resp1.handNum).toBe(4);
   });
 
   test('Get all hand history', async () => {
-    const [
-      clubId,
-      playerId,
-      gameId,
-      playerUuid,
-      clubCode,
-      gameCode,
-    ] = await createClubAndStartGame();
-
-    allInHand.gameId = gameId;
-    allInHand.players['2'].id = playerId.toString();
-    // allInHand.clubId = clubId;
-    //allInHand.handLog.potWinners["0"].hiWinners[0].seatNo = 1;
-    // allInHand.handLog.potWinners["0"].lowWinners[0].seatNo = 1;
-    //allInHand.handResult.balanceAfterHand[0].playerId = playerId;
-    //allInHand.handResult.playersInSeats = [playerId];
-    for (let i = 1; i < 5; i++) {
-      allInHand.handNum = i;
-      await axios.post(
-        `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${allInHand.handNum}`,
-        allInHand
+    try {
+      const [
+        owner,
+        clubCode,
+        clubId,
+        playerUuids,
+        playerIds,
+      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+      const rewardId = await createReward(owner, clubCode);
+      const [gameCode, gameId] = await setupGameEnvironment(
+        owner,
+        clubCode,
+        playerUuids,
+        100
       );
+
+      const files = await glob.sync('**/*.json', {
+        onlyFiles: false,
+        cwd: 'highhand-results',
+        deep: 5,
+      });
+
+      let lastHand = 0;
+      for await (const file of files) {
+        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        const resp = await axios.post(
+          `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
+          data
+        );
+        expect(resp.status).toBe(200);
+        lastHand += 1;
+      }
+      const handHistory = await handutils.getAllHandHistory(
+        playerUuids[0],
+        clubCode,
+        gameCode
+      );
+      expect(handHistory).toHaveLength(lastHand);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
     }
-    const resp1 = await handutils.getAllHandHistory(
-      playerUuid,
-      clubCode,
-      gameCode
-    );
-    expect(resp1).toHaveLength(4);
   });
 
   test('Get all hand history pagination', async () => {
-    const [
-      clubId,
-      playerId,
-      gameId,
-      playerUuid,
-      clubCode,
-      gameCode,
-    ] = await createClubAndStartGame();
-
-    allInHand.gameId = gameId;
-    allInHand.players['2'].id = playerId.toString();
-    // allInHand.clubId = clubId;
-    //allInHand.handLog.potWinners["0"].hiWinners[0].seatNo = 1;
-    // allInHand.handLog.potWinners["0"].lowWinners[0].seatNo = 1;
-    //allInHand.handResult.balanceAfterHand[0].playerId = playerId;
-    //allInHand.handResult.playersInSeats = [playerId];
-    for (let i = 1; i < 17; i++) {
-      allInHand.handNum = i;
-      await axios.post(
-        `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${allInHand.handNum}`,
-        allInHand
+    try {
+      const [
+        owner,
+        clubCode,
+        clubId,
+        playerUuids,
+        playerIds,
+      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+      const rewardId = await createReward(owner, clubCode);
+      const [gameCode, gameId] = await setupGameEnvironment(
+        owner,
+        clubCode,
+        playerUuids,
+        100
       );
-    }
-    const resp1 = await handutils.getAllHandHistory(
-      playerUuid,
-      clubCode,
-      gameCode
-    );
-    expect(resp1).toHaveLength(10);
 
-    const lastHand = resp1[9];
-    const resp2 = await handutils.getAllHandHistory(
-      playerUuid,
-      clubCode,
-      gameCode,
-      {
-        prev: lastHand.pageId,
-        count: 5,
+      const files = await glob.sync('**/*.json', {
+        onlyFiles: false,
+        cwd: 'highhand-results',
+        deep: 5,
+      });
+
+      let lastHand = 0;
+      for await (const file of files) {
+        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        await axios.post(
+          `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
+          data
+        );
+        lastHand += 1;
       }
-    );
-    expect(resp2).toHaveLength(5);
+
+      const handHistory = await handutils.getAllHandHistory(
+        playerUuids[0],
+        clubCode,
+        gameCode,
+        {
+          count: lastHand - 2,
+        }
+      );
+      expect(handHistory).toHaveLength(lastHand - 2);
+      const handHistory1 = await handutils.getAllHandHistory(
+        playerUuids[0],
+        clubCode,
+        gameCode,
+        {
+          prev: handHistory[lastHand - 3].pageId,
+          count: 2,
+        }
+      );
+      expect(handHistory1).toHaveLength(2);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
   });
 
-  // test('Get my winning hands', async () => {
-  //   const [
-  //     clubId,
-  //     playerId,
-  //     gameId,
-  //     playerUuid,
-  //     clubCode,
-  //     gameCode,
-  //   ] = await createClubAndStartGame();
+  test.skip('Get my winning hands', async () => {
+    try {
+      const [
+        owner,
+        clubCode,
+        clubId,
+        playerUuids,
+        playerIds,
+      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+      const rewardId = await createReward(owner, clubCode);
+      const [gameCode, gameId] = await setupGameEnvironment(
+        owner,
+        clubCode,
+        playerUuids,
+        100
+      );
 
-  //   allInHand.gameId = gameId;
-  //    //  allInHand.clubId = clubId;
-  //   //  allInHand.handLog.potWinners["0"].hiWinners[0].seatNo = 1;
-  //   //  allInHand.handLog.potWinners["0"].lowWinners[0].seatNo = 1;
-  //   //  allInHand.handResult.balanceAfterHand[0].playerId = playerId;
-  //   //  allInHand.handResult.playersInSeats = [playerId];
-  //   for (let i = 1; i < 5; i++) {
-  //     allInHand.handNum = i;
-  //     await axios.post(`${SERVER_API}/save-hand/gameId/${gameId}/handNum/${allInHand.handNum}`, allInHand);
-  //   }
-  //   const resp1 = await handutils.getMyWinningHands(
-  //     playerUuid,
-  //     clubCode,
-  //     gameCode
-  //   );
-  //   expect(resp1).toHaveLength(8);
-  //   resp1.forEach(element => {
-  //     expect(element.playerId).toBe(playerId);
-  //   });
-  // });
+      const files = await glob.sync('**/*.json', {
+        onlyFiles: false,
+        cwd: 'highhand-results',
+        deep: 5,
+      });
 
-  // test('Get my winning hands pagination', async () => {
-  //   const [
-  //     clubId,
-  //     playerId,
-  //     gameId,
-  //     playerUuid,
-  //     clubCode,
-  //     gameCode,
-  //   ] = await createClubAndStartGame();
+      let noOfWinningPlayer2 = 0;
+      for await (const file of files) {
+        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        const resp = await axios.post(
+          `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
+          data
+        );
+        expect(resp.status).toBe(200);
+        for await (const hiWinner of data.handLog.potWinners[0].hiWinners) {
+          if (data.players[hiWinner.seatNo].id == playerIds[1])
+            noOfWinningPlayer2 += 1;
+        }
+        for await (const loWinner of data.handLog.potWinners[0].lowWinners) {
+          if (data.players[loWinner.seatNo].id == playerIds[1])
+            noOfWinningPlayer2 += 1;
+        }
+      }
+      console.log(noOfWinningPlayer2);
+      const winningHands = await handutils.getMyWinningHands(
+        playerUuids[0],
+        clubCode,
+        gameCode
+      );
+      console.log(winningHands);
+      // expect(winningHands).toHaveLength(4);
+      // winningHands.forEach(element => {
+      //   expect(element.playerId).toBe(playerId);
+      // });
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
 
-  //   allInHand.gameId = gameId;
-  //   //  allInHand.clubId = clubId;
-  //   //  allInHand.handLog.potWinners["0"].hiWinners[0].seatNo = 1;
-  //   //  allInHand.handLog.potWinners["0"].lowWinners[0].seatNo = 1;
-  //   //  allInHand.handResult.balanceAfterHand[0].playerId = playerId;
-  //   //  allInHand.handResult.playersInSeats = [playerId];
-  //   for (let i = 1; i < 17; i++) {
-  //     allInHand.handNum = i;
-  //     await axios.post(`${SERVER_API}/save-hand/gameId/${gameId}/handNum/${allInHand.handNum}`, allInHand);
-  //   }
-  //   const resp1 = await handutils.getMyWinningHands(
-  //     playerUuid,
-  //     clubCode,
-  //     gameCode
-  //   );
-  //   expect(resp1).toHaveLength(10);
+  test.skip('Get my winning hands pagination', async () => {
+    try {
+      const [
+        owner,
+        clubCode,
+        clubId,
+        playerUuids,
+        playerIds,
+      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+      const rewardId = await createReward(owner, clubCode);
+      const [gameCode, gameId] = await setupGameEnvironment(
+        owner,
+        clubCode,
+        playerUuids,
+        100
+      );
 
-  //   const lastHand = resp1[9];
-  //   const resp2 = await handutils.getMyWinningHands(
-  //     playerUuid,
-  //     clubCode,
-  //     gameCode,
-  //     {
-  //       prev: lastHand.pageId,
-  //       count: 5,
-  //     }
-  //   );
-  //   expect(resp2).toHaveLength(5);
-  // });
+      const files = await glob.sync('**/*.json', {
+        onlyFiles: false,
+        cwd: 'highhand-results',
+        deep: 5,
+      });
+
+      let noOfWinningPlayer2 = 0;
+      for await (const file of files) {
+        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        const resp = await axios.post(
+          `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
+          data
+        );
+        expect(resp).toBe(true);
+        for await (const hiWinner of data.handLog.potWinners[0].hiWinners) {
+          if (data.players[hiWinner.seatNo].id == playerIds[1])
+            noOfWinningPlayer2 += 1;
+        }
+        for await (const loWinner of data.handLog.potWinners[0].lowWinners) {
+          if (data.players[loWinner.seatNo].id == playerIds[1])
+            noOfWinningPlayer2 += 1;
+        }
+      }
+      console.log(noOfWinningPlayer2);
+      const winningHands = await handutils.getMyWinningHands(
+        playerUuids[0],
+        clubCode,
+        gameCode,
+        {
+          count: noOfWinningPlayer2 - 1,
+        }
+      );
+      const winningHands1 = await handutils.getMyWinningHands(
+        playerUuids[0],
+        clubCode,
+        gameCode,
+        {
+          prev: winningHands[noOfWinningPlayer2 - 2].pageId,
+          count: 3,
+        }
+      );
+      console.log(winningHands, winningHands1);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
 
   test('Save starred hand', async () => {
-    const [
-      clubId,
-      playerId,
-      gameId,
-      playerUuid,
-      clubCode,
-      gameCode,
-    ] = await createClubAndStartGame();
+    try {
+      const [
+        owner,
+        clubCode,
+        clubId,
+        playerUuids,
+        playerIds,
+      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+      const rewardId = await createReward(owner, clubCode);
+      const [gameCode, gameId] = await setupGameEnvironment(
+        owner,
+        clubCode,
+        playerUuids,
+        100
+      );
 
-    allInHand.gameId = gameId;
-    //  allInHand.clubId = clubId;
-    //  allInHand.handLog.potWinners["0"].hiWinners[0].seatNo = 1;
-    //  allInHand.handLog.potWinners["0"].lowWinners[0].seatNo = 1;
-    //  allInHand.handResult.balanceAfterHand[0].playerId = playerId;
-    //  allInHand.handResult.playersInSeats = [playerId];
-    allInHand.handNum = 1;
-    allInHand.players['2'].id = playerId.toString();
-    await axios.post(
-      `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${allInHand.handNum}`,
-      allInHand
-    );
+      const files = await glob.sync('**/*.json', {
+        onlyFiles: false,
+        cwd: 'highhand-results',
+        deep: 5,
+      });
 
-    const resp = await handutils.saveStarredHand(
-      clubCode,
-      gameCode,
-      playerUuid,
-      '1'
-    );
-    expect(resp).toBe('true');
+      let lastHand = 0;
+      for await (const file of files) {
+        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        await axios.post(
+          `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
+          data
+        );
+        lastHand += 1;
+      }
+
+      const starredHand = await handutils.saveStarredHand(
+        clubCode,
+        gameCode,
+        playerUuids[0],
+        '1'
+      );
+      expect(starredHand).toBe('true');
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
   });
 
   test('Get starred hand', async () => {
-    const [
-      clubId,
-      playerId,
-      gameId,
-      playerUuid,
-      clubCode,
-      gameCode,
-    ] = await createClubAndStartGame();
-
-    allInHand.gameId = gameId;
-    allInHand.players['2'].id = playerId.toString();
-    //  allInHand.clubId = clubId;
-    //  allInHand.handLog.potWinners["0"].hiWinners[0].seatNo = 1;
-    //  allInHand.handLog.potWinners["0"].lowWinners[0].seatNo = 1;
-    //  allInHand.handResult.balanceAfterHand[0].playerId = playerId;
-    //  allInHand.handResult.playersInSeats = [playerId];
-    for (let i = 1; i < 30; i++) {
-      allInHand.handNum = i;
-      await axios.post(
-        `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${allInHand.handNum}`,
-        allInHand
-      );
-      await handutils.saveStarredHand(
+    try {
+      const [
+        owner,
         clubCode,
-        gameCode,
-        playerUuid,
-        i.toString()
+        clubId,
+        playerUuids,
+        playerIds,
+      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+      const rewardId = await createReward(owner, clubCode);
+      const [gameCode, gameId] = await setupGameEnvironment(
+        owner,
+        clubCode,
+        playerUuids,
+        100
       );
-    }
 
-    const resp = await handutils.getStarredHands(playerUuid);
-    expect(resp.length).toBe(25);
+      const files = await glob.sync('**/*.json', {
+        onlyFiles: false,
+        cwd: 'highhand-results',
+        deep: 5,
+      });
+
+      let lastHand = 0;
+      for await (const file of files) {
+        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        const resp = await axios.post(
+          `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
+          data
+        );
+        expect(resp.status).toBe(200);
+        await handutils.saveStarredHand(
+          clubCode,
+          gameCode,
+          playerUuids[0],
+          data.handNum.toString()
+        );
+        lastHand += 1;
+      }
+      const starredHands = await handutils.getStarredHands(playerUuids[0]);
+      expect(starredHands).toHaveLength(lastHand);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
   });
 });
