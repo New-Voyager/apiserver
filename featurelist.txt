@@ -1,0 +1,19 @@
+1. Easy club managements
+    Track chips
+    Auto approve buyin within credit limit
+    Player chips management
+2. Rewards
+     High hand
+     Bad beat
+     Head hunting
+3. Multi game support
+4. In Game features
+    Switch seat without missing a hand
+    Change seat feature
+    View wait list/observers
+    Player stats (in-app purchase)
+    Game table stats (random order)
+      buyin/session-time info (in-app purchase)
+    Track reward hands (high hand, bad beat, head hunting)
+      Show fireworks animation if there is a new high hand in the current table
+    

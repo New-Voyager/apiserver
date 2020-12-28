@@ -86,7 +86,7 @@
         "--runInBand",
         "./unit-tests",
         "--testNamePattern",
-        "Sit back after break"
+        "gametest: Take a break"
       ],
       "env": {
         "NODE_ENV": "test",
