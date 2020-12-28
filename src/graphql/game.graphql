@@ -89,6 +89,7 @@ input GameCreateInput {
   pauseAfterShowdown: Int   # default 2 seconds
   buyInWaitTime: Int        # default 3 minutes
   seatChangeAllowed: Boolean
+  botGame: Boolean
 }
 
 type SeatInfo {
@@ -142,6 +143,7 @@ type GameInfo {
   playerGameStatus: PlayerGameStatus
   waitlistSittingTimeout: Int
   hhEligible: Boolean           # true if this game is eligible for high hand
+  botGame: Boolean
   
   # NATS channels
   gameToPlayerChannel: String

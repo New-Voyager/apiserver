@@ -9,7 +9,6 @@ import {NewUpdate} from '@src/repositories/types';
 
 let notifyGameServer = false;
 const logger = getLogger('gameServer');
-const gameServerUrl = 'http://localhost:8080';
 
 export function initializeGameServer() {
   if (process.env.NOTIFY_GAME_SERVER === '1') {

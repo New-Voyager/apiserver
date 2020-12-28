@@ -161,7 +161,8 @@ export async function createPlayer(args: any) {
       playerInput.name,
       playerInput.email,
       playerInput.password,
-      playerInput.deviceId
+      playerInput.deviceId,
+      playerInput.isBot
     );
   } catch (err) {
     logger.error(err);

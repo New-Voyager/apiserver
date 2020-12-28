@@ -7,10 +7,11 @@ class PlayerRepositoryImpl {
     name: string,
     email: string,
     password: string,
-    deviceId: string
+    deviceId: string,
+    isBot: boolean
   ): Promise<string> {
     const repository = getRepository(Player);
-    let player;
+    let player: Player | undefined;
     if (email) {
       player = await repository.findOne({where: {email: email}});
     } else {
@@ -33,6 +34,7 @@ class PlayerRepositoryImpl {
     player.password = password;
     player.isActive = true;
     player.deviceId = deviceId;
+    player.bot = isBot;
 
     await repository.save(player);
     return player.uuid;
