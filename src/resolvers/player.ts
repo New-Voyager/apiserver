@@ -3,6 +3,7 @@ import {PlayerRepository} from '@src/repositories/player';
 import {ClubRepository} from '@src/repositories/club';
 import {getLogger} from '@src/utils/log';
 import {GameRepository} from '@src/repositories/game';
+import {Cache} from '@src/cache/index';
 import {
   GameStatus,
   GameType,
@@ -63,6 +64,10 @@ const resolvers: any = {
 
     myInfo: async (parent, args, ctx, info) => {
       return getPlayerInfo(ctx.req.playerId);
+    },
+
+    clubInfo: async (parent, args, ctx, info) => {
+      return getClubPlayerInfo(ctx.req.playerId, args.clubCode);
     },
   },
   Mutation: {
@@ -147,6 +152,24 @@ export async function getPlayerInfo(playerId: string) {
     name: player.name,
     email: player.email,
     lastActiveTime: player.updatedAt,
+  };
+}
+
+export async function getClubPlayerInfo(playerId: string, clubCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const clubMember = await Cache.getClubMember(playerId, clubCode, true);
+  if (!clubMember) {
+    throw new Error(`Player ${playerId} is not a club member`);
+  }
+
+  return {
+    name: clubMember.club.name,
+    myBalance: clubMember.balance,
+    joinedAt: clubMember.joinedDate,
+    gamesPlayed: clubMember.totalGames,
+    status: ClubMemberStatus[clubMember.status],
   };
 }
 

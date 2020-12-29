@@ -87,6 +87,14 @@ type PlayerInfo {
   lastActiveTime: DateTime  
 }
 
+type ClubInfo {
+  name: String!   # name of the club
+  myBalance: Float!
+  joinedAt: DateTime
+  status: ClubMemberStatus
+  gamesPlayed: Int
+}
+
 
 type Query {
   myClubs: [PlayerClub!]
@@ -95,4 +103,5 @@ type Query {
   liveGames (clubCode: String): [LiveGame!]
   pastGames: [PastGame!]
   myInfo: PlayerInfo!
+  clubInfo (clubCode: String!): ClubInfo!
 }

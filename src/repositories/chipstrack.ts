@@ -102,28 +102,21 @@ class ChipsTrackRepositoryImpl {
     playerId: string,
     clubCode: string
   ): Promise<ClubMember> {
-    const clubRepository = getRepository(Club);
-    const playerRepository = getRepository(Player);
+    let clubMember = await Cache.getClubMember(playerId, clubCode);
+    if (!clubMember) {
+      clubMember = await Cache.getClubMember(playerId, clubCode, true);
+    }
+    if (!clubMember) {
+      throw new Error(`Player ${playerId} is not a club member`);
+    }
     const clubMemberRepository = getRepository(ClubMember);
-    const club = await clubRepository.findOne({
-      where: {clubCode: clubCode},
-    });
-    const player = await playerRepository.findOne({
-      where: {uuid: playerId},
-    });
-    if (!club) {
-      logger.error(`Club ${clubCode} is not found`);
-      throw new Error(`Club ${clubCode} is not found`);
-    }
-    if (!player) {
-      logger.error(`Player ${playerId} is not found`);
-      throw new Error(`Player ${playerId} is not found`);
-    }
     const clubPlayerBalance = await clubMemberRepository.findOne({
-      where: {club: club.id, player: player.id},
+      where: {id: clubMember.id},
     });
     if (!clubPlayerBalance) {
-      logger.error('Error in retreiving data');
+      logger.error(
+        'Error in retreiving club player balance for player: ${playerId}, clubCode: ${clubCode}'
+      );
       throw new Error('Error in retreiving data');
     }
     return clubPlayerBalance;
