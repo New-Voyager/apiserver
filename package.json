@@ -7,8 +7,8 @@
   "private": true,
   "scripts": {
     "watch-debug": "NODE_ENV=dev tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
-    "watch-debug-nats": "NOTIFY_GAME_SERVER=1 BOTRUNNER_URL=http://localhost:8081 NATS_SERVER=nats://localhost:4222 NATS_ENABLED=1 NODE_ENV=dev tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
-    "run-docker": "NOTIFY_GAME_SERVER=1 NATS_SERVER=nats://nats:4222 NATS_ENABLED=1 NODE_ENV=dev node --inspect=0.0.0.0:9235 --nolazy ./build/index.js",
+    "watch-debug-nats": "NOTIFY_GAME_SERVER=1 BOTRUNNER_URL=http://localhost:8081 NATS_SERVER=${NATS_SERVER:-'nats://localhost:4222'} NATS_ENABLED=1 NODE_ENV=dev tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
+    "run-docker": "NOTIFY_GAME_SERVER=1 NATS_SERVER=${NATS_SERVER:-'nats://nats:4222'} NATS_ENABLED=1 NODE_ENV=dev node --inspect=0.0.0.0:9235 --nolazy ./build/index.js",
     "debug": "NODE_ENV=dev node --inspect=0.0.0.0:9228 ./build/index.js",
     "debug-windows": "set NODE_ENV=dev && tsc-watch.bat",
     "debug-break": "node --nolazy --inspect-brk=9235 ./build/index.js",
