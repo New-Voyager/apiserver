@@ -206,7 +206,7 @@ export async function startGame(
     if (game.botGame && players.length < game.maxPlayers) {
       // fill the empty seats with bots
       await fillSeats(game.club.clubCode, game.gameCode);
-      await new Promise(r => setTimeout(r, 5000));
+      await new Promise(r => setTimeout(r, 10000));
     }
 
     // do we have enough players in the table

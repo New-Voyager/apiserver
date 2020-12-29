@@ -170,4 +170,13 @@ export class ClubMember {
     default: 0,
   })
   public creditLimit!: number;
+
+  @Column({name: 'total_games', type: 'int', nullable: true, default: 0})
+  public totalGames!: number;
+
+  @Column({name: 'total_hands', type: 'int', nullable: true, default: 0})
+  public totalHands!: number;
+
+  @Column({name: 'won_hands', type: 'int', nullable: true, default: 0})
+  public wonHands!: number;
 }
