@@ -23,7 +23,7 @@ import {
   getAllStarredHands,
   saveStarredHand,
 } from '../src/resolvers/hand';
-
+import {getRewardTrack} from '../src/resolvers/reward';
 const logger = getLogger('Hand server unit-test');
 
 // default player, game and club inputs
@@ -197,7 +197,11 @@ describe('Hand server APIs', () => {
         playerUuids,
         100
       );
-
+      const rewardTrackId = await getRewardTrack(
+        playerUuids[0],
+        gameCode,
+        rewardId.toString()
+      );
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
         cwd: 'highhand-results',
@@ -205,7 +209,12 @@ describe('Hand server APIs', () => {
       });
 
       for await (const file of files) {
-        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        const data = await defaultHandData(
+          file,
+          gameId,
+          rewardTrackId,
+          playerIds
+        );
         const resp = await postHand(gameId, data.handNum, data);
         expect(resp).toBe(true);
       }
@@ -231,6 +240,11 @@ describe('Hand server APIs', () => {
         playerUuids,
         100
       );
+      const rewardTrackId = await getRewardTrack(
+        playerUuids[0],
+        gameCode,
+        rewardId.toString()
+      );
 
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
@@ -239,7 +253,12 @@ describe('Hand server APIs', () => {
       });
 
       for await (const file of files) {
-        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        const data = await defaultHandData(
+          file,
+          gameId,
+          rewardTrackId,
+          playerIds
+        );
         const resp = await postHand(gameId, data.handNum, data);
         expect(resp).toBe(true);
       }
@@ -273,6 +292,11 @@ describe('Hand server APIs', () => {
         playerUuids,
         100
       );
+      const rewardTrackId = await getRewardTrack(
+        playerUuids[0],
+        gameCode,
+        rewardId.toString()
+      );
 
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
@@ -282,7 +306,12 @@ describe('Hand server APIs', () => {
 
       let lastHand = 0;
       for await (const file of files) {
-        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        const data = await defaultHandData(
+          file,
+          gameId,
+          rewardTrackId,
+          playerIds
+        );
         const resp = await postHand(gameId, data.handNum, data);
         expect(resp).toBe(true);
         lastHand += 1;
@@ -316,6 +345,11 @@ describe('Hand server APIs', () => {
         playerUuids,
         100
       );
+      const rewardTrackId = await getRewardTrack(
+        playerUuids[0],
+        gameCode,
+        rewardId.toString()
+      );
 
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
@@ -325,7 +359,12 @@ describe('Hand server APIs', () => {
 
       let lastHand = 0;
       for await (const file of files) {
-        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        const data = await defaultHandData(
+          file,
+          gameId,
+          rewardTrackId,
+          playerIds
+        );
         const resp = await postHand(gameId, data.handNum, data);
         expect(resp).toBe(true);
         lastHand += 1;
@@ -357,6 +396,11 @@ describe('Hand server APIs', () => {
         playerUuids,
         100
       );
+      const rewardTrackId = await getRewardTrack(
+        playerUuids[0],
+        gameCode,
+        rewardId.toString()
+      );
 
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
@@ -366,7 +410,12 @@ describe('Hand server APIs', () => {
 
       let lastHand = 0;
       for await (const file of files) {
-        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        const data = await defaultHandData(
+          file,
+          gameId,
+          rewardTrackId,
+          playerIds
+        );
         const resp = await postHand(gameId, data.handNum, data);
         expect(resp).toBe(true);
         lastHand += 1;
@@ -414,6 +463,11 @@ describe('Hand server APIs', () => {
         playerUuids,
         100
       );
+      const rewardTrackId = await getRewardTrack(
+        playerUuids[0],
+        gameCode,
+        rewardId.toString()
+      );
 
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
@@ -423,7 +477,12 @@ describe('Hand server APIs', () => {
 
       let noOfWinningPlayer2 = 0;
       for await (const file of files) {
-        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        const data = await defaultHandData(
+          file,
+          gameId,
+          rewardTrackId,
+          playerIds
+        );
         const resp = await postHand(gameId, data.handNum, data);
         expect(resp).toBe(true);
         for await (const hiWinner of data.handLog.potWinners[0].hiWinners) {
@@ -467,6 +526,11 @@ describe('Hand server APIs', () => {
         playerUuids,
         100
       );
+      const rewardTrackId = await getRewardTrack(
+        playerUuids[0],
+        gameCode,
+        rewardId.toString()
+      );
 
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
@@ -476,7 +540,12 @@ describe('Hand server APIs', () => {
 
       let noOfWinningPlayer2 = 0;
       for await (const file of files) {
-        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        const data = await defaultHandData(
+          file,
+          gameId,
+          rewardTrackId,
+          playerIds
+        );
         const resp = await postHand(gameId, data.handNum, data);
         expect(resp).toBe(true);
         for await (const hiWinner of data.handLog.potWinners[0].hiWinners) {
@@ -527,6 +596,11 @@ describe('Hand server APIs', () => {
         playerUuids,
         100
       );
+      const rewardTrackId = await getRewardTrack(
+        playerUuids[0],
+        gameCode,
+        rewardId.toString()
+      );
 
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
@@ -536,7 +610,12 @@ describe('Hand server APIs', () => {
 
       let lastHand = 0;
       for await (const file of files) {
-        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        const data = await defaultHandData(
+          file,
+          gameId,
+          rewardTrackId,
+          playerIds
+        );
         const resp = await postHand(gameId, data.handNum, data);
         expect(resp).toBe(true);
         lastHand += 1;
@@ -570,6 +649,11 @@ describe('Hand server APIs', () => {
         playerUuids,
         100
       );
+      const rewardTrackId = await getRewardTrack(
+        playerUuids[0],
+        gameCode,
+        rewardId.toString()
+      );
 
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
@@ -579,7 +663,12 @@ describe('Hand server APIs', () => {
 
       let lastHand = 0;
       for await (const file of files) {
-        const data = await defaultHandData(file, gameId, rewardId, playerIds);
+        const data = await defaultHandData(
+          file,
+          gameId,
+          rewardTrackId,
+          playerIds
+        );
         const resp = await postHand(gameId, data.handNum, data);
         expect(resp).toBe(true);
         await saveStarredHand(playerUuids[0], {

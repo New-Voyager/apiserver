@@ -141,7 +141,6 @@ class RewardRepositoryImpl {
       if (existingTracking && existingTracking.highHandRank) {
         existingHighHandRank = existingTracking.highHandRank;
       }
-      console.log(highHandRank);
       const highHandPlayers = new Array<any>();
       let hhCards = '';
       for (const seatNo of Object.keys(input.players)) {
@@ -430,6 +429,34 @@ class RewardRepositoryImpl {
       );
       throw new Error("Couldn't retrieve highhand, please retry again");
     }
+  }
+
+  public async getRewardTrack(gameCode: string, rewardId: string) {
+    if (!gameCode || !rewardId) {
+      return;
+    }
+    const rewardRepo = getRepository(Reward);
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      logger.error('Invalid gameCode');
+      throw new Error('Invalid gameCode');
+    }
+    const reward = await rewardRepo.findOne({id: parseInt(rewardId)});
+    if (!reward) {
+      logger.error(`Invalid RewardId. ${rewardId}`);
+      throw new Error('Invalid RewardId');
+    }
+    const rewardTrackRepo = getRepository(GameRewardTracking);
+    const rewardtrack = await rewardTrackRepo.find({
+      where: {
+        reward: {id: parseInt(rewardId)},
+      },
+    });
+    if (!rewardtrack) {
+      logger.error('RewardTrackId not found.');
+      throw new Error('RewardTrackId not found.');
+    }
+    return rewardtrack;
   }
 }
 

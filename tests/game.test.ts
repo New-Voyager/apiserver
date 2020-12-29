@@ -114,7 +114,7 @@ describe('Tests: Game APIs', () => {
   test('start a new game', async () => {
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
     await createGameServer('1.2.0.1');
-    saveReward(playerId, clubCode);
+    await saveReward(playerId, clubCode);
     const resp = await getClient(playerId).mutate({
       variables: {
         clubCode: clubCode,

@@ -70,6 +70,14 @@ export const highHandWinnersQuery = gql`
   }
 `;
 
+export const getRewardTrackQuery = gql`
+  query($gameCode: String!, $rewardId: String!) {
+    rewardTrackdata: getRewardTrack(gameCode: $gameCode, rewardId: $rewardId) {
+      id
+    }
+  }
+`;
+
 export async function getRewards(
   playerId: string,
   clubCode: string
@@ -141,4 +149,23 @@ export async function getHighHandWinners(
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
   return resp.data.winnerdata;
+}
+
+export async function getRewardtrack(
+  playerId: string,
+  gameCode: string,
+  rewardId: string
+): Promise<Array<any>> {
+  const variables: any = {
+    playerId: playerId,
+    gameCode: gameCode,
+    rewardId: rewardId,
+  };
+  const resp = await getClient(playerId).query({
+    variables: variables,
+    query: getRewardTrackQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.rewardTrackdata[0].id;
 }

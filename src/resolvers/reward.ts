@@ -120,6 +120,22 @@ export async function getHighHandWinners(
   });
 }
 
+export async function getRewardTrack(
+  playerId: string,
+  gameCode: string,
+  rewardId: string
+) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const messages = await RewardRepository.getRewardTrack(gameCode, rewardId);
+  return _.map(messages, x => {
+    return {
+      id: x.id,
+    };
+  });
+}
+
 const resolvers: any = {
   Mutation: {
     createReward: async (parent, args, ctx, info) => {
@@ -130,6 +146,9 @@ const resolvers: any = {
   Query: {
     rewards: async (parent, args, ctx, info) => {
       return getRewards(ctx.req.playerId, args.clubCode);
+    },
+    getRewardTrack: async (parent, args, ctx, info) => {
+      return getRewardTrack(ctx.req.playerId, args.gameCode, args.rewardId);
     },
     highHandsByGame: async (parent, args, ctx, info) => {
       return getHighHandsByGame(ctx.req.playerId, args.gameCode);

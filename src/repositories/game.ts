@@ -160,7 +160,6 @@ class GameRepositoryImpl {
                 createGameReward.rewardId = rewardId;
                 createGameReward.rewardTrackingId = rewardTrackResponse;
                 rewardTrackingIds.push(rewardTrackResponse.id);
-
                 const gameRewardRepository = transactionEntityManager.getRepository(
                   GameReward
                 );
