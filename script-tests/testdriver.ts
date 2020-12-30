@@ -142,7 +142,7 @@ class GameScript {
         // await this.saveHands(step['save-hands']);
       }
       if (step['end-games']) {
-        await this.endGames(step['end-games']);
+        // await this.endGames(step['end-games']);
       }
       if (step['verify-club-balance']) {
         // await this.verifyClubBalances(step['verify-club-balance']);
@@ -204,6 +204,7 @@ class GameScript {
   }
 
   protected async createGameServers(params: any) {
+    console.log('1');
     for (const serverInput of params) {
       await this.createGameServer(serverInput);
     }
@@ -512,9 +513,43 @@ class GameScript {
     }
   }
 
+  protected async createReward(input: any) {
+    this.log('Create Reward ');
+    try {
+      const createReward = gql`
+        mutation($clubCode: String!, $input: RewardInput!) {
+          rewardId: createReward(clubCode: $clubCode, input: $input)
+        }
+      `;
+      const rewardInput = {
+        amount: 100.4,
+        endHour: 4,
+        minRank: 1,
+        name: 'brady',
+        startHour: 4,
+        type: 'HIGH_HAND',
+        schedule: 'HOURLY',
+      };
+      const club = this.clubCreated[input.club];
+      const gameCode = this.gameCreated[input.game].gameCode;
+      const client = await getClient(
+        this.registeredPlayers[club.owner].playerUuid
+      );
+      const response = await client.mutate({
+        variables: {
+          clubCode: club.clubCode,
+          input: rewardInput,
+        },
+        mutation: createReward,
+      });
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
   protected async startGame(input: any): Promise<any> {
     this.log(`Start game: ${JSON.stringify(input)}`);
-
     try {
       const query = gql`
         mutation($gameCode: String!) {
@@ -533,6 +568,7 @@ class GameScript {
         mutation: query,
       });
     } catch (err) {
+      this.log('2');
       this.log(JSON.stringify(err));
       throw err;
     }
