@@ -1,9 +1,9 @@
-import {PORT_NUMBER} from './utils/utils';
+import {PORT_NUMBER} from '../../tests/utils/utils';
 import {default as axios} from 'axios';
-import {resetDatabase} from './utils/utils';
-import * as handutils from './utils/hand.testutils';
-import * as clubutils from './utils/club.testutils';
-import * as gameutils from './utils/game.testutils';
+import {resetDatabase} from '../../tests/utils/utils';
+import * as handutils from '../../tests/utils/hand.testutils';
+import * as clubutils from '../../tests/utils/club.testutils';
+import * as gameutils from '../../tests/utils/game.testutils';
 
 const allInHand = {
   clubId: 1,

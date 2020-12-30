@@ -234,7 +234,6 @@ export const seatChangeRequestsQuery = gql`
       seatNo
       sessionTime
       seatChangeRequestedAt
-      seatChangeConfirmed
     }
   }
 `;

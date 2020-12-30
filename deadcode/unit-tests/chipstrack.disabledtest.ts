@@ -1,21 +1,21 @@
-import {initializeSqlLite} from './utils';
-import {createGameServer} from '../src/internal/gameserver';
+import {initializeSqlLite} from '../../unit-tests/utils';
+import {createGameServer} from '../../src/internal/gameserver';
 import {
   configureGame,
   configureGameByPlayer,
   endGame,
-} from '../src/resolvers/game';
+} from '../../src/resolvers/game';
 import {
   getClubBalanceAmount,
   getRakeCollected,
   getPlayerBalanceAmount,
-} from '../src/resolvers/chipstrack';
-import {getClubById, createClub} from '../src/resolvers/club';
-import {saveReward} from '../src/resolvers/reward';
-import {getPlayerById, createPlayer} from '../src/resolvers/player';
-import {getGame} from '../src/cache/index';
+} from '../../src/resolvers/chipstrack';
+import {getClubById, createClub} from '../../src/resolvers/club';
+import {saveReward} from '../../src/resolvers/reward';
+import {getPlayerById, createPlayer} from '../../src/resolvers/player';
+import {getGame} from '../../src/cache/index';
 
-import {getLogger} from '../src/utils/log';
+import {getLogger} from '../../src/utils/log';
 const logger = getLogger('chipstrack-unit-test');
 
 const SERVER_API = 'http://localhost:9501/internal';

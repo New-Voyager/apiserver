@@ -1,4 +1,4 @@
-import {resetDatabase, getClient} from './utils';
+import {resetDatabase, getClient} from '../../tests/utils/utils';
 import {gql} from 'apollo-boost';
 
 export const queryClubBalance = gql`
