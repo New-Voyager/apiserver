@@ -40,6 +40,13 @@ function setPgConversion() {
 
 export async function start(dbConnection?: any): Promise<[any, any]> {
   logger.debug('In start method');
+
+  if (!process.env.NATS_URL) {
+    throw new Error(
+      'NATS_URL should be specified in the environment variable.'
+    );
+  }
+
   const typesArray = fileLoader(
     __dirname + '/' + '../../src/graphql/*.graphql',
     {recursive: true}
@@ -145,6 +152,7 @@ function addInternalRoutes(app: any) {
   );
 
   app.post('/auth/login', login);
+  app.get('/nats-urls', natsUrls);
 }
 
 /**
@@ -244,4 +252,9 @@ async function login(req: any, resp: any) {
 function generateAccessToken(payload) {
   // expires after 3 days
   return jwt.sign(payload, getJwtSecret(), {expiresIn: `${JWT_EXPIRY_DAYS}d`});
+}
+
+// returns nats urls
+async function natsUrls(req: any, resp: any) {
+  resp.status(200).send(JSON.stringify({urls: process.env.NATS_URL}));
 }
