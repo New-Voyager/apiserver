@@ -99,6 +99,8 @@ game:
             buyInMin: 100
             buyInMax: 300
             actionTime: 100
+            rewardIds:
+              
 
     # players sits in
     - sitsin:
@@ -170,52 +172,221 @@ game:
 
     # save hands
     - save-hands:
-        - clubId: New Delhi
-          gameId: test1
-          handNum: 1
-          messageType: RESULT
-          handStatus: RESULT
-          handResult:
-            playersInSeats: [arun, 0, sam, 0, bala, 0, 0, arjun]
-            handStartedAt: "1595385733"
-            handEndedAt: "1595385739"
-            preflopActions:
-            flopActions:
-            turnActions:
-            riverActions:
-            potWinners:
-              0:
-                hiWinners:
-                  - seatNo: 1
-                    amount: 50
-                    winningCards: [200, 196, 8, 132, 1]
-                    winningCardsStr: "[ A♣  A♦  2♣  T♦  2♠ ]"
-                    rankStr: Two Pair
-                    rank: 1000
-                loWinners:
-                  - seatNo: 1
-                    amount: 50
-                    winningCards: [200, 196, 8, 132, 1]
-                    winningCardsStr: "[ A♣  A♦  2♣  T♦  2♠ ]"
-                    rankStr: Two Pair
-                    rank: 1000
-            wonAt: SHOW_DOWN
-            rank: 1000
-            tips: 2.0
-            totalPot: 150
-            balanceAfterHand:
-              - seatNo: 1
-                playerId: arun
-                balance: 200
+        gameId: '44'
+        handNum: 1
+        gameType: HOLDEM
+        handLog:
+          preflopActions:
+            pot: 7
+            actions:
+            - seatNo: 2
+              action: SB
+              amount: 1
+              timedOut: false
+              stack: 0
+            - seatNo: 3
+              action: BB
+              amount: 2
+              timedOut: false
+              stack: 0
+            - seatNo: 1
+              action: CALL
+              amount: 2
+              timedOut: false
+              stack: 0
+            - seatNo: 2
+              action: CALL
+              amount: 2
+              timedOut: false
+              stack: 0
+            - seatNo: 3
+              action: CHECK
+              amount: 0
+              timedOut: false
+              stack: 98
+          flopActions:
+            pot: 16
+            actions:
+            - seatNo: 2
+              action: CHECK
+              amount: 0
+              timedOut: false
+              stack: 0
+            - seatNo: 3
+              action: BET
+              amount: 2
+              timedOut: false
+              stack: 0
+            - seatNo: 1
+              action: CALL
+              amount: 2
+              timedOut: false
+              stack: 0
+            - seatNo: 2
+              action: RAISE
+              amount: 4
+              timedOut: false
+              stack: 0
+            - seatNo: 3
+              action: CALL
+              amount: 4
+              timedOut: false
+              stack: 0
+            - seatNo: 1
+              action: CALL
+              amount: 4
+              timedOut: false
+              stack: 94
+          turnActions:
+            pot: 30
+            actions:
+            - seatNo: 2
+              action: CHECK
+              amount: 0
+              timedOut: false
+              stack: 0
+            - seatNo: 3
+              action: CHECK
+              amount: 0
+              timedOut: false
+              stack: 0
+            - seatNo: 1
+              action: BET
+              amount: 10
+              timedOut: false
+              stack: 0
+            - seatNo: 2
+              action: CALL
+              amount: 10
+              timedOut: false
+              stack: 0
+            - seatNo: 3
+              action: CALL
+              amount: 10
+              timedOut: false
+              stack: 84
+          riverActions:
+            pot: 30
+            actions:
+            - seatNo: 2
+              action: BET
+              amount: 10
+              timedOut: false
+              stack: 0
+            - seatNo: 3
+              action: CALL
+              amount: 10
+              timedOut: false
+              stack: 0
+            - seatNo: 1
+              action: CALL
+              amount: 10
+              timedOut: false
+              stack: 74
+          potWinners:
+            '0':
+              hiWinners:
               - seatNo: 3
-                playerId: sam
-                balance: 50
-              - seatNo: 5
-                playerId: bala
-                balance: 0
-              - seatNo: 8
-                playerId: arjun
-                balance: 50
+                loCard: false
+                amount: 78
+                winningCards:
+                - 200
+                - 196
+                - 84
+                - 88
+                - 193
+                winningCardsStr: "[ A♣  A♦  7♦  7♣  A♠ ]"
+                rankStr: Full House
+              lowWinners: []
+          wonAt: SHOW_DOWN
+          showDown:
+          handStartedAt: '1608392102'
+          handEndedAt: '1608392114'
+        rewardTrackingIds:
+        - 20
+        boardCards:
+        - 200
+        - 196
+        - 8
+        - 84
+        - 88
+        boardCards2: []
+        flop:
+        - 200
+        - 196
+        - 8
+        turn: 84
+        river: 88
+        players:
+          '1':
+            id: '313'
+            cards:
+            - 4
+            - 1
+            bestCards:
+            - 200
+            - 196
+            - 8
+            - 4
+            - 1
+            rank: 311
+            playedUntil: RIVER
+            balance:
+              before: 100
+              after: 74
+            hhCards:
+            - 4
+            - 1
+            - 200
+            - 196
+            - 8
+            hhRank: 311
+          '2':
+            id: '314'
+            cards:
+            - 56
+            - 72
+            bestCards:
+            - 200
+            - 8
+            - 88
+            - 56
+            - 72
+            rank: 804
+            playedUntil: RIVER
+            balance:
+              before: 100
+              after: 74
+            hhCards:
+            - 56
+            - 72
+            - 200
+            - 8
+            - 88
+            hhRank: 804
+          '3':
+            id: '315'
+            cards:
+            - 193
+            - 130
+            bestCards:
+            - 200
+            - 196
+            - 84
+            - 88
+            - 193
+            rank: 173
+            playedUntil: RIVER
+            balance:
+              before: 100
+              after: 152
+            hhCards:
+            - 193
+            - 130
+            - 200
+            - 196
+            - 84
+            hhRank: 1642
     
     # End multiple games
     - end-games:

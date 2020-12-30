@@ -160,7 +160,6 @@ class GameRepositoryImpl {
                 createGameReward.rewardId = rewardId;
                 createGameReward.rewardTrackingId = rewardTrackResponse;
                 rewardTrackingIds.push(rewardTrackResponse.id);
-
                 const gameRewardRepository = transactionEntityManager.getRepository(
                   GameReward
                 );
@@ -613,6 +612,7 @@ class GameRepositoryImpl {
   public async tableGameState(game: PokerGame): Promise<PlayerGameTracker[]> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.find({
+      relations: ['player'],
       where: {
         game: {id: game.id},
       },

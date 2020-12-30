@@ -70,9 +70,11 @@ export const highHandWinnersQuery = gql`
   }
 `;
 
-export const getTrackId = gql`
-  query($rewardId: String!) {
-    trackId: getTrackId(rewardId: $rewardId)
+export const getRewardTrackQuery = gql`
+  query($gameCode: String!, $rewardId: String!) {
+    rewardTrackdata: getRewardTrack(gameCode: $gameCode, rewardId: $rewardId) {
+      id
+    }
   }
 `;
 
@@ -149,16 +151,21 @@ export async function getHighHandWinners(
   return resp.data.winnerdata;
 }
 
-export async function getTrackingId(playerId: string, rewardId: string) {
+export async function getRewardtrack(
+  playerId: string,
+  gameCode: string,
+  rewardId: string
+): Promise<Array<any>> {
   const variables: any = {
     playerId: playerId,
+    gameCode: gameCode,
     rewardId: rewardId,
   };
   const resp = await getClient(playerId).query({
     variables: variables,
-    query: getTrackId,
+    query: getRewardTrackQuery,
   });
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
-  return resp.data.logdata;
+  return resp.data.rewardTrackdata[0].id;
 }

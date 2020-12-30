@@ -514,7 +514,7 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
     const tableGameState = new Array<any>();
     gameState.map(data => {
       const gameState = {
-        playerUuid: player.uuid,
+        playerUuid: data.player.uuid,
         buyIn: data.buyIn,
         stack: data.stack,
         status: PlayerStatus[data.status],

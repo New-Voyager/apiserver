@@ -36,7 +36,7 @@ const holdemGameInput = {
   rewardIds: [] as any,
 };
 
-let rewardId;
+let rewardId, rewardTrackID;
 
 async function saveReward(playerId, clubCode) {
   const rewardInput = {
@@ -59,7 +59,6 @@ async function saveReward(playerId, clubCode) {
   holdemGameInput.rewardIds.splice(0);
   holdemGameInput.rewardIds.push(rewardId.data.rewardId);
   rewardId = rewardId.data.rewardId;
-  return rewardId;
 }
 
 const SERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
@@ -103,6 +102,11 @@ async function createClubWithMembers(
     playerIds.push(playerId);
   }
   const gameId = await gameutils.getGameById(game.gameCode);
+  rewardTrackID = await rewardutils.getRewardtrack(
+    playerUuids[0],
+    game.gameCode,
+    rewardId.toString()
+  );
   return [ownerId, clubCode, playerUuids, gameId, game.gameCode, playerIds];
 }
 
@@ -159,7 +163,7 @@ describe('Hand Server', () => {
       const data = JSON.parse(obj);
       data.gameId = gameId.toString();
       data.rewardTrackingIds.splice(0);
-      data.rewardTrackingIds.push(rewardId);
+      data.rewardTrackingIds.push(rewardTrackID);
       data.players['1'].id = playerIds[0].toString();
 
       data.gameId = gameId.toString();

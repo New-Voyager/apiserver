@@ -120,15 +120,20 @@ export async function getHighHandWinners(
   });
 }
 
-export async function getTrackingIdByRewardId(
+export async function getRewardTrack(
   playerId: string,
+  gameCode: string,
   rewardId: string
 ) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  const id = await RewardRepository.getTrackId(rewardId);
-  return id;
+  const messages = await RewardRepository.getRewardTrack(gameCode, rewardId);
+  return _.map(messages, x => {
+    return {
+      id: x.id,
+    };
+  });
 }
 
 const resolvers: any = {
@@ -142,11 +147,11 @@ const resolvers: any = {
     rewards: async (parent, args, ctx, info) => {
       return getRewards(ctx.req.playerId, args.clubCode);
     },
+    getRewardTrack: async (parent, args, ctx, info) => {
+      return getRewardTrack(ctx.req.playerId, args.gameCode, args.rewardId);
+    },
     highHandsByGame: async (parent, args, ctx, info) => {
       return getHighHandsByGame(ctx.req.playerId, args.gameCode);
-    },
-    getTrackId: async (parent, args, ctx, info) => {
-      return getTrackingIdByRewardId(ctx.req.playerId, args.rewardId);
     },
     highHandsByReward: async (parent, args, ctx, info) => {
       return getHighHandsByReward(

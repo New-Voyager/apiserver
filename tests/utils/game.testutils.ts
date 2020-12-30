@@ -129,16 +129,25 @@ export const startGameQuery = gql`
 
 export const buyinQuery = gql`
   mutation($gameCode: String!, $amount: Float!) {
-    status: buyIn(gameCode: $gameCode, amount: $amount)
+    status: buyIn(gameCode: $gameCode, amount: $amount) {
+      expireSeconds
+      approved
+    }
   }
 `;
 
-export const approveBuyInQuery = gql`
-  mutation($gameCode: String!, $playerUuid: String!, $amount: Float!) {
-    status: approveBuyIn(
+export const approveQuery = gql`
+  mutation(
+    $gameCode: String!
+    $playerUuid: String!
+    $type: ApprovalType!
+    $status: ApprovalStatus!
+  ) {
+    status: approveRequest(
       gameCode: $gameCode
       playerUuid: $playerUuid
-      amount: $amount
+      type: $type
+      status: $status
     )
   }
 `;
@@ -225,7 +234,6 @@ export const seatChangeRequestsQuery = gql`
       seatNo
       sessionTime
       seatChangeRequestedAt
-      seatChangeConfirmed
     }
   }
 `;
@@ -255,6 +263,32 @@ export const waitingListQuery = gql`
       name
       waitingFrom
       status
+    }
+  }
+`;
+
+export const pendingApprovalsForClubQuery = gql`
+  query($clubCode: String!) {
+    status: pendingApprovalsForClub(clubCode: $clubCode) {
+      gameCode
+      playerUuid
+      name
+      approvalType
+      amount
+      outstandingBalance
+    }
+  }
+`;
+
+export const pendingApprovalsForGameQuery = gql`
+  query($gameCode: String!) {
+    status: pendingApprovalsForGame(gameCode: $gameCode) {
+      gameCode
+      playerUuid
+      name
+      approvalType
+      amount
+      outstandingBalance
     }
   }
 `;
@@ -350,19 +384,55 @@ export async function buyin(
   return resp.data.status;
 }
 
-export async function approveBuyIn(
+export async function pendingApprovalsForClub(
+  playerId: string,
+  clubCode: string
+): Promise<Array<any>> {
+  const variables: any = {
+    clubCode: clubCode,
+  };
+
+  const resp = await getClient(playerId).query({
+    variables: variables,
+    query: pendingApprovalsForClubQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+export async function pendingApprovalsForGame(
+  playerId: string,
+  gameCode: string
+): Promise<Array<any>> {
+  const variables: any = {
+    gameCode: gameCode,
+  };
+
+  const resp = await getClient(playerId).query({
+    variables: variables,
+    query: pendingApprovalsForGameQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+export async function approveRequest(
   hostId: string,
   playerId: string,
   gameCode: string,
-  amount: number
+  type: string,
+  status: string
 ): Promise<any> {
   const resp = await getClient(hostId).mutate({
     variables: {
       gameCode: gameCode,
       playerUuid: playerId,
-      amount: amount,
+      type: type,
+      status: status,
     },
-    mutation: approveBuyInQuery,
+    mutation: approveQuery,
   });
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();

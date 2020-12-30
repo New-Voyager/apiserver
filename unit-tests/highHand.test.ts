@@ -11,7 +11,11 @@ import {
 import {getGame} from '../src/cache/index';
 import {createGameServer} from '../src/internal/gameserver';
 import {configureGame, joinGame} from '../src/resolvers/game';
-import {saveReward, getHighHandWinners} from '../src/resolvers/reward';
+import {
+  saveReward,
+  getHighHandWinners,
+  getRewardTrack,
+} from '../src/resolvers/reward';
 import {postHand} from '../src/internal/hand';
 import _ from 'lodash';
 
@@ -151,12 +155,17 @@ describe('HighHand APIs', () => {
     });
     const wonRank = [] as any,
       wonId = [] as any;
+    const rewardTrackId = await getRewardTrack(
+      playerUuids[0],
+      gameCode,
+      rewardId.toString()
+    );
     for await (const file of files) {
       const obj = await fs.readFileSync(`highhand-results/${file}`, 'utf8');
       const data = JSON.parse(obj);
       data.gameId = gameId.toString();
       data.rewardTrackingIds.splice(0);
-      data.rewardTrackingIds.push(rewardId);
+      data.rewardTrackingIds.push(rewardTrackId[0].id);
       data.players['1'].id = playerIds[0].toString();
 
       data.gameId = gameId.toString();

@@ -22,11 +22,6 @@ import {
 import {FavouriteMessage} from '../src/entity/clubfreqmessage';
 import {ClubMessageInput} from '../src/entity/clubmessage';
 import {GameServer, TrackGameServer} from '../src/entity/gameserver';
-import {
-  Promotion,
-  GamePromotion,
-  PromotionWinners,
-} from '../src/entity/promotion';
 
 export async function initializeSqlLite() {
   process.env.DB_USED = 'sqllite';
@@ -55,9 +50,6 @@ export async function sqlliteConnection() {
       ClubMessageInput,
       GameServer,
       TrackGameServer,
-      Promotion,
-      GamePromotion,
-      PromotionWinners,
       PokerGameUpdates,
       GameReward,
       GameRewardTracking,

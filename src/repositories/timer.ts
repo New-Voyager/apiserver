@@ -43,15 +43,15 @@ export async function timerCallback(req: any, resp: any) {
   );
 
   if (purpose === WAITLIST_SEATING) {
-    waitlistTimeoutExpired(gameID, playerID);
+    await waitlistTimeoutExpired(gameID, playerID);
   } else if (purpose === SEATCHANGE_PROGRSS) {
-    seatChangeTimeoutExpired(gameID);
+    await seatChangeTimeoutExpired(gameID);
   } else if (purpose === BUYIN_TIMEOUT) {
-    buyInTimeoutExpired(gameID, playerID);
+    await buyInTimeoutExpired(gameID, playerID);
   } else if (purpose === BUYIN_APPROVAL_TIMEOUT) {
-    buyInApprovalTimeoutExpired(gameID, playerID);
+    await buyInApprovalTimeoutExpired(gameID, playerID);
   } else if (purpose === RELOAD_APPROVAL_TIMEOUT) {
-    reloadApprovalTimeoutExpired(gameID, playerID);
+    await reloadApprovalTimeoutExpired(gameID, playerID);
   }
 
   resp.status(200).send({status: 'OK'});

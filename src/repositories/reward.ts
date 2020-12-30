@@ -141,7 +141,6 @@ class RewardRepositoryImpl {
       if (existingTracking && existingTracking.highHandRank) {
         existingHighHandRank = existingTracking.highHandRank;
       }
-      console.log(highHandRank);
       const highHandPlayers = new Array<any>();
       let hhCards = '';
       for (const seatNo of Object.keys(input.players)) {
@@ -379,25 +378,6 @@ class RewardRepositoryImpl {
     return 0xffffffff;
   }
 
-  public async getTrackId(rewardId: string) {
-    // We should use both gameCode and rewardId to get tracking id
-    // a multiple games may be associated with a rewardId
-    if (!rewardId) {
-      throw new Error('RewardId is empty');
-    }
-    const gameTrackRepo = getRepository(GameRewardTracking);
-    const rewardRepo = getRepository(Reward);
-    const reward = await rewardRepo.findOne({id: parseInt(rewardId)});
-    if (!reward) {
-      throw new Error(`Reward ${rewardId} is not found`);
-    }
-    const gameTrack = await gameTrackRepo.findOne({reward: {id: reward.id}});
-    if (!gameTrack) {
-      throw new Error(`Reward-id ${rewardId} not found`);
-    }
-    return gameTrack.id;
-  }
-
   public async highHandWinners(gameCode: string, rewardId: number) {
     if (!gameCode || !rewardId) {
       return;
@@ -449,6 +429,34 @@ class RewardRepositoryImpl {
       );
       throw new Error("Couldn't retrieve highhand, please retry again");
     }
+  }
+
+  public async getRewardTrack(gameCode: string, rewardId: string) {
+    if (!gameCode || !rewardId) {
+      return;
+    }
+    const rewardRepo = getRepository(Reward);
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      logger.error('Invalid gameCode');
+      throw new Error('Invalid gameCode');
+    }
+    const reward = await rewardRepo.findOne({id: parseInt(rewardId)});
+    if (!reward) {
+      logger.error(`Invalid RewardId. ${rewardId}`);
+      throw new Error('Invalid RewardId');
+    }
+    const rewardTrackRepo = getRepository(GameRewardTracking);
+    const rewardtrack = await rewardTrackRepo.find({
+      where: {
+        reward: {id: parseInt(rewardId)},
+      },
+    });
+    if (!rewardtrack) {
+      logger.error('RewardTrackId not found.');
+      throw new Error('RewardTrackId not found.');
+    }
+    return rewardtrack;
   }
 }
 
