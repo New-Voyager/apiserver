@@ -360,7 +360,7 @@ describe('Club APIs', () => {
       const members = await getClubMembers('1234', {clubCode: '1234'});
       expect(members).toBeNull();
     } catch (err) {
-      expect(err.message).toContain('not found');
+      expect(err.message).toContain('Unauthorized');
     }
   });
 

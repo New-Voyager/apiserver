@@ -55,20 +55,10 @@ export const queryClubMembers = gql`
 
 export const queryMemberStatus = gql`
   query($clubCode: String!) {
-    status: clubMemberStatus(clubCode: $clubCode) {
-      id
+    status: clubInfo(clubCode: $clubCode) {
       status
       isManager
       isOwner
-      contactInfo
-      ownerNotes
-      lastGamePlayedDate
-      joinedDate
-      leftDate
-      viewAllowed
-      playAllowed
-      createdAt
-      updatedAt
     }
   }
 `;

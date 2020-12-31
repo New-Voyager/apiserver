@@ -16,41 +16,33 @@ export async function getClubMembers(playerId: string, args: any) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  const clubMembers1 = await ClubRepository.getMembers(args.clubCode);
   const clubMember = await ClubRepository.isClubMember(args.clubCode, playerId);
   if (!clubMember) {
-    logger.error(
-      `The user ${playerId} is not a member of ${
-        args.clubCode
-      }, ${JSON.stringify(clubMembers1)}`
-    );
+    logger.error(`The user ${playerId} is not a member of ${args.clubCode}`);
     throw new Error('Unauthorized');
   }
 
-  if (clubMember.status == ClubMemberStatus.KICKEDOUT) {
+  if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
     logger.error(`The user ${playerId} is kicked out of ${args.clubCode}`);
     throw new Error('Unauthorized');
   }
 
-  const clubMembers = await ClubRepository.getMembers(args.clubCode);
+  const clubMembers = await ClubRepository.getMembers(
+    args.clubCode,
+    args.filter
+  );
   const members = new Array<any>();
   for (const member of clubMembers) {
-    members.push({
-      name: member.player.name,
-      joinedDate: member.joinedDate,
-      status: ClubMemberStatus[member.status],
-      lastGamePlayedDate: null,
-      imageId: '',
-      isOwner: member.isOwner,
-      isManager: member.isManager,
-      playerId: member.player.uuid,
-      balance: member.balance,
-      totalBuyins: member.totalBuyins,
-      totalWinnings: member.totalWinnings,
-      notes: member.notes,
-    });
+    const memberAny = member as any;
+    memberAny.name = member.player.name;
+    memberAny.playerId = member.player.uuid;
+    const today = new Date();
+    today.setDate(today.getDate() - 7);
+    memberAny.lastPlayedDate = today;
+    memberAny.contactInfo = '+17812341203';
+    memberAny.status = ClubMemberStatus[member.status];
+    members.push(memberAny);
   }
-
   return members;
 }
 
@@ -171,7 +163,7 @@ export async function updateClub(
     if (!owner) {
       throw new Error(`Club ${clubCode} does not have a owner`);
     }
-    if (playerId != owner.uuid) {
+    if (playerId !== owner.uuid) {
       const a = JSON.stringify(club.owner);
       throw new Error(
         `Unauthorized. ${playerId} is not the owner of the club ${clubCode}, ${a}`
@@ -379,10 +371,6 @@ const resolvers: any = {
 
     clubById: async (parent, args, ctx, info) => {
       return getClubById(ctx.req.playerId, args.clubCode);
-    },
-
-    clubMemberStatus: async (parent, args, ctx, info) => {
-      return getMemberStatus(ctx.req.playerId, args.clubCode);
     },
   },
   Mutation: {

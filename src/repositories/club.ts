@@ -459,7 +459,10 @@ class ClubRepositoryImpl {
     return [club, player, clubMember];
   }
 
-  public async getMembers(clubCode: string): Promise<ClubMember[]> {
+  public async getMembers(
+    clubCode: string,
+    filter?: any
+  ): Promise<ClubMember[]> {
     const clubRepository = getRepository<Club>(Club);
     const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     if (!club) {
@@ -471,12 +474,40 @@ class ClubRepositoryImpl {
     }
 
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {
+      club: {id: club.id},
+      status: Not(ClubMemberStatus.LEFT),
+    };
+    if (filter) {
+      if (filter.all) {
+        // nothing to filter
+      } else {
+        if (filter.unsettled) {
+          where.balance = Not(0);
+        }
+
+        if (filter.managers) {
+          where.isManager = true;
+        }
+
+        if (filter.playerId) {
+          const player = await Cache.getPlayer(filter.playerId);
+          where.player = {id: player.id};
+        }
+
+        if (filter.inactive) {
+          const inactiveDate = new Date();
+          inactiveDate.setMonth(inactiveDate.getMonth() - 3);
+          where.lastGamePlayedDate = LessThan(inactiveDate);
+        }
+      }
+    }
+
     // see whehter the player is already a member
     const clubMembers = await clubMemberRepository.find({
-      where: {
-        club: {id: club.id},
-        status: Not(ClubMemberStatus.LEFT),
-      },
+      relations: ['player'],
+      where: where,
     });
     return clubMembers;
   }
