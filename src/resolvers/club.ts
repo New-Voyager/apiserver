@@ -37,7 +37,7 @@ export async function getClubMembers(playerId: string, args: any) {
     memberAny.name = member.player.name;
     memberAny.playerId = member.player.uuid;
     const today = new Date();
-    today.setDate(today.getDate()-366 );
+    today.setDate(today.getDate() - 7);
     memberAny.lastPlayedDate = today;
     memberAny.contactInfo = '+17812341203';
     memberAny.status = ClubMemberStatus[member.status];
