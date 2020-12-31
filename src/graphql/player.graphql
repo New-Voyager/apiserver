@@ -93,6 +93,8 @@ type ClubInfo {
   joinedAt: DateTime
   status: ClubMemberStatus
   gamesPlayed: Int
+  isManager: Boolean
+  isOwner: Boolean
 }
 
 

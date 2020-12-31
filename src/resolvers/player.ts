@@ -67,7 +67,8 @@ const resolvers: any = {
     },
 
     clubInfo: async (parent, args, ctx, info) => {
-      return getClubPlayerInfo(ctx.req.playerId, args.clubCode);
+      const ret = await getClubPlayerInfo(ctx.req.playerId, args.clubCode);
+      return ret;
     },
   },
   Mutation: {
@@ -169,6 +170,8 @@ export async function getClubPlayerInfo(playerId: string, clubCode: string) {
     myBalance: clubMember.balance,
     joinedAt: clubMember.joinedDate,
     gamesPlayed: clubMember.totalGames,
+    isManager: clubMember.isManager,
+    isOwner: clubMember.isOwner,
     status: ClubMemberStatus[clubMember.status],
   };
 }

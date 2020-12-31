@@ -48,9 +48,10 @@ type Mutation {
 
 type ClubMember {
   name: String!
+  playerId: String!
   joinedDate: DateTime!
   status: ClubMemberStatus!
-  lastGamePlayedDate: String
+  lastPlayedDate: DateTime
   imageId: String
   isOwner: Boolean
   isManager: Boolean
@@ -58,7 +59,12 @@ type ClubMember {
   balance: Float
   totalBuyins: Int
   totalWinnings: Int
+  rakePaid: Float
   notes: String
+  contactInfo: String
+  referredBy: String
+  autoBuyinApproval: Boolean
+  creditLimit: Float
 }
 
 type ClubGameInfo {
@@ -83,31 +89,17 @@ type clubId{
   id: Int!
 }
 
-
-type Member{
-  id: Int!
-  status: Int!
-  isManager: Boolean!
-  isOwner: Boolean
-  contactInfo: String
-  ownerNotes: String
-  lastGamePlayedDate: DateTime
-  joinedDate: DateTime
-  leftDate: DateTime
-  viewAllowed: Boolean
-  playAllowed: Boolean
-  createdAt: DateTime
-  updatedAt: DateTime
-  balance: Float
-  totalBuyins: Int
-  totalWinnings: Int
-  notes: String
+input MemberFilterInput {
+  all: Boolean              # added this to make it easy to build queries in the client
+  inactive: Boolean
+  unsettled: Boolean
+  managers: Boolean
+  playerId: String
 }
 
 type Query {
-  clubMembers(clubCode: String!): [ClubMember!]
+  clubMembers(clubCode: String!, filter: MemberFilterInput): [ClubMember!]
   clubById(clubCode: String!): clubId!
-  clubMemberStatus(clubCode: String!): Member!
 
   # returns 'last' number of games 'from' in reverse order
   # by default, this call returns only last 20 games

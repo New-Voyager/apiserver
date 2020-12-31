@@ -179,4 +179,13 @@ export class ClubMember {
 
   @Column({name: 'won_hands', type: 'int', nullable: true, default: 0})
   public wonHands!: number;
+
+  @Column({
+    name: 'rake_paid',
+    type: 'decimal',
+    precision: 8,
+    scale: 2,
+    default: 0,
+  })
+  public rakePaid!: number;
 }
