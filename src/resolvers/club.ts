@@ -4,12 +4,15 @@ import {
   ClubUpdateInput,
   ClubMemberUpdateInput,
 } from '@src/repositories/club';
-import {ClubMemberStatus, GameStatus} from '@src/entity/types';
+import {ClubMemberStatus, GameStatus, GameType} from '@src/entity/types';
 import {Player} from '@src/entity/player';
 import {PageOptions} from '@src/types';
 import * as _ from 'lodash';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const humanizeDuration = require('humanize-duration');
+
 const logger = getLogger('clubresolvers');
 
 export async function getClubMembers(playerId: string, args: any) {
@@ -59,29 +62,31 @@ export async function getClubGames(
     logger.error(`The user ${playerId} is not a member of ${clubCode}`);
     throw new Error('Unauthorized');
   }
-  const clubGames = await ClubRepository.getClubGames(clubCode, pageOptions);
-  const ret = _.map(clubGames, x => {
-    let endedAt;
-    let endedBy;
-    if (x.endedAt) {
-      endedAt = x.endedAt;
-      if (x.endedBy) {
-        endedBy = x.endedBy.name;
-      }
+  const clubGames = await ClubRepository.getClubGames(
+    clubCode,
+    clubMember.player.id
+  );
+  const ret = new Array<any>();
+
+  for (const game of clubGames) {
+    const retGame = game as any;
+    if (game.endedAt) {
+      const runTime = game.endedAt - game.startedAt;
+      game.runTime = runTime;
+      game.runTimeStr = humanizeDuration(runTime, {round: true});
     }
 
-    return {
-      pageId: x.id,
-      title: x.title,
-      type: x.gameType,
-      gameCode: x.gameCode,
-      startedBy: x.startedBy.name,
-      startedAt: x.startedAt,
-      status: GameStatus[x.status],
-      endedAt: endedAt,
-      endedBy: endedBy,
-    };
-  });
+    if (game.sessionTime) {
+      game.sessionTimeStr = humanizeDuration(game.sessionTime * 1000, {
+        round: true,
+      });
+    }
+    if (!game.endedBy) {
+      game.endedBy = '';
+    }
+    retGame.gameType = GameType[game.gameType];
+    ret.push(retGame);
+  }
   // convert club games to PlayerClubGame
   return ret;
 }

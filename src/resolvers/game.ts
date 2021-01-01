@@ -202,13 +202,14 @@ export async function startGame(
       }
     }
 
-    const players = await GameRepository.getPlayersInSeats(game.id);
+    let players = await GameRepository.getPlayersInSeats(game.id);
     if (game.botGame && players.length < game.maxPlayers) {
       // fill the empty seats with bots
       await fillSeats(game.club.clubCode, game.gameCode);
       await new Promise(r => setTimeout(r, 10000));
     }
 
+    players = await GameRepository.getPlayersInSeats(game.id);
     // do we have enough players in the table
     // if (players.length <= 1) {
     //   throw new Error('We need more players to start the game');

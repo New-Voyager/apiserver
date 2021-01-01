@@ -69,14 +69,22 @@ type ClubMember {
 
 type ClubGameInfo {
   title: String
-  type: GameType
+  gameType: GameType
   pageId: Int!
   gameCode: String!
+  smallBlind: Float
+  bigBlind: Float
   startedBy: String
   startedAt: DateTime
   endedBy: String
-  endedAt: String
+  endedAt: DateTime
   status: GameStatus
+  runTime: Int
+  runTimeStr: String
+  sessionTime: Int
+  sessionTimeStr: String
+  handsPlayed: Int
+  balance: Int  
 }
 
 input PageInput {
