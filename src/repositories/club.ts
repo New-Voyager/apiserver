@@ -707,7 +707,6 @@ class ClubRepositoryImpl {
 
     return nextGameNum;
   }
-
 }
 
 export const ClubRepository = new ClubRepositoryImpl();

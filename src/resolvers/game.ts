@@ -16,7 +16,7 @@ import {default as _} from 'lodash';
 import {BuyIn} from '@src/repositories/buyin';
 import {PokerGame} from '@src/entity/game';
 import {fillSeats} from '@src/botrunner';
-import { ClubRepository } from '@src/repositories/club';
+import {ClubRepository} from '@src/repositories/club';
 
 const logger = getLogger('game');
 
