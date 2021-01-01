@@ -589,6 +589,44 @@ class ClubRepositoryImpl {
 
   public async getClubGames(
     clubCode: string,
+    playerId: number,
+    completedGames?: boolean
+  ): Promise<Array<any>> {
+    let endedAt = '';
+    if (completedGames) {
+      endedAt = 'AND pg.ended_at IS NOT NULL';
+    }
+    const query = fixQuery(`
+        SELECT pg.id, pg.game_code as "gameCode", pg.game_num as "gameNum",
+        pgt.session_time as "sessionTime", pg.game_status as "status",
+        pg.small_blind as "smallBlind", pg.big_blind as "bigBlind",
+        pgt.no_hands_played as "handsPlayed", 
+        cm.player_id, pg.game_type as "gameType", 
+        pg.started_at as "startedAt", p.name as "startedBy",
+        pg.ended_at as "endedAt", pg.ended_by as "endedBy", 
+        pg.started_at as "startedAt", pgt.session_time as "sessionTime", 
+        (pgt.stack - pgt.buy_in) as balance 
+        FROM
+        poker_game pg JOIN club c ON pg.club_id  = c.id ${endedAt}
+        JOIN player p ON pg.started_by = p.id
+        JOIN club_member cm  ON cm.club_id  = c.id AND cm.player_id = ? AND c.club_code = ?
+        LEFT OUTER JOIN player_game_tracker pgt ON 
+        pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = cm.player_id
+        ORDER BY pg.id DESC`);
+
+    // TODO: we need to do pagination here
+    const result = await getConnection().query(query, [playerId, clubCode]);
+
+    let res = await getConnection().query('SELECT * from club');
+    res = await getConnection().query('SELECT * from poker_game');
+    res = await getConnection().query('SELECT * from player_game_tracker');
+
+    console.log(JSON.stringify(res));
+    return result;
+  }
+
+  public async getClubGames1(
+    clubCode: string,
     pageOptions?: PageOptions
   ): Promise<Array<any>> {
     if (!pageOptions) {
@@ -652,6 +690,33 @@ class ClubRepositoryImpl {
       throw new Error('Club not found');
     }
     return club;
+  }
+
+  public async getNextGameNum(clubId: number): Promise<number> {
+    const nextGameNum = await getManager().transaction(
+      async transactionEntityManager => {
+        await transactionEntityManager
+          .getRepository(Club)
+          .createQueryBuilder()
+          .update()
+          .set({
+            nextGameNum: () => 'next_game_num + 1',
+          })
+          .where({
+            id: clubId,
+          })
+          .execute();
+
+        const repo = transactionEntityManager.getRepository(Club);
+        const club = await repo.findOne({id: clubId});
+        if (!club) {
+          return 1;
+        }
+        return club.nextGameNum;
+      }
+    );
+
+    return nextGameNum;
   }
 }
 

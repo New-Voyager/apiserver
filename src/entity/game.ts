@@ -234,6 +234,10 @@ export class PokerGame {
   @Column({name: 'bot_game', default: false})
   public botGame!: boolean;
 
+  // used for tracking game number for club games
+  @Column({name: 'game_num', type: 'int', default: 0})
+  public gameNum!: number;
+
   // This is not a database column and used for tracking highhand in the cache
   public highHandRank = 0;
 }

@@ -69,14 +69,23 @@ type ClubMember {
 
 type ClubGameInfo {
   title: String
-  type: GameType
+  gameType: GameType
   pageId: Int!
   gameCode: String!
+  gameNum: Int
+  smallBlind: Float
+  bigBlind: Float
   startedBy: String
   startedAt: DateTime
   endedBy: String
-  endedAt: String
+  endedAt: DateTime
   status: GameStatus
+  runTime: Int
+  runTimeStr: String
+  sessionTime: Int
+  sessionTimeStr: String
+  handsPlayed: Int
+  balance: Int  
 }
 
 input PageInput {
@@ -105,5 +114,5 @@ type Query {
   # by default, this call returns only last 20 games
   # the caller can paginate with pageId
   # clubGames(clubCode: "", prev: 20, from: 10000001)
-  clubGames(clubCode: String!, page: PageInput): [ClubGameInfo!]
+  clubGames(clubCode: String!, page: PageInput, completedGames: Boolean): [ClubGameInfo!]
 }

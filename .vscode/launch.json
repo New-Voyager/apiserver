@@ -76,7 +76,7 @@
         "--runInBand",
         "./unit-tests",
         "--testNamePattern",
-        "gametest: Take a break"
+        "get club games"
       ],
       "env": {
         "NODE_ENV": "test",

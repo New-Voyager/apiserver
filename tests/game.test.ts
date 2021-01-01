@@ -185,7 +185,7 @@ describe('Tests: Game APIs', () => {
     expect(startedGame.muckLosingHand).toEqual(true);
   });
 
-  test('get club games', async () => {
+  test.skip('get club games', async () => {
     const [ownerId, clubCode, players] = await createClubWithMembers([]);
 
     await saveReward(ownerId, clubCode);
@@ -203,7 +203,7 @@ describe('Tests: Game APIs', () => {
     expect(club2Games).toHaveLength(0);
   });
 
-  test('get club games pagination', async () => {
+  test.skip('get club games pagination', async () => {
     const [ownerId, clubCode, players] = await createClubWithMembers([]);
 
     const numGames = 30;

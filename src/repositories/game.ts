@@ -869,8 +869,11 @@ class GameRepositoryImpl {
     return GameStatus.ACTIVE;
   }
 
-  public async markGameActive(gameId: number): Promise<GameStatus> {
-    return this.markGameStatus(gameId, GameStatus.ACTIVE);
+  public async markGameActive(
+    gameId: number,
+    gameNum?: number
+  ): Promise<GameStatus> {
+    return this.markGameStatus(gameId, GameStatus.ACTIVE, gameNum);
   }
 
   public async markGameEnded(gameId: number): Promise<GameStatus> {
@@ -910,7 +913,11 @@ class GameRepositoryImpl {
     }
   }
 
-  public async markGameStatus(gameId: number, status: GameStatus) {
+  public async markGameStatus(
+    gameId: number,
+    status: GameStatus,
+    gameNum?: number
+  ) {
     const repository = getRepository(PokerGame);
     const game = await repository.findOne({where: {id: gameId}});
     if (!game) {
@@ -922,6 +929,10 @@ class GameRepositoryImpl {
     };
     if (status === GameStatus.ENDED) {
       values.endedAt = new Date();
+    }
+
+    if (gameNum) {
+      values.gameNum = gameNum;
     }
 
     await getConnection()
