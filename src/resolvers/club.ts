@@ -52,6 +52,7 @@ export async function getClubMembers(playerId: string, args: any) {
 export async function getClubGames(
   playerId: string,
   clubCode: string,
+  completedGames?: boolean,
   pageOptions?: PageOptions
 ): Promise<Array<any>> {
   if (!playerId) {
@@ -64,7 +65,8 @@ export async function getClubGames(
   }
   const clubGames = await ClubRepository.getClubGames(
     clubCode,
-    clubMember.player.id
+    clubMember.player.id,
+    completedGames
   );
   const ret = new Array<any>();
 
@@ -371,7 +373,12 @@ const resolvers: any = {
     },
 
     clubGames: async (parent, args, ctx, info) => {
-      return getClubGames(ctx.req.playerId, args.clubCode, args.page);
+      return getClubGames(
+        ctx.req.playerId,
+        args.clubCode,
+        args.page,
+        args.completedGames
+      );
     },
 
     clubById: async (parent, args, ctx, info) => {

@@ -589,11 +589,16 @@ class ClubRepositoryImpl {
 
   public async getClubGames(
     clubCode: string,
-    playerId: number
+    playerId: number,
+    completedGames?: boolean
   ): Promise<Array<any>> {
+    let endedAt = '';
+    if (completedGames) {
+      endedAt = 'AND pg.ended_at IS NOT NULL';
+    }
     const query = fixQuery(`
         SELECT pg.id, pg.game_code as "gameCode", pg.game_num as "gameNum",
-        pgt.session_time as "sessionTime", 
+        pgt.session_time as "sessionTime", pg.game_status as "status",
         pg.small_blind as "smallBlind", pg.big_blind as "bigBlind",
         pgt.no_hands_played as "handsPlayed", 
         cm.player_id, pg.game_type as "gameType", 
@@ -602,7 +607,7 @@ class ClubRepositoryImpl {
         pg.started_at as "startedAt", pgt.session_time as "sessionTime", 
         (pgt.stack - pgt.buy_in) as balance 
         FROM
-        poker_game pg JOIN club c ON pg.club_id  = c.id AND pg.ended_at IS NOT NULL
+        poker_game pg JOIN club c ON pg.club_id  = c.id ${endedAt}
         JOIN player p ON pg.started_by = p.id
         JOIN club_member cm  ON cm.club_id  = c.id AND cm.player_id = ? AND c.club_code = ?
         LEFT OUTER JOIN player_game_tracker pgt ON 
@@ -611,6 +616,12 @@ class ClubRepositoryImpl {
 
     // TODO: we need to do pagination here
     const result = await getConnection().query(query, [playerId, clubCode]);
+
+    let res = await getConnection().query('SELECT * from club');
+    res = await getConnection().query('SELECT * from poker_game');
+    res = await getConnection().query('SELECT * from player_game_tracker');
+
+    console.log(JSON.stringify(res));
     return result;
   }
 
