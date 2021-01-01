@@ -592,7 +592,8 @@ class ClubRepositoryImpl {
     playerId: number
   ): Promise<Array<any>> {
     const query = fixQuery(`
-        SELECT pg.id, pg.game_code as "gameCode", pgt.session_time as "sessionTime", 
+        SELECT pg.id, pg.game_code as "gameCode", pg.game_num as "gameNum",
+        pgt.session_time as "sessionTime", 
         pg.small_blind as "smallBlind", pg.big_blind as "bigBlind",
         pgt.no_hands_played as "handsPlayed", 
         cm.player_id, pg.game_type as "gameType", 
@@ -679,6 +680,34 @@ class ClubRepositoryImpl {
     }
     return club;
   }
+
+  public async getNextGameNum(clubId: number): Promise<number> {
+    const nextGameNum = await getManager().transaction(
+      async transactionEntityManager => {
+        await transactionEntityManager
+          .getRepository(Club)
+          .createQueryBuilder()
+          .update()
+          .set({
+            nextGameNum: () => 'next_game_num + 1',
+          })
+          .where({
+            id: clubId,
+          })
+          .execute();
+
+        const repo = transactionEntityManager.getRepository(Club);
+        const club = await repo.findOne({id: clubId});
+        if (!club) {
+          return 1;
+        }
+        return club.nextGameNum;
+      }
+    );
+
+    return nextGameNum;
+  }
+
 }
 
 export const ClubRepository = new ClubRepositoryImpl();

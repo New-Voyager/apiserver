@@ -56,6 +56,9 @@ export class Club {
   @OneToMany(type => ClubMember, clubMember => clubMember.club)
   @JoinColumn()
   public members!: Array<ClubMember>;
+
+  @Column({name: 'next_game_num', type: 'int', default: 0})
+  public nextGameNum!: number;
 }
 
 @Entity()

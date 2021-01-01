@@ -16,6 +16,7 @@ import {default as _} from 'lodash';
 import {BuyIn} from '@src/repositories/buyin';
 import {PokerGame} from '@src/entity/game';
 import {fillSeats} from '@src/botrunner';
+import { ClubRepository } from '@src/repositories/club';
 
 const logger = getLogger('game');
 
@@ -171,6 +172,7 @@ export async function startGame(
     throw new Error('Unauthorized');
   }
   try {
+    let gameNum = 0;
     // get game using game code
     const game = await Cache.getGame(gameCode);
     if (!game) {
@@ -200,6 +202,8 @@ export async function startGame(
           `Player: ${playerUuid} is not manager or owner. The player is not authorized to start the game ${gameCode}`
         );
       }
+
+      gameNum = await ClubRepository.getNextGameNum(game.club.id);
     }
 
     let players = await GameRepository.getPlayersInSeats(game.id);
@@ -225,7 +229,7 @@ export async function startGame(
     //   throw new Error('Not enough players with stack to start the game');
     // }
 
-    const status = await GameRepository.markGameActive(game.id);
+    const status = await GameRepository.markGameActive(game.id, gameNum);
     // game is started
     return GameStatus[status];
   } catch (err) {

@@ -72,6 +72,7 @@ type ClubGameInfo {
   gameType: GameType
   pageId: Int!
   gameCode: String!
+  gameNum: Int
   smallBlind: Float
   bigBlind: Float
   startedBy: String
