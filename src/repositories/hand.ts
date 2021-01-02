@@ -124,12 +124,18 @@ class HandRepositoryImpl {
             playerRound[playerId].flop = 1;
             break;
           case 'TURN':
+            playerRound[playerId].flop = 1;
             playerRound[playerId].turn = 1;
             break;
           case 'RIVER':
+            playerRound[playerId].flop = 1;
+            playerRound[playerId].turn = 1;
             playerRound[playerId].river = 1;
             break;
-          case 'SHOWDOWN':
+          case 'SHOW_DOWN':
+            playerRound[playerId].flop = 1;
+            playerRound[playerId].turn = 1;
+            playerRound[playerId].river = 1;
             playerRound[playerId].showdown = 1;
             break;
         }
@@ -147,8 +153,14 @@ class HandRepositoryImpl {
           rakePaid[playerId] = playerRake.amount;
         }
       }
-      logger.info('****** STARTING TRANSACTION TO SAVE a hand result');
 
+      // extract player before/after balance
+      const playerBalance = {};
+      for (const playerID of Object.keys(result.players)) {
+        playerBalance[playerID] = result.players[playerID].balance;
+      }
+      handHistory.playersStack = JSON.stringify(playerBalance);
+      logger.info('****** STARTING TRANSACTION TO SAVE a hand result');
       await getManager().transaction(async transactionEntityManager => {
         /**
          * Assigning player chips values

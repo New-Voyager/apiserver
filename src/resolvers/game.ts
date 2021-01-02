@@ -17,6 +17,8 @@ import {BuyIn} from '@src/repositories/buyin';
 import {PokerGame} from '@src/entity/game';
 import {fillSeats} from '@src/botrunner';
 import {ClubRepository} from '@src/repositories/club';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const humanizeDuration = require('humanize-duration');
 
 const logger = getLogger('game');
 
@@ -382,6 +384,43 @@ export async function pendingApprovalsForGame(
     const buyin = new BuyIn(game, player);
     const resp = await buyin.pendingApprovalsForGame();
 
+    return resp;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error(`Failed to approve buyin. ${JSON.stringify(err)}`);
+  }
+}
+
+export async function completedGame(playerId: string, gameCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    const player = await Cache.getPlayer(playerId);
+
+    const resp = await GameRepository.getCompletedGame(gameCode, player.id);
+    if (game.endedAt) {
+      const runTime = resp.endedAt - resp.startedAt;
+      resp.runTime = runTime;
+      resp.runTimeStr = humanizeDuration(runTime, {round: true});
+    }
+
+    if (resp.sessionTime) {
+      resp.sessionTimeStr = humanizeDuration(resp.sessionTime * 1000, {
+        round: true,
+      });
+    }
+    if (!resp.endedBy) {
+      resp.endedBy = '';
+    }
+
+    resp.gameType = GameType[resp.gameType];
     return resp;
   } catch (err) {
     logger.error(JSON.stringify(err));
@@ -1025,6 +1064,9 @@ const resolvers: any = {
     pendingApprovalsForGame: async (parent, args, ctx, info) => {
       return await pendingApprovalsForGame(ctx.req.playerId, args.gameCode);
     },
+    completedGame: async (parent, args, ctx, info) => {
+      return await completedGame(ctx.req.playerId, args.gameCode);
+    },
   },
   GameInfo: {
     seatInfo: async (parent, args, ctx, info) => {
@@ -1077,6 +1119,22 @@ const resolvers: any = {
         return PlayerStatus[playerState.playerStatus];
       }
       return PlayerStatus[PlayerStatus.NOT_PLAYING];
+    },
+  },
+  CompletedGame: {
+    stackStat: async (parent, args, ctx, info) => {
+      if (parent.hand_stack) {
+        const stack = JSON.parse(parent.hand_stack);
+        return stack.map(x => {
+          return {
+            handNum: x.hand,
+            before: x.playerStack.before,
+            after: x.playerStack.after,
+          };
+        });
+      } else {
+        return [];
+      }
     },
   },
   Mutation: {

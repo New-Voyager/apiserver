@@ -1074,6 +1074,38 @@ class GameRepositoryImpl {
   ): Promise<PokerGameUpdates | undefined> {
     return await getRepository(PokerGameUpdates).findOne({gameID: gameID});
   }
+
+  public async getCompletedGame(
+    gameCode: string,
+    playerId: number
+  ): Promise<any> {
+    const query = fixQuery(`
+        SELECT pg.id, pg.game_code as "gameCode", pg.game_num as "gameNum",
+        pgt.session_time as "sessionTime", pg.game_status as "status",
+        pg.small_blind as "smallBlind", pg.big_blind as "bigBlind",
+        pgt.no_hands_played as "handsPlayed", 
+        pgt.no_hands_won as "handsWon", seen_flop as "flopHands", seen_turn as "turnHands",
+        seen_river as "riverHands", in_showdown as "showdownHands", 
+        big_loss as "bigLoss", big_win as "bigWin", big_loss_hand as "bigLossHand", 
+        big_win_hand as "bigWinHand", hand_stack,
+        pg.game_type as "gameType", 
+        pg.started_at as "startedAt", p.name as "startedBy",
+        pg.ended_at as "endedAt", pg.ended_by as "endedBy", 
+        pg.started_at as "startedAt", pgt.session_time as "sessionTime", 
+        (pgt.stack - pgt.buy_in) as balance 
+        FROM
+        poker_game pg JOIN club c ON pg.club_id  = c.id AND pg.game_code = ?
+        JOIN player p ON pg.started_by = p.id and p.id = ?
+        LEFT OUTER JOIN player_game_tracker pgt ON 
+        pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = p.id`);
+
+    // TODO: we need to do pagination here
+    const result = await getConnection().query(query, [gameCode, playerId]);
+    if (result.length > 0) {
+      return result[0];
+    }
+    return null;
+  }
 }
 
 export const GameRepository = new GameRepositoryImpl();

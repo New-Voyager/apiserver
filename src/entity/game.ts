@@ -91,9 +91,6 @@ export class PokerGame {
   @Column({
     name: 'straddle_bet',
     type: 'decimal',
-    precision: 7,
-    scale: 2,
-    nullable: true,
   })
   public straddleBet!: number;
 
@@ -237,6 +234,10 @@ export class PokerGame {
   // used for tracking game number for club games
   @Column({name: 'game_num', type: 'int', default: 0})
   public gameNum!: number;
+
+  // used for tracking game number for club games
+  @Column({name: 'hh_tracked', default: false})
+  public highHandTracked!: boolean;
 
   // This is not a database column and used for tracking highhand in the cache
   public highHandRank = 0;
