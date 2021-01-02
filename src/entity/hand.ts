@@ -93,6 +93,9 @@ export class HandHistory {
 
   @Column({name: 'player_paid_rake', type: 'int', nullable: true})
   public playerPaidRake!: number;
+
+  @DbAwareColumn({name: 'players_stack', type: 'text', nullable: true})
+  public playersStack!: string;
 }
 
 @Entity({name: 'starred_hands'})

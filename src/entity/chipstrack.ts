@@ -72,6 +72,9 @@ export class PlayerGameTracker {
   @Column({name: 'no_hands_won', default: 0})
   public noHandsWon!: number;
 
+  @Column({name: 'folded_preflop', default: 0})
+  public foldedPreflop!: number;
+
   @Column({name: 'seen_flop', default: 0})
   public seenFlop!: number;
 
@@ -86,6 +89,21 @@ export class PlayerGameTracker {
 
   @Column({name: 'rake_paid', type: 'decimal', default: 0})
   public rakePaid!: number;
+
+  @Column({name: 'big_win', type: 'decimal', default: 0})
+  public bigWin!: number;
+
+  @Column({name: 'big_win_hand', type: 'int', default: 0})
+  public bigWinHand!: number;
+
+  @Column({name: 'big_loss', type: 'decimal', default: 0})
+  public bigLoss!: number;
+
+  @Column({name: 'big_loss_hand', type: 'int', default: 0})
+  public bigLossHand!: number;
+
+  @DbAwareColumn({name: 'hand_stack', type: 'text', nullable: true})
+  public handStack!: string;
 
   @DbAwareColumn({
     name: 'seat_change_requested_at',

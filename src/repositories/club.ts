@@ -601,6 +601,10 @@ class ClubRepositoryImpl {
         pgt.session_time as "sessionTime", pg.game_status as "status",
         pg.small_blind as "smallBlind", pg.big_blind as "bigBlind",
         pgt.no_hands_played as "handsPlayed", 
+        pgt.no_hands_won as "handsWon", seen_flop as "flopHands", seen_turn as "turnHands",
+        seen_river as "riverHands", in_showdown as "showdownHands", 
+        big_loss as "bigLoss", big_win as "bigWin", big_loss_hand as "bigLossHand", 
+        big_win_hand as "bigWinHand", hand_stack,
         cm.player_id, pg.game_type as "gameType", 
         pg.started_at as "startedAt", p.name as "startedBy",
         pg.ended_at as "endedAt", pg.ended_by as "endedBy", 
@@ -616,12 +620,6 @@ class ClubRepositoryImpl {
 
     // TODO: we need to do pagination here
     const result = await getConnection().query(query, [playerId, clubCode]);
-
-    let res = await getConnection().query('SELECT * from club');
-    res = await getConnection().query('SELECT * from poker_game');
-    res = await getConnection().query('SELECT * from player_game_tracker');
-
-    console.log(JSON.stringify(res));
     return result;
   }
 

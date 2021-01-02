@@ -216,6 +216,44 @@ type PendingApproval {
   outstandingBalance: Float!  
 }
 
+
+type GameStackStat {
+  handNum: Int
+  before: Float
+  after: Float
+}
+
+type CompletedGame {
+  title: String
+  gameType: GameType
+  pageId: Int!
+  gameCode: String!
+  gameNum: Int
+  smallBlind: Float
+  bigBlind: Float
+  startedBy: String
+  startedAt: DateTime
+  endedBy: String
+  endedAt: DateTime
+  status: GameStatus
+  runTime: Int
+  runTimeStr: String
+  sessionTime: Int
+  sessionTimeStr: String
+  handsPlayed: Int
+  handsWon: Int
+  balance: Int 
+  bigWin: Float
+  bigWinHand: Int 
+  bigLoss: Float
+  bigLossHand: Float
+  flopHands: Int
+  turnHands: Int
+  riverHands: Int
+  showdownHands: Int
+  stackStat: [GameStackStat!]
+}
+
 type Mutation {
   # Not implemented
   configureGameFromTemplate(clubCode: String!, templateId: Int!): GameInfo!
@@ -272,4 +310,5 @@ type Query {
   waitingList(gameCode: String!): [WaitingListPlayer!]
   pendingApprovalsForClub(clubCode: String!): [PendingApproval!]
   pendingApprovalsForGame(gameCode: String!): [PendingApproval!]
+  completedGame(gameCode: String!): CompletedGame
 }
