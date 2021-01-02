@@ -1,3 +1,5 @@
+scalar Json
+
 enum GameType {
   UNKNOWN
   HOLDEM
@@ -311,4 +313,5 @@ type Query {
   pendingApprovalsForClub(clubCode: String!): [PendingApproval!]
   pendingApprovalsForGame(gameCode: String!): [PendingApproval!]
   completedGame(gameCode: String!): CompletedGame
+  currentHandLog(gameCode: String!): Json
 }
