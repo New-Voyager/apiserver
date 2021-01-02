@@ -332,3 +332,17 @@ export async function playerLeftGame(
     throw new Error(`Failed to update player status: ${newGameUrl}`);
   }
 }
+
+export async function getCurrentHandLog(gameId: number): Promise<any> {
+  if (!notifyGameServer) {
+    return;
+  }
+  const gameServerUrl = await getGameServerUrl(gameId);
+  const newGameUrl = `${gameServerUrl}/current-hand-log?game-id=${gameId}`;
+  const resp = await axios.get(newGameUrl);
+  if (resp.status !== 200) {
+    logger.error(`Failed to update pending updates: ${newGameUrl}`);
+    throw new Error(`Failed to update pending updates: ${newGameUrl}`);
+  }
+  return resp.data;
+}

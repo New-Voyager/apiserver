@@ -124,18 +124,18 @@ class HandRepositoryImpl {
             playerRound[playerId].flop = 1;
             break;
           case 'TURN':
-            playerRound[playerId].flop = 1;
+            //playerRound[playerId].flop = 1;
             playerRound[playerId].turn = 1;
             break;
           case 'RIVER':
-            playerRound[playerId].flop = 1;
-            playerRound[playerId].turn = 1;
+            //playerRound[playerId].flop = 1;
+            //playerRound[playerId].turn = 1;
             playerRound[playerId].river = 1;
             break;
           case 'SHOW_DOWN':
-            playerRound[playerId].flop = 1;
-            playerRound[playerId].turn = 1;
-            playerRound[playerId].river = 1;
+            //playerRound[playerId].flop = 1;
+            //playerRound[playerId].turn = 1;
+            //playerRound[playerId].river = 1;
             playerRound[playerId].showdown = 1;
             break;
         }

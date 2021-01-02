@@ -17,6 +17,7 @@ import {BuyIn} from '@src/repositories/buyin';
 import {PokerGame} from '@src/entity/game';
 import {fillSeats} from '@src/botrunner';
 import {ClubRepository} from '@src/repositories/club';
+import {getCurrentHandLog} from '@src/gameserver';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -1066,6 +1067,11 @@ const resolvers: any = {
     },
     completedGame: async (parent, args, ctx, info) => {
       return await completedGame(ctx.req.playerId, args.gameCode);
+    },
+    currentHandLog: async (parent, args, ctx, info) => {
+      const game = await Cache.getGame(args.gameCode);
+      logger.info(`Getting current hand log for ${args.gameCode}`);
+      return getCurrentHandLog(game.id);
     },
   },
   GameInfo: {
