@@ -425,7 +425,7 @@ export async function completedGame(playerId: string, gameCode: string) {
     return resp;
   } catch (err) {
     logger.error(JSON.stringify(err));
-    throw new Error(`Failed to approve buyin. ${JSON.stringify(err)}`);
+    throw new Error(`Failed to get game information. ${JSON.stringify(err)}`);
   }
 }
 
