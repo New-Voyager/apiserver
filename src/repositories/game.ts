@@ -1085,16 +1085,19 @@ class GameRepositoryImpl {
         pg.small_blind as "smallBlind", pg.big_blind as "bigBlind",
         pgt.no_hands_played as "handsPlayed", 
         pgt.no_hands_won as "handsWon", seen_flop as "flopHands", seen_turn as "turnHands",
-        seen_river as "riverHands", in_showdown as "showdownHands", 
+        pgt.buy_in as "buyIn", (pgt.stack - pgt.buy_in) as "profit",
+        folded_preflop as "preflopHands", seen_river as "riverHands", in_showdown as "showdownHands", 
         big_loss as "bigLoss", big_win as "bigWin", big_loss_hand as "bigLossHand", 
         big_win_hand as "bigWinHand", hand_stack,
         pg.game_type as "gameType", 
         pg.started_at as "startedAt", p.name as "startedBy",
         pg.ended_at as "endedAt", pg.ended_by as "endedBy", 
         pg.started_at as "startedAt", pgt.session_time as "sessionTime", 
-        (pgt.stack - pgt.buy_in) as balance 
+        pgt.stack as balance,
+        pgu.last_hand_num as "handsDealt"
         FROM
         poker_game pg JOIN club c ON pg.club_id  = c.id AND pg.game_code = ?
+        JOIN poker_game_updates pgu ON pg.id = pgu.game_id
         JOIN player p ON pg.started_by = p.id and p.id = ?
         LEFT OUTER JOIN player_game_tracker pgt ON 
         pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = p.id`);

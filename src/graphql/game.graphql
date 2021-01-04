@@ -242,6 +242,7 @@ type CompletedGame {
   runTimeStr: String
   sessionTime: Int
   sessionTimeStr: String
+  handsDealt: Int
   handsPlayed: Int
   handsWon: Int
   balance: Int 
@@ -249,10 +250,13 @@ type CompletedGame {
   bigWinHand: Int 
   bigLoss: Float
   bigLossHand: Float
+  preflopHands: Int
   flopHands: Int
   turnHands: Int
   riverHands: Int
   showdownHands: Int
+  buyIn: Float!
+  profit: Float!
   stackStat: [GameStackStat!]
 }
 
