@@ -376,8 +376,8 @@ const resolvers: any = {
       return getClubGames(
         ctx.req.playerId,
         args.clubCode,
-        args.page,
-        args.completedGames
+        args.completedGames,
+        args.page
       );
     },
 
