@@ -7,11 +7,14 @@ import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {
   pendingProcessDone,
+  playerBuyIn,
   playerKickedOut,
   playerLeftGame,
 } from '@src/gameserver';
 import {occupiedSeats, WaitListMgmt} from './waitlist';
 import {SeatChangeProcess} from './seatchange';
+import { isSpecifiedScalarType } from 'graphql';
+import { buyInApprovalTimeoutExpired } from './timer';
 
 const logger = getLogger('pending-updates');
 
@@ -79,6 +82,16 @@ export async function processPendingUpdates(gameId: number) {
       newOpenSeat = true;
     } else if (update.newUpdate === NextHandUpdate.LEAVE) {
       await leaveGame(
+        playerGameTrackerRepository,
+        game,
+        update,
+        pendingUpdatesRepo
+      );
+    } else if (
+      update.newUpdate === NextHandUpdate.RELOAD_APPROVED ||
+      update.newUpdate === NextHandUpdate.BUYIN_APPROVED
+    ) {
+      await buyinApproved(
         playerGameTrackerRepository,
         game,
         update,
@@ -202,4 +215,51 @@ async function leaveGame(
   }
   // delete this update
   pendingUpdatesRepo.delete({id: update.id});
+}
+
+async function buyinApproved(
+  playerGameTrackerRepository: any,
+  game: PokerGame,
+  update: NextHandUpdates,
+  pendingUpdatesRepo
+) {
+  await playerGameTrackerRepository.update(
+    {
+      game: {id: game.id},
+      player: {id: update.player.id},
+    },
+    {
+      status: PlayerStatus.PLAYING,
+    }
+  );
+  let amount = 0;
+  if (update.buyinAmount) {
+    amount = update.buyinAmount;
+  } else {
+    amount = update.reloadAmount;
+  }
+
+  await playerGameTrackerRepository.update(
+    {
+      game: {id: game.id},
+      player: {id: update.player.id},
+    },
+    {
+      status: PlayerStatus.PLAYING,
+      stack: amount,
+    }
+  );
+  const playerInGame = await playerGameTrackerRepository.findOne({
+    where: {
+      game: {id: game.id},
+      player: {id: update.player.id},
+    },
+  });
+
+  if (playerInGame) {
+    // notify game server, player has a new buyin
+    await playerBuyIn(game, update.player, playerInGame.seatNo);
+  }
+  // delete this update
+  await pendingUpdatesRepo.delete({id: update.id});
 }

@@ -296,6 +296,7 @@ export class BuyIn {
         if (!clubMember) {
           throw new Error(`The player ${this.player.uuid} is not in the club`);
         }
+        clubMember.autoBuyinApproval = true;
 
         if (clubMember.autoBuyinApproval) {
           approved = true;
