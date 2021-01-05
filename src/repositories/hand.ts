@@ -144,14 +144,8 @@ class HandRepositoryImpl {
       // get the total rake collected from the hand and track each player paid the rake
       let handRake = 0.0;
       const rakePaid = {};
-      if (result.rake) {
-        if (result.rake.amount) {
-          handRake = result.rake.amount;
-        }
-        for (const playerRake of result.rake.playerPaid) {
-          const playerId = parseInt(playerRake.id);
-          rakePaid[playerId] = playerRake.amount;
-        }
+      if (result.rakeCollected) {
+        handRake = result.rakeCollected;
       }
 
       // extract player before/after balance
@@ -174,8 +168,8 @@ class HandRepositoryImpl {
             wonHand = 1;
           }
           let rakePaidByPlayer = 0.0;
-          if (rakePaid[playerId]) {
-            rakePaidByPlayer = rakePaid[playerId];
+          if (player.rakePaid) {
+            rakePaidByPlayer = player.rakePaid;
           }
           await transactionEntityManager
             .getRepository(PlayerGameTracker)

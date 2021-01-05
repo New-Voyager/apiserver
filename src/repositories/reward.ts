@@ -178,13 +178,7 @@ class RewardRepositoryImpl {
       // TODO: we need to handle multiple players with high hands
       if (winner && highHandPlayers.length > 0) {
         const highHandPlayer = highHandPlayers[0];
-        const playerRepo = getRepository(Player);
-        const player = await playerRepo.findOne({
-          id: parseInt(highHandPlayer.id),
-        });
-        if (!player) {
-          throw new Error('Player not found');
-        }
+        const playerId = parseInt(highHandPlayer.id);
         let rewardTrackRepo: Repository<GameRewardTracking>;
         if (transactionManager) {
           rewardTrackRepo = transactionManager.getRepository(
@@ -201,8 +195,8 @@ class RewardRepositoryImpl {
           },
           {
             handNum: input.handNum,
-            game: game,
-            player: player,
+            game: {id: game.id},
+            player: {id: playerId},
             boardCards: JSON.stringify(input.boardCards),
             playerCards: JSON.stringify(highHandPlayer.cards),
             highHand: JSON.stringify(highHandPlayer.hhCards),
@@ -211,8 +205,8 @@ class RewardRepositoryImpl {
         );
         await this.logHighHand(
           existingTracking,
-          game,
-          player,
+          game.id,
+          playerId,
           input.handNum,
           JSON.stringify(highHandPlayer.cards),
           JSON.stringify(input.boardCards),
@@ -233,10 +227,10 @@ class RewardRepositoryImpl {
     }
   }
 
-  public async logHighHand(
+  private async logHighHand(
     rewardTracking: GameRewardTracking,
-    game: PokerGame,
-    player: Player,
+    gameId: number,
+    playerId: number,
     handNum: number,
     playerCards: string,
     boardCards: string,
@@ -266,6 +260,10 @@ class RewardRepositoryImpl {
         }
       );
     }
+    const player = new Player();
+    player.id = playerId;
+    const game = new PokerGame();
+    game.id = gameId;
     const highhand = new HighHand();
     highhand.reward = reward;
     highhand.rewardTracking = rewardTracking;
