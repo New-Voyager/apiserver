@@ -4,10 +4,8 @@ test:
 # Cleanup steps
 cleanup:
   steps:
-
-      # delete clubs and club members
-    - delete-clubs:
-        - name: New Delhi
+    - include:
+        script: common.yaml
 
 # Setup steps
 setup:
@@ -21,13 +19,32 @@ game:
     - include:
         script: common.yaml
 
-    # player reloads
+    # run-game should call startGame graphql to make game.status as ACTIVE
+    # call /internal/update-table-status to mark table_status as GAME_RUNNING       
+    - run-game:
+      - club: New Delhi
+        game: test1
+
+    # player reloads 100 chips
     - reload:
       - club: New Delhi
         game: test1
         players:
         - name: arun
           amount: 100
+
+    - verify-player-game-stack:
+        - club: New Delhi
+          game: test1
+          players:
+          - name: arun
+            balance: 100
+          - name: sam
+            balance: 100
+          - name: bala
+            balance: 100
+          - name: arjun
+            balance: 100
 
     - process-pending-updates:
       - club: New Delhi
@@ -50,7 +67,7 @@ game:
       - club: New Delhi
         game: test1
         players:
-        - name: arun
+        - name: sam
           amount: 500
 
     - verify-player-game-stack:
@@ -65,3 +82,5 @@ game:
             balance: 100
           - name: arjun
             balance: 100
+
+    
