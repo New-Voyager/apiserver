@@ -67,6 +67,111 @@ class GameScript {
     await this.game();
   }
 
+  /////////////////////// Include Functions
+
+  protected async getIncludeFile(fileName) {
+    const myArgs = process.argv.slice(2);
+    let scriptDir = `${__dirname}/script`;
+    if (myArgs.length > 0) {
+      scriptDir = myArgs[0];
+    }
+    console.log(`Script directory: ${scriptDir}/utils/${fileName}`);
+    const doc = yaml.safeLoad(
+      fs.readFileSync(`${scriptDir}/utils/${fileName}`, 'utf8')
+    );
+    return doc;
+  }
+
+  protected async cleanupInclude(data) {
+    const cleanup = data['cleanup'];
+    if (!cleanup) {
+      return;
+    }
+
+    // run cleanup steps
+    for (const step of cleanup['steps']) {
+      if (step['delete-clubs']) {
+        await this.deleteClubs(step['delete-clubs']);
+      }
+    }
+  }
+
+  protected async setupInclude(data) {
+    const setup = data['setup'];
+    if (!setup) {
+      return;
+    }
+
+    for (const step of setup['steps']) {
+      // run setup steps
+      if (step['register-players']) {
+        await this.registerPlayers(step['register-players']);
+      }
+      if (step['create-clubs']) {
+        await this.createClubs(step['create-clubs']);
+      }
+      if (step['join-clubs']) {
+        await this.joinClubs(step['join-clubs']);
+      }
+      if (step['verify-club-members']) {
+        await this.verifyClubMembers(step['verify-club-members']);
+      }
+      if (step['approve-club-members']) {
+        await this.approveClubMembers(step['approve-club-members']);
+      }
+      if (step['create-game-servers']) {
+        await this.createGameServers(step['create-game-servers']);
+      }
+    }
+  }
+
+  protected async gameInclude(data) {
+    const game = data['game'];
+    if (!game) {
+      return;
+    }
+
+    // run game steps
+    for (const step of game['steps']) {
+      if (step['configure-games']) {
+        await this.configureGames(step['configure-games']);
+      }
+      if (step['sitsin']) {
+        await this.playersSitsin(step['sitsin']);
+      }
+      if (step['buyin']) {
+        await this.addBuyins(step['buyin']);
+      }
+      if (step['start-games']) {
+        await this.startGames(step['start-games']);
+      }
+      if (step['verify-club-game-stack']) {
+        await this.verifyClubGameStacks(step['verify-club-game-stack']);
+      }
+      if (step['verify-player-game-stack']) {
+        await this.verifyPlayerGameStacks(step['verify-player-game-stack']);
+      }
+      if (step['save-hands']) {
+        await this.saveHands(step['save-hands']);
+      }
+      if (step['end-games']) {
+        await this.endGames(step['end-games']);
+      }
+      if (step['verify-club-balance']) {
+        await this.verifyClubBalances(step['verify-club-balance']);
+      }
+      if (step['verify-player-balance']) {
+        await this.verifyPlayerBalances(step['verify-player-balance']);
+      }
+      if (step['messages']) {
+        await this.sendClubMessages(step['messages']);
+      }
+      if (step['process-pending-updates']) {
+        await this.processPendingUpdates(step['process-pending-updates']);
+      }
+    }
+  }
+
   /////////////////////// Level 1 Functions
 
   protected async cleanup() {
@@ -77,6 +182,10 @@ class GameScript {
 
     // run cleanup steps
     for (const step of cleanup['steps']) {
+      if (step['include']) {
+        const data = await this.getIncludeFile(step['include'].script);
+        await this.cleanupInclude(data);
+      }
       if (step['delete-clubs']) {
         await this.deleteClubs(step['delete-clubs']);
       }
@@ -91,6 +200,10 @@ class GameScript {
 
     for (const step of setup['steps']) {
       // run setup steps
+      if (step['include']) {
+        const data = await this.getIncludeFile(step['include'].script);
+        await this.setupInclude(data);
+      }
       if (step['register-players']) {
         await this.registerPlayers(step['register-players']);
       }
@@ -120,6 +233,10 @@ class GameScript {
 
     // run game steps
     for (const step of game['steps']) {
+      if (step['include']) {
+        const data = await this.getIncludeFile(step['include'].script);
+        await this.gameInclude(data);
+      }
       if (step['configure-games']) {
         await this.configureGames(step['configure-games']);
       }

@@ -1,14 +1,14 @@
-test:
-  disabled: true
+cleanup:
+  steps:
+      # delete clubs and club members
+    - delete-clubs:
+        - name: New Delhi
 
 setup:
   steps:
-      # register players if doesn't exist and store the player info
     - register-players: 
         - name: arun
           deviceId: 1edad270-1926-4634-b89b-9d5a62586d9e
-        - name: arjun
-          deviceId: c3744887-51d7-4ab9-b01b-0ea274577b04
         - name: sam
           deviceId: 1d43342c-84bf-4928-b5b4-ece904b66dd0
         - name: bala
@@ -26,7 +26,6 @@ setup:
           members:     
             - arun
             - sam
-            - arjun
 
       # verify the players are waiting to be approved  (PENDING)
     - verify-club-members:
@@ -36,8 +35,6 @@ setup:
               status: PENDING
             - name: sam
               status: PENDING
-            - name: arjun
-              status: PENDING
 
       # approve members with auth header (club.owner)
     - approve-club-members:
@@ -45,7 +42,6 @@ setup:
           members:     
             - arun
             - sam
-            - arjun
 
       # verify the players are approved  (ACTIVE)
     - verify-club-members:
@@ -55,18 +51,21 @@ setup:
               status: ACTIVE
             - name: sam
               status: ACTIVE
-            - name: arjun
-              status: ACTIVE
 
 game:
   steps:
-    - include:
-        script: common.yaml
-        
     # configure game
     - configure-games:
         - club: New Delhi
           game: test1
+          reward:
+            amount: 100.4
+            endHour: 4
+            minRank: 1
+            name: brady
+            startHour: 4
+            type: HIGH_HAND
+            schedule: HOURLY
           input:
             title: test1
             gameType: HOLDEM
@@ -91,40 +90,44 @@ game:
           players:
             - playerId: arun
               seatNo: 1
-              buyChips: 0
             - playerId: sam
-              seatNo: 3
-              buyChips: 0
+              seatNo: 2
             - playerId: bala
-              seatNo: 5
-              buyChips: 0
-            - playerId: arjun
-              seatNo: 8
-              buyChips: 0
+              seatNo: 3
 
+    # start games
+    - start-games:
+        - club: New Delhi
+          game: test1
+  
     # players buy-in
     - buyin:
         - club: New Delhi
           game: test1
           players:
             - playerId: arun
-              seatNo: 1
               buyChips: 100
             - playerId: sam
-              seatNo: 3
               buyChips: 100
             - playerId: bala
-              seatNo: 5
-              buyChips: 100
-            - playerId: arjun
-              seatNo: 8
               buyChips: 100
 
-    # verify club game balance
-    - verify-club-game-stack:
+    # verify player game balance
+    - verify-player-game-stack:
         - club: New Delhi
           game: test1
-          balance: 0
+          players:
+          - name: arun
+            balance: 0
+          - name: sam
+            balance: 0
+          - name: bala
+            balance: 0
+    
+    # Process pending updates
+    - process-pending-updates:
+      - club: New Delhi
+        game: test1
 
     # verify player game balance
     - verify-player-game-stack:
@@ -137,10 +140,9 @@ game:
             balance: 100
           - name: bala
             balance: 100
-          - name: arjun
-            balance: 100
 
-    # start games
-    - start-games:
+    # verify club game balance
+    - verify-club-game-stack:
         - club: New Delhi
           game: test1
+          balance: 0
