@@ -13,8 +13,8 @@ import {
 } from '@src/gameserver';
 import {occupiedSeats, WaitListMgmt} from './waitlist';
 import {SeatChangeProcess} from './seatchange';
-import { isSpecifiedScalarType } from 'graphql';
-import { buyInApprovalTimeoutExpired } from './timer';
+import {isSpecifiedScalarType} from 'graphql';
+import {buyInApprovalTimeoutExpired} from './timer';
 
 const logger = getLogger('pending-updates');
 

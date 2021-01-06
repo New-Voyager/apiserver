@@ -952,7 +952,7 @@ class GameRepositoryImpl {
     }
 
     // update cached game
-    Cache.getGame(game.gameCode, true /** update */);
+    await Cache.getGame(game.gameCode, true /** update */);
     return status;
   }
 
@@ -970,7 +970,7 @@ class GameRepositoryImpl {
       .where('id = :id', {id: gameId})
       .execute();
     // update cached game
-    Cache.getGame(game.gameCode, true /** update */);
+    await Cache.getGame(game.gameCode, true /** update */);
     return status;
   }
 

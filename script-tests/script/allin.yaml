@@ -99,7 +99,6 @@ game:
             buyInMin: 100
             buyInMax: 300
             actionTime: 100
-              
 
     # players sits in
     - sitsin:
@@ -113,6 +112,11 @@ game:
             - playerId: bala
               seatNo: 3
 
+    # start games
+    - start-games:
+        - club: New Delhi
+          game: test1
+  
     # players buy-in
     - buyin:
         - club: New Delhi
@@ -125,35 +129,48 @@ game:
             - playerId: bala
               buyChips: 100
 
+    # verify player game balance
+    - verify-player-game-stack:
+        - club: New Delhi
+          game: test1
+          players:
+          - name: arun
+            balance: 0
+          - name: sam
+            balance: 0
+          - name: bala
+            balance: 0
+    
+    # Process pending updates
+    - process-pending-updates:
+      - club: New Delhi
+        game: test1
+
+    # verify player game balance
+    - verify-player-game-stack:
+        - club: New Delhi
+          game: test1
+          players:
+          - name: arun
+            balance: 100
+          - name: sam
+            balance: 100
+          - name: bala
+            balance: 100
+
     # verify club game balance
     - verify-club-game-stack:
         - club: New Delhi
           game: test1
           balance: 0
 
-    # verify player game balance
-    # - verify-player-game-stack:
-    #     - club: New Delhi
-    #       game: test1
-    #       players:
-    #       - name: arun
-    #         balance: 100
-    #       - name: sam
-    #         balance: 100
-    #       - name: bala
-    #         balance: 100
-
+    # send club messages
     - messages:
         - club: New Delhi
           messages:
             - arun: hello guys
             - bala: did you see the weird hand?
             - sam: I know. Doesn't it happen often
-
-    # start games
-    - start-games:
-        - club: New Delhi
-          game: test1
 
     # save hands
     - save-hands:
@@ -379,19 +396,24 @@ game:
         - club: New Delhi
           game: test1
 
+    # Process pending updates
+    - process-pending-updates:
+      - club: New Delhi
+        game: test1
+
     # verify the balance of the clubs
     - verify-club-balance:
         - club: New Delhi
-          balance: 2
+          balance: 0
 
     # verify the balance of the club players
     - verify-player-balance:
         - club: New Delhi
           player: arun
-          balance: 100
+          balance: 74
         - club: New Delhi
           player: sam
-          balance: -50
+          balance: 74
         - club: New Delhi
           player: bala
-          balance: -100
+          balance: 152
