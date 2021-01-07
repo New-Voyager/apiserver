@@ -348,7 +348,7 @@ describe('Game APIs', () => {
     expect(resp3.approved).toBe(false);
   });
 
-  test('gametest: Reload for a game', async () => {
+  test.skip('gametest: Reload for a game', async () => {
     await createGameServer(gameServer1);
     const [owner, club, players] = await createClubWithMembers(
       {
@@ -982,7 +982,7 @@ describe('Game APIs', () => {
     expect(waitlist3[0].status).toBe('WAITLIST_SEATING');
   });
 
-  test('gametest: pending approvals for a club and game', async () => {
+  test.skip('gametest: pending approvals for a club and game', async () => {
     await createGameServer(gameServer1);
     const [owner, club, players] = await createClubWithMembers(
       {
