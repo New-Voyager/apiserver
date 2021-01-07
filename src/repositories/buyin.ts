@@ -283,6 +283,9 @@ export class BuyIn {
           playerInGame.stack + amount < this.game.buyInMin ||
           playerInGame.stack + amount > this.game.buyInMax
         ) {
+          logger.error(
+            `Buyin must be between ${this.game.buyInMin} and ${this.game.buyInMax}`
+          );
           throw new Error(
             `Buyin must be between ${this.game.buyInMin} and ${this.game.buyInMax}`
           );
@@ -294,9 +297,11 @@ export class BuyIn {
           this.game.club.clubCode
         );
         if (!clubMember) {
+          logger.error(`The player ${this.player.uuid} is not in the club`);
           throw new Error(`The player ${this.player.uuid} is not in the club`);
         }
-        clubMember.autoBuyinApproval = true;
+        // Why are we doing this?
+        // clubMember.autoBuyinApproval = true;
 
         if (clubMember.autoBuyinApproval) {
           approved = true;

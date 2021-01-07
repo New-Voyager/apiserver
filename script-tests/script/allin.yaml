@@ -4,156 +4,28 @@ test:
 # Cleanup steps
 cleanup:
   steps:
-
-      # delete clubs and club members
-    - delete-clubs:
-        - name: New Delhi
+    - include:
+        script: common.yaml
 
 # Setup steps
 setup:
   steps:
-
-      # register players if doesn't exist and store the player info
-    - register-players: 
-        - name: arun
-          deviceId: 1edad270-1926-4634-b89b-9d5a62586d9e
-        - name: sam
-          deviceId: 1d43342c-84bf-4928-b5b4-ece904b66dd0
-        - name: bala
-          deviceId: 8ba53577-1318-4da3-adbd-0796234e405a   
- 
-      # create a club and pass the owner in the Auth header
-      # store club info in a dictionary
-    - create-clubs:
-        - name: New Delhi
-          owner: bala
-
-      # use joinClub API and auth header to join each player
-    - join-clubs:
-        - club: New Delhi
-          members:     
-            - arun
-            - sam
-
-      # verify the players are waiting to be approved  (PENDING)
-    - verify-club-members:
-        - club: New Delhi
-          members:
-            - name: arun
-              status: PENDING
-            - name: sam
-              status: PENDING
-
-      # approve members with auth header (club.owner)
-    - approve-club-members:
-        - club: New Delhi
-          members:     
-            - arun
-            - sam
-
-      # verify the players are approved  (ACTIVE)
-    - verify-club-members:
-        - club: New Delhi
-          members:
-            - name: arun
-              status: ACTIVE
-            - name: sam
-              status: ACTIVE
-
-      # create game servers if does not exist
-    - create-game-servers:
-        - ipAddress: 10.1.1.4
-          currentMemory: 100
-          status: ACTIVE
-          url: http://server1:8080
+    - include:
+        script: common.yaml
 
 # Game steps
 game:
   steps:
+    - include:
+        script: common.yaml
 
-    # configure game
-    - configure-games:
-        - club: New Delhi
-          game: test1
-          reward:
-            amount: 100.4
-            endHour: 4
-            minRank: 1
-            name: brady
-            startHour: 4
-            type: HIGH_HAND
-            schedule: HOURLY
-          input:
-            title: test1
-            gameType: HOLDEM
-            smallBlind: 1.0
-            bigBlind: 2.0
-            utgStraddleAllowed: true
-            straddleBet: 4.0
-            minPlayers: 2
-            maxPlayers: 9
-            gameLength: 60
-            buyInApproval: false
-            rakePercentage: 5.0
-            rakeCap: 5.0
-            buyInMin: 100
-            buyInMax: 300
-            actionTime: 100
-              
-
-    # players sits in
-    - sitsin:
-        - club: New Delhi
-          game: test1
-          players:
-            - playerId: arun
-              seatNo: 1
-            - playerId: sam
-              seatNo: 2
-            - playerId: bala
-              seatNo: 3
-
-    # players buy-in
-    - buyin:
-        - club: New Delhi
-          game: test1
-          players:
-            - playerId: arun
-              buyChips: 100
-            - playerId: sam
-              buyChips: 100
-            - playerId: bala
-              buyChips: 100
-
-    # verify club game balance
-    - verify-club-game-stack:
-        - club: New Delhi
-          game: test1
-          balance: 0
-
-    # verify player game balance
-    # - verify-player-game-stack:
-    #     - club: New Delhi
-    #       game: test1
-    #       players:
-    #       - name: arun
-    #         balance: 100
-    #       - name: sam
-    #         balance: 100
-    #       - name: bala
-    #         balance: 100
-
+    # send club messages
     - messages:
         - club: New Delhi
           messages:
             - arun: hello guys
             - bala: did you see the weird hand?
             - sam: I know. Doesn't it happen often
-
-    # start games
-    - start-games:
-        - club: New Delhi
-          game: test1
 
     # save hands
     - save-hands:
@@ -379,19 +251,24 @@ game:
         - club: New Delhi
           game: test1
 
+    # Process pending updates
+    - process-pending-updates:
+      - club: New Delhi
+        game: test1
+
     # verify the balance of the clubs
     - verify-club-balance:
         - club: New Delhi
-          balance: 2
+          balance: 0
 
     # verify the balance of the club players
     - verify-player-balance:
         - club: New Delhi
           player: arun
-          balance: 100
+          balance: 74
         - club: New Delhi
           player: sam
-          balance: -50
+          balance: 74
         - club: New Delhi
           player: bala
-          balance: -100
+          balance: 152

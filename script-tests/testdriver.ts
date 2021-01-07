@@ -1,7 +1,7 @@
 import * as yaml from 'js-yaml';
 import * as fs from 'fs';
 import {default as axios} from 'axios';
-import {getClient} from '../tests/utils/utils';
+import {getClient, resetDatabase} from './utils';
 import {gql} from 'apollo-boost';
 
 /*
@@ -67,6 +67,111 @@ class GameScript {
     await this.game();
   }
 
+  /////////////////////// Include Functions
+
+  protected async getIncludeFile(fileName) {
+    const myArgs = process.argv.slice(2);
+    let scriptDir = `${__dirname}/script`;
+    if (myArgs.length > 0) {
+      scriptDir = myArgs[0];
+    }
+    console.log(`Script directory: ${scriptDir}/utils/${fileName}`);
+    const doc = yaml.safeLoad(
+      fs.readFileSync(`${scriptDir}/utils/${fileName}`, 'utf8')
+    );
+    return doc;
+  }
+
+  protected async cleanupInclude(data) {
+    const cleanup = data['cleanup'];
+    if (!cleanup) {
+      return;
+    }
+
+    // run cleanup steps
+    for (const step of cleanup['steps']) {
+      if (step['delete-clubs']) {
+        await this.deleteClubs(step['delete-clubs']);
+      }
+    }
+  }
+
+  protected async setupInclude(data) {
+    const setup = data['setup'];
+    if (!setup) {
+      return;
+    }
+
+    for (const step of setup['steps']) {
+      // run setup steps
+      if (step['register-players']) {
+        await this.registerPlayers(step['register-players']);
+      }
+      if (step['create-clubs']) {
+        await this.createClubs(step['create-clubs']);
+      }
+      if (step['join-clubs']) {
+        await this.joinClubs(step['join-clubs']);
+      }
+      if (step['verify-club-members']) {
+        await this.verifyClubMembers(step['verify-club-members']);
+      }
+      if (step['approve-club-members']) {
+        await this.approveClubMembers(step['approve-club-members']);
+      }
+      if (step['create-game-servers']) {
+        await this.createGameServers(step['create-game-servers']);
+      }
+    }
+  }
+
+  protected async gameInclude(data) {
+    const game = data['game'];
+    if (!game) {
+      return;
+    }
+
+    // run game steps
+    for (const step of game['steps']) {
+      if (step['configure-games']) {
+        await this.configureGames(step['configure-games']);
+      }
+      if (step['sitsin']) {
+        await this.playersSitsin(step['sitsin']);
+      }
+      if (step['buyin']) {
+        await this.addBuyins(step['buyin']);
+      }
+      if (step['start-games']) {
+        await this.startGames(step['start-games']);
+      }
+      if (step['verify-club-game-stack']) {
+        await this.verifyClubGameStacks(step['verify-club-game-stack']);
+      }
+      if (step['verify-player-game-stack']) {
+        await this.verifyPlayerGameStacks(step['verify-player-game-stack']);
+      }
+      if (step['save-hands']) {
+        await this.saveHands(step['save-hands']);
+      }
+      if (step['end-games']) {
+        await this.endGames(step['end-games']);
+      }
+      if (step['verify-club-balance']) {
+        await this.verifyClubBalances(step['verify-club-balance']);
+      }
+      if (step['verify-player-balance']) {
+        await this.verifyPlayerBalances(step['verify-player-balance']);
+      }
+      if (step['messages']) {
+        await this.sendClubMessages(step['messages']);
+      }
+      if (step['process-pending-updates']) {
+        await this.processPendingUpdates(step['process-pending-updates']);
+      }
+    }
+  }
+
   /////////////////////// Level 1 Functions
 
   protected async cleanup() {
@@ -77,6 +182,10 @@ class GameScript {
 
     // run cleanup steps
     for (const step of cleanup['steps']) {
+      if (step['include']) {
+        const data = await this.getIncludeFile(step['include'].script);
+        await this.cleanupInclude(data);
+      }
       if (step['delete-clubs']) {
         await this.deleteClubs(step['delete-clubs']);
       }
@@ -91,6 +200,10 @@ class GameScript {
 
     for (const step of setup['steps']) {
       // run setup steps
+      if (step['include']) {
+        const data = await this.getIncludeFile(step['include'].script);
+        await this.setupInclude(data);
+      }
       if (step['register-players']) {
         await this.registerPlayers(step['register-players']);
       }
@@ -120,6 +233,10 @@ class GameScript {
 
     // run game steps
     for (const step of game['steps']) {
+      if (step['include']) {
+        const data = await this.getIncludeFile(step['include'].script);
+        await this.gameInclude(data);
+      }
       if (step['configure-games']) {
         await this.configureGames(step['configure-games']);
       }
@@ -136,23 +253,28 @@ class GameScript {
         await this.verifyClubGameStacks(step['verify-club-game-stack']);
       }
       if (step['verify-player-game-stack']) {
-        this.log('verify-player-game-stack: Skipped');
-        // await this.verifyPlayerGameStacks(step['verify-player-game-stack']);
+        await this.verifyPlayerGameStacks(step['verify-player-game-stack']);
       }
       if (step['save-hands']) {
         await this.saveHands(step['save-hands']);
       }
       if (step['end-games']) {
-        // await this.endGames(step['end-games']);
+        await this.endGames(step['end-games']);
       }
       if (step['verify-club-balance']) {
-        // await this.verifyClubBalances(step['verify-club-balance']);
+        await this.verifyClubBalances(step['verify-club-balance']);
       }
       if (step['verify-player-balance']) {
-        // await this.verifyPlayerBalances(step['verify-player-balance']);
+        await this.verifyPlayerBalances(step['verify-player-balance']);
       }
       if (step['messages']) {
         await this.sendClubMessages(step['messages']);
+      }
+      if (step['process-pending-updates']) {
+        await this.processPendingUpdates(step['process-pending-updates']);
+      }
+      if (step['reload']) {
+        await this.reloadChips(step['reload']);
       }
     }
   }
@@ -167,10 +289,13 @@ class GameScript {
 
   protected async registerPlayers(params: any) {
     for (const playerInput of params) {
-      const [playerUuid, playerId] = await this.registerPlayer(playerInput);
+      const [playerUuid, playerId, token] = await this.registerPlayer(
+        playerInput
+      );
       this.registeredPlayers[playerInput.name] = {
         playerUuid: playerUuid,
         playerId: playerId,
+        token: token,
       };
     }
   }
@@ -239,19 +364,17 @@ class GameScript {
     }
   }
 
-  // protected async verifyPlayerGameStacks(params: any) {
-  //   for (const playerStack of params) {
-  //     await this.verifyPlayerGameStack(playerStack);
-  //   }
-  // }
+  protected async verifyPlayerGameStacks(params: any) {
+    for (const playerStack of params) {
+      await this.verifyPlayerGameStack(playerStack);
+    }
+  }
 
   protected async startGames(params: any) {
     for (const startGameInput of params) {
       await this.startGame(startGameInput);
     }
   }
-
-  ///////////////////////////// done ///////////////////////
 
   protected async saveHands(params: any) {
     for (const handData of params) {
@@ -280,6 +403,18 @@ class GameScript {
   protected async sendClubMessages(params: any) {
     for (const club of params) {
       await this.sendClubMessagesForClub(club);
+    }
+  }
+
+  protected async processPendingUpdates(params: any) {
+    for (const pendingUpdate of params) {
+      await this.processPendingUpdate(pendingUpdate);
+    }
+  }
+
+  protected async reloadChips(params: any) {
+    for (const chips of params) {
+      await this.reloadChip(chips);
     }
   }
 
@@ -318,6 +453,12 @@ class GameScript {
       });
       const playerId = resp.data.playerId;
 
+      const token = await this.loginPlayerWithUuid({
+        uuid: playerId,
+        deviceId: playerInput.deviceId,
+        name: playerInput.name,
+      });
+
       // get player by uuid (we need to get internal id for game/hand requests)
       const queryPlayer = gql`
         query {
@@ -329,13 +470,30 @@ class GameScript {
           }
         }
       `;
-      const playerResp = await getClient(playerId).query({
+      const playerResp = await getClient(token).query({
         variables: {
           playerId: resp.data.playerId,
         },
         query: queryPlayer,
       });
-      return [playerResp.data.player.uuid, playerResp.data.player.id];
+      return [playerResp.data.player.uuid, playerResp.data.player.id, token];
+    } catch (err) {
+      this.log(err.toString());
+      throw err;
+    }
+  }
+
+  protected async loginPlayerWithUuid(params: any) {
+    // call internal REST API to delete the club
+    try {
+      const url = `${this.serverURL}/auth/login`;
+      this.log(url);
+      const resp = await axios.post(url, {
+        uuid: params.uuid,
+        'device-id': params.deviceId,
+      });
+      this.log(`player ${params.name} has logged in successfully`);
+      return resp.data.jwt;
     } catch (err) {
       this.log(err.toString());
       throw err;
@@ -351,7 +509,7 @@ class GameScript {
         }
       `;
       const resp = await getClient(
-        this.registeredPlayers[clubInput.owner].playerUuid
+        this.registeredPlayers[clubInput.owner].token
       ).mutate({
         variables: {
           input: {
@@ -371,7 +529,7 @@ class GameScript {
         }
       `;
       const clubResp = await getClient(
-        this.registeredPlayers[clubInput.owner].playerUuid
+        this.registeredPlayers[clubInput.owner].token
       ).query({
         variables: {
           clubCode: resp.data.clubCode,
@@ -394,7 +552,7 @@ class GameScript {
         }
       `;
       for (const member of joinClubInput.members) {
-        await getClient(this.registeredPlayers[member].playerUuid).mutate({
+        await getClient(this.registeredPlayers[member].token).mutate({
           variables: {
             clubCode: this.clubCreated[joinClubInput.club].clubCode,
           },
@@ -422,7 +580,7 @@ class GameScript {
       `;
       for (const member of memberInput.members) {
         const resp = await getClient(
-          this.registeredPlayers[member.name].playerUuid
+          this.registeredPlayers[member.name].token
         ).query({
           variables: {
             clubCode: this.clubCreated[memberInput.club].clubCode,
@@ -452,8 +610,7 @@ class GameScript {
       `;
       for (const member of memberInput.members) {
         await getClient(
-          this.registeredPlayers[this.clubCreated[memberInput.club].owner]
-            .playerUuid
+          this.registeredPlayers[this.clubCreated[memberInput.club].owner].token
         ).mutate({
           variables: {
             clubCode: this.clubCreated[memberInput.club].clubCode,
@@ -486,9 +643,7 @@ class GameScript {
         }
       `;
       const club = this.clubCreated[input.club];
-      const client = await getClient(
-        this.registeredPlayers[club.owner].playerUuid
-      );
+      const client = await getClient(this.registeredPlayers[club.owner].token);
       const response = await client.mutate({
         variables: {
           clubCode: club.clubCode,
@@ -519,8 +674,7 @@ class GameScript {
         }
       `;
       const resp = await getClient(
-        this.registeredPlayers[this.clubCreated[gameInput.club].owner]
-          .playerUuid
+        this.registeredPlayers[this.clubCreated[gameInput.club].owner].token
       ).mutate({
         variables: {
           gameInput: gameInput.input,
@@ -538,8 +692,7 @@ class GameScript {
         }
       `;
       const gameResp = await getClient(
-        this.registeredPlayers[this.clubCreated[gameInput.club].owner]
-          .playerUuid
+        this.registeredPlayers[this.clubCreated[gameInput.club].owner].token
       ).query({
         variables: {
           gameCode: resp.data.configuredGame.gameCode,
@@ -567,7 +720,7 @@ class GameScript {
       `;
       for (const player of sitsinInput.players) {
         const client = await getClient(
-          this.registeredPlayers[player.playerId].playerUuid
+          this.registeredPlayers[player.playerId].token
         );
         await client.mutate({
           variables: {
@@ -596,7 +749,7 @@ class GameScript {
       `;
       for (const player of buyinInput.players) {
         const client = await getClient(
-          this.registeredPlayers[player.playerId].playerUuid
+          this.registeredPlayers[player.playerId].token
         );
         const resp = await client.mutate({
           variables: {
@@ -621,7 +774,7 @@ class GameScript {
     `;
     try {
       const resp = await getClient(
-        this.registeredPlayers[this.clubCreated[balance.club].owner].playerUuid
+        this.registeredPlayers[this.clubCreated[balance.club].owner].token
       ).query({
         variables: {
           gameCode: this.gameCreated[balance.game].gameCode,
@@ -640,48 +793,55 @@ class GameScript {
     }
   }
 
-  // protected async verifyPlayerGameStack(balance: any): Promise<any> {
-  //   this.log(`Verify player stack: ${JSON.stringify(balance)}`);
-  //   const queryPlayerTrack = gql`
-  //     query($playerId: String!, $clubCode: String!, $gameCode: String!) {
-  //       balance: playerGametrack(
-  //         clubCode: $clubCode
-  //         gameCode: $gameCode
-  //         playerId: $playerId
-  //       ) {
-  //         buyIn
-  //         stack
-  //         seatNo
-  //         noOfBuyins
-  //         hhRank
-  //         hhHandNum
-  //       }
-  //     }
-  //   `;
-  //   try {
-  //     for (const player of balance.players) {
-  //       const resp = await getClient(
-  //         this.registeredPlayers[player.name].playerUuid
-  //       ).query({
-  //         variables: {
-  //           playerId: this.registeredPlayers[player.name].playerUuid,
-  //           clubCode: this.clubCreated[balance.club].clubCode,
-  //           gameCode: this.gameCreated[balance.game].gameCode,
-  //         },
-  //         query: queryPlayerTrack,
-  //       });
-  //       if (resp.data.balance.stack != player.balance) {
-  //         this.log(
-  //           `Expected ${player.balance} but received ${resp.data.balance.stack}`
-  //         );
-  //         throw new Error('Player stack verification failed');
-  //       }
-  //     }
-  //   } catch (err) {
-  //     this.log(err.toString());
-  //     throw err;
-  //   }
-  // }
+  protected async verifyPlayerGameStack(balance: any): Promise<any> {
+    this.log(`Verify player stack: ${JSON.stringify(balance)}`);
+    const queryGameInfo = gql`
+      query($gameCode: String!) {
+        seatInfo: gameInfo(gameCode: $gameCode) {
+          seatInfo {
+            playersInSeats {
+              seatNo
+              playerUuid
+              name
+              buyIn
+              stack
+              status
+            }
+          }
+        }
+      }
+    `;
+    try {
+      const resp = await getClient(
+        this.registeredPlayers[this.clubCreated[balance.club].owner].token
+      ).query({
+        variables: {
+          gameCode: this.gameCreated[balance.game].gameCode,
+        },
+        query: queryGameInfo,
+      });
+      const playerInSeats: Array<any> =
+        resp.data.seatInfo.seatInfo.playersInSeats;
+      for (const player of balance.players) {
+        const receivedPlayer = await playerInSeats.find(
+          element => element.name == player.name
+        );
+        if (!receivedPlayer) {
+          this.log(`Player ${player} not found in ${playerInSeats}`);
+          throw new Error('Player stack verification failed');
+        }
+        if (player.balance != receivedPlayer.stack) {
+          this.log(
+            `Expected ${player.balance} but received ${receivedPlayer.stack}`
+          );
+          throw new Error('Player stack verification failed');
+        }
+      }
+    } catch (err) {
+      this.log(err.toString());
+      throw err;
+    }
+  }
 
   protected async startGame(input: any): Promise<any> {
     this.log(`Start game: ${JSON.stringify(input)}`);
@@ -693,14 +853,17 @@ class GameScript {
       `;
       const club = this.clubCreated[input.club];
       const gameCode = this.gameCreated[input.game].gameCode;
-      const client = await getClient(
-        this.registeredPlayers[club.owner].playerUuid
-      );
+      const client = await getClient(this.registeredPlayers[club.owner].token);
       await client.mutate({
         variables: {
           gameCode: gameCode,
         },
         mutation: query,
+      });
+      const url = `${this.serverURL}/internal/update-table-status`;
+      await axios.post(url, {
+        gameId: this.gameCreated[input.game].gameId,
+        status: 'GAME_RUNNING',
       });
     } catch (err) {
       this.log(JSON.stringify(err));
@@ -730,14 +893,19 @@ class GameScript {
     }
   }
 
-  ///////////////////////////// done ///////////////////////
-
   protected async endGame(params: any) {
+    this.log(`endgame: ${JSON.stringify(params)}`);
+    const queryEndGame = gql`
+      mutation($gameCode: String!) {
+        GameStatus: endGame(gameCode: $gameCode)
+      }
+    `;
     try {
-      const url = `${this.serverURL}/internal/game-ended`;
-      const resp = await axios.post(url, {
-        club_id: this.clubCreated[params.club].clubId,
-        game_id: this.gameCreated[params.game].gameId,
+      const resp = await getClient(
+        this.registeredPlayers[this.clubCreated[params.club].owner].token
+      ).mutate({
+        variables: {gameCode: this.gameCreated[params.game].gameCode},
+        mutation: queryEndGame,
       });
       this.log(`Game ${[params.game]} has been ended`);
     } catch (err) {
@@ -758,7 +926,7 @@ class GameScript {
     `;
     try {
       const resp = await getClient(
-        this.registeredPlayers[this.clubCreated[balance.club].owner].playerUuid
+        this.registeredPlayers[this.clubCreated[balance.club].owner].token
       ).query({
         variables: {clubCode: this.clubCreated[balance.club].clubCode},
         query: queryClubBalance,
@@ -783,14 +951,13 @@ class GameScript {
           totalBuyins
           totalWinnings
           balance
-          notes
           updatedAt
         }
       }
     `;
     try {
       const resp = await getClient(
-        this.registeredPlayers[balance.player].playerUuid
+        this.registeredPlayers[balance.player].token
       ).query({
         variables: {
           clubCode: this.clubCreated[balance.club].clubCode,
@@ -823,30 +990,58 @@ class GameScript {
     const clubCode = this.clubCreated[club.club].clubCode;
     const messages = club.messages;
     for (const message of messages) {
-      let playerId;
+      let token;
       let messageText;
       for (const key of Object.keys(message)) {
         messageText = message[key];
-        playerId = this.registeredPlayers[key].playerUuid;
+        token = this.registeredPlayers[key].token;
         break;
       }
-      const resp = await getClient(playerId).mutate({
+      const resp = await getClient(token).mutate({
         variables: {clubCode: clubCode, text: messageText},
         mutation: sendMessage,
       });
     }
   }
-}
 
-async function resetDatabase() {
-  const resetDB = gql`
-    mutation {
-      resetDB
+  protected async processPendingUpdate(update: any) {
+    this.log(`Process pending updates for: ${JSON.stringify(update)}`);
+    const url = `${this.serverURL}/internal/process-pending-updates/gameId/${
+      this.gameCreated[update.game].gameId
+    }`;
+    try {
+      await axios.post(url);
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
     }
-  `;
-  const resp = await getClient().mutate({
-    mutation: resetDB,
-  });
+  }
+
+  protected async reloadChip(chips: any) {
+    this.log(`Reload chips for: ${JSON.stringify(chips)}`);
+    const reloadQuery = gql`
+      mutation($gameCode: String!, $amount: Float!) {
+        resp: reload(gameCode: $gameCode, amount: $amount) {
+          expireSeconds
+          approved
+        }
+      }
+    `;
+    try {
+      for (const chip of chips.players) {
+        await getClient(this.registeredPlayers[chip.name].token).mutate({
+          variables: {
+            gameCode: this.gameCreated[chips.game].gameCode,
+            amount: chip.amount,
+          },
+          mutation: reloadQuery,
+        });
+      }
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
 }
 
 async function main() {
@@ -858,10 +1053,10 @@ async function main() {
   console.log(`Script directory: ${scriptDir}`);
 
   const list = fs.readdirSync(scriptDir);
-  await resetDatabase();
   for (const file of list) {
     if (file.endsWith('.yaml')) {
       try {
+        await resetDatabase();
         const gameScript1 = new GameScript(serverURL, `${scriptDir}/${file}`);
         gameScript1.load();
         if (gameScript1.isDisabled()) {
