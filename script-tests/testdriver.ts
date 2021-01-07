@@ -1,7 +1,7 @@
 import * as yaml from 'js-yaml';
 import * as fs from 'fs';
 import {default as axios} from 'axios';
-import {getClient} from '../tests/utils/utils';
+import {getClient, resetDatabase} from './utils';
 import {gql} from 'apollo-boost';
 
 /*
@@ -286,10 +286,13 @@ class GameScript {
 
   protected async registerPlayers(params: any) {
     for (const playerInput of params) {
-      const [playerUuid, playerId] = await this.registerPlayer(playerInput);
+      const [playerUuid, playerId, token] = await this.registerPlayer(
+        playerInput
+      );
       this.registeredPlayers[playerInput.name] = {
         playerUuid: playerUuid,
         playerId: playerId,
+        token: token,
       };
     }
   }
@@ -441,6 +444,12 @@ class GameScript {
       });
       const playerId = resp.data.playerId;
 
+      const token = await this.loginPlayerWithUuid({
+        uuid: playerId,
+        deviceId: playerInput.deviceId,
+        name: playerInput.name,
+      });
+
       // get player by uuid (we need to get internal id for game/hand requests)
       const queryPlayer = gql`
         query {
@@ -452,13 +461,30 @@ class GameScript {
           }
         }
       `;
-      const playerResp = await getClient(playerId).query({
+      const playerResp = await getClient(token).query({
         variables: {
           playerId: resp.data.playerId,
         },
         query: queryPlayer,
       });
-      return [playerResp.data.player.uuid, playerResp.data.player.id];
+      return [playerResp.data.player.uuid, playerResp.data.player.id, token];
+    } catch (err) {
+      this.log(err.toString());
+      throw err;
+    }
+  }
+
+  protected async loginPlayerWithUuid(params: any) {
+    // call internal REST API to delete the club
+    try {
+      const url = `${this.serverURL}/auth/login`;
+      this.log(url);
+      const resp = await axios.post(url, {
+        uuid: params.uuid,
+        'device-id': params.deviceId,
+      });
+      this.log(`player ${params.name} has logged in successfully`);
+      return resp.data.jwt;
     } catch (err) {
       this.log(err.toString());
       throw err;
@@ -474,7 +500,7 @@ class GameScript {
         }
       `;
       const resp = await getClient(
-        this.registeredPlayers[clubInput.owner].playerUuid
+        this.registeredPlayers[clubInput.owner].token
       ).mutate({
         variables: {
           input: {
@@ -494,7 +520,7 @@ class GameScript {
         }
       `;
       const clubResp = await getClient(
-        this.registeredPlayers[clubInput.owner].playerUuid
+        this.registeredPlayers[clubInput.owner].token
       ).query({
         variables: {
           clubCode: resp.data.clubCode,
@@ -517,7 +543,7 @@ class GameScript {
         }
       `;
       for (const member of joinClubInput.members) {
-        await getClient(this.registeredPlayers[member].playerUuid).mutate({
+        await getClient(this.registeredPlayers[member].token).mutate({
           variables: {
             clubCode: this.clubCreated[joinClubInput.club].clubCode,
           },
@@ -545,7 +571,7 @@ class GameScript {
       `;
       for (const member of memberInput.members) {
         const resp = await getClient(
-          this.registeredPlayers[member.name].playerUuid
+          this.registeredPlayers[member.name].token
         ).query({
           variables: {
             clubCode: this.clubCreated[memberInput.club].clubCode,
@@ -575,8 +601,7 @@ class GameScript {
       `;
       for (const member of memberInput.members) {
         await getClient(
-          this.registeredPlayers[this.clubCreated[memberInput.club].owner]
-            .playerUuid
+          this.registeredPlayers[this.clubCreated[memberInput.club].owner].token
         ).mutate({
           variables: {
             clubCode: this.clubCreated[memberInput.club].clubCode,
@@ -609,9 +634,7 @@ class GameScript {
         }
       `;
       const club = this.clubCreated[input.club];
-      const client = await getClient(
-        this.registeredPlayers[club.owner].playerUuid
-      );
+      const client = await getClient(this.registeredPlayers[club.owner].token);
       const response = await client.mutate({
         variables: {
           clubCode: club.clubCode,
@@ -642,8 +665,7 @@ class GameScript {
         }
       `;
       const resp = await getClient(
-        this.registeredPlayers[this.clubCreated[gameInput.club].owner]
-          .playerUuid
+        this.registeredPlayers[this.clubCreated[gameInput.club].owner].token
       ).mutate({
         variables: {
           gameInput: gameInput.input,
@@ -661,8 +683,7 @@ class GameScript {
         }
       `;
       const gameResp = await getClient(
-        this.registeredPlayers[this.clubCreated[gameInput.club].owner]
-          .playerUuid
+        this.registeredPlayers[this.clubCreated[gameInput.club].owner].token
       ).query({
         variables: {
           gameCode: resp.data.configuredGame.gameCode,
@@ -690,7 +711,7 @@ class GameScript {
       `;
       for (const player of sitsinInput.players) {
         const client = await getClient(
-          this.registeredPlayers[player.playerId].playerUuid
+          this.registeredPlayers[player.playerId].token
         );
         await client.mutate({
           variables: {
@@ -719,7 +740,7 @@ class GameScript {
       `;
       for (const player of buyinInput.players) {
         const client = await getClient(
-          this.registeredPlayers[player.playerId].playerUuid
+          this.registeredPlayers[player.playerId].token
         );
         const resp = await client.mutate({
           variables: {
@@ -744,7 +765,7 @@ class GameScript {
     `;
     try {
       const resp = await getClient(
-        this.registeredPlayers[this.clubCreated[balance.club].owner].playerUuid
+        this.registeredPlayers[this.clubCreated[balance.club].owner].token
       ).query({
         variables: {
           gameCode: this.gameCreated[balance.game].gameCode,
@@ -783,7 +804,7 @@ class GameScript {
     `;
     try {
       const resp = await getClient(
-        this.registeredPlayers[this.clubCreated[balance.club].owner].playerUuid
+        this.registeredPlayers[this.clubCreated[balance.club].owner].token
       ).query({
         variables: {
           gameCode: this.gameCreated[balance.game].gameCode,
@@ -823,9 +844,7 @@ class GameScript {
       `;
       const club = this.clubCreated[input.club];
       const gameCode = this.gameCreated[input.game].gameCode;
-      const client = await getClient(
-        this.registeredPlayers[club.owner].playerUuid
-      );
+      const client = await getClient(this.registeredPlayers[club.owner].token);
       await client.mutate({
         variables: {
           gameCode: gameCode,
@@ -874,7 +893,7 @@ class GameScript {
     `;
     try {
       const resp = await getClient(
-        this.registeredPlayers[this.clubCreated[params.club].owner].playerUuid
+        this.registeredPlayers[this.clubCreated[params.club].owner].token
       ).mutate({
         variables: {gameCode: this.gameCreated[params.game].gameCode},
         mutation: queryEndGame,
@@ -898,7 +917,7 @@ class GameScript {
     `;
     try {
       const resp = await getClient(
-        this.registeredPlayers[this.clubCreated[balance.club].owner].playerUuid
+        this.registeredPlayers[this.clubCreated[balance.club].owner].token
       ).query({
         variables: {clubCode: this.clubCreated[balance.club].clubCode},
         query: queryClubBalance,
@@ -929,7 +948,7 @@ class GameScript {
     `;
     try {
       const resp = await getClient(
-        this.registeredPlayers[balance.player].playerUuid
+        this.registeredPlayers[balance.player].token
       ).query({
         variables: {
           clubCode: this.clubCreated[balance.club].clubCode,
@@ -962,14 +981,14 @@ class GameScript {
     const clubCode = this.clubCreated[club.club].clubCode;
     const messages = club.messages;
     for (const message of messages) {
-      let playerId;
+      let token;
       let messageText;
       for (const key of Object.keys(message)) {
         messageText = message[key];
-        playerId = this.registeredPlayers[key].playerUuid;
+        token = this.registeredPlayers[key].token;
         break;
       }
-      const resp = await getClient(playerId).mutate({
+      const resp = await getClient(token).mutate({
         variables: {clubCode: clubCode, text: messageText},
         mutation: sendMessage,
       });
@@ -988,17 +1007,6 @@ class GameScript {
       throw err;
     }
   }
-}
-
-async function resetDatabase() {
-  const resetDB = gql`
-    mutation {
-      resetDB
-    }
-  `;
-  const resp = await getClient().mutate({
-    mutation: resetDB,
-  });
 }
 
 async function main() {
