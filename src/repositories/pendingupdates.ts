@@ -221,15 +221,6 @@ async function buyinApproved(
   update: NextHandUpdates,
   pendingUpdatesRepo
 ) {
-  await playerGameTrackerRepository.update(
-    {
-      game: {id: game.id},
-      player: {id: update.player.id},
-    },
-    {
-      status: PlayerStatus.PLAYING,
-    }
-  );
   let amount = 0;
   if (update.buyinAmount) {
     amount = update.buyinAmount;
@@ -237,22 +228,25 @@ async function buyinApproved(
     amount = update.reloadAmount;
   }
 
-  await playerGameTrackerRepository.update(
-    {
-      game: {id: game.id},
-      player: {id: update.player.id},
-    },
-    {
-      status: PlayerStatus.PLAYING,
-      stack: amount,
-    }
-  );
   const playerInGame = await playerGameTrackerRepository.findOne({
     where: {
       game: {id: game.id},
       player: {id: update.player.id},
     },
   });
+
+  playerInGame.status = PlayerStatus.PLAYING;
+  playerInGame.stack = playerInGame.stack + amount;
+  await playerGameTrackerRepository.update(
+    {
+      game: {id: game.id},
+      player: {id: update.player.id},
+    },
+    {
+      status: playerInGame.status,
+      stack: playerInGame.stack,
+    }
+  );
 
   if (playerInGame) {
     // notify game server, player has a new buyin

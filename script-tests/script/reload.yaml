@@ -1,5 +1,5 @@
 test:
-  disabled: true
+  disabled: false
 
 # Cleanup steps
 cleanup:
@@ -19,12 +19,6 @@ game:
     - include:
         script: common.yaml
 
-    # run-game should call startGame graphql to make game.status as ACTIVE
-    # call /internal/update-table-status to mark table_status as GAME_RUNNING       
-    - run-game:
-      - club: New Delhi
-        game: test1
-
     # player reloads 100 chips
     - reload:
       - club: New Delhi
@@ -43,8 +37,6 @@ game:
             balance: 100
           - name: bala
             balance: 100
-          - name: arjun
-            balance: 100
 
     - process-pending-updates:
       - club: New Delhi
@@ -60,15 +52,28 @@ game:
             balance: 100
           - name: bala
             balance: 100
-          - name: arjun
-            balance: 100
 
     - reload:
       - club: New Delhi
         game: test1
         players:
         - name: sam
-          amount: 500
+          amount: 200
+
+    - verify-player-game-stack:
+        - club: New Delhi
+          game: test1
+          players:
+          - name: arun
+            balance: 200
+          - name: sam
+            balance: 100
+          - name: bala
+            balance: 100
+
+    - process-pending-updates:
+      - club: New Delhi
+        game: test1
 
     - verify-player-game-stack:
         - club: New Delhi
@@ -80,7 +85,4 @@ game:
             balance: 300
           - name: bala
             balance: 100
-          - name: arjun
-            balance: 100
-
     

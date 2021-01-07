@@ -52,6 +52,13 @@ setup:
             - name: sam
               status: ACTIVE
 
+    # create game servers if does not exist
+    - create-game-servers:
+        - ipAddress: 10.1.1.4
+          currentMemory: 100
+          status: ACTIVE
+          url: http://server1:8080
+
 game:
   steps:
     # configure game

@@ -273,6 +273,9 @@ class GameScript {
       if (step['process-pending-updates']) {
         await this.processPendingUpdates(step['process-pending-updates']);
       }
+      if (step['reload']) {
+        await this.reloadChips(step['reload']);
+      }
     }
   }
 
@@ -406,6 +409,12 @@ class GameScript {
   protected async processPendingUpdates(params: any) {
     for (const pendingUpdate of params) {
       await this.processPendingUpdate(pendingUpdate);
+    }
+  }
+
+  protected async reloadChips(params: any) {
+    for (const chips of params) {
+      await this.reloadChip(chips);
     }
   }
 
@@ -1007,6 +1016,32 @@ class GameScript {
       throw err;
     }
   }
+
+  protected async reloadChip(chips: any) {
+    this.log(`Reload chips for: ${JSON.stringify(chips)}`);
+    const reloadQuery = gql`
+      mutation($gameCode: String!, $amount: Float!) {
+        resp: reload(gameCode: $gameCode, amount: $amount) {
+          expireSeconds
+          approved
+        }
+      }
+    `;
+    try {
+      for (const chip of chips.players) {
+        await getClient(this.registeredPlayers[chip.name].token).mutate({
+          variables: {
+            gameCode: this.gameCreated[chips.game].gameCode,
+            amount: chip.amount,
+          },
+          mutation: reloadQuery,
+        });
+      }
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
 }
 
 async function main() {
@@ -1018,10 +1053,10 @@ async function main() {
   console.log(`Script directory: ${scriptDir}`);
 
   const list = fs.readdirSync(scriptDir);
-  await resetDatabase();
   for (const file of list) {
     if (file.endsWith('.yaml')) {
       try {
+        await resetDatabase();
         const gameScript1 = new GameScript(serverURL, `${scriptDir}/${file}`);
         gameScript1.load();
         if (gameScript1.isDisabled()) {
