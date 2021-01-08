@@ -3,6 +3,8 @@ import {GameRepository} from '@src/repositories/game';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {getLogger} from '@src/utils/log';
 
+const logger = getLogger('GameAPIs');
+
 /**
  * These APIs are only available for game server.
  */
@@ -64,8 +66,13 @@ class GameAPIs {
       return;
     }
 
-    await GameRepository.markTableStatus(gameID, tableStatus);
-    resp.status(200).send({status: 'OK'});
+    try {
+      await GameRepository.markTableStatus(gameID, tableStatus);
+      resp.status(200).send({status: 'OK'});
+    } catch (err) {
+      logger.error(err.message);
+      resp.status(500).send(JSON.stringify({error: err.message}));
+    }
   }
 
   public async anyPendingUpdates(req: any, resp: any) {

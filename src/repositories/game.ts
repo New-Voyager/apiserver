@@ -962,11 +962,11 @@ class GameRepositoryImpl {
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
     }
-
+    const tableStatusValue = TableStatus[status.toString()];
     await getConnection()
       .createQueryBuilder()
       .update(PokerGame)
-      .set({tableStatus: status})
+      .set({tableStatus: tableStatusValue})
       .where('id = :id', {id: gameId})
       .execute();
     // update cached game
