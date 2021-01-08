@@ -250,7 +250,7 @@ async function buyinApproved(
 
   if (playerInGame) {
     // notify game server, player has a new buyin
-    await playerBuyIn(game, update.player, playerInGame.seatNo);
+    await playerBuyIn(game, update.player, playerInGame);
   }
   // delete this update
   await pendingUpdatesRepo.delete({id: update.id});
