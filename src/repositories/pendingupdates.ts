@@ -236,7 +236,9 @@ async function buyinApproved(
   });
 
   playerInGame.status = PlayerStatus.PLAYING;
-  playerInGame.stack = playerInGame.stack + amount;
+  playerInGame.stack += amount;
+  playerInGame.buyIn += amount;
+  playerInGame.noOfBuyins += 1;
   await playerGameTrackerRepository.update(
     {
       game: {id: game.id},
@@ -245,6 +247,8 @@ async function buyinApproved(
     {
       status: playerInGame.status,
       stack: playerInGame.stack,
+      buyIn: playerInGame.buyIn,
+      noOfBuyins: playerInGame.noOfBuyins,
     }
   );
 

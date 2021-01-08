@@ -265,10 +265,10 @@ game:
     - verify-player-balance:
         - club: New Delhi
           player: arun
-          balance: 74
+          balance: -26
         - club: New Delhi
           player: sam
-          balance: 74
+          balance: -26
         - club: New Delhi
           player: bala
-          balance: 152
+          balance: 52

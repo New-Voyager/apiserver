@@ -276,6 +276,9 @@ class GameScript {
       if (step['reload']) {
         await this.reloadChips(step['reload']);
       }
+      if (step['update-club-members']) {
+        await this.updateClubMembers(step['update-club-members']);
+      }
     }
   }
 
@@ -415,6 +418,12 @@ class GameScript {
   protected async reloadChips(params: any) {
     for (const chips of params) {
       await this.reloadChip(chips);
+    }
+  }
+
+  protected async updateClubMembers(params: any) {
+    for (const updateData of params) {
+      await this.updateClubMember(updateData);
     }
   }
 
@@ -1035,6 +1044,40 @@ class GameScript {
             amount: chip.amount,
           },
           mutation: reloadQuery,
+        });
+      }
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
+  protected async updateClubMember(updateData: any) {
+    this.log(`update club members: ${JSON.stringify(updateData)}`);
+    const updateClubMemberQuery = gql`
+      mutation(
+        $clubCode: String!
+        $playerUuid: String!
+        $update: ClubMemberUpdateInput!
+      ) {
+        status: updateClubMember(
+          clubCode: $clubCode
+          playerUuid: $playerUuid
+          update: $update
+        )
+      }
+    `;
+    try {
+      for (const data of updateData.players) {
+        await getClient(
+          this.registeredPlayers[this.clubCreated[updateData.club].owner].token
+        ).mutate({
+          variables: {
+            clubCode: this.clubCreated[updateData.club].clubCode,
+            playerUuid: this.registeredPlayers[data.name].playerUuid,
+            update: data.update,
+          },
+          mutation: updateClubMemberQuery,
         });
       }
     } catch (err) {
