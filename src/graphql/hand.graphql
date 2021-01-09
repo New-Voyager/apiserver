@@ -17,19 +17,22 @@ enum GameType {
 
 type HandHistory {
   pageId: Int
-  gameId: Int!
   handNum: Int!
+  noWinners: Int!
+  noLoWinners: Int
   gameType: GameType!
   wonAt: WonAtStatus!
   showDown: Boolean!
+  playerCards: [Int],
   winningCards: String
   winningRank: Int
   loWinningCards: String
   loWinningRank: Int
   timeStarted: DateTime!
   timeEnded: DateTime!
-  data: String!
+  winners: Json
   totalPot: Float!
+  data: String
 }
 
 type HandWinners {
@@ -66,25 +69,22 @@ type Mutation {
 
 type Query {
   # To get the last hand history for a given gameId and clubId
-  lastHandHistory(clubCode: String!, gameCode: String!): HandHistory!
+  lastHandHistory(gameCode: String!): HandHistory!
 
   # To get specific hand history for a given gameId, clubId and handNum
   specificHandHistory(
-    clubCode: String!
     gameCode: String!
     handNum: String!
   ): HandHistory!
 
   # To get all hand history for a given gameId and clubId
   allHandHistory(
-    clubCode: String!
     gameCode: String!
     page: PageInput
   ): [HandHistory!]
 
   # To get a specific user's last 10 winning hands for a given gameId and clubId
   myWinningHands(
-    clubCode: String!
     gameCode: String!
     page: PageInput
   ): [HandWinners!]

@@ -37,6 +37,7 @@ export interface ClubMemberUpdateInput {
   creditLimit?: number;
   autoBuyinApproval?: boolean;
   referredBy?: string;
+  contactInfo?: string;
 }
 
 class ClubRepositoryImpl {
@@ -108,6 +109,10 @@ class ClubRepositoryImpl {
     }
     if (updateData.referredBy) {
       clubMember.referredBy = updateData.referredBy.toString();
+    }
+
+    if (updateData.contactInfo) {
+      clubMember.contactInfo = updateData.contactInfo.toString();
     }
 
     // Save the data

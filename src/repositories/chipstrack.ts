@@ -129,6 +129,9 @@ class ChipsTrackRepositoryImpl {
               balance: () => `balance + ${profit}`,
               totalBuyins: () => `total_buyins + ${playerChip.buyIn}`,
               totalWinnings: () => `total_winnings + ${playerChip.stack}`,
+              rakePaid: () => `rake_paid + ${playerChip.rakePaid}`,
+              totalGames: () => 'total_games + 1',
+              totalHands: () => `total_hands + ${playerChip.noHandsPlayed}`,
               notes: '',
             })
             .where({

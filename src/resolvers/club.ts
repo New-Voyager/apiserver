@@ -42,7 +42,7 @@ export async function getClubMembers(playerId: string, args: any) {
     const today = new Date();
     today.setDate(today.getDate() - 7);
     memberAny.lastPlayedDate = today;
-    memberAny.contactInfo = '+17812341203';
+    memberAny.contactInfo = member.contactInfo;
     memberAny.status = ClubMemberStatus[member.status];
     members.push(memberAny);
   }

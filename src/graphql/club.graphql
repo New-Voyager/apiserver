@@ -33,18 +33,9 @@ input ClubMemberUpdateInput {
   creditLimit: Float
   autoBuyinApproval: Boolean
   referredBy: String
+  contactInfo: String
 }
 
-type Mutation {
-  createClub(club: ClubCreateInput!): String!
-  updateClub(clubCode: String!, club: ClubUpdateInput!): Boolean!
-  joinClub(clubCode: String!): ClubMemberStatus
-  approveMember(clubCode: String!, playerUuid: String!): ClubMemberStatus
-  rejectMember(clubCode: String!, playerUuid: String!): ClubMemberStatus
-  kickMember(clubCode: String!, playerUuid: String!): ClubMemberStatus
-  deleteClub(clubCode: String!): Boolean!
-  updateClubMember(clubCode: String!, playerUuid: String!, update: ClubMemberUpdateInput!): ClubMemberStatus
-}
 
 type ClubMember {
   name: String!
@@ -65,6 +56,7 @@ type ClubMember {
   referredBy: String
   autoBuyinApproval: Boolean
   creditLimit: Float
+  totalGames: Int
 }
 
 type ClubGameInfo {
@@ -115,4 +107,15 @@ type Query {
   # the caller can paginate with pageId
   # clubGames(clubCode: "", prev: 20, from: 10000001)
   clubGames(clubCode: String!, page: PageInput, completedGames: Boolean): [ClubGameInfo!]
+}
+
+type Mutation {
+  createClub(club: ClubCreateInput!): String!
+  updateClub(clubCode: String!, club: ClubUpdateInput!): Boolean!
+  joinClub(clubCode: String!): ClubMemberStatus
+  approveMember(clubCode: String!, playerUuid: String!): ClubMemberStatus
+  rejectMember(clubCode: String!, playerUuid: String!): ClubMemberStatus
+  kickMember(clubCode: String!, playerUuid: String!): ClubMemberStatus
+  deleteClub(clubCode: String!): Boolean!
+  updateClubMember(clubCode: String!, playerUuid: String!, update: ClubMemberUpdateInput!): ClubMemberStatus
 }
