@@ -21,11 +21,9 @@ class HandRepositoryImpl {
     if (result.boardCards) {
       summary.boardCards.push(result.boardCards);
     }
-    if (result.boardCards2) {
-      summary.boardCards.push(result.boardCards);
+    if (result.boardCards2 && result.boardCards2.length > 0) {
+      summary.boardCards.push(result.boardCards2);
     }
-    //const hiWinners = new Array<any>();
-    //const lowWinners = new Array<any>();
     let noCards = 2;
     for (const seatNo of Object.keys(result.players)) {
       const player = result.players[seatNo];

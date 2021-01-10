@@ -38,6 +38,10 @@ export function getResolvers() {
 }
 
 async function generateHandHistoryData(handHistory: HandHistory) {
+  const handTime = Math.round(
+    (handHistory.timeEnded.getTime() - handHistory.timeStarted.getTime()) / 1000
+  );
+
   return {
     pageId: handHistory.id,
     //data: handHistory.data,
@@ -50,6 +54,7 @@ async function generateHandHistoryData(handHistory: HandHistory) {
     timeEnded: handHistory.timeEnded,
     timeStarted: handHistory.timeStarted,
     totalPot: handHistory.totalPot,
+    handTime: handTime,
     winningCards: handHistory.winningCards,
     winningRank: handHistory.winningRank,
     wonAt: WonAtStatus[handHistory.wonAt],
