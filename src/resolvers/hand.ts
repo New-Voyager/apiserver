@@ -38,9 +38,13 @@ export function getResolvers() {
 }
 
 async function generateHandHistoryData(handHistory: HandHistory) {
+  const handTime = Math.round(
+    (handHistory.timeEnded.getTime() - handHistory.timeStarted.getTime()) / 1000
+  );
+
   return {
     pageId: handHistory.id,
-    data: handHistory.data,
+    //data: handHistory.data,
     gameId: handHistory.gameId,
     gameType: GameType[handHistory.gameType],
     handNum: handHistory.handNum,
@@ -50,9 +54,11 @@ async function generateHandHistoryData(handHistory: HandHistory) {
     timeEnded: handHistory.timeEnded,
     timeStarted: handHistory.timeStarted,
     totalPot: handHistory.totalPot,
+    handTime: handTime,
     winningCards: handHistory.winningCards,
     winningRank: handHistory.winningRank,
     wonAt: WonAtStatus[handHistory.wonAt],
+    summary: handHistory.summary,
   };
 }
 
