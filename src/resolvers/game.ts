@@ -429,6 +429,23 @@ export async function completedGame(playerId: string, gameCode: string) {
   }
 }
 
+export async function getGameResultTable(gameCode: string) {
+  try {
+    const resp = await GameRepository.getGameResultTable(gameCode);
+
+    for (const r of resp) {
+      if (r.sessionTime) {
+        r.sessionTimeStr = getSessionTimeStr(r.sessionTime);
+      }
+    }
+
+    return resp;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error(`Failed to get game result table. ${JSON.stringify(err)}`);
+  }
+}
+
 function getSessionTimeStr(totalSeconds: number): string {
   if (totalSeconds < 60) {
     // "## seconds"
@@ -436,10 +453,10 @@ function getSessionTimeStr(totalSeconds: number): string {
   }
   if (totalSeconds < 3600) {
     // "## minutes"
-    return humanizeDuration(totalSeconds * 1000, { units: ['m'], round: true });
+    return humanizeDuration(totalSeconds * 1000, {units: ['m'], round: true});
   }
   // "## hours"
-  return humanizeDuration(totalSeconds * 1000, { units: ['h'], round: true });
+  return humanizeDuration(totalSeconds * 1000, {units: ['h'], round: true});
 }
 
 export async function approveRequest(
@@ -1085,6 +1102,9 @@ const resolvers: any = {
       const game = await Cache.getGame(args.gameCode);
       logger.info(`Getting current hand log for ${args.gameCode}`);
       return getCurrentHandLog(game.id);
+    },
+    gameResultTable: async (parent, args, ctx, info) => {
+      return await getGameResultTable(args.gameCode);
     },
   },
   GameInfo: {
