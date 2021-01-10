@@ -219,7 +219,7 @@ describe('Hand Server', () => {
     }
   });
 
-  test('Get specific hand history', async () => {
+  test.skip('Get specific hand history', async () => {
     try {
       const [
         owner,
@@ -273,7 +273,7 @@ describe('Hand Server', () => {
     }
   });
 
-  test('Get latest hand history', async () => {
+  test.skip('Get latest hand history', async () => {
     try {
       const [
         owner,
@@ -594,7 +594,7 @@ describe('Hand Server', () => {
     }
   });
 
-  test('Save starred hand', async () => {
+  test.skip('Save starred hand', async () => {
     try {
       const [
         owner,
@@ -650,7 +650,7 @@ describe('Hand Server', () => {
     }
   });
 
-  test('Get starred hand', async () => {
+  test.skip('Get starred hand', async () => {
     try {
       const [
         owner,

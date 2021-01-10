@@ -30,9 +30,11 @@ type HandHistory {
   loWinningRank: Int
   timeStarted: DateTime!
   timeEnded: DateTime!
+  handTime: Int
   winners: Json
   totalPot: Float!
   data: String
+  summary: String
 }
 
 type HandWinners {
