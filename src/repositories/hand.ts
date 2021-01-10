@@ -370,54 +370,11 @@ class HandRepositoryImpl {
     gameId: number,
     playerId: number,
     pageOptions?: PageOptions
-  ): Promise<Array<HandWinners>> {
-    if (!pageOptions) {
-      pageOptions = {
-        count: 10,
-        prev: 0x7fffffff,
-      };
-    }
-
-    let order: any = {
-      id: 'DESC',
-    };
-
-    let pageWhere: any;
-    if (pageOptions.next) {
-      order = {
-        id: 'DESC',
-      };
-      pageWhere = MoreThan(pageOptions.next);
-    } else {
-      if (pageOptions.prev) {
-        order = {
-          id: 'DESC',
-        };
-        pageWhere = LessThan(pageOptions.prev);
-      }
-    }
-
-    logger.info(`pageOptions count: ${pageOptions.count}`);
-    let take = pageOptions.count;
-    if (!take || take > 10) {
-      take = 10;
-    }
-
-    const findOptions: any = {
-      where: {
-        gameId: gameId,
-        playerId: playerId,
-      },
-      order: order,
-      take: take,
-    };
-
-    if (pageWhere) {
-      findOptions['where']['id'] = pageWhere;
-    }
-    const handWinnersRepository = getRepository(HandWinners);
-    const handWinners = await handWinnersRepository.find(findOptions);
-    return handWinners;
+  ): Promise<Array<HandHistory>> {
+    const allHands = await this.getAllHandHistory(gameId);
+    const playerIdMatch = `"playerId":"${playerId}"`;
+    const myHands = _.filter(allHands, e => e.summary.includes(playerIdMatch));
+    return myHands;
   }
 
   public async saveStarredHand(

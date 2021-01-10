@@ -1098,7 +1098,7 @@ class GameRepositoryImpl {
         FROM
         poker_game pg JOIN club c ON pg.club_id  = c.id AND pg.game_code = ?
         JOIN poker_game_updates pgu ON pg.id = pgu.game_id
-        JOIN player p ON pg.started_by = p.id and p.id = ?
+        JOIN player p ON p.id = ?
         LEFT OUTER JOIN player_game_tracker pgt ON 
         pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = p.id`);
 

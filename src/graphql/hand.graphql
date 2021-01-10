@@ -89,7 +89,7 @@ type Query {
   myWinningHands(
     gameCode: String!
     page: PageInput
-  ): [HandWinners!]
+  ): [HandHistory!]
 
   # To get all starred message for a user (default count 25)
   allStarredHands: [StarredHands!]
