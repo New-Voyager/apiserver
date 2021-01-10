@@ -40,7 +40,7 @@ export function getResolvers() {
 async function generateHandHistoryData(handHistory: HandHistory) {
   return {
     pageId: handHistory.id,
-    data: handHistory.data,
+    //data: handHistory.data,
     gameId: handHistory.gameId,
     gameType: GameType[handHistory.gameType],
     handNum: handHistory.handNum,
@@ -53,6 +53,7 @@ async function generateHandHistoryData(handHistory: HandHistory) {
     winningCards: handHistory.winningCards,
     winningRank: handHistory.winningRank,
     wonAt: WonAtStatus[handHistory.wonAt],
+    summary: handHistory.summary,
   };
 }
 

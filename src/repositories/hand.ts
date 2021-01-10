@@ -14,6 +14,72 @@ const logger = getLogger('hand');
 const MAX_STARRED_HAND = 25;
 
 class HandRepositoryImpl {
+  private getSummary(result: any): any {
+    // returns hand summary information
+    const summary: any = {};
+    summary.boardCards = new Array<any>();
+    if (result.boardCards) {
+      summary.boardCards.push(result.boardCards);
+    }
+    if (result.boardCards2) {
+      summary.boardCards.push(result.boardCards);
+    }
+    //const hiWinners = new Array<any>();
+    //const lowWinners = new Array<any>();
+    let noCards = 2;
+    for (const seatNo of Object.keys(result.players)) {
+      const player = result.players[seatNo];
+      noCards = player.cards.length;
+      break;
+    }
+    summary.noCards = noCards;
+    const isShowDown = result.wonAt === 'SHOW_DOWN';
+    const log = result.handLog;
+    const hiWinners = {};
+    const lowWinners = {};
+    for (const potNo of Object.keys(log.potWinners)) {
+      const pot = log.potWinners[potNo];
+      for (const winner of pot.hiWinners) {
+        const seatNo = winner.seatNo;
+        const player = result.players[seatNo];
+        if (!hiWinners[player.id]) {
+          hiWinners[player.id] = {};
+          hiWinners[player.id].playerId = player.id;
+          hiWinners[player.id].amount = 0;
+          hiWinners[player.id].cards = player.cards;
+          if (isShowDown) {
+            hiWinners[player.id] = JSON.stringify(player.playerCards);
+            hiWinners[player.id].rankStr = winner.rankStr;
+          }
+        }
+        hiWinners[player.id].amount += winner.amount;
+      }
+      for (const winner of pot.lowWinners) {
+        const seatNo = winner.seatNo;
+        const player = result.players[seatNo];
+        if (!lowWinners[player.id]) {
+          lowWinners[player.id] = {};
+          lowWinners[player.id].playerId = player.id;
+          lowWinners[player.id].amount = 0;
+          lowWinners[player.id].cards = player.cards;
+          if (isShowDown) {
+            lowWinners[player.id] = JSON.stringify(player.playerCards);
+          }
+        }
+        lowWinners[player.id].amount += winner.amount;
+      }
+    }
+    summary.flop = result.flop;
+    summary.turn = result.turn;
+    summary.river = result.river;
+    summary.hiWinners = Object.values(hiWinners);
+    summary.lowWinners = Object.values(lowWinners);
+    if (summary.lowWinners && summary.lowWinners.length === 0) {
+      delete summary.lowWinners;
+    }
+    return summary;
+  }
+
   public async saveHandNew(
     gameID: number,
     handNum: number,
@@ -42,10 +108,14 @@ class HandRepositoryImpl {
       handHistory.totalPot = potWinners.hiWinners[0].amount;
       if (wonAt === 'SHOW_DOWN') {
         handHistory.showDown = true;
-        handHistory.winningCards = potWinners.hiWinners[0].winningCardsStr;
+        handHistory.winningCards = JSON.stringify(
+          potWinners.hiWinners[0].winningCards
+        );
         handHistory.winningRank = potWinners.hiWinners[0].rank;
         if (potWinners.loWinners) {
-          handHistory.loWinningCards = potWinners.loWinners[0].winningCardsStr;
+          handHistory.loWinningCards = JSON.stringify(
+            potWinners.loWinners[0].winningCards
+          );
           handHistory.loWinningRank = potWinners.loWinners[0].rank;
         }
       } else {
@@ -54,6 +124,7 @@ class HandRepositoryImpl {
       handHistory.timeStarted = handLog.handStartedAt;
       handHistory.timeEnded = handLog.handEndedAt;
       handHistory.data = JSON.stringify(result);
+      handHistory.summary = JSON.stringify(this.getSummary(result));
 
       if (typeof handLog.handStartedAt === 'string') {
         handLog.handStartedAt = parseInt(handLog.handStartedAt);
@@ -75,7 +146,7 @@ class HandRepositoryImpl {
         handWinners.gameId = gameID;
         handWinners.handNum = handNum;
         if (wonAt === 'SHOW_DOWN') {
-          handWinners.winningCards = hiWinner.winningCardsStr;
+          handWinners.winningCards = JSON.stringify(hiWinner.winningCards);
           handWinners.winningRank = hiWinner.rank; // undefined
         }
         handWinners.playerId = parseInt(playersInHand[hiWinner.seatNo].id);
@@ -89,7 +160,7 @@ class HandRepositoryImpl {
           handWinners.gameId = gameID;
           handWinners.handNum = handNum;
           if (wonAt === 'SHOW_DOWN') {
-            handWinners.winningCards = loWinner.winningCardsStr;
+            handWinners.winningCards = JSON.stringify(loWinner.winningCards);
             handWinners.winningRank = loWinner.rank; // undefined
           }
           handWinners.playerId = parseInt(playersInHand[loWinner.seatNo].id);
@@ -143,9 +214,9 @@ class HandRepositoryImpl {
 
       // get the total rake collected from the hand and track each player paid the rake
       let handRake = 0.0;
-      const rakePaid = {};
       if (result.rakeCollected) {
         handRake = result.rakeCollected;
+        handHistory.rake = handRake;
       }
 
       // extract player before/after balance
@@ -281,7 +352,6 @@ class HandRepositoryImpl {
     if (!take || take > 10) {
       take = 10;
     }
-
     const findOptions: any = {
       where: {
         gameId: gameId,

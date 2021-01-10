@@ -96,6 +96,10 @@ export class HandHistory {
 
   @DbAwareColumn({name: 'players_stack', type: 'text', nullable: true})
   public playersStack!: string;
+
+  // summary is used for showing in the hand history view
+  @DbAwareColumn({name: 'summary', type: 'text', nullable: true})
+  public summary!: string;
 }
 
 @Entity({name: 'starred_hands'})

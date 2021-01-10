@@ -33,6 +33,7 @@ type HandHistory {
   winners: Json
   totalPot: Float!
   data: String
+  summary: String
 }
 
 type HandWinners {
