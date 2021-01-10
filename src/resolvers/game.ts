@@ -429,6 +429,29 @@ export async function completedGame(playerId: string, gameCode: string) {
   }
 }
 
+function getSessionTimeStr(totalSeconds: number): string {
+  if (totalSeconds < 60) {
+    // "00:59"
+    return '00:' + totalSeconds;
+  }
+  if (totalSeconds < 3600) {
+    // "59:59"
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  if (totalSeconds < 60 * 60 * 24) {
+    // "23:59:59"
+    const hrs = Math.floor(totalSeconds / (60 * 60));
+    const mins = Math.floor((totalSeconds % (60 * 60)) / 60);
+    const secs = totalSeconds % 60;
+    return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  // Played for more than 24 hours. Just show the hours in fraction. "48.3h"
+  const hrs = (totalSeconds / (60 * 60)).toFixed(1);
+  return `${hrs.toString()}h`;
+}
+
 export async function approveRequest(
   hostUuid: string,
   playerUuid: string,
