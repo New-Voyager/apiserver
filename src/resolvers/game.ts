@@ -446,6 +446,18 @@ export async function getGameResultTable(gameCode: string) {
   }
 }
 
+export async function getGamePlayers(gameCode: string) {
+  try {
+    const resp = await GameRepository.getGamePlayers(gameCode);
+    return resp;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error(
+      `Failed to get game players information. ${JSON.stringify(err)}`
+    );
+  }
+}
+
 function getSessionTimeStr(totalSeconds: number): string {
   if (totalSeconds < 60) {
     // "## seconds"
@@ -1105,6 +1117,9 @@ const resolvers: any = {
     },
     gameResultTable: async (parent, args, ctx, info) => {
       return await getGameResultTable(args.gameCode);
+    },
+    gamePlayers: async (parent, args, ctx, info) => {
+      return await getGamePlayers(args.gameCode);
     },
   },
   GameInfo: {

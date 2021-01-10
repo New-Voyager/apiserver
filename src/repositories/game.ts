@@ -1127,6 +1127,18 @@ class GameRepositoryImpl {
     const result = await getConnection().query(query, [gameCode]);
     return result;
   }
+
+  public async getGamePlayers(gameCode: string): Promise<Array<any>> {
+    const query = fixQuery(`
+      SELECT p.id AS "id", p.name AS "name", p.uuid AS "playerId"
+      FROM player_game_tracker pgt
+      INNER JOIN player p ON pgt.pgt_player_id = p.id
+      INNER JOIN poker_game pg ON pgt.pgt_game_id = pg.id
+      WHERE pg.game_code = ?`);
+
+    const result = await getConnection().query(query, [gameCode]);
+    return result;
+  }
 }
 
 export const GameRepository = new GameRepositoryImpl();
