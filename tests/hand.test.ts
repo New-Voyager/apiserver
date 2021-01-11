@@ -260,7 +260,6 @@ describe('Hand Server', () => {
       }
       const handHistory = await handutils.getSpecificHandHistory(
         playerUuids[0],
-        clubCode,
         gameCode,
         '1'
       );
@@ -317,7 +316,6 @@ describe('Hand Server', () => {
       }
       const resp1 = await handutils.getLastHandHistory(
         playerUuids[0],
-        clubCode,
         gameCode
       );
       expect(resp1.gameType).toBe('HOLDEM');
@@ -374,7 +372,6 @@ describe('Hand Server', () => {
       }
       const handHistory = await handutils.getAllHandHistory(
         playerUuids[0],
-        clubCode,
         gameCode
       );
       expect(handHistory).toHaveLength(lastHand);
@@ -429,7 +426,6 @@ describe('Hand Server', () => {
 
       const handHistory = await handutils.getAllHandHistory(
         playerUuids[0],
-        clubCode,
         gameCode,
         {
           count: lastHand - 2,
@@ -438,7 +434,6 @@ describe('Hand Server', () => {
       expect(handHistory).toHaveLength(lastHand - 2);
       const handHistory1 = await handutils.getAllHandHistory(
         playerUuids[0],
-        clubCode,
         gameCode,
         {
           prev: handHistory[lastHand - 3].pageId,
@@ -505,7 +500,6 @@ describe('Hand Server', () => {
       console.log(noOfWinningPlayer2);
       const winningHands = await handutils.getMyWinningHands(
         playerUuids[0],
-        clubCode,
         gameCode
       );
       console.log(winningHands);
@@ -572,7 +566,6 @@ describe('Hand Server', () => {
       console.log(noOfWinningPlayer2);
       const winningHands = await handutils.getMyWinningHands(
         playerUuids[0],
-        clubCode,
         gameCode,
         {
           count: noOfWinningPlayer2 - 1,
@@ -580,7 +573,6 @@ describe('Hand Server', () => {
       );
       const winningHands1 = await handutils.getMyWinningHands(
         playerUuids[0],
-        clubCode,
         gameCode,
         {
           prev: winningHands[noOfWinningPlayer2 - 2].pageId,

@@ -2,14 +2,9 @@ import {getClient} from './utils';
 import {gql} from 'apollo-boost';
 
 export const getSpecificHandHistoryQuery = gql`
-  query($clubCode: String!, $gameCode: String!, $handNum: String!) {
-    handHistory: specificHandHistory(
-      clubCode: $clubCode
-      gameCode: $gameCode
-      handNum: $handNum
-    ) {
+  query($gameCode: String!, $handNum: String!) {
+    handHistory: specificHandHistory(gameCode: $gameCode, handNum: $handNum) {
       pageId
-      gameId
       handNum
       gameType
       wonAt
@@ -27,10 +22,9 @@ export const getSpecificHandHistoryQuery = gql`
 `;
 
 export const getLastHandHistoryQuery = gql`
-  query($clubCode: String!, $gameCode: String!) {
-    handHistory: lastHandHistory(clubCode: $clubCode, gameCode: $gameCode) {
+  query($gameCode: String!) {
+    handHistory: lastHandHistory(gameCode: $gameCode) {
       pageId
-      gameId
       handNum
       gameType
       wonAt
@@ -112,12 +106,10 @@ export const saveStarredHandMutation = gql`
 
 export async function getSpecificHandHistory(
   playerId: string,
-  clubCode: string,
   gameCode: string,
   handNum: string
 ): Promise<any> {
   const variables: any = {
-    clubCode: clubCode,
     gameCode: gameCode,
     handNum: handNum,
   };
@@ -133,11 +125,9 @@ export async function getSpecificHandHistory(
 
 export async function getLastHandHistory(
   playerId: string,
-  clubCode: string,
   gameCode: string
 ): Promise<any> {
   const variables: any = {
-    clubCode: clubCode,
     gameCode: gameCode,
   };
 
@@ -152,12 +142,10 @@ export async function getLastHandHistory(
 
 export async function getAllHandHistory(
   playerId: string,
-  clubCode: string,
   gameCode: string,
   page?: {prev?: number; next?: number; count?: number}
 ): Promise<any> {
   const variables: any = {
-    clubCode: clubCode,
     gameCode: gameCode,
   };
 
@@ -185,12 +173,10 @@ export async function getAllHandHistory(
 
 export async function getMyWinningHands(
   playerId: string,
-  clubCode: string,
   gameCode: string,
   page?: {prev?: number; next?: number; count?: number}
 ): Promise<any> {
   const variables: any = {
-    clubCode: clubCode,
     gameCode: gameCode,
   };
 
