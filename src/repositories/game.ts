@@ -963,11 +963,11 @@ class GameRepositoryImpl {
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
     }
-
+    const tableStatusValue = TableStatus[status.toString()];
     await getConnection()
       .createQueryBuilder()
       .update(PokerGame)
-      .set({tableStatus: status})
+      .set({tableStatus: tableStatusValue})
       .where('id = :id', {id: gameId})
       .execute();
     // update cached game
@@ -1099,7 +1099,7 @@ class GameRepositoryImpl {
         FROM
         poker_game pg JOIN club c ON pg.club_id  = c.id AND pg.game_code = ?
         JOIN poker_game_updates pgu ON pg.id = pgu.game_id
-        JOIN player p ON pg.started_by = p.id and p.id = ?
+        JOIN player p ON p.id = ?
         LEFT OUTER JOIN player_game_tracker pgt ON 
         pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = p.id`);
 
@@ -1109,6 +1109,36 @@ class GameRepositoryImpl {
       return result[0];
     }
     return null;
+  }
+
+  public async getGameResultTable(gameCode: string): Promise<any> {
+    const query = fixQuery(`
+      SELECT pgt.session_time AS "sessionTime",
+        pgt.no_hands_played AS "handsPlayed",
+        pgt.buy_in AS "buyIn",
+        pgt.stack - pgt.buy_in AS "profit",
+        pgt.rake_paid AS "rakePaid",
+        p.name AS "playerName"
+      FROM player_game_tracker pgt
+      INNER JOIN player p ON pgt.pgt_player_id = p.id
+      INNER JOIN poker_game pg ON pgt.pgt_game_id = pg.id
+      WHERE pg.game_code = ?
+      AND pgt.no_hands_played > 0`);
+
+    const result = await getConnection().query(query, [gameCode]);
+    return result;
+  }
+
+  public async getGamePlayers(gameCode: string): Promise<Array<any>> {
+    const query = fixQuery(`
+      SELECT p.id AS "id", p.name AS "name", p.uuid AS "playerId"
+      FROM player_game_tracker pgt
+      INNER JOIN player p ON pgt.pgt_player_id = p.id
+      INNER JOIN poker_game pg ON pgt.pgt_game_id = pg.id
+      WHERE pg.game_code = ?`);
+
+    const result = await getConnection().query(query, [gameCode]);
+    return result;
   }
 }
 

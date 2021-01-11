@@ -260,6 +260,16 @@ type CompletedGame {
   stackStat: [GameStackStat!]
 }
 
+type GameResultTableRow {
+  playerName: String!
+  sessionTime: Int!
+  sessionTimeStr: String!
+  handsPlayed: Int!
+  buyIn: Float!
+  profit: Float!
+  rakePaid: Float!
+}
+
 type Mutation {
   # Not implemented
   configureGameFromTemplate(clubCode: String!, templateId: Int!): GameInfo!
@@ -318,4 +328,6 @@ type Query {
   pendingApprovalsForGame(gameCode: String!): [PendingApproval!]
   completedGame(gameCode: String!): CompletedGame
   currentHandLog(gameCode: String!): Json
+  gameResultTable(gameCode: String!): [GameResultTableRow!]
+  gamePlayers(gameCode: String!): [PlayerInfo!]
 }

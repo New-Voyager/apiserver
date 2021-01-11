@@ -48,14 +48,9 @@ export const getLastHandHistoryQuery = gql`
 `;
 
 export const getAllHandHistoryQuery = gql`
-  query($clubCode: String!, $gameCode: String!, $page: PageInput) {
-    handHistory: allHandHistory(
-      clubCode: $clubCode
-      gameCode: $gameCode
-      page: $page
-    ) {
+  query($gameCode: String!, $page: PageInput) {
+    handHistory: allHandHistory(gameCode: $gameCode, page: $page) {
       pageId
-      gameId
       handNum
       gameType
       wonAt
@@ -73,14 +68,9 @@ export const getAllHandHistoryQuery = gql`
 `;
 
 export const getMyWinningHandsQuery = gql`
-  query($clubCode: String!, $gameCode: String!, $page: PageInput) {
-    handWinners: myWinningHands(
-      clubCode: $clubCode
-      gameCode: $gameCode
-      page: $page
-    ) {
+  query($gameCode: String!, $page: PageInput) {
+    handWinners: myWinningHands(gameCode: $gameCode, page: $page) {
       pageId
-      gameId
       handNum
       winningCards
       winningRank
@@ -115,12 +105,8 @@ export const getStarredHandsQuery = gql`
 `;
 
 export const saveStarredHandMutation = gql`
-  mutation($clubCode: String!, $gameCode: String!, $handNum: String!) {
-    saved: saveStarredHand(
-      clubCode: $clubCode
-      gameCode: $gameCode
-      handNum: $handNum
-    )
+  mutation($gameCode: String!, $handNum: String!) {
+    saved: saveStarredHand(gameCode: $gameCode, handNum: $handNum)
   }
 `;
 
