@@ -79,48 +79,27 @@ export async function getLastHandHistory(playerId: string, args: any) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  let club;
-  if (args.clubCode !== '000000') {
-    const clubMembers1 = await ClubRepository.getMembers(args.clubCode);
-    const clubMember = await ClubRepository.isClubMember(
-      args.clubCode,
-      playerId
-    );
 
-    const player = await PlayerRepository.getPlayerById(playerId);
-    if (!player) {
-      throw new Error(`Player ${playerId} is not found`);
-    }
-    club = await ClubRepository.getClubById(args.clubCode);
-    if (!club) {
-      throw new Error(`Club ${args.clubCode} is not found`);
-    }
+  const game = await Cache.getGame(args.gameCode);
+  if (!game) {
+    throw new Error(`Game ${args.gameCode} is not found`);
+  }
+
+  if (game.club) {
+    const clubMember = await Cache.getClubMember(playerId, game.club.clubCode);
     if (!clubMember) {
       logger.error(
-        `The user ${playerId} is not a member of ${
-          args.clubCode
-        }, ${JSON.stringify(clubMembers1)}`
+        `Player: ${playerId} is not authorized to start the game ${args.gameCode} in club ${game.club.name}`
       );
-      throw new Error('Unauthorized');
-    }
-
-    if (clubMember.status == ClubMemberStatus.KICKEDOUT) {
-      logger.error(`The user ${playerId} is kicked out of ${args.clubCode}`);
-      throw new Error('Unauthorized');
+      throw new Error(
+        `Player: ${playerId} is not authorized to start the game ${args.gameCode}`
+      );
     }
 
     if (clubMember.status !== ClubMemberStatus.ACTIVE) {
       logger.error(`The user ${playerId} is not Active in ${args.clubCode}`);
       throw new Error('Unauthorized');
     }
-  } else {
-    club = new Club();
-    club.id = 0;
-  }
-
-  const game = await Cache.getGame(args.gameCode);
-  if (!game) {
-    throw new Error(`Game ${args.gameCode} is not found`);
   }
 
   const handHistory = await HandRepository.getLastHandHistory(game.id);
@@ -134,44 +113,27 @@ export async function getSpecificHandHistory(playerId: string, args: any) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  let club;
-  if (args.clubCode !== '000000') {
-    const player = await PlayerRepository.getPlayerById(playerId);
-    if (!player) {
-      throw new Error(`Player ${playerId} is not found`);
-    }
-    club = await ClubRepository.getClubById(args.clubCode);
-    if (!club) {
-      throw new Error(`Club ${args.clubCode} is not found`);
-    }
 
-    const clubMembers1 = await ClubRepository.getMembers(args.clubCode);
-    const clubMember = await ClubRepository.isClubMember(
-      args.clubCode,
-      playerId
-    );
+  const game = await Cache.getGame(args.gameCode);
+  if (!game) {
+    throw new Error(`Game ${args.gameCode} is not found`);
+  }
 
+  if (game.club) {
+    const clubMember = await Cache.getClubMember(playerId, game.club.clubCode);
     if (!clubMember) {
       logger.error(
-        `The user ${playerId} is not a member of ${
-          args.clubCode
-        }, ${JSON.stringify(clubMembers1)}`
+        `Player: ${playerId} is not authorized to start the game ${args.gameCode} in club ${game.club.name}`
       );
-      throw new Error('Unauthorized');
+      throw new Error(
+        `Player: ${playerId} is not authorized to start the game ${args.gameCode}`
+      );
     }
 
     if (clubMember.status !== ClubMemberStatus.ACTIVE) {
       logger.error(`The user ${playerId} is not Active in ${args.clubCode}`);
       throw new Error('Unauthorized');
     }
-  } else {
-    club = new Club();
-    club.id = 0;
-  }
-
-  const game = await Cache.getGame(args.gameCode);
-  if (!game) {
-    throw new Error(`Game ${args.gameCode} is not found`);
   }
 
   const handHistory = await HandRepository.getSpecificHandHistory(
@@ -206,11 +168,6 @@ export async function getAllHandHistory(playerId: string, args: any) {
       throw new Error('Unauthorized');
     }
 
-    if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
-      logger.error(`The user ${playerId} is kicked out of ${args.clubCode}`);
-      throw new Error('Unauthorized');
-    }
-
     if (clubMember.status !== ClubMemberStatus.ACTIVE) {
       logger.error(`The user ${playerId} is not Active in ${args.clubCode}`);
       throw new Error('Unauthorized');
@@ -240,6 +197,23 @@ export async function getMyWinningHands(playerId: string, args: any) {
   const game = await Cache.getGame(args.gameCode);
   if (!game) {
     throw new Error(`Game ${args.gameCode} is not found`);
+  }
+
+  if (game.club) {
+    const clubMember = await Cache.getClubMember(playerId, game.club.clubCode);
+    if (!clubMember) {
+      logger.error(
+        `Player: ${playerId} is not authorized to start the game ${args.gameCode} in club ${game.club.name}`
+      );
+      throw new Error(
+        `Player: ${playerId} is not authorized to start the game ${args.gameCode}`
+      );
+    }
+
+    if (clubMember.status !== ClubMemberStatus.ACTIVE) {
+      logger.error(`The user ${playerId} is not Active in ${args.clubCode}`);
+      throw new Error('Unauthorized');
+    }
   }
 
   const handHistory = await HandRepository.getMyWinningHands(
@@ -273,9 +247,6 @@ export async function saveStarredHand(playerId: string, args: any) {
   }
   const errors = new Array<string>();
   try {
-    if (!args.clubCode) {
-      errors.push('ClubCode is missing');
-    }
     if (!args.gameCode) {
       errors.push('gameCode is missing');
     }
@@ -297,39 +268,22 @@ export async function saveStarredHand(playerId: string, args: any) {
   if (!game) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
-  let club;
-  if (args.clubCode !== '000000') {
-    const clubMembers1 = await ClubRepository.getMembers(args.clubCode);
-    const clubMember = await ClubRepository.isClubMember(
-      args.clubCode,
-      playerId
-    );
 
-    club = await ClubRepository.getClubById(args.clubCode);
-    if (!club) {
-      throw new Error(`Club ${args.clubCode} is not found`);
-    }
+  if (game.club) {
+    const clubMember = await Cache.getClubMember(playerId, game.club.clubCode);
     if (!clubMember) {
       logger.error(
-        `The user ${playerId} is not a member of ${
-          args.clubCode
-        }, ${JSON.stringify(clubMembers1)}`
+        `Player: ${playerId} is not authorized to start the game ${args.gameCode} in club ${game.club.name}`
       );
-      throw new Error('Unauthorized');
-    }
-
-    if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
-      logger.error(`The user ${playerId} is kicked out of ${args.clubCode}`);
-      throw new Error('Unauthorized');
+      throw new Error(
+        `Player: ${playerId} is not authorized to start the game ${args.gameCode}`
+      );
     }
 
     if (clubMember.status !== ClubMemberStatus.ACTIVE) {
       logger.error(`The user ${playerId} is not Active in ${args.clubCode}`);
       throw new Error('Unauthorized');
     }
-  } else {
-    club = new Club();
-    club.id = 0;
   }
 
   const handHistory = await HandRepository.getSpecificHandHistory(

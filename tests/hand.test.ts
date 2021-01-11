@@ -219,112 +219,108 @@ describe('Hand Server', () => {
     }
   });
 
-  test.skip('Get specific hand history', async () => {
-    try {
-      const [
-        owner,
-        clubCode,
-        clubId,
-        playerUuids,
-        playerIds,
-      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-      const rewardId = await createReward(owner, clubCode);
-      const [gameCode, gameId] = await setupGameEnvironment(
-        owner,
-        clubCode,
-        playerUuids,
-        100
-      );
-      const rewardTrackId = await rewardutils.getRewardtrack(
-        playerUuids[0],
-        gameCode,
-        rewardId.toString()
-      );
-      const files = await glob.sync('**/*.json', {
-        onlyFiles: false,
-        cwd: 'highhand-results',
-        deep: 5,
-      });
+  test('Get specific hand history', async () => {
+    // try {
+    const [
+      owner,
+      clubCode,
+      clubId,
+      playerUuids,
+      playerIds,
+    ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+    const rewardId = await createReward(owner, clubCode);
+    const [gameCode, gameId] = await setupGameEnvironment(
+      owner,
+      clubCode,
+      playerUuids,
+      100
+    );
+    const rewardTrackId = await rewardutils.getRewardtrack(
+      playerUuids[0],
+      gameCode,
+      rewardId.toString()
+    );
+    const files = await glob.sync('**/*.json', {
+      onlyFiles: false,
+      cwd: 'highhand-results',
+      deep: 5,
+    });
 
-      for await (const file of files) {
-        const data = await defaultHandData(
-          file,
-          gameId,
-          rewardTrackId,
-          playerIds
-        );
-        await axios.post(
-          `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
-          data
-        );
-      }
-      const handHistory = await handutils.getSpecificHandHistory(
-        playerUuids[0],
-        gameCode,
-        '1'
+    for await (const file of files) {
+      const data = await defaultHandData(
+        file,
+        gameId,
+        rewardTrackId,
+        playerIds
       );
-      expect(handHistory.gameType).toBe('HOLDEM');
-      expect(handHistory.gameId).toBe(gameId);
-      expect(handHistory.handNum).toBe(1);
-    } catch (err) {
-      logger.error(JSON.stringify(err));
-      expect(true).toBeFalsy();
+      await axios.post(
+        `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
+        data
+      );
     }
+    const handHistory = await handutils.getSpecificHandHistory(
+      playerUuids[0],
+      gameCode,
+      '1'
+    );
+    expect(handHistory.gameType).toBe('HOLDEM');
+    expect(handHistory.handNum).toBe(1);
+    // } catch (err) {
+    //   logger.error(JSON.stringify(err));
+    //   expect(true).toBeFalsy();
+    // }
   });
 
-  test.skip('Get latest hand history', async () => {
-    try {
-      const [
-        owner,
-        clubCode,
-        clubId,
-        playerUuids,
-        playerIds,
-      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-      const rewardId = await createReward(owner, clubCode);
-      const [gameCode, gameId] = await setupGameEnvironment(
-        owner,
-        clubCode,
-        playerUuids,
-        100
-      );
-      const rewardTrackId = await rewardutils.getRewardtrack(
-        playerUuids[0],
-        gameCode,
-        rewardId.toString()
-      );
+  test('Get latest hand history', async () => {
+    // try {
+    const [
+      owner,
+      clubCode,
+      clubId,
+      playerUuids,
+      playerIds,
+    ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+    const rewardId = await createReward(owner, clubCode);
+    const [gameCode, gameId] = await setupGameEnvironment(
+      owner,
+      clubCode,
+      playerUuids,
+      100
+    );
+    const rewardTrackId = await rewardutils.getRewardtrack(
+      playerUuids[0],
+      gameCode,
+      rewardId.toString()
+    );
 
-      const files = await glob.sync('**/*.json', {
-        onlyFiles: false,
-        cwd: 'highhand-results',
-        deep: 5,
-      });
+    const files = await glob.sync('**/*.json', {
+      onlyFiles: false,
+      cwd: 'highhand-results',
+      deep: 5,
+    });
 
-      let lastHand = 0;
-      for await (const file of files) {
-        const data = await defaultHandData(
-          file,
-          gameId,
-          rewardTrackId,
-          playerIds
-        );
-        await axios.post(
-          `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
-          data
-        );
-        lastHand += 1;
-      }
-      const resp1 = await handutils.getLastHandHistory(
-        playerUuids[0],
-        gameCode
+    let lastHand = 0;
+    for await (const file of files) {
+      const data = await defaultHandData(
+        file,
+        gameId,
+        rewardTrackId,
+        playerIds
       );
-      expect(resp1.gameType).toBe('HOLDEM');
-      expect(resp1.wonAt).toBe('SHOW_DOWN');
-      expect(resp1.handNum).toBe(lastHand);
-    } catch (err) {
-      logger.error(JSON.stringify(err));
-      expect(true).toBeFalsy();
+      await axios.post(
+        `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
+        data
+      );
+      lastHand += 1;
     }
+    const resp1 = await handutils.getLastHandHistory(playerUuids[0], gameCode);
+    expect(resp1.gameType).toBe('HOLDEM');
+    expect(resp1.wonAt).toBe('SHOW_DOWN');
+    expect(resp1.handNum).toBe(lastHand);
+    // } catch (err) {
+    //   logger.error(JSON.stringify(err));
+    //   expect(true).toBeFalsy();
+    // }
   });
 
   test('Get all hand history', async () => {
@@ -586,7 +582,7 @@ describe('Hand Server', () => {
     }
   });
 
-  test.skip('Save starred hand', async () => {
+  test('Save starred hand', async () => {
     try {
       const [
         owner,
@@ -630,7 +626,6 @@ describe('Hand Server', () => {
       }
 
       const starredHand = await handutils.saveStarredHand(
-        clubCode,
         gameCode,
         playerUuids[0],
         '1'
@@ -642,7 +637,7 @@ describe('Hand Server', () => {
     }
   });
 
-  test.skip('Get starred hand', async () => {
+  test('Get starred hand', async () => {
     try {
       const [
         owner,
@@ -684,7 +679,6 @@ describe('Hand Server', () => {
         );
         expect(resp.status).toBe(200);
         await handutils.saveStarredHand(
-          clubCode,
           gameCode,
           playerUuids[0],
           data.handNum.toString()

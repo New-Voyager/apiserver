@@ -211,14 +211,12 @@ export async function getPlayerById(playerId: string): Promise<number> {
 }
 
 export async function saveStarredHand(
-  clubCode: string,
   gameCode: string,
   playerId: string,
   handNum: string
 ) {
   const client = getClient(playerId);
   const variables = {
-    clubCode: clubCode,
     gameCode: gameCode,
     handNum: handNum,
   };
