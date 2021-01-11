@@ -1,7 +1,9 @@
-  # Cleanup steps
+test:
+  disabled: false
+
+# Cleanup steps
 cleanup:
   steps:
-
       # delete clubs and club members
     - delete-clubs:
         - name: chennai
@@ -10,7 +12,6 @@ cleanup:
 # Setup steps
 setup:
   steps:
-
       # register players if doesn't exist and store the player info
     - register-players: 
         - name: arun
@@ -102,9 +103,17 @@ game:
   steps:
 
     # configure game
-    - start-games:
+    - configure-games:
         - club: chennai
           game: test1
+          reward:
+            amount: 100.4
+            endHour: 4
+            minRank: 1
+            name: brady
+            startHour: 4
+            type: HIGH_HAND
+            schedule: HOURLY
           input:
             title: test1
             gameType: HOLDEM
@@ -123,6 +132,14 @@ game:
             actionTime: 100
         - club: chennai
           game: test2
+          reward:
+            amount: 100.4
+            endHour: 4
+            minRank: 1
+            name: brady
+            startHour: 4
+            type: HIGH_HAND
+            schedule: HOURLY
           input:
             title: test2
             gameType: HOLDEM
@@ -141,6 +158,14 @@ game:
             actionTime: 100
         - club: newClub
           game: test3
+          reward:
+            amount: 100.4
+            endHour: 4
+            minRank: 1
+            name: brady
+            startHour: 4
+            type: HIGH_HAND
+            schedule: HOURLY
           input:
             title: test3
             gameType: HOLDEM
@@ -165,40 +190,30 @@ game:
           players:
             - playerId: arun
               seatNo: 1
-              buyChips: 0
             - playerId: sam
               seatNo: 3
-              buyChips: 0
             - playerId: bala
               seatNo: 5
-              buyChips: 0
         - club: chennai
           game: test2
           players:
             - playerId: arun
               seatNo: 1
-              buyChips: 0
             - playerId: sam
               seatNo: 3
-              buyChips: 0
             - playerId: bala
               seatNo: 5
-              buyChips: 0
         - club: newClub
           game: test3
           players:
             - playerId: arun
               seatNo: 1
-              buyChips: 0
             - playerId: sam
               seatNo: 3
-              buyChips: 0
             - playerId: bala
               seatNo: 5
-              buyChips: 0
             - playerId: arjun
               seatNo: 8
-              buyChips: 0
 
     # players buy-in
     - buyin:
@@ -206,40 +221,30 @@ game:
           game: test1
           players:
             - playerId: arun
-              seatNo: 1
               buyChips: 100
             - playerId: sam
-              seatNo: 3
               buyChips: 100
             - playerId: bala
-              seatNo: 5
               buyChips: 100
         - club: chennai
           game: test2
           players:
             - playerId: arun
-              seatNo: 1
-              buyChips: 50
+              buyChips: 150
             - playerId: sam
-              seatNo: 3
-              buyChips: 50
+              buyChips: 150
             - playerId: bala
-              seatNo: 5
-              buyChips: 50
+              buyChips: 150
         - club: newClub
           game: test3
           players:
             - playerId: arun
-              seatNo: 1
               buyChips: 100
             - playerId: sam
-              seatNo: 3
               buyChips: 100
             - playerId: bala
-              seatNo: 5
               buyChips: 100
             - playerId: arjun
-              seatNo: 8
               buyChips: 100
 
     # verify club game balance
@@ -269,11 +274,11 @@ game:
           game: test2
           players:
           - name: arun
-            balance: 50
+            balance: 150
           - name: sam
-            balance: 50
+            balance: 150
           - name: bala
-            balance: 50
+            balance: 150
         - club: newClub
           game: test3
           players:
