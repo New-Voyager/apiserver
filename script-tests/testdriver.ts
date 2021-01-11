@@ -82,8 +82,7 @@ class GameScript {
     return doc;
   }
 
-  protected async cleanupInclude(data) {
-    const cleanup = data['cleanup'];
+  protected async cleanupInclude(cleanup) {
     if (!cleanup) {
       return;
     }
@@ -96,8 +95,7 @@ class GameScript {
     }
   }
 
-  protected async setupInclude(data) {
-    const setup = data['setup'];
+  protected async setupInclude(setup) {
     if (!setup) {
       return;
     }
@@ -119,20 +117,30 @@ class GameScript {
       if (step['approve-club-members']) {
         await this.approveClubMembers(step['approve-club-members']);
       }
+      if (step['deny-club-members']) {
+        await this.denyClubMembers(step['deny-club-members']);
+      }
       if (step['create-game-servers']) {
         await this.createGameServers(step['create-game-servers']);
       }
     }
   }
 
-  protected async gameInclude(data) {
-    const game = data['game'];
+  protected async gameInclude(game) {
     if (!game) {
       return;
     }
 
     // run game steps
     for (const step of game['steps']) {
+      if (step['error']) {
+        try {
+          await this.gameInclude(step['error']);
+          throw new Error('error case not satisfied');
+        } catch (error) {
+          this.log('error case successfully verified');
+        }
+      }
       if (step['configure-games']) {
         await this.configureGames(step['configure-games']);
       }
@@ -151,109 +159,8 @@ class GameScript {
       if (step['verify-player-game-stack']) {
         await this.verifyPlayerGameStacks(step['verify-player-game-stack']);
       }
-      if (step['save-hands']) {
-        await this.saveHands(step['save-hands']);
-      }
-      if (step['end-games']) {
-        await this.endGames(step['end-games']);
-      }
-      if (step['verify-club-balance']) {
-        await this.verifyClubBalances(step['verify-club-balance']);
-      }
-      if (step['verify-player-balance']) {
-        await this.verifyPlayerBalances(step['verify-player-balance']);
-      }
-      if (step['messages']) {
-        await this.sendClubMessages(step['messages']);
-      }
-      if (step['process-pending-updates']) {
-        await this.processPendingUpdates(step['process-pending-updates']);
-      }
-    }
-  }
-
-  /////////////////////// Level 1 Functions
-
-  protected async cleanup() {
-    const cleanup = this.script['cleanup'];
-    if (!cleanup) {
-      return;
-    }
-
-    // run cleanup steps
-    for (const step of cleanup['steps']) {
-      if (step['include']) {
-        const data = await this.getIncludeFile(step['include'].script);
-        await this.cleanupInclude(data);
-      }
-      if (step['delete-clubs']) {
-        await this.deleteClubs(step['delete-clubs']);
-      }
-    }
-  }
-
-  protected async setup() {
-    const setup = this.script['setup'];
-    if (!setup) {
-      return;
-    }
-
-    for (const step of setup['steps']) {
-      // run setup steps
-      if (step['include']) {
-        const data = await this.getIncludeFile(step['include'].script);
-        await this.setupInclude(data);
-      }
-      if (step['register-players']) {
-        await this.registerPlayers(step['register-players']);
-      }
-      if (step['create-clubs']) {
-        await this.createClubs(step['create-clubs']);
-      }
-      if (step['join-clubs']) {
-        await this.joinClubs(step['join-clubs']);
-      }
-      if (step['verify-club-members']) {
-        await this.verifyClubMembers(step['verify-club-members']);
-      }
-      if (step['approve-club-members']) {
-        await this.approveClubMembers(step['approve-club-members']);
-      }
-      if (step['create-game-servers']) {
-        await this.createGameServers(step['create-game-servers']);
-      }
-    }
-  }
-
-  protected async game() {
-    const game = this.script['game'];
-    if (!game) {
-      return;
-    }
-
-    // run game steps
-    for (const step of game['steps']) {
-      if (step['include']) {
-        const data = await this.getIncludeFile(step['include'].script);
-        await this.gameInclude(data);
-      }
-      if (step['configure-games']) {
-        await this.configureGames(step['configure-games']);
-      }
-      if (step['sitsin']) {
-        await this.playersSitsin(step['sitsin']);
-      }
-      if (step['buyin']) {
-        await this.addBuyins(step['buyin']);
-      }
-      if (step['start-games']) {
-        await this.startGames(step['start-games']);
-      }
-      if (step['verify-club-game-stack']) {
-        await this.verifyClubGameStacks(step['verify-club-game-stack']);
-      }
-      if (step['verify-player-game-stack']) {
-        await this.verifyPlayerGameStacks(step['verify-player-game-stack']);
+      if (step['verify-player-game-status']) {
+        await this.verifyPlayersGameStatus(step['verify-player-game-status']);
       }
       if (step['save-hands']) {
         await this.saveHands(step['save-hands']);
@@ -279,7 +186,69 @@ class GameScript {
       if (step['update-club-members']) {
         await this.updateClubMembers(step['update-club-members']);
       }
+      if (step['live-games']) {
+        await this.liveGames(step['live-games']);
+      }
     }
+  }
+
+  /////////////////////// Level 1 Functions
+
+  protected async cleanup() {
+    const cleanup = this.script['cleanup'];
+    if (!cleanup) {
+      return;
+    }
+
+    // run cleanup steps
+    for (const step of cleanup['steps']) {
+      if (step['include']) {
+        const data = await this.getIncludeFile(step['include'].script);
+        if (data) {
+          await this.cleanupInclude(data['cleanup']);
+        }
+      }
+    }
+
+    await this.cleanupInclude(cleanup);
+  }
+
+  protected async setup() {
+    const setup = this.script['setup'];
+    if (!setup) {
+      return;
+    }
+
+    for (const step of setup['steps']) {
+      // run setup steps
+      if (step['include']) {
+        const data = await this.getIncludeFile(step['include'].script);
+        if (data) {
+          await this.setupInclude(data['setup']);
+        }
+      }
+    }
+
+    await this.setupInclude(setup);
+  }
+
+  protected async game() {
+    const game = this.script['game'];
+    if (!game) {
+      return;
+    }
+
+    // run game steps
+    for (const step of game['steps']) {
+      if (step['include']) {
+        const data = await this.getIncludeFile(step['include'].script);
+        if (data) {
+          await this.gameInclude(data['game']);
+        }
+      }
+    }
+
+    await this.gameInclude(game);
   }
 
   /////////////////////// Level 2 Functions
@@ -332,6 +301,12 @@ class GameScript {
     }
   }
 
+  protected async denyClubMembers(params: any) {
+    for (const membersInput of params) {
+      await this.denyMember(membersInput);
+    }
+  }
+
   protected async createGameServers(params: any) {
     for (const serverInput of params) {
       await this.createGameServer(serverInput);
@@ -370,6 +345,12 @@ class GameScript {
   protected async verifyPlayerGameStacks(params: any) {
     for (const playerStack of params) {
       await this.verifyPlayerGameStack(playerStack);
+    }
+  }
+
+  protected async verifyPlayersGameStatus(params: any) {
+    for (const playerStatus of params) {
+      await this.verifyPlayerGameStatus(playerStatus);
     }
   }
 
@@ -427,6 +408,11 @@ class GameScript {
     }
   }
 
+  protected async liveGames(params: any) {
+    for (const games of params) {
+      await this.liveGame(games);
+    }
+  }
   /////////////////////// Level 3 Functions
 
   protected async deleteClub(params: any) {
@@ -626,6 +612,31 @@ class GameScript {
             playerUuid: this.registeredPlayers[member].playerUuid,
           },
           mutation: approveClubQuery,
+        });
+      }
+    } catch (err) {
+      this.log(err.toString());
+      throw err;
+    }
+  }
+
+  protected async denyMember(memberInput: any): Promise<any> {
+    this.log(`Deny Club Membres: ${JSON.stringify(memberInput)}`);
+    try {
+      const rejectClubQuery = gql`
+        mutation($clubCode: String!, $playerUuid: String!) {
+          status: rejectMember(clubCode: $clubCode, playerUuid: $playerUuid)
+        }
+      `;
+      for (const member of memberInput.members) {
+        await getClient(
+          this.registeredPlayers[this.clubCreated[memberInput.club].owner].token
+        ).mutate({
+          variables: {
+            clubCode: this.clubCreated[memberInput.club].clubCode,
+            playerUuid: this.registeredPlayers[member].playerUuid,
+          },
+          mutation: rejectClubQuery,
         });
       }
     } catch (err) {
@@ -844,6 +855,56 @@ class GameScript {
             `Expected ${player.balance} but received ${receivedPlayer.stack}`
           );
           throw new Error('Player stack verification failed');
+        }
+      }
+    } catch (err) {
+      this.log(err.toString());
+      throw err;
+    }
+  }
+
+  protected async verifyPlayerGameStatus(status: any): Promise<any> {
+    this.log(`Verify player status: ${JSON.stringify(status)}`);
+    const queryGameInfo = gql`
+      query($gameCode: String!) {
+        seatInfo: gameInfo(gameCode: $gameCode) {
+          seatInfo {
+            playersInSeats {
+              seatNo
+              playerUuid
+              name
+              buyIn
+              stack
+              status
+            }
+          }
+        }
+      }
+    `;
+    try {
+      const resp = await getClient(
+        this.registeredPlayers[this.clubCreated[status.club].owner].token
+      ).query({
+        variables: {
+          gameCode: this.gameCreated[status.game].gameCode,
+        },
+        query: queryGameInfo,
+      });
+      const playerInSeats: Array<any> =
+        resp.data.seatInfo.seatInfo.playersInSeats;
+      for (const player of status.players) {
+        const receivedPlayer = await playerInSeats.find(
+          element => element.name == player.name
+        );
+        if (!receivedPlayer) {
+          this.log(`Player ${player} not found in ${playerInSeats}`);
+          throw new Error('Player status verification failed');
+        }
+        if (player.status != receivedPlayer.status) {
+          this.log(
+            `Expected ${player.status} but received ${receivedPlayer.status}`
+          );
+          throw new Error('Player status verification failed');
         }
       }
     } catch (err) {
@@ -1082,6 +1143,60 @@ class GameScript {
       }
     } catch (err) {
       this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
+  protected async liveGame(games: any): Promise<any> {
+    this.log(`Verify live games: ${JSON.stringify(games)}`);
+    const queryLiveGame = gql`
+      query($clubCode: String!) {
+        games: liveGames(clubCode: $clubCode) {
+          title
+          clubName
+          gameType
+          tableCount
+        }
+      }
+    `;
+    try {
+      const resp = await getClient(
+        this.registeredPlayers[this.clubCreated[games.club].owner].token
+      ).query({
+        variables: {
+          clubCode: this.clubCreated[games.club].clubCode,
+        },
+        query: queryLiveGame,
+      });
+      if (resp.data.games.length !== games.input.length) {
+        this.log(
+          `Expected ${games.input.length} live games but received ${resp.data.games.length}`
+        );
+        throw new Error('Live games verification failed');
+      }
+      for (const game of games.input) {
+        const receivedGame = await resp.data.games.find(
+          element => element.title == game.game
+        );
+        if (!receivedGame) {
+          this.log(`Game ${game} not found in ${resp.data.games}`);
+          throw new Error('Live games verification failed');
+        }
+        if (game.gameType != receivedGame.gameType) {
+          this.log(
+            `Expected ${game.gameType} but received ${receivedGame.gameType}`
+          );
+          throw new Error('Live games verification failed');
+        }
+        if (game.tableCount != receivedGame.tableCount) {
+          this.log(
+            `Expected ${game.tableCount} but received ${receivedGame.tableCount}`
+          );
+          throw new Error('Live games verification failed');
+        }
+      }
+    } catch (err) {
+      this.log(err.toString());
       throw err;
     }
   }
