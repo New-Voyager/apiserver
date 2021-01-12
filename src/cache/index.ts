@@ -58,6 +58,11 @@ class GameCache {
       if (!club) {
         throw new Error(`Cannot find with game code: ${clubCode}`);
       }
+      // resolve club owner
+      const owner: Player | undefined = await Promise.resolve(club.owner);
+      if (owner) {
+        club.owner = owner;
+      }
       this.clubCache.set(clubCode, club);
     }
     return club;

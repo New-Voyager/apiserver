@@ -101,7 +101,6 @@ input MemberFilterInput {
 type Query {
   clubMembers(clubCode: String!, filter: MemberFilterInput): [ClubMember!]
   clubById(clubCode: String!): clubId!
-
   # returns 'last' number of games 'from' in reverse order
   # by default, this call returns only last 20 games
   # the caller can paginate with pageId

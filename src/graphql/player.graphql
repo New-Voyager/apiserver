@@ -97,6 +97,12 @@ type ClubInfo {
   isOwner: Boolean
 }
 
+type SearchClubResult {
+  name: String!         # name of the club
+  ownerName: String!
+  status: ClubStatus
+}
+
 
 type Query {
   myClubs: [PlayerClub!]
@@ -106,4 +112,5 @@ type Query {
   pastGames: [PastGame!]
   myInfo: PlayerInfo!
   clubInfo (clubCode: String!): ClubInfo!
+  searchClub (clubCode: String!): SearchClubResult
 }

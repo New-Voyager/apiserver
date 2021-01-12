@@ -4,11 +4,14 @@ import {ClubRepository} from '@src/repositories/club';
 import {getLogger} from '@src/utils/log';
 import {GameRepository} from '@src/repositories/game';
 import {Cache} from '@src/cache/index';
+import {Player} from '@src/entity/player';
+
 import {
   GameStatus,
   GameType,
   ClubMemberStatus,
   PlayerStatus,
+  ClubStatus,
 } from '@src/entity/types';
 import {getHighHandsByGame} from './reward';
 const logger = getLogger('player');
@@ -68,6 +71,10 @@ const resolvers: any = {
 
     clubInfo: async (parent, args, ctx, info) => {
       const ret = await getClubPlayerInfo(ctx.req.playerId, args.clubCode);
+      return ret;
+    },
+    searchClub: async (parent, args, ctx, info) => {
+      const ret = await searchClub(ctx.req.playerId, args.clubCode);
       return ret;
     },
   },
@@ -173,6 +180,26 @@ export async function getClubPlayerInfo(playerId: string, clubCode: string) {
     isManager: clubMember.isManager,
     isOwner: clubMember.isOwner,
     status: ClubMemberStatus[clubMember.status],
+  };
+}
+
+export async function searchClub(playerId: string, clubCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+
+  const club = await Cache.getClub(clubCode);
+  if (!club) {
+    return null;
+  }
+  let ownerName = '';
+  if (club.owner && club.owner instanceof Player) {
+    ownerName = club.owner.name;
+  }
+  return {
+    name: club.name,
+    ownerName: ownerName,
+    status: ClubStatus[club.status],
   };
 }
 
