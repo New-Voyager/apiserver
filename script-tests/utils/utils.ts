@@ -21,6 +21,24 @@ export function getClient(token?: string, test?: string): any {
   });
 }
 
+export async function mutationHelper(
+  variables: any,
+  query: any,
+  token?: string
+) {
+  return getClient(token).mutate({
+    variables: variables,
+    mutation: query,
+  });
+}
+
+export async function queryHelper(variables: any, query: any, token?: string) {
+  return getClient(token).query({
+    variables: variables,
+    query: query,
+  });
+}
+
 export async function resetDatabase() {
   const resetDB = gql`
     mutation {

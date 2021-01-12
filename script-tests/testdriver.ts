@@ -1,8 +1,9 @@
 import * as yaml from 'js-yaml';
 import * as fs from 'fs';
 import {default as axios} from 'axios';
-import {getClient, resetDatabase} from './utils';
-import {gql} from 'apollo-boost';
+import {resetDatabase, mutationHelper, queryHelper} from './utils/utils';
+import * as queries from './utils/queries';
+import * as URL from './utils/APIPaths';
 
 /*
 This class runs game script and verifies results in different stages
@@ -32,8 +33,6 @@ class GameScript {
   }
 
   public load() {
-    const cwd = __dirname;
-    //const filename = `${cwd}/${this.scriptFile}`;
     const filename = this.scriptFile;
     console.log(
       '\n---------------------------------------------------------------------\n'
@@ -134,12 +133,14 @@ class GameScript {
     // run game steps
     for (const step of game['steps']) {
       if (step['error']) {
+        let flag = false;
         try {
           await this.gameInclude(step['error']);
-          throw new Error('error case not satisfied');
+          flag = true;
         } catch (error) {
           this.log('error case successfully verified');
         }
+        if (flag) throw new Error('error case not satisfied');
       }
       if (step['configure-games']) {
         await this.configureGames(step['configure-games']);
@@ -418,7 +419,7 @@ class GameScript {
   protected async deleteClub(params: any) {
     // call internal REST API to delete the club
     try {
-      const url = `${this.serverURL}/internal/delete-club-by-name/${params.name}`;
+      const url = `${this.serverURL}${URL.deleteClubByName}/${params.name}`;
       this.log(url);
       await axios.post(url, {});
       this.log(`Club ${params.name} has been deleted`);
@@ -430,22 +431,15 @@ class GameScript {
   protected async registerPlayer(playerInput: any): Promise<any> {
     this.log(`Register player: ${JSON.stringify(playerInput)}`);
     try {
-      const createPlayer = gql`
-        mutation($input: PlayerCreateInput!) {
-          playerId: createPlayer(player: $input)
-        }
-      `;
-      const resp = await getClient().mutate({
-        variables: {
-          input: {
-            name: playerInput.name,
-            deviceId: playerInput.deviceId,
-            email: `${playerInput.name}@poker.net`,
-            password: playerInput.name,
-          },
+      const variables = {
+        input: {
+          name: playerInput.name,
+          deviceId: playerInput.deviceId,
+          email: `${playerInput.name}@poker.net`,
+          password: playerInput.name,
         },
-        mutation: createPlayer,
-      });
+      };
+      const resp = await mutationHelper(variables, queries.createPlayer);
       const playerId = resp.data.playerId;
 
       const token = await this.loginPlayerWithUuid({
@@ -454,23 +448,11 @@ class GameScript {
         name: playerInput.name,
       });
 
-      // get player by uuid (we need to get internal id for game/hand requests)
-      const queryPlayer = gql`
-        query {
-          player: playerById {
-            uuid
-            id
-            name
-            lastActiveTime
-          }
-        }
-      `;
-      const playerResp = await getClient(token).query({
-        variables: {
-          playerId: resp.data.playerId,
-        },
-        query: queryPlayer,
-      });
+      const playerResp = await queryHelper(
+        {playerId: resp.data.playerId},
+        queries.getPlayer,
+        token
+      );
       return [playerResp.data.player.uuid, playerResp.data.player.id, token];
     } catch (err) {
       this.log(err.toString());
@@ -481,7 +463,7 @@ class GameScript {
   protected async loginPlayerWithUuid(params: any) {
     // call internal REST API to delete the club
     try {
-      const url = `${this.serverURL}/auth/login`;
+      const url = `${this.serverURL}${URL.authLogin}`;
       this.log(url);
       const resp = await axios.post(url, {
         uuid: params.uuid,
@@ -498,39 +480,23 @@ class GameScript {
   protected async createClub(clubInput: any): Promise<any> {
     this.log(`Create Club: ${JSON.stringify(clubInput)}`);
     try {
-      const createClubQuery = gql`
-        mutation($input: ClubCreateInput!) {
-          clubCode: createClub(club: $input)
-        }
-      `;
-      const resp = await getClient(
-        this.registeredPlayers[clubInput.owner].token
-      ).mutate({
-        variables: {
+      const resp = await mutationHelper(
+        {
           input: {
             name: clubInput.name,
             description: 'Poker players gather',
           },
         },
-        mutation: createClubQuery,
-      });
+        queries.createClub,
+        this.registeredPlayers[clubInput.owner].token
+      );
 
       // get club by uuid (we need to get internal id for game/hand requests)
-      const queryClub = gql`
-        query($clubCode: String!) {
-          club: clubById(clubCode: $clubCode) {
-            id
-          }
-        }
-      `;
-      const clubResp = await getClient(
+      const clubResp = await queryHelper(
+        {clubCode: resp.data.clubCode},
+        queries.getClub,
         this.registeredPlayers[clubInput.owner].token
-      ).query({
-        variables: {
-          clubCode: resp.data.clubCode,
-        },
-        query: queryClub,
-      });
+      );
       return [resp.data.clubCode, clubResp.data.club.id];
     } catch (err) {
       this.log(err.toString());
@@ -541,18 +507,14 @@ class GameScript {
   protected async joinClub(joinClubInput: any): Promise<any> {
     this.log(`Join Club: ${JSON.stringify(joinClubInput)}`);
     try {
-      const joinClubQuery = gql`
-        mutation($clubCode: String!) {
-          status: joinClub(clubCode: $clubCode)
-        }
-      `;
       for (const member of joinClubInput.members) {
-        await getClient(this.registeredPlayers[member].token).mutate({
-          variables: {
+        await mutationHelper(
+          {
             clubCode: this.clubCreated[joinClubInput.club].clubCode,
           },
-          mutation: joinClubQuery,
-        });
+          queries.joinClub,
+          this.registeredPlayers[member].token
+        );
       }
     } catch (err) {
       this.log(err.toString());
@@ -563,26 +525,15 @@ class GameScript {
   protected async verifyMember(memberInput: any): Promise<any> {
     this.log(`Verify Club Membres: ${JSON.stringify(memberInput)}`);
     try {
-      const queryMemberStatus = gql`
-        query($clubCode: String!, $playerUuid: String!) {
-          status: clubMembers(
-            clubCode: $clubCode
-            filter: {playerId: $playerUuid}
-          ) {
-            status
-          }
-        }
-      `;
       for (const member of memberInput.members) {
-        const resp = await getClient(
-          this.registeredPlayers[member.name].token
-        ).query({
-          variables: {
+        const resp = await queryHelper(
+          {
             clubCode: this.clubCreated[memberInput.club].clubCode,
             playerUuid: this.registeredPlayers[member.name].playerUuid,
           },
-          query: queryMemberStatus,
-        });
+          queries.clubMemberStatus,
+          this.registeredPlayers[member.name].token
+        );
         if (resp.data.status[0].status != member.status) {
           throw new Error(
             `${member.name}'s status verification failed. Expected: ${member.status} Received: ${resp.data.status[0].status}`
@@ -598,21 +549,15 @@ class GameScript {
   protected async approveMember(memberInput: any): Promise<any> {
     this.log(`Approve Club Membres: ${JSON.stringify(memberInput)}`);
     try {
-      const approveClubQuery = gql`
-        mutation($clubCode: String!, $playerUuid: String!) {
-          status: approveMember(clubCode: $clubCode, playerUuid: $playerUuid)
-        }
-      `;
       for (const member of memberInput.members) {
-        await getClient(
-          this.registeredPlayers[this.clubCreated[memberInput.club].owner].token
-        ).mutate({
-          variables: {
+        await mutationHelper(
+          {
             clubCode: this.clubCreated[memberInput.club].clubCode,
             playerUuid: this.registeredPlayers[member].playerUuid,
           },
-          mutation: approveClubQuery,
-        });
+          queries.approveClubMember,
+          this.registeredPlayers[this.clubCreated[memberInput.club].owner].token
+        );
       }
     } catch (err) {
       this.log(err.toString());
@@ -623,21 +568,15 @@ class GameScript {
   protected async denyMember(memberInput: any): Promise<any> {
     this.log(`Deny Club Membres: ${JSON.stringify(memberInput)}`);
     try {
-      const rejectClubQuery = gql`
-        mutation($clubCode: String!, $playerUuid: String!) {
-          status: rejectMember(clubCode: $clubCode, playerUuid: $playerUuid)
-        }
-      `;
       for (const member of memberInput.members) {
-        await getClient(
-          this.registeredPlayers[this.clubCreated[memberInput.club].owner].token
-        ).mutate({
-          variables: {
+        await mutationHelper(
+          {
             clubCode: this.clubCreated[memberInput.club].clubCode,
             playerUuid: this.registeredPlayers[member].playerUuid,
           },
-          mutation: rejectClubQuery,
-        });
+          queries.rejectClubMember,
+          this.registeredPlayers[this.clubCreated[memberInput.club].owner].token
+        );
       }
     } catch (err) {
       this.log(err.toString());
@@ -648,7 +587,7 @@ class GameScript {
   protected async createGameServer(gameServer: any): Promise<any> {
     this.log(`Create game server: ${JSON.stringify(gameServer)}`);
     // call internal REST API to create a game server
-    const url = `${this.serverURL}/internal/register-game-server`;
+    const url = `${this.serverURL}${URL.registerGameServer}`;
     await axios.post(url, gameServer).catch(err => {
       this.log('Game server already exists');
     });
@@ -657,20 +596,14 @@ class GameScript {
   protected async createReward(input: any) {
     this.log(`Create Reward: ${JSON.stringify(input)}`);
     try {
-      const createReward = gql`
-        mutation($clubCode: String!, $input: RewardInput!) {
-          rewardId: createReward(clubCode: $clubCode, input: $input)
-        }
-      `;
-      const club = this.clubCreated[input.club];
-      const client = await getClient(this.registeredPlayers[club.owner].token);
-      const response = await client.mutate({
-        variables: {
-          clubCode: club.clubCode,
+      const response = await mutationHelper(
+        {
+          clubCode: this.clubCreated[input.club].clubCode,
           input: input.reward,
         },
-        mutation: createReward,
-      });
+        queries.createReward,
+        this.registeredPlayers[this.clubCreated[input.club].owner].token
+      );
       return response.data.rewardId;
     } catch (err) {
       this.log(JSON.stringify(err));
@@ -686,39 +619,24 @@ class GameScript {
         reward: gameInput.reward,
       });
       gameInput.input.rewardIds = [rewardId];
-      const configureGame = gql`
-        mutation($clubCode: String!, $gameInput: GameCreateInput!) {
-          configuredGame: configureGame(clubCode: $clubCode, game: $gameInput) {
-            gameCode
-          }
-        }
-      `;
-      const resp = await getClient(
-        this.registeredPlayers[this.clubCreated[gameInput.club].owner].token
-      ).mutate({
-        variables: {
+
+      const resp = await mutationHelper(
+        {
           gameInput: gameInput.input,
           clubCode: this.clubCreated[gameInput.club].clubCode,
         },
-        mutation: configureGame,
-      });
+        queries.configureGame,
+        this.registeredPlayers[this.clubCreated[gameInput.club].owner].token
+      );
 
       // get game by uuid (we need to get internal id for game/hand requests)
-      const queryGame = gql`
-        query($gameCode: String!) {
-          game: gameById(gameCode: $gameCode) {
-            id
-          }
-        }
-      `;
-      const gameResp = await getClient(
-        this.registeredPlayers[this.clubCreated[gameInput.club].owner].token
-      ).query({
-        variables: {
+      const gameResp = await queryHelper(
+        {
           gameCode: resp.data.configuredGame.gameCode,
         },
-        query: queryGame,
-      });
+        queries.getGame,
+        this.registeredPlayers[this.clubCreated[gameInput.club].owner].token
+      );
       this.log(`Game code: ${resp.data.configuredGame.gameCode}`);
       this.rewardIds[gameInput.game] = {
         ids: gameInput.input.rewardIds,
@@ -733,22 +651,15 @@ class GameScript {
   protected async playerSitsin(sitsinInput: any): Promise<any> {
     this.log(`Players sits in: ${JSON.stringify(sitsinInput)}`);
     try {
-      const query = gql`
-        mutation($gameCode: String!, $seatNo: Int!) {
-          joinGame(gameCode: $gameCode, seatNo: $seatNo)
-        }
-      `;
       for (const player of sitsinInput.players) {
-        const client = await getClient(
-          this.registeredPlayers[player.playerId].token
-        );
-        await client.mutate({
-          variables: {
+        await mutationHelper(
+          {
             gameCode: this.gameCreated[sitsinInput.game].gameCode,
             seatNo: player.seatNo,
           },
-          mutation: query,
-        });
+          queries.joinGame,
+          this.registeredPlayers[player.playerId].token
+        );
       }
     } catch (err) {
       this.log(JSON.stringify(err));
@@ -759,25 +670,15 @@ class GameScript {
   protected async addBuyin(buyinInput: any): Promise<any> {
     this.log(`Buyin: ${JSON.stringify(buyinInput)}`);
     try {
-      const query = gql`
-        mutation($gameCode: String!, $amount: Float!) {
-          buyIn(gameCode: $gameCode, amount: $amount) {
-            expireSeconds
-            approved
-          }
-        }
-      `;
       for (const player of buyinInput.players) {
-        const client = await getClient(
-          this.registeredPlayers[player.playerId].token
-        );
-        const resp = await client.mutate({
-          variables: {
+        await mutationHelper(
+          {
             gameCode: this.gameCreated[buyinInput.game].gameCode,
             amount: player.buyChips,
           },
-          mutation: query,
-        });
+          queries.buyIn,
+          this.registeredPlayers[player.playerId].token
+        );
       }
     } catch (err) {
       this.log(JSON.stringify(err));
@@ -787,20 +688,14 @@ class GameScript {
 
   protected async verifyClubGameStack(balance: any): Promise<any> {
     this.log(`verify club stack: ${JSON.stringify(balance)}`);
-    const queryClubTrack = gql`
-      query($gameCode: String!) {
-        balance: rakeCollected(gameCode: $gameCode)
-      }
-    `;
     try {
-      const resp = await getClient(
-        this.registeredPlayers[this.clubCreated[balance.club].owner].token
-      ).query({
-        variables: {
+      const resp = await queryHelper(
+        {
           gameCode: this.gameCreated[balance.game].gameCode,
         },
-        query: queryClubTrack,
-      });
+        queries.clubGameRake,
+        this.registeredPlayers[this.clubCreated[balance.club].owner].token
+      );
       if (resp.data.balance !== balance.balance) {
         this.log(
           `Expected ${balance.balance} but received ${resp.data.balance}`
@@ -815,31 +710,14 @@ class GameScript {
 
   protected async verifyPlayerGameStack(balance: any): Promise<any> {
     this.log(`Verify player stack: ${JSON.stringify(balance)}`);
-    const queryGameInfo = gql`
-      query($gameCode: String!) {
-        seatInfo: gameInfo(gameCode: $gameCode) {
-          seatInfo {
-            playersInSeats {
-              seatNo
-              playerUuid
-              name
-              buyIn
-              stack
-              status
-            }
-          }
-        }
-      }
-    `;
     try {
-      const resp = await getClient(
-        this.registeredPlayers[this.clubCreated[balance.club].owner].token
-      ).query({
-        variables: {
+      const resp = await queryHelper(
+        {
           gameCode: this.gameCreated[balance.game].gameCode,
         },
-        query: queryGameInfo,
-      });
+        queries.playersInSeats,
+        this.registeredPlayers[this.clubCreated[balance.club].owner].token
+      );
       const playerInSeats: Array<any> =
         resp.data.seatInfo.seatInfo.playersInSeats;
       for (const player of balance.players) {
@@ -865,31 +743,14 @@ class GameScript {
 
   protected async verifyPlayerGameStatus(status: any): Promise<any> {
     this.log(`Verify player status: ${JSON.stringify(status)}`);
-    const queryGameInfo = gql`
-      query($gameCode: String!) {
-        seatInfo: gameInfo(gameCode: $gameCode) {
-          seatInfo {
-            playersInSeats {
-              seatNo
-              playerUuid
-              name
-              buyIn
-              stack
-              status
-            }
-          }
-        }
-      }
-    `;
     try {
-      const resp = await getClient(
-        this.registeredPlayers[this.clubCreated[status.club].owner].token
-      ).query({
-        variables: {
+      const resp = await queryHelper(
+        {
           gameCode: this.gameCreated[status.game].gameCode,
         },
-        query: queryGameInfo,
-      });
+        queries.playersInSeats,
+        this.registeredPlayers[this.clubCreated[status.club].owner].token
+      );
       const playerInSeats: Array<any> =
         resp.data.seatInfo.seatInfo.playersInSeats;
       for (const player of status.players) {
@@ -916,21 +777,14 @@ class GameScript {
   protected async startGame(input: any): Promise<any> {
     this.log(`Start game: ${JSON.stringify(input)}`);
     try {
-      const query = gql`
-        mutation($gameCode: String!) {
-          startGame(gameCode: $gameCode)
-        }
-      `;
-      const club = this.clubCreated[input.club];
-      const gameCode = this.gameCreated[input.game].gameCode;
-      const client = await getClient(this.registeredPlayers[club.owner].token);
-      await client.mutate({
-        variables: {
-          gameCode: gameCode,
+      await mutationHelper(
+        {
+          gameCode: this.gameCreated[input.game].gameCode,
         },
-        mutation: query,
-      });
-      const url = `${this.serverURL}/internal/update-table-status`;
+        queries.startGame,
+        this.registeredPlayers[this.clubCreated[input.club].owner].token
+      );
+      const url = `${this.serverURL}${URL.updateTableStatus}`;
       await axios.post(url, {
         gameId: this.gameCreated[input.game].gameId,
         status: 'GAME_RUNNING',
@@ -954,7 +808,7 @@ class GameScript {
     }
     try {
       await axios.post(
-        `${this.serverURL}/internal/save-hand/gameId/${saveHandData.gameId}/handNum/${saveHandData.handNum}`,
+        `${this.serverURL}${URL.saveHand}/gameId/${saveHandData.gameId}/handNum/${saveHandData.handNum}`,
         saveHandData
       );
     } catch (err) {
@@ -965,18 +819,12 @@ class GameScript {
 
   protected async endGame(params: any) {
     this.log(`endgame: ${JSON.stringify(params)}`);
-    const queryEndGame = gql`
-      mutation($gameCode: String!) {
-        GameStatus: endGame(gameCode: $gameCode)
-      }
-    `;
     try {
-      const resp = await getClient(
+      await mutationHelper(
+        {gameCode: this.gameCreated[params.game].gameCode},
+        queries.endGame,
         this.registeredPlayers[this.clubCreated[params.club].owner].token
-      ).mutate({
-        variables: {gameCode: this.gameCreated[params.game].gameCode},
-        mutation: queryEndGame,
-      });
+      );
       this.log(`Game ${[params.game]} has been ended`);
     } catch (err) {
       this.log(err.toString());
@@ -986,21 +834,12 @@ class GameScript {
 
   protected async verifyClubBalance(balance: any): Promise<any> {
     this.log(`verify club balance: ${JSON.stringify(balance)}`);
-    const queryClubBalance = gql`
-      query($clubCode: String!) {
-        balance: clubBalance(clubCode: $clubCode) {
-          balance
-          updatedAt
-        }
-      }
-    `;
     try {
-      const resp = await getClient(
+      const resp = await queryHelper(
+        {clubCode: this.clubCreated[balance.club].clubCode},
+        queries.clubBalance,
         this.registeredPlayers[this.clubCreated[balance.club].owner].token
-      ).query({
-        variables: {clubCode: this.clubCreated[balance.club].clubCode},
-        query: queryClubBalance,
-      });
+      );
       if (resp.data.balance.balance !== balance.balance) {
         this.log(
           `Expected ${balance.balance} but received ${resp.data.balance.balance}`
@@ -1015,26 +854,15 @@ class GameScript {
 
   protected async verifyPlayerBalance(balance: any): Promise<any> {
     this.log(`Verify player balance: ${JSON.stringify(balance)}`);
-    const queryPlayerBalance = gql`
-      query($playerId: String!, $clubCode: String!) {
-        balance: playerBalance(playerId: $playerId, clubCode: $clubCode) {
-          totalBuyins
-          totalWinnings
-          balance
-          updatedAt
-        }
-      }
-    `;
     try {
-      const resp = await getClient(
-        this.registeredPlayers[balance.player].token
-      ).query({
-        variables: {
+      const resp = await queryHelper(
+        {
           clubCode: this.clubCreated[balance.club].clubCode,
           playerId: this.registeredPlayers[balance.player].playerUuid,
         },
-        query: queryPlayerBalance,
-      });
+        queries.playerBalance,
+        this.registeredPlayers[balance.player].token
+      );
       if (resp.data.balance.balance !== balance.balance) {
         this.log(
           `Expected ${balance.balance} but received ${resp.data.balance.balance}`
@@ -1049,14 +877,6 @@ class GameScript {
 
   protected async sendClubMessagesForClub(club: any) {
     this.log(`Send club messages: ${JSON.stringify(club)}`);
-    const sendMessage = gql`
-      mutation($clubCode: String!, $text: String) {
-        resp: sendClubMessage(
-          clubCode: $clubCode
-          message: {messageType: TEXT, text: $text}
-        )
-      }
-    `;
     const clubCode = this.clubCreated[club.club].clubCode;
     const messages = club.messages;
     for (const message of messages) {
@@ -1067,16 +887,17 @@ class GameScript {
         token = this.registeredPlayers[key].token;
         break;
       }
-      const resp = await getClient(token).mutate({
-        variables: {clubCode: clubCode, text: messageText},
-        mutation: sendMessage,
-      });
+      await mutationHelper(
+        {clubCode: clubCode, text: messageText},
+        queries.sendMessage,
+        token
+      );
     }
   }
 
   protected async processPendingUpdate(update: any) {
     this.log(`Process pending updates for: ${JSON.stringify(update)}`);
-    const url = `${this.serverURL}/internal/process-pending-updates/gameId/${
+    const url = `${this.serverURL}${URL.processPendingUpdates}/gameId/${
       this.gameCreated[update.game].gameId
     }`;
     try {
@@ -1089,23 +910,16 @@ class GameScript {
 
   protected async reloadChip(chips: any) {
     this.log(`Reload chips for: ${JSON.stringify(chips)}`);
-    const reloadQuery = gql`
-      mutation($gameCode: String!, $amount: Float!) {
-        resp: reload(gameCode: $gameCode, amount: $amount) {
-          expireSeconds
-          approved
-        }
-      }
-    `;
     try {
       for (const chip of chips.players) {
-        await getClient(this.registeredPlayers[chip.name].token).mutate({
-          variables: {
+        await mutationHelper(
+          {
             gameCode: this.gameCreated[chips.game].gameCode,
             amount: chip.amount,
           },
-          mutation: reloadQuery,
-        });
+          queries.reload,
+          this.registeredPlayers[chip.name].token
+        );
       }
     } catch (err) {
       this.log(JSON.stringify(err));
@@ -1115,31 +929,17 @@ class GameScript {
 
   protected async updateClubMember(updateData: any) {
     this.log(`update club members: ${JSON.stringify(updateData)}`);
-    const updateClubMemberQuery = gql`
-      mutation(
-        $clubCode: String!
-        $playerUuid: String!
-        $update: ClubMemberUpdateInput!
-      ) {
-        status: updateClubMember(
-          clubCode: $clubCode
-          playerUuid: $playerUuid
-          update: $update
-        )
-      }
-    `;
     try {
       for (const data of updateData.players) {
-        await getClient(
-          this.registeredPlayers[this.clubCreated[updateData.club].owner].token
-        ).mutate({
-          variables: {
+        await mutationHelper(
+          {
             clubCode: this.clubCreated[updateData.club].clubCode,
             playerUuid: this.registeredPlayers[data.name].playerUuid,
             update: data.update,
           },
-          mutation: updateClubMemberQuery,
-        });
+          queries.updateClubMember,
+          this.registeredPlayers[this.clubCreated[updateData.club].owner].token
+        );
       }
     } catch (err) {
       this.log(JSON.stringify(err));
@@ -1149,25 +949,14 @@ class GameScript {
 
   protected async liveGame(games: any): Promise<any> {
     this.log(`Verify live games: ${JSON.stringify(games)}`);
-    const queryLiveGame = gql`
-      query($clubCode: String!) {
-        games: liveGames(clubCode: $clubCode) {
-          title
-          clubName
-          gameType
-          tableCount
-        }
-      }
-    `;
     try {
-      const resp = await getClient(
-        this.registeredPlayers[this.clubCreated[games.club].owner].token
-      ).query({
-        variables: {
+      const resp = await queryHelper(
+        {
           clubCode: this.clubCreated[games.club].clubCode,
         },
-        query: queryLiveGame,
-      });
+        queries.liveGames,
+        this.registeredPlayers[this.clubCreated[games.club].owner].token
+      );
       if (resp.data.games.length !== games.input.length) {
         this.log(
           `Expected ${games.input.length} live games but received ${resp.data.games.length}`
@@ -1215,7 +1004,7 @@ async function main() {
     if (file.endsWith('.yaml')) {
       try {
         await resetDatabase();
-        const gameScript1 = new GameScript(serverURL, `${scriptDir}/${file}`);
+        const gameScript1 = new GameScript(URL.server, `${scriptDir}/${file}`);
         gameScript1.load();
         if (gameScript1.isDisabled()) {
           console.log(`Script: ${file} is marked as disabled`);
@@ -1232,101 +1021,6 @@ async function main() {
   }
 }
 
-const serverURL = 'http://localhost:9501';
 (async () => {
   await main();
 })();
-
-// Old codes
-
-// protected async startGameOld(input: any): Promise<any> {
-//   this.log(`Start game: ${JSON.stringify(input)}`);
-//   try {
-//     const clubId = this.clubCreated[input.club].clubId;
-//     const gameId = this.gameCreated[input.game].gameId;
-//     const url = `${this.serverURL}/internal/start-game/club_id/${clubId}/game_id/${gameId}`;
-//     const resp = await axios.post(
-//       `${this.serverURL}/internal/start-game?club-id=${clubId}&game-id=${gameId}`
-//     );
-//   } catch (err) {
-//     if (err.response && err.response.data) {
-//       this.log(err.response.data);
-//     }
-//     this.log(err.toString());
-//     throw err;
-//   }
-// }
-
-// protected async playerSitsinOld(sitsinInput: any): Promise<any> {
-//   this.log(`Players sits in: ${JSON.stringify(sitsinInput)}`);
-//   try {
-//     for (const player of sitsinInput.players) {
-//       const messageInput = {
-//         clubId: this.clubCreated[sitsinInput.club].clubId,
-//         playerId: this.registeredPlayers[player.playerId].playerId,
-//         gameId: this.gameCreated[sitsinInput.game].gameId,
-//         buyIn: player.buyChips,
-//         status: 'PLAYING',
-//         seatNo: player.seatNo,
-//       };
-//       await axios.post(
-//         `${this.serverURL}/internal/player-sit-in`,
-//         messageInput
-//       );
-//     }
-//   } catch (err) {
-//     this.log(JSON.stringify(err));
-//     throw err;
-//   }
-// }
-
-// protected async addBuyinOld(buyinInput: any): Promise<any> {
-//   this.log(`Buyin: ${JSON.stringify(buyinInput)}`);
-//   try {
-//     for (const player of buyinInput.players) {
-//       const buyChips = {
-//         clubId: this.clubCreated[buyinInput.club].clubId,
-//         playerId: this.registeredPlayers[player.playerId].playerId,
-//         gameId: this.gameCreated[buyinInput.game].gameId,
-//         buyChips: player.buyChips,
-//       };
-//       const resp = await axios.post(
-//         `${this.serverURL}/internal/buy-chips`,
-//         buyChips
-//       );
-//     }
-//   } catch (err) {
-//     if (err.response && err.response.data) {
-//       this.log(err.response.data);
-//     }
-//     this.log(err.toString());
-//     throw err;
-//   }
-// }
-
-// protected async saveHandOld(handData: any): Promise<any> {
-//   this.log(`save hand: ${JSON.stringify(handData)}`);
-//   const saveHandData = handData;
-//   saveHandData.clubId = this.clubCreated[handData.clubId].clubId;
-//   saveHandData.gameId = this.gameCreated[handData.gameId].gameId;
-//   for (let i = 0; i < handData.handResult.playersInSeats.length; i++) {
-//     if (handData.handResult.playersInSeats[i] !== 0) {
-//       saveHandData.handResult.playersInSeats[i] = this.registeredPlayers[
-//         handData.handResult.playersInSeats[i]
-//       ].playerId;
-//     }
-//   }
-//   for (let i = 0; i < handData.handResult.balanceAfterHand.length; i++) {
-//     saveHandData.handResult.balanceAfterHand[
-//       i
-//     ].playerId = this.registeredPlayers[
-//       handData.handResult.balanceAfterHand[i].playerId
-//     ].playerId;
-//   }
-//   try {
-//     await axios.post(`${this.serverURL}/internal/save-hand`, saveHandData);
-//   } catch (err) {
-//     this.log(err.toString());
-//     throw err;
-//   }
-// }
