@@ -190,6 +190,24 @@ class GameScript {
       if (step['live-games']) {
         await this.liveGames(step['live-games']);
       }
+      if (step['request-seat-change']) {
+        await this.requestSeatChanges(step['request-seat-change']);
+      }
+      if (step['seat-change-requests']) {
+        await this.seatChangeRequests(step['seat-change-requests']);
+      }
+      if (step['confirm-seat-change']) {
+        await this.confirmSeatChanges(step['confirm-seat-change']);
+      }
+      if (step['sleep']) {
+        await this.sleep(step['sleep'].time);
+      }
+      if (step['timer-callback']) {
+        await this.timerCallbacks(step['timer-callback']);
+      }
+      if (step['players-seat-info']) {
+        await this.playerSeatInfos(step['players-seat-info']);
+      }
     }
   }
 
@@ -253,6 +271,12 @@ class GameScript {
   }
 
   /////////////////////// Level 2 Functions
+
+  protected sleep(ms: number) {
+    return new Promise(resolve => {
+      setTimeout(resolve, ms);
+    });
+  }
 
   protected async deleteClubs(params: any) {
     for (const clubName of params) {
@@ -414,6 +438,37 @@ class GameScript {
       await this.liveGame(games);
     }
   }
+
+  protected async requestSeatChanges(params: any) {
+    for (const data of params) {
+      await this.requestSeatChange(data);
+    }
+  }
+
+  protected async seatChangeRequests(params: any) {
+    for (const data of params) {
+      await this.seatChangeRequest(data);
+    }
+  }
+
+  protected async confirmSeatChanges(params: any) {
+    for (const data of params) {
+      await this.confirmSeatChange(data);
+    }
+  }
+
+  protected async timerCallbacks(params: any) {
+    for (const data of params) {
+      await this.timerCallback(data);
+    }
+  }
+
+  protected async playerSeatInfos(params: any) {
+    for (const data of params) {
+      await this.playerSeatInfo(data);
+    }
+  }
+
   /////////////////////// Level 3 Functions
 
   protected async deleteClub(params: any) {
@@ -982,6 +1037,122 @@ class GameScript {
             `Expected ${game.tableCount} but received ${receivedGame.tableCount}`
           );
           throw new Error('Live games verification failed');
+        }
+      }
+    } catch (err) {
+      this.log(err.toString());
+      throw err;
+    }
+  }
+
+  protected async requestSeatChange(updateData: any) {
+    this.log(`Request seat change: ${JSON.stringify(updateData)}`);
+    try {
+      for (const data of updateData.players) {
+        await mutationHelper(
+          {
+            gameCode: this.gameCreated[updateData.game].gameCode,
+          },
+          queries.requestSeatChange,
+          this.registeredPlayers[data].token
+        );
+      }
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
+  protected async seatChangeRequest(updateData: any) {
+    this.log(`Seat change requests: ${JSON.stringify(updateData)}`);
+    try {
+      const resp = await queryHelper(
+        {
+          gameCode: this.gameCreated[updateData.game].gameCode,
+        },
+        queries.seatChangeRequests,
+        this.registeredPlayers[this.clubCreated[updateData.club].owner].token
+      );
+      if (resp.data.players.length !== updateData.players.length) {
+        this.log(
+          `Expected ${updateData.input.length} players but received ${resp.data.players.length}`
+        );
+        throw new Error('seat change verification failed');
+      }
+      for (const data of updateData.players) {
+        const receivedPlayer = await resp.data.players.find(
+          element => element.name == data
+        );
+        if (!receivedPlayer) {
+          this.log(`player ${data} not found in ${resp.data.players}`);
+          throw new Error('Live games verification failed');
+        }
+      }
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
+  protected async confirmSeatChange(updateData: any) {
+    this.log(`Confirm seat change: ${JSON.stringify(updateData)}`);
+    try {
+      for (const data of updateData.players) {
+        await mutationHelper(
+          {
+            gameCode: this.gameCreated[updateData.game].gameCode,
+            seatNo: data.seat,
+          },
+          queries.confirmSeatChange,
+          this.registeredPlayers[data.name].token
+        );
+      }
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
+  protected async timerCallback(update: any) {
+    this.log(`Timer callback for: ${JSON.stringify(update)}`);
+    const url = `${this.serverURL}${URL.timerCallback}/gameId/${
+      this.gameCreated[update.game].gameId
+    }/playerId/${
+      this.registeredPlayers[this.clubCreated[update.club].owner].playerId
+    }/purpose/${update.purpose}`;
+    try {
+      await axios.post(url);
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
+  protected async playerSeatInfo(status: any): Promise<any> {
+    this.log(`Verify player seat info: ${JSON.stringify(status)}`);
+    try {
+      const resp = await queryHelper(
+        {
+          gameCode: this.gameCreated[status.game].gameCode,
+        },
+        queries.playersInSeats,
+        this.registeredPlayers[this.clubCreated[status.club].owner].token
+      );
+      const playerInSeats: Array<any> =
+        resp.data.seatInfo.seatInfo.playersInSeats;
+      for (const player of status.players) {
+        const receivedPlayer = await playerInSeats.find(
+          element => element.name == player.name
+        );
+        if (!receivedPlayer) {
+          this.log(`Player ${player} not found in ${playerInSeats}`);
+          throw new Error('Player status verification failed');
+        }
+        if (player.seatNo != receivedPlayer.seatNo) {
+          this.log(
+            `Expected ${player.seatNo} but received ${receivedPlayer.seatNo}`
+          );
+          throw new Error('Player status verification failed');
         }
       }
     } catch (err) {

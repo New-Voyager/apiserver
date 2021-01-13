@@ -1,5 +1,5 @@
 test:
-  disabled: true
+  disabled: false
 
 cleanup:
   steps:
@@ -47,7 +47,7 @@ game:
           players:
             - playerId: arun
               seatNo: 1
-            - playerId: sam
+            - playerId: bala
               seatNo: 2
   
     - buyin:
@@ -56,7 +56,7 @@ game:
           players:
             - playerId: arun
               buyChips: 100
-            - playerId: sam
+            - playerId: bala
               buyChips: 100
 
     - start-games:
@@ -65,31 +65,29 @@ game:
 
     - request-seat-change:
         - club: New Delhi
-          player: arun
           game: test1
-        - club: New Delhi
-          player: sam
-          game: test1
+          players:
+            - arun
+            - bala
 
     - seat-change-requests:
         - club: New Delhi
           game: test1 
           players: 
             - arun
-            - sam
+            - bala
     
     - confirm-seat-change: 
         - club: New Delhi
-          player: arun
           game: test1
-          seat: 3
-        - club: New Delhi
-          player: sam
-          game: test1
-          seat: 3
+          players:
+            - name: arun
+              seat: 3
+            - name: bala
+              seat: 3
     
     - sleep:
-        - time: 6000
+        time: 6000
     
     - timer-callback:
         - club: New Delhi
@@ -100,7 +98,7 @@ game:
         - club: New Delhi
           game: test1 
           players: 
-            - sam
+            - bala
     
     - players-seat-info:
         - club: New Delhi
@@ -108,5 +106,5 @@ game:
           players:
             - name: arun
               seatNo: 3
-            - name: sam
+            - name: bala
               seatNo: 2

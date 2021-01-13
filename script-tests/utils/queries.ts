@@ -191,3 +191,51 @@ export const liveGames = gql`
     }
   }
 `;
+
+export const requestSeatChange = gql`
+  mutation($gameCode: String!) {
+    date: requestSeatChange(gameCode: $gameCode)
+  }
+`;
+
+export const seatChangeRequests = gql`
+  query($gameCode: String!) {
+    players: seatChangeRequests(gameCode: $gameCode) {
+      playerUuid
+      name
+      status
+      seatNo
+      sessionTime
+      seatChangeRequestedAt
+    }
+  }
+`;
+
+export const confirmSeatChange = gql`
+  mutation($gameCode: String!, $seatNo: Int!) {
+    status: confirmSeatChange(gameCode: $gameCode, seatNo: $seatNo)
+  }
+`;
+
+export const addToWaitingList = gql`
+  mutation($gameCode: String!) {
+    status: addToWaitingList(gameCode: $gameCode)
+  }
+`;
+
+export const removeFromWaitingList = gql`
+  mutation($gameCode: String!) {
+    status: removeFromWaitingList(gameCode: $gameCode)
+  }
+`;
+
+export const waitingList = gql`
+  query($gameCode: String!) {
+    status: waitingList(gameCode: $gameCode) {
+      playerUuid
+      name
+      waitingFrom
+      status
+    }
+  }
+`;
