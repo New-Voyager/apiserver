@@ -1,0 +1,112 @@
+test:
+  disabled: true
+
+cleanup:
+  steps:
+    - include:
+        script: common.yaml
+
+setup:
+  steps:
+    - include:
+        script: common.yaml
+
+game:
+  steps:
+    - configure-games:
+        - club: New Delhi
+          game: test1
+          reward:
+            amount: 100.4
+            endHour: 4
+            minRank: 1
+            name: brady
+            startHour: 4
+            type: HIGH_HAND
+            schedule: HOURLY
+          input:
+            title: test1
+            gameType: HOLDEM
+            smallBlind: 1.0
+            bigBlind: 2.0
+            utgStraddleAllowed: true
+            straddleBet: 4.0
+            minPlayers: 2
+            maxPlayers: 9
+            gameLength: 60
+            buyInApproval: false
+            rakePercentage: 5.0
+            rakeCap: 5.0
+            buyInMin: 100
+            buyInMax: 300
+            actionTime: 100
+
+    - sitsin:
+        - club: New Delhi
+          game: test1
+          players:
+            - playerId: arun
+              seatNo: 1
+            - playerId: sam
+              seatNo: 2
+  
+    - buyin:
+        - club: New Delhi
+          game: test1
+          players:
+            - playerId: arun
+              buyChips: 100
+            - playerId: sam
+              buyChips: 100
+
+    - start-games:
+        - club: New Delhi
+          game: test1
+
+    - request-seat-change:
+        - club: New Delhi
+          player: arun
+          game: test1
+        - club: New Delhi
+          player: sam
+          game: test1
+
+    - seat-change-requests:
+        - club: New Delhi
+          game: test1 
+          players: 
+            - arun
+            - sam
+    
+    - confirm-seat-change: 
+        - club: New Delhi
+          player: arun
+          game: test1
+          seat: 3
+        - club: New Delhi
+          player: sam
+          game: test1
+          seat: 3
+    
+    - sleep:
+        - time: 6000
+    
+    - timer-callback:
+        - club: New Delhi
+          game: test1 
+          purpose: SEATCHANGE_INPROGRESS
+    
+    - seat-change-requests:
+        - club: New Delhi
+          game: test1 
+          players: 
+            - sam
+    
+    - players-seat-info:
+        - club: New Delhi
+          game: test1 
+          players:
+            - name: arun
+              seatNo: 3
+            - name: sam
+              seatNo: 2

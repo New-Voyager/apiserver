@@ -1,0 +1,95 @@
+test:
+  disabled: true
+
+cleanup:
+  steps:
+    - include:
+        script: common.yaml
+
+setup:
+  steps:
+    - include:
+        script: common.yaml
+
+    - register-players: 
+        - name: arjun
+          deviceId: 1d43342c-84bf-4928-b5b4-ece454b66dd0
+        - name: sanjay
+          deviceId: 1d43342c-84bf-4928-4564-ece454b66dd0
+
+    - join-clubs:
+        - club: New Delhi
+          members:     
+            - arjun
+            - sanjay
+
+    - approve-club-members:
+        - club: New Delhi
+          members:     
+            - arjun
+            - sanjay
+
+    - verify-club-members:
+        - club: New Delhi
+          members:
+            - name: arjun
+              status: ACTIVE
+            - name: sanjay
+              status: ACTIVE
+
+game:
+  steps:
+    - include:
+        script: common.yaml
+    
+    - add-to-waitinglist:
+        - club: New Delhi
+          game: test1
+          players:
+            - arjun
+            - sanjay
+    
+    - waiting-list:
+        - club: New Delhi
+          game: test1
+          players:
+            - arjun
+            - sanjay
+    
+    - leave-game:
+        - club: New Delhi
+          game: test1
+          players:
+            - arun
+    
+    - process-pending-updates:
+        - club: New Delhi
+          game: test1
+    
+    - error:
+        steps:
+          - sitsin:
+              - club: New Delhi
+                game: test1
+                players:
+                  - playerId: sanjay
+                    seatNo: 1
+      
+    - sitsin:
+      - club: New Delhi
+        game: test1
+        players:
+          - playerId: arjun
+            seatNo: 1
+    
+    - players-seat-info:
+        - club: New Delhi
+          game: test1 
+          players:
+            - name: arun
+              seatNo: 3
+            - name: sam
+              seatNo: 2
+
+
+    
