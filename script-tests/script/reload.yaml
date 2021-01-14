@@ -52,13 +52,22 @@ game:
             balance: 100
           - name: bala
             balance: 100
+    
+    - update-club-members:
+      - club: New Delhi
+        game: test1
+        players:
+        - name: sam
+          update:
+            creditLimit: 200
+            autoBuyinApproval: false
 
     - reload:
       - club: New Delhi
         game: test1
         players:
         - name: sam
-          amount: 200
+          amount: 100
 
     - verify-player-game-stack:
         - club: New Delhi
@@ -82,7 +91,28 @@ game:
           - name: arun
             balance: 200
           - name: sam
-            balance: 300
+            balance: 200
           - name: bala
             balance: 100
     
+    - reload:
+      - club: New Delhi
+        game: test1
+        players:
+        - name: sam
+          amount: 100
+    
+    - process-pending-updates:
+      - club: New Delhi
+        game: test1
+
+    - verify-player-game-stack:
+        - club: New Delhi
+          game: test1
+          players:
+          - name: arun
+            balance: 200
+          - name: sam
+            balance: 200
+          - name: bala
+            balance: 100

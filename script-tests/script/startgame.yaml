@@ -1,79 +1,17 @@
 test:
-  disabled: true
+  disabled: false
 
 # Cleanup steps
 cleanup:
   steps:
-
-      # delete clubs and club members
-    - delete-clubs:
-        - name: New Delhi
+    - include:
+        script: common.yaml
 
 # Setup steps
 setup:
   steps:
-
-      # register players if doesn't exist and store the player info
-    - register-players: 
-        - name: arun
-          deviceId: 1edad270-1926-4634-b89b-9d5a62586d9e
-        - name: arjun
-          deviceId: c3744887-51d7-4ab9-b01b-0ea274577b04
-        - name: sam
-          deviceId: 1d43342c-84bf-4928-b5b4-ece904b66dd0
-        - name: bala
-          deviceId: 8ba53577-1318-4da3-adbd-0796234e405a   
- 
-      # create a club and pass the owner in the Auth header
-      # store club info in a dictionary
-    - create-clubs:
-        - name: New Delhi
-          owner: bala
-
-      # use joinClub API and auth header to join each player
-    - join-clubs:
-        - club: New Delhi
-          members:     
-            - arun
-            - sam
-            - arjun
-
-      # verify the players are waiting to be approved  (PENDING)
-    - verify-club-members:
-        - club: New Delhi
-          members:
-            - name: arun
-              status: PENDING
-            - name: sam
-              status: PENDING
-            - name: arjun
-              status: PENDING
-
-      # approve members with auth header (club.owner)
-    - approve-club-members:
-        - club: New Delhi
-          members:     
-            - arun
-            - sam
-            - arjun
-
-      # verify the players are approved  (ACTIVE)
-    - verify-club-members:
-        - club: New Delhi
-          members:
-            - name: arun
-              status: ACTIVE
-            - name: sam
-              status: ACTIVE
-            - name: arjun
-              status: ACTIVE
-
-    # # create game servers if does not exist
-    # - create-game-servers:
-    #     - ipAddress: 10.1.1.4
-    #       currentMemory: 100
-    #       status: ACTIVE
-    #       url: http://server1:8080
+    - include:
+        script: common.yaml
 
 # Game steps
 game:
@@ -82,6 +20,14 @@ game:
     - configure-games:
         - club: New Delhi
           game: test1
+          reward:
+            amount: 100.4
+            endHour: 4
+            minRank: 1
+            name: brady
+            startHour: 4
+            type: HIGH_HAND
+            schedule: HOURLY
           input:
             title: test1
             gameType: HOLDEM
@@ -90,9 +36,9 @@ game:
             utgStraddleAllowed: true
             straddleBet: 4.0
             minPlayers: 2
-            maxPlayers: 9
+            maxPlayers: 3
             gameLength: 60
-            buyInApproval: false
+            buyInApproval: true
             rakePercentage: 5.0
             rakeCap: 5.0
             buyInMin: 100
@@ -106,16 +52,26 @@ game:
           players:
             - playerId: arun
               seatNo: 1
-              buyChips: 0
             - playerId: sam
-              seatNo: 3
-              buyChips: 0
+              seatNo: 2
+    
+    # player sitsin occupied seat
+    - error:
+        steps:
+          - sitsin:
+              - club: New Delhi
+                game: test1
+                players:
+                  - playerId: bala
+                    seatNo: 1
+    
+    # players sits in
+    - sitsin:
+        - club: New Delhi
+          game: test1
+          players:
             - playerId: bala
-              seatNo: 5
-              buyChips: 0
-            - playerId: arjun
-              seatNo: 8
-              buyChips: 0
+              seatNo: 3
 
     # players buy-in
     - buyin:
@@ -123,16 +79,10 @@ game:
           game: test1
           players:
             - playerId: arun
-              seatNo: 1
               buyChips: 100
             - playerId: sam
-              seatNo: 3
               buyChips: 100
             - playerId: bala
-              seatNo: 5
-              buyChips: 100
-            - playerId: arjun
-              seatNo: 8
               buyChips: 100
 
     # verify club game balance
@@ -152,10 +102,99 @@ game:
             balance: 100
           - name: bala
             balance: 100
-          - name: arjun
-            balance: 100
 
     # start games
     - start-games:
         - club: New Delhi
           game: test1
+
+    - verify-player-game-status:
+        - club: New Delhi
+          game: test1
+          players:
+          - name: arun
+            status: PLAYING
+          - name: sam
+            status: PLAYING
+          - name: bala
+            status: PLAYING
+    
+    - live-games:
+        - club: New Delhi
+          input: 
+            - game: test1
+              gameType: HOLDEM
+              tableCount: 3
+    
+    # configure game
+    - configure-games:
+        - club: New Delhi
+          game: test2
+          reward:
+            amount: 100.4
+            endHour: 4
+            minRank: 1
+            name: brady
+            startHour: 4
+            type: HIGH_HAND
+            schedule: HOURLY
+          input:
+            title: test2
+            gameType: HOLDEM
+            smallBlind: 1.0
+            bigBlind: 2.0
+            utgStraddleAllowed: true
+            straddleBet: 4.0
+            minPlayers: 2
+            maxPlayers: 3
+            gameLength: 60
+            buyInApproval: true
+            rakePercentage: 5.0
+            rakeCap: 5.0
+            buyInMin: 100
+            buyInMax: 300
+            actionTime: 100
+
+    # players sits in
+    - sitsin:
+        - club: New Delhi
+          game: test2
+          players:
+            - playerId: arun
+              seatNo: 1
+            - playerId: bala
+              seatNo: 2
+    
+    # players buy-in
+    - buyin:
+        - club: New Delhi
+          game: test2
+          players:
+            - playerId: arun
+              buyChips: 100
+            - playerId: bala
+              buyChips: 100
+    
+    # start games
+    - start-games:
+        - club: New Delhi
+          game: test2
+
+    - verify-player-game-status:
+        - club: New Delhi
+          game: test2
+          players:
+          - name: arun
+            status: PLAYING
+          - name: bala
+            status: PLAYING
+    
+    - live-games:
+        - club: New Delhi
+          input: 
+            - game: test1
+              gameType: HOLDEM
+              tableCount: 3
+            - game: test2
+              gameType: HOLDEM
+              tableCount: 2

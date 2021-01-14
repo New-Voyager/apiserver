@@ -1,0 +1,62 @@
+test:
+  disabled: false
+
+# Cleanup steps
+cleanup:
+  steps:
+    - include:
+        script: common.yaml
+
+# Setup steps
+setup:
+  steps:
+    - register-players: 
+        - name: arun
+          deviceId: 1edad270-1926-4634-b89b-9d5a62586d9e
+        - name: sam
+          deviceId: 1d43342c-84bf-4928-b5b4-ece904b66dd0
+        - name: bala
+          deviceId: 8ba53577-1318-4da3-adbd-0796234e405a   
+ 
+      # create a club and pass the owner in the Auth header
+      # store club info in a dictionary
+    - create-clubs:
+        - name: New Delhi
+          owner: bala
+
+      # use joinClub API and auth header to join each player
+    - join-clubs:
+        - club: New Delhi
+          members:     
+            - arun
+            - sam
+
+      # verify the players are waiting to be approved  (PENDING)
+    - verify-club-members:
+        - club: New Delhi
+          members:
+            - name: arun
+              status: PENDING
+            - name: sam
+              status: PENDING
+
+      # approve members with auth header (club.owner)
+    - approve-club-members:
+        - club: New Delhi
+          members:     
+            - arun
+
+      # deny member with auth header (club.owner)
+    - deny-club-members:
+        - club: New Delhi
+          members:     
+            - sam
+    
+      # verify the players are approved  (ACTIVE)
+    - verify-club-members:
+        - club: New Delhi
+          members:
+            - name: arun
+              status: ACTIVE
+            - name: sam
+              status: DENIED

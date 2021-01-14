@@ -317,8 +317,8 @@ class GameRepositoryImpl {
   public async getLiveGames(playerId: string) {
     // get the list of live games associated with player clubs
     const query = `
-          WITH my_clubs AS (SELECT DISTINCT c.*, p.id player_id FROM club c JOIN club_member cm ON
-            c.id  = cm.club_id JOIN player p ON 
+          WITH my_clubs AS (SELECT DISTINCT c.*, p.id as "player_id" FROM club as c JOIN club_member as cm ON
+            c.id  = cm.club_id JOIN player as p ON 
             cm.player_id = p.id AND 
             p.uuid = '${playerId}' AND
             c.status = ${ClubStatus.ACTIVE} AND cm.status = ${ClubMemberStatus.ACTIVE})
@@ -333,7 +333,6 @@ class GameRepositoryImpl {
             g.buy_in_max as "buyInMax",
             g.small_blind as "smallBlind",
             g.big_blind as "bigBlind",
-            EXTRACT(EPOCH FROM(now()-g.started_at)) as "elapsedTime", 
             g.started_at as "startedAt", 
             g.max_players as "maxPlayers", 
             g.max_waitlist as "maxWaitList", 
@@ -342,14 +341,16 @@ class GameRepositoryImpl {
             g.game_status as "gameStatus",
             pgt.status as "playerStatus",
             pgu.last_hand_num as "handsDealt"
-          FROM poker_game g JOIN poker_game_updates pgu ON 
-          g.id = pgu.game_id JOIN my_clubs c ON 
+          FROM poker_game as g JOIN poker_game_updates as pgu ON 
+          g.id = pgu.game_id JOIN my_clubs as c ON 
             g.club_id = c.id 
             AND g.game_status NOT IN (${GameStatus.ENDED})
           LEFT OUTER JOIN 
-            player_game_tracker pgt ON
+            player_game_tracker as pgt ON
             pgt.pgt_player_id = c.player_id AND
             pgt.pgt_game_id  = g.id`;
+
+    // EXTRACT(EPOCH FROM (now()-g.started_at)) as "elapsedTime",  Showing some error
     const resp = await getConnection().query(query);
     return resp;
   }
@@ -962,11 +963,12 @@ class GameRepositoryImpl {
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
     }
-    const tableStatusValue = TableStatus[status.toString()];
+    //this stores string value
+    // const tableStatusValue = TableStatus[status.toString()];
     await getConnection()
       .createQueryBuilder()
       .update(PokerGame)
-      .set({tableStatus: tableStatusValue})
+      .set({tableStatus: status})
       .where('id = :id', {id: gameId})
       .execute();
     // update cached game

@@ -1,5 +1,5 @@
 test:
-  disabled: true
+  disabled: false
 
 # Cleanup steps
 cleanup:
@@ -91,16 +91,16 @@ setup:
             - name: bala
               status: ACTIVE
 
-    #   # create game servers if does not exist
-    # - create-game-servers:
-    #     - ipAddress: 10.1.1.5
-    #       currentMemory: 100
-    #       status: ACTIVE
-    #       url: http://server1:8080
-    #     - ipAddress: 10.1.1.6
-    #       currentMemory: 100
-    #       status: ACTIVE
-    #       url: http://server2:8080
+      # create game servers if does not exist
+    - create-game-servers:
+        - ipAddress: 10.1.1.5
+          currentMemory: 100
+          status: ACTIVE
+          url: http://server1:8080
+        - ipAddress: 10.1.1.6
+          currentMemory: 100
+          status: ACTIVE
+          url: http://server2:8080
 
 # Game steps
 game:
@@ -110,6 +110,14 @@ game:
     - configure-games:
         - club: chennai
           game: test1
+          reward:
+            amount: 100.4
+            endHour: 4
+            minRank: 1
+            name: brady
+            startHour: 4
+            type: HIGH_HAND
+            schedule: HOURLY
           input:
             title: test1
             gameType: HOLDEM
@@ -128,6 +136,14 @@ game:
             actionTime: 100
         - club: chennai
           game: test2
+          reward:
+            amount: 100.4
+            endHour: 4
+            minRank: 1
+            name: brady
+            startHour: 4
+            type: HIGH_HAND
+            schedule: HOURLY
           input:
             title: test2
             gameType: HOLDEM
@@ -146,6 +162,14 @@ game:
             actionTime: 100
         - club: newClub
           game: test3
+          reward:
+            amount: 100.4
+            endHour: 4
+            minRank: 1
+            name: brady
+            startHour: 4
+            type: HIGH_HAND
+            schedule: HOURLY
           input:
             title: test3
             gameType: HOLDEM
@@ -164,6 +188,14 @@ game:
             actionTime: 100
         - club: chennai
           game: live game 1
+          reward:
+            amount: 100.4
+            endHour: 4
+            minRank: 1
+            name: brady
+            startHour: 4
+            type: HIGH_HAND
+            schedule: HOURLY
           input:
             title: live game 1
             gameType: HOLDEM
@@ -182,6 +214,14 @@ game:
             actionTime: 100
         - club: newClub
           game: live game 2
+          reward:
+            amount: 100.4
+            endHour: 4
+            minRank: 1
+            name: brady
+            startHour: 4
+            type: HIGH_HAND
+            schedule: HOURLY
           input:
             title: live game 2
             gameType: HOLDEM
@@ -198,6 +238,7 @@ game:
             buyInMin: 100
             buyInMax: 300
             actionTime: 100            
+    
     # players sits in
     - sitsin:
         - club: chennai
@@ -205,134 +246,97 @@ game:
           players:
             - playerId: arun
               seatNo: 1
-              buyChips: 0
             - playerId: sam
-              seatNo: 3
-              buyChips: 0
+              seatNo: 2
             - playerId: bala
-              seatNo: 5
-              buyChips: 0
+              seatNo: 3
         - club: chennai
           game: test2
           players:
             - playerId: arun
               seatNo: 1
-              buyChips: 0
             - playerId: sam
-              seatNo: 3
-              buyChips: 0
+              seatNo: 2
             - playerId: bala
-              seatNo: 5
-              buyChips: 0
+              seatNo: 3
         - club: newClub
           game: test3
           players:
             - playerId: arun
               seatNo: 1
-              buyChips: 0
             - playerId: sam
-              seatNo: 3
-              buyChips: 0
+              seatNo: 2
             - playerId: bala
-              seatNo: 5
-              buyChips: 0
-            - playerId: arjun
-              seatNo: 8
-              buyChips: 0
+              seatNo: 3
         - club: chennai
           game: live game 1
           players:
             - playerId: arun
               seatNo: 1
-              buyChips: 0
             - playerId: sam
               seatNo: 3
-              buyChips: 0
             - playerId: bala
               seatNo: 5
-              buyChips: 0
         - club: newClub
           game: live game 2
           players:
             - playerId: arun
               seatNo: 1
-              buyChips: 0
             - playerId: sam
               seatNo: 3
-              buyChips: 0
             - playerId: bala
               seatNo: 5
-              buyChips: 0
             - playerId: arjun
-              seatNo: 8
-              buyChips: 0              
+              seatNo: 8           
+    
     # players buy-in
     - buyin:
         - club: chennai
           game: test1
           players:
             - playerId: arun
-              seatNo: 1
               buyChips: 100
             - playerId: sam
-              seatNo: 3
               buyChips: 100
             - playerId: bala
-              seatNo: 5
               buyChips: 100
         - club: chennai
           game: test2
           players:
             - playerId: arun
-              seatNo: 1
-              buyChips: 50
+              buyChips: 100
             - playerId: sam
-              seatNo: 3
-              buyChips: 50
+              buyChips: 100
             - playerId: bala
-              seatNo: 5
-              buyChips: 50
+              buyChips: 100
         - club: newClub
           game: test3
           players:
             - playerId: arun
-              seatNo: 1
               buyChips: 100
             - playerId: sam
-              seatNo: 3
               buyChips: 100
             - playerId: bala
-              seatNo: 5
-              buyChips: 100
-            - playerId: arjun
-              seatNo: 8
               buyChips: 100
         - club: newClub
           game: live game 2
           players:
             - playerId: arun
-              seatNo: 1
               buyChips: 100
             - playerId: sam
-              seatNo: 3
               buyChips: 100
             - playerId: bala
-              seatNo: 5
               buyChips: 100
             - playerId: arjun
-              seatNo: 8
               buyChips: 100
         - club: chennai
           game: live game 1
           players:
             - playerId: arun
-              seatNo: 1
               buyChips: 100
             - playerId: sam
-              seatNo: 3
               buyChips: 100
             - playerId: bala
-              seatNo: 5
               buyChips: 100
 
     # verify club game balance
@@ -362,22 +366,21 @@ game:
           game: test2
           players:
           - name: arun
-            balance: 50
+            balance: 100
           - name: sam
-            balance: 50
+            balance: 100
           - name: bala
-            balance: 50
+            balance: 100
         - club: newClub
           game: test3
           players:
           - name: arun
             balance: 100
-          - name: arjun
-            balance: 100
           - name: sam
             balance: 100
           - name: bala
             balance: 100
+    
     # start games
     - start-games:
         - club: chennai
@@ -393,7 +396,8 @@ game:
 
     # save hands
     - save-hands:
-        - gameId: '44'
+        - clubId: chennai
+          gameId: test1
           handNum: 1
           gameType: HOLDEM
           handLog:
@@ -540,7 +544,7 @@ game:
           river: 88
           players:
             '1':
-              id: '313'
+              id: arun
               cards:
               - 4
               - 1
@@ -563,7 +567,7 @@ game:
               - 8
               hhRank: 311
             '2':
-              id: '314'
+              id: sam
               cards:
               - 56
               - 72
@@ -586,7 +590,7 @@ game:
               - 88
               hhRank: 804
             '3':
-              id: '315'
+              id: bala
               cards:
               - 193
               - 130
@@ -608,7 +612,8 @@ game:
               - 196
               - 84
               hhRank: 1642
-        - gameId: '44'
+        - clubId: chennai
+          gameId: test2
           handNum: 2
           gameType: HOLDEM
           handLog:
@@ -740,7 +745,7 @@ game:
           river: 24
           players:
             '1':
-              id: '313'
+              id: arun
               cards:
               - 4
               - 1
@@ -763,7 +768,7 @@ game:
               - 8
               hhRank: 311
             '2':
-              id: '314'
+              id: sam
               cards:
               - 56
               - 72
@@ -786,7 +791,7 @@ game:
               - 24
               hhRank: 9
             '3':
-              id: '315'
+              id: bala
               cards:
               - 193
               - 194
@@ -798,8 +803,8 @@ game:
                 after: 96
               hhCards: []
               hhRank: 4294967295
-
-        - gameId: '44'
+        - clubId: newClub
+          gameId: test3
           handNum: 3
           gameType: HOLDEM
           handLog:
@@ -931,7 +936,7 @@ game:
           river: 17
           players:
             '1':
-              id: '313'
+              id: arun
               cards:
               - 180
               - 177
@@ -954,7 +959,7 @@ game:
               - 184
               hhRank: 179
             '2':
-              id: '314'
+              id: sam
               cards:
               - 136
               - 152
@@ -977,7 +982,7 @@ game:
               - 168
               hhRank: 1
             '3':
-              id: '315'
+              id: bala
               cards:
               - 193
               - 194
@@ -1000,33 +1005,42 @@ game:
         - club: newClub
           game: test3
 
+    # Process pending updates
+    - process-pending-updates:
+      - club: chennai
+        game: test1
+      - club: chennai
+        game: test2
+      - club: newClub
+        game: test3
+
     # verify the balance of the clubs
     - verify-club-balance:
         - club: chennai
-          balance: 4
+          balance: 0
         - club: newClub
-          balance: 2
+          balance: 0
 
     # verify the balance of the club players
     - verify-player-balance:
         - club: chennai
           player: arun
-          balance: 250
+          balance: -52
         - club: chennai
           player: sam
-          balance: -50
+          balance: 4
         - club: chennai
           player: bala
-          balance: -150
+          balance: 48
         - club: newClub
           player: bala
-          balance: -100
+          balance: -4
         - club: newClub
           player: arun
-          balance: 100
+          balance: -26
         - club: newClub
           player: sam
-          balance: -50
+          balance: 30
         - club: newClub
           player: arjun
-          balance: -50
+          balance: 0
