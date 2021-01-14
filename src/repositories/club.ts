@@ -266,6 +266,7 @@ class ClubRepositoryImpl {
     clubCode: string,
     playerId: string
   ): Promise<ClubMemberStatus> {
+    clubCode = clubCode.toUpperCase();
     let clubMember = await Cache.getClubMember(playerId, clubCode);
     const player = await Cache.getPlayer(playerId);
     if (clubMember) {
@@ -548,13 +549,17 @@ class ClubRepositoryImpl {
     if (!player) {
       throw new Error('Not found');
     }
+
     const query = fixQuery(`WITH my_clubs as (
       SELECT cm.club_id, count(*) member_count FROM club_member cm
       WHERE cm.club_id in (SELECT club_id FROM club_member WHERE player_id=?)
                  GROUP BY cm.club_id)
-      SELECT c.club_code as "clubCode", member_count as "memberCount", c.name, c.owner_id as "ownerId" 
-      FROM club c JOIN my_clubs mc ON c.id = mc.club_id`);
-    const result = await getConnection().query(query, [player.id]);
+      SELECT c.club_code as "clubCode", member_count as "memberCount", c.name, p.name as "host", c.owner_id as "ownerId",
+          cm.status as "memberStatus", c.status, cm.balance balance
+      FROM club c JOIN my_clubs mc ON c.id = mc.club_id
+      JOIN club_member cm ON cm.club_id = c.id AND cm.player_id=?
+      JOIN player p ON p.id = c.owner_id`);
+    const result = await getConnection().query(query, [player.id, player.id]);
     return result;
   }
 
@@ -720,6 +725,25 @@ class ClubRepositoryImpl {
     );
 
     return nextGameNum;
+  }
+
+  public async searchClub(clubCode: string): Promise<any> {
+    clubCode = clubCode.toUpperCase();
+    try {
+      const clubs = await getRepository(Club).find({
+        where: {clubCode: clubCode},
+      });
+      if (clubs.length === 1) {
+        const club = clubs[0];
+        if (club.owner !== null) {
+          await Promise.resolve(club.owner);
+        }
+        return club;
+      }
+    } catch (err) {
+      logger.error(err);
+    }
+    return null;
   }
 }
 

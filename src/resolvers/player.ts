@@ -30,6 +30,7 @@ async function getClubs(playerId: string): Promise<Array<any>> {
     if (x.ownerId === player.id) {
       isOwner = true;
     }
+
     return {
       name: x.name,
       private: true,
@@ -37,6 +38,10 @@ async function getClubs(playerId: string): Promise<Array<any>> {
       isOwner: isOwner,
       clubCode: x.clubCode,
       memberCount: parseInt(x.memberCount),
+      clubStatus: ClubStatus[x.status],
+      memberStatus: ClubMemberStatus[x.memberStatus],
+      balance: x.balance,
+      host: x.host,
     };
   });
   return clubs;
@@ -188,7 +193,7 @@ export async function searchClub(playerId: string, clubCode: string) {
     throw new Error('Unauthorized');
   }
 
-  const club = await Cache.getClub(clubCode);
+  const club = await ClubRepository.searchClub(clubCode);
   if (!club) {
     return null;
   }

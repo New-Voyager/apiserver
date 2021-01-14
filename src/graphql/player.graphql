@@ -23,12 +23,15 @@ type Mutation {
 
 type PlayerClub {
   name: String
+  host: String
   clubCode: String
   clubStatus: ClubStatus
   memberCount: Int
   imageId: String
   isOwner: Boolean
   private: Boolean
+  memberStatus: ClubMemberStatus
+  balance: Float
 }
 
 
