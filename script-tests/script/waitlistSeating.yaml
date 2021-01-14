@@ -1,5 +1,5 @@
 test:
-  disabled: true
+  disabled: false
 
 cleanup:
   steps:
@@ -86,8 +86,8 @@ game:
         - club: New Delhi
           game: test1 
           players:
-            - name: arun
-              seatNo: 3
+            - name: arjun
+              seatNo: 1
             - name: sam
               seatNo: 2
 

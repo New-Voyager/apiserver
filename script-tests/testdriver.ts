@@ -208,6 +208,15 @@ class GameScript {
       if (step['players-seat-info']) {
         await this.playerSeatInfos(step['players-seat-info']);
       }
+      if (step['add-to-waitinglist']) {
+        await this.addToWaitinglists(step['add-to-waitinglist']);
+      }
+      if (step['waiting-list']) {
+        await this.waitingLists(step['waiting-list']);
+      }
+      if (step['leave-game']) {
+        await this.leaveGames(step['leave-game']);
+      }
     }
   }
 
@@ -466,6 +475,24 @@ class GameScript {
   protected async playerSeatInfos(params: any) {
     for (const data of params) {
       await this.playerSeatInfo(data);
+    }
+  }
+
+  protected async addToWaitinglists(params: any) {
+    for (const data of params) {
+      await this.addToWaitinglist(data);
+    }
+  }
+
+  protected async waitingLists(params: any) {
+    for (const data of params) {
+      await this.waitingList(data);
+    }
+  }
+
+  protected async leaveGames(params: any) {
+    for (const data of params) {
+      await this.leaveGame(data);
     }
   }
 
@@ -1085,7 +1112,7 @@ class GameScript {
         );
         if (!receivedPlayer) {
           this.log(`player ${data} not found in ${resp.data.players}`);
-          throw new Error('Live games verification failed');
+          throw new Error('Seat change verification failed');
         }
       }
     } catch (err) {
@@ -1157,6 +1184,73 @@ class GameScript {
       }
     } catch (err) {
       this.log(err.toString());
+      throw err;
+    }
+  }
+
+  protected async addToWaitinglist(updateData: any) {
+    this.log(`Add players to waiting list: ${JSON.stringify(updateData)}`);
+    try {
+      for (const data of updateData.players) {
+        await mutationHelper(
+          {
+            gameCode: this.gameCreated[updateData.game].gameCode,
+          },
+          queries.addToWaitingList,
+          this.registeredPlayers[data].token
+        );
+      }
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
+  protected async waitingList(updateData: any) {
+    this.log(`Verify waiting list: ${JSON.stringify(updateData)}`);
+    try {
+      const resp = await queryHelper(
+        {
+          gameCode: this.gameCreated[updateData.game].gameCode,
+        },
+        queries.waitingList,
+        this.registeredPlayers[this.clubCreated[updateData.club].owner].token
+      );
+      if (resp.data.players.length !== updateData.players.length) {
+        this.log(
+          `Expected ${updateData.input.length} players but received ${resp.data.players.length}`
+        );
+        throw new Error('waitlist verification failed');
+      }
+      for (const data of updateData.players) {
+        const receivedPlayer = await resp.data.players.find(
+          element => element.name == data
+        );
+        if (!receivedPlayer) {
+          this.log(`player ${data} not found in ${resp.data.players}`);
+          throw new Error('waitlist verification failed');
+        }
+      }
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
+  protected async leaveGame(updateData: any) {
+    this.log(`player leaves a game: ${JSON.stringify(updateData)}`);
+    try {
+      for (const data of updateData.players) {
+        await mutationHelper(
+          {
+            gameCode: this.gameCreated[updateData.game].gameCode,
+          },
+          queries.leaveGame,
+          this.registeredPlayers[data].token
+        );
+      }
+    } catch (err) {
+      this.log(JSON.stringify(err));
       throw err;
     }
   }

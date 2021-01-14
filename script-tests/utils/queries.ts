@@ -231,11 +231,17 @@ export const removeFromWaitingList = gql`
 
 export const waitingList = gql`
   query($gameCode: String!) {
-    status: waitingList(gameCode: $gameCode) {
+    players: waitingList(gameCode: $gameCode) {
       playerUuid
       name
       waitingFrom
       status
     }
+  }
+`;
+
+export const leaveGame = gql`
+  mutation($gameCode: String!) {
+    status: leaveGame(gameCode: $gameCode)
   }
 `;
