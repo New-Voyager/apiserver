@@ -82,21 +82,37 @@ run-server-nats:
 
 
 .PHONY: publish
-publish: export REGISTRY=${GCP_REGISTRY}
-publish:  publish-common
+publish: do-publish
 
 .PHONY: do-publish
 do-publish: export REGISTRY=${DO_REGISTRY}
-do-publish: publish-common
+do-publish: publish-apiserver
 
-.PHONY: publish-common
-publish-common:
-	# publish postgres so that we don't have to pull from the docker hub
-	docker pull postgres:${POSTGRES_VERSION}
-	docker tag postgres:${POSTGRES_VERSION} ${REGISTRY}/postgres:${POSTGRES_VERSION}
-	docker push ${REGISTRY}/postgres:${POSTGRES_VERSION}
-	# publish api server
+.PHONY: do-publish-all
+do-publish-all: export REGISTRY=${DO_REGISTRY}
+do-publish-all: publish-all
+
+.PHONY: gcp-publish
+gcp-publish: export REGISTRY=${GCP_REGISTRY}
+gcp-publish: publish-apiserver
+
+.PHONY: gcp-publish-all
+gcp-publish-all: export REGISTRY=${GCP_REGISTRY}
+gcp-publish-all: publish-all
+
+.PHONY: publish-all
+publish-all: publish-apiserver publish-3rdparty
+
+.PHONY: publish-apiserver
+publish-apiserver:
 	docker tag api-server ${REGISTRY}/api-server:$(BUILD_NO)
 	docker tag api-server ${REGISTRY}/api-server:latest
 	docker push ${REGISTRY}/api-server:$(BUILD_NO)
 	docker push ${REGISTRY}/api-server:latest
+
+.PHONY: publish-3rdparty
+publish-3rdparty:
+	# publish 3rd-party images so that we don't have to pull from the docker hub
+	docker pull postgres:${POSTGRES_VERSION}
+	docker tag postgres:${POSTGRES_VERSION} ${REGISTRY}/postgres:${POSTGRES_VERSION}
+	docker push ${REGISTRY}/postgres:${POSTGRES_VERSION}
