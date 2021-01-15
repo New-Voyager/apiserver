@@ -1,7 +1,7 @@
 import {Club} from '@src/entity/club';
 import {EntityManager, getRepository, Not, Repository} from 'typeorm';
 import {RewardType, ScheduleType} from '@src/entity/types';
-import {GameRewardTracking, Reward} from '@src/entity/reward';
+import {GameReward, GameRewardTracking, Reward} from '@src/entity/reward';
 export interface RewardInputFormat {
   name: string;
   type: RewardType;
@@ -377,7 +377,7 @@ class RewardRepositoryImpl {
   }
 
   public async highHandWinners(gameCode: string, rewardId: number) {
-    if (!gameCode || !rewardId) {
+    if (!gameCode) {
       return;
     }
     const highHands = [] as any;
@@ -388,10 +388,29 @@ class RewardRepositoryImpl {
       logger.error('Invalid gameCode');
       throw new Error('Invalid gameCode');
     }
+
+    if (!rewardId) {
+      // get reward associated with the game code
+      const gameRewards = await getRepository(GameReward).find({
+        gameId: {id: game.id},
+      });
+      if (gameRewards && gameRewards.length >= 1) {
+        // get highhand reward id
+        if (gameRewards.length === 1) {
+          rewardId = gameRewards[0].rewardId.id;
+        }
+      }
+    }
+
+    // no highhand rewards attached to the game
+    if (!rewardId) {
+      return [];
+    }
+
     const reward = await rewardRepo.findOne({id: rewardId});
     if (!reward) {
-      logger.error(`Invalid RewardId. ${rewardId}`);
-      throw new Error('Invalid RewardId');
+      logger.error(`Invalid Reward. ${rewardId}`);
+      throw new Error('Invalid Reward');
     }
     const rewardTrackRepo = getRepository(GameRewardTracking);
     const rewardtrack = await rewardTrackRepo.findOne({

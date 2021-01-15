@@ -57,6 +57,6 @@ type Query {
   rewards(clubCode: String!): [Reward!]
   highHandsByGame(gameCode: String!): [HighHand!]
   highHandsByReward(gameCode: String!, rewardId: String!): [HighHand!]
-  highHandWinners(gameCode: String!, rewardId: String!): [HighHand!]
+  highHandWinners(gameCode: String!, rewardId: String): [HighHand!]
   getRewardTrack(gameCode: String!, rewardId: String!): [RewardTrack]
 }
