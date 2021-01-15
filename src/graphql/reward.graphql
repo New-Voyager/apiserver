@@ -46,6 +46,7 @@ type HighHand{
   rank: Int!
   handTime: DateTime!
   highHandCards: String!
+  winner: Boolean
 }
 
 type RewardTrack{

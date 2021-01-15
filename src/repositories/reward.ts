@@ -304,6 +304,7 @@ class RewardRepositoryImpl {
           rank: highHand.rank,
           handTime: highHand.handTime,
           highHandCards: highHand.highHandCards,
+          winner: highHand.winner,
         });
       }
       return highHands;
@@ -349,6 +350,7 @@ class RewardRepositoryImpl {
           rank: highHand.rank,
           handTime: highHand.handTime,
           highHandCards: highHand.highHandCards,
+          winner: highHand.winner,
         });
       }
       return highHands;
@@ -437,6 +439,7 @@ class RewardRepositoryImpl {
           rank: highHand.rank,
           handTime: highHand.handTime,
           highHandCards: highHand.highHandCards,
+          winner: highHand.winner,
         });
       }
       return highHands;
