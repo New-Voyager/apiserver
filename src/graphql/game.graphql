@@ -192,6 +192,7 @@ type WaitingListPlayer {
   name: String
   waitingFrom: DateTime
   status: PlayerGameStatus
+  waitlistNum: Int
 }
 
 type BuyInStatus {

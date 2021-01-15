@@ -236,6 +236,7 @@ export const waitingList = gql`
       name
       waitingFrom
       status
+      waitlistNum
     }
   }
 `;

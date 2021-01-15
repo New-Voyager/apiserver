@@ -211,6 +211,9 @@ class GameScript {
       if (step['add-to-waitinglist']) {
         await this.addToWaitinglists(step['add-to-waitinglist']);
       }
+      if (step['remove-from-waitinglist']) {
+        await this.removeFromWaitinglists(step['remove-from-waitinglist']);
+      }
       if (step['waiting-list']) {
         await this.waitingLists(step['waiting-list']);
       }
@@ -481,6 +484,12 @@ class GameScript {
   protected async addToWaitinglists(params: any) {
     for (const data of params) {
       await this.addToWaitinglist(data);
+    }
+  }
+
+  protected async removeFromWaitinglists(params: any) {
+    for (const data of params) {
+      await this.removeFromWaitinglist(data);
     }
   }
 
@@ -1224,10 +1233,16 @@ class GameScript {
       }
       for (const data of updateData.players) {
         const receivedPlayer = await resp.data.players.find(
-          element => element.name == data
+          element => element.name == data.name
         );
         if (!receivedPlayer) {
-          this.log(`player ${data} not found in ${resp.data.players}`);
+          this.log(`player ${data.name} not found in ${resp.data.players}`);
+          throw new Error('waitlist verification failed');
+        }
+        if (receivedPlayer.waitlistNum !== data.waitlistNum) {
+          this.log(
+            `expected ${receivedPlayer.waitlistNum} but received ${data.waitlistNum}`
+          );
           throw new Error('waitlist verification failed');
         }
       }
@@ -1246,6 +1261,24 @@ class GameScript {
             gameCode: this.gameCreated[updateData.game].gameCode,
           },
           queries.leaveGame,
+          this.registeredPlayers[data].token
+        );
+      }
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
+  protected async removeFromWaitinglist(updateData: any) {
+    this.log(`Remove players from waiting list: ${JSON.stringify(updateData)}`);
+    try {
+      for (const data of updateData.players) {
+        await mutationHelper(
+          {
+            gameCode: this.gameCreated[updateData.game].gameCode,
+          },
+          queries.removeFromWaitingList,
           this.registeredPlayers[data].token
         );
       }

@@ -135,6 +135,9 @@ export class PlayerGameTracker {
   })
   public waitingFrom!: Date | null;
 
+  @Column({name: 'waitlist_num', type: 'int', default: 0})
+  public waitlistNum!: number;
+
   // this user is notified to take a seat and the time will expire at this time
   @DbAwareColumn({
     name: 'waitlist_sitting_exp',

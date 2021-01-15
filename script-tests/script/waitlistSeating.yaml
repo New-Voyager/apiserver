@@ -53,9 +53,32 @@ game:
         - club: New Delhi
           game: test1
           players:
-            - arjun
-            - sanjay
+            - name: arjun
+              waitlistNum: 1
+            - name: sanjay
+              waitlistNum: 2
     
+    - remove-from-waitinglist:
+        - club: New Delhi
+          game: test1
+          players:
+            - arjun
+
+    - add-to-waitinglist:
+        - club: New Delhi
+          game: test1
+          players:
+            - arjun
+
+    - waiting-list:
+        - club: New Delhi
+          game: test1
+          players:
+            - name: sanjay
+              waitlistNum: 2
+            - name: arjun
+              waitlistNum: 3
+  
     - leave-game:
         - club: New Delhi
           game: test1
@@ -72,21 +95,21 @@ game:
               - club: New Delhi
                 game: test1
                 players:
-                  - playerId: sanjay
+                  - playerId: arjun
                     seatNo: 1
       
     - sitsin:
       - club: New Delhi
         game: test1
         players:
-          - playerId: arjun
+          - playerId: sanjay
             seatNo: 1
     
     - players-seat-info:
         - club: New Delhi
           game: test1 
           players:
-            - name: arjun
+            - name: sanjay
               seatNo: 1
             - name: sam
               seatNo: 2

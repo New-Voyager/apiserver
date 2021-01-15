@@ -6,7 +6,14 @@ import {PlayerStatus} from '@src/entity/types';
 import {cancelTimer, gameUpdate, startTimer} from '@src/gameserver';
 import {fixQuery} from '@src/utils';
 import {getLogger} from '@src/utils/log';
-import {getConnection, getManager, getRepository, IsNull, Not} from 'typeorm';
+import {
+  Equal,
+  getConnection,
+  getManager,
+  getRepository,
+  IsNull,
+  Not,
+} from 'typeorm';
 import {WAITLIST_SEATING} from './types';
 import * as crypto from 'crypto';
 
@@ -107,9 +114,10 @@ export class WaitListMgmt {
       where: {
         game: {id: gameId},
         waitingFrom: Not(IsNull()),
+        waitlistNum: Not(Equal(0)),
       },
       order: {
-        waitingFrom: 'ASC',
+        waitlistNum: 'ASC',
       },
     });
     if (waitingPlayers.length === 0) {
@@ -137,6 +145,7 @@ export class WaitListMgmt {
               status: PlayerStatus.NOT_PLAYING,
               waitingFrom: null,
               waitingListTimeExp: null,
+              waitlistNum: 0,
             }
           );
           // timer probably got cancelled
@@ -236,6 +245,12 @@ export class WaitListMgmt {
         },
       });
 
+      let waitlistNum = await getConnection().query(`
+        SELECT MAX(waitlist_num) as max_count from player_game_tracker WHERE pgt_game_id = ${this.game.id} 
+      `);
+      waitlistNum = waitlistNum[0]['max_count'] + 1;
+      logger.debug(`Current Waitlist Number is:${waitlistNum}`);
+
       if (playerInGame) {
         // if the player is already playing, the user cannot add himself to the waiting list
         if (playerInGame.status === PlayerStatus.PLAYING) {
@@ -252,6 +267,7 @@ export class WaitListMgmt {
           {
             status: PlayerStatus.IN_QUEUE,
             waitingFrom: new Date(),
+            waitlistNum: waitlistNum,
           }
         );
       } else {
@@ -266,6 +282,7 @@ export class WaitListMgmt {
         playerInGame.gameToken = randomBytes.toString('hex');
         playerInGame.status = PlayerStatus.IN_QUEUE;
         playerInGame.waitingFrom = new Date();
+        playerInGame.waitlistNum = waitlistNum;
         await playerGameTrackerRepository.save(playerInGame);
       }
 
@@ -320,6 +337,7 @@ export class WaitListMgmt {
         {
           status: PlayerStatus.NOT_PLAYING,
           waitingFrom: null,
+          waitlistNum: 0,
         }
       );
 
@@ -350,6 +368,7 @@ export class WaitListMgmt {
       where: {
         game: {id: this.game.id},
         waitingFrom: Not(IsNull()),
+        waitlistNum: Not(Equal(0)),
       },
       order: {
         waitingFrom: 'ASC',
@@ -362,6 +381,7 @@ export class WaitListMgmt {
         name: x.player.name,
         waitingFrom: x.waitingFrom,
         status: PlayerStatus[x.status],
+        waitlistNum: x.waitlistNum,
       };
     });
 
