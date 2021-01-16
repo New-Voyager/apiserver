@@ -12,7 +12,11 @@ export interface RewardInputFormat {
   schedule: ScheduleType;
 }
 import {getLogger} from '@src/utils/log';
-import {MIN_FULLHOUSE_RANK} from './types';
+import {
+  HighHandWinner,
+  HighHandWinnerResult,
+  MIN_FULLHOUSE_RANK,
+} from './types';
 import {Cache} from '@src/cache';
 import _ from 'lodash';
 import {HighHand} from '@src/entity/reward';
@@ -91,10 +95,11 @@ class RewardRepositoryImpl {
     input: any,
     handTime: Date,
     transactionManager?: EntityManager
-  ) {
+  ): Promise<HighHandWinnerResult | null> {
+    let rewardTrackingId = 0;
     try {
       if (!input.rewardTrackingIds || input.rewardTrackingIds.length === 0) {
-        return;
+        return null;
       }
       const rank: number[] = [];
       Object.keys(input.players).forEach(async card => {
@@ -102,16 +107,12 @@ class RewardRepositoryImpl {
       });
       const highHandRank = _.min(rank);
       if (!highHandRank) {
-        return;
+        return null;
       }
 
       if (highHandRank > MIN_FULLHOUSE_RANK) {
-        return;
+        return null;
       }
-
-      // TODO: multiple players can have the same hand (we need to deal with this)
-      // May be store the winning player information in a json
-      // get the players who had this rank
       // right now, we handle only one reward
       if (input.rewardTrackingIds.length > 1) {
         logger.error(`Game: ${gameCode} Cannot track more than one reward`);
@@ -119,6 +120,7 @@ class RewardRepositoryImpl {
       }
 
       const trackingId = input.rewardTrackingIds[0];
+      rewardTrackingId = trackingId;
       let rewardTrackRepo: Repository<GameRewardTracking>;
       if (transactionManager) {
         rewardTrackRepo = transactionManager.getRepository(GameRewardTracking);
@@ -134,13 +136,15 @@ class RewardRepositoryImpl {
         logger.error(
           `No existing active reward tracking found for id: ${trackingId}`
         );
-        return;
+        return null;
       }
 
       let existingHighHandRank = Number.MAX_SAFE_INTEGER;
       if (existingTracking && existingTracking.highHandRank) {
         existingHighHandRank = existingTracking.highHandRank;
       }
+
+      const highHandWinners = new Array<HighHandWinner>();
       const highHandPlayers = new Array<any>();
       let hhCards = '';
       for (const seatNo of Object.keys(input.players)) {
@@ -148,10 +152,30 @@ class RewardRepositoryImpl {
         if (player.hhRank === highHandRank) {
           highHandPlayers.push(player);
           hhCards = player.hhCards;
+
+          try {
+            const playerInfo = await Cache.getPlayerById(player.id);
+            highHandWinners.push({
+              gameCode: gameCode,
+              playerId: player.id,
+              playerUuid: playerInfo.uuid,
+              playerName: playerInfo.name,
+              boardCards: input.boardCards,
+              playerCards: player.cards,
+              hhCards: player.hhCards,
+            });
+          } catch (err) {
+            logger.error(
+              `Cannot update high hand winners. Error occurred: ${JSON.stringify(
+                err
+              )}`
+            );
+          }
         }
       }
+
       if (hhCards === '') {
-        return;
+        return null;
       }
 
       let winner = true;
@@ -170,7 +194,7 @@ class RewardRepositoryImpl {
         }
 
         if (highHandRank > gameHighHandRank) {
-          return;
+          return null;
         }
       }
 
@@ -218,7 +242,10 @@ class RewardRepositoryImpl {
         );
         Cache.updateGameHighHand(game.gameCode, highHandRank);
       }
-      return true;
+      return {
+        rewardTrackingId: rewardTrackingId,
+        winners: highHandWinners,
+      };
     } catch (err) {
       logger.error(
         `Couldn't update reward. retry again. Error: ${err.toString()}`
