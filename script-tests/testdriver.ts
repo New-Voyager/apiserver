@@ -217,6 +217,9 @@ class GameScript {
       if (step['waiting-list']) {
         await this.waitingLists(step['waiting-list']);
       }
+      if (step['apply-waitinglist-order']) {
+        await this.applyWaitinglistOrders(step['apply-waitinglist-order']);
+      }
       if (step['leave-game']) {
         await this.leaveGames(step['leave-game']);
       }
@@ -496,6 +499,12 @@ class GameScript {
   protected async waitingLists(params: any) {
     for (const data of params) {
       await this.waitingList(data);
+    }
+  }
+
+  protected async applyWaitinglistOrders(params: any) {
+    for (const data of params) {
+      await this.applyWaitinglistOrder(data);
     }
   }
 
@@ -1282,6 +1291,27 @@ class GameScript {
           this.registeredPlayers[data].token
         );
       }
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
+  protected async applyWaitinglistOrder(updateData: any) {
+    this.log(`Apply waitlist order: ${JSON.stringify(updateData)}`);
+    try {
+      const players = new Array<string>();
+      for (const data of updateData.players) {
+        players.push(this.registeredPlayers[data].playerUuid);
+      }
+      await mutationHelper(
+        {
+          gameCode: this.gameCreated[updateData.game].gameCode,
+          playerUuid: players,
+        },
+        queries.applyWaitlistOrder,
+        this.registeredPlayers[this.clubCreated[updateData.club].owner].token
+      );
     } catch (err) {
       this.log(JSON.stringify(err));
       throw err;

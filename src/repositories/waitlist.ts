@@ -371,7 +371,7 @@ export class WaitListMgmt {
         waitlistNum: Not(Equal(0)),
       },
       order: {
-        waitingFrom: 'ASC',
+        waitlistNum: 'ASC',
       },
     });
 
@@ -386,5 +386,53 @@ export class WaitListMgmt {
     });
 
     return ret;
+  }
+
+  public async applyWaitlistOrder(players: Array<string>) {
+    await getManager().transaction(async transactionEntityManager => {
+      const playerGameTrackerRepository = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
+      const count = await playerGameTrackerRepository.count({
+        where: {
+          game: {id: this.game.id},
+          waitingFrom: Not(IsNull()),
+          waitlistNum: Not(Equal(0)),
+        },
+      });
+      if (count !== players.length) {
+        logger.info(
+          `Waiting list count: Expected - ${count} but received - ${players.length}`
+        );
+        throw new Error(
+          `Waiting list count: Expected - ${count} but received - ${players.length}`
+        );
+      }
+      await playerGameTrackerRepository.update(
+        {
+          game: {id: this.game.id},
+          waitingFrom: Not(IsNull()),
+          waitlistNum: Not(Equal(0)),
+        },
+        {
+          waitlistNum: 0,
+        }
+      );
+
+      let i = 1;
+      for await (const playerUuid of players) {
+        const player = await Cache.getPlayer(playerUuid);
+        await playerGameTrackerRepository.update(
+          {
+            game: {id: this.game.id},
+            player: {id: player.id},
+          },
+          {
+            waitlistNum: i,
+          }
+        );
+        i += 1;
+      }
+    });
   }
 }

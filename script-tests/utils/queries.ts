@@ -241,6 +241,12 @@ export const waitingList = gql`
   }
 `;
 
+export const applyWaitlistOrder = gql`
+  mutation($gameCode: String!, $playerUuid: [String!]) {
+    status: applyWaitlistOrder(gameCode: $gameCode, playerUuid: $playerUuid)
+  }
+`;
+
 export const leaveGame = gql`
   mutation($gameCode: String!) {
     status: leaveGame(gameCode: $gameCode)

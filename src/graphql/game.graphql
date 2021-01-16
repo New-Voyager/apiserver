@@ -308,6 +308,7 @@ type Mutation {
   kickOut(gameCode: String!, playerUuid: String!): Boolean!
   addToWaitingList(gameCode: String!): Boolean!
   removeFromWaitingList(gameCode: String!): Boolean!
+  applyWaitlistOrder(gameCode: String!, playerUuid: [String!]): Boolean!
 }
 
 type gameId{
