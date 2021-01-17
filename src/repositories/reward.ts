@@ -439,7 +439,7 @@ class RewardRepositoryImpl {
     const reward = await rewardRepo.findOne({id: rewardId});
     if (!reward) {
       logger.error(`Invalid Reward. ${rewardId}`);
-      throw new Error('Invalid Reward');
+      return [];
     }
     const rewardTrackRepo = getRepository(GameRewardTracking);
     const rewardtrack = await rewardTrackRepo.findOne({
@@ -448,7 +448,7 @@ class RewardRepositoryImpl {
     });
     if (!rewardtrack) {
       logger.error('RewardTrackId not found.');
-      throw new Error('RewardTrackId not found.');
+      return [];
     }
     try {
       const gameHighHands = await highHandRepo.find({

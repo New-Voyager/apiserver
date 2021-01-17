@@ -37,14 +37,16 @@ export function getResolvers() {
   return resolvers;
 }
 
-async function generateHandHistoryData(handHistory: HandHistory) {
+async function generateHandHistoryData(
+  handHistory: HandHistory,
+  includeData?: boolean
+) {
   const handTime = Math.round(
     (handHistory.timeEnded.getTime() - handHistory.timeStarted.getTime()) / 1000
   );
 
-  return {
+  const ret: any = {
     pageId: handHistory.id,
-    //data: handHistory.data,
     gameId: handHistory.gameId,
     gameType: GameType[handHistory.gameType],
     handNum: handHistory.handNum,
@@ -60,6 +62,10 @@ async function generateHandHistoryData(handHistory: HandHistory) {
     wonAt: WonAtStatus[handHistory.wonAt],
     summary: handHistory.summary,
   };
+  if (includeData) {
+    ret.data = JSON.parse(handHistory.data);
+  }
+  return ret;
 }
 
 async function generateHandWinnersData(hand: HandWinners) {
@@ -143,7 +149,7 @@ export async function getSpecificHandHistory(playerId: string, args: any) {
   if (!handHistory) {
     throw new Error('No hand found');
   }
-  return await generateHandHistoryData(handHistory);
+  return await generateHandHistoryData(handHistory, true);
 }
 
 export async function getAllHandHistory(playerId: string, args: any) {

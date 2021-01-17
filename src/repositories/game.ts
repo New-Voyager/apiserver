@@ -165,6 +165,7 @@ class GameRepositoryImpl {
                 );
                 await gameRewardRepository.save(createGameReward);
               } else {
+                rewardTrackingIds.push(rewardTrack.id);
                 const createGameReward = new GameReward();
                 createGameReward.gameId = game;
                 createGameReward.rewardId = rewardId;
