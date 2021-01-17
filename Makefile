@@ -5,6 +5,8 @@ GCP_REGISTRY := gcr.io/${GCP_PROJECT_ID}
 
 POSTGRES_VERSION := 12.5
 
+DOCKER_BUILDKIT ?= 1
+
 ifeq ($(OS), Windows_NT)
 	BUILD_NO := $(file < build_number.txt)
 else
@@ -50,7 +52,7 @@ create-network:
 
 .PHONY: docker-build
 docker-build:
-	docker build -f docker/Dockerfile.apiserver . -t api-server
+	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build -f docker/Dockerfile.apiserver . -t api-server
 
 .PHONY: up
 up: create-network
