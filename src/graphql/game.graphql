@@ -255,8 +255,8 @@ type CompletedGame {
   turnHands: Int
   riverHands: Int
   showdownHands: Int
-  buyIn: Float!
-  profit: Float!
+  buyIn: Float
+  profit: Float
   stackStat: [GameStackStat!]
 }
 
