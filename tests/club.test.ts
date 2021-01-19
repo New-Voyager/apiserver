@@ -222,14 +222,7 @@ describe('Club APIs', () => {
 
     clubMembers = await clubutils.getClubMembers(ownerId, clubCode);
     // owner + 2 players
-    expect(clubMembers).toHaveLength(3);
-    for (const member of clubMembers) {
-      if (member.playerId === player1Id) {
-        expect(member.status).toBe('DENIED');
-      } else {
-        expect(member.status).toBe('ACTIVE');
-      }
-    }
+    expect(clubMembers).toHaveLength(2);
   });
 
   test('owner kicks an existing member request', async () => {
@@ -279,14 +272,7 @@ describe('Club APIs', () => {
     // get club members as owner
     clubMembers = await clubutils.getClubMembers(ownerId, clubCode);
     // owner + 2 players
-    expect(clubMembers).toHaveLength(3);
-    for (const member of clubMembers) {
-      if (member.playerId === player1Id) {
-        expect(member.status).toBe('KICKEDOUT');
-      } else {
-        expect(member.status).toBe('ACTIVE');
-      }
-    }
+    expect(clubMembers).toHaveLength(2);
 
     // get club members as the player who got kicked out
     try {
