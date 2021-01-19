@@ -1,5 +1,5 @@
 test:
-  disabled: true
+  disabled: false
 
 cleanup:
   steps:
@@ -53,9 +53,39 @@ game:
         - club: New Delhi
           game: test1
           players:
+            - name: arjun
+              waitlistNum: 1
+            - name: sanjay
+              waitlistNum: 2
+    
+    - remove-from-waitinglist:
+        - club: New Delhi
+          game: test1
+          players:
+            - arjun
+
+    - add-to-waitinglist:
+        - club: New Delhi
+          game: test1
+          players:
+            - arjun
+
+    - waiting-list:
+        - club: New Delhi
+          game: test1
+          players:
+            - name: sanjay
+              waitlistNum: 2
+            - name: arjun
+              waitlistNum: 3
+  
+    - apply-waitinglist-order:
+        - club: New Delhi
+          game: test1
+          players:
             - arjun
             - sanjay
-    
+
     - leave-game:
         - club: New Delhi
           game: test1
@@ -86,8 +116,8 @@ game:
         - club: New Delhi
           game: test1 
           players:
-            - name: arun
-              seatNo: 3
+            - name: arjun
+              seatNo: 1
             - name: sam
               seatNo: 2
 

@@ -188,7 +188,7 @@ describe('Hand Server', () => {
         `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
         data
       );
-      expect(resp.data.status).toBe('OK');
+      expect(resp.data.success).toBe(true);
     }
 
     const resp1 = await rewardutils.getlogDatabyGame(

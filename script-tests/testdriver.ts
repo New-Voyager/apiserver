@@ -208,6 +208,21 @@ class GameScript {
       if (step['players-seat-info']) {
         await this.playerSeatInfos(step['players-seat-info']);
       }
+      if (step['add-to-waitinglist']) {
+        await this.addToWaitinglists(step['add-to-waitinglist']);
+      }
+      if (step['remove-from-waitinglist']) {
+        await this.removeFromWaitinglists(step['remove-from-waitinglist']);
+      }
+      if (step['waiting-list']) {
+        await this.waitingLists(step['waiting-list']);
+      }
+      if (step['apply-waitinglist-order']) {
+        await this.applyWaitinglistOrders(step['apply-waitinglist-order']);
+      }
+      if (step['leave-game']) {
+        await this.leaveGames(step['leave-game']);
+      }
     }
   }
 
@@ -466,6 +481,36 @@ class GameScript {
   protected async playerSeatInfos(params: any) {
     for (const data of params) {
       await this.playerSeatInfo(data);
+    }
+  }
+
+  protected async addToWaitinglists(params: any) {
+    for (const data of params) {
+      await this.addToWaitinglist(data);
+    }
+  }
+
+  protected async removeFromWaitinglists(params: any) {
+    for (const data of params) {
+      await this.removeFromWaitinglist(data);
+    }
+  }
+
+  protected async waitingLists(params: any) {
+    for (const data of params) {
+      await this.waitingList(data);
+    }
+  }
+
+  protected async applyWaitinglistOrders(params: any) {
+    for (const data of params) {
+      await this.applyWaitinglistOrder(data);
+    }
+  }
+
+  protected async leaveGames(params: any) {
+    for (const data of params) {
+      await this.leaveGame(data);
     }
   }
 
@@ -1085,7 +1130,7 @@ class GameScript {
         );
         if (!receivedPlayer) {
           this.log(`player ${data} not found in ${resp.data.players}`);
-          throw new Error('Live games verification failed');
+          throw new Error('Seat change verification failed');
         }
       }
     } catch (err) {
@@ -1157,6 +1202,118 @@ class GameScript {
       }
     } catch (err) {
       this.log(err.toString());
+      throw err;
+    }
+  }
+
+  protected async addToWaitinglist(updateData: any) {
+    this.log(`Add players to waiting list: ${JSON.stringify(updateData)}`);
+    try {
+      for (const data of updateData.players) {
+        await mutationHelper(
+          {
+            gameCode: this.gameCreated[updateData.game].gameCode,
+          },
+          queries.addToWaitingList,
+          this.registeredPlayers[data].token
+        );
+      }
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
+  protected async waitingList(updateData: any) {
+    this.log(`Verify waiting list: ${JSON.stringify(updateData)}`);
+    try {
+      const resp = await queryHelper(
+        {
+          gameCode: this.gameCreated[updateData.game].gameCode,
+        },
+        queries.waitingList,
+        this.registeredPlayers[this.clubCreated[updateData.club].owner].token
+      );
+      if (resp.data.players.length !== updateData.players.length) {
+        this.log(
+          `Expected ${updateData.input.length} players but received ${resp.data.players.length}`
+        );
+        throw new Error('waitlist verification failed');
+      }
+      for (const data of updateData.players) {
+        const receivedPlayer = await resp.data.players.find(
+          element => element.name == data.name
+        );
+        if (!receivedPlayer) {
+          this.log(`player ${data.name} not found in ${resp.data.players}`);
+          throw new Error('waitlist verification failed');
+        }
+        if (receivedPlayer.waitlistNum !== data.waitlistNum) {
+          this.log(
+            `expected ${receivedPlayer.waitlistNum} but received ${data.waitlistNum}`
+          );
+          throw new Error('waitlist verification failed');
+        }
+      }
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
+  protected async leaveGame(updateData: any) {
+    this.log(`player leaves a game: ${JSON.stringify(updateData)}`);
+    try {
+      for (const data of updateData.players) {
+        await mutationHelper(
+          {
+            gameCode: this.gameCreated[updateData.game].gameCode,
+          },
+          queries.leaveGame,
+          this.registeredPlayers[data].token
+        );
+      }
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
+  protected async removeFromWaitinglist(updateData: any) {
+    this.log(`Remove players from waiting list: ${JSON.stringify(updateData)}`);
+    try {
+      for (const data of updateData.players) {
+        await mutationHelper(
+          {
+            gameCode: this.gameCreated[updateData.game].gameCode,
+          },
+          queries.removeFromWaitingList,
+          this.registeredPlayers[data].token
+        );
+      }
+    } catch (err) {
+      this.log(JSON.stringify(err));
+      throw err;
+    }
+  }
+
+  protected async applyWaitinglistOrder(updateData: any) {
+    this.log(`Apply waitlist order: ${JSON.stringify(updateData)}`);
+    try {
+      const players = new Array<string>();
+      for (const data of updateData.players) {
+        players.push(this.registeredPlayers[data].playerUuid);
+      }
+      await mutationHelper(
+        {
+          gameCode: this.gameCreated[updateData.game].gameCode,
+          playerUuid: players,
+        },
+        queries.applyWaitlistOrder,
+        this.registeredPlayers[this.clubCreated[updateData.club].owner].token
+      );
+    } catch (err) {
+      this.log(JSON.stringify(err));
       throw err;
     }
   }

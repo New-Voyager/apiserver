@@ -1078,6 +1078,69 @@ export async function waitingList(
   }
 }
 
+export async function applyWaitlistOrder(
+  hostUuid: string,
+  gameCode: string,
+  players: Array<string>
+): Promise<boolean> {
+  if (!hostUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      // club game
+      const clubMember = await Cache.getClubMember(
+        hostUuid,
+        game.club.clubCode
+      );
+      if (!clubMember) {
+        logger.error(
+          `Player: ${hostUuid} is not a club member in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${hostUuid} is not authorized to kick out a user`
+        );
+      }
+
+      if (!(clubMember.isOwner || clubMember.isManager)) {
+        // player is not a owner or a manager
+        // did this user start the game?
+        if (game.startedBy.uuid !== hostUuid) {
+          logger.error(
+            `Player: ${hostUuid} cannot change waitlist order in ${gameCode}`
+          );
+          throw new Error(
+            `Player: ${hostUuid} cannot change waitlist order in ${gameCode}`
+          );
+        }
+      }
+    } else {
+      // hosted by individual user
+      if (game.startedBy.uuid !== hostUuid) {
+        logger.error(
+          `Player: ${hostUuid} cannot change waitlist order in ${gameCode}`
+        );
+        throw new Error(
+          `Player: ${hostUuid} cannot change waitlist order in ${gameCode}`
+        );
+      }
+    }
+
+    const waitlistMgmt = new WaitListMgmt(game);
+    await waitlistMgmt.applyWaitlistOrder(players);
+    return true;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error('Failed to change waitlist order');
+  }
+}
+
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -1246,6 +1309,13 @@ const resolvers: any = {
     },
     removeFromWaitingList: async (parent, args, ctx, info) => {
       return removeFromWaitingList(ctx.req.playerId, args.gameCode);
+    },
+    applyWaitlistOrder: async (parent, args, ctx, info) => {
+      return applyWaitlistOrder(
+        ctx.req.playerId,
+        args.gameCode,
+        args.playerUuid
+      );
     },
   },
 };

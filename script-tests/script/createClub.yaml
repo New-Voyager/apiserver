@@ -58,5 +58,6 @@ setup:
           members:
             - name: arun
               status: ACTIVE
-            - name: sam
-              status: DENIED
+            # Now we cannot verify this since club members API returns only Approved members
+            # - name: sam
+            #   status: DENIED 

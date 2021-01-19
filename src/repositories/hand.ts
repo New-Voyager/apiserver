@@ -384,11 +384,10 @@ class HandRepositoryImpl {
     }
 
     logger.info(`pageOptions count: ${pageOptions.count}`);
-    let take: number | undefined = pageOptions.count;
+    let take = pageOptions.count;
     if (!take || take > 10) {
       take = 10;
     }
-    take = undefined;
     const findOptions: any = {
       where: {
         gameId: gameId,
