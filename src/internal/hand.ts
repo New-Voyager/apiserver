@@ -98,8 +98,11 @@ class HandServerAPIs {
       return;
     }
     const result = req.body;
-    await postHand(gameID, handNum, result);
-    resp.status(200).send({status: 'OK'});
+    const saveResult = await postHand(gameID, handNum, result);
+    if (saveResult.success) {
+      resp.status(200).send(saveResult);
+    }
+    resp.status(500).send(saveResult);
   }
 }
 

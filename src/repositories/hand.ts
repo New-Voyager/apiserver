@@ -3,11 +3,13 @@ import {HandHistory, HandWinners, StarredHands} from '@src/entity/hand';
 import {GameType, WonAtStatus} from '@src/entity/types';
 import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
-import {PokerGameUpdates} from '@src/entity/game';
+import {PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {Cache} from '@src/cache';
 import {RewardRepository} from './reward';
+import {GameReward, GameRewardTracking} from '@src/entity/reward';
+import {SaveHandResult} from './types';
 
 const logger = getLogger('hand');
 
@@ -82,12 +84,16 @@ class HandRepositoryImpl {
     gameID: number,
     handNum: number,
     result: any
-  ): Promise<any> {
+  ): Promise<SaveHandResult> {
+    let game: PokerGame;
+    let gameCode = '';
     try {
-      const game = await Cache.getGameById(gameID);
-      if (!game) {
+      const gameFromCache = await Cache.getGameById(gameID);
+      if (!gameFromCache) {
         throw new Error(`Game ${gameID} is not found`);
       }
+      gameCode = gameFromCache.gameCode;
+      game = gameFromCache;
       const playersInHand = result.players;
 
       /**
@@ -224,72 +230,104 @@ class HandRepositoryImpl {
       }
       handHistory.playersStack = JSON.stringify(playerBalance);
       logger.info('****** STARTING TRANSACTION TO SAVE a hand result');
-      await getManager().transaction(async transactionEntityManager => {
-        /**
-         * Assigning player chips values
-         */
-        for await (const seatNo of Object.keys(result.players)) {
-          const player = result.players[seatNo];
-          const playerId = parseInt(player.id);
-          const round = playerRound[playerId];
-          let wonHand = 0;
-          if (winners[playerId]) {
-            wonHand = 1;
-          }
-          let rakePaidByPlayer = 0.0;
-          if (player.rakePaid) {
-            rakePaidByPlayer = player.rakePaid;
+      const saveResult = await getManager().transaction(
+        async transactionEntityManager => {
+          /**
+           * Assigning player chips values
+           */
+          for await (const seatNo of Object.keys(result.players)) {
+            const player = result.players[seatNo];
+            const playerId = parseInt(player.id);
+            const round = playerRound[playerId];
+            let wonHand = 0;
+            if (winners[playerId]) {
+              wonHand = 1;
+            }
+            let rakePaidByPlayer = 0.0;
+            if (player.rakePaid) {
+              rakePaidByPlayer = player.rakePaid;
+            }
+            await transactionEntityManager
+              .getRepository(PlayerGameTracker)
+              .createQueryBuilder()
+              .update()
+              .set({
+                stack: player.balance.after,
+                sessionTime: () => `session_time + ${sessionTime}`,
+                noHandsWon: () => `no_hands_won + ${wonHand}`,
+                seenFlop: () => `seen_flop + ${round.flop}`,
+                seenTurn: () => `seen_turn + ${round.turn}`,
+                seenRiver: () => `seen_river + ${round.river}`,
+                inShowDown: () => `in_showdown + ${round.showdown}`,
+                noHandsPlayed: () => 'no_hands_played + 1',
+                rakePaid: () => `rake_paid + ${rakePaidByPlayer}`,
+              })
+              .where({
+                game: {id: gameID},
+                player: {id: playerId},
+              })
+              .execute();
           }
           await transactionEntityManager
-            .getRepository(PlayerGameTracker)
+            .getRepository(HandHistory)
+            .save(handHistory);
+          // update game rake and last hand number
+          await transactionEntityManager
+            .getRepository(PokerGameUpdates)
             .createQueryBuilder()
             .update()
             .set({
-              stack: player.balance.after,
-              sessionTime: () => `session_time + ${sessionTime}`,
-              noHandsWon: () => `no_hands_won + ${wonHand}`,
-              seenFlop: () => `seen_flop + ${round.flop}`,
-              seenTurn: () => `seen_turn + ${round.turn}`,
-              seenRiver: () => `seen_river + ${round.river}`,
-              inShowDown: () => `in_showdown + ${round.showdown}`,
-              noHandsPlayed: () => 'no_hands_played + 1',
-              rakePaid: () => `rake_paid + ${rakePaidByPlayer}`,
+              rake: () => `rake + ${handRake}`,
+              lastHandNum: handNum,
             })
             .where({
-              game: {id: gameID},
-              player: {id: playerId},
+              gameID: gameID,
             })
             .execute();
-        }
-        await transactionEntityManager
-          .getRepository(HandHistory)
-          .save(handHistory);
-        // update game rake and last hand number
-        await transactionEntityManager
-          .getRepository(PokerGameUpdates)
-          .createQueryBuilder()
-          .update()
-          .set({
-            rake: () => `rake + ${handRake}`,
-            lastHandNum: handNum,
-          })
-          .where({
-            gameID: gameID,
-          })
-          .execute();
+          const saveResult: SaveHandResult = {
+            gameCode: game.gameCode,
+            handNum: result.handNum,
+            success: true,
+          };
+          const highhandWinners = await RewardRepository.handleHighHand(
+            game.gameCode,
+            result,
+            handHistory.timeEnded,
+            transactionEntityManager
+          );
 
-        await RewardRepository.handleHighHand(
-          game.gameCode,
-          result,
-          handHistory.timeEnded,
-          transactionEntityManager
-        );
-      });
+          if (
+            highhandWinners !== null &&
+            highhandWinners.rewardTrackingId !== 0
+          ) {
+            // new high hand winners
+            // get the game codes associated with the reward tracking id
+            const games = await getRepository(GameReward).find({
+              rewardTrackingId: {id: highhandWinners.rewardTrackingId},
+            });
+            const gameCodes = games.map(e => e.gameId.gameCode);
+            saveResult.highHand = {
+              gameCode: game.gameCode,
+              handNum: handNum,
+              rewardTrackingId: highhandWinners.rewardTrackingId,
+              associatedGames: gameCodes,
+              winners: highhandWinners.winners,
+            };
+          }
+          return saveResult;
+        }
+      );
+      logger.info(`Result: ${JSON.stringify(saveResult)}`);
       logger.info('****** ENDING TRANSACTION TO SAVE a hand result');
-      return true;
+      return saveResult;
     } catch (err) {
       logger.error(`Error when trying to save hand log: ${err.toString()}`);
-      return err;
+      return {
+        gameCode: gameCode,
+        handNum: handNum,
+        success: false,
+        error: err.message,
+      };
     }
   }
 
@@ -346,10 +384,11 @@ class HandRepositoryImpl {
     }
 
     logger.info(`pageOptions count: ${pageOptions.count}`);
-    let take = pageOptions.count;
+    let take: number | undefined = pageOptions.count;
     if (!take || take > 10) {
       take = 10;
     }
+    take = undefined;
     const findOptions: any = {
       where: {
         gameId: gameId,

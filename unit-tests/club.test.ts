@@ -245,8 +245,8 @@ describe('Club APIs', () => {
     expect(player2).toBe('ACTIVE');
 
     clubMembers = await getClubMembers(playerId, {clubCode: clubCode});
-    // owner + 2 players
-    expect(clubMembers).toHaveLength(3);
+    // owner + 1 active players
+    expect(clubMembers).toHaveLength(2);
     for (const member of clubMembers) {
       if (member.playerId === player1Id) {
         expect(member.status).toBe('DENIED');
@@ -284,7 +284,7 @@ describe('Club APIs', () => {
 
     // get club members as player1
     let clubMembers = await getClubMembers(playerId, {clubCode: clubCode});
-    // owner + 2 players
+    // owner + 2 active players
     expect(clubMembers).toHaveLength(3);
     for (const member of clubMembers) {
       expect(member.status).toBe('ACTIVE');
@@ -295,8 +295,8 @@ describe('Club APIs', () => {
 
     // get club members as owner
     clubMembers = await getClubMembers(playerId, {clubCode: clubCode});
-    // owner + 2 players
-    expect(clubMembers).toHaveLength(3);
+    // owner + 1 player
+    expect(clubMembers).toHaveLength(2);
     for (const member of clubMembers) {
       if (member.playerId === player1Id) {
         expect(member.status).toBe('KICKEDOUT');

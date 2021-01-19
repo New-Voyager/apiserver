@@ -8,6 +8,7 @@ import {
   Not,
   LessThan,
   MoreThan,
+  In,
 } from 'typeorm';
 import {PokerGame} from '@src/entity/game';
 import {PageOptions} from '@src/types';
@@ -483,7 +484,13 @@ class ClubRepositoryImpl {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       club: {id: club.id},
-      status: Not(ClubMemberStatus.LEFT),
+      status: Not(
+        In([
+          ClubMemberStatus.LEFT,
+          ClubMemberStatus.DENIED,
+          ClubMemberStatus.KICKEDOUT,
+        ])
+      ),
     };
     if (filter) {
       if (filter.all) {

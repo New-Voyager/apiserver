@@ -57,9 +57,12 @@ class GameAPIs {
       resp.status(500).send(JSON.stringify(res));
       return;
     }
-    const tableStatus: TableStatus = (TableStatus[
-      req.body.status
-    ] as unknown) as TableStatus;
+    let tableStatus: TableStatus;
+    if (typeof req.body.status === 'number') {
+      tableStatus = req.body.status;
+    } else {
+      tableStatus = (TableStatus[req.body.status] as unknown) as TableStatus;
+    }
     if (!tableStatus) {
       const res = {error: 'Invalid table status'};
       resp.status(500).send(JSON.stringify(res));
