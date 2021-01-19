@@ -51,6 +51,12 @@ export async function processPendingUpdates(gameId: number) {
   if (resp[0]['updates'] > 0) {
     // game ended
     await GameRepository.markGameStatus(gameId, GameStatus.ENDED);
+
+    // delete hand updates for the game
+    await getConnection().query(
+      fixQuery('DELETE FROM next_hand_updates WHERE game_id=?'),
+      [gameId]
+    );
     return;
   }
 
