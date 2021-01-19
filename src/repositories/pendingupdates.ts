@@ -85,6 +85,7 @@ export async function processPendingUpdates(gameId: number) {
         update,
         pendingUpdatesRepo
       );
+      newOpenSeat = true;
     } else if (
       update.newUpdate === NextHandUpdate.RELOAD_APPROVED ||
       update.newUpdate === NextHandUpdate.BUYIN_APPROVED
@@ -100,9 +101,12 @@ export async function processPendingUpdates(gameId: number) {
 
   let endPendingProcess = true;
   let seatChangeInProgress = false;
+  let seatChangeAllowed = game.seatChangeAllowed;
   const seats = await occupiedSeats(game.id);
-  if (game.seatChangeAllowed) {
+  seatChangeAllowed = true; // debugging
+  if (seatChangeAllowed) {
     if (newOpenSeat && seats < game.maxPlayers) {
+      logger.info(`[${game.gameCode}] Seat Change is in Progress`);
       // open seat
       endPendingProcess = false;
       const seatChangeProcess = new SeatChangeProcess(game);

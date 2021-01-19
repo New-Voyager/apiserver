@@ -101,8 +101,9 @@ class HandServerAPIs {
     const saveResult = await postHand(gameID, handNum, result);
     if (saveResult.success) {
       resp.status(200).send(saveResult);
+    } else {
+      resp.status(500).send(saveResult);
     }
-    resp.status(500).send(saveResult);
   }
 }
 

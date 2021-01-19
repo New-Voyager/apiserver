@@ -42,16 +42,21 @@ export class SeatChangeProcess {
     const expTime = new Date();
     const timeout = this.game.waitlistSittingTimeout;
     expTime.setSeconds(expTime.getSeconds() + timeout);
-
-    // notify game server, seat change process has begun
+    logger.info(
+      `[${
+        this.game.gameCode
+      }] Started Seat change timer. Expires at ${expTime.toISOString()}`
+    );
+    // start seat change process timer
     await startTimer(this.game.id, 0, SEATCHANGE_PROGRSS, expTime);
 
-    // start seat change process timer
+    // notify game server, seat change process has begun
   }
 
   // called from the seat change timer callback to finish seat change processing
   public async finish() {
     logger.info('****** STARTING TRANSACTION TO FINISH seat change');
+    logger.info(`[${this.game.gameCode}] Seat change timer expired`);
     const switchedSeats = await getManager().transaction(
       async transactionEntityManager => {
         // get all the switch seat requests
@@ -154,7 +159,7 @@ export class SeatChangeProcess {
         gameID: this.game.id,
       },
       {
-        seatChangeInProgress: true,
+        seatChangeInProgress: false,
       }
     );
 
