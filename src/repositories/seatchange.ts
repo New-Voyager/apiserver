@@ -20,7 +20,7 @@ import {
 } from '@src/gameserver';
 import {WaitListMgmt} from './waitlist';
 import {SEATCHANGE_PROGRSS} from './types';
-import { GameRepository } from './game';
+import {GameRepository} from './game';
 const logger = getLogger('seatchange');
 
 export class SeatChangeProcess {
@@ -49,12 +49,12 @@ export class SeatChangeProcess {
         this.game.gameCode
       }] Started Seat change timer. Expires at ${expTime.toISOString()}`
     );
-    
+
     // notify game server, seat change process has begun
     await openSeat(this.game, 0, timeout);
 
     // start seat change process timer
-    await startTimer(this.game.id, 0, SEATCHANGE_PROGRSS, expTime);  
+    await startTimer(this.game.id, 0, SEATCHANGE_PROGRSS, expTime);
   }
 
   // called from the seat change timer callback to finish seat change processing
@@ -345,6 +345,5 @@ export class SeatChangeProcess {
       return 0;
     }
     return availableSeats[0];
-
   }
 }

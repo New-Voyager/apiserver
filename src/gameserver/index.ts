@@ -347,8 +347,6 @@ export async function getCurrentHandLog(gameId: number): Promise<any> {
   return resp.data;
 }
 
-
-
 export async function openSeat(
   game: PokerGame,
   seatNo: number,
