@@ -13,12 +13,14 @@ import {
 } from 'typeorm';
 import * as _ from 'lodash';
 import {
+  openSeat,
   pendingProcessDone,
   playerSwitchSeat,
   startTimer,
 } from '@src/gameserver';
 import {WaitListMgmt} from './waitlist';
 import {SEATCHANGE_PROGRSS} from './types';
+import { GameRepository } from './game';
 const logger = getLogger('seatchange');
 
 export class SeatChangeProcess {
@@ -47,10 +49,12 @@ export class SeatChangeProcess {
         this.game.gameCode
       }] Started Seat change timer. Expires at ${expTime.toISOString()}`
     );
-    // start seat change process timer
-    await startTimer(this.game.id, 0, SEATCHANGE_PROGRSS, expTime);
-
+    
     // notify game server, seat change process has begun
+    await openSeat(this.game, 0, timeout);
+
+    // start seat change process timer
+    await startTimer(this.game.id, 0, SEATCHANGE_PROGRSS, expTime);  
   }
 
   // called from the seat change timer callback to finish seat change processing
@@ -257,6 +261,13 @@ export class SeatChangeProcess {
       logger.error(`player status is ${PlayerStatus[playerInGame.status]}`);
       throw new Error(`player status is ${PlayerStatus[playerInGame.status]}`);
     }
+    if (!seatNo) {
+      // get a first open seat
+      seatNo = await this.getNextAvailableSeat();
+      if (!seatNo) {
+        throw new Error(`No seats avaialble in game ${this.game.gameCode}`);
+      }
+    }
 
     // make sure this seat is open
     playerInGame = await playerGameTrackerRepository.findOne({
@@ -314,5 +325,26 @@ export class SeatChangeProcess {
       },
     });
     return players.map(x => x.player);
+  }
+
+  async getNextAvailableSeat(): Promise<number> {
+    const playersInSeats = await GameRepository.getPlayersInSeats(this.game.id);
+    for (const player of playersInSeats) {
+      player.status = PlayerStatus[player.status];
+    }
+
+    const takenSeats = playersInSeats.map(x => x.seatNo);
+    const availableSeats: Array<number> = [];
+    for (let seatNo = 1; seatNo <= this.game.maxPlayers; seatNo++) {
+      if (takenSeats.indexOf(seatNo) === -1) {
+        availableSeats.push(seatNo);
+      }
+    }
+
+    if (availableSeats.length === 0) {
+      return 0;
+    }
+    return availableSeats[0];
+
   }
 }
