@@ -114,10 +114,13 @@ export async function processPendingUpdates(gameId: number) {
     if (newOpenSeat && seats < game.maxPlayers) {
       logger.info(`[${game.gameCode}] Seat Change is in Progress`);
       // open seat
-      endPendingProcess = false;
       const seatChangeProcess = new SeatChangeProcess(game);
-      await seatChangeProcess.start();
-      seatChangeInProgress = true;
+      const waitingPlayers = await seatChangeProcess.getSeatChangeRequestedPlayers();
+      if (waitingPlayers.length > 0) {
+        endPendingProcess = false;
+        await seatChangeProcess.start();
+        seatChangeInProgress = true;
+      }
     }
   }
 

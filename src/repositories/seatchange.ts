@@ -224,7 +224,7 @@ export class SeatChangeProcess {
       throw new Error(`player status is ${PlayerStatus[playerInGame.status]}`);
     }
 
-    const allPlayersInGame = await playerGameTrackerRepository.find({
+    const seatChangeRequestedPlayers = await playerGameTrackerRepository.find({
       relations: ['player', 'game'],
       order: {
         seatChangeRequestedAt: 'ASC',
@@ -236,7 +236,7 @@ export class SeatChangeProcess {
       },
     });
 
-    return allPlayersInGame;
+    return seatChangeRequestedPlayers;
   }
 
   public async confirmSeatChange(
