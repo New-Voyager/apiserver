@@ -13,8 +13,12 @@ import {
 } from '@src/entity/types';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {GameRepository} from './game';
-import {playerBuyIn, startTimer} from '@src/gameserver';
-import {BUYIN_APPROVAL_TIMEOUT, RELOAD_APPROVAL_TIMEOUT} from './types';
+import {cancelTimer, playerBuyIn, startTimer} from '@src/gameserver';
+import {
+  BUYIN_APPROVAL_TIMEOUT,
+  BUYIN_TIMEOUT,
+  RELOAD_APPROVAL_TIMEOUT,
+} from './types';
 import {Club, ClubMember} from '@src/entity/club';
 
 const logger = getLogger('buyin');
@@ -229,6 +233,8 @@ export class BuyIn {
               gameID: this.game.id,
             })
             .execute();
+
+          cancelTimer(this.game.id, this.player.id, BUYIN_TIMEOUT);
 
           // send a message to gameserver
           // get game server of this game
@@ -632,5 +638,8 @@ export class BuyIn {
     update.newUpdate = status;
     update.buyinAmount = amount;
     await nextHandUpdatesRepository.save(update);
+    // cancel timer
+    cancelTimer(this.game.id, this.player.id, BUYIN_TIMEOUT);
+    cancelTimer(this.game.id, this.player.id, BUYIN_APPROVAL_TIMEOUT);
   }
 }

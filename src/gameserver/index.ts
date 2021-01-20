@@ -346,3 +346,28 @@ export async function getCurrentHandLog(gameId: number): Promise<any> {
   }
   return resp.data;
 }
+
+export async function openSeat(
+  game: PokerGame,
+  seatNo: number,
+  timeRemaining: number
+) {
+  if (!notifyGameServer) {
+    return;
+  }
+
+  const gameServerUrl = await getGameServerUrl(game.id);
+  const message = {
+    type: 'OpenSeat',
+    gameId: game.id,
+    seatNo: seatNo,
+    timeRemaining: timeRemaining,
+  };
+
+  const newGameUrl = `${gameServerUrl}/table-update`;
+  const resp = await axios.post(newGameUrl, message);
+  if (resp.status !== 200) {
+    logger.error(`Failed to update table status: ${newGameUrl}`);
+    throw new Error(`Failed to update table status: ${newGameUrl}`);
+  }
+}
