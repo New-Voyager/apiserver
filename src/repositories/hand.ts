@@ -1,5 +1,10 @@
 import * as _ from 'lodash';
-import {HandHistory, HandWinners, StarredHands} from '@src/entity/hand';
+import {
+  HandHistory,
+  HandWinners,
+  SavedHands,
+  StarredHands,
+} from '@src/entity/hand';
 import {GameType, WonAtStatus} from '@src/entity/types';
 import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
@@ -10,6 +15,8 @@ import {Cache} from '@src/cache';
 import {RewardRepository} from './reward';
 import {GameReward, GameRewardTracking} from '@src/entity/reward';
 import {SaveHandResult} from './types';
+import {Player} from '@src/entity/player';
+import {Club} from '@src/entity/club';
 
 const logger = getLogger('hand');
 
@@ -466,6 +473,137 @@ class HandRepositoryImpl {
 
     const starredHands = await starredHandsRepository.find(findOptions);
     return starredHands;
+  }
+
+  public async bookmarkHand(
+    game: PokerGame,
+    player: Player,
+    handHistory: HandHistory
+  ): Promise<boolean> {
+    try {
+      const savedHandsRepository = getRepository(SavedHands);
+
+      let bookmarkedHand = await savedHandsRepository.findOne({
+        game: {id: game.id},
+        handNum: handHistory.handNum,
+        savedBy: {id: player.id},
+      });
+
+      if (!bookmarkedHand) {
+        bookmarkedHand = new SavedHands();
+        bookmarkedHand.game = game;
+        bookmarkedHand.handNum = handHistory.handNum;
+        bookmarkedHand.savedBy = player;
+        bookmarkedHand.data = handHistory.data;
+      }
+
+      await savedHandsRepository.save(bookmarkedHand);
+      return true;
+    } catch (error) {
+      logger.error(
+        `Error when trying to save bookmarked hand: ${error.toString}`
+      );
+      throw error;
+    }
+  }
+
+  public async shareHand(
+    game: PokerGame,
+    player: Player,
+    club: Club,
+    handHistory: HandHistory
+  ): Promise<boolean> {
+    try {
+      const savedHandsRepository = getRepository(SavedHands);
+
+      let sharedHand = await savedHandsRepository.findOne({
+        game: {id: game.id},
+        handNum: handHistory.handNum,
+        savedBy: {id: player.id},
+        sharedTo: {id: club.id},
+      });
+
+      if (!sharedHand) {
+        sharedHand = new SavedHands();
+        sharedHand.game = game;
+        sharedHand.handNum = handHistory.handNum;
+        sharedHand.sharedBy = player;
+        sharedHand.sharedTo = club;
+        sharedHand.data = handHistory.data;
+      }
+
+      await savedHandsRepository.save(sharedHand);
+      return true;
+    } catch (error) {
+      logger.error(`Error when trying to share hands: ${error.toString}`);
+      throw error;
+    }
+  }
+
+  public async sharedHand(
+    game: PokerGame,
+    club: Club,
+    handNum: number,
+    sharedBy: Player | undefined
+  ): Promise<any> {
+    try {
+      const savedHandsRepository = getRepository(SavedHands);
+
+      const findOptions = {
+        game: {id: game.id},
+        sharedTo: {id: club.id},
+        handNum: handNum,
+      };
+
+      if (sharedBy) {
+        findOptions['sharedBy'] = sharedBy;
+      }
+
+      const sharedHand = await savedHandsRepository.find({
+        relations: ['sharedBy', 'game', 'sharedTo'],
+        where: findOptions,
+      });
+      return sharedHand;
+    } catch (error) {
+      logger.error(`Error when trying to get share hands: ${error.toString}`);
+      throw error;
+    }
+  }
+
+  public async sharedHands(club: Club): Promise<any> {
+    try {
+      const savedHandsRepository = getRepository(SavedHands);
+
+      const sharedHands = await savedHandsRepository.find({
+        relations: ['sharedBy', 'game', 'sharedTo'],
+        where: {
+          sharedTo: {id: club.id},
+        },
+      });
+      return sharedHands;
+    } catch (error) {
+      logger.error(`Error when trying to get share hands: ${error.toString}`);
+      throw error;
+    }
+  }
+
+  public async bookmarkedHands(player: Player): Promise<any> {
+    try {
+      const savedHandsRepository = getRepository(SavedHands);
+
+      const bookmarkedHands = await savedHandsRepository.find({
+        relations: ['game', 'savedBy'],
+        where: {
+          savedBy: {id: player.id},
+        },
+      });
+      return bookmarkedHands;
+    } catch (error) {
+      logger.error(
+        `Error when trying to get bookmarked hands: ${error.toString}`
+      );
+      throw error;
+    }
   }
 }
 

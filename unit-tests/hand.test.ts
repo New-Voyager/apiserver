@@ -22,6 +22,11 @@ import {
   getMyWinningHands,
   getAllStarredHands,
   saveStarredHand,
+  shareHand,
+  sharedHand,
+  sharedHands,
+  bookmarkHand,
+  bookmarkedHands,
 } from '../src/resolvers/hand';
 import {getRewardTrack} from '../src/resolvers/reward';
 const logger = getLogger('Hand server unit-test');
@@ -678,6 +683,136 @@ describe('Hand server APIs', () => {
 
       const starredHands = await getAllStarredHands(playerUuids[0], {});
       expect(starredHands).toHaveLength(lastHand);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
+
+  test('Handtest: Bookmark hands', async () => {
+    try {
+      const [
+        owner,
+        clubCode,
+        clubId,
+        playerUuids,
+        playerIds,
+      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+      const rewardId = await createReward(owner, clubCode);
+      const [gameCode, gameId] = await setupGameEnvironment(
+        owner,
+        clubCode,
+        playerUuids,
+        100
+      );
+      const rewardTrackId = await getRewardTrack(
+        playerUuids[0],
+        gameCode,
+        rewardId.toString()
+      );
+
+      const files = await glob.sync('**/*.json', {
+        onlyFiles: false,
+        cwd: 'highhand-results',
+        deep: 5,
+      });
+
+      let lastHand = 0;
+      for await (const file of files) {
+        const data = await defaultHandData(
+          file,
+          gameId,
+          rewardTrackId,
+          playerIds
+        );
+        const resp = await postHand(gameId, data.handNum, data);
+        expect(resp).not.toBe(null);
+        await bookmarkHand(playerUuids[0], {
+          gameCode: gameCode,
+          handNum: data.handNum,
+        });
+        lastHand += 1;
+      }
+
+      const bookmarkedHand = await bookmarkedHands(playerUuids[0], {});
+      expect(bookmarkedHand).toHaveLength(lastHand);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
+
+  test('Handtest: Share hands', async () => {
+    try {
+      const [
+        owner,
+        clubCode,
+        clubId,
+        playerUuids,
+        playerIds,
+      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+      const rewardId = await createReward(owner, clubCode);
+      const [gameCode, gameId] = await setupGameEnvironment(
+        owner,
+        clubCode,
+        playerUuids,
+        100
+      );
+      const rewardTrackId = await getRewardTrack(
+        playerUuids[0],
+        gameCode,
+        rewardId.toString()
+      );
+
+      const files = await glob.sync('**/*.json', {
+        onlyFiles: false,
+        cwd: 'highhand-results',
+        deep: 5,
+      });
+
+      let lastHand = 0;
+      for await (const file of files) {
+        const data = await defaultHandData(
+          file,
+          gameId,
+          rewardTrackId,
+          playerIds
+        );
+        const resp = await postHand(gameId, data.handNum, data);
+        expect(resp).not.toBe(null);
+        await shareHand(playerUuids[0], {
+          clubCode: clubCode,
+          gameCode: gameCode,
+          handNum: data.handNum,
+        });
+        lastHand += 1;
+      }
+
+      await shareHand(playerUuids[1], {
+        clubCode: clubCode,
+        gameCode: gameCode,
+        handNum: lastHand,
+      });
+
+      const allSharedHands = await sharedHands(playerUuids[0], {
+        clubCode: clubCode,
+      });
+      expect(allSharedHands).toHaveLength(lastHand + 1);
+
+      const allSharedHands1 = await sharedHand(playerUuids[0], {
+        gameCode: gameCode,
+        handNum: lastHand,
+        clubCode: clubCode,
+      });
+      expect(allSharedHands1).toHaveLength(2);
+
+      const allSharedHands2 = await sharedHand(playerUuids[0], {
+        gameCode: gameCode,
+        handNum: lastHand,
+        clubCode: clubCode,
+        sharedBy: playerUuids[1],
+      });
+      expect(allSharedHands2).toHaveLength(1);
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();

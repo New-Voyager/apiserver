@@ -8,7 +8,12 @@ import {
   NextHandUpdates,
   PokerGameUpdates,
 } from '../src/entity/game';
-import {HandWinners, HandHistory, StarredHands} from '../src/entity/hand';
+import {
+  HandWinners,
+  HandHistory,
+  StarredHands,
+  SavedHands,
+} from '../src/entity/hand';
 import {
   PlayerGameTracker,
   ClubChipsTransaction,
@@ -55,6 +60,7 @@ export async function sqlliteConnection() {
       GameRewardTracking,
       Reward,
       HighHand,
+      SavedHands,
     ],
     dropSchema: true,
     synchronize: true,

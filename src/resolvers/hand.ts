@@ -6,6 +6,7 @@ import {WonAtStatus, GameType, ClubMemberStatus} from '@src/entity/types';
 import {PlayerRepository} from '@src/repositories/player';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
+import {Player} from '@src/entity/player';
 const logger = getLogger('hand-resolvers');
 
 const resolvers: any = {
@@ -25,10 +26,25 @@ const resolvers: any = {
     allStarredHands: async (parent, args, ctx, info) => {
       return await getAllStarredHands(ctx.req.playerId, args);
     },
+    sharedHand: async (parent, args, ctx, info) => {
+      return await sharedHand(ctx.req.playerId, args);
+    },
+    sharedHands: async (parent, args, ctx, info) => {
+      return await sharedHands(ctx.req.playerId, args);
+    },
+    bookmarkedHands: async (parent, args, ctx, info) => {
+      return await bookmarkedHands(ctx.req.playerId, args);
+    },
   },
   Mutation: {
     saveStarredHand: async (parent, args, ctx, info) => {
       return await saveStarredHand(ctx.req.playerId, args);
+    },
+    shareHand: async (parent, args, ctx, info) => {
+      return await shareHand(ctx.req.playerId, args);
+    },
+    bookmarkHand: async (parent, args, ctx, info) => {
+      return await bookmarkHand(ctx.req.playerId, args);
     },
   },
 };
@@ -307,5 +323,242 @@ export async function saveStarredHand(playerId: string, args: any) {
     player.id,
     handHistory
   );
+  return resp;
+}
+
+export async function shareHand(playerId: string, args: any) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const errors = new Array<string>();
+  try {
+    if (!args.gameCode) {
+      errors.push('gameCode is missing');
+    }
+    if (!args.clubCode) {
+      errors.push('clubCode is missing');
+    }
+    if (!args.handNum) {
+      errors.push('HandNum is missing');
+    }
+  } catch (err) {
+    throw new Error('Internal server error');
+  }
+
+  if (errors.length) {
+    throw new Error(JSON.stringify(errors));
+  }
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+  const game = await Cache.getGame(args.gameCode);
+  if (!game) {
+    throw new Error(`Game ${args.gameCode} is not found`);
+  }
+  if (game.club) {
+    const clubMember = await Cache.getClubMember(playerId, game.club.clubCode);
+    if (!clubMember) {
+      logger.error(
+        `Player: ${playerId} is not authorized to start the game ${args.gameCode} in club ${game.club.name}`
+      );
+      throw new Error(
+        `Player: ${playerId} is not authorized to start the game ${args.gameCode}`
+      );
+    }
+  }
+
+  const club = await Cache.getClub(args.clubCode);
+  if (!club) {
+    throw new Error(`Club ${args.clubCode} is not found`);
+  }
+  const clubMember = await Cache.getClubMember(playerId, club.clubCode);
+  if (!clubMember) {
+    logger.error(
+      `Player: ${playerId} is not authorized to start the game ${args.gameCode} in club ${club.name}`
+    );
+    throw new Error(
+      `Player: ${playerId} is not authorized to start the game ${args.gameCode}`
+    );
+  }
+
+  const handHistory = await HandRepository.getSpecificHandHistory(
+    game.id,
+    parseInt(args.handNum)
+  );
+  if (!handHistory) {
+    logger.error(`The hand ${args.handNum} is not found`);
+    throw new Error('Hand not found');
+  }
+
+  const resp = await HandRepository.shareHand(game, player, club, handHistory);
+  return resp;
+}
+
+export async function bookmarkHand(playerId: string, args: any) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const errors = new Array<string>();
+  try {
+    if (!args.gameCode) {
+      errors.push('gameCode is missing');
+    }
+    if (!args.handNum) {
+      errors.push('HandNum is missing');
+    }
+  } catch (err) {
+    throw new Error('Internal server error');
+  }
+
+  if (errors.length) {
+    throw new Error(JSON.stringify(errors));
+  }
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+  const game = await Cache.getGame(args.gameCode);
+  if (!game) {
+    throw new Error(`Game ${args.gameCode} is not found`);
+  }
+
+  if (game.club) {
+    const clubMember = await Cache.getClubMember(playerId, game.club.clubCode);
+    if (!clubMember) {
+      logger.error(
+        `Player: ${playerId} is not authorized to start the game ${args.gameCode} in club ${game.club.name}`
+      );
+      throw new Error(
+        `Player: ${playerId} is not authorized to start the game ${args.gameCode}`
+      );
+    }
+  }
+
+  const handHistory = await HandRepository.getSpecificHandHistory(
+    game.id,
+    parseInt(args.handNum)
+  );
+  if (!handHistory) {
+    logger.error(`The hand ${args.handNum} is not found`);
+    throw new Error('Hand not found');
+  }
+
+  const resp = await HandRepository.bookmarkHand(game, player, handHistory);
+  return resp;
+}
+
+export async function sharedHand(playerId: string, args: any) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const errors = new Array<string>();
+  try {
+    if (!args.gameCode) {
+      errors.push('gameCode is missing');
+    }
+    if (!args.clubCode) {
+      errors.push('clubCode is missing');
+    }
+    if (!args.handNum) {
+      errors.push('HandNum is missing');
+    }
+  } catch (err) {
+    throw new Error('Internal server error');
+  }
+
+  if (errors.length) {
+    throw new Error(JSON.stringify(errors));
+  }
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+  const game = await Cache.getGame(args.gameCode);
+  if (!game) {
+    throw new Error(`Game ${args.gameCode} is not found`);
+  }
+  if (game.club) {
+    const gameClubMember = await Cache.getClubMember(
+      playerId,
+      game.club.clubCode
+    );
+    if (!gameClubMember) {
+      logger.error(
+        `Player: ${playerId} is not authorized to start the game ${args.gameCode} in club ${game.club.name}`
+      );
+      throw new Error(
+        `Player: ${playerId} is not authorized to start the game ${args.gameCode}`
+      );
+    }
+  }
+
+  const club = await Cache.getClub(args.clubCode);
+  if (!club) {
+    throw new Error(`Club ${args.clubCode} is not found`);
+  }
+  const clubMember = await Cache.getClubMember(playerId, club.clubCode);
+  if (!clubMember) {
+    logger.error(`Player: ${playerId} is not authorized in club ${club.name}`);
+    throw new Error(
+      `Player: ${playerId} is not authorized in club ${club.name}`
+    );
+  }
+
+  let sharedBy;
+  if (args.sharedBy) {
+    sharedBy = await Cache.getPlayer(args.sharedBy);
+    if (!sharedBy) {
+      throw new Error(`Player ${args.sharedBy} is not found`);
+    }
+  } else {
+    sharedBy = undefined;
+  }
+
+  const resp = await HandRepository.sharedHand(
+    game,
+    club,
+    args.handNum,
+    sharedBy
+  );
+  return resp;
+}
+
+export async function sharedHands(playerId: string, args: any) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+  const club = await Cache.getClub(args.clubCode);
+  if (!club) {
+    throw new Error(`Club ${args.clubCode} is not found`);
+  }
+  const clubMember = await Cache.getClubMember(playerId, club.clubCode);
+  if (!clubMember) {
+    logger.error(`Player: ${playerId} is not authorized in club ${club.name}`);
+    throw new Error(
+      `Player: ${playerId} is not authorized in club ${club.name}`
+    );
+  }
+
+  const resp = await HandRepository.sharedHands(club);
+  return resp;
+}
+
+export async function bookmarkedHands(playerId: string, args: any) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+
+  const resp = await HandRepository.bookmarkedHands(player);
   return resp;
 }
