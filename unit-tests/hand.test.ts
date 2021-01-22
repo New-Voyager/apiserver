@@ -771,6 +771,7 @@ describe('Hand server APIs', () => {
       });
 
       let lastHand = 0;
+      let id = 0;
       for await (const file of files) {
         const data = await defaultHandData(
           file,
@@ -780,7 +781,7 @@ describe('Hand server APIs', () => {
         );
         const resp = await postHand(gameId, data.handNum, data);
         expect(resp).not.toBe(null);
-        await shareHand(playerUuids[0], {
+        id = await shareHand(playerUuids[0], {
           clubCode: clubCode,
           gameCode: gameCode,
           handNum: data.handNum,
@@ -788,31 +789,17 @@ describe('Hand server APIs', () => {
         lastHand += 1;
       }
 
-      await shareHand(playerUuids[1], {
-        clubCode: clubCode,
-        gameCode: gameCode,
-        handNum: lastHand,
-      });
-
       const allSharedHands = await sharedHands(playerUuids[0], {
         clubCode: clubCode,
       });
-      expect(allSharedHands).toHaveLength(lastHand + 1);
+      expect(allSharedHands).toHaveLength(lastHand);
 
       const allSharedHands1 = await sharedHand(playerUuids[0], {
-        gameCode: gameCode,
-        handNum: lastHand,
+        id: id,
         clubCode: clubCode,
       });
-      expect(allSharedHands1).toHaveLength(2);
-
-      const allSharedHands2 = await sharedHand(playerUuids[0], {
-        gameCode: gameCode,
-        handNum: lastHand,
-        clubCode: clubCode,
-        sharedBy: playerUuids[1],
-      });
-      expect(allSharedHands2).toHaveLength(1);
+      expect(allSharedHands1.id).toBe(id);
+      expect(allSharedHands1.sharedTo.name).toBe(clubInput.name);
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();

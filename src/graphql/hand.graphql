@@ -61,11 +61,27 @@ input PageInput {
   count: Int
 }
 
+type Player {
+  name: String
+  uuid: String!
+}
+
+type Club {
+  name: String
+  clubCode: String! 
+}
+
+type Game {
+  title: String
+  gameCode: String!
+}
+
 type SavedHand {
-  sharedBy: Json
-  savedBy: Json
-  sharedTo: Json
-  game: Json!
+  id: Int!
+  sharedBy: Player
+  savedBy: Player
+  sharedTo: Club
+  game: Game!
   handNum: Int!
   data: Json!
   updatedAt: DateTime!
@@ -76,8 +92,8 @@ type Mutation {
     gameCode: String!
     handNum: String!
   ): String!
-  shareHand(gameCode: String!, handNum: Int!, clubCode: String!): Boolean!
-  bookmarkHand(gameCode: String!, handNum: Int!): Boolean!
+  shareHand(gameCode: String!, handNum: Int!, clubCode: String!): Int!
+  bookmarkHand(gameCode: String!, handNum: Int!): Int!
 }
 
 type Query {
@@ -105,7 +121,7 @@ type Query {
   # To get all starred message for a user (default count 25)
   allStarredHands: [StarredHands!]
 
-  sharedHand(clubCode: String!, gameCode: String!, handNum: Int!, sharedBy: String): [SavedHand!]
+  sharedHand(id: Int!, clubCode: String!): SavedHand!
   sharedHands(clubCode: String!): [SavedHand!]
   bookmarkedHands: [SavedHand!]
 }

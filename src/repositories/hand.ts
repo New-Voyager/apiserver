@@ -479,7 +479,7 @@ class HandRepositoryImpl {
     game: PokerGame,
     player: Player,
     handHistory: HandHistory
-  ): Promise<boolean> {
+  ): Promise<number> {
     try {
       const savedHandsRepository = getRepository(SavedHands);
 
@@ -497,8 +497,8 @@ class HandRepositoryImpl {
         bookmarkedHand.data = handHistory.data;
       }
 
-      await savedHandsRepository.save(bookmarkedHand);
-      return true;
+      const resp = await savedHandsRepository.save(bookmarkedHand);
+      return resp.id;
     } catch (error) {
       logger.error(
         `Error when trying to save bookmarked hand: ${error.toString}`
@@ -512,7 +512,7 @@ class HandRepositoryImpl {
     player: Player,
     club: Club,
     handHistory: HandHistory
-  ): Promise<boolean> {
+  ): Promise<number> {
     try {
       const savedHandsRepository = getRepository(SavedHands);
 
@@ -532,40 +532,26 @@ class HandRepositoryImpl {
         sharedHand.data = handHistory.data;
       }
 
-      await savedHandsRepository.save(sharedHand);
-      return true;
+      const resp = await savedHandsRepository.save(sharedHand);
+      return resp.id;
     } catch (error) {
       logger.error(`Error when trying to share hands: ${error.toString}`);
       throw error;
     }
   }
 
-  public async sharedHand(
-    game: PokerGame,
-    club: Club,
-    handNum: number,
-    sharedBy: Player | undefined
-  ): Promise<any> {
+  public async sharedHand(id: number): Promise<any> {
     try {
       const savedHandsRepository = getRepository(SavedHands);
-
-      const findOptions = {
-        game: {id: game.id},
-        sharedTo: {id: club.id},
-        handNum: handNum,
-      };
-
-      if (sharedBy) {
-        findOptions['sharedBy'] = sharedBy;
-      }
-
-      const sharedHand = await savedHandsRepository.find({
+      const sharedHand = await savedHandsRepository.findOne({
         relations: ['sharedBy', 'game', 'sharedTo'],
-        where: findOptions,
+        where: {
+          id: id,
+        },
       });
       return sharedHand;
     } catch (error) {
-      logger.error(`Error when trying to get share hands: ${error.toString}`);
+      logger.error(`Error when trying to get shared hand: ${error.toString}`);
       throw error;
     }
   }
@@ -579,10 +565,11 @@ class HandRepositoryImpl {
         where: {
           sharedTo: {id: club.id},
         },
+        order: {id: 'DESC'},
       });
       return sharedHands;
     } catch (error) {
-      logger.error(`Error when trying to get share hands: ${error.toString}`);
+      logger.error(`Error when trying to get shared hands: ${error.toString}`);
       throw error;
     }
   }
@@ -596,6 +583,7 @@ class HandRepositoryImpl {
         where: {
           savedBy: {id: player.id},
         },
+        order: {id: 'DESC'},
       });
       return bookmarkedHands;
     } catch (error) {

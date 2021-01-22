@@ -783,6 +783,7 @@ describe('Hand Server', () => {
       });
 
       let lastHand = 0;
+      let id = 0;
       for await (const file of files) {
         const data = await defaultHandData(
           file,
@@ -795,7 +796,7 @@ describe('Hand Server', () => {
           data
         );
         expect(resp.status).toBe(200);
-        await handutils.saveSharedHand(
+        id = await handutils.saveSharedHand(
           gameCode,
           playerUuids[0],
           data.handNum,
@@ -804,35 +805,18 @@ describe('Hand Server', () => {
         lastHand += 1;
       }
 
-      await handutils.saveSharedHand(
-        gameCode,
-        playerUuids[1],
-        lastHand,
-        clubCode
-      );
-
       const allSharedHands = await handutils.getsharedHands(
         playerUuids[0],
         clubCode
       );
-      expect(allSharedHands).toHaveLength(lastHand + 1);
+      expect(allSharedHands).toHaveLength(lastHand);
 
       const allSharedHands1 = await handutils.getsharedHand(
         playerUuids[0],
         clubCode,
-        gameCode,
-        lastHand
+        id
       );
-      expect(allSharedHands1).toHaveLength(2);
-
-      const allSharedHands2 = await handutils.getsharedHand(
-        playerUuids[0],
-        clubCode,
-        gameCode,
-        lastHand,
-        playerUuids[1]
-      );
-      expect(allSharedHands2).toHaveLength(1);
+      expect(allSharedHands1.id).toBe(id);
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();

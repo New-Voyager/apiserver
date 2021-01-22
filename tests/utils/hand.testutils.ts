@@ -123,8 +123,15 @@ export const bookmarkHand = gql`
 export const bookmarkedHands = gql`
   query {
     data: bookmarkedHands {
-      savedBy
-      game
+      id
+      savedBy {
+        name
+        uuid
+      }
+      game {
+        title
+        gameCode
+      }
       handNum
       data
       updatedAt
@@ -133,21 +140,21 @@ export const bookmarkedHands = gql`
 `;
 
 export const sharedHand = gql`
-  query(
-    $clubCode: String!
-    $gameCode: String!
-    $handNum: Int!
-    $sharedBy: String
-  ) {
-    data: sharedHand(
-      clubCode: $clubCode
-      gameCode: $gameCode
-      handNum: $handNum
-      sharedBy: $sharedBy
-    ) {
-      sharedBy
-      sharedTo
-      game
+  query($clubCode: String!, $id: Int!) {
+    data: sharedHand(clubCode: $clubCode, id: $id) {
+      id
+      sharedBy {
+        name
+        uuid
+      }
+      sharedTo {
+        name
+        clubCode
+      }
+      game {
+        title
+        gameCode
+      }
       handNum
       data
       updatedAt
@@ -158,9 +165,19 @@ export const sharedHand = gql`
 export const sharedHands = gql`
   query($clubCode: String!) {
     data: sharedHands(clubCode: $clubCode) {
-      sharedBy
-      sharedTo
-      game
+      id
+      sharedBy {
+        name
+        uuid
+      }
+      sharedTo {
+        name
+        clubCode
+      }
+      game {
+        title
+        gameCode
+      }
       handNum
       data
       updatedAt
@@ -363,19 +380,13 @@ export async function getsharedHands(
 export async function getsharedHand(
   playerId: string,
   clubCode: string,
-  gameCode: string,
-  handNum: number,
-  sharedBy?: string
-): Promise<Array<any>> {
+  id: number
+): Promise<any> {
   const playerClient = getClient(playerId);
   const variables = {
     clubCode: clubCode,
-    gameCode: gameCode,
-    handNum: handNum,
+    id: id,
   };
-  if (sharedBy) {
-    variables['sharedBy'] = sharedBy;
-  }
   const resp = await playerClient.query({
     variables: variables,
     query: sharedHand,
