@@ -105,7 +105,7 @@ type Query {
   # To get all starred message for a user (default count 25)
   allStarredHands: [StarredHands!]
 
-  sharedHand(clubCode: String!, gameCode: String!, handNum: Int!, sharedBy: String): SavedHand
+  sharedHand(clubCode: String!, gameCode: String!, handNum: Int!, sharedBy: String): [SavedHand!]
   sharedHands(clubCode: String!): [SavedHand!]
   bookmarkedHands: [SavedHand!]
 }
