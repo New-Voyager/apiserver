@@ -3,7 +3,7 @@ import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {PlayerStatus} from '@src/entity/types';
-import {cancelTimer, gameUpdate, startTimer} from '@src/gameserver';
+import {cancelTimer, startTimer, waitlistSeating} from '@src/gameserver';
 import {fixQuery} from '@src/utils';
 import {getLogger} from '@src/utils/log';
 import {
@@ -14,19 +14,17 @@ import {
   IsNull,
   Not,
 } from 'typeorm';
-import {WAITLIST_SEATING} from './types';
+import {BUYIN_TIMEOUT, WAITLIST_SEATING} from './types';
 import * as crypto from 'crypto';
+import {BuyIn} from './buyin';
 
 const logger = getLogger('waitlist');
 
 export async function occupiedSeats(gameId: number): Promise<number> {
   const query = fixQuery(
-    'SELECT COUNT(*) as occupied FROM player_game_tracker WHERE pgt_game_id = ? AND status = ?'
+    'SELECT COUNT(*) as occupied FROM player_game_tracker WHERE pgt_game_id = ? AND (seat_no = 0 or seat_no is NULL)'
   );
-  const resp = await getConnection().query(query, [
-    gameId,
-    PlayerStatus.PLAYING,
-  ]);
+  const resp = await getConnection().query(query, [gameId]);
   return resp[0]['occupied'];
 }
 
@@ -38,7 +36,7 @@ export class WaitListMgmt {
     this.game = game;
   }
 
-  public async seatPlayer(player: Player) {
+  public async seatPlayer(player: Player, seatNo: number) {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const gameUpdateRepo = getRepository(PokerGameUpdates);
 
@@ -72,6 +70,7 @@ export class WaitListMgmt {
       }
 
       cancelTimer(this.game.id, player.id, WAITLIST_SEATING);
+
       const count = await playerGameTrackerRepository.count({
         where: {
           game: {id: this.game.id},
@@ -115,6 +114,7 @@ export class WaitListMgmt {
         game: {id: gameId},
         waitingFrom: Not(IsNull()),
         waitlistNum: Not(Equal(0)),
+        status: PlayerStatus.IN_QUEUE,
       },
       order: {
         waitlistNum: 'ASC',
@@ -219,13 +219,11 @@ export class WaitListMgmt {
       waitingListTimeExp
     );
 
+    logger.info(
+      `Game: [${nextPlayer.game.gameCode}], Player: ${nextPlayer.player.name}:${nextPlayer.player.uuid} is requested to take open seat`
+    );
     // we will send a notification which player is coming to the table
-    gameUpdate(nextPlayer.game, WAITLIST_SEATING, {
-      data: {
-        player: nextPlayer.player.id,
-        name: nextPlayer.player.name,
-      },
-    });
+    waitlistSeating(nextPlayer.game, nextPlayer.player, timeout);
   }
 
   public async addToWaitingList(playerUuid: string) {

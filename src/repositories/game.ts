@@ -391,7 +391,7 @@ class GameRepositoryImpl {
           LEFT OUTER JOIN 
             player_game_tracker pgt ON
             pgt.pgt_player_id = c.player_id AND
-            pgt.pgt_game_id  = g.id;
+            pgt.pgt_game_id  = g.id
         `;
     const resp = await getConnection().query(query);
     return resp;
@@ -448,7 +448,7 @@ class GameRepositoryImpl {
         if (gameUpdate.waitlistSeatingInprogress) {
           // wait list seating in progress
           // only the player who is asked from the waiting list can sit here
-          await waitlistMgmt.seatPlayer(player);
+          await waitlistMgmt.seatPlayer(player, seatNo);
         }
 
         // player is taking a seat in the game
@@ -540,6 +540,8 @@ class GameRepositoryImpl {
           {
             seatNo: seatNo,
             status: playerInGame.status,
+            waitingFrom: null,
+            waitlistNum: 0,
           }
         );
 
