@@ -23,7 +23,9 @@
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run-script", "watch-debug"],
-      "port": 9235
+      "port": 9235,
+      "outputCapture": "std",
+      "console": "internalConsole"
     },
     {
       "name": "Watch debug windows",

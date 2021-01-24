@@ -155,31 +155,6 @@ export async function changeGameStatus(game: PokerGame, status: GameStatus) {
   }
 }
 
-export async function gameUpdate(
-  game: PokerGame,
-  update: string,
-  contextData: any
-) {
-  if (!notifyGameServer) {
-    return;
-  }
-  const gameServerUrl = await getGameServerUrl(game.id);
-
-  const message = {
-    type: 'GameStatus',
-    gameId: game.id,
-    update: update,
-    context: contextData,
-  };
-  /*
-  const newGameUrl = `${gameServerUrl}/game-update`;
-  const resp = await axios.post(newGameUrl, message);
-  if (resp.status !== 200) {
-    logger.error(`Failed to update game status: ${newGameUrl}`);
-    throw new Error(`Failed to update game status: ${newGameUrl}`);
-  }*/
-}
-
 async function getGameServerUrl(gameId: number): Promise<string> {
   // get game server of this game
   const gameServer = await GameRepository.getGameServer(gameId);
@@ -362,6 +337,33 @@ export async function openSeat(
     gameId: game.id,
     seatNo: seatNo,
     timeRemaining: timeRemaining,
+  };
+
+  const newGameUrl = `${gameServerUrl}/table-update`;
+  const resp = await axios.post(newGameUrl, message);
+  if (resp.status !== 200) {
+    logger.error(`Failed to update table status: ${newGameUrl}`);
+    throw new Error(`Failed to update table status: ${newGameUrl}`);
+  }
+}
+
+export async function waitlistSeating(
+  game: PokerGame,
+  player: Player,
+  timeRemaining: number
+) {
+  if (!notifyGameServer) {
+    return;
+  }
+
+  const gameServerUrl = await getGameServerUrl(game.id);
+  const message = {
+    type: 'WaitlistSeating',
+    gameId: game.id,
+    playerId: player.id,
+    name: player.name,
+    playerUuid: player.uuid,
+    remainingTime: timeRemaining,
   };
 
   const newGameUrl = `${gameServerUrl}/table-update`;
