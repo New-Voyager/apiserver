@@ -694,7 +694,6 @@ describe('Game APIs', () => {
   });
 
   test('gametest: wait list seating APIs', async () => {
-    try {
       await createGameServer(gameServer1);
 
       // create players
@@ -774,14 +773,9 @@ describe('Game APIs', () => {
       const waitlist2 = await waitingList(owner, game.gameCode);
       expect(waitlist2).toHaveLength(1);
       expect(waitlist2[0].status).toBe('IN_QUEUE');
-    } catch (err) {
-      logger.error(JSON.stringify(err));
-      expect(true).toBeFalsy();
-    }
   });
 
   test('gametest: wait list seating - success case', async () => {
-    try {
       await createGameServer(gameServer1);
       const ownerInput = {
         name: 'player_name',
@@ -875,10 +869,7 @@ describe('Game APIs', () => {
 
       const resp = await joinGame(john, game.gameCode, 1);
       expect(resp).toBe('WAIT_FOR_BUYIN');
-    } catch (err) {
-      logger.error(JSON.stringify(err));
-      expect(true).toBeFalsy();
-    }
+
   });
 
   test('gametest: wait list seating - timeout case', async () => {

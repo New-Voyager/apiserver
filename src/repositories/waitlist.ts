@@ -22,7 +22,7 @@ const logger = getLogger('waitlist');
 
 export async function occupiedSeats(gameId: number): Promise<number> {
   const query = fixQuery(
-    'SELECT COUNT(*) as occupied FROM player_game_tracker WHERE pgt_game_id = ? AND (seat_no = 0 or seat_no is NULL)'
+    'SELECT COUNT(*) as occupied FROM player_game_tracker WHERE pgt_game_id = ? AND (seat_no <> 0)'
   );
   const resp = await getConnection().query(query, [gameId]);
   return resp[0]['occupied'];
@@ -89,6 +89,22 @@ export class WaitListMgmt {
     }
   }
 
+  protected async resetExistingWaitingList() {
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    // eslint-disable-next-line no-constant-condition
+    const waitingPlayers = await playerGameTrackerRepository.update(
+      {
+        game: {id: this.game.id},
+        status: PlayerStatus.WAITLIST_SEATING,
+      },
+      {
+        waitingFrom: null,
+        waitlistNum: 0,
+        status: PlayerStatus.NOT_PLAYING,
+      }
+    );
+  }
+
   // get the first guy from the wait list
   // if the timer expired, cancel the timer and change the user to status, NOT_PLAYING, waitingFrom: null, waitlist_sitting_exp: null
   // if no-one is in the wait list, set waitlist seating in progress to false
@@ -103,6 +119,7 @@ export class WaitListMgmt {
       logger.info(`No open seats in game: ${this.game.gameCode}`);
       return;
     }
+    await this.resetExistingWaitingList();
 
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
 
