@@ -276,7 +276,7 @@ export async function getParticularGameServer(
 export async function getGamesForGameServer(
   gameServerUrl: string
 ): Promise<Array<PokerGame>> {
-  let query = `SELECT pg.* FROM poker_game pg
+  let query = `SELECT pg.id FROM poker_game pg
       INNER JOIN game_gameserver gg ON pg.id = gg.game_id 
       INNER JOIN game_server gs ON gg."gameServerId" = gs.id
       WHERE gs.url = ?
