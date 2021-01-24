@@ -1,9 +1,11 @@
-import {getConnection, getRepository} from 'typeorm';
+import {getConnection, getRepository, In} from 'typeorm';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {GameServerStatus, GameStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {fixQuery} from '@src/utils';
 import {getLogger} from '@src/utils/log';
+import {PokerGame} from '@src/entity/game';
+import {publishNewGame} from '@src/gameserver';
 const logger = getLogger('internal::gameserver');
 
 class GameServerAPIs {
@@ -27,8 +29,7 @@ class GameServerAPIs {
         errors.push('currentMemory field is missing');
       }
       if (!registerPayload.url) {
-        //errors.push('url field is missing');
-        registerPayload['url'] = `http://${registerPayload.ipAddress}/url`;
+        errors.push('url field is missing');
       }
 
       if (!registerPayload.status) {
@@ -112,18 +113,45 @@ class GameServerAPIs {
   }
 
   public async restartGames(req: any, resp: any) {
-    const gameServer = req.params.gameServer;
-    const errors = new Array<string>();
-    if (!gameServer) {
-      errors.push('gameServer parameter is missing');
+    const payload = req.body;
+    const records: Array<GameServer> = await getRepository(GameServer).find({
+      where: {
+        url: payload.url,
+      },
+    });
+
+    let err: string = '';
+
+    if (records.length > 1) {
+      err = `Found ${records.length} game servers with URL [${payload.url}]. Expected 0 or 1.`;
     }
-    if (errors.length) {
-      resp.status(400).send(JSON.stringify({errors: errors}));
+
+    if (err) {
+      const response = {
+        error: err,
+      };
+      resp.status(500).send(JSON.stringify(response));
       return;
     }
-    const url = `http://${gameServer}:8080`;
-    const gameCodes = await getGamesForGameServer(url);
-    resp.status(200).send(JSON.stringify({gameCodes: gameCodes}));
+
+    if (records.length == 0) {
+      resp.status(200).send(JSON.stringify({status: 'OK'}));
+      return;
+    }
+
+    const gameServer: GameServer = records[0];
+    try {
+      await restartGameServerGames(gameServer);
+    } catch (err) {
+      logger.error(
+        `Error while restarting game server games. Error: ${err} Message: ${err.message}`
+      );
+      const response = {
+        error: err.message,
+      };
+      resp.status(500).send(JSON.stringify(response));
+    }
+    resp.status(200).send(JSON.stringify({status: 'OK'}));
   }
 }
 
@@ -170,6 +198,19 @@ export async function createGameServer(
   } catch (err) {
     logger.error(`Registering game server failed. Error: ${err.toString()}`);
     return [null, err];
+  }
+}
+async function restartGameServerGames(
+  gameServer: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<void> {
+  const games: Array<PokerGame> = await getGamesForGameServer(gameServer.url);
+  for (const game of games) {
+    logger.info(
+      `Restarting game ${game.gameCode} in game server ID: ${gameServer.id} url: ${gameServer.url}`
+    );
+    // TODO: Retry
+    await publishNewGame(game, gameServer);
   }
 }
 
@@ -234,17 +275,23 @@ export async function getParticularGameServer(
 
 export async function getGamesForGameServer(
   gameServerUrl: string
-): Promise<Array<string>> {
-  let query = `SELECT pg.game_code FROM poker_game pg 
+): Promise<Array<PokerGame>> {
+  let query = `SELECT pg.* FROM poker_game pg
       INNER JOIN game_gameserver gg ON pg.id = gg.game_id 
       INNER JOIN game_server gs ON gg."gameServerId" = gs.id
       WHERE gs.url = ?
       AND pg.game_status = ?;`;
   query = fixQuery(query);
-  const res = await getConnection().query(query, [
+  const records = await getConnection().query(query, [
     gameServerUrl,
     GameStatus.ACTIVE,
   ]);
 
-  return res.map(g => g.game_code);
+  const games: Array<PokerGame> = await getRepository(PokerGame).find({
+    where: {
+      id: In(records.map(r => r.id)),
+    },
+  });
+
+  return games;
 }

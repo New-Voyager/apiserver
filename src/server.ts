@@ -141,10 +141,7 @@ function addInternalRoutes(app: any) {
     timerCallback
   );
 
-  app.post(
-    '/internal/restart-my-games/:gameServer',
-    GameServerAPI.restartGames
-  );
+  app.post('/internal/restart-games', GameServerAPI.restartGames);
 
   app.post(
     '/internal/save-hand/gameId/:gameId/handNum/:handNum',
