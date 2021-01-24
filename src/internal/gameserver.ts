@@ -280,18 +280,20 @@ export async function getGamesForGameServer(
       INNER JOIN game_gameserver gg ON pg.id = gg.game_id 
       INNER JOIN game_server gs ON gg."gameServerId" = gs.id
       WHERE gs.url = ?
-      AND pg.game_status = ?;`;
+      AND pg.game_status = ?`;
   query = fixQuery(query);
   const records = await getConnection().query(query, [
     gameServerUrl,
     GameStatus.ACTIVE,
   ]);
 
-  const games: Array<PokerGame> = await getRepository(PokerGame).find({
-    where: {
-      id: In(records.map(r => r.id)),
-    },
-  });
-
-  return games;
+  if (records.length > 0) {
+    const games: Array<PokerGame> = await getRepository(PokerGame).find({
+      where: {
+        id: In(records.map(r => r.id)),
+      },
+    });
+    return games;
+  }
+  return [];
 }

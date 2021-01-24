@@ -1,4 +1,4 @@
-import {getRepository, getConnection} from 'typeorm';
+import {getRepository, getConnection, Not} from 'typeorm';
 import {fixQuery} from '@src/utils';
 import {GameStatus, NextHandUpdate, PlayerStatus} from '@src/entity/types';
 import {GameRepository} from './game';
@@ -208,7 +208,7 @@ async function leaveGame(
   const count = await playerGameTrackerRepository.count({
     where: {
       game: {id: game.id},
-      status: PlayerStatus.PLAYING,
+      seatNo: Not(0),
     },
   });
 

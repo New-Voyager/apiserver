@@ -307,7 +307,7 @@ type Mutation {
   #resumeGame(gameCode: String!): GameStatus!
   kickOut(gameCode: String!, playerUuid: String!): Boolean!
   addToWaitingList(gameCode: String!): Boolean!
-  removeFromWaitingList(gameCode: String!): Boolean!
+  removeFromWaitingList(gameCode: String!, playerUuid: String): Boolean!
   applyWaitlistOrder(gameCode: String!, playerUuid: [String!]): Boolean!
 }
 
