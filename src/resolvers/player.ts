@@ -279,12 +279,17 @@ async function getLiveGames(playerId: string, clubCode: string) {
   const liveGames = await GameRepository.getLiveGames(playerId);
   let game: any;
   const ret = new Array<any>();
+  const now = new Date();
   for (game of liveGames) {
     // skip other club games
     if (clubCode && game.clubCode !== clubCode) {
       continue;
     }
-    game.elapsedTime = Math.floor(game.elapsedTime);
+  
+    const nowMilli = now.getTime();
+    const startedAtMs = game.startedAt.getTime();
+    const elapsedTime = nowMilli - startedAtMs;
+    game.elapsedTime = Math.ceil(elapsedTime / 1000);
     game.status = GameStatus[game['gameStatus']];
     game.gameType = GameType[game['gameType']];
     if (!game['playerStatus']) {
