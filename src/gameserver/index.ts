@@ -359,10 +359,10 @@ export async function waitlistSeating(
   const message = {
     type: 'WaitlistSeating',
     gameId: game.id,
-    playerId: player.id,
-    name: player.name,
-    playerUuid: player.uuid,
-    remainingTime: timeRemaining,
+    waitlistPlayerId: player.id,
+    waitlistPlayerName: player.name,
+    waitlisttPlayerUuid: player.uuid,
+    waitlistRemainingTime: timeRemaining,
   };
 
   const newGameUrl = `${gameServerUrl}/table-update`;
@@ -377,7 +377,8 @@ export async function initiateSeatChangeProcess(
   game: PokerGame,
   seatNo: number,
   timeRemaining: number,
-  seatChangePlayers: Array<number>
+  seatChangePlayers: Array<number>,
+  seatChangeSeatNos: Array<number>
 ) {
   if (!notifyGameServer) {
     return;
@@ -390,6 +391,7 @@ export async function initiateSeatChangeProcess(
     seatNo: seatNo,
     seatChangeRemainingTime: timeRemaining,
     seatChangePlayers: seatChangePlayers,
+    seatChangeSeatNos: seatChangeSeatNos,
   };
 
   const newGameUrl = `${gameServerUrl}/table-update`;

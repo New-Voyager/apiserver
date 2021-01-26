@@ -245,26 +245,19 @@ export class WaitListMgmt {
 
   public async addToWaitingList(playerUuid: string) {
     logger.info('****** STARTING TRANSACTION TO ADD a player to waitlist');
+    const player = await Cache.getPlayer(playerUuid);
+    let playerInGame = await getRepository(PlayerGameTracker).findOne({
+      where: {
+        game: {id: this.game.id},
+        player: {id: player.id},
+      },
+    });
     await getManager().transaction(async transactionEntityManager => {
       // add this user to waiting list
       // if this user is already playing, then he cannot be in the waiting list
       const playerGameTrackerRepository = transactionEntityManager.getRepository(
         PlayerGameTracker
       );
-
-      const player = await Cache.getPlayer(playerUuid);
-      let playerInGame = await playerGameTrackerRepository.findOne({
-        where: {
-          game: {id: this.game.id},
-          player: {id: player.id},
-        },
-      });
-
-      let waitlistNum = await getConnection().query(`
-        SELECT MAX(waitlist_num) as max_count from player_game_tracker WHERE pgt_game_id = ${this.game.id} 
-      `);
-      waitlistNum = waitlistNum[0]['max_count'] + 1;
-      logger.debug(`Current Waitlist Number is:${waitlistNum}`);
 
       if (playerInGame) {
         // if the player is already playing, the user cannot add himself to the waiting list
@@ -273,18 +266,6 @@ export class WaitListMgmt {
             'Playing in the seat cannot be added to waiting list'
           );
         }
-
-        await playerGameTrackerRepository.update(
-          {
-            game: {id: this.game.id},
-            player: {id: player.id},
-          },
-          {
-            status: PlayerStatus.IN_QUEUE,
-            waitingFrom: new Date(),
-            waitlistNum: waitlistNum,
-          }
-        );
       } else {
         // player is not in the game
         playerInGame = new PlayerGameTracker();
@@ -297,10 +278,22 @@ export class WaitListMgmt {
         playerInGame.gameToken = randomBytes.toString('hex');
         playerInGame.status = PlayerStatus.IN_QUEUE;
         playerInGame.waitingFrom = new Date();
-        playerInGame.waitlistNum = waitlistNum;
         await playerGameTrackerRepository.save(playerInGame);
       }
 
+      await transactionEntityManager
+        .getRepository(PlayerGameTracker)
+        .createQueryBuilder()
+        .update()
+        .set({
+          status: PlayerStatus.IN_QUEUE,
+          waitingFrom: new Date(),
+        })
+        .where({
+          game: {id: this.game.id},
+          player: {id: player.id},
+        })
+        .execute();
       // update players in waiting list column
       const count = await playerGameTrackerRepository.count({
         where: {
@@ -319,6 +312,18 @@ export class WaitListMgmt {
         {playersInWaitList: count}
       );
     });
+    getRepository(PlayerGameTracker)
+      .createQueryBuilder()
+      .update()
+      .set({
+        waitlistNum: () =>
+          `(select MAX(waitlist_num)+1 from player_game_tracker where pgt_game_id=${this.game.id})`,
+      })
+      .where({
+        game: {id: this.game.id},
+        player: {id: player.id},
+      })
+      .execute();
     logger.info('****** ENDING TRANSACTION TO ADD a player to waitlist');
   }
 

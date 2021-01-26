@@ -38,6 +38,8 @@ export class SeatChangeProcess {
     }
 
     const playerIds = players.map(x => x.id);
+    const playerSeatNos = await this.getSeatChangeRequestedPlayersSeatNo();
+
     // first set the game that we are in seat change process
     const gameUpdatesRepo = getRepository(PokerGameUpdates);
     await gameUpdatesRepo.update(
@@ -58,7 +60,7 @@ export class SeatChangeProcess {
     );
 
     // notify game server, seat change process has begun
-    await initiateSeatChangeProcess(this.game, 0, timeout, playerIds);
+    await initiateSeatChangeProcess(this.game, 0, timeout, playerIds, playerSeatNos);
 
     // start seat change process timer
     await startTimer(this.game.id, 0, SEATCHANGE_PROGRSS, expTime);
@@ -332,6 +334,29 @@ export class SeatChangeProcess {
       },
     });
     return players.map(x => x.player);
+  }
+
+  async getSeatChangeRequestedPlayersSeatNo(
+    transactionManager?: EntityManager
+  ) {
+    let playerGameTrackerRepository: Repository<PlayerGameTracker>;
+    if (transactionManager) {
+      playerGameTrackerRepository = transactionManager.getRepository(
+        PlayerGameTracker
+      );
+    } else {
+      playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    }
+    const players = await playerGameTrackerRepository.find({
+      relations: ['player'],
+      order: {seatChangeRequestedAt: 'ASC'},
+      where: {
+        game: {id: this.game.id},
+        seatChangeRequestedAt: Not(IsNull()),
+        status: PlayerStatus.PLAYING,
+      },
+    });
+    return players.map(x => x.seatNo);
   }
 
   async getNextAvailableSeat(): Promise<number> {
