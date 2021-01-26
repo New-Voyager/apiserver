@@ -139,7 +139,10 @@ export class PokerGame {
   @Column({name: 'max_waitlist', type: 'int', default: 20})
   public maxWaitlist!: number;
 
-  @Column({name: 'waitlist_sitting_timeout', type: 'int', default: 300})
+  @Column({name: 'seatchange_timeout', type: 'int', default: 30})
+  public seatChangeTimeout!: number;
+
+  @Column({name: 'waitlist_sitting_timeout', type: 'int', default: 60})
   public waitlistSittingTimeout!: number;
 
   @Column({

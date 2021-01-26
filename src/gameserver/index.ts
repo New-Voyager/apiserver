@@ -336,7 +336,6 @@ export async function openSeat(
     type: 'OpenSeat',
     gameId: game.id,
     seatNo: seatNo,
-    timeRemaining: timeRemaining,
   };
 
   const newGameUrl = `${gameServerUrl}/table-update`;
@@ -364,6 +363,33 @@ export async function waitlistSeating(
     name: player.name,
     playerUuid: player.uuid,
     remainingTime: timeRemaining,
+  };
+
+  const newGameUrl = `${gameServerUrl}/table-update`;
+  const resp = await axios.post(newGameUrl, message);
+  if (resp.status !== 200) {
+    logger.error(`Failed to update table status: ${newGameUrl}`);
+    throw new Error(`Failed to update table status: ${newGameUrl}`);
+  }
+}
+
+export async function initiateSeatChangeProcess(
+  game: PokerGame,
+  seatNo: number,
+  timeRemaining: number,
+  seatChangePlayers: Array<number>
+) {
+  if (!notifyGameServer) {
+    return;
+  }
+
+  const gameServerUrl = await getGameServerUrl(game.id);
+  const message = {
+    type: 'SeatChangeInProgress',
+    gameId: game.id,
+    seatNo: seatNo,
+    seatChangeRemainingTime: timeRemaining,
+    seatChangePlayers: seatChangePlayers,
   };
 
   const newGameUrl = `${gameServerUrl}/table-update`;

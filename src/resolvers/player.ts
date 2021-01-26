@@ -285,7 +285,7 @@ async function getLiveGames(playerId: string, clubCode: string) {
     if (clubCode && game.clubCode !== clubCode) {
       continue;
     }
-  
+
     const nowMilli = now.getTime();
     const startedAtMs = game.startedAt.getTime();
     const elapsedTime = nowMilli - startedAtMs;

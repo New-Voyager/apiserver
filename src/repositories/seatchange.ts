@@ -13,6 +13,7 @@ import {
 } from 'typeorm';
 import * as _ from 'lodash';
 import {
+  initiateSeatChangeProcess,
   openSeat,
   pendingProcessDone,
   playerSwitchSeat,
@@ -31,6 +32,12 @@ export class SeatChangeProcess {
   }
 
   public async start() {
+    const players = await this.getSeatChangeRequestedPlayers();
+    if (players.length === 0) {
+      return;
+    }
+
+    const playerIds = players.map(x => x.id);
     // first set the game that we are in seat change process
     const gameUpdatesRepo = getRepository(PokerGameUpdates);
     await gameUpdatesRepo.update(
@@ -42,7 +49,7 @@ export class SeatChangeProcess {
       }
     );
     const expTime = new Date();
-    const timeout = this.game.waitlistSittingTimeout;
+    const timeout = this.game.seatChangeTimeout;
     expTime.setSeconds(expTime.getSeconds() + timeout);
     logger.info(
       `[${
@@ -51,7 +58,7 @@ export class SeatChangeProcess {
     );
 
     // notify game server, seat change process has begun
-    await openSeat(this.game, 0, timeout);
+    await initiateSeatChangeProcess(this.game, 0, timeout, playerIds);
 
     // start seat change process timer
     await startTimer(this.game.id, 0, SEATCHANGE_PROGRSS, expTime);
