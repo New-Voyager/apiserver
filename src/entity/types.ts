@@ -132,3 +132,8 @@ export enum ApprovalStatus {
   APPROVED,
   DENIED,
 }
+
+export enum HostMessageType {
+  FROM_HOST,
+  TO_HOST,
+}

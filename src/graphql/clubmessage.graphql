@@ -4,6 +4,11 @@ enum ClubMessageType {
   GIPHY,
 }
 
+enum HostMessageType {
+  FROM_HOST,
+  TO_HOST,
+}
+
 input ClubMessageInput {
   messageType: ClubMessageType!
   text: String
@@ -26,10 +31,35 @@ type ClubMessage {
   messageTimeInEpoc: Int
 }
 
+type HostMessage {
+  id: Int!
+  clubCode: String!
+  memberID: Int!
+  messageTime: DateTime
+  messageType: HostMessageType!
+  text: String!
+}
+
+type HostMessageSummary {
+  memberID: Int!
+  memberName: String!
+  memberImageId: String
+  newMessageCount: Int!
+  lastMessageTime: DateTime
+  lastMessageText: String
+}
+
 type Mutation {
   sendClubMessage(clubCode: String!, message: ClubMessageInput!): String!
+
+  sendHostMessage(clubCode: String!,memberID: Int!, messageType: HostMessageType!, text: String!): HostMessage!
 }
 
 type Query {
   clubMessages(clubCode: String!, pageOptions: PageInput): [ClubMessage]  
+
+  hostMessageSummary(clubCode: String!): [HostMessageSummary!]
+  
+  # first and afterId are for pagination.
+  hostMessages(clubCode: String!, memberID: Int!, first: Int, afterId: Int): [HostMessage!]
 }
