@@ -92,7 +92,9 @@ export class WaitListMgmt {
   public async declineWaitlistSeat(player: Player) {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const gameUpdateRepo = getRepository(PokerGameUpdates);
-    logger.info(`Player [${player.name}: ${player.id}] declined to join the game. ${this.game.gameCode}`);
+    logger.info(
+      `Player [${player.name}: ${player.id}] declined to join the game. ${this.game.gameCode}`
+    );
 
     // join game waitlist seating in progress flag
     // if set to true, only the player with WAITLIST_SEATING is allowed to sit
@@ -108,7 +110,6 @@ export class WaitListMgmt {
 
     if (playerAskedToSit && playerAskedToSit.player.id === player.id) {
       cancelTimer(this.game.id, player.id, WAITLIST_SEATING);
-    
 
       // remove this player from waiting list
       await playerGameTrackerRepository.update(
