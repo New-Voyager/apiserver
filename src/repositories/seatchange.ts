@@ -60,7 +60,13 @@ export class SeatChangeProcess {
     );
 
     // notify game server, seat change process has begun
-    await initiateSeatChangeProcess(this.game, 0, timeout, playerIds, playerSeatNos);
+    await initiateSeatChangeProcess(
+      this.game,
+      0,
+      timeout,
+      playerIds,
+      playerSeatNos
+    );
 
     // start seat change process timer
     await startTimer(this.game.id, 0, SEATCHANGE_PROGRSS, expTime);

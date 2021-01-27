@@ -504,6 +504,7 @@ class GameRepositoryImpl {
           playerInGame.seatNo = seatNo;
           playerInGame.noOfBuyins = 0;
           playerInGame.buyinNotes = '';
+          playerInGame.satAt = new Date();
           const randomBytes = Buffer.from(crypto.randomBytes(5));
           playerInGame.gameToken = randomBytes.toString('hex');
           playerInGame.status = PlayerStatus.NOT_PLAYING;

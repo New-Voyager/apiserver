@@ -1141,6 +1141,42 @@ export async function applyWaitlistOrder(
   }
 }
 
+export async function declineWaitlistSeat(playerId: string, gameCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      // club game
+      const clubMember = await Cache.getClubMember(
+        playerId,
+        game.club.clubCode
+      );
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerId} is not a club member in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerId} is not authorized to kick out a user`
+        );
+      }
+    }
+    const waitlistMgmt = new WaitListMgmt(game);
+    const player = await Cache.getPlayer(playerId);
+    await waitlistMgmt.declineWaitlistSeat(player);
+    return true;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error('Failed to add player to waiting list');
+  }
+}
+
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -1316,6 +1352,9 @@ const resolvers: any = {
         args.gameCode,
         args.playerUuid
       );
+    },
+    declineWaitlistSeat: async (parent, args, ctx, info) => {
+      return declineWaitlistSeat(ctx.req.playerId, args.gameCode);
     },
   },
 };

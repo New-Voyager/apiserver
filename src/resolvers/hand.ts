@@ -128,9 +128,9 @@ export async function getLastHandHistory(playerId: string, args: any) {
 
   const handHistory = await HandRepository.getLastHandHistory(game.id);
   if (!handHistory) {
-    throw new Error('No hand found');
+    return null;
   }
-  return await generateHandHistoryData(handHistory);
+  return await generateHandHistoryData(handHistory, true);
 }
 
 export async function getSpecificHandHistory(playerId: string, args: any) {

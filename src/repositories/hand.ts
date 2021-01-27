@@ -356,7 +356,11 @@ class HandRepositoryImpl {
     const hands = await handHistoryRepository.find({
       where: {gameId: gameId},
       order: {handNum: 'DESC'},
+      take: 1,
     });
+    if (hands.length === 0) {
+      return undefined;
+    }
     return hands[0];
   }
 

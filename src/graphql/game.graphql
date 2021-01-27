@@ -309,6 +309,7 @@ type Mutation {
   addToWaitingList(gameCode: String!): Boolean!
   removeFromWaitingList(gameCode: String!, playerUuid: String): Boolean!
   applyWaitlistOrder(gameCode: String!, playerUuid: [String!]): Boolean!
+  declineWaitlistSeat(gameCode: String!): Boolean
 }
 
 type gameId{

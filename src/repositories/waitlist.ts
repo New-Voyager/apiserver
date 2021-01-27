@@ -89,6 +89,61 @@ export class WaitListMgmt {
     }
   }
 
+  public async declineWaitlistSeat(player: Player) {
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const gameUpdateRepo = getRepository(PokerGameUpdates);
+    logger.info(`Player [${player.name}: ${player.id}] declined to join the game. ${this.game.gameCode}`);
+
+    // join game waitlist seating in progress flag
+    // if set to true, only the player with WAITLIST_SEATING is allowed to sit
+    // if WAITLIST_SEATING player is sitting, change status to PLAYING, update waitingFrom, waitlist_sitting_exp
+    // cancel timer
+    const playerAskedToSit = await playerGameTrackerRepository.findOne({
+      relations: ['player'],
+      where: {
+        game: {id: this.game.id},
+        status: PlayerStatus.WAITLIST_SEATING,
+      },
+    });
+
+    if (playerAskedToSit && playerAskedToSit.player.id === player.id) {
+      cancelTimer(this.game.id, player.id, WAITLIST_SEATING);
+    
+
+      // remove this player from waiting list
+      await playerGameTrackerRepository.update(
+        {
+          game: {id: this.game.id},
+          player: {id: player.id},
+        },
+        {
+          status: PlayerStatus.NOT_PLAYING,
+        }
+      );
+    }
+
+    const count = await playerGameTrackerRepository.count({
+      where: {
+        game: {id: this.game.id},
+        status: PlayerStatus.IN_QUEUE,
+      },
+    });
+    await gameUpdateRepo.update(
+      {
+        gameID: this.game.id,
+      },
+      {
+        playersInWaitList: count,
+        waitlistSeatingInprogress: false,
+      }
+    );
+    if (count > 0) {
+      // continue to run the waitlist seating
+      this.runWaitList();
+    }
+    return true;
+  }
+
   protected async resetExistingWaitingList() {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     // eslint-disable-next-line no-constant-condition
@@ -100,6 +155,7 @@ export class WaitListMgmt {
       {
         waitingFrom: null,
         waitlistNum: 0,
+        waitingListTimeExp: null,
         status: PlayerStatus.NOT_PLAYING,
       }
     );
