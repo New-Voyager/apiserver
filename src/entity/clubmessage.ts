@@ -1,4 +1,11 @@
-import {Entity, Column, PrimaryGeneratedColumn} from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import {Club, ClubMember} from './club';
 import {DbAwareUpdateDateColumn} from './dbaware';
 import {ClubMessageType, HostMessageType} from './types';
 
@@ -50,11 +57,13 @@ export class ClubHostMessages {
   @Column({name: 'text'})
   public text!: string;
 
-  @Column({name: 'club_code'})
-  public clubCode!: string;
+  @ManyToOne(() => Club, club => club.id)
+  @JoinColumn({name: 'club'})
+  public club!: Club;
 
-  @Column({name: 'member_id', type: 'int'})
-  public memberID!: number;
+  @ManyToOne(() => ClubMember, member => member.id)
+  @JoinColumn({name: 'saved_by'})
+  public member!: ClubMember;
 
   @Column({name: 'read_status', default: false})
   public readStatus!: boolean;

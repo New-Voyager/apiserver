@@ -47,12 +47,14 @@ type HostMessageSummary {
   newMessageCount: Int!
   lastMessageTime: DateTime
   lastMessageText: String
+  messageType: HostMessageType!
 }
 
 type Mutation {
   sendClubMessage(clubCode: String!, message: ClubMessageInput!): String!
 
-  sendHostMessage(clubCode: String!,memberID: Int!, messageType: HostMessageType!, text: String!): HostMessage!
+  sendMessageToMember(clubCode: String!, memberID: Int!, text: String!): HostMessage!
+  sendMessageToHost(clubCode: String!, text: String!): HostMessage!
 }
 
 type Query {

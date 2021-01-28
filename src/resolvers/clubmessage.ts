@@ -10,6 +10,7 @@ import {
 import {PageOptions} from '@src/types';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
+import {ClubMember} from '@src/entity/club';
 const logger = getLogger('clubmessage');
 
 export async function getClubMsg(
@@ -88,11 +89,11 @@ export async function sendClubMsg(
   }
 }
 
-export async function sendHostMessage(
+export async function sendMessageToMember(
   playerId: string,
   clubCode: string,
   memberId: number,
-  text: any,
+  text: string,
   messageType: HostMessageType
 ) {
   if (!playerId) {
@@ -106,54 +107,23 @@ export async function sendHostMessage(
   if (!club) {
     throw new Error(`Club ${clubCode} is not found`);
   }
-
-  if (messageType === HostMessageType.FROM_HOST) {
-    const clubMember = await Cache.getClubMember(player.uuid, club.clubCode);
-    if (!clubMember || !clubMember.isOwner) {
-      logger.error(`Player: ${player.uuid} is not a host in club ${club.name}`);
-      throw new Error(
-        `Player: ${player.uuid} is not a host in club ${club.name}`
-      );
-    }
-
-    const clubMember1 = await ClubRepository.getClubMemberById(club, memberId);
-    if (!clubMember1) {
-      logger.error(`Member: ${memberId} is not a member in club ${club.name}`);
-      throw new Error(
-        `Member: ${memberId} is not a member in club ${club.name}`
-      );
-    }
-  } else if (messageType === HostMessageType.TO_HOST) {
-    const clubMember = await Cache.getClubMember(player.uuid, club.clubCode);
-    if (!clubMember) {
-      logger.error(
-        `Player: ${player.uuid} is not a member in club ${club.name}`
-      );
-      throw new Error(
-        `Player: ${player.uuid} is not a member in club ${club.name}`
-      );
-    }
-    if (clubMember.id !== memberId) {
-      logger.error(
-        `Player: ${player.uuid} is not a member in club ${club.name} with memberId: ${memberId}`
-      );
-      throw new Error(
-        `Player: ${player.uuid} is not a member in club ${club.name} with memberId: ${memberId}`
-      );
-    }
-  } else {
-    logger.error(
-      `Not a valid message Type. messageType: ${HostMessageType[messageType]}`
-    );
+  const clubMember = await Cache.getClubMember(player.uuid, club.clubCode);
+  if (!clubMember || !clubMember.isOwner) {
+    logger.error(`Player: ${player.uuid} is not a host in club ${club.name}`);
     throw new Error(
-      `Not a valid message Type. messageType: ${HostMessageType[messageType]}`
+      `Player: ${player.uuid} is not a host in club ${club.name}`
     );
   }
 
+  const clubMember1 = await ClubRepository.getClubMemberById(club, memberId);
+  if (!clubMember1) {
+    logger.error(`Member: ${memberId} is not a member in club ${club.name}`);
+    throw new Error(`Member: ${memberId} is not a member in club ${club.name}`);
+  }
   try {
     return HostMessageRepository.sendHostMessage(
-      club.clubCode,
-      memberId,
+      club,
+      clubMember1,
       text,
       messageType
     );
@@ -163,7 +133,76 @@ export async function sendHostMessage(
   }
 }
 
-export async function hostMessageSummary(playerId: string, clubCode: string) {}
+export async function sendMessageToHost(
+  playerId: string,
+  clubCode: string,
+  text: string,
+  messageType: HostMessageType
+) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+  const club = await Cache.getClub(clubCode);
+  if (!club) {
+    throw new Error(`Club ${clubCode} is not found`);
+  }
+  const clubMember = await Cache.getClubMember(player.uuid, club.clubCode);
+  if (!clubMember) {
+    logger.error(`Player: ${player.uuid} is not a member in club ${club.name}`);
+    throw new Error(
+      `Player: ${player.uuid} is not a member in club ${club.name}`
+    );
+  }
+  try {
+    return HostMessageRepository.sendHostMessage(
+      club,
+      clubMember,
+      text,
+      messageType
+    );
+  } catch (err) {
+    logger.error(err);
+    throw new Error('Failed to send host message');
+  }
+}
+
+export async function hostMessageSummary(playerId: string, clubCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+  const club = await Cache.getClub(clubCode);
+  if (!club) {
+    throw new Error(`Club ${clubCode} is not found`);
+  }
+  const clubMember = await Cache.getClubMember(player.uuid, club.clubCode);
+  if (!clubMember) {
+    logger.error(`Player: ${player.uuid} is not a member in club ${club.name}`);
+    throw new Error(
+      `Player: ${player.uuid} is not a member in club ${club.name}`
+    );
+  }
+  try {
+    if (clubMember.isOwner) {
+      return HostMessageRepository.hostMessageSummaryWithoutMemberId(club);
+    } else {
+      return HostMessageRepository.hostMessageSummaryWithMemberId(
+        club,
+        clubMember
+      );
+    }
+  } catch (err) {
+    logger.error(err);
+    throw new Error('Failed to get host message summary');
+  }
+}
 
 export async function hostMessages(
   playerId: string,
@@ -196,13 +235,21 @@ const resolvers: any = {
     sendClubMessage: async (parent, args, ctx, info) => {
       return sendClubMsg(ctx.req.playerId, args.clubCode, args.message);
     },
-    sendHostMessage: async (parent, args, ctx, info) => {
-      return sendHostMessage(
+    sendMessageToMember: async (parent, args, ctx, info) => {
+      return sendMessageToMember(
         ctx.req.playerId,
         args.clubCode,
         args.memberID,
         args.text,
-        args.messageType
+        HostMessageType.FROM_HOST
+      );
+    },
+    sendMessageToHost: async (parent, args, ctx, info) => {
+      return sendMessageToHost(
+        ctx.req.playerId,
+        args.clubCode,
+        args.text,
+        HostMessageType.TO_HOST
       );
     },
   },
