@@ -1,9 +1,10 @@
 import {ClubHostMessages} from '@src/entity/clubmessage';
 import {Club, ClubMember} from '@src/entity/club';
-import {getRepository} from 'typeorm';
+import {getConnection, getRepository} from 'typeorm';
 import {HostMessageType} from '../entity/types';
 import {getLogger} from '@src/utils/log';
 import {ClubRepository} from './club';
+import {repeat} from 'lodash';
 const logger = getLogger('host-message');
 
 class HostMessageRepositoryImpl {
@@ -12,7 +13,7 @@ class HostMessageRepositoryImpl {
     clubMember: ClubMember,
     text: string,
     messageType: HostMessageType
-  ): Promise<ClubHostMessages> {
+  ): Promise<any> {
     try {
       const hostMessageRepository = getRepository(ClubHostMessages);
       const newMessage = new ClubHostMessages();
@@ -21,7 +22,14 @@ class HostMessageRepositoryImpl {
       newMessage.messageType = messageType;
       newMessage.text = text;
       const resp = await hostMessageRepository.save(newMessage);
-      return resp;
+      return {
+        id: resp.id,
+        clubCode: resp.club.clubCode,
+        memberID: resp.member.id,
+        messageTime: resp.messageTime,
+        messageType: HostMessageType[resp.messageType],
+        text: resp.text,
+      };
     } catch (e) {
       logger.error(JSON.stringify(e));
       throw new Error(e.message);
@@ -30,7 +38,8 @@ class HostMessageRepositoryImpl {
 
   public async hostMessageSummaryWithMemberId(
     club: Club,
-    clubMember: ClubMember
+    clubMember: ClubMember,
+    messageType: HostMessageType = HostMessageType.FROM_HOST
   ): Promise<any> {
     try {
       const hostMessageRepository = getRepository(ClubHostMessages);
@@ -47,6 +56,7 @@ class HostMessageRepositoryImpl {
       const count = await hostMessageRepository.count({
         club: {id: club.id},
         member: {id: clubMember.id},
+        messageType: messageType,
         readStatus: false,
       });
       return [
@@ -68,35 +78,28 @@ class HostMessageRepositoryImpl {
 
   public async hostMessageSummaryWithoutMemberId(club: Club): Promise<any> {
     try {
-      // let query = `SELECT DISTINCT member as memberId FROM club_host_messages where club = ${club.id} order by id`;
-      const members = await getRepository(ClubHostMessages)
-        .createQueryBuilder()
-        .select('member')
-        .distinct(true)
-        .orderBy('id', 'DESC')
-        .where('club.id = :id', {id: club.id})
-        .getMany();
-      // const members = await getConnection().query(query);
-      console.log(members);
-      const memberIds = members[0]['memberId'];
-
+      const query = `
+        SELECT DISTINCT member as memberId FROM club_host_messages where club = ${club.id} order by id DESC
+      `;
+      const members = await getConnection().query(query);
       const summary = new Array<any>();
-      for await (const memberId of memberIds) {
+      for await (const member of members) {
         const clubMember = await ClubRepository.getClubMemberById(
           club,
-          memberId
+          member.memberId
         );
         if (!clubMember) {
           logger.error(
-            `Member: ${memberId} is not a member in club ${club.name}`
+            `Member: ${member.memberId} is not a member in club ${club.name}`
           );
           throw new Error(
-            `Member: ${memberId} is not a member in club ${club.name}`
+            `Member: ${member.memberId} is not a member in club ${club.name}`
           );
         }
         const resp = await this.hostMessageSummaryWithMemberId(
           club,
-          clubMember
+          clubMember,
+          HostMessageType.TO_HOST
         );
         summary.push(resp[0]);
       }

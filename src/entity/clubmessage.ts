@@ -62,7 +62,7 @@ export class ClubHostMessages {
   public club!: Club;
 
   @ManyToOne(() => ClubMember, member => member.id)
-  @JoinColumn({name: 'saved_by'})
+  @JoinColumn({name: 'member'})
   public member!: ClubMember;
 
   @Column({name: 'read_status', default: false})

@@ -93,8 +93,7 @@ export async function sendMessageToMember(
   playerId: string,
   clubCode: string,
   memberId: number,
-  text: string,
-  messageType: HostMessageType
+  text: string
 ) {
   if (!playerId) {
     throw new Error('Unauthorized');
@@ -125,7 +124,7 @@ export async function sendMessageToMember(
       club,
       clubMember1,
       text,
-      messageType
+      HostMessageType.FROM_HOST
     );
   } catch (err) {
     logger.error(err);
@@ -136,8 +135,7 @@ export async function sendMessageToMember(
 export async function sendMessageToHost(
   playerId: string,
   clubCode: string,
-  text: string,
-  messageType: HostMessageType
+  text: string
 ) {
   if (!playerId) {
     throw new Error('Unauthorized');
@@ -162,7 +160,7 @@ export async function sendMessageToHost(
       club,
       clubMember,
       text,
-      messageType
+      HostMessageType.TO_HOST
     );
   } catch (err) {
     logger.error(err);
@@ -240,17 +238,11 @@ const resolvers: any = {
         ctx.req.playerId,
         args.clubCode,
         args.memberID,
-        args.text,
-        HostMessageType.FROM_HOST
+        args.text
       );
     },
     sendMessageToHost: async (parent, args, ctx, info) => {
-      return sendMessageToHost(
-        ctx.req.playerId,
-        args.clubCode,
-        args.text,
-        HostMessageType.TO_HOST
-      );
+      return sendMessageToHost(ctx.req.playerId, args.clubCode, args.text);
     },
   },
 };
