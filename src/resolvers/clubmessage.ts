@@ -181,34 +181,170 @@ export async function hostMessageSummary(playerId: string, clubCode: string) {
     throw new Error(`Club ${clubCode} is not found`);
   }
   const clubMember = await Cache.getClubMember(player.uuid, club.clubCode);
-  if (!clubMember) {
-    logger.error(`Player: ${player.uuid} is not a member in club ${club.name}`);
+  if (!clubMember || !clubMember.isOwner) {
+    logger.error(`Player: ${player.uuid} is not a host in club ${club.name}`);
     throw new Error(
-      `Player: ${player.uuid} is not a member in club ${club.name}`
+      `Player: ${player.uuid} is not a host in club ${club.name}`
     );
   }
+  const allClubMembers = await ClubRepository.getAllClubMembers(club);
   try {
-    if (clubMember.isOwner) {
-      return HostMessageRepository.hostMessageSummaryWithoutMemberId(club);
-    } else {
-      return HostMessageRepository.hostMessageSummaryWithMemberId(
-        club,
-        clubMember
-      );
-    }
+    return HostMessageRepository.hostMessageSummary(club, allClubMembers);
   } catch (err) {
     logger.error(err);
     throw new Error('Failed to get host message summary');
   }
 }
 
-export async function hostMessages(
+export async function messagesFromHost(
+  playerId: string,
+  clubCode: string,
+  first?: number,
+  afterId?: number
+) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+  const club = await Cache.getClub(clubCode);
+  if (!club) {
+    throw new Error(`Club ${clubCode} is not found`);
+  }
+  const clubMember = await Cache.getClubMember(player.uuid, club.clubCode);
+  if (!clubMember) {
+    logger.error(`Player: ${player.uuid} is not a member in club ${club.name}`);
+    throw new Error(
+      `Player: ${player.uuid} is not a member in club ${club.name}`
+    );
+  }
+
+  try {
+    return HostMessageRepository.hostMessages(club, clubMember, first, afterId);
+  } catch (err) {
+    logger.error(err);
+    throw new Error('Failed to get messages from host');
+  }
+}
+
+export async function messagesFromMember(
   playerId: string,
   clubCode: string,
   memberId: number,
-  first: number,
-  afterId: number
-) {}
+  first?: number,
+  afterId?: number
+) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+  const club = await Cache.getClub(clubCode);
+  if (!club) {
+    throw new Error(`Club ${clubCode} is not found`);
+  }
+  const clubMember = await Cache.getClubMember(player.uuid, club.clubCode);
+  if (!clubMember || !clubMember.isOwner) {
+    logger.error(`Player: ${player.uuid} is not a host in club ${club.name}`);
+    throw new Error(
+      `Player: ${player.uuid} is not a host in club ${club.name}`
+    );
+  }
+  const clubMember1 = await ClubRepository.getClubMemberById(club, memberId);
+  if (!clubMember1) {
+    logger.error(`Member: ${memberId} is not a member in club ${club.name}`);
+    throw new Error(`Member: ${memberId} is not a member in club ${club.name}`);
+  }
+
+  try {
+    return HostMessageRepository.hostMessages(
+      club,
+      clubMember1,
+      first,
+      afterId
+    );
+  } catch (err) {
+    logger.error(err);
+    throw new Error('Failed to get messages from member');
+  }
+}
+
+export async function markHostMsgRead(playerId: string, clubCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+  const club = await Cache.getClub(clubCode);
+  if (!club) {
+    throw new Error(`Club ${clubCode} is not found`);
+  }
+  const clubMember = await Cache.getClubMember(player.uuid, club.clubCode);
+  if (!clubMember) {
+    logger.error(`Player: ${player.uuid} is not a member in club ${club.name}`);
+    throw new Error(
+      `Player: ${player.uuid} is not a member in club ${club.name}`
+    );
+  }
+
+  try {
+    return HostMessageRepository.markAsRead(
+      club,
+      clubMember,
+      HostMessageType.FROM_HOST
+    );
+  } catch (err) {
+    logger.error(err);
+    throw new Error('Failed to mark as read for FROM_HOST messages');
+  }
+}
+
+export async function markMemberMsgRead(
+  playerId: string,
+  clubCode: string,
+  memberId: number
+) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+  const club = await Cache.getClub(clubCode);
+  if (!club) {
+    throw new Error(`Club ${clubCode} is not found`);
+  }
+  const clubMember = await Cache.getClubMember(player.uuid, club.clubCode);
+  if (!clubMember || !clubMember.isOwner) {
+    logger.error(`Player: ${player.uuid} is not a host in club ${club.name}`);
+    throw new Error(
+      `Player: ${player.uuid} is not a host in club ${club.name}`
+    );
+  }
+  const clubMember1 = await ClubRepository.getClubMemberById(club, memberId);
+  if (!clubMember1) {
+    logger.error(`Member: ${memberId} is not a member in club ${club.name}`);
+    throw new Error(`Member: ${memberId} is not a member in club ${club.name}`);
+  }
+
+  try {
+    return HostMessageRepository.markAsRead(
+      club,
+      clubMember1,
+      HostMessageType.TO_HOST
+    );
+  } catch (err) {
+    logger.error(err);
+    throw new Error('Failed to mark as read for TO_HOST messages');
+  }
+}
 
 const resolvers: any = {
   Query: {
@@ -218,8 +354,16 @@ const resolvers: any = {
     hostMessageSummary: async (parent, args, ctx, info) => {
       return hostMessageSummary(ctx.req.playerId, args.clubCode);
     },
-    hostMessages: async (parent, args, ctx, info) => {
-      return hostMessages(
+    messagesFromHost: async (parent, args, ctx, info) => {
+      return messagesFromHost(
+        ctx.req.playerId,
+        args.clubCode,
+        args.first,
+        args.afterId
+      );
+    },
+    messagesFromMember: async (parent, args, ctx, info) => {
+      return messagesFromMember(
         ctx.req.playerId,
         args.clubCode,
         args.memberID,
@@ -243,6 +387,12 @@ const resolvers: any = {
     },
     sendMessageToHost: async (parent, args, ctx, info) => {
       return sendMessageToHost(ctx.req.playerId, args.clubCode, args.text);
+    },
+    markHostMsgRead: async (parent, args, ctx, info) => {
+      return markHostMsgRead(ctx.req.playerId, args.clubCode);
+    },
+    markMemberMsgRead: async (parent, args, ctx, info) => {
+      return markMemberMsgRead(ctx.req.playerId, args.clubCode, args.memberID);
     },
   },
 };

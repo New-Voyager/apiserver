@@ -55,13 +55,16 @@ type Mutation {
 
   sendMessageToMember(clubCode: String!, memberID: Int!, text: String!): HostMessage!
   sendMessageToHost(clubCode: String!, text: String!): HostMessage!
+  markHostMsgRead(clubCode: String!): Boolean!
+  markMemberMsgRead(clubCode: String!, memberID:Int!): Boolean!
 }
 
 type Query {
   clubMessages(clubCode: String!, pageOptions: PageInput): [ClubMessage]  
 
-  hostMessageSummary(clubCode: String!): [HostMessageSummary!]
+  hostMessageSummary(clubCode: String!): [HostMessageSummary]
   
   # first and afterId are for pagination.
-  hostMessages(clubCode: String!, memberID: Int!, first: Int, afterId: Int): [HostMessage!]
+  messagesFromHost(clubCode: String!, first: Int, afterId: Int): [HostMessage]
+  messagesFromMember(clubCode: String, memberID: Int!, first: Int, afterId: Int): [HostMessage]
 }

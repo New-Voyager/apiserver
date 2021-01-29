@@ -8,6 +8,10 @@ import {
   sendMessageToHost,
   sendMessageToMember,
   hostMessageSummary,
+  messagesFromHost,
+  messagesFromMember,
+  markHostMsgRead,
+  markMemberMsgRead,
 } from '../src/resolvers/clubmessage';
 import {getLogger} from '../src/utils/log';
 const logger = getLogger('clubfreqmsg-unit-test');
@@ -282,13 +286,141 @@ describe('Club message APIs', () => {
     expect(resp1[1].newMessageCount).toBe(100);
     expect(resp1[1].messageType).toBe('FROM_HOST');
     expect(resp1[1].lastMessageText).toBe('Host Message:99');
+  });
 
-    const resp2 = await hostMessageSummary(playerUuid1, clubCode);
-    expect(resp2).toHaveLength(1);
-    expect(resp2[0].memberName).toBe('player1');
-    expect(resp2[0].memberID).toBe(clubMember1[0].id);
-    expect(resp2[0].newMessageCount).toBe(100);
-    expect(resp2[0].messageType).toBe('FROM_HOST');
-    expect(resp2[0].lastMessageText).toBe('Host Message:99');
+  test('get host messages', async () => {
+    const ownerUuid = await createPlayer({
+      player: {name: 'owner', deviceId: 'test'},
+    });
+    const playerUuid1 = await createPlayer({
+      player: {name: 'player1', deviceId: 'test1'},
+    });
+    const playerUuid2 = await createPlayer({
+      player: {name: 'player2', deviceId: 'test2'},
+    });
+    const clubInput = {
+      name: 'bbc',
+      description: 'poker players gather',
+      ownerUuid: ownerUuid,
+    };
+    const clubCode = await createClub(ownerUuid, clubInput);
+    await joinClub(playerUuid1, clubCode);
+    await approveMember(ownerUuid, clubCode, playerUuid1);
+    await joinClub(playerUuid2, clubCode);
+    await approveMember(ownerUuid, clubCode, playerUuid2);
+    const clubMember1 = await ClubRepository.getMembers(clubCode, {
+      playerId: playerUuid1,
+    });
+    const clubMember2 = await ClubRepository.getMembers(clubCode, {
+      playerId: playerUuid2,
+    });
+
+    try {
+      for (let i = 0; i < 100; i++) {
+        await sendMessageToHost(playerUuid1, clubCode, `Member Message:${i}`);
+        await sendMessageToMember(
+          ownerUuid,
+          clubCode,
+          clubMember1[0].id,
+          `Host Message:${i}`
+        );
+      }
+      for (let i = 0; i < 50; i++) {
+        await sendMessageToMember(
+          ownerUuid,
+          clubCode,
+          clubMember2[0].id,
+          `Host Message:${i}`
+        );
+        await sendMessageToHost(playerUuid2, clubCode, `Member Message:${i}`);
+      }
+    } catch (e) {
+      logger.error(JSON.stringify(e));
+      expect(true).toBeFalsy();
+    }
+
+    const resp1 = await messagesFromMember(
+      ownerUuid,
+      clubCode,
+      clubMember1[0].id
+    );
+    expect(resp1).toHaveLength(200);
+    const resp2 = await messagesFromMember(
+      ownerUuid,
+      clubCode,
+      clubMember2[0].id
+    );
+    expect(resp2).toHaveLength(100);
+
+    const resp3 = await messagesFromHost(playerUuid1, clubCode);
+    expect(resp3).toHaveLength(200);
+    const resp4 = await messagesFromHost(playerUuid2, clubCode);
+    expect(resp4).toHaveLength(100);
+  });
+
+  test('Read status for host messages', async () => {
+    const ownerUuid = await createPlayer({
+      player: {name: 'owner', deviceId: 'test'},
+    });
+    const playerUuid1 = await createPlayer({
+      player: {name: 'player1', deviceId: 'test1'},
+    });
+    const playerUuid2 = await createPlayer({
+      player: {name: 'player2', deviceId: 'test2'},
+    });
+    const clubInput = {
+      name: 'bbc',
+      description: 'poker players gather',
+      ownerUuid: ownerUuid,
+    };
+    const clubCode = await createClub(ownerUuid, clubInput);
+    await joinClub(playerUuid1, clubCode);
+    await approveMember(ownerUuid, clubCode, playerUuid1);
+    await joinClub(playerUuid2, clubCode);
+    await approveMember(ownerUuid, clubCode, playerUuid2);
+    const clubMember1 = await ClubRepository.getMembers(clubCode, {
+      playerId: playerUuid1,
+    });
+    const clubMember2 = await ClubRepository.getMembers(clubCode, {
+      playerId: playerUuid2,
+    });
+
+    try {
+      for (let i = 0; i < 100; i++) {
+        await sendMessageToHost(playerUuid1, clubCode, `Member Message:${i}`);
+        await sendMessageToMember(
+          ownerUuid,
+          clubCode,
+          clubMember1[0].id,
+          `Host Message:${i}`
+        );
+      }
+      for (let i = 0; i < 50; i++) {
+        await sendMessageToMember(
+          ownerUuid,
+          clubCode,
+          clubMember2[0].id,
+          `Host Message:${i}`
+        );
+        await sendMessageToHost(playerUuid2, clubCode, `Member Message:${i}`);
+      }
+    } catch (e) {
+      logger.error(JSON.stringify(e));
+      expect(true).toBeFalsy();
+    }
+
+    const resp1 = await hostMessageSummary(ownerUuid, clubCode);
+    expect(resp1[0].newMessageCount).toBe(50);
+    expect(resp1[1].newMessageCount).toBe(100);
+
+    await markMemberMsgRead(ownerUuid, clubCode, clubMember1[0].id);
+    const resp2 = await hostMessageSummary(ownerUuid, clubCode);
+    expect(resp2[0].newMessageCount).toBe(50);
+    expect(resp2[1].newMessageCount).toBe(0);
+
+    await markMemberMsgRead(ownerUuid, clubCode, clubMember2[0].id);
+    const resp3 = await hostMessageSummary(ownerUuid, clubCode);
+    expect(resp3[0].newMessageCount).toBe(0);
+    expect(resp3[1].newMessageCount).toBe(0);
   });
 });

@@ -1,10 +1,8 @@
 import {ClubHostMessages} from '@src/entity/clubmessage';
 import {Club, ClubMember} from '@src/entity/club';
-import {getConnection, getRepository} from 'typeorm';
+import {getRepository} from 'typeorm';
 import {HostMessageType} from '../entity/types';
 import {getLogger} from '@src/utils/log';
-import {ClubRepository} from './club';
-import {repeat} from 'lodash';
 const logger = getLogger('host-message');
 
 class HostMessageRepositoryImpl {
@@ -53,57 +51,105 @@ class HostMessageRepositoryImpl {
           member: {id: clubMember.id},
         },
       });
+      if (!resp.length) return null;
       const count = await hostMessageRepository.count({
         club: {id: club.id},
         member: {id: clubMember.id},
         messageType: messageType,
         readStatus: false,
       });
-      return [
-        {
-          memberID: clubMember.id,
-          memberName: clubMember.player.name,
-          memberImageId: null,
-          newMessageCount: count,
-          lastMessageTime: resp[0].messageTime,
-          lastMessageText: resp[0].text,
-          messageType: HostMessageType[resp[0].messageType],
-        },
-      ];
+      return {
+        memberID: clubMember.id,
+        memberName: clubMember.player.name,
+        memberImageId: null,
+        newMessageCount: count,
+        lastMessageTime: resp[0].messageTime,
+        lastMessageText: resp[0].text,
+        messageType: HostMessageType[resp[0].messageType],
+      };
     } catch (e) {
       logger.error(JSON.stringify(e));
       throw new Error(e.message);
     }
   }
 
-  public async hostMessageSummaryWithoutMemberId(club: Club): Promise<any> {
+  public async hostMessageSummary(
+    club: Club,
+    allClubMembers: ClubMember[]
+  ): Promise<any> {
     try {
-      const query = `
-        SELECT DISTINCT member as memberId FROM club_host_messages where club = ${club.id} order by id DESC
-      `;
-      const members = await getConnection().query(query);
       const summary = new Array<any>();
-      for await (const member of members) {
-        const clubMember = await ClubRepository.getClubMemberById(
-          club,
-          member.memberId
-        );
-        if (!clubMember) {
-          logger.error(
-            `Member: ${member.memberId} is not a member in club ${club.name}`
-          );
-          throw new Error(
-            `Member: ${member.memberId} is not a member in club ${club.name}`
-          );
-        }
+      for await (const member of allClubMembers) {
         const resp = await this.hostMessageSummaryWithMemberId(
           club,
-          clubMember,
+          member,
           HostMessageType.TO_HOST
         );
-        summary.push(resp[0]);
+        if (resp) summary.push(resp);
       }
+      summary.sort((a, b) => (a.lastMessageTime > b.lastMessageTime ? 0 : 1));
       return summary;
+    } catch (e) {
+      logger.error(JSON.stringify(e));
+      throw new Error(e.message);
+    }
+  }
+
+  public async hostMessages(
+    club: Club,
+    clubMember: ClubMember,
+    first?: number,
+    afterId?: number
+  ): Promise<any> {
+    try {
+      const hostMessageRepository = getRepository(ClubHostMessages);
+      const resp = await hostMessageRepository.find({
+        order: {
+          id: 'DESC',
+        },
+        where: {
+          club: {id: club.id},
+          member: {id: clubMember.id},
+        },
+      });
+
+      const messages = new Array<any>();
+      for await (const message of resp) {
+        messages.push({
+          id: message.id,
+          clubCode: club.clubCode,
+          memberID: clubMember.id,
+          messageTime: message.messageTime,
+          messageType: HostMessageType[message.messageType],
+          text: message.text,
+        });
+      }
+
+      return messages;
+    } catch (e) {
+      logger.error(JSON.stringify(e));
+      throw new Error(e.message);
+    }
+  }
+
+  public async markAsRead(
+    club: Club,
+    clubMember: ClubMember,
+    messageType: HostMessageType
+  ): Promise<boolean> {
+    try {
+      const hostMessageRepository = getRepository(ClubHostMessages);
+      await hostMessageRepository.update(
+        {
+          club: {id: club.id},
+          member: {id: clubMember.id},
+          messageType: messageType,
+        },
+        {
+          readStatus: true,
+        }
+      );
+      return true;
     } catch (e) {
       logger.error(JSON.stringify(e));
       throw new Error(e.message);
