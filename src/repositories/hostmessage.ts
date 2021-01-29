@@ -1,6 +1,6 @@
 import {ClubHostMessages} from '@src/entity/clubmessage';
 import {Club, ClubMember} from '@src/entity/club';
-import {getRepository} from 'typeorm';
+import {getConnection, getRepository} from 'typeorm';
 import {HostMessageType} from '../entity/types';
 import {getLogger} from '@src/utils/log';
 const logger = getLogger('host-message');
@@ -36,8 +36,9 @@ class HostMessageRepositoryImpl {
 
   public async hostMessageSummaryWithMemberId(
     club: Club,
-    clubMember: ClubMember,
-    messageType: HostMessageType = HostMessageType.FROM_HOST
+    memberID: number,
+    messageType: HostMessageType,
+    name: string
   ): Promise<any> {
     try {
       const hostMessageRepository = getRepository(ClubHostMessages);
@@ -48,19 +49,19 @@ class HostMessageRepositoryImpl {
         take: 1,
         where: {
           club: {id: club.id},
-          member: {id: clubMember.id},
+          member: {id: memberID},
         },
       });
       if (!resp.length) return null;
       const count = await hostMessageRepository.count({
         club: {id: club.id},
-        member: {id: clubMember.id},
+        member: {id: memberID},
         messageType: messageType,
         readStatus: false,
       });
       return {
-        memberID: clubMember.id,
-        memberName: clubMember.player.name,
+        memberID: memberID,
+        memberName: name,
         memberImageId: null,
         newMessageCount: count,
         lastMessageTime: resp[0].messageTime,
@@ -73,21 +74,25 @@ class HostMessageRepositoryImpl {
     }
   }
 
-  public async hostMessageSummary(
-    club: Club,
-    allClubMembers: ClubMember[]
-  ): Promise<any> {
+  public async hostMessageSummary(club: Club): Promise<any> {
     try {
+      const query = `
+        SELECT DISTINCT chm.member as memberId, p.name FROM club_host_messages chm
+        INNER JOIN club_member cm on cm.id = chm.member
+        INNER JOIN player p on cm.player_id = p.id 
+        where chm.club = ${club.id} order by chm.id DESC`;
+      const members = await getConnection().query(query);
+
       const summary = new Array<any>();
-      for await (const member of allClubMembers) {
+      for await (const member of members) {
         const resp = await this.hostMessageSummaryWithMemberId(
           club,
-          member,
-          HostMessageType.TO_HOST
+          member.memberId,
+          HostMessageType.TO_HOST,
+          member.name
         );
         if (resp) summary.push(resp);
       }
-      summary.sort((a, b) => (a.lastMessageTime > b.lastMessageTime ? 0 : 1));
       return summary;
     } catch (e) {
       logger.error(JSON.stringify(e));

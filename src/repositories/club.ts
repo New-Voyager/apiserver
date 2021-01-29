@@ -538,15 +538,6 @@ class ClubRepositoryImpl {
     return clubMember;
   }
 
-  public async getAllClubMembers(club: Club): Promise<ClubMember[]> {
-    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
-    const clubMembers = await clubMemberRepository.find({
-      club: {id: club.id},
-      isOwner: Not(true),
-    });
-    return clubMembers;
-  }
-
   public async isClubMember(
     clubCode: string,
     playerId: string

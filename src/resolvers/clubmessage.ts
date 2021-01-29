@@ -187,9 +187,9 @@ export async function hostMessageSummary(playerId: string, clubCode: string) {
       `Player: ${player.uuid} is not a host in club ${club.name}`
     );
   }
-  const allClubMembers = await ClubRepository.getAllClubMembers(club);
+
   try {
-    return HostMessageRepository.hostMessageSummary(club, allClubMembers);
+    return HostMessageRepository.hostMessageSummary(club);
   } catch (err) {
     logger.error(err);
     throw new Error('Failed to get host message summary');
