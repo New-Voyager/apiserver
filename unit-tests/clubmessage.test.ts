@@ -409,6 +409,11 @@ describe('Club message APIs', () => {
       expect(true).toBeFalsy();
     }
 
+    const status1 = await markHostMsgRead(playerUuid1, clubCode);
+    expect(status1).toBe(true);
+    const status2 = await markHostMsgRead(playerUuid1, clubCode);
+    expect(status1).toBe(true);
+
     const resp1 = await hostMessageSummary(ownerUuid, clubCode);
     expect(resp1[0].newMessageCount).toBe(50);
     expect(resp1[1].newMessageCount).toBe(100);
