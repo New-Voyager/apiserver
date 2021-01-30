@@ -1,6 +1,13 @@
-import {Entity, Column, PrimaryGeneratedColumn} from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import {Club, ClubMember} from './club';
 import {DbAwareUpdateDateColumn} from './dbaware';
-import {ClubMessageType} from './types';
+import {ClubMessageType, HostMessageType} from './types';
 
 @Entity({name: 'club_messages'})
 export class ClubMessageInput {
@@ -37,4 +44,34 @@ export class ClubMessageInput {
     onUpdate: 'CURRENT_TIMESTAMP',
   })
   public updatedAt!: Date;
+}
+
+@Entity({name: 'club_host_messages'})
+export class ClubHostMessages {
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @Column({name: 'message_type', type: 'int'})
+  public messageType!: HostMessageType;
+
+  @Column({name: 'text'})
+  public text!: string;
+
+  @ManyToOne(() => Club, club => club.id)
+  @JoinColumn({name: 'club'})
+  public club!: Club;
+
+  @ManyToOne(() => ClubMember, member => member.id)
+  @JoinColumn({name: 'member'})
+  public member!: ClubMember;
+
+  @Column({name: 'read_status', default: false})
+  public readStatus!: boolean;
+
+  @DbAwareUpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  public messageTime!: Date;
 }

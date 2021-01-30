@@ -120,7 +120,7 @@ class GameServerAPIs {
       },
     });
 
-    let err: string = '';
+    let err = '';
 
     if (records.length > 1) {
       err = `Found ${records.length} game servers with URL [${payload.url}]. Expected 0 or 1.`;

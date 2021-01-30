@@ -694,182 +694,181 @@ describe('Game APIs', () => {
   });
 
   test('gametest: wait list seating APIs', async () => {
-      await createGameServer(gameServer1);
+    await createGameServer(gameServer1);
 
-      // create players
-      const ownerInput = {
-        name: 'player_name',
-        deviceId: 'abc123',
-      };
-      const clubInput = {
-        name: 'club_name',
-        description: 'poker players gather',
-      };
-      const playersInput = [
-        {
-          name: 'player_name1',
-          deviceId: 'abc1234',
-        },
-        {
-          name: 'player_3',
-          deviceId: 'abc123456',
-        },
-        {
-          name: 'john',
-          deviceId: 'abc1235',
-        },
-        {
-          name: 'bob',
-          deviceId: 'abc1236',
-        },
-      ];
-      const [owner, club, playerUuids] = await createClubWithMembers(
-        ownerInput,
-        clubInput,
-        playersInput
-      );
-      const player1 = owner;
-      const player2 = playerUuids[0];
-      const player3 = playerUuids[1];
-      const john = playerUuids[2];
-      const bob = playerUuids[3];
+    // create players
+    const ownerInput = {
+      name: 'player_name',
+      deviceId: 'abc123',
+    };
+    const clubInput = {
+      name: 'club_name',
+      description: 'poker players gather',
+    };
+    const playersInput = [
+      {
+        name: 'player_name1',
+        deviceId: 'abc1234',
+      },
+      {
+        name: 'player_3',
+        deviceId: 'abc123456',
+      },
+      {
+        name: 'john',
+        deviceId: 'abc1235',
+      },
+      {
+        name: 'bob',
+        deviceId: 'abc1236',
+      },
+    ];
+    const [owner, club, playerUuids] = await createClubWithMembers(
+      ownerInput,
+      clubInput,
+      playersInput
+    );
+    const player1 = owner;
+    const player2 = playerUuids[0];
+    const player3 = playerUuids[1];
+    const john = playerUuids[2];
+    const bob = playerUuids[3];
 
-      // start a game
-      const gameInput = holdemGameInput;
-      gameInput.maxPlayers = 3;
-      gameInput.minPlayers = 2;
-      await createReward(owner, club);
-      const game = await configureGame(owner, club, gameInput);
-      await startGame(owner, game.gameCode);
+    // start a game
+    const gameInput = holdemGameInput;
+    gameInput.maxPlayers = 3;
+    gameInput.minPlayers = 2;
+    await createReward(owner, club);
+    const game = await configureGame(owner, club, gameInput);
+    await startGame(owner, game.gameCode);
 
-      // Join a game
-      await joinGame(player1, game.gameCode, 1);
-      await joinGame(player2, game.gameCode, 2);
-      await joinGame(player3, game.gameCode, 3);
+    // Join a game
+    await joinGame(player1, game.gameCode, 1);
+    await joinGame(player2, game.gameCode, 2);
+    await joinGame(player3, game.gameCode, 3);
 
-      // buyin
-      await buyIn(player1, game.gameCode, 100);
-      await buyIn(player2, game.gameCode, 100);
-      await buyIn(player3, game.gameCode, 100);
+    // buyin
+    await buyIn(player1, game.gameCode, 100);
+    await buyIn(player2, game.gameCode, 100);
+    await buyIn(player3, game.gameCode, 100);
 
-      // add john & bob to waitlist
-      const resp1 = await addToWaitingList(john, game.gameCode);
-      expect(resp1).toBe(true);
-      const resp2 = await addToWaitingList(bob, game.gameCode);
-      expect(resp2).toBe(true);
+    // add john & bob to waitlist
+    const resp1 = await addToWaitingList(john, game.gameCode);
+    expect(resp1).toBe(true);
+    const resp2 = await addToWaitingList(bob, game.gameCode);
+    expect(resp2).toBe(true);
 
-      // verify waitlist count
-      const waitlist1 = await waitingList(owner, game.gameCode);
-      expect(waitlist1).toHaveLength(2);
-      waitlist1.forEach(element => {
-        expect(element.status).toBe('IN_QUEUE');
-      });
+    // verify waitlist count
+    const waitlist1 = await waitingList(owner, game.gameCode);
+    expect(waitlist1).toHaveLength(2);
+    waitlist1.forEach(element => {
+      expect(element.status).toBe('IN_QUEUE');
+    });
 
-      // remove john from wailist
-      const resp3 = await removeFromWaitingList(john, game.gameCode);
-      expect(resp3).toBe(true);
+    // remove john from wailist
+    const resp3 = await removeFromWaitingList(john, game.gameCode);
+    expect(resp3).toBe(true);
 
-      // verify waitlist count
-      const waitlist2 = await waitingList(owner, game.gameCode);
-      expect(waitlist2).toHaveLength(1);
-      expect(waitlist2[0].status).toBe('IN_QUEUE');
+    // verify waitlist count
+    const waitlist2 = await waitingList(owner, game.gameCode);
+    expect(waitlist2).toHaveLength(1);
+    expect(waitlist2[0].status).toBe('IN_QUEUE');
   });
 
   test('gametest: wait list seating - success case', async () => {
-      await createGameServer(gameServer1);
-      const ownerInput = {
-        name: 'player_name',
-        deviceId: 'abc123',
-      };
-      const clubInput = {
-        name: 'club_name',
-        description: 'poker players gather',
-      };
-      const playersInput = [
-        {
-          name: 'player_name1',
-          deviceId: 'abc1234',
-        },
-        {
-          name: 'player_3',
-          deviceId: 'abc123456',
-        },
-        {
-          name: 'john',
-          deviceId: 'abc1235',
-        },
-        {
-          name: 'bob',
-          deviceId: 'abc1236',
-        },
-      ];
-      const [owner, club, playerUuids] = await createClubWithMembers(
-        ownerInput,
-        clubInput,
-        playersInput
-      );
-      const player1 = owner;
-      const player2 = playerUuids[0];
-      const player3 = playerUuids[1];
-      const john = playerUuids[2];
-      const bob = playerUuids[3];
+    await createGameServer(gameServer1);
+    const ownerInput = {
+      name: 'player_name',
+      deviceId: 'abc123',
+    };
+    const clubInput = {
+      name: 'club_name',
+      description: 'poker players gather',
+    };
+    const playersInput = [
+      {
+        name: 'player_name1',
+        deviceId: 'abc1234',
+      },
+      {
+        name: 'player_3',
+        deviceId: 'abc123456',
+      },
+      {
+        name: 'john',
+        deviceId: 'abc1235',
+      },
+      {
+        name: 'bob',
+        deviceId: 'abc1236',
+      },
+    ];
+    const [owner, club, playerUuids] = await createClubWithMembers(
+      ownerInput,
+      clubInput,
+      playersInput
+    );
+    const player1 = owner;
+    const player2 = playerUuids[0];
+    const player3 = playerUuids[1];
+    const john = playerUuids[2];
+    const bob = playerUuids[3];
 
-      // start a game
-      const gameInput = holdemGameInput;
-      gameInput.maxPlayers = 3;
-      gameInput.minPlayers = 2;
-      await createReward(owner, club);
-      const game = await configureGame(owner, club, gameInput);
-      await startGame(owner, game.gameCode);
+    // start a game
+    const gameInput = holdemGameInput;
+    gameInput.maxPlayers = 3;
+    gameInput.minPlayers = 2;
+    await createReward(owner, club);
+    const game = await configureGame(owner, club, gameInput);
+    await startGame(owner, game.gameCode);
 
-      // Join a game
-      await joinGame(player1, game.gameCode, 1);
-      await joinGame(player2, game.gameCode, 2);
-      await joinGame(player3, game.gameCode, 3);
+    // Join a game
+    await joinGame(player1, game.gameCode, 1);
+    await joinGame(player2, game.gameCode, 2);
+    await joinGame(player3, game.gameCode, 3);
 
-      // buyin
-      await buyIn(player1, game.gameCode, 100);
-      await buyIn(player2, game.gameCode, 100);
-      await buyIn(player3, game.gameCode, 100);
+    // buyin
+    await buyIn(player1, game.gameCode, 100);
+    await buyIn(player2, game.gameCode, 100);
+    await buyIn(player3, game.gameCode, 100);
 
-      // add john & bob to waitlist
-      await addToWaitingList(john, game.gameCode);
-      await addToWaitingList(bob, game.gameCode);
+    // add john & bob to waitlist
+    await addToWaitingList(john, game.gameCode);
+    await addToWaitingList(bob, game.gameCode);
 
-      // verify waitlist count
-      const waitlist1 = await waitingList(owner, game.gameCode);
-      expect(waitlist1).toHaveLength(2);
-      waitlist1.forEach(element => {
+    // verify waitlist count
+    const waitlist1 = await waitingList(owner, game.gameCode);
+    expect(waitlist1).toHaveLength(2);
+    waitlist1.forEach(element => {
+      expect(element.status).toBe('IN_QUEUE');
+    });
+
+    // player1 leaves a game
+    await leaveGame(player1, game.gameCode);
+
+    // process pending updates
+    await processPendingUpdates(game.id);
+
+    // verify waitlist count and status
+    const waitlist2 = await waitingList(owner, game.gameCode);
+    expect(waitlist2).toHaveLength(2);
+    waitlist2.forEach(element => {
+      if (element.playerUuid === john) {
+        expect(element.status).toBe('WAITLIST_SEATING');
+      } else {
         expect(element.status).toBe('IN_QUEUE');
-      });
-
-      // player1 leaves a game
-      await leaveGame(player1, game.gameCode);
-
-      // process pending updates
-      await processPendingUpdates(game.id);
-
-      // verify waitlist count and status
-      const waitlist2 = await waitingList(owner, game.gameCode);
-      expect(waitlist2).toHaveLength(2);
-      waitlist2.forEach(element => {
-        if (element.playerUuid === john) {
-          expect(element.status).toBe('WAITLIST_SEATING');
-        } else {
-          expect(element.status).toBe('IN_QUEUE');
-        }
-      });
-
-      try {
-        await joinGame(bob, game.gameCode, 1);
-        expect(true).toBeFalsy();
-      } catch (error) {
-        logger.error(JSON.stringify(error));
       }
+    });
 
-      const resp = await joinGame(john, game.gameCode, 1);
-      expect(resp).toBe('WAIT_FOR_BUYIN');
+    try {
+      await joinGame(bob, game.gameCode, 1);
+      expect(true).toBeFalsy();
+    } catch (error) {
+      logger.error(JSON.stringify(error));
+    }
 
+    const resp = await joinGame(john, game.gameCode, 1);
+    expect(resp).toBe('WAIT_FOR_BUYIN');
   });
 
   test('gametest: wait list seating - timeout case', async () => {

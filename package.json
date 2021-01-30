@@ -13,7 +13,7 @@
     "debug-break": "node --nolazy --inspect-brk=9235 ./build/index.js",
     "test": "NODE_ENV=test jest --runInBand ./tests",
     "unit-tests": "NODE_ENV=test DB_USED=sqllite jest --coverage=true --runInBand ./unit-tests",
-    "unit-test-specific": "NODE_ENV=test DB_USED=sqllite jest --runInBand ./unit-tests \"--testNamePattern\" \"Hand server APIs\" ",
+    "unit-test-specific": "NODE_ENV=test DB_USED=sqllite jest --runInBand ./unit-tests \"--testNamePattern\" \"Club message APIs\" ",
     "test-specific": "NODE_ENV=test jest --runInBand ./tests \"--testNamePattern\" ",
     "test-server-watch": "tsc-watch --noClear --onSuccess './debug.sh' --onFailure 'echo Beep! Compilation Failed'",
     "test-server": "NODE_ENV=test NATS_URL=${NATS_URL:-'nats://nats:4222'} DB_USED=sqllite node build/index.js",
