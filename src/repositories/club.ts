@@ -525,19 +525,6 @@ class ClubRepositoryImpl {
     return clubMembers;
   }
 
-  public async getClubMemberById(
-    club: Club,
-    memberId: number
-  ): Promise<ClubMember | null> {
-    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
-    const clubMember = await clubMemberRepository.findOne({
-      club: {id: club.id},
-      id: memberId,
-    });
-    if (!clubMember) return null;
-    return clubMember;
-  }
-
   public async isClubMember(
     clubCode: string,
     playerId: string

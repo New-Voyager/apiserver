@@ -200,7 +200,7 @@ describe('Club message APIs', () => {
     const resp2 = await sendMessageToMember(
       ownerUuid,
       clubCode,
-      clubMember[0].id,
+      playerUuid1,
       'hi'
     );
     expect(resp2.clubCode).toBe(clubCode);
@@ -216,7 +216,7 @@ describe('Club message APIs', () => {
       logger.error(JSON.stringify(e));
     }
     try {
-      await sendMessageToMember(playerUuid1, clubCode, clubMember[0].id, 'hi');
+      await sendMessageToMember(playerUuid1, clubCode, playerUuid2, 'hi');
       expect(true).toBeFalsy();
     } catch (e) {
       logger.error(JSON.stringify(e));
@@ -256,7 +256,7 @@ describe('Club message APIs', () => {
         await sendMessageToMember(
           ownerUuid,
           clubCode,
-          clubMember1[0].id,
+          playerUuid1,
           `Host Message:${i}`
         );
       }
@@ -264,7 +264,7 @@ describe('Club message APIs', () => {
         await sendMessageToMember(
           ownerUuid,
           clubCode,
-          clubMember2[0].id,
+          playerUuid2,
           `Host Message:${i}`
         );
         await sendMessageToHost(playerUuid2, clubCode, `Member Message:${i}`);
@@ -321,7 +321,7 @@ describe('Club message APIs', () => {
         await sendMessageToMember(
           ownerUuid,
           clubCode,
-          clubMember1[0].id,
+          playerUuid1,
           `Host Message:${i}`
         );
       }
@@ -329,7 +329,7 @@ describe('Club message APIs', () => {
         await sendMessageToMember(
           ownerUuid,
           clubCode,
-          clubMember2[0].id,
+          playerUuid2,
           `Host Message:${i}`
         );
         await sendMessageToHost(playerUuid2, clubCode, `Member Message:${i}`);
@@ -339,17 +339,9 @@ describe('Club message APIs', () => {
       expect(true).toBeFalsy();
     }
 
-    const resp1 = await messagesFromMember(
-      ownerUuid,
-      clubCode,
-      clubMember1[0].id
-    );
+    const resp1 = await messagesFromMember(ownerUuid, clubCode, playerUuid1);
     expect(resp1).toHaveLength(200);
-    const resp2 = await messagesFromMember(
-      ownerUuid,
-      clubCode,
-      clubMember2[0].id
-    );
+    const resp2 = await messagesFromMember(ownerUuid, clubCode, playerUuid2);
     expect(resp2).toHaveLength(100);
 
     const resp3 = await messagesFromHost(playerUuid1, clubCode);
@@ -391,7 +383,7 @@ describe('Club message APIs', () => {
         await sendMessageToMember(
           ownerUuid,
           clubCode,
-          clubMember1[0].id,
+          playerUuid1,
           `Host Message:${i}`
         );
       }
@@ -399,7 +391,7 @@ describe('Club message APIs', () => {
         await sendMessageToMember(
           ownerUuid,
           clubCode,
-          clubMember2[0].id,
+          playerUuid2,
           `Host Message:${i}`
         );
         await sendMessageToHost(playerUuid2, clubCode, `Member Message:${i}`);
@@ -418,12 +410,12 @@ describe('Club message APIs', () => {
     expect(resp1[0].newMessageCount).toBe(50);
     expect(resp1[1].newMessageCount).toBe(100);
 
-    await markMemberMsgRead(ownerUuid, clubCode, clubMember1[0].id);
+    await markMemberMsgRead(ownerUuid, clubCode, playerUuid1);
     const resp2 = await hostMessageSummary(ownerUuid, clubCode);
     expect(resp2[0].newMessageCount).toBe(50);
     expect(resp2[1].newMessageCount).toBe(0);
 
-    await markMemberMsgRead(ownerUuid, clubCode, clubMember2[0].id);
+    await markMemberMsgRead(ownerUuid, clubCode, playerUuid2);
     const resp3 = await hostMessageSummary(ownerUuid, clubCode);
     expect(resp3[0].newMessageCount).toBe(0);
     expect(resp3[1].newMessageCount).toBe(0);

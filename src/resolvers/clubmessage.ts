@@ -10,7 +10,6 @@ import {
 import {PageOptions} from '@src/types';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
-import {ClubMember} from '@src/entity/club';
 const logger = getLogger('clubmessage');
 
 export async function getClubMsg(
@@ -92,7 +91,7 @@ export async function sendClubMsg(
 export async function sendMessageToMember(
   playerId: string,
   clubCode: string,
-  memberId: number,
+  memberUuid: string,
   text: string
 ) {
   if (!playerId) {
@@ -101,6 +100,10 @@ export async function sendMessageToMember(
   const player = await Cache.getPlayer(playerId);
   if (!player) {
     throw new Error(`Player ${playerId} is not found`);
+  }
+  const member = await Cache.getPlayer(memberUuid);
+  if (!member) {
+    throw new Error(`Player ${memberUuid} is not found`);
   }
   const club = await Cache.getClub(clubCode);
   if (!club) {
@@ -114,10 +117,12 @@ export async function sendMessageToMember(
     );
   }
 
-  const clubMember1 = await ClubRepository.getClubMemberById(club, memberId);
+  const clubMember1 = await Cache.getClubMember(member.uuid, club.clubCode);
   if (!clubMember1) {
-    logger.error(`Member: ${memberId} is not a member in club ${club.name}`);
-    throw new Error(`Member: ${memberId} is not a member in club ${club.name}`);
+    logger.error(`Member: ${memberUuid} is not a member in club ${club.name}`);
+    throw new Error(
+      `Member: ${memberUuid} is not a member in club ${club.name}`
+    );
   }
   try {
     return HostMessageRepository.sendHostMessage(
@@ -232,7 +237,7 @@ export async function messagesFromHost(
 export async function messagesFromMember(
   playerId: string,
   clubCode: string,
-  memberId: number,
+  memberUuid: string,
   first?: number,
   afterId?: number
 ) {
@@ -242,6 +247,10 @@ export async function messagesFromMember(
   const player = await Cache.getPlayer(playerId);
   if (!player) {
     throw new Error(`Player ${playerId} is not found`);
+  }
+  const member = await Cache.getPlayer(memberUuid);
+  if (!member) {
+    throw new Error(`Player ${memberUuid} is not found`);
   }
   const club = await Cache.getClub(clubCode);
   if (!club) {
@@ -254,10 +263,12 @@ export async function messagesFromMember(
       `Player: ${player.uuid} is not a host in club ${club.name}`
     );
   }
-  const clubMember1 = await ClubRepository.getClubMemberById(club, memberId);
+  const clubMember1 = await Cache.getClubMember(member.uuid, club.clubCode);
   if (!clubMember1) {
-    logger.error(`Member: ${memberId} is not a member in club ${club.name}`);
-    throw new Error(`Member: ${memberId} is not a member in club ${club.name}`);
+    logger.error(`Member: ${memberUuid} is not a member in club ${club.name}`);
+    throw new Error(
+      `Member: ${memberUuid} is not a member in club ${club.name}`
+    );
   }
 
   try {
@@ -308,7 +319,7 @@ export async function markHostMsgRead(playerId: string, clubCode: string) {
 export async function markMemberMsgRead(
   playerId: string,
   clubCode: string,
-  memberId: number
+  memberUuid: string
 ) {
   if (!playerId) {
     throw new Error('Unauthorized');
@@ -316,6 +327,10 @@ export async function markMemberMsgRead(
   const player = await Cache.getPlayer(playerId);
   if (!player) {
     throw new Error(`Player ${playerId} is not found`);
+  }
+  const member = await Cache.getPlayer(memberUuid);
+  if (!member) {
+    throw new Error(`Player ${memberUuid} is not found`);
   }
   const club = await Cache.getClub(clubCode);
   if (!club) {
@@ -328,10 +343,12 @@ export async function markMemberMsgRead(
       `Player: ${player.uuid} is not a host in club ${club.name}`
     );
   }
-  const clubMember1 = await ClubRepository.getClubMemberById(club, memberId);
+  const clubMember1 = await Cache.getClubMember(member.uuid, club.clubCode);
   if (!clubMember1) {
-    logger.error(`Member: ${memberId} is not a member in club ${club.name}`);
-    throw new Error(`Member: ${memberId} is not a member in club ${club.name}`);
+    logger.error(`Member: ${memberUuid} is not a member in club ${club.name}`);
+    throw new Error(
+      `Member: ${memberUuid} is not a member in club ${club.name}`
+    );
   }
 
   try {
@@ -366,7 +383,7 @@ const resolvers: any = {
       return messagesFromMember(
         ctx.req.playerId,
         args.clubCode,
-        args.memberID,
+        args.playerId,
         args.first,
         args.afterId
       );
@@ -381,7 +398,7 @@ const resolvers: any = {
       return sendMessageToMember(
         ctx.req.playerId,
         args.clubCode,
-        args.memberID,
+        args.playerId,
         args.text
       );
     },
@@ -392,7 +409,7 @@ const resolvers: any = {
       return markHostMsgRead(ctx.req.playerId, args.clubCode);
     },
     markMemberMsgRead: async (parent, args, ctx, info) => {
-      return markMemberMsgRead(ctx.req.playerId, args.clubCode, args.memberID);
+      return markMemberMsgRead(ctx.req.playerId, args.clubCode, args.playerId);
     },
   },
 };

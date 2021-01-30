@@ -53,10 +53,10 @@ type HostMessageSummary {
 type Mutation {
   sendClubMessage(clubCode: String!, message: ClubMessageInput!): String!
 
-  sendMessageToMember(clubCode: String!, memberID: Int!, text: String!): HostMessage!
+  sendMessageToMember(clubCode: String!, playerId: String!, text: String!): HostMessage!
   sendMessageToHost(clubCode: String!, text: String!): HostMessage!
   markHostMsgRead(clubCode: String!): Boolean!
-  markMemberMsgRead(clubCode: String!, memberID:Int!): Boolean!
+  markMemberMsgRead(clubCode: String!, playerId: String!): Boolean!
 }
 
 type Query {
@@ -66,5 +66,5 @@ type Query {
   
   # first and afterId are for pagination.
   messagesFromHost(clubCode: String!, first: Int, afterId: Int): [HostMessage]
-  messagesFromMember(clubCode: String, memberID: Int!, first: Int, afterId: Int): [HostMessage]
+  messagesFromMember(clubCode: String, playerId: String!, first: Int, afterId: Int): [HostMessage]
 }
