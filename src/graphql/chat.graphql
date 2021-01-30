@@ -1,0 +1,10 @@
+type Mutation {
+  addClubChatText(clubCode: String!, text: String!): Boolean
+  removeClubChatText(clubCode: String!, text: String!): Boolean
+  addPlayerChatText(text: String!): Boolean
+  removePlayerChatText(text: String!): Boolean
+}
+
+type Query {
+  chatTexts(clubCode: String): [String!]
+}

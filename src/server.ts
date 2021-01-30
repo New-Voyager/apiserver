@@ -17,6 +17,8 @@ import {AdminAPI} from './internal/admin';
 import {Player} from './entity/player';
 import {initializeGameServer} from './gameserver';
 import {timerCallback} from './repositories/timer';
+import {seed} from './initdb';
+
 const logger = getLogger('server');
 const JWT_EXPIRY_DAYS = 3;
 const requestContext = async ({req}) => {
@@ -103,6 +105,8 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
   );
   setPgConversion();
   addInternalRoutes(app);
+  // initialize db
+  await seed();
   return [app, httpServer];
 }
 

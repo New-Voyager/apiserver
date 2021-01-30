@@ -137,3 +137,9 @@ export enum HostMessageType {
   FROM_HOST,
   TO_HOST,
 }
+
+export enum ChatTextType {
+  SYSTEM,
+  CLUB,
+  PLAYER,
+}
