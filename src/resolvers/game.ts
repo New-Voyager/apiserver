@@ -665,7 +665,7 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.playerToHandChannel = `player.${game.gameCode}.hand`;
     ret.handToAllChannel = `hand.${game.gameCode}.player.all`;
     ret.handToPlayerChannel = `hand.${game.gameCode}.player.${player.id}`;
-
+    ret.gameChatChannel = `game.${game.gameCode}.chat`;
     return ret;
   } catch (err) {
     logger.error(JSON.stringify(err));

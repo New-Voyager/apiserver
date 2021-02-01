@@ -152,6 +152,7 @@ type GameInfo {
   handToAllChannel: String
   playerToHandChannel: String
   handToPlayerChannel: String
+  gameChatChannel: String
 
   # updates
   lastHandNum: Int
