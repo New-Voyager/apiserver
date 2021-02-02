@@ -1,8 +1,14 @@
 import {ApolloServer} from 'apollo-server-express';
 import {fileLoader, mergeTypes} from 'merge-graphql-schemas';
-import {merge} from 'lodash';
+import {create, merge} from 'lodash';
 import {authorize} from '@src/middlewares/authorization';
-import {createConnection, getConnectionOptions, getRepository} from 'typeorm';
+import {
+  ConnectionOptions,
+  ConnectionOptionsReader,
+  createConnection,
+  getConnectionOptions,
+  getRepository,
+} from 'typeorm';
 import {GameServerAPI} from './internal/gameserver';
 import {HandServerAPI} from './internal/hand';
 import {GameAPI} from './internal/game';
@@ -74,7 +80,26 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
   if (process.env.NODE_ENV !== 'test') {
     logger.debug('Running in dev/prod mode');
     const options = await getConnectionOptions('default');
-    await createConnection(options);
+
+    // override database name if specified in the environment variable
+    if (process.env.DB_NAME) {
+      const optionsObj = options as any;
+      await createConnection({
+        type: optionsObj.type,
+        host: optionsObj.host,
+        port: optionsObj.port,
+        username: optionsObj.username,
+        password: optionsObj.password,
+        database: process.env.DB_NAME,
+        cache: optionsObj.cache,
+        synchronize: optionsObj.synchronize,
+        bigNumberStrings: optionsObj.bigNumberStrings,
+        entities: optionsObj.entities,
+        name: 'default',
+      });
+    } else {
+      await createConnection(options);
+    }
   } else {
     logger.debug('Running in TEST mode');
     process.env.DB_USED = 'sqllite';

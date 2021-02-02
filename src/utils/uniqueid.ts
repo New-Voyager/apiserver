@@ -6,7 +6,8 @@ export async function getClubCode(name: string): Promise<string> {
   const hashIds = new Hashids(name, 6, '0123456789ABCDEFGHIJKLMNOPQRSTWXYZ');
   // let us get the count of total clubs
   const clubCount = await ClubRepository.getClubCount();
-  const clubCode = hashIds.encode(clubCount);
+  const now = new Date().getTime();
+  const clubCode = hashIds.encode(clubCount, now);
   return 'C-' + clubCode;
 }
 
@@ -21,7 +22,8 @@ export async function getGameCodeForClub(
   );
   // let us get the count of total clubs
   const gameCount = await GameRepository.getGameCountByClubId(clubId);
-  const gameCode = hashIds.encode(clubId, gameCount);
+  const now = new Date().getTime();
+  const gameCode = hashIds.encode(clubId, gameCount, now);
   //const gameCode = 'NRPZSR';
   return 'CG-' + gameCode;
 }
@@ -35,6 +37,7 @@ export async function getGameCodeForPlayer(playerId: number): Promise<string> {
   );
   // let us get the count of total clubs
   const gameCount = await GameRepository.getGameCountByPlayerId(playerId);
-  const gameCode = hashIds.encode(playerId, gameCount);
+  const now = new Date().getTime();
+  const gameCode = hashIds.encode(playerId, gameCount, now);
   return 'PG-' + gameCode;
 }
