@@ -77,10 +77,10 @@ class HostMessageRepositoryImpl {
   public async hostMessageSummary(club: Club): Promise<any> {
     try {
       const query = `
-        SELECT DISTINCT chm.member as memberId, p.name FROM club_host_messages chm
+        SELECT DISTINCT chm.member as "memberId", p.name FROM club_host_messages chm
         INNER JOIN club_member cm on cm.id = chm.member
         INNER JOIN player p on cm.player_id = p.id 
-        where chm.club = ${club.id} order by chm.id DESC`;
+        where chm.club = ${club.id} order by chm.member DESC`;
       const members = await getConnection().query(query);
 
       const summary = new Array<any>();
@@ -110,7 +110,7 @@ class HostMessageRepositoryImpl {
       const hostMessageRepository = getRepository(ClubHostMessages);
       const resp = await hostMessageRepository.find({
         order: {
-          id: 'DESC',
+          id: 'ASC',
         },
         where: {
           club: {id: club.id},
