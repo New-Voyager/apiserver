@@ -1,10 +1,11 @@
 import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {Player} from '@src/entity/player';
-import {NextHandUpdate, PlayerStatus} from '@src/entity/types';
+import {NextHandUpdate, PlayerStatus, SeatChangeProcessType} from '@src/entity/types';
 import {getLogger} from '@src/utils/log';
 import {
   EntityManager,
+  getConnection,
   getManager,
   getRepository,
   IsNull,
@@ -14,7 +15,6 @@ import {
 import * as _ from 'lodash';
 import {
   initiateSeatChangeProcess,
-  openSeat,
   pendingProcessDone,
   playerSwitchSeat,
   startTimer,
@@ -22,7 +22,9 @@ import {
 import {WaitListMgmt} from './waitlist';
 import {SEATCHANGE_PROGRSS} from './types';
 import {GameRepository} from './game';
+import { HostSeatChangeProcess } from '@src/entity/seatchange';
 const logger = getLogger('seatchange');
+
 
 export class SeatChangeProcess {
   game: PokerGame;
@@ -384,4 +386,133 @@ export class SeatChangeProcess {
     }
     return availableSeats[0];
   }
+
+  public async beginHostSeatChange() {
+    // first remove entries from the HostSeatChangeProcess table
+    await getRepository(HostSeatChangeProcess).delete({
+      gameCode: this.game.gameCode
+    });
+
+    await getManager().transaction(
+      async transactionEntityManager => {
+      const playerGameTrackerRepo = transactionEntityManager.getRepository(PlayerGameTracker);
+      const seatChangeProcessRepo = transactionEntityManager.getRepository(HostSeatChangeProcess);
+
+      // copy current seated players in the seats to the seat change process table
+      const playersInSeats = await playerGameTrackerRepo.find({
+        game: {id: this.game.id},
+        seatNo: Not(IsNull()),
+      });
+
+      // these are the players in seats
+      // convert list to map
+      const playersBySeatNo = _.keyBy(playersInSeats, 'seatNo');
+      for(let seatNo = 1; seatNo <= this.game.maxPlayers; seatNo++) {
+        let seatChangePlayer: HostSeatChangeProcess;
+        if (playersBySeatNo[seatNo]) {
+          const player = playersBySeatNo[seatNo];
+          // a player is in the seat
+          seatChangePlayer = new HostSeatChangeProcess();
+          seatChangePlayer.gameCode = this.game.gameCode;
+          seatChangePlayer.name = player.player.name;
+          seatChangePlayer.playerId = player.player.id;
+          seatChangePlayer.playerUuid = player.player.uuid;
+          seatChangePlayer.seatNo = seatNo;
+          seatChangePlayer.stack = player.stack;
+          seatChangePlayer.openSeat = false;
+        } else {
+          // open seat
+          seatChangePlayer = new HostSeatChangeProcess();
+          seatChangePlayer.gameCode = this.game.gameCode;
+          seatChangePlayer.seatNo = seatNo;
+          seatChangePlayer.openSeat = true;
+        }
+        await seatChangeProcessRepo.save(seatChangePlayer);
+      }
+    });
+  }
+
+  public async swapSeats(seatNo1: number, seatNo2: number) {
+    await getManager().transaction(
+      async transactionEntityManager => {
+      const seatChangeProcessRepo = transactionEntityManager.getRepository(HostSeatChangeProcess);
+      let seat1Open, seat2Open;
+      const seatChangePlayer1 = await seatChangeProcessRepo.findOne(
+        {
+          gameCode: this.game.gameCode,
+          seatNo: seatNo1,
+        }
+      );
+
+      if (seatChangePlayer1 && seatChangePlayer1?.openSeat) {
+        seat1Open = true;
+      }
+
+      const seatChangePlayer2 = await seatChangeProcessRepo.findOne(
+        {
+          gameCode: this.game.gameCode,
+          seatNo: seatNo2,
+        }
+      );
+      if (seatChangePlayer2 && seatChangePlayer2?.openSeat) {
+        seat2Open = true;
+      }
+
+      if (seat1Open && seat2Open) {
+        // do nothing, open seats cannot be moved
+        return;
+      }
+
+      if(!seatChangePlayer1 || !seatChangePlayer2) {
+        return;
+      }
+
+      // update seat no 1
+      seatChangeProcessRepo.update({
+        gameCode: this.game.gameCode,
+        seatNo: seatNo1
+      }, {
+        playerId: seatChangePlayer2.playerId,
+        playerUuid: seatChangePlayer2.playerUuid,
+        name: seatChangePlayer2.name,
+        stack: seatChangePlayer2.stack,
+        seatNo: seatChangePlayer2.seatNo,
+        openSeat: seatChangePlayer2.openSeat
+      });
+
+      // update seat no 2
+      seatChangeProcessRepo.update({
+        gameCode: this.game.gameCode,
+        seatNo: seatNo2
+      }, {
+        playerId: seatChangePlayer1.playerId,
+        playerUuid: seatChangePlayer1.playerUuid,
+        name: seatChangePlayer1.name,
+        stack: seatChangePlayer1.stack,
+        seatNo: seatChangePlayer1.seatNo,
+        openSeat: seatChangePlayer1.openSeat
+      });
+    });
+  }
+
+  public async hostSeatChangeComplete() {
+    await getManager().transaction(
+      async transactionEntityManager => {
+      const seatChangeProcessRepo = transactionEntityManager.getRepository(HostSeatChangeProcess);
+      const playerGameTrackerRepo = transactionEntityManager.getRepository(PlayerGameTracker);
+      const seatChangedPlayers = await seatChangeProcessRepo.find({
+        gameCode: this.game.gameCode
+      });
+      for(const player of seatChangedPlayers) {
+        if (player.playerId != null) {
+          playerGameTrackerRepo.update({
+            game: {id: this.game.id},
+            player: {id: player.playerId},
+          }, {
+            seatNo: player.seatNo
+          });
+        }
+      }
+    });
+  }  
 }

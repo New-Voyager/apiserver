@@ -11,7 +11,6 @@ import {
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
 import {WaitListMgmt} from '@src/repositories/waitlist';
-import {SeatChangeProcess} from '@src/repositories/seatchange';
 import {default as _} from 'lodash';
 import {BuyIn} from '@src/repositories/buyin';
 import {PokerGame} from '@src/entity/game';
@@ -780,131 +779,6 @@ export async function sitBack(playerUuid: string, gameCode: string) {
   }
 }
 
-export async function requestSeatChange(playerUuid: string, gameCode: string) {
-  if (!playerUuid) {
-    throw new Error('Unauthorized');
-  }
-  try {
-    // get game using game code
-    const game = await Cache.getGame(gameCode);
-    if (!game) {
-      throw new Error(`Game ${gameCode} is not found`);
-    }
-
-    if (game.club) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.club.clubCode
-      );
-      if (!clubMember) {
-        logger.error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
-        );
-        throw new Error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
-        );
-      }
-    }
-    const player = await Cache.getPlayer(playerUuid);
-    const seatChange = new SeatChangeProcess(game);
-    const requestedAt = await seatChange.requestSeatChange(player);
-    return requestedAt;
-  } catch (err) {
-    logger.error(JSON.stringify(err));
-    throw new Error(`Failed to request seat change. ${JSON.stringify(err)}`);
-  }
-}
-
-export async function seatChangeRequests(playerUuid: string, gameCode: string) {
-  if (!playerUuid) {
-    throw new Error('Unauthorized');
-  }
-  try {
-    // get game using game code
-    const game = await Cache.getGame(gameCode);
-    if (!game) {
-      throw new Error(`Game ${gameCode} is not found`);
-    }
-
-    if (game.club) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.club.clubCode
-      );
-      if (!clubMember) {
-        logger.error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
-        );
-        throw new Error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
-        );
-      }
-    }
-    const player = await Cache.getPlayer(playerUuid);
-    const seatChange = new SeatChangeProcess(game);
-    const allPlayers = await seatChange.seatChangeRequests(player);
-
-    const playerSeatChange = new Array<any>();
-    allPlayers.map(player => {
-      const data = {
-        playerUuid: player.player.uuid,
-        name: player.player.name,
-        status: PlayerStatus[player.status],
-        seatNo: player.seatNo,
-        sessionTime: player.sessionTime,
-        seatChangeRequestedAt: player.seatChangeRequestedAt,
-      };
-      playerSeatChange.push(data);
-    });
-
-    return playerSeatChange;
-  } catch (err) {
-    logger.error(JSON.stringify(err));
-    throw new Error(
-      `Failed to get seat change requests. ${JSON.stringify(err)}`
-    );
-  }
-}
-
-export async function confirmSeatChange(
-  playerUuid: string,
-  gameCode: string,
-  seatNo: number
-) {
-  if (!playerUuid) {
-    throw new Error('Unauthorized');
-  }
-  try {
-    // get game using game code
-    const game = await Cache.getGame(gameCode);
-    if (!game) {
-      throw new Error(`Game ${gameCode} is not found`);
-    }
-
-    if (game.club) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.club.clubCode
-      );
-      if (!clubMember) {
-        logger.error(
-          `Player: ${playerUuid} is not a club member in club ${game.club.name}`
-        );
-        throw new Error(
-          `Player: ${playerUuid} is not authorized to make seat change ${gameCode}`
-        );
-      }
-    }
-    const player = await Cache.getPlayer(playerUuid);
-    const seatChange = new SeatChangeProcess(game);
-    const seatChangeStatus = await seatChange.confirmSeatChange(player, seatNo);
-    return seatChangeStatus;
-  } catch (err) {
-    logger.error(JSON.stringify(err));
-    throw new Error(`Failed to confirm seat change. ${JSON.stringify(err)}`);
-  }
-}
-
 export async function kickOutPlayer(
   requestUser: string,
   gameCode: string,
@@ -1194,9 +1068,6 @@ const resolvers: any = {
     gameInfo: async (parent, args, ctx, info) => {
       return await getGameInfo(ctx.req.playerId, args.gameCode);
     },
-    seatChangeRequests: async (parent, args, ctx, info) => {
-      return await seatChangeRequests(ctx.req.playerId, args.gameCode);
-    },
     waitingList: async (parent, args, ctx, info) => {
       return await waitingList(ctx.req.playerId, args.gameCode);
     },
@@ -1330,12 +1201,6 @@ const resolvers: any = {
     },
     leaveGame: async (parent, args, ctx, info) => {
       return leaveGame(ctx.req.playerId, args.gameCode);
-    },
-    requestSeatChange: async (parent, args, ctx, info) => {
-      return requestSeatChange(ctx.req.playerId, args.gameCode);
-    },
-    confirmSeatChange: async (parent, args, ctx, info) => {
-      return confirmSeatChange(ctx.req.playerId, args.gameCode, args.seatNo);
     },
     kickOut: async (parent, args, ctx, info) => {
       return kickOutPlayer(ctx.req.playerId, args.gameCode, args.playerUuid);

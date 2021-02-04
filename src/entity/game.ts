@@ -13,7 +13,7 @@ import {
   DbAwareCreateDateColumn,
   DbAwareUpdateDateColumn,
 } from './dbaware';
-import {GameStatus, GameType, TableStatus, NextHandUpdate} from './types';
+import {GameStatus, GameType, TableStatus, NextHandUpdate, SeatChangeProcessType} from './types';
 
 @Entity({name: 'poker_game_updates'})
 export class PokerGameUpdates {
@@ -31,6 +31,9 @@ export class PokerGameUpdates {
 
   @Column({name: 'seat_change_inprogress', default: false})
   public seatChangeInProgress!: boolean;
+
+  @Column({name: 'seat_change', default: null, nullable: true})
+  public seatChange!: SeatChangeProcessType;
 
   @Column({name: 'rake', type: 'decimal', precision: 8, scale: 2, default: 0.0})
   public rake!: number;

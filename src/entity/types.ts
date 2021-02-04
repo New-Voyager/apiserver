@@ -143,3 +143,8 @@ export enum ChatTextType {
   CLUB,
   PLAYER,
 }
+
+export enum SeatChangeProcessType {
+  AUTO,     // seat change process is initiated by the server
+  HOST      // seat change process is initiated by the host
+}
