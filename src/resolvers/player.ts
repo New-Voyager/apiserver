@@ -287,7 +287,7 @@ async function getLiveGames(playerId: string, clubCode: string) {
     }
 
     const nowMilli = now.getTime();
-    const startedAtMs = game.startedAt.getTime();
+    const startedAtMs = new Date(game.startedAt).getTime();
     const elapsedTime = nowMilli - startedAtMs;
     game.elapsedTime = Math.ceil(elapsedTime / 1000);
     game.status = GameStatus[game['gameStatus']];

@@ -94,9 +94,11 @@ setup:
         - ipAddress: 10.1.1.5
           currentMemory: 100
           status: ACTIVE
+          url: http://10.1.1.5:8080/
         - ipAddress: 10.1.1.6
           currentMemory: 100
           status: ACTIVE
+          url: http://10.1.1.6:8080/
 
 # Game steps
 game:
