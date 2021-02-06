@@ -396,7 +396,7 @@ export class SeatChangeProcess {
     return availableSeats[0];
   }
 
-  public async beginHostSeatChange() {
+  public async beginHostSeatChange(host: Player) {
     // first remove entries from the HostSeatChangeProcess table
     await getRepository(HostSeatChangeProcess).delete({
       gameCode: this.game.gameCode,
@@ -443,7 +443,7 @@ export class SeatChangeProcess {
       }
 
       // notify the players seat change process has begun
-      await hostSeatChangeProcessStarted(this.game);
+      await hostSeatChangeProcessStarted(this.game, host.id);
     });
   }
 
@@ -535,7 +535,7 @@ export class SeatChangeProcess {
     return true;
   }
 
-  public async hostSeatChangeComplete() {
+  public async hostSeatChangeComplete(host: Player) {
     await getManager().transaction(async transactionEntityManager => {
       const seatChangeProcessRepo = transactionEntityManager.getRepository(
         HostSeatChangeProcess
@@ -569,7 +569,7 @@ export class SeatChangeProcess {
         transactionEntityManager
       );
       // notify the players seat change process has ended
-      await hostSeatChangeProcessEnded(this.game, currentSeatStatus);
+      await hostSeatChangeProcessEnded(this.game, currentSeatStatus, host.id);
     });
   }
 }

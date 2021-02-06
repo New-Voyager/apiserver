@@ -405,7 +405,10 @@ export async function initiateSeatChangeProcess(
 }
 
 // indicate the players that host has started to make seat change
-export async function hostSeatChangeProcessStarted(game: PokerGame) {
+export async function hostSeatChangeProcessStarted(
+  game: PokerGame,
+  seatChangeHostId: number
+) {
   if (!notifyGameServer) {
     return;
   }
@@ -414,6 +417,7 @@ export async function hostSeatChangeProcessStarted(game: PokerGame) {
   const message = {
     type: Constants.TableHostSeatChangeProcessStart,
     gameId: game.id,
+    seatChangeHostId: seatChangeHostId,
   };
 
   const newGameUrl = `${gameServerUrl}/table-update`;
@@ -427,7 +431,8 @@ export async function hostSeatChangeProcessStarted(game: PokerGame) {
 // indicate the players that host has ended the seat change
 export async function hostSeatChangeProcessEnded(
   game: PokerGame,
-  seatUpdates: Array<SeatUpdate>
+  seatUpdates: Array<SeatUpdate>,
+  seatChangeHostId: number
 ) {
   if (!notifyGameServer) {
     return;
@@ -438,6 +443,7 @@ export async function hostSeatChangeProcessEnded(
     type: Constants.TableHostSeatChangeProcessEnd,
     gameId: game.id,
     updates: seatUpdates,
+    seatChangeHostId: seatChangeHostId,
   };
 
   const newGameUrl = `${gameServerUrl}/table-update`;

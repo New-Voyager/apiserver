@@ -192,8 +192,9 @@ export async function beginHostSeatChange(
         `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
       );
     }
+    const host = await Cache.getPlayer(playerUuid);
     const seatChange = new SeatChangeProcess(game);
-    seatChange.beginHostSeatChange();
+    seatChange.beginHostSeatChange(host);
     return true;
   } catch (err) {
     logger.error(JSON.stringify(err));
@@ -257,8 +258,9 @@ export async function seatChangeComplete(playerUuid: string, gameCode: string) {
         `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
       );
     }
+    const host = await Cache.getPlayer(playerUuid);
     const seatChange = new SeatChangeProcess(game);
-    seatChange.hostSeatChangeComplete();
+    seatChange.hostSeatChangeComplete(host);
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error(
