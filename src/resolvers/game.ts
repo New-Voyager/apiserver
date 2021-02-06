@@ -17,6 +17,7 @@ import {PokerGame} from '@src/entity/game';
 import {fillSeats} from '@src/botrunner';
 import {ClubRepository} from '@src/repositories/club';
 import {getCurrentHandLog} from '@src/gameserver';
+import {isHostOrManagerOrOwner} from './util';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -84,25 +85,14 @@ export async function endGame(playerId: string, gameCode: string) {
   try {
     const game = await Cache.getGame(gameCode);
 
-    if (game.club) {
-      // is the player club member
-      const clubMember = await Cache.getClubMember(
-        playerId,
-        game.club.clubCode
+    const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
+    if (!isAuthorized) {
+      logger.error(
+        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot end the game`
       );
-      if (!clubMember) {
-        throw new Error('Player is not a club member');
-      }
-
-      // only manager and owner can end the game
-      if (!(clubMember.isManager || clubMember.isOwner)) {
-        throw new Error('Player is not a club owner or manager');
-      }
-    } else {
-      // only club owner or host can end the game
-      if (playerId !== game.startedBy.uuid) {
-        throw new Error('Game can be ended up by the host');
-      }
+      throw new Error(
+        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot end the game`
+      );
     }
 
     if (
@@ -1051,6 +1041,46 @@ export async function declineWaitlistSeat(playerId: string, gameCode: string) {
   }
 }
 
+export async function pauseGame(playerId: string, gameCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const errors = new Array<string>();
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+  try {
+    const game = await Cache.getGame(gameCode);
+
+    const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
+    if (!isAuthorized) {
+      logger.error(
+        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot pause game`
+      );
+      throw new Error(
+        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot pause game`
+      );
+    }
+
+    if (
+      game.status === GameStatus.ACTIVE &&
+      game.tableStatus === TableStatus.GAME_RUNNING
+    ) {
+      // the game will be stopped in the next hand
+      GameRepository.pauseGameNextHand(game.id);
+    } else {
+      const status = await GameRepository.markGameStatus(
+        game.id,
+        GameStatus.PAUSED
+      );
+      return GameStatus[status];
+    }
+    return GameStatus[game.status];
+  } catch (err) {
+    logger.error(err.message);
+    throw new Error('Failed to pause the game. ' + err.message);
+  }
+}
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -1173,6 +1203,9 @@ const resolvers: any = {
     },
     endGame: async (parent, args, ctx, info) => {
       return endGame(ctx.req.playerId, args.gameCode);
+    },
+    pauseGame: async (parent, args, ctx, info) => {
+      return pauseGame(ctx.req.playerId, args.gameCode);
     },
     buyIn: async (parent, args, ctx, info) => {
       const status = await buyIn(ctx.req.playerId, args.gameCode, args.amount);

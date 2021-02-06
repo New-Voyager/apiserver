@@ -13,7 +13,13 @@ import {
   DbAwareCreateDateColumn,
   DbAwareUpdateDateColumn,
 } from './dbaware';
-import {GameStatus, GameType, TableStatus, NextHandUpdate, SeatChangeProcessType} from './types';
+import {
+  GameStatus,
+  GameType,
+  TableStatus,
+  NextHandUpdate,
+  SeatChangeProcessType,
+} from './types';
 
 @Entity({name: 'poker_game_updates'})
 export class PokerGameUpdates {

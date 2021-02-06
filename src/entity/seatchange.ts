@@ -1,15 +1,14 @@
-import {
-  Entity,
-  Column,
-  Index,
-} from 'typeorm';
+import {Entity, Column, Index, PrimaryGeneratedColumn} from 'typeorm';
 
 @Entity({name: 'host_seat_change_process'})
 export class HostSeatChangeProcess {
-  @Column({primary: true, name: 'game_code'})
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @Column({name: 'game_code'})
   public gameCode!: string;
 
-  @Column({primary: true, name: 'seat_no'})
+  @Column({name: 'seat_no'})
   public seatNo!: number;
 
   @Column({name: 'player_id'})

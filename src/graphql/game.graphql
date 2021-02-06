@@ -301,7 +301,7 @@ type Mutation {
   takeBreak(gameCode: String!): Boolean!
   sitBack(gameCode: String!): Boolean!
   leaveGame(gameCode: String!): Boolean!
-  #pauseGame(gameCode: String!): GameStatus!
+  pauseGame(gameCode: String!): GameStatus!
   endGame(gameCode: String!): GameStatus!
   #resumeGame(gameCode: String!): GameStatus!
   kickOut(gameCode: String!, playerUuid: String!): Boolean!

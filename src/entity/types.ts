@@ -24,6 +24,8 @@ export enum TableStatus {
   WAITING_TO_BE_STARTED,
   NOT_ENOUGH_PLAYERS,
   GAME_RUNNING,
+  HOST_SEATCHANGE_IN_PROGRESS,
+  HOST_SEATCHANGE_COMPLETE,
 }
 
 export enum NextHandUpdate {
@@ -145,6 +147,6 @@ export enum ChatTextType {
 }
 
 export enum SeatChangeProcessType {
-  AUTO,     // seat change process is initiated by the server
-  HOST      // seat change process is initiated by the host
+  AUTO, // seat change process is initiated by the server
+  HOST, // seat change process is initiated by the host
 }

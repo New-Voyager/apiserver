@@ -24,7 +24,7 @@ export class PlayerGameTracker {
   public game!: PokerGame;
 
   @Index('player-game-tracker-player-idx')
-  @ManyToOne(() => Player, player => player.id, {primary: true, eager: false})
+  @ManyToOne(() => Player, player => player.id, {primary: true, eager: true})
   @JoinColumn({name: 'pgt_player_id'})
   public player!: Player;
 

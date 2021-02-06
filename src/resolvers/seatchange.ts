@@ -1,9 +1,10 @@
 import {Cache} from '@src/cache/index';
-import { PokerGame } from '@src/entity/game';
-import { Player } from '@src/entity/player';
-import { PlayerStatus } from '@src/entity/types';
-import { SeatChangeProcess } from '@src/repositories/seatchange';
-import { getLogger } from '@src/utils/log';
+import {PokerGame} from '@src/entity/game';
+import {Player} from '@src/entity/player';
+import {PlayerStatus} from '@src/entity/types';
+import {SeatChangeProcess} from '@src/repositories/seatchange';
+import {getLogger} from '@src/utils/log';
+import {isHostOrManagerOrOwner} from './util';
 const logger = getLogger('game');
 
 const resolvers: any = {
@@ -26,7 +27,12 @@ const resolvers: any = {
       return beginHostSeatChange(ctx.req.playerId, args.gameCode);
     },
     seatChangeSwapSeats: async (parent, args, ctx, info) => {
-      return swapSeats(ctx.req.playerId, args.gameCode, args.seatNo1, args.seatNo2);
+      return swapSeats(
+        ctx.req.playerId,
+        args.gameCode,
+        args.seatNo1,
+        args.seatNo2
+      );
     },
     seatChangeComplete: async (parent, args, ctx, info) => {
       return seatChangeComplete(ctx.req.playerId, args.gameCode);
@@ -163,44 +169,10 @@ export async function seatChangeRequests(playerUuid: string, gameCode: string) {
   }
 }
 
-async function isHostOrManagerOrOwner(playerUuid: string, game: PokerGame): Promise<boolean> {
-  // is the player host
-  const host = game.host.uuid === playerUuid;
-  if (host) {
-    return true;
-  }
-
-  if (game.club) {
-    const clubMember = await Cache.getClubMember(
-      playerUuid,
-      game.club.clubCode
-    );
-    if (!clubMember) {
-      logger.error(
-        `Player: ${playerUuid} is not a club member in club ${game.club.name}`
-      );
-      return false;
-    }
-
-    if (!host) {
-      if (clubMember.isManager || clubMember.isOwner) {
-        logger.info(`Player: ${playerUuid} is either a manager or club owner of the ${game.club.name}`);
-        return true;
-      } else {
-        logger.error(
-          `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
-        );
-        return false;
-      }
-    }
-  }
-  return false;
-}
-
 export async function beginHostSeatChange(
   playerUuid: string,
   gameCode: string
-) {
+): Promise<boolean> {
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }
@@ -213,16 +185,21 @@ export async function beginHostSeatChange(
     // is the player host
     const isAuthorized = await isHostOrManagerOrOwner(playerUuid, game);
     if (!isAuthorized) {
-        logger.error(
-          `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
-        );
-        throw new Error(`Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`);
+      logger.error(
+        `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
+      );
+      throw new Error(
+        `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
+      );
     }
     const seatChange = new SeatChangeProcess(game);
     seatChange.beginHostSeatChange();
+    return true;
   } catch (err) {
     logger.error(JSON.stringify(err));
-    throw new Error(`Failed to start seat change process. ${JSON.stringify(err)}`);
+    throw new Error(
+      `Failed to start seat change process. ${JSON.stringify(err)}`
+    );
   }
 }
 
@@ -230,8 +207,8 @@ export async function swapSeats(
   playerUuid: string,
   gameCode: string,
   seatNo1: number,
-  seatNo2: number,
-) {
+  seatNo2: number
+): Promise<boolean> {
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }
@@ -244,23 +221,23 @@ export async function swapSeats(
     // is the player host
     const isAuthorized = await isHostOrManagerOrOwner(playerUuid, game);
     if (!isAuthorized) {
-        logger.error(
-          `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
-        );
-        throw new Error(`Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`);
+      logger.error(
+        `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
+      );
+      throw new Error(
+        `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
+      );
     }
     const seatChange = new SeatChangeProcess(game);
     seatChange.swapSeats(seatNo1, seatNo2);
+    return true;
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error(`Failed to swap seats. ${JSON.stringify(err)}`);
   }
 }
 
-export async function seatChangeComplete(
-  playerUuid: string,
-  gameCode: string
-) {
+export async function seatChangeComplete(playerUuid: string, gameCode: string) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }
@@ -273,15 +250,19 @@ export async function seatChangeComplete(
     // is the player host
     const isAuthorized = await isHostOrManagerOrOwner(playerUuid, game);
     if (!isAuthorized) {
-        logger.error(
-          `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
-        );
-        throw new Error(`Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`);
+      logger.error(
+        `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
+      );
+      throw new Error(
+        `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
+      );
     }
     const seatChange = new SeatChangeProcess(game);
     seatChange.hostSeatChangeComplete();
   } catch (err) {
     logger.error(JSON.stringify(err));
-    throw new Error(`Failed to complete seat change process. ${JSON.stringify(err)}`);
+    throw new Error(
+      `Failed to complete seat change process. ${JSON.stringify(err)}`
+    );
   }
 }
