@@ -165,6 +165,8 @@ function addInternalRoutes(app: any) {
     GameAPI.getGame
   );
 
+  app.get('/internal/game-info/game_num/:gameCode', GameAPI.getGameInfo);
+
   app.post(
     '/internal/timer-callback/gameId/:gameID/playerId/:playerID/purpose/:purpose',
     timerCallback
