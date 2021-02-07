@@ -3,10 +3,12 @@ import {GameRepository} from '@src/repositories/game';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
-import {PokerGame} from '@src/entity/game';
+import {PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {PlayerStatus} from '@src/entity/types';
 import {GameReward} from '@src/entity/reward';
-import {getManager} from 'typeorm';
+import {getManager, getRepository} from 'typeorm';
+import {NewHandInfo, PlayerInSeat} from '@src/repositories/types';
+import _ from 'lodash';
 
 const logger = getLogger('GameAPIs');
 
@@ -222,6 +224,85 @@ class GameAPIs {
     } catch (err) {
       resp.status(500).send({error: err.message});
     }
+  }
+
+  public async getNextHandInfo(req: any, resp: any) {
+    const gameCode = req.params.gameCode;
+    if (!gameCode) {
+      const res = {error: 'Invalid game code'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+
+    const ret = await getManager().transaction(
+      async transactionEntityManager => {
+        const game: PokerGame = await Cache.getGame(
+          gameCode,
+          false,
+          transactionEntityManager
+        );
+        if (!game) {
+          const res = {error: `Game code: ${gameCode} not found`};
+          resp.status(500).send(JSON.stringify(res));
+        }
+
+        const gameUpdatesRepo = transactionEntityManager.getRepository(
+          PokerGameUpdates
+        );
+        const gameUpdates = await gameUpdatesRepo.find({
+          gameID: game.id,
+        });
+        if (gameUpdates.length === 0) {
+          const res = {error: 'GameUpdates not found'};
+          resp.status(500).send(JSON.stringify(res));
+          return;
+        }
+        const gameUpdate = gameUpdates[0];
+        if (!gameUpdate.buttonPos) {
+          gameUpdate.buttonPos = -1;
+        }
+
+        const nextHandInfo: NewHandInfo = {
+          gameCode: gameCode,
+          gameType: game.gameType,
+          announceGameType: false,
+          playersInSeats: new Array<PlayerInSeat>(),
+          smallBlind: game.smallBlind,
+          bigBlind: game.bigBlind,
+          maxPlayers: game.maxPlayers,
+          buttonPos: gameUpdate.buttonPos,
+        };
+
+        const playersInSeats = await GameRepository.getPlayersInSeats(
+          game.id,
+          transactionEntityManager
+        );
+        const takenSeats = _.keyBy(playersInSeats, 'seatNo');
+        for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+          const playerSeat = takenSeats[seatNo];
+          if (!playerSeat) {
+            nextHandInfo.playersInSeats.push({
+              seatNo: seatNo,
+              openSeat: true,
+            });
+          } else {
+            // player is in a seat
+            nextHandInfo.playersInSeats.push({
+              seatNo: seatNo,
+              openSeat: false,
+              playerId: playerSeat.playerId,
+              playerUuid: playerSeat.playerUuid,
+              name: playerSeat.name,
+              stack: playerSeat.stack,
+              status: PlayerStatus[playerSeat.status],
+            });
+          }
+        }
+        return nextHandInfo;
+      }
+    );
+
+    resp.status(200).send(JSON.stringify(ret));
   }
 }
 

@@ -1,3 +1,6 @@
+import {Player} from '@src/entity/player';
+import {GameType, PlayerStatus} from '@src/entity/types';
+
 export interface PlayerSitInput {
   clubId: number;
   gameId: number;
@@ -46,6 +49,27 @@ export interface SaveHandResult {
   success: boolean;
   error?: string;
   highHand?: HighHandResult;
+}
+
+export interface PlayerInSeat {
+  seatNo: number;
+  openSeat: boolean;
+  playerId?: number;
+  playerUuid?: string;
+  name?: string;
+  stack?: number;
+  status?: string; // PlayerStatus
+}
+
+export interface NewHandInfo {
+  gameCode: string;
+  gameType: GameType;
+  maxPlayers: number;
+  smallBlind: number;
+  bigBlind: number;
+  buttonPos: number;
+  announceGameType: boolean;
+  playersInSeats: Array<PlayerInSeat>;
 }
 
 export const WAITLIST_SEATING = 'WAITLIST_SEATING';
