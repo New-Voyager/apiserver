@@ -2,6 +2,11 @@ import {GameStatus, TableStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {getLogger} from '@src/utils/log';
+import {Cache} from '@src/cache/index';
+import {PokerGame} from '@src/entity/game';
+import {PlayerStatus} from '@src/entity/types';
+import {GameReward} from '@src/entity/reward';
+import {getManager} from 'typeorm';
 
 const logger = getLogger('GameAPIs');
 
@@ -116,6 +121,86 @@ class GameAPIs {
     }
 
     resp.status(200).send({status: 'OK'});
+  }
+
+  public async getGameInfo(req: any, resp: any) {
+    const gameCode = req.params.gameCode;
+    if (!gameCode) {
+      const res = {error: 'Invalid game code'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+
+    const ret = await getManager().transaction(
+      async transactionEntityManager => {
+        const game: PokerGame = await Cache.getGame(
+          gameCode,
+          false,
+          transactionEntityManager
+        );
+        if (!game) {
+          throw new Error(`Game ${gameCode} is not found`);
+        }
+        const playersInSeats = await GameRepository.getPlayersInSeats(
+          game.id,
+          transactionEntityManager
+        );
+        for (const player of playersInSeats) {
+          player.status = PlayerStatus[player.status];
+        }
+
+        const takenSeats = playersInSeats.map(x => x.seatNo);
+        const availableSeats: Array<number> = [];
+        for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+          if (takenSeats.indexOf(seatNo) === -1) {
+            availableSeats.push(seatNo);
+          }
+        }
+        const gameRewardRepository = transactionEntityManager.getRepository(
+          GameReward
+        );
+        const gameRewards: GameReward[] = await gameRewardRepository.find({
+          where: {
+            gameId: game.id,
+          },
+        });
+        const rewardTrackingIds = gameRewards.map(r => r.rewardTrackingId.id);
+        const ret: any = {
+          clubId: game.club.id,
+          gameId: game.id,
+          clubCode: game.club.clubCode,
+          gameCode: game.gameCode,
+          gameType: game.gameType,
+          title: game.title,
+          status: game.status,
+          tableStatus: game.tableStatus,
+          smallBlind: game.smallBlind,
+          bigBlind: game.bigBlind,
+          straddleBet: game.straddleBet,
+          utgStraddleAllowed: game.utgStraddleAllowed,
+          maxPlayers: game.maxPlayers,
+          gameLength: game.gameLength,
+          rakePercentage: game.rakePercentage,
+          rakeCap: game.rakeCap,
+          buyInMin: game.buyInMin,
+          buyInMax: game.buyInMax,
+          actionTime: game.actionTime,
+          privateGame: game.privateGame,
+          startedBy: game.startedBy.name,
+          startedByUuid: game.startedBy.uuid,
+          breakLength: game.breakLength,
+          autoKickAfterBreak: game.autoKickAfterBreak,
+          rewardTrackingIds: rewardTrackingIds,
+          seatInfo: {
+            playersInSeats: playersInSeats,
+            availableSeats: availableSeats,
+          },
+        };
+        return ret;
+      }
+    );
+
+    resp.status(200).send(JSON.stringify(ret));
   }
 
   public async startGame(req: any, resp: any) {
