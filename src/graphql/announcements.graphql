@@ -1,0 +1,15 @@
+type Mutation {
+  addClubAnnouncement(clubCode: String!, text: String!, expiresAt: DateTime): Boolean!
+  addSystemAnnouncement(text: String!, expiresAt: DateTime): Boolean!
+}
+
+type Announcement {
+  text: String!
+  createdAt: DateTime!
+  expiresAt: DateTime
+}
+
+type Query {
+  clubAnnouncements(clubCode: String!): [Announcement!]
+  systemAnnouncements: [Announcement!]
+}

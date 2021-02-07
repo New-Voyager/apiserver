@@ -143,3 +143,8 @@ export enum ChatTextType {
   CLUB,
   PLAYER,
 }
+
+export enum AnnouncementType {
+  SYSTEM,
+  CLUB,
+}
