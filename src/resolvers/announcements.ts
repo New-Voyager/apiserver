@@ -3,7 +3,7 @@ import {AnnouncementsRepository} from '@src/repositories/announcements';
 import {getLogger} from '@src/utils/log';
 const logger = getLogger('announcements');
 
-async function clubAnnouncements(
+export async function clubAnnouncements(
   playerId: string,
   clubCode: string
 ): Promise<Array<any>> {
@@ -15,22 +15,31 @@ async function clubAnnouncements(
   if (!club) {
     throw new Error(`Club ${clubCode} is not found`);
   }
+  const clubMember = await Cache.getClubMember(player.uuid, club.clubCode);
+  if (!clubMember) {
+    logger.error(`Player: ${player.uuid} is not a member in club ${club.name}`);
+    throw new Error(
+      `Player: ${player.uuid} is not a member in club ${club.name}`
+    );
+  }
 
   const resp = await AnnouncementsRepository.clubAnnouncements(club);
   return resp;
 }
 
-async function systemAnnouncements(playerId: string): Promise<Array<any>> {
-  const player = await Cache.getPlayer(playerId);
-  if (!player) {
-    throw new Error(`Player ${playerId} is not found`);
-  }
+export async function systemAnnouncements(
+  playerId: string
+): Promise<Array<any>> {
+  // const player = await Cache.getPlayer(playerId);
+  // if (!player) {
+  //   throw new Error(`Player ${playerId} is not found`);
+  // }
 
   const resp = await AnnouncementsRepository.systemAnnouncements();
   return resp;
 }
 
-async function addClubAnnouncement(
+export async function addClubAnnouncement(
   playerId: string,
   clubCode: string,
   text: string,
@@ -56,7 +65,7 @@ async function addClubAnnouncement(
   return true;
 }
 
-async function addSystemAnnouncement(
+export async function addSystemAnnouncement(
   playerId: string,
   text: string,
   expiresAt: string
