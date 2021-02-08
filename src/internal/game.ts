@@ -285,7 +285,7 @@ class GameAPIs {
             nextHandInfo.playersInSeats.push({
               seatNo: seatNo,
               openSeat: true,
-              status: PlayerStatus[PlayerStatus.NOT_PLAYING],
+              status: PlayerStatus.NOT_PLAYING,
               gameToken: '',
             });
           } else {
@@ -298,7 +298,7 @@ class GameAPIs {
               name: playerSeat.name,
               stack: playerSeat.stack,
               buyIn: playerSeat.buyIn,
-              status: PlayerStatus[playerSeat.status],
+              status: playerSeat.status,
               gameToken: '',
             });
           }

@@ -59,7 +59,7 @@ export interface PlayerInSeat {
   name?: string;
   buyIn?: number;
   stack?: number;
-  status?: string; // PlayerStatus
+  status?: number; // PlayerStatus
   gameToken: string;
 }
 
