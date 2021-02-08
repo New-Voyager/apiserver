@@ -57,8 +57,10 @@ export interface PlayerInSeat {
   playerId?: number;
   playerUuid?: string;
   name?: string;
+  buyIn?: number;
   stack?: number;
   status?: string; // PlayerStatus
+  gameToken: string;
 }
 
 export interface NewHandInfo {
@@ -68,6 +70,7 @@ export interface NewHandInfo {
   smallBlind: number;
   bigBlind: number;
   buttonPos: number;
+  handNum: number;
   announceGameType: boolean;
   playersInSeats: Array<PlayerInSeat>;
 }

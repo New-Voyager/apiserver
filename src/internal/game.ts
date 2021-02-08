@@ -271,6 +271,7 @@ class GameAPIs {
           bigBlind: game.bigBlind,
           maxPlayers: game.maxPlayers,
           buttonPos: gameUpdate.buttonPos,
+          handNum: gameUpdate.lastHandNum + 1,
         };
 
         const playersInSeats = await GameRepository.getPlayersInSeats(
@@ -284,6 +285,8 @@ class GameAPIs {
             nextHandInfo.playersInSeats.push({
               seatNo: seatNo,
               openSeat: true,
+              status: PlayerStatus[PlayerStatus.NOT_PLAYING],
+              gameToken: '',
             });
           } else {
             // player is in a seat
@@ -294,7 +297,9 @@ class GameAPIs {
               playerUuid: playerSeat.playerUuid,
               name: playerSeat.name,
               stack: playerSeat.stack,
+              buyIn: playerSeat.buyIn,
               status: PlayerStatus[playerSeat.status],
+              gameToken: '',
             });
           }
         }
