@@ -9,7 +9,7 @@ import {Club} from './club';
 import {DbAwareCreateDateColumn} from './dbaware';
 import {PokerGame} from './game';
 import {Player} from './player';
-import {TransactionType, SubTransactionType} from './types';
+import {TransactionType, TransactionSubType} from './types';
 
 @Entity({name: 'club_token_transactions'})
 export class ClubTokenTransactions {
@@ -52,7 +52,7 @@ export class ClubTokenTransactions {
   public type!: TransactionType;
 
   @Column({name: 'sub_type', type: 'int', nullable: true})
-  public subType!: SubTransactionType;
+  public subType!: TransactionSubType;
 
   @DbAwareCreateDateColumn({
     type: 'timestamp',

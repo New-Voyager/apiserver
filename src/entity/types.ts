@@ -169,7 +169,7 @@ export enum TransactionType {
   PLAYER_BALANCE_UPDATED,
 }
 
-export enum SubTransactionType {
+export enum TransactionSubType {
   REWARD,
   BONUS,
   MANAGER_INCENTIVE,
