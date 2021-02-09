@@ -1,6 +1,7 @@
 import {Cache} from '@src/cache';
 import {getLogger} from '@src/utils/log';
 import {TransactionSubType} from '@src/entity/types';
+import {AccountingRepository} from '@src/repositories/accounting';
 const logger = getLogger('accounting');
 
 export async function clubTransactions(
@@ -22,8 +23,8 @@ export async function clubTransactions(
     throw new Error(`Player: ${host.uuid} is not a host in club ${club.name}`);
   }
 
-  // TODO call repository functions
-  return [];
+  const resp = await AccountingRepository.clubTransactions(club);
+  return resp;
 }
 
 export async function addTokensToPlayer(
@@ -60,8 +61,16 @@ export async function addTokensToPlayer(
     );
   }
 
-  // TODO call repository functions
-  return true;
+  const resp = await AccountingRepository.addTokensToPlayer(
+    host,
+    club,
+    clubMember,
+    player,
+    subType,
+    amount,
+    notes
+  );
+  return resp;
 }
 
 export async function withdrawTokensFromPlayer(
@@ -98,8 +107,16 @@ export async function withdrawTokensFromPlayer(
     );
   }
 
-  // TODO call repository functions
-  return true;
+  const resp = await AccountingRepository.withdrawTokensFromPlayer(
+    host,
+    club,
+    clubMember,
+    player,
+    subType,
+    amount,
+    notes
+  );
+  return resp;
 }
 
 export async function addTokensToClub(
@@ -124,8 +141,14 @@ export async function addTokensToClub(
     throw new Error(`Player: ${host.uuid} is not a host in club ${club.name}`);
   }
 
-  // TODO call repository functions
-  return true;
+  const resp = await AccountingRepository.addTokensToClub(
+    host,
+    club,
+    subType,
+    amount,
+    notes
+  );
+  return resp;
 }
 
 export async function withdrawTokensFromClub(
@@ -150,8 +173,14 @@ export async function withdrawTokensFromClub(
     throw new Error(`Player: ${host.uuid} is not a host in club ${club.name}`);
   }
 
-  // TODO call repository functions
-  return true;
+  const resp = await AccountingRepository.withdrawTokensFromClub(
+    host,
+    club,
+    subType,
+    amount,
+    notes
+  );
+  return resp;
 }
 
 export async function updateClubBalance(
@@ -175,8 +204,13 @@ export async function updateClubBalance(
     throw new Error(`Player: ${host.uuid} is not a host in club ${club.name}`);
   }
 
-  // TODO call repository functions
-  return true;
+  const resp = await AccountingRepository.updateClubBalance(
+    host,
+    club,
+    amount,
+    notes
+  );
+  return resp;
 }
 
 export async function updatePlayerBalance(
@@ -212,8 +246,15 @@ export async function updatePlayerBalance(
     );
   }
 
-  // TODO call repository functions
-  return true;
+  const resp = await AccountingRepository.updatePlayerBalance(
+    host,
+    club,
+    clubMember,
+    player,
+    amount,
+    notes
+  );
+  return resp;
 }
 
 const resolvers: any = {
