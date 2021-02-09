@@ -25,11 +25,7 @@ export function isGameServerEnabled() {
   return notifyGameServer;
 }
 
-export async function publishNewGame(
-  game: any,
-  gameServer: any,
-  publishType: string
-) {
+export async function publishNewGame(game: any, gameServer: any) {
   if (!notifyGameServer) {
     return;
   }
@@ -38,33 +34,10 @@ export async function publishNewGame(
   const gameServerUrl = gameServer.url;
 
   const message = {
-    type: publishType,
     clubId: game.club.id,
     gameId: game.id,
     clubCode: game.club.clubCode,
     gameCode: game.gameCode,
-    gameType: gameType,
-    title: game.title,
-    status: game.status,
-    tableStatus: game.tableStatus,
-    smallBlind: game.smallBlind,
-    bigBlind: game.bigBlind,
-    straddleBet: game.straddleBet,
-    utgStraddleBetAllowed: game.utgStraddleBetAllowed,
-    minPlayers: game.minPlayers,
-    maxPlayers: game.maxPlayers,
-    gameLength: game.gameLength,
-    rakePercentage: game.rakePercentage,
-    rakeCap: game.rakeCap,
-    buyInMin: game.buyInMin,
-    buyInMax: game.buyInMax,
-    actionTime: game.actionTime,
-    privateGame: game.privateRoom,
-    startedBy: game.startedBy.name,
-    startedByUuid: game.startedBy.uuid,
-    breakLength: game.breakLength,
-    autoKickAfterBreak: game.autoKickAfterBreak,
-    rewardTrackingIds: game.rewardTrackingIds,
   };
 
   const newGameUrl = `${gameServerUrl}/new-game`;

@@ -188,11 +188,7 @@ class GameRepositoryImpl {
               gameServer = gameServers[pick];
               const gameInput = game as any;
               gameInput.rewardTrackingIds = rewardTrackingIds;
-              tableStatus = await publishNewGame(
-                gameInput,
-                gameServer,
-                'NewGame'
-              );
+              tableStatus = await publishNewGame(gameInput, gameServer);
               break;
             } catch (err) {
               logger.warn(

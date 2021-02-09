@@ -210,7 +210,7 @@ async function restartGameServerGames(
       `Restarting game ${game.gameCode} in game server ID: ${gameServer.id} url: ${gameServer.url}`
     );
     // TODO: Retry
-    await publishNewGame(game, gameServer, 'Resume');
+    await publishNewGame(game, gameServer);
   }
 }
 
