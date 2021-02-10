@@ -1,4 +1,4 @@
-import {getManager, getRepository, LessThan, Not} from 'typeorm';
+import {getManager, getRepository} from 'typeorm';
 import {Club, ClubMember} from '@src/entity/club';
 import {TransactionSubType, TransactionType} from '@src/entity/types';
 import {Player} from '@src/entity/player';
@@ -10,10 +10,23 @@ class AccountingRepositoryImpl {
   public async clubTransactions(club: Club): Promise<Array<any>> {
     const clubTransactionsRepository = getRepository(ClubTokenTransactions);
     const resp = await clubTransactionsRepository.find({
-      club: {id: club.id},
+      relations: ['player'],
+      where: {
+        club: {id: club.id},
+      },
     });
-    console.log(resp);
-    return resp;
+    const transactions = new Array<any>();
+    for await (const data of resp) {
+      transactions.push({
+        playerId: data.player ? data.player.uuid : null,
+        type: TransactionType[data.type],
+        subType: TransactionSubType[data.subType],
+        amount: data.token,
+        notes: data.notes,
+        updatedDate: data.createdAt,
+      });
+    }
+    return transactions;
   }
 
   public async addTokensToPlayer(
@@ -38,12 +51,10 @@ class AccountingRepositoryImpl {
       transaction.subType = subType;
       transaction.token = amount;
       transaction.type = TransactionType.ADD_TOKENS_TO_PLAYER;
-      console.log(transaction);
 
-      const resp = await transactionEntityManager
+      await transactionEntityManager
         .getRepository(ClubTokenTransactions)
         .save(transaction);
-      console.log(resp);
     });
     logger.info('****** ENDING TRANSACTION FOR ADD TOKENS TO PLAYER');
     return true;
@@ -71,12 +82,10 @@ class AccountingRepositoryImpl {
       transaction.subType = subType;
       transaction.token = amount;
       transaction.type = TransactionType.WITHDRAW_TOKENS_FROM_PLAYER;
-      console.log(transaction);
 
-      const resp = await transactionEntityManager
+      await transactionEntityManager
         .getRepository(ClubTokenTransactions)
         .save(transaction);
-      console.log(resp);
     });
     logger.info('****** ENDING TRANSACTION FOR WITHDRAW TOKENS FROM PLAYER');
     return true;
@@ -101,12 +110,10 @@ class AccountingRepositoryImpl {
       transaction.subType = subType;
       transaction.token = amount;
       transaction.type = TransactionType.ADD_TOKENS_TO_CLUB;
-      console.log(transaction);
 
-      const resp = await transactionEntityManager
+      await transactionEntityManager
         .getRepository(ClubTokenTransactions)
         .save(transaction);
-      console.log(resp);
     });
     logger.info('****** ENDING TRANSACTION FOR ADD TOKENS TO CLUB');
     return true;
@@ -131,12 +138,10 @@ class AccountingRepositoryImpl {
       transaction.subType = subType;
       transaction.token = amount;
       transaction.type = TransactionType.WITHDRAW_TOKENS_FROM_CLUB;
-      console.log(transaction);
 
-      const resp = await transactionEntityManager
+      await transactionEntityManager
         .getRepository(ClubTokenTransactions)
         .save(transaction);
-      console.log(resp);
     });
     logger.info('****** ENDING TRANSACTION FOR WITHDRAW TOKENS FROM CLUB');
     return true;
@@ -159,12 +164,10 @@ class AccountingRepositoryImpl {
       transaction.notes = notes;
       transaction.token = amount;
       transaction.type = TransactionType.CLUB_BALANCE_UPDATED;
-      console.log(transaction);
 
-      const resp = await transactionEntityManager
+      await transactionEntityManager
         .getRepository(ClubTokenTransactions)
         .save(transaction);
-      console.log(resp);
     });
     logger.info('****** ENDING TRANSACTION FOR UPDATE CLUB BALANCE');
     return true;
@@ -190,12 +193,10 @@ class AccountingRepositoryImpl {
       transaction.player = player;
       transaction.token = amount;
       transaction.type = TransactionType.ADD_TOKENS_TO_PLAYER;
-      console.log(transaction);
 
       const resp = await transactionEntityManager
         .getRepository(ClubTokenTransactions)
         .save(transaction);
-      console.log(resp);
     });
     logger.info('****** ENDING TRANSACTION FOR UPDATE PLAYER BALANCE');
     return true;

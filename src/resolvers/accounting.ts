@@ -31,7 +31,7 @@ export async function addTokensToPlayer(
   hostId: string,
   clubCode: string,
   playerId: string,
-  subType: TransactionSubType,
+  subType: string,
   amount: number,
   notes: string
 ): Promise<boolean> {
@@ -61,12 +61,15 @@ export async function addTokensToPlayer(
     );
   }
 
+  const sub: TransactionSubType = TransactionSubType[
+    subType
+  ] as TransactionSubType;
   const resp = await AccountingRepository.addTokensToPlayer(
     host,
     club,
     clubMember,
     player,
-    subType,
+    sub,
     amount,
     notes
   );
@@ -77,7 +80,7 @@ export async function withdrawTokensFromPlayer(
   hostId: string,
   clubCode: string,
   playerId: string,
-  subType: TransactionSubType,
+  subType: string,
   amount: number,
   notes: string
 ): Promise<boolean> {
@@ -107,12 +110,15 @@ export async function withdrawTokensFromPlayer(
     );
   }
 
+  const sub: TransactionSubType = TransactionSubType[
+    subType
+  ] as TransactionSubType;
   const resp = await AccountingRepository.withdrawTokensFromPlayer(
     host,
     club,
     clubMember,
     player,
-    subType,
+    sub,
     amount,
     notes
   );
@@ -122,7 +128,7 @@ export async function withdrawTokensFromPlayer(
 export async function addTokensToClub(
   hostId: string,
   clubCode: string,
-  subType: TransactionSubType,
+  subType: string,
   amount: number,
   notes: string
 ): Promise<boolean> {
@@ -141,10 +147,13 @@ export async function addTokensToClub(
     throw new Error(`Player: ${host.uuid} is not a host in club ${club.name}`);
   }
 
+  const sub: TransactionSubType = TransactionSubType[
+    subType
+  ] as TransactionSubType;
   const resp = await AccountingRepository.addTokensToClub(
     host,
     club,
-    subType,
+    sub,
     amount,
     notes
   );
@@ -154,7 +163,7 @@ export async function addTokensToClub(
 export async function withdrawTokensFromClub(
   hostId: string,
   clubCode: string,
-  subType: TransactionSubType,
+  subType: string,
   amount: number,
   notes: string
 ): Promise<boolean> {
@@ -173,10 +182,13 @@ export async function withdrawTokensFromClub(
     throw new Error(`Player: ${host.uuid} is not a host in club ${club.name}`);
   }
 
+  const sub: TransactionSubType = TransactionSubType[
+    subType
+  ] as TransactionSubType;
   const resp = await AccountingRepository.withdrawTokensFromClub(
     host,
     club,
-    subType,
+    sub,
     amount,
     notes
   );
