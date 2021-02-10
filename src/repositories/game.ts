@@ -21,7 +21,7 @@ import {Club, ClubMember} from '@src/entity/club';
 import {Player} from '@src/entity/player';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {getLogger} from '@src/utils/log';
-import {PlayerGameTracker} from '@src/entity/chipstrack';
+import {PlayerGameStats, PlayerGameTracker} from '@src/entity/chipstrack';
 import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
 import {
   newPlayerSat,
@@ -445,6 +445,10 @@ class GameRepositoryImpl {
         const playerGameTrackerRepository = transactionEntityManager.getRepository(
           PlayerGameTracker
         );
+        const playerGameStatsRepository = transactionEntityManager.getRepository(
+          PlayerGameStats
+        );
+
         if (gameUpdate.waitlistSeatingInprogress) {
           // wait list seating in progress
           // only the player who is asked from the waiting list can sit here
@@ -508,8 +512,15 @@ class GameRepositoryImpl {
           const randomBytes = Buffer.from(crypto.randomBytes(5));
           playerInGame.gameToken = randomBytes.toString('hex');
           playerInGame.status = PlayerStatus.NOT_PLAYING;
+
+          // player stats record
+          const playerInStats = new PlayerGameStats();
+          playerInStats.player = player;
+          playerInStats.game = game;
+
           try {
             await playerGameTrackerRepository.save(playerInGame);
+            await playerGameStatsRepository.save(playerInStats);
           } catch (err) {
             const doesGameExist = await this.getGameByCode(
               game.gameCode,

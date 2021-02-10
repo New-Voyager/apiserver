@@ -1,12 +1,10 @@
 import {PokerGame, PokerGameUpdates} from '@src/entity/game';
-import {Player} from '@src/entity/player';
 import {Club, ClubMember} from '@src/entity/club';
 import {getRepository, getManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker, ClubChipsTransaction} from '@src/entity/chipstrack';
 import {Cache} from '@src/cache';
 import {HandHistory} from '@src/entity/hand';
-import {PlayerStatus} from '@src/entity/types';
 
 const logger = getLogger('chipstrack');
 
