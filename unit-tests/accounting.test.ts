@@ -13,6 +13,8 @@ import {
   withdrawTokensFromPlayer,
   updateClubBalance,
   updatePlayerBalance,
+  playerTransactions,
+  settlePlayerToPlayer,
 } from '../src/resolvers/accounting';
 
 beforeAll(async done => {
@@ -209,5 +211,81 @@ describe('Accounting APIs', () => {
 
     const resp = await clubTransactions(ownerId, clubCode);
     expect(resp).toHaveLength(4);
+  });
+
+  test('Player to Player Transactions', async () => {
+    const ownerId = await createPlayer({
+      player: {name: 'owner', deviceId: 'test'},
+    });
+    const player1Id = await createPlayer({
+      player: {name: 'player1', deviceId: 'test234'},
+    });
+    const player2Id = await createPlayer({
+      player: {name: 'player2', deviceId: 'test234567'},
+    });
+    const clubCode = await createClub(ownerId, {
+      name: 'bbc',
+      description: 'poker players gather',
+      ownerUuid: ownerId,
+    });
+    await joinClub(player1Id, clubCode);
+    await approveMember(ownerId, clubCode, player1Id);
+    await joinClub(player2Id, clubCode);
+    await approveMember(ownerId, clubCode, player2Id);
+
+    const playerBalance1 = await getPlayerBalanceAmount(player1Id, {
+      clubCode: clubCode,
+    });
+    expect(playerBalance1.balance).toBe(0);
+    const playerBalance2 = await getPlayerBalanceAmount(player2Id, {
+      clubCode: clubCode,
+    });
+    expect(playerBalance2.balance).toBe(0);
+
+    await updatePlayerBalance(
+      ownerId,
+      clubCode,
+      player1Id,
+      10,
+      'update balance'
+    );
+    await updatePlayerBalance(
+      ownerId,
+      clubCode,
+      player2Id,
+      10,
+      'update balance'
+    );
+    const playerBalance3 = await getPlayerBalanceAmount(player1Id, {
+      clubCode: clubCode,
+    });
+    expect(playerBalance3.balance).toBe(10);
+    const playerBalance4 = await getPlayerBalanceAmount(player2Id, {
+      clubCode: clubCode,
+    });
+    expect(playerBalance4.balance).toBe(10);
+
+    await settlePlayerToPlayer(
+      ownerId,
+      clubCode,
+      player1Id,
+      player2Id,
+      5,
+      'amount sent'
+    );
+
+    const playerBalance5 = await getPlayerBalanceAmount(player1Id, {
+      clubCode: clubCode,
+    });
+    expect(playerBalance5.balance).toBe(5);
+    const playerBalance6 = await getPlayerBalanceAmount(player2Id, {
+      clubCode: clubCode,
+    });
+    expect(playerBalance6.balance).toBe(15);
+
+    const resp1 = await playerTransactions(ownerId, clubCode, player1Id);
+    const resp2 = await playerTransactions(ownerId, clubCode, player2Id);
+    expect(resp1).toHaveLength(1);
+    expect(resp2).toHaveLength(1);
   });
 });
