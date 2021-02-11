@@ -26,6 +26,7 @@ import {
 } from '../src/entity/reward';
 import {FavouriteMessage} from '../src/entity/clubfreqmessage';
 import {Announcement} from '../src/entity/announcements';
+import {ClubTokenTransactions} from '../src/entity/accounting';
 import {ClubMessageInput, ClubHostMessages} from '../src/entity/clubmessage';
 import {GameServer, TrackGameServer} from '../src/entity/gameserver';
 
@@ -64,6 +65,7 @@ export async function sqlliteConnection() {
       SavedHands,
       ClubHostMessages,
       Announcement,
+      ClubTokenTransactions,
     ],
     dropSchema: true,
     synchronize: true,

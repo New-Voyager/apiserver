@@ -1,0 +1,70 @@
+enum TransactionType {
+  TIPS,
+  GAME_BUYIN,
+  GAME_RETURN,
+  GAME_FEE,
+  GAME_REWARD,
+  SEND_PLAYER_TO_PLAYER,
+  RECEIVE_PLAYER_TO_PLAYER,
+  SEND_PLAYER_TO_CLUB,
+  RECEIVE_PLAYER_TO_CLUB,
+  SEND_CLUB_TO_PLAYER,
+  RECEIVE_CLUB_TO_PLAYER,
+  ADD_TOKENS_TO_PLAYER,
+  SUBTRACT_TOKENS_FROM_PLAYER,
+  ADD_TOKENS_TO_CLUB,
+  WITHDRAW_TOKENS_FROM_CLUB,
+  CLUB_BALANCE_UPDATED,
+  PLAYER_BALANCE_UPDATED,
+}
+
+enum TransactionSubType {
+  REWARD,
+  BONUS,
+  MANAGER_INCENTIVE,
+  HOST_INCENTIVE,
+  MISC_EXP,
+  MISC_INCOME,
+  ADJUSTMENT,
+  TRANSACTION,
+}
+
+type ClubTransaction {
+  playerId: String
+  type: TransactionType!
+  subType: TransactionSubType!
+  amount: Float!
+  notes: String
+  updatedDate: DateTime!
+}
+
+type Query {
+  clubTransactions(clubCode: String!): [ClubTransaction!]
+}
+
+type Mutation {
+  addTokensToPlayer(
+    clubCode: String!, 
+    playerId: String!, 
+    subType: TransactionSubType!, 
+    amount: Float!, 
+    notes: String!): Boolean!
+  withdrawTokensFromPlayer(
+    clubCode: String!, 
+    playerId: String!, 
+    subType: TransactionSubType!, 
+    amount: Float!, 
+    notes: String!): Boolean!
+  addTokensToClub(
+    clubCode: String!, 
+    amount: Float!, 
+    subType: TransactionSubType!, 
+    notes: String!): Boolean!
+  withdrawTokensFromClub(
+    clubCode: String!, 
+    amount: Float!, 
+    subType: TransactionSubType!, 
+    notes: String!): Boolean!
+  updateClubBalance(clubCode: String!, amount: Float!, notes: String!): Boolean!
+  updatePlayerBalance(clubCode: String!, playerId: String!, amount: Float!, notes: String!): Boolean!
+}
