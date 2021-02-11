@@ -38,11 +38,28 @@ type ClubTransaction {
   updatedDate: DateTime!
 }
 
+type PlayerTransaction {
+  playerId: String!
+  otherPlayerId: String 
+  type: TransactionType!
+  subType: TransactionSubType!
+  amount: Float!
+  notes: String
+  updatedDate: DateTime!
+}
+
 type Query {
   clubTransactions(clubCode: String!): [ClubTransaction!]
+  playerTransactions(clubCode: String!, playerId: String!): [PlayerTransaction!]
 }
 
 type Mutation {
+  settlePlayerToPlayer(
+    clubCode: String!, 
+    fromPlayerId: String!, 
+    toPlayerId: String!, 
+    amount: Float!, 
+    notes: String!): Boolean!
   addTokensToPlayer(
     clubCode: String!, 
     playerId: String!, 
