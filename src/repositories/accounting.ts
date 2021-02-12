@@ -1,13 +1,14 @@
 import {getManager, getRepository, In} from 'typeorm';
 import {Club, ClubMember} from '@src/entity/club';
 import {TransactionSubType, TransactionType} from '@src/entity/types';
+import {ClubTransaction, PlayerTransaction} from '@src/types';
 import {Player} from '@src/entity/player';
 import {getLogger} from '@src/utils/log';
 import {ClubTokenTransactions} from '@src/entity/accounting';
-const logger = getLogger('accounting');
+const logger = getLogger('accounting - repositories');
 
 class AccountingRepositoryImpl {
-  public async clubTransactions(club: Club): Promise<Array<any>> {
+  public async clubTransactions(club: Club): Promise<Array<ClubTransaction>> {
     const clubTransactionsRepository = getRepository(ClubTokenTransactions);
     const resp = await clubTransactionsRepository.find({
       relations: ['player'],
@@ -23,10 +24,10 @@ class AccountingRepositoryImpl {
         ]),
       },
     });
-    const transactions = new Array<any>();
+    const transactions = new Array<ClubTransaction>();
     for await (const data of resp) {
       transactions.push({
-        playerId: data.player ? data.player.uuid : null,
+        playerId: data.player ? data.player.uuid : undefined,
         type: TransactionType[data.type],
         subType: TransactionSubType[data.subType],
         amount: data.token,
@@ -213,7 +214,7 @@ class AccountingRepositoryImpl {
   public async playerTransactions(
     club: Club,
     player: Player
-  ): Promise<Array<any>> {
+  ): Promise<Array<PlayerTransaction>> {
     const clubTransactionsRepository = getRepository(ClubTokenTransactions);
     const resp = await clubTransactionsRepository.find({
       relations: ['player'],
@@ -226,11 +227,11 @@ class AccountingRepositoryImpl {
         ]),
       },
     });
-    const transactions = new Array<any>();
+    const transactions = new Array<PlayerTransaction>();
     for await (const data of resp) {
       transactions.push({
         playerId: data.player.uuid,
-        otherPlayerId: data.otherPlayer ? data.otherPlayer.uuid : null,
+        otherPlayerId: data.otherPlayer ? data.otherPlayer.uuid : undefined,
         type: TransactionType[data.type],
         subType: TransactionSubType[data.subType],
         amount: data.token,

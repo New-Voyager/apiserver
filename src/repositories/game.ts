@@ -428,7 +428,7 @@ class GameRepositoryImpl {
           },
         });
         if (!gameUpdate) {
-          console.log(`Game status is not found for game: ${game.gameCode}`);
+          logger.error(`Game status is not found for game: ${game.gameCode}`);
           throw new Error(
             `Game status is not found for game: ${game.gameCode}`
           );
@@ -488,7 +488,7 @@ class GameRepositoryImpl {
           .addSelect('game_token', 'gameToken')
           .execute();
 
-        let playerInGame: any = null;
+        let playerInGame: PlayerGameTracker | null = null;
         if (playerInGames.length > 0) {
           playerInGame = playerInGames[0];
         }

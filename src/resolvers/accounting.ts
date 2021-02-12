@@ -2,12 +2,13 @@ import {Cache} from '@src/cache';
 import {getLogger} from '@src/utils/log';
 import {TransactionSubType} from '@src/entity/types';
 import {AccountingRepository} from '@src/repositories/accounting';
-const logger = getLogger('accounting');
+import {ClubTransaction, PlayerTransaction} from '@src/types';
+const logger = getLogger('accounting - resolvers');
 
 export async function clubTransactions(
   hostId: string,
   clubCode: string
-): Promise<Array<any>> {
+): Promise<Array<ClubTransaction>> {
   const host = await Cache.getPlayer(hostId);
   if (!host) {
     throw new Error(`Player ${hostId} is not found`);
@@ -22,9 +23,13 @@ export async function clubTransactions(
     logger.error(`Player: ${host.uuid} is not a host in club ${club.name}`);
     throw new Error(`Player: ${host.uuid} is not a host in club ${club.name}`);
   }
-
-  const resp = await AccountingRepository.clubTransactions(club);
-  return resp;
+  try {
+    const resp = await AccountingRepository.clubTransactions(club);
+    return resp;
+  } catch (error) {
+    logger.error(`Failed with error: ${JSON.stringify(error)}`);
+    throw new Error(`Failed with error: ${JSON.stringify(error)}`);
+  }
 }
 
 export async function addTokensToPlayer(
@@ -61,19 +66,24 @@ export async function addTokensToPlayer(
     );
   }
 
-  const sub: TransactionSubType = TransactionSubType[
-    subType
-  ] as TransactionSubType;
-  const resp = await AccountingRepository.addTokensToPlayer(
-    host,
-    club,
-    clubMember,
-    player,
-    sub,
-    amount,
-    notes
-  );
-  return resp;
+  try {
+    const sub: TransactionSubType = TransactionSubType[
+      subType
+    ] as TransactionSubType;
+    const resp = await AccountingRepository.addTokensToPlayer(
+      host,
+      club,
+      clubMember,
+      player,
+      sub,
+      amount,
+      notes
+    );
+    return resp;
+  } catch (error) {
+    logger.error(`Failed with error: ${JSON.stringify(error)}`);
+    throw new Error(`Failed with error: ${JSON.stringify(error)}`);
+  }
 }
 
 export async function withdrawTokensFromPlayer(
@@ -110,19 +120,24 @@ export async function withdrawTokensFromPlayer(
     );
   }
 
-  const sub: TransactionSubType = TransactionSubType[
-    subType
-  ] as TransactionSubType;
-  const resp = await AccountingRepository.withdrawTokensFromPlayer(
-    host,
-    club,
-    clubMember,
-    player,
-    sub,
-    amount,
-    notes
-  );
-  return resp;
+  try {
+    const sub: TransactionSubType = TransactionSubType[
+      subType
+    ] as TransactionSubType;
+    const resp = await AccountingRepository.withdrawTokensFromPlayer(
+      host,
+      club,
+      clubMember,
+      player,
+      sub,
+      amount,
+      notes
+    );
+    return resp;
+  } catch (error) {
+    logger.error(`Failed with error: ${JSON.stringify(error)}`);
+    throw new Error(`Failed with error: ${JSON.stringify(error)}`);
+  }
 }
 
 export async function addTokensToClub(
@@ -147,17 +162,22 @@ export async function addTokensToClub(
     throw new Error(`Player: ${host.uuid} is not a host in club ${club.name}`);
   }
 
-  const sub: TransactionSubType = TransactionSubType[
-    subType
-  ] as TransactionSubType;
-  const resp = await AccountingRepository.addTokensToClub(
-    host,
-    club,
-    sub,
-    amount,
-    notes
-  );
-  return resp;
+  try {
+    const sub: TransactionSubType = TransactionSubType[
+      subType
+    ] as TransactionSubType;
+    const resp = await AccountingRepository.addTokensToClub(
+      host,
+      club,
+      sub,
+      amount,
+      notes
+    );
+    return resp;
+  } catch (error) {
+    logger.error(`Failed with error: ${JSON.stringify(error)}`);
+    throw new Error(`Failed with error: ${JSON.stringify(error)}`);
+  }
 }
 
 export async function withdrawTokensFromClub(
@@ -182,17 +202,22 @@ export async function withdrawTokensFromClub(
     throw new Error(`Player: ${host.uuid} is not a host in club ${club.name}`);
   }
 
-  const sub: TransactionSubType = TransactionSubType[
-    subType
-  ] as TransactionSubType;
-  const resp = await AccountingRepository.withdrawTokensFromClub(
-    host,
-    club,
-    sub,
-    amount,
-    notes
-  );
-  return resp;
+  try {
+    const sub: TransactionSubType = TransactionSubType[
+      subType
+    ] as TransactionSubType;
+    const resp = await AccountingRepository.withdrawTokensFromClub(
+      host,
+      club,
+      sub,
+      amount,
+      notes
+    );
+    return resp;
+  } catch (error) {
+    logger.error(`Failed with error: ${JSON.stringify(error)}`);
+    throw new Error(`Failed with error: ${JSON.stringify(error)}`);
+  }
 }
 
 export async function updateClubBalance(
@@ -216,13 +241,18 @@ export async function updateClubBalance(
     throw new Error(`Player: ${host.uuid} is not a host in club ${club.name}`);
   }
 
-  const resp = await AccountingRepository.updateClubBalance(
-    host,
-    club,
-    amount,
-    notes
-  );
-  return resp;
+  try {
+    const resp = await AccountingRepository.updateClubBalance(
+      host,
+      club,
+      amount,
+      notes
+    );
+    return resp;
+  } catch (error) {
+    logger.error(`Failed with error: ${JSON.stringify(error)}`);
+    throw new Error(`Failed with error: ${JSON.stringify(error)}`);
+  }
 }
 
 export async function updatePlayerBalance(
@@ -258,22 +288,27 @@ export async function updatePlayerBalance(
     );
   }
 
-  const resp = await AccountingRepository.updatePlayerBalance(
-    host,
-    club,
-    clubMember,
-    player,
-    amount,
-    notes
-  );
-  return resp;
+  try {
+    const resp = await AccountingRepository.updatePlayerBalance(
+      host,
+      club,
+      clubMember,
+      player,
+      amount,
+      notes
+    );
+    return resp;
+  } catch (error) {
+    logger.error(`Failed with error: ${JSON.stringify(error)}`);
+    throw new Error(`Failed with error: ${JSON.stringify(error)}`);
+  }
 }
 
 export async function playerTransactions(
   hostId: string,
   clubCode: string,
   playerId: string
-): Promise<Array<any>> {
+): Promise<Array<PlayerTransaction>> {
   const host = await Cache.getPlayer(hostId);
   if (!host) {
     throw new Error(`Player ${hostId} is not found`);
@@ -300,8 +335,13 @@ export async function playerTransactions(
     );
   }
 
-  const resp = await AccountingRepository.playerTransactions(club, player);
-  return resp;
+  try {
+    const resp = await AccountingRepository.playerTransactions(club, player);
+    return resp;
+  } catch (error) {
+    logger.error(`Failed with error: ${JSON.stringify(error)}`);
+    throw new Error(`Failed with error: ${JSON.stringify(error)}`);
+  }
 }
 
 export async function settlePlayerToPlayer(
@@ -356,17 +396,22 @@ export async function settlePlayerToPlayer(
     );
   }
 
-  const resp = await AccountingRepository.settlePlayerToPlayer(
-    host,
-    club,
-    fromClubMember,
-    toClubMember,
-    fromPlayer,
-    toPlayer,
-    amount,
-    notes
-  );
-  return resp;
+  try {
+    const resp = await AccountingRepository.settlePlayerToPlayer(
+      host,
+      club,
+      fromClubMember,
+      toClubMember,
+      fromPlayer,
+      toPlayer,
+      amount,
+      notes
+    );
+    return resp;
+  } catch (error) {
+    logger.error(`Failed with error: ${JSON.stringify(error)}`);
+    throw new Error(`Failed with error: ${JSON.stringify(error)}`);
+  }
 }
 
 const resolvers: any = {

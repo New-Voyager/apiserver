@@ -1,17 +1,15 @@
 import {PokerGame, PokerGameUpdates} from '@src/entity/game';
-import {Player} from '@src/entity/player';
 import {Club, ClubMember} from '@src/entity/club';
-import {getRepository, getManager} from 'typeorm';
+import {getRepository, getManager, UpdateResult} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker, ClubChipsTransaction} from '@src/entity/chipstrack';
 import {Cache} from '@src/cache';
 import {HandHistory} from '@src/entity/hand';
-import {PlayerStatus} from '@src/entity/types';
 
 const logger = getLogger('chipstrack');
 
 class ChipsTrackRepositoryImpl {
-  public async settleClubBalances(game: PokerGame): Promise<any> {
+  public async settleClubBalances(game: PokerGame): Promise<boolean> {
     try {
       if (!game.club) {
         // we don't track balances of individual host games
@@ -51,7 +49,7 @@ class ChipsTrackRepositoryImpl {
           .execute();
 
         // walk through the hand history and collect big win hands for each player
-        const playerBigWinLoss: any = {};
+        const playerBigWinLoss = {};
         const hands = await transactionEntityManager
           .getRepository(HandHistory)
           .find({gameId: game.id});
@@ -90,7 +88,7 @@ class ChipsTrackRepositoryImpl {
           }
         }
 
-        const chipUpdates = new Array<any>();
+        const chipUpdates = new Array<Promise<UpdateResult>>();
         for (const seatNoStr of Object.keys(playerBigWinLoss)) {
           const seatNo = parseInt(seatNoStr);
           const result = await transactionEntityManager
@@ -108,7 +106,7 @@ class ChipsTrackRepositoryImpl {
                 handStack: JSON.stringify(playerBigWinLoss[seatNo].playerStack),
               }
             );
-          console.log(JSON.stringify(result));
+          logger.info(JSON.stringify(result));
         }
 
         // update club member balance
@@ -147,7 +145,7 @@ class ChipsTrackRepositoryImpl {
       return true;
     } catch (e) {
       logger.error(`Error: ${JSON.stringify(e)}`);
-      return new Error(JSON.stringify(e));
+      throw new Error(JSON.stringify(e));
     }
   }
 

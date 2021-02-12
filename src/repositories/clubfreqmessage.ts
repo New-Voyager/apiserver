@@ -108,7 +108,9 @@ class ClubFreqMessageRepositoryImpl {
     return response.id;
   }
 
-  public async clubFavoriteMessage(clubCode: string): Promise<Array<any>> {
+  public async clubFavoriteMessage(
+    clubCode: string
+  ): Promise<Array<FavouriteMessage>> {
     try {
       const clubRepository = getRepository(Club);
       const club = await clubRepository.findOne({where: {clubCode: clubCode}});
@@ -132,7 +134,9 @@ class ClubFreqMessageRepositoryImpl {
     }
   }
 
-  public async playerFavoriteMessage(playerId: string): Promise<Array<any>> {
+  public async playerFavoriteMessage(
+    playerId: string
+  ): Promise<Array<FavouriteMessage>> {
     try {
       const playerRepository = getRepository<Player>(Player);
       const player = playerRepository.findOne({
