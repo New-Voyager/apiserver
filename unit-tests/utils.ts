@@ -29,6 +29,7 @@ import {Announcement} from '../src/entity/announcements';
 import {ClubTokenTransactions} from '../src/entity/accounting';
 import {ClubMessageInput, ClubHostMessages} from '../src/entity/clubmessage';
 import {GameServer, TrackGameServer} from '../src/entity/gameserver';
+import {HostSeatChangeProcess} from '../src/entity/seatchange';
 
 export async function initializeSqlLite() {
   process.env.DB_USED = 'sqllite';
@@ -66,6 +67,7 @@ export async function sqlliteConnection() {
       ClubHostMessages,
       Announcement,
       ClubTokenTransactions,
+      HostSeatChangeProcess,
     ],
     dropSchema: true,
     synchronize: true,
