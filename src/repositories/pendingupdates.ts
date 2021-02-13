@@ -44,13 +44,31 @@ export async function processPendingUpdates(gameId: number) {
   const query = fixQuery(
     'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ? AND new_update = ?'
   );
-  const resp = await getConnection().query(query, [
+  let resp = await getConnection().query(query, [
     gameId,
     NextHandUpdate.END_GAME,
   ]);
   if (resp[0]['updates'] > 0) {
     // game ended
     await GameRepository.markGameStatus(gameId, GameStatus.ENDED);
+
+    // delete hand updates for the game
+    await getConnection().query(
+      fixQuery('DELETE FROM next_hand_updates WHERE game_id=?'),
+      [gameId]
+    );
+    return;
+  }
+
+  // did the host paused the game?
+  resp = await getConnection().query(query, [
+    gameId,
+    NextHandUpdate.PAUSE_GAME,
+  ]);
+  if (resp[0]['updates'] > 0) {
+    logger.info(`Game: ${gameId} is paused`);
+    // game paused
+    await GameRepository.markGameStatus(gameId, GameStatus.PAUSED);
 
     // delete hand updates for the game
     await getConnection().query(

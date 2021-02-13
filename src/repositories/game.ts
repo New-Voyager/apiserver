@@ -918,6 +918,28 @@ class GameRepositoryImpl {
     }
   }
 
+  public async pauseGameNextHand(gameId: number) {
+    // check to see if the game is already marked to be ended
+    const repository = getRepository(NextHandUpdates);
+    const query = fixQuery(
+      'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ? AND new_update = ?'
+    );
+    const resp = await getConnection().query(query, [
+      gameId,
+      NextHandUpdate.PAUSE_GAME,
+    ]);
+    if (resp[0]['updates'] === 0) {
+      const nextHandUpdate = new NextHandUpdates();
+      const game = new PokerGame();
+      game.id = gameId;
+      nextHandUpdate.game = game;
+      nextHandUpdate.newUpdate = NextHandUpdate.PAUSE_GAME;
+      repository.save(nextHandUpdate);
+
+      // notify users that the game will end in the next hand
+    }
+  }
+
   public async markGameStatus(
     gameId: number,
     status: GameStatus,

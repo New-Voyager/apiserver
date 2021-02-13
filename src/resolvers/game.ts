@@ -11,13 +11,13 @@ import {
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
 import {WaitListMgmt} from '@src/repositories/waitlist';
-import {SeatChangeProcess} from '@src/repositories/seatchange';
 import {default as _} from 'lodash';
 import {BuyIn} from '@src/repositories/buyin';
 import {PokerGame} from '@src/entity/game';
 import {fillSeats} from '@src/botrunner';
 import {ClubRepository} from '@src/repositories/club';
 import {getCurrentHandLog} from '@src/gameserver';
+import {isHostOrManagerOrOwner} from './util';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -85,25 +85,14 @@ export async function endGame(playerId: string, gameCode: string) {
   try {
     const game = await Cache.getGame(gameCode);
 
-    if (game.club) {
-      // is the player club member
-      const clubMember = await Cache.getClubMember(
-        playerId,
-        game.club.clubCode
+    const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
+    if (!isAuthorized) {
+      logger.error(
+        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot end the game`
       );
-      if (!clubMember) {
-        throw new Error('Player is not a club member');
-      }
-
-      // only manager and owner can end the game
-      if (!(clubMember.isManager || clubMember.isOwner)) {
-        throw new Error('Player is not a club owner or manager');
-      }
-    } else {
-      // only club owner or host can end the game
-      if (playerId !== game.startedBy.uuid) {
-        throw new Error('Game can be ended up by the host');
-      }
+      throw new Error(
+        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot end the game`
+      );
     }
 
     if (
@@ -780,131 +769,6 @@ export async function sitBack(playerUuid: string, gameCode: string) {
   }
 }
 
-export async function requestSeatChange(playerUuid: string, gameCode: string) {
-  if (!playerUuid) {
-    throw new Error('Unauthorized');
-  }
-  try {
-    // get game using game code
-    const game = await Cache.getGame(gameCode);
-    if (!game) {
-      throw new Error(`Game ${gameCode} is not found`);
-    }
-
-    if (game.club) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.club.clubCode
-      );
-      if (!clubMember) {
-        logger.error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
-        );
-        throw new Error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
-        );
-      }
-    }
-    const player = await Cache.getPlayer(playerUuid);
-    const seatChange = new SeatChangeProcess(game);
-    const requestedAt = await seatChange.requestSeatChange(player);
-    return requestedAt;
-  } catch (err) {
-    logger.error(JSON.stringify(err));
-    throw new Error(`Failed to request seat change. ${JSON.stringify(err)}`);
-  }
-}
-
-export async function seatChangeRequests(playerUuid: string, gameCode: string) {
-  if (!playerUuid) {
-    throw new Error('Unauthorized');
-  }
-  try {
-    // get game using game code
-    const game = await Cache.getGame(gameCode);
-    if (!game) {
-      throw new Error(`Game ${gameCode} is not found`);
-    }
-
-    if (game.club) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.club.clubCode
-      );
-      if (!clubMember) {
-        logger.error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
-        );
-        throw new Error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
-        );
-      }
-    }
-    const player = await Cache.getPlayer(playerUuid);
-    const seatChange = new SeatChangeProcess(game);
-    const allPlayers = await seatChange.seatChangeRequests(player);
-
-    const playerSeatChange = new Array<any>();
-    allPlayers.map(player => {
-      const data = {
-        playerUuid: player.player.uuid,
-        name: player.player.name,
-        status: PlayerStatus[player.status],
-        seatNo: player.seatNo,
-        sessionTime: player.sessionTime,
-        seatChangeRequestedAt: player.seatChangeRequestedAt,
-      };
-      playerSeatChange.push(data);
-    });
-
-    return playerSeatChange;
-  } catch (err) {
-    logger.error(JSON.stringify(err));
-    throw new Error(
-      `Failed to get seat change requests. ${JSON.stringify(err)}`
-    );
-  }
-}
-
-export async function confirmSeatChange(
-  playerUuid: string,
-  gameCode: string,
-  seatNo: number
-) {
-  if (!playerUuid) {
-    throw new Error('Unauthorized');
-  }
-  try {
-    // get game using game code
-    const game = await Cache.getGame(gameCode);
-    if (!game) {
-      throw new Error(`Game ${gameCode} is not found`);
-    }
-
-    if (game.club) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.club.clubCode
-      );
-      if (!clubMember) {
-        logger.error(
-          `Player: ${playerUuid} is not a club member in club ${game.club.name}`
-        );
-        throw new Error(
-          `Player: ${playerUuid} is not authorized to make seat change ${gameCode}`
-        );
-      }
-    }
-    const player = await Cache.getPlayer(playerUuid);
-    const seatChange = new SeatChangeProcess(game);
-    const seatChangeStatus = await seatChange.confirmSeatChange(player, seatNo);
-    return seatChangeStatus;
-  } catch (err) {
-    logger.error(JSON.stringify(err));
-    throw new Error(`Failed to confirm seat change. ${JSON.stringify(err)}`);
-  }
-}
-
 export async function kickOutPlayer(
   requestUser: string,
   gameCode: string,
@@ -1177,6 +1041,46 @@ export async function declineWaitlistSeat(playerId: string, gameCode: string) {
   }
 }
 
+export async function pauseGame(playerId: string, gameCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const errors = new Array<string>();
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+  try {
+    const game = await Cache.getGame(gameCode);
+
+    const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
+    if (!isAuthorized) {
+      logger.error(
+        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot pause game`
+      );
+      throw new Error(
+        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot pause game`
+      );
+    }
+
+    if (
+      game.status === GameStatus.ACTIVE &&
+      game.tableStatus === TableStatus.GAME_RUNNING
+    ) {
+      // the game will be stopped in the next hand
+      GameRepository.pauseGameNextHand(game.id);
+    } else {
+      const status = await GameRepository.markGameStatus(
+        game.id,
+        GameStatus.PAUSED
+      );
+      return GameStatus[status];
+    }
+    return GameStatus[game.status];
+  } catch (err) {
+    logger.error(err.message);
+    throw new Error('Failed to pause the game. ' + err.message);
+  }
+}
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -1193,9 +1097,6 @@ const resolvers: any = {
     },
     gameInfo: async (parent, args, ctx, info) => {
       return await getGameInfo(ctx.req.playerId, args.gameCode);
-    },
-    seatChangeRequests: async (parent, args, ctx, info) => {
-      return await seatChangeRequests(ctx.req.playerId, args.gameCode);
     },
     waitingList: async (parent, args, ctx, info) => {
       return await waitingList(ctx.req.playerId, args.gameCode);
@@ -1303,6 +1204,9 @@ const resolvers: any = {
     endGame: async (parent, args, ctx, info) => {
       return endGame(ctx.req.playerId, args.gameCode);
     },
+    pauseGame: async (parent, args, ctx, info) => {
+      return pauseGame(ctx.req.playerId, args.gameCode);
+    },
     buyIn: async (parent, args, ctx, info) => {
       const status = await buyIn(ctx.req.playerId, args.gameCode, args.amount);
       return status;
@@ -1330,12 +1234,6 @@ const resolvers: any = {
     },
     leaveGame: async (parent, args, ctx, info) => {
       return leaveGame(ctx.req.playerId, args.gameCode);
-    },
-    requestSeatChange: async (parent, args, ctx, info) => {
-      return requestSeatChange(ctx.req.playerId, args.gameCode);
-    },
-    confirmSeatChange: async (parent, args, ctx, info) => {
-      return confirmSeatChange(ctx.req.playerId, args.gameCode, args.seatNo);
     },
     kickOut: async (parent, args, ctx, info) => {
       return kickOutPlayer(ctx.req.playerId, args.gameCode, args.playerUuid);
