@@ -150,3 +150,39 @@ export enum SeatChangeProcessType {
   AUTO, // seat change process is initiated by the server
   HOST, // seat change process is initiated by the host
 }
+
+export enum AnnouncementType {
+  SYSTEM,
+  CLUB,
+}
+
+export enum TransactionType {
+  TIPS,
+  GAME_BUYIN,
+  GAME_RETURN,
+  GAME_FEE,
+  GAME_REWARD,
+  SEND_PLAYER_TO_PLAYER,
+  RECEIVE_PLAYER_TO_PLAYER,
+  SEND_PLAYER_TO_CLUB,
+  RECEIVE_PLAYER_TO_CLUB,
+  SEND_CLUB_TO_PLAYER,
+  RECEIVE_CLUB_TO_PLAYER,
+  ADD_TOKENS_TO_PLAYER,
+  WITHDRAW_TOKENS_FROM_PLAYER,
+  ADD_TOKENS_TO_CLUB,
+  WITHDRAW_TOKENS_FROM_CLUB,
+  CLUB_BALANCE_UPDATED,
+  PLAYER_BALANCE_UPDATED,
+}
+
+export enum TransactionSubType {
+  REWARD,
+  BONUS,
+  MANAGER_INCENTIVE,
+  HOST_INCENTIVE,
+  MISC_EXP,
+  MISC_INCOME,
+  ADJUSTMENT,
+  TRANSACTION,
+}

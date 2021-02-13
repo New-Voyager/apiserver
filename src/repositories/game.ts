@@ -1002,11 +1002,19 @@ class GameRepositoryImpl {
     return status;
   }
 
-  public async getPlayersInSeats(gameId: number): Promise<Array<any>> {
-    const query = fixQuery(`SELECT name, uuid as "playerUuid", buy_in as "buyIn", stack, status, seat_no as "seatNo", status FROM 
+  public async getPlayersInSeats(
+    gameId: number,
+    transactionManager?: EntityManager
+  ): Promise<Array<any>> {
+    const query = fixQuery(`SELECT p.id as "playerId", name, uuid as "playerUuid", buy_in as "buyIn", stack, status, seat_no as "seatNo", status FROM 
           player_game_tracker pgt JOIN player p ON pgt.pgt_player_id = p.id
           AND pgt.pgt_game_id = ? AND pgt.seat_no <> 0`);
-    const resp = await getConnection().query(query, [gameId]);
+    let resp;
+    if (transactionManager) {
+      resp = await transactionManager.query(query, [gameId]);
+    } else {
+      resp = await getConnection().query(query, [gameId]);
+    }
     return resp;
   }
 

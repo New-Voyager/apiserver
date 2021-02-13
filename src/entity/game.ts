@@ -46,6 +46,9 @@ export class PokerGameUpdates {
 
   @Column({name: 'last_hand_num', nullable: false, default: 0})
   public lastHandNum!: number;
+
+  @Column({name: 'button_pos', nullable: true, default: 0})
+  public buttonPos!: number;
 }
 
 @Entity({name: 'poker_game'})

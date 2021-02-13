@@ -2,6 +2,13 @@ import {GameStatus, TableStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {getLogger} from '@src/utils/log';
+import {Cache} from '@src/cache/index';
+import {PokerGame, PokerGameUpdates} from '@src/entity/game';
+import {PlayerStatus} from '@src/entity/types';
+import {GameReward} from '@src/entity/reward';
+import {getManager, getRepository} from 'typeorm';
+import {NewHandInfo, PlayerInSeat} from '@src/repositories/types';
+import _ from 'lodash';
 
 const logger = getLogger('GameAPIs');
 
@@ -118,6 +125,86 @@ class GameAPIs {
     resp.status(200).send({status: 'OK'});
   }
 
+  public async getGameInfo(req: any, resp: any) {
+    const gameCode = req.params.gameCode;
+    if (!gameCode) {
+      const res = {error: 'Invalid game code'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+
+    const ret = await getManager().transaction(
+      async transactionEntityManager => {
+        const game: PokerGame = await Cache.getGame(
+          gameCode,
+          false,
+          transactionEntityManager
+        );
+        if (!game) {
+          throw new Error(`Game ${gameCode} is not found`);
+        }
+        const playersInSeats = await GameRepository.getPlayersInSeats(
+          game.id,
+          transactionEntityManager
+        );
+        for (const player of playersInSeats) {
+          player.status = PlayerStatus[player.status];
+        }
+
+        const takenSeats = playersInSeats.map(x => x.seatNo);
+        const availableSeats: Array<number> = [];
+        for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+          if (takenSeats.indexOf(seatNo) === -1) {
+            availableSeats.push(seatNo);
+          }
+        }
+        const gameRewardRepository = transactionEntityManager.getRepository(
+          GameReward
+        );
+        const gameRewards: GameReward[] = await gameRewardRepository.find({
+          where: {
+            gameId: game.id,
+          },
+        });
+        const rewardTrackingIds = gameRewards.map(r => r.rewardTrackingId.id);
+        const ret: any = {
+          clubId: game.club.id,
+          gameId: game.id,
+          clubCode: game.club.clubCode,
+          gameCode: game.gameCode,
+          gameType: game.gameType,
+          title: game.title,
+          status: game.status,
+          tableStatus: game.tableStatus,
+          smallBlind: game.smallBlind,
+          bigBlind: game.bigBlind,
+          straddleBet: game.straddleBet,
+          utgStraddleAllowed: game.utgStraddleAllowed,
+          maxPlayers: game.maxPlayers,
+          gameLength: game.gameLength,
+          rakePercentage: game.rakePercentage,
+          rakeCap: game.rakeCap,
+          buyInMin: game.buyInMin,
+          buyInMax: game.buyInMax,
+          actionTime: game.actionTime,
+          privateGame: game.privateGame,
+          startedBy: game.startedBy.name,
+          startedByUuid: game.startedBy.uuid,
+          breakLength: game.breakLength,
+          autoKickAfterBreak: game.autoKickAfterBreak,
+          rewardTrackingIds: rewardTrackingIds,
+          seatInfo: {
+            playersInSeats: playersInSeats,
+            availableSeats: availableSeats,
+          },
+        };
+        return ret;
+      }
+    );
+
+    resp.status(200).send(JSON.stringify(ret));
+  }
+
   public async startGame(req: any, resp: any) {
     const clubID = parseInt(req.param('club-id'));
     if (!clubID) {
@@ -137,6 +224,90 @@ class GameAPIs {
     } catch (err) {
       resp.status(500).send({error: err.message});
     }
+  }
+
+  public async getNextHandInfo(req: any, resp: any) {
+    const gameCode = req.params.gameCode;
+    if (!gameCode) {
+      const res = {error: 'Invalid game code'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+
+    const ret = await getManager().transaction(
+      async transactionEntityManager => {
+        const game: PokerGame = await Cache.getGame(
+          gameCode,
+          false,
+          transactionEntityManager
+        );
+        if (!game) {
+          const res = {error: `Game code: ${gameCode} not found`};
+          resp.status(500).send(JSON.stringify(res));
+        }
+
+        const gameUpdatesRepo = transactionEntityManager.getRepository(
+          PokerGameUpdates
+        );
+        const gameUpdates = await gameUpdatesRepo.find({
+          gameID: game.id,
+        });
+        if (gameUpdates.length === 0) {
+          const res = {error: 'GameUpdates not found'};
+          resp.status(500).send(JSON.stringify(res));
+          return;
+        }
+        const gameUpdate = gameUpdates[0];
+        if (!gameUpdate.buttonPos) {
+          gameUpdate.buttonPos = -1;
+        }
+
+        const nextHandInfo: NewHandInfo = {
+          gameCode: gameCode,
+          gameType: game.gameType,
+          announceGameType: false,
+          playersInSeats: new Array<PlayerInSeat>(),
+          smallBlind: game.smallBlind,
+          bigBlind: game.bigBlind,
+          maxPlayers: game.maxPlayers,
+          buttonPos: gameUpdate.buttonPos,
+          handNum: gameUpdate.lastHandNum + 1,
+        };
+
+        const playersInSeats = await GameRepository.getPlayersInSeats(
+          game.id,
+          transactionEntityManager
+        );
+        const takenSeats = _.keyBy(playersInSeats, 'seatNo');
+        for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+          const playerSeat = takenSeats[seatNo];
+          if (!playerSeat) {
+            nextHandInfo.playersInSeats.push({
+              seatNo: seatNo,
+              openSeat: true,
+              status: PlayerStatus.NOT_PLAYING,
+              gameToken: '',
+            });
+          } else {
+            // player is in a seat
+            nextHandInfo.playersInSeats.push({
+              seatNo: seatNo,
+              openSeat: false,
+              playerId: playerSeat.playerId,
+              playerUuid: playerSeat.playerUuid,
+              name: playerSeat.name,
+              stack: playerSeat.stack,
+              buyIn: playerSeat.buyIn,
+              status: playerSeat.status,
+              gameToken: '',
+            });
+          }
+        }
+        return nextHandInfo;
+      }
+    );
+
+    resp.status(200).send(JSON.stringify(ret));
   }
 }
 
