@@ -269,13 +269,126 @@ export async function updatePlayerBalance(
   return resp;
 }
 
+export async function playerTransactions(
+  hostId: string,
+  clubCode: string,
+  playerId: string
+): Promise<Array<any>> {
+  const host = await Cache.getPlayer(hostId);
+  if (!host) {
+    throw new Error(`Player ${hostId} is not found`);
+  }
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+  const club = await Cache.getClub(clubCode);
+  if (!club) {
+    throw new Error(`Club ${clubCode} is not found`);
+  }
+
+  const clubOwner = await Cache.getClubMember(host.uuid, club.clubCode);
+  if (!clubOwner || !clubOwner.isOwner) {
+    logger.error(`Player: ${host.uuid} is not a host in club ${club.name}`);
+    throw new Error(`Player: ${host.uuid} is not a host in club ${club.name}`);
+  }
+  const clubMember = await Cache.getClubMember(player.uuid, club.clubCode);
+  if (!clubMember) {
+    logger.error(`Player: ${player.uuid} is not a member in club ${club.name}`);
+    throw new Error(
+      `Player: ${player.uuid} is not a member in club ${club.name}`
+    );
+  }
+
+  const resp = await AccountingRepository.playerTransactions(club, player);
+  return resp;
+}
+
+export async function settlePlayerToPlayer(
+  hostId: string,
+  clubCode: string,
+  fromPlayerId: string,
+  toPlayerId: string,
+  amount: number,
+  notes: string
+): Promise<boolean> {
+  const host = await Cache.getPlayer(hostId);
+  if (!host) {
+    throw new Error(`Player ${hostId} is not found`);
+  }
+  const fromPlayer = await Cache.getPlayer(fromPlayerId);
+  if (!fromPlayer) {
+    throw new Error(`Player ${fromPlayerId} is not found`);
+  }
+  const toPlayer = await Cache.getPlayer(toPlayerId);
+  if (!toPlayer) {
+    throw new Error(`Player ${toPlayerId} is not found`);
+  }
+  const club = await Cache.getClub(clubCode);
+  if (!club) {
+    throw new Error(`Club ${clubCode} is not found`);
+  }
+
+  const clubOwner = await Cache.getClubMember(host.uuid, club.clubCode);
+  if (!clubOwner || !clubOwner.isOwner) {
+    logger.error(`Player: ${host.uuid} is not a host in club ${club.name}`);
+    throw new Error(`Player: ${host.uuid} is not a host in club ${club.name}`);
+  }
+  const fromClubMember = await Cache.getClubMember(
+    fromPlayer.uuid,
+    club.clubCode
+  );
+  if (!fromClubMember) {
+    logger.error(
+      `Player: ${fromPlayer.uuid} is not a member in club ${club.name}`
+    );
+    throw new Error(
+      `Player: ${fromPlayer.uuid} is not a member in club ${club.name}`
+    );
+  }
+  const toClubMember = await Cache.getClubMember(toPlayer.uuid, club.clubCode);
+  if (!toClubMember) {
+    logger.error(
+      `Player: ${toPlayer.uuid} is not a member in club ${club.name}`
+    );
+    throw new Error(
+      `Player: ${toPlayer.uuid} is not a member in club ${club.name}`
+    );
+  }
+
+  const resp = await AccountingRepository.settlePlayerToPlayer(
+    host,
+    club,
+    fromClubMember,
+    toClubMember,
+    fromPlayer,
+    toPlayer,
+    amount,
+    notes
+  );
+  return resp;
+}
+
 const resolvers: any = {
   Query: {
     clubTransactions: async (parent, args, ctx, info) => {
       return clubTransactions(ctx.req.playerId, args.clubCode);
     },
+    playerTransactions: async (parent, args, ctx, info) => {
+      return playerTransactions(ctx.req.playerId, args.clubCode, args.playerId);
+    },
   },
   Mutation: {
+    settlePlayerToPlayer: async (parent, args, ctx, info) => {
+      return settlePlayerToPlayer(
+        ctx.req.playerId,
+        args.clubCode,
+        args.fromPlayerId,
+        args.toPlayerId,
+        args.amount,
+        args.notes
+      );
+    },
     addTokensToPlayer: async (parent, args, ctx, info) => {
       return addTokensToPlayer(
         ctx.req.playerId,
