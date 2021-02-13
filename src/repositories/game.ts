@@ -21,7 +21,7 @@ import {Club, ClubMember} from '@src/entity/club';
 import {Player} from '@src/entity/player';
 import {GameServer, TrackGameServer} from '@src/entity/gameserver';
 import {getLogger} from '@src/utils/log';
-import {PlayerGameStats, PlayerGameTracker} from '@src/entity/chipstrack';
+import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
 import {
   newPlayerSat,
@@ -36,6 +36,7 @@ import {Reward, GameRewardTracking, GameReward} from '@src/entity/reward';
 import {ChipsTrackRepository} from './chipstrack';
 import {BUYIN_TIMEOUT} from './types';
 import {Cache} from '@src/cache/index';
+import {StatsRepository} from './stats';
 
 const logger = getLogger('game');
 
@@ -445,9 +446,6 @@ class GameRepositoryImpl {
         const playerGameTrackerRepository = transactionEntityManager.getRepository(
           PlayerGameTracker
         );
-        const playerGameStatsRepository = transactionEntityManager.getRepository(
-          PlayerGameStats
-        );
 
         if (gameUpdate.waitlistSeatingInprogress) {
           // wait list seating in progress
@@ -513,14 +511,14 @@ class GameRepositoryImpl {
           playerInGame.gameToken = randomBytes.toString('hex');
           playerInGame.status = PlayerStatus.NOT_PLAYING;
 
-          // player stats record
-          const playerInStats = new PlayerGameStats();
-          playerInStats.player = player;
-          playerInStats.game = game;
-
           try {
             await playerGameTrackerRepository.save(playerInGame);
-            await playerGameStatsRepository.save(playerInStats);
+            // create a row in stats table
+            await StatsRepository.newGameStatsRow(
+              game,
+              player,
+              transactionEntityManager
+            );
           } catch (err) {
             const doesGameExist = await this.getGameByCode(
               game.gameCode,
