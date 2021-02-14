@@ -20,3 +20,7 @@ export function stringCards(cards: Array<number>): Array<string | undefined> {
   const stringCards = cards.map(x => Cards.get(x));
   return stringCards;
 }
+
+export function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}

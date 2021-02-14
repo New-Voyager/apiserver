@@ -9,6 +9,7 @@ import {GameReward} from '@src/entity/reward';
 import {getManager, getRepository} from 'typeorm';
 import {NewHandInfo, PlayerInSeat} from '@src/repositories/types';
 import _ from 'lodash';
+import {delay} from '@src/utils';
 
 const logger = getLogger('GameAPIs');
 
@@ -133,79 +134,91 @@ class GameAPIs {
       return;
     }
 
-    try {
-      const ret = await getManager().transaction(
-        async transactionEntityManager => {
-          const game: PokerGame = await Cache.getGame(
-            gameCode,
-            false,
-            transactionEntityManager
-          );
-          if (!game) {
-            throw new Error(`Game ${gameCode} is not found`);
-          }
-          const playersInSeats = await GameRepository.getPlayersInSeats(
-            game.id,
-            transactionEntityManager
-          );
-          for (const player of playersInSeats) {
-            player.status = PlayerStatus[player.status];
-          }
+    let retryCount = 10;
+    while (retryCount > 0) {
+      try {
+        delay(1000);
+        retryCount--;
 
-          const takenSeats = playersInSeats.map(x => x.seatNo);
-          const availableSeats: Array<number> = [];
-          for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
-            if (takenSeats.indexOf(seatNo) === -1) {
-              availableSeats.push(seatNo);
+        const ret = await getManager().transaction(
+          async transactionEntityManager => {
+            const game: PokerGame = await Cache.getGame(
+              gameCode,
+              false,
+              transactionEntityManager
+            );
+            if (!game) {
+              throw new Error(`Game ${gameCode} is not found`);
             }
-          }
-          const gameRewardRepository = transactionEntityManager.getRepository(
-            GameReward
-          );
-          const gameRewards: GameReward[] = await gameRewardRepository.find({
-            where: {
-              gameId: game.id,
-            },
-          });
-          const rewardTrackingIds = gameRewards.map(r => r.rewardTrackingId.id);
-          const ret: any = {
-            clubId: game.club.id,
-            gameId: game.id,
-            clubCode: game.club.clubCode,
-            gameCode: game.gameCode,
-            gameType: game.gameType,
-            title: game.title,
-            status: game.status,
-            tableStatus: game.tableStatus,
-            smallBlind: game.smallBlind,
-            bigBlind: game.bigBlind,
-            straddleBet: game.straddleBet,
-            utgStraddleAllowed: game.utgStraddleAllowed,
-            maxPlayers: game.maxPlayers,
-            gameLength: game.gameLength,
-            rakePercentage: game.rakePercentage,
-            rakeCap: game.rakeCap,
-            buyInMin: game.buyInMin,
-            buyInMax: game.buyInMax,
-            actionTime: game.actionTime,
-            privateGame: game.privateGame,
-            startedBy: game.startedBy.name,
-            startedByUuid: game.startedBy.uuid,
-            breakLength: game.breakLength,
-            autoKickAfterBreak: game.autoKickAfterBreak,
-            rewardTrackingIds: rewardTrackingIds,
-            seatInfo: {
-              playersInSeats: playersInSeats,
-              availableSeats: availableSeats,
-            },
-          };
-          return ret;
-        }
-      );
+            const playersInSeats = await GameRepository.getPlayersInSeats(
+              game.id,
+              transactionEntityManager
+            );
+            for (const player of playersInSeats) {
+              player.status = PlayerStatus[player.status];
+            }
 
-      resp.status(200).send(JSON.stringify(ret));
-    } catch (err) {
-      resp.status(500).send(JSON.stringify({error: err.message}));
+            const takenSeats = playersInSeats.map(x => x.seatNo);
+            const availableSeats: Array<number> = [];
+            for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+              if (takenSeats.indexOf(seatNo) === -1) {
+                availableSeats.push(seatNo);
+              }
+            }
+            const gameRewardRepository = transactionEntityManager.getRepository(
+              GameReward
+            );
+            const gameRewards: GameReward[] = await gameRewardRepository.find({
+              where: {
+                gameId: game.id,
+              },
+            });
+            const rewardTrackingIds = gameRewards.map(
+              r => r.rewardTrackingId.id
+            );
+            const ret: any = {
+              clubId: game.club.id,
+              gameId: game.id,
+              clubCode: game.club.clubCode,
+              gameCode: game.gameCode,
+              gameType: game.gameType,
+              title: game.title,
+              status: game.status,
+              tableStatus: game.tableStatus,
+              smallBlind: game.smallBlind,
+              bigBlind: game.bigBlind,
+              straddleBet: game.straddleBet,
+              utgStraddleAllowed: game.utgStraddleAllowed,
+              maxPlayers: game.maxPlayers,
+              gameLength: game.gameLength,
+              rakePercentage: game.rakePercentage,
+              rakeCap: game.rakeCap,
+              buyInMin: game.buyInMin,
+              buyInMax: game.buyInMax,
+              actionTime: game.actionTime,
+              privateGame: game.privateGame,
+              startedBy: game.startedBy.name,
+              startedByUuid: game.startedBy.uuid,
+              breakLength: game.breakLength,
+              autoKickAfterBreak: game.autoKickAfterBreak,
+              rewardTrackingIds: rewardTrackingIds,
+              seatInfo: {
+                playersInSeats: playersInSeats,
+                availableSeats: availableSeats,
+              },
+            };
+            return ret;
+          }
+        );
+
+        resp.status(200).send(JSON.stringify(ret));
+        return;
+      } catch (err) {
+        if (retryCount === 0) {
+          resp.status(500).send(JSON.stringify({error: err.message}));
+          return;
+        }
+      }
     }
   }
 
