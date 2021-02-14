@@ -6,6 +6,8 @@ import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {GameStatus, PlayerStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {NewUpdate} from '@src/repositories/types';
+import * as Constants from '../const';
+import {SeatMove, SeatUpdate} from '@src/types';
 
 let notifyGameServer = false;
 const logger = getLogger('gameServer');
@@ -312,7 +314,7 @@ export async function openSeat(
 
   const gameServerUrl = await getGameServerUrl(game.id);
   const message = {
-    type: 'OpenSeat',
+    type: Constants.TableUpdateOpenSeat,
     gameId: game.id,
     seatNo: seatNo,
   };
@@ -336,7 +338,7 @@ export async function waitlistSeating(
 
   const gameServerUrl = await getGameServerUrl(game.id);
   const message = {
-    type: 'WaitlistSeating',
+    type: Constants.TableWaitlistSeating,
     gameId: game.id,
     waitlistPlayerId: player.id,
     waitlistPlayerName: player.name,
@@ -365,12 +367,86 @@ export async function initiateSeatChangeProcess(
 
   const gameServerUrl = await getGameServerUrl(game.id);
   const message = {
-    type: 'SeatChangeInProgress',
+    type: Constants.TableSeatChangeProcess,
     gameId: game.id,
     seatNo: seatNo,
     seatChangeRemainingTime: timeRemaining,
     seatChangePlayers: seatChangePlayers,
     seatChangeSeatNos: seatChangeSeatNos,
+  };
+
+  const newGameUrl = `${gameServerUrl}/table-update`;
+  const resp = await axios.post(newGameUrl, message);
+  if (resp.status !== 200) {
+    logger.error(`Failed to update table status: ${newGameUrl}`);
+    throw new Error(`Failed to update table status: ${newGameUrl}`);
+  }
+}
+
+// indicate the players that host has started to make seat change
+export async function hostSeatChangeProcessStarted(
+  game: PokerGame,
+  seatChangeHostId: number
+) {
+  if (!notifyGameServer) {
+    return;
+  }
+
+  const gameServerUrl = await getGameServerUrl(game.id);
+  const message = {
+    type: Constants.TableHostSeatChangeProcessStart,
+    gameId: game.id,
+    seatChangeHostId: seatChangeHostId,
+  };
+
+  const newGameUrl = `${gameServerUrl}/table-update`;
+  const resp = await axios.post(newGameUrl, message);
+  if (resp.status !== 200) {
+    logger.error(`Failed to update table status: ${newGameUrl}`);
+    throw new Error(`Failed to update table status: ${newGameUrl}`);
+  }
+}
+
+// indicate the players that host has ended the seat change
+export async function hostSeatChangeProcessEnded(
+  game: PokerGame,
+  seatUpdates: Array<SeatUpdate>,
+  seatChangeHostId: number
+) {
+  if (!notifyGameServer) {
+    return;
+  }
+
+  const gameServerUrl = await getGameServerUrl(game.id);
+  const message = {
+    type: Constants.TableHostSeatChangeProcessEnd,
+    gameId: game.id,
+    updates: seatUpdates,
+    seatChangeHostId: seatChangeHostId,
+  };
+
+  const newGameUrl = `${gameServerUrl}/table-update`;
+  const resp = await axios.post(newGameUrl, message);
+  if (resp.status !== 200) {
+    logger.error(`Failed to update table status: ${newGameUrl}`);
+    throw new Error(`Failed to update table status: ${newGameUrl}`);
+  }
+}
+
+// indicate the players that host has ended the seat change
+export async function hostSeatChangeSeatMove(
+  game: PokerGame,
+  updates: Array<SeatMove>
+) {
+  if (!notifyGameServer) {
+    return;
+  }
+
+  const gameServerUrl = await getGameServerUrl(game.id);
+  const message = {
+    type: Constants.TableHostSeatChangeMove,
+    gameId: game.id,
+    seatMoves: updates,
   };
 
   const newGameUrl = `${gameServerUrl}/table-update`;
