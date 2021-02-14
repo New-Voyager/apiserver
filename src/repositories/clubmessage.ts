@@ -88,7 +88,7 @@ class ClubMessageRepositoryImpl {
   public async getClubMessage(
     clubCode: string,
     pageOptions?: PageOptions
-  ): Promise<Array<any>> {
+  ): Promise<Array<ClubMessageInput>> {
     try {
       const clubRepository = getRepository(Club);
       const club = await clubRepository.findOne({where: {clubCode: clubCode}});

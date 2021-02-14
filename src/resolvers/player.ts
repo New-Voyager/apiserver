@@ -14,6 +14,7 @@ import {
   ClubStatus,
 } from '@src/entity/types';
 import {getHighHandsByGame} from './reward';
+import {getAgoraToken} from '@src/3rdparty/agora';
 const logger = getLogger('player');
 
 async function getClubs(playerId: string): Promise<Array<any>> {
@@ -80,6 +81,10 @@ const resolvers: any = {
     },
     searchClub: async (parent, args, ctx, info) => {
       const ret = await searchClub(ctx.req.playerId, args.clubCode);
+      return ret;
+    },
+    liveAudioToken: async (parent, args, ctx, info) => {
+      const ret = await getAudioToken(ctx.req.playerId, args.gameCode);
       return ret;
     },
   },
@@ -319,4 +324,23 @@ async function getPastGames(playerId: string) {
     game.playerStatus = PlayerStatus[game['playerStatus']];
   }
   return pastGames;
+}
+
+async function getAudioToken(
+  playerId: string,
+  gameCode: string
+): Promise<string> {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  // get player info using uuid
+  const playerInfo = await Cache.getPlayer(playerId);
+  const gameExists = await Cache.getGame(gameCode);
+  if (!gameExists) {
+    throw new Error(`Game ${gameCode} does not exist`);
+  }
+  // get audio token for the player
+  const token = GameRepository.getAudioToken(playerInfo, gameExists);
+  logger.info(`Player: ${playerId} is using agora token for game ${gameCode}`);
+  return token;
 }

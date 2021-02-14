@@ -1,12 +1,13 @@
 import {Cache} from '@src/cache';
 import {AnnouncementsRepository} from '@src/repositories/announcements';
+import {AnnouncementData} from '@src/types';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger('announcements');
+const logger = getLogger('announcements - resolvers');
 
 export async function clubAnnouncements(
   playerId: string,
   clubCode: string
-): Promise<Array<any>> {
+): Promise<Array<AnnouncementData>> {
   const player = await Cache.getPlayer(playerId);
   if (!player) {
     throw new Error(`Player ${playerId} is not found`);
@@ -23,20 +24,30 @@ export async function clubAnnouncements(
     );
   }
 
-  const resp = await AnnouncementsRepository.clubAnnouncements(club);
-  return resp;
+  try {
+    const resp = await AnnouncementsRepository.clubAnnouncements(club);
+    return resp;
+  } catch (error) {
+    logger.error(`Failed with error: ${JSON.stringify(error)}`);
+    throw new Error(`Failed with error: ${JSON.stringify(error)}`);
+  }
 }
 
 export async function systemAnnouncements(
   playerId: string
-): Promise<Array<any>> {
+): Promise<Array<AnnouncementData>> {
   // const player = await Cache.getPlayer(playerId);
   // if (!player) {
   //   throw new Error(`Player ${playerId} is not found`);
   // }
 
-  const resp = await AnnouncementsRepository.systemAnnouncements();
-  return resp;
+  try {
+    const resp = await AnnouncementsRepository.systemAnnouncements();
+    return resp;
+  } catch (error) {
+    logger.error(`Failed with error: ${JSON.stringify(error)}`);
+    throw new Error(`Failed with error: ${JSON.stringify(error)}`);
+  }
 }
 
 export async function addClubAnnouncement(
@@ -61,8 +72,13 @@ export async function addClubAnnouncement(
     );
   }
 
-  await AnnouncementsRepository.addClubAnnouncement(club, text, expiresAt);
-  return true;
+  try {
+    await AnnouncementsRepository.addClubAnnouncement(club, text, expiresAt);
+    return true;
+  } catch (error) {
+    logger.error(`Failed with error: ${JSON.stringify(error)}`);
+    throw new Error(`Failed with error: ${JSON.stringify(error)}`);
+  }
 }
 
 export async function addSystemAnnouncement(
@@ -75,8 +91,13 @@ export async function addSystemAnnouncement(
   //   throw new Error(`Player ${playerId} is not found`);
   // }
 
-  await AnnouncementsRepository.addSystemAnnouncement(text, expiresAt);
-  return true;
+  try {
+    await AnnouncementsRepository.addSystemAnnouncement(text, expiresAt);
+    return true;
+  } catch (error) {
+    logger.error(`Failed with error: ${JSON.stringify(error)}`);
+    throw new Error(`Failed with error: ${JSON.stringify(error)}`);
+  }
 }
 
 const resolvers: any = {

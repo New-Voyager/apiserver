@@ -301,9 +301,7 @@ type Mutation {
   takeBreak(gameCode: String!): Boolean!
   sitBack(gameCode: String!): Boolean!
   leaveGame(gameCode: String!): Boolean!
-  requestSeatChange(gameCode: String!): DateTime!
-  confirmSeatChange(gameCode: String!, seatNo: Int): Boolean!
-  #pauseGame(gameCode: String!): GameStatus!
+  pauseGame(gameCode: String!): GameStatus!
   endGame(gameCode: String!): GameStatus!
   #resumeGame(gameCode: String!): GameStatus!
   kickOut(gameCode: String!, playerUuid: String!): Boolean!
@@ -311,6 +309,13 @@ type Mutation {
   removeFromWaitingList(gameCode: String!, playerUuid: String): Boolean!
   applyWaitlistOrder(gameCode: String!, playerUuid: [String!]): Boolean!
   declineWaitlistSeat(gameCode: String!): Boolean
+
+  # seat change APIs
+  requestSeatChange(gameCode: String!): DateTime!
+  confirmSeatChange(gameCode: String!, seatNo: Int): Boolean!
+  beginHostSeatChange(gameCode: String!): Boolean
+  seatChangeSwapSeats(gameCode: String!, seatNo1: Int!, seatNo2: Int!): Boolean!
+  seatChangeComplete(gameCode: String!): Boolean
 }
 
 type gameId{
@@ -326,7 +331,6 @@ type Query {
   gameInfo(gameCode: String!): GameInfo
   myGameState(gameCode: String!): PlayerGameState
   tableGameState(gameCode: String!): [PlayerGameState!]
-  seatChangeRequests(gameCode: String!): [PlayerSeatChange]
   waitingList(gameCode: String!): [WaitingListPlayer!]
   pendingApprovalsForClub(clubCode: String!): [PendingApproval!]
   pendingApprovalsForGame(gameCode: String!): [PendingApproval!]
@@ -334,4 +338,8 @@ type Query {
   currentHandLog(gameCode: String!): Json
   gameResultTable(gameCode: String!): [GameResultTableRow!]
   gamePlayers(gameCode: String!): [PlayerInfo!]
+
+  # seat change queries
+  seatChangeRequests(gameCode: String!): [PlayerSeatChange]
+  seatPositions(gameCode: String!, seatChange: Boolean): [SeatInfo!]
 }

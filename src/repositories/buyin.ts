@@ -20,6 +20,7 @@ import {
   RELOAD_APPROVAL_TIMEOUT,
 } from './types';
 import {Club, ClubMember} from '@src/entity/club';
+import {buyInRequest, pendingApprovalsForClubData} from '@src/types';
 
 const logger = getLogger('buyin');
 
@@ -34,7 +35,7 @@ export class BuyIn {
 
   protected async approveBuyInRequest(
     amount: number,
-    playerInGame: any,
+    playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
   ) {
     if (
@@ -67,7 +68,7 @@ export class BuyIn {
 
   protected async clubMemberBuyInApproval(
     amount: number,
-    playerInGame: any,
+    playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
   ): Promise<[PlayerStatus, boolean]> {
     let approved = false;
@@ -140,7 +141,7 @@ export class BuyIn {
     return [playerStatus, approved];
   }
 
-  public async request(amount: number): Promise<any> {
+  public async request(amount: number): Promise<buyInRequest> {
     const timeout = 60;
     const [status, approved] = await getManager().transaction(
       async transactionEntityManager => {
@@ -255,7 +256,7 @@ export class BuyIn {
     };
   }
 
-  public async reloadRequest(amount: number): Promise<any> {
+  public async reloadRequest(amount: number): Promise<buyInRequest> {
     let timeout = 0,
       approved = false;
     const status = await getManager().transaction(
@@ -447,7 +448,9 @@ export class BuyIn {
     };
   }
 
-  public async pendingApprovalsForClub(club: Club): Promise<any> {
+  public async pendingApprovalsForClub(
+    club: Club
+  ): Promise<Array<pendingApprovalsForClubData>> {
     const query1 = `select 
       g.game_code as "gameCode", 
       g.id as "gameId", 
@@ -470,7 +473,7 @@ export class BuyIn {
 
     const resp1 = await getConnection().query(query1);
 
-    const result = new Array<any>();
+    const result = new Array<pendingApprovalsForClubData>();
     for await (const data of resp1) {
       const outstandingBalance = await this.calcOutstandingBalance(
         club.id,
@@ -492,7 +495,9 @@ export class BuyIn {
     return result;
   }
 
-  public async pendingApprovalsForGame(): Promise<any> {
+  public async pendingApprovalsForGame(): Promise<
+    Array<pendingApprovalsForClubData>
+  > {
     const query1 = `select 
       g.game_code as "gameCode", 
       g.id as "gameId", 
@@ -514,7 +519,7 @@ export class BuyIn {
 
     const resp1 = await getConnection().query(query1);
 
-    const result = new Array<any>();
+    const result = new Array<pendingApprovalsForClubData>();
     for await (const data of resp1) {
       const outstandingBalance = await this.calcOutstandingBalance(
         data.clubId,

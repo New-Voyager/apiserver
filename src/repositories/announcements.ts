@@ -1,7 +1,8 @@
-import {getRepository, LessThan, Not} from 'typeorm';
+import {getRepository} from 'typeorm';
 import {Club} from '@src/entity/club';
 import {Announcement} from '@src/entity/announcements';
 import {AnnouncementType} from '@src/entity/types';
+import {AnnouncementData} from '@src/types';
 
 class AnnouncementRepositoryImpl {
   public async addClubAnnouncement(
@@ -36,26 +37,41 @@ class AnnouncementRepositoryImpl {
     return true;
   }
 
-  public async clubAnnouncements(club: Club): Promise<Array<any>> {
+  public async clubAnnouncements(club: Club): Promise<Array<AnnouncementData>> {
     const announcementRepo = getRepository(Announcement);
 
-    const resp = announcementRepo.find({
+    const resp = await announcementRepo.find({
       club: {id: club.id},
       announcementType: AnnouncementType.CLUB,
       // expiresAt: Not(LessThan(Date.now()))
     });
-    return resp;
+    const announcements = new Array<AnnouncementData>();
+    for await (const data of resp) {
+      announcements.push({
+        text: data.text,
+        createdAt: data.createdAt,
+        expiresAt: data.expiresAt,
+      });
+    }
+    return announcements;
   }
 
-  public async systemAnnouncements(): Promise<Array<any>> {
+  public async systemAnnouncements(): Promise<Array<AnnouncementData>> {
     const announcementRepo = getRepository(Announcement);
 
-    const resp = announcementRepo.find({
+    const resp = await announcementRepo.find({
       announcementType: AnnouncementType.SYSTEM,
       // expiresAt: Not(LessThan(Date.now()))
     });
-
-    return resp;
+    const announcements = new Array<AnnouncementData>();
+    for await (const data of resp) {
+      announcements.push({
+        text: data.text,
+        createdAt: data.createdAt,
+        expiresAt: data.expiresAt,
+      });
+    }
+    return announcements;
   }
 }
 
