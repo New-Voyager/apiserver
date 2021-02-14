@@ -19,6 +19,9 @@ import {
   ClubChipsTransaction,
 } from '../src/entity/chipstrack';
 import {
+  PlayerGameStats,
+} from '../src/entity/stats';
+import {
   Reward,
   GameReward,
   GameRewardTracking,
@@ -68,6 +71,7 @@ export async function sqlliteConnection() {
       Announcement,
       ClubTokenTransactions,
       HostSeatChangeProcess,
+      PlayerGameStats,
     ],
     dropSchema: true,
     synchronize: true,

@@ -625,8 +625,8 @@ class ClubRepositoryImpl {
         pgt.session_time as "sessionTime", pg.game_status as "status",
         pg.small_blind as "smallBlind", pg.big_blind as "bigBlind",
         pgt.no_hands_played as "handsPlayed", 
-        pgt.no_hands_won as "handsWon", seen_flop as "flopHands", seen_turn as "turnHands",
-        seen_river as "riverHands", in_showdown as "showdownHands", 
+        pgt.no_hands_won as "handsWon", in_flop as "flopHands", in_turn as "turnHands",
+        in_river as "riverHands", went_to_showdown as "showdownHands", 
         big_loss as "bigLoss", big_win as "bigWin", big_loss_hand as "bigLossHand", 
         big_win_hand as "bigWinHand", hand_stack,
         cm.player_id, pg.game_type as "gameType", 
@@ -640,6 +640,8 @@ class ClubRepositoryImpl {
         JOIN club_member cm  ON cm.club_id  = c.id AND cm.player_id = ? AND c.club_code = ?
         LEFT OUTER JOIN player_game_tracker pgt ON 
         pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = cm.player_id
+        LEFT OUTER JOIN player_game_stats pgs ON 
+        pgs.pgs_game_id = pg.id AND pgs.pgs_player_id = cm.player_id
         ORDER BY pg.id DESC`);
 
     // TODO: we need to do pagination here
