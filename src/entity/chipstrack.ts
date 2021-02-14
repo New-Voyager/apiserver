@@ -51,6 +51,9 @@ export class PlayerGameTracker {
   @Column({name: 'game_token', type: 'text', nullable: false, default: ''})
   public gameToken!: string;
 
+  @Column({name: 'audio_token', type: 'text', nullable: false, default: ''})
+  public audioToken!: string;
+
   @Column({name: 'seat_no', nullable: true})
   public seatNo!: number;
 
