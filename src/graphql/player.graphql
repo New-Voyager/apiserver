@@ -116,4 +116,5 @@ type Query {
   myInfo: PlayerInfo!
   clubInfo (clubCode: String!): ClubInfo!
   searchClub (clubCode: String!): SearchClubResult
+  liveAudioToken(gameCode: String!): String!
 }

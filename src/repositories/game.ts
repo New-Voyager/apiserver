@@ -36,10 +36,19 @@ import {Reward, GameRewardTracking, GameReward} from '@src/entity/reward';
 import {ChipsTrackRepository} from './chipstrack';
 import {BUYIN_TIMEOUT} from './types';
 import {Cache} from '@src/cache/index';
+import {getAgoraToken} from '@src/3rdparty/agora';
 
 const logger = getLogger('game');
 
 class GameRepositoryImpl {
+  private notifyGameServer: boolean;
+  constructor() {
+    this.notifyGameServer = false;
+    if (process.env.NOTIFY_GAME_SERVER === '0') {
+      this.notifyGameServer = false;
+    }
+  }
+
   public async createPrivateGame(
     clubCode: string,
     playerId: string,
@@ -81,8 +90,10 @@ class GameRepositoryImpl {
         `The player ${playerId} is not an approved manager to create a game`
       );
     }
+
+    let gameServers;
     const gameServerRepository = getRepository(GameServer);
-    const gameServers = await gameServerRepository.find();
+    gameServers = await gameServerRepository.find();
     if (gameServers.length === 0) {
       throw new Error('No game server is availabe');
     }
@@ -179,9 +190,9 @@ class GameRepositoryImpl {
             }
           }
 
+          let tableStatus = TableStatus.WAITING_TO_BE_STARTED;
           let scanServer = 0;
           let gameServer;
-          let tableStatus;
           for (scanServer = 0; scanServer < gameServers.length; scanServer++) {
             // create a new game in game server within the transcation
             try {
@@ -206,7 +217,6 @@ class GameRepositoryImpl {
             // could not assign game server for the game
             throw new Error('No game server is accepting this game');
           }
-
           game.tableStatus = tableStatus;
           await transactionEntityManager.getRepository(PokerGame).update(
             {
@@ -1174,6 +1184,48 @@ class GameRepositoryImpl {
 
     const result = await getConnection().query(query, [gameCode]);
     return result;
+  }
+
+  public async getAudioToken(player: Player, game: PokerGame): Promise<string> {
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const rows = await playerGameTrackerRepository
+      .createQueryBuilder()
+      .where({
+        game: {id: game.id},
+        player: {id: player.id},
+      })
+      .select('audio_token')
+      .select('status')
+      .execute();
+    if (!rows && rows.length === 0) {
+      throw new Error('Player is not found in the game');
+    }
+
+    const playerInGame = rows[0];
+    let token = playerInGame.audio_token;
+
+    // TODO: agora will be used only for the player who are in the seats
+    // if the player is not playing, then the player cannot join
+    // if (playerInGame.status !== PlayerStatus.PLAYING) {
+    //   return '';
+    // }
+
+    if (!token) {
+      token = await getAgoraToken(game.gameCode, player.id);
+
+      // update the record
+      await playerGameTrackerRepository.update(
+        {
+          game: {id: game.id},
+          player: {id: player.id},
+        },
+        {
+          audioToken: token,
+        }
+      );
+    }
+
+    return token;
   }
 }
 
