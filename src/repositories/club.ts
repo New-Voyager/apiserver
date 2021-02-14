@@ -11,7 +11,12 @@ import {
   In,
 } from 'typeorm';
 import {PokerGame} from '@src/entity/game';
-import {PageOptions} from '@src/types';
+import {
+  getClubGamesData,
+  getMembersFilterData,
+  getPlayerClubsData,
+  PageOptions,
+} from '@src/types';
 import {getLogger} from '@src/utils/log';
 import {getClubCode} from '@src/utils/uniqueid';
 import {fixQuery} from '@src/utils';
@@ -468,7 +473,7 @@ class ClubRepositoryImpl {
 
   public async getMembers(
     clubCode: string,
-    filter?: any
+    filter?: getMembersFilterData
   ): Promise<ClubMember[]> {
     const clubRepository = getRepository<Club>(Club);
     const club = await clubRepository.findOne({where: {clubCode: clubCode}});
@@ -550,7 +555,9 @@ class ClubRepositoryImpl {
     return null;
   }
 
-  public async getPlayerClubs(playerId: string): Promise<any[] | null> {
+  public async getPlayerClubs(
+    playerId: string
+  ): Promise<Array<getPlayerClubsData>> {
     const playerRepository = getRepository<Player>(Player);
     const player = await playerRepository.findOne({where: {uuid: playerId}});
     if (!player) {
@@ -608,7 +615,7 @@ class ClubRepositoryImpl {
     clubCode: string,
     playerId: number,
     completedGames?: boolean
-  ): Promise<Array<any>> {
+  ): Promise<Array<getClubGamesData>> {
     let endedAt = '';
     if (completedGames) {
       endedAt = 'AND pg.ended_at IS NOT NULL';
@@ -643,7 +650,7 @@ class ClubRepositoryImpl {
   public async getClubGames1(
     clubCode: string,
     pageOptions?: PageOptions
-  ): Promise<Array<any>> {
+  ): Promise<Array<PokerGame>> {
     if (!pageOptions) {
       pageOptions = {
         count: 20,
@@ -734,7 +741,7 @@ class ClubRepositoryImpl {
     return nextGameNum;
   }
 
-  public async searchClub(clubCode: string): Promise<any> {
+  public async searchClub(clubCode: string): Promise<Club | null> {
     clubCode = clubCode.toUpperCase();
     try {
       const clubs = await getRepository(Club).find({
