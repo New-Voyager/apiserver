@@ -75,21 +75,6 @@ export class PlayerGameTracker {
   @Column({name: 'no_hands_won', default: 0})
   public noHandsWon!: number;
 
-  @Column({name: 'folded_preflop', default: 0})
-  public foldedPreflop!: number;
-
-  @Column({name: 'seen_flop', default: 0})
-  public seenFlop!: number;
-
-  @Column({name: 'seen_turn', default: 0})
-  public seenTurn!: number;
-
-  @Column({name: 'seen_river', default: 0})
-  public seenRiver!: number;
-
-  @Column({name: 'in_showdown', default: 0})
-  public inShowDown!: number;
-
   @Column({name: 'rake_paid', type: 'decimal', default: 0})
   public rakePaid!: number;
 
@@ -122,6 +107,13 @@ export class PlayerGameTracker {
     nullable: true,
   })
   public satAt!: Date;
+
+  @DbAwareColumn({
+    name: 'left_at',
+    type: 'timestamp',
+    nullable: true,
+  })
+  public leftAt!: Date;
 
   @DbAwareColumn({
     name: 'break_time_at',

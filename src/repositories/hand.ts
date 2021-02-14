@@ -17,6 +17,7 @@ import {GameReward, GameRewardTracking} from '@src/entity/reward';
 import {SaveHandResult} from './types';
 import {Player} from '@src/entity/player';
 import {Club} from '@src/entity/club';
+import {StatsRepository} from './stats';
 
 const logger = getLogger('hand');
 
@@ -206,18 +207,12 @@ class HandRepositoryImpl {
             playerRound[playerId].flop = 1;
             break;
           case 'TURN':
-            //playerRound[playerId].flop = 1;
             playerRound[playerId].turn = 1;
             break;
           case 'RIVER':
-            //playerRound[playerId].flop = 1;
-            //playerRound[playerId].turn = 1;
             playerRound[playerId].river = 1;
             break;
           case 'SHOW_DOWN':
-            //playerRound[playerId].flop = 1;
-            //playerRound[playerId].turn = 1;
-            //playerRound[playerId].river = 1;
             playerRound[playerId].showdown = 1;
             break;
         }
@@ -262,10 +257,6 @@ class HandRepositoryImpl {
                 stack: player.balance.after,
                 sessionTime: () => `session_time + ${sessionTime}`,
                 noHandsWon: () => `no_hands_won + ${wonHand}`,
-                seenFlop: () => `seen_flop + ${round.flop}`,
-                seenTurn: () => `seen_turn + ${round.turn}`,
-                seenRiver: () => `seen_river + ${round.river}`,
-                inShowDown: () => `in_showdown + ${round.showdown}`,
                 noHandsPlayed: () => 'no_hands_played + 1',
                 rakePaid: () => `rake_paid + ${rakePaidByPlayer}`,
               })
@@ -321,6 +312,14 @@ class HandRepositoryImpl {
               winners: highhandWinners.winners,
             };
           }
+
+          await StatsRepository.saveHandStats(
+            game,
+            result,
+            handNum,
+            transactionEntityManager
+          );
+
           return saveResult;
         }
       );

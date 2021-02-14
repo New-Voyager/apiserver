@@ -36,6 +36,7 @@ import {Reward, GameRewardTracking, GameReward} from '@src/entity/reward';
 import {ChipsTrackRepository} from './chipstrack';
 import {BUYIN_TIMEOUT} from './types';
 import {Cache} from '@src/cache/index';
+import {StatsRepository} from './stats';
 import {getAgoraToken} from '@src/3rdparty/agora';
 
 const logger = getLogger('game');
@@ -455,6 +456,7 @@ class GameRepositoryImpl {
         const playerGameTrackerRepository = transactionEntityManager.getRepository(
           PlayerGameTracker
         );
+
         if (gameUpdate.waitlistSeatingInprogress) {
           // wait list seating in progress
           // only the player who is asked from the waiting list can sit here
@@ -518,8 +520,15 @@ class GameRepositoryImpl {
           const randomBytes = Buffer.from(crypto.randomBytes(5));
           playerInGame.gameToken = randomBytes.toString('hex');
           playerInGame.status = PlayerStatus.NOT_PLAYING;
+
           try {
             await playerGameTrackerRepository.save(playerInGame);
+            // create a row in stats table
+            await StatsRepository.newGameStatsRow(
+              game,
+              player,
+              transactionEntityManager
+            );
           } catch (err) {
             const doesGameExist = await this.getGameByCode(
               game.gameCode,
@@ -1130,9 +1139,9 @@ class GameRepositoryImpl {
         pgt.session_time as "sessionTime", pg.game_status as "status",
         pg.small_blind as "smallBlind", pg.big_blind as "bigBlind",
         pgt.no_hands_played as "handsPlayed", 
-        pgt.no_hands_won as "handsWon", seen_flop as "flopHands", seen_turn as "turnHands",
+        pgt.no_hands_won as "handsWon", in_flop as "flopHands", in_turn as "turnHands",
         pgt.buy_in as "buyIn", (pgt.stack - pgt.buy_in) as "profit",
-        folded_preflop as "preflopHands", seen_river as "riverHands", in_showdown as "showdownHands", 
+        in_preflop as "preflopHands", in_river as "riverHands", went_to_showdown as "showdownHands", 
         big_loss as "bigLoss", big_win as "bigWin", big_loss_hand as "bigLossHand", 
         big_win_hand as "bigWinHand", hand_stack,
         pg.game_type as "gameType", 
@@ -1146,7 +1155,9 @@ class GameRepositoryImpl {
         JOIN poker_game_updates pgu ON pg.id = pgu.game_id
         JOIN player p ON p.id = ?
         LEFT OUTER JOIN player_game_tracker pgt ON 
-        pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = p.id`);
+        pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = p.id
+        LEFT OUTER JOIN player_game_stats pgs ON 
+        pgs.pgs_game_id = pg.id AND pgs.pgs_player_id = p.id`);
 
     // TODO: we need to do pagination here
     const result = await getConnection().query(query, [gameCode, playerId]);
