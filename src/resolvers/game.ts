@@ -618,12 +618,13 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }
-
+    let clubCode = '';
     if (game.club) {
       const clubMember = await Cache.isClubMember(
         playerUuid,
         game.club.clubCode
       );
+      clubCode = game.club.clubCode;
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.club.name}`
@@ -640,6 +641,7 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
     if (ret.startedBy) {
       ret.startedBy = ret.startedBy.name;
     }
+    ret.clubCode = clubCode;
     ret.gameType = GameType[game.gameType];
     ret.tableStatus = TableStatus[game.tableStatus];
     ret.status = GameStatus[game.status];

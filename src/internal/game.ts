@@ -135,7 +135,8 @@ class GameAPIs {
     }
 
     let retryCount = 10;
-    while (retryCount > 0) {
+    let gameFound = false;
+    while (retryCount > 0 && !gameFound) {
       try {
         delay(1000);
         retryCount--;
@@ -212,7 +213,8 @@ class GameAPIs {
         );
 
         resp.status(200).send(JSON.stringify(ret));
-        return;
+        gameFound = true;
+        break;
       } catch (err) {
         if (retryCount === 0) {
           resp.status(500).send(JSON.stringify({error: err.message}));

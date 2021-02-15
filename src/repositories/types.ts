@@ -10,6 +10,7 @@ export interface PlayerSitInput {
 }
 
 export enum NewUpdate {
+  UNKNOWN_PLAYE_UPDATE,
   NEW_PLAYER,
   RELOAD_CHIPS,
   SWITCH_SEAT,

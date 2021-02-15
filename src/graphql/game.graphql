@@ -110,6 +110,7 @@ type TableSeats {
 
 type GameInfo {
   gameCode: String!
+  clubCode: String
   gameType: GameType
   title: String
   smallBlind: Float

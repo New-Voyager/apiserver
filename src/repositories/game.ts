@@ -426,8 +426,9 @@ class GameRepositoryImpl {
     if (seatNo > game.maxPlayers) {
       throw new Error('Invalid seat number');
     }
+    const waitlistMgmt = new WaitListMgmt(game);
 
-    const status = await getManager().transaction(
+    const [playerInGame, newPlayer] = await getManager().transaction(
       async transactionEntityManager => {
         // get game updates
         const gameUpdateRepo = transactionEntityManager.getRepository(
@@ -450,8 +451,6 @@ class GameRepositoryImpl {
             `Seat change is in progress for game: ${game.gameCode}`
           );
         }
-
-        const waitlistMgmt = new WaitListMgmt(game);
 
         const playerGameTrackerRepository = transactionEntityManager.getRepository(
           PlayerGameTracker
@@ -478,7 +477,7 @@ class GameRepositoryImpl {
 
         // if the current player in seat tried to sit in the same seat, do nothing
         if (playerInSeat && playerInSeat.player.id === player.id) {
-          return playerInSeat.status;
+          return [playerInSeat, false];
         }
 
         if (playerInSeat && playerInSeat.player.id !== player.id) {
@@ -536,7 +535,7 @@ class GameRepositoryImpl {
             );
             if (doesGameExist) {
               logger.error(
-                `Failed to update player_game_tracker table ${err.toString()} Game: ${
+                `Failed to update player_game_tracker and player_game_stats table ${err.toString()} Game: ${
                   doesGameExist.id
                 }`
               );
@@ -595,15 +594,18 @@ class GameRepositoryImpl {
           startTimer(game.id, player.id, BUYIN_TIMEOUT, buyinTimeExp);
         }
 
-        // send a message to gameserver
-        newPlayerSat(game, player, seatNo, playerInGame);
-
-        // continue to run wait list seating
-        waitlistMgmt.runWaitList();
-        return playerInGame.status;
+        return [playerInGame, true];
       }
     );
-    return status;
+
+    if (newPlayer) {
+      // send a message to gameserver
+      newPlayerSat(game, player, seatNo, playerInGame);
+
+      // continue to run wait list seating
+      waitlistMgmt.runWaitList();
+    }
+    return playerInGame.status;
   }
 
   public async myGameState(
