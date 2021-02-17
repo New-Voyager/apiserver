@@ -14,6 +14,11 @@ jobs:
       - run: 
           name: Compile TS
           command: make build
+      - setup_remote_docker:
+          version: 19.03.13
+      - run:
+          name: Start redis
+          command: docker run -d --name redis  -p 6379:6379 redis:6.0.9
       - run:
           name: Run unit tests
           command: make unit-tests
@@ -22,7 +27,10 @@ jobs:
           command: make tests
       - run:
           name: Run script tests
-          command: make script-tests          
+          command: make script-tests  
+      - run:
+          name: Stop redis
+          command: docker rm -f redis      
 workflows:
     build-and-test:
       jobs:
