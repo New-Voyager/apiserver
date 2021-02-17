@@ -2,13 +2,7 @@ import {initializeSqlLite} from './utils';
 import {getLogger} from '../src/utils/log';
 import {resetDB} from '../src/resolvers/reset';
 import {createPlayer, getPlayerById} from '../src/resolvers/player';
-import {
-  createClub,
-  getClubById,
-  joinClub,
-  approveMember,
-} from '../src/resolvers/club';
-import {getGame} from '../src/cache/index';
+import {createClub, joinClub, approveMember} from '../src/resolvers/club';
 import {createGameServer} from '../src/internal/gameserver';
 import {configureGame, joinGame} from '../src/resolvers/game';
 import {
@@ -101,7 +95,7 @@ async function createClubWithMembers(
   const game = await configureGame(ownerUuid, clubCode, holdemGameInput);
   const playerUuids = new Array<string>();
   const playerIds = new Array<number>();
-  for (const playerInput of players) {
+  for await (const playerInput of players) {
     const playerUuid = await createPlayer({player: playerInput});
     await joinClub(playerUuid, clubCode);
     await approveMember(ownerUuid, clubCode, playerUuid);
@@ -110,11 +104,19 @@ async function createClubWithMembers(
     playerUuids.push(playerUuid);
     playerIds.push(playerId);
   }
-  const gameId = (await getGame(game.gameCode)).id;
-  return [ownerUuid, clubCode, playerUuids, gameId, game.gameCode, playerIds];
+  return [ownerUuid, clubCode, playerUuids, game.id, game.gameCode, playerIds];
 }
 
 describe('HighHand APIs', () => {
+  beforeEach(async done => {
+    await resetDB();
+    done();
+  });
+
+  afterEach(async done => {
+    done();
+  });
+
   test('Save and retreive highHands', async () => {
     const ownerInput = {
       name: 'player_name',

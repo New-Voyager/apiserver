@@ -18,9 +18,7 @@ import {
   PlayerGameTracker,
   ClubChipsTransaction,
 } from '../src/entity/chipstrack';
-import {
-  PlayerGameStats,
-} from '../src/entity/stats';
+import {PlayerGameStats} from '../src/entity/stats';
 import {
   Reward,
   GameReward,
