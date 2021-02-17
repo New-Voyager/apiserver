@@ -14,6 +14,8 @@ jobs:
       - run: 
           name: Compile TS
           command: make build
+      - setup_remote_docker:
+          version: 19.03.13
       - run:
           name: Run unit tests
           command: make unit-tests
