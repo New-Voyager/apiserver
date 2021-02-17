@@ -29,7 +29,8 @@
     "pretest-disabled": "npm run compile",
     "posttest-disabled": "npm run check",
     "run-pg": "docker-compose -f docker-compose-pg.yaml up",
-    "run-redis": "docker-compose -f docker-compose-redis.yaml up",
+    "run-redis": "docker-compose -f docker-compose-redis.yaml up -d",
+    "stop-redis": "docker-compose -f docker-compose-redis.yaml down",
     "script-tests": "node build/script-tests/testdriver.js ./script-tests/script"
   },
   "dependencies": {
