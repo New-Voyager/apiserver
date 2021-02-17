@@ -19,6 +19,7 @@ jobs:
       - run:
           name: Start redis
           command: docker run -d --name redis  -p 6379:6379 redis:6.0.9
+          background: true
       - run:
           name: Run unit tests
           command: make unit-tests
