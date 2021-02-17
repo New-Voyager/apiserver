@@ -8,18 +8,14 @@ jobs:
       - checkout
       - node/install-packages:
           pkg-manager: yarn
-      - run:
-          name: Lint
-          command: make lint
-      - run: 
-          name: Compile TS
-          command: make build
+    #   - run:
+    #       name: Lint
+    #       command: make lint
+    #   - run: 
+    #       name: Compile TS
+    #       command: make build
       - setup_remote_docker:
           version: 19.03.13
-      - run:
-          name: Start redis
-          command: docker run -d --name redis  -p 6379:6379 redis:6.0.9
-          background: true
       - run:
           name: Run unit tests
           command: make unit-tests
@@ -28,10 +24,7 @@ jobs:
           command: make tests
       - run:
           name: Run script tests
-          command: make script-tests  
-      - run:
-          name: Stop redis
-          command: docker rm -f redis      
+          command: make script-tests      
 workflows:
     build-and-test:
       jobs:

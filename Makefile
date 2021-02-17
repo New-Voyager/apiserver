@@ -28,14 +28,17 @@ clean:
 
 .PHONY: tests
 tests:
+	yarn run-redis &
 	./run_system_tests.sh
 
 .PHONY: unit-tests
 unit-tests:
+	yarn run-redis &
 	yarn unit-tests
 
 .PHONY: script-tests
 script-tests:
+	yarn run-redis &
 	./run_script_tests.sh
 
 .PHONY: setup-hook
