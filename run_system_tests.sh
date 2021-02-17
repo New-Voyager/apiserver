@@ -4,6 +4,9 @@ set -eo pipefail
 
 PORT_NUMBER=9501
 
+echo "Starting redis docker container"
+docker run -d --name redis  -p 6379:6379 redis:6.0.9
+
 echo "Starting test server in background"
 yarn test-server &
 TEST_SERVER_PID=$!
@@ -16,6 +19,7 @@ cleanup() {
     kill ${TEST_SERVER_PID}
     fuser -k -TERM -n tcp ${PORT_NUMBER}
     set -e
+    docker rm -f redis
 }
 
 # Make sure test server stops before scrip exit.
