@@ -155,7 +155,7 @@ docker-script-tests: create-network run-redis
 		api-server-test sh -c "sh ./run_script_tests.sh"
 
 .PHONY: docker-tests
-docker-script-tests: create-network run-redis
+docker-tests: create-network run-redis
 	docker run -t --rm \
 		--name api-server-test \
 		--network $(DEFAULT_DOCKER_NET) \
