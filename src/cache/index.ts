@@ -3,6 +3,7 @@ import {PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {EntityManager, getRepository, Repository} from 'typeorm';
 import * as redis from 'redis';
+import {redisHost, redisPort} from '@src/utils';
 
 interface CachedHighHandTracking {
   rewardId: number;
@@ -10,7 +11,7 @@ interface CachedHighHandTracking {
   gameCodes: Array<string>;
 }
 
-const client = redis.createClient();
+const client = redis.createClient(redisPort(), redisHost());
 client.on('error', error => {
   console.error(error);
   process.exit(0);

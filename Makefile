@@ -27,22 +27,16 @@ clean:
 	rm -rf build
 
 .PHONY: tests
-tests:
-	yarn run-redis
+tests: run-redis
 	./run_system_tests.sh
-	yarn stop-redis
 
 .PHONY: unit-tests
-unit-tests:
-	yarn run-redis
+unit-tests: run-redis
 	yarn unit-tests
-	yarn stop-redis
 
 .PHONY: script-tests
-script-tests:
-	yarn run-redis
+script-tests: run-redis
 	./run_script_tests.sh
-	yarn stop-redis
 
 .PHONY: setup-hook
 setup-hook:
@@ -59,6 +53,10 @@ create-network:
 .PHONY: docker-build
 docker-build:
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build -f docker/Dockerfile.apiserver . -t api-server
+
+.PHONY: docker-build-test
+docker-build-test:
+	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build -f docker/Dockerfile.test . -t api-server-test
 
 .PHONY: up
 up: create-network
@@ -128,3 +126,30 @@ publish-3rdparty:
 	docker pull postgres:${POSTGRES_VERSION}
 	docker tag postgres:${POSTGRES_VERSION} ${REGISTRY}/postgres:${POSTGRES_VERSION}
 	docker push ${REGISTRY}/postgres:${POSTGRES_VERSION}
+
+run-redis:
+	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-redis.yaml up -d
+
+stop-redis:
+	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-redis.yaml down
+
+.PHONY: docker-unit-tests
+docker-unit-tests: create-network run-redis
+	docker run -t --rm \
+		--name api-server \
+		--network $(DEFAULT_DOCKER_NET) \
+		-e REDIS_HOST=redis \
+		-e REDIS_PORT=6379 \
+		-e REDIS_DB=0 \
+		api-server-test sh -c "yarn unit-tests"
+
+
+.PHONY: docker-script-tests
+docker-script-tests: create-network run-redis
+	docker run -t --rm \
+		--name api-server-test \
+		--network $(DEFAULT_DOCKER_NET) \
+		-e REDIS_HOST=redis \
+		-e REDIS_PORT=6379 \
+		-e REDIS_DB=0 \
+		api-server-test sh -c "sh ./run_script_tests.sh"
