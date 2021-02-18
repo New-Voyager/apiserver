@@ -14,11 +14,11 @@ jobs:
       - run: 
           name: Compile TS
           command: make build
+      - setup_remote_docker:
+          version: 19.03.13
       - run:
           name: Build images
           command: make docker-build          
-      - setup_remote_docker:
-          version: 19.03.13
       - run:
           name: Run unit tests
           command: make docker-unit-tests
