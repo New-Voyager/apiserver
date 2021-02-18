@@ -17,8 +17,8 @@ jobs:
       - setup_remote_docker:
           version: 19.03.13
       - run:
-          name: Build images
-          command: make docker-build          
+          name: Build test images
+          command: make docker-build-test      
       - run:
           name: Run unit tests
           command: make docker-unit-tests
