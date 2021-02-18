@@ -453,7 +453,7 @@ export class SeatChangeProcess {
         HostSeatChangeProcess
       );
       let seat1Open, seat2Open;
-      let seatMoves = new Array<SeatMove>();
+      const seatMoves = new Array<SeatMove>();
       const seatChangePlayer1 = await seatChangeProcessRepo.findOne({
         gameCode: this.game.gameCode,
         seatNo: seatNo1,

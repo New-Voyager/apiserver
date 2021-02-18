@@ -3,7 +3,7 @@ RUN apk --no-cache add yarn curl
 WORKDIR /app
 
 RUN mkdir /build
-COPY package.json package-lock.json yarn.lock /build/
+COPY package.json package-lock.json /build/
 WORKDIR /build
 RUN yarn install --production=true && \
   curl -sf https://gobinaries.com/tj/node-prune | sh

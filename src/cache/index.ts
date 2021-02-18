@@ -2,6 +2,8 @@ import {Club, ClubMember} from '@src/entity/club';
 import {PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {EntityManager, getRepository, Repository} from 'typeorm';
+import * as redis from 'redis';
+import {redisHost, redisPort} from '@src/utils';
 
 interface CachedHighHandTracking {
   rewardId: number;
@@ -9,18 +11,65 @@ interface CachedHighHandTracking {
   gameCodes: Array<string>;
 }
 
+const client = redis.createClient(redisPort(), redisHost());
+client.on('error', error => {
+  console.error(error);
+  process.exit(0);
+});
+
 class GameCache {
-  private gameCache = new Map<string, PokerGame>();
-  private clubCache = new Map<string, Club>();
-  private playerCache = new Map<string, Player>();
-  private playerIdCache = new Map<number, Player>();
-  private clubMemberCache = new Map<string, ClubMember>();
-  private gameIdGameCodeCache = new Map<number, string>();
+  public async getCache(key: string) {
+    return new Promise<{success: boolean; data: string}>(
+      async (resolve, reject) => {
+        try {
+          client.get(key, (err: any, value: any) => {
+            if (err) resolve({success: false, data: value});
+            resolve({success: true, data: value});
+          });
+        } catch (error) {
+          console.log('getCache Handle rejected promise (' + error + ') here.');
+          reject({success: false, data: error});
+        }
+      }
+    );
+  }
+
+  public async setCache(key: string, value: string) {
+    return new Promise<{success: boolean}>(async (resolve, reject) => {
+      try {
+        client.set(key, value, (err: any, object: any) => {
+          if (err) resolve({success: false});
+          resolve({success: true});
+        });
+      } catch (error) {
+        console.log('getCache Handle rejected promise (' + error + ') here.');
+        reject({success: false, data: error});
+      }
+    });
+  }
+
+  public async removeCache(key: string) {
+    return new Promise<{success: boolean}>(async (resolve, reject) => {
+      try {
+        client.del(key, (err: any, object: any) => {
+          if (err) resolve({success: false});
+          resolve({success: true});
+        });
+      } catch (error) {
+        console.log(
+          'removeCache Handle rejected promise (' + error + ') here.'
+        );
+        reject({success: false, data: error});
+      }
+    });
+  }
 
   public async updateGameHighHand(gameCode: string, rank: number) {
-    const game = this.gameCache.get(gameCode);
-    if (game) {
+    const getResp = await this.getCache(`gameCache-${gameCode}`);
+    if (getResp.success && getResp.data) {
+      const game: PokerGame = JSON.parse(getResp.data) as PokerGame;
       game.highHandRank = rank;
+      await this.setCache(`gameCache-${gameCode}`, JSON.stringify(game));
     }
   }
 
@@ -29,88 +78,80 @@ class GameCache {
     update = false,
     transactionManager?: EntityManager
   ): Promise<PokerGame> {
-    let game = this.gameCache.get(gameCode);
-    if (update) {
-      game = undefined;
-    }
-    if (!game) {
+    const getResp = await this.getCache(`gameCache-${gameCode}`);
+    if (getResp.success && getResp.data && !update) {
+      return JSON.parse(getResp.data) as PokerGame;
+    } else {
       let repo: Repository<PokerGame>;
       if (transactionManager) {
         repo = transactionManager.getRepository(PokerGame);
       } else {
         repo = getRepository(PokerGame);
       }
-      game = await repo.findOne({
+      const game = await repo.findOne({
+        relations: ['club', 'host', 'startedBy', 'endedBy'],
         where: {gameCode: gameCode},
       });
       if (!game) {
         throw new Error(`Cannot find with game code: ${gameCode}`);
       }
-      this.gameCache.set(gameCode, game);
-      this.gameIdGameCodeCache.set(game.id, game.gameCode);
+
+      await this.setCache(`gameCache-${gameCode}`, JSON.stringify(game));
+      await this.setCache(`gameIdCache-${game.id}`, JSON.stringify(game));
+      return game;
     }
-    return game;
   }
 
   public async getClub(clubCode: string, update = false): Promise<Club> {
-    let club = this.clubCache.get(clubCode);
-    if (update) {
-      club = undefined;
-    }
-
-    if (!club) {
-      club = await getRepository(Club).findOne({
+    const getResp = await this.getCache(`clubCache-${clubCode}`);
+    if (getResp.success && getResp.data && !update) {
+      return JSON.parse(getResp.data) as Club;
+    } else {
+      const club = await getRepository(Club).findOne({
+        relations: ['owner', 'members'],
         where: {clubCode: clubCode},
       });
       if (!club) {
         throw new Error(`Cannot find with game code: ${clubCode}`);
       }
-      // resolve club owner
-      const owner: Player | undefined = await Promise.resolve(club.owner);
-      if (owner) {
-        club.owner = owner;
-      }
-      this.clubCache.set(clubCode, club);
+
+      await this.setCache(`clubCache-${clubCode}`, JSON.stringify(club));
+      return club;
     }
-    return club;
   }
 
   public async getPlayer(playerUuid: string, update = false): Promise<Player> {
-    let player = this.playerCache.get(playerUuid);
-    if (update) {
-      player = undefined;
-    }
-
-    if (!player) {
-      player = await getRepository(Player).findOne({
+    const getResp = await this.getCache(`playerCache-${playerUuid}`);
+    if (getResp.success && getResp.data && !update) {
+      return JSON.parse(getResp.data) as Player;
+    } else {
+      const player = await getRepository(Player).findOne({
         where: {uuid: playerUuid},
       });
       if (!player) {
         throw new Error(`Cannot find player: ${playerUuid}`);
       }
-      this.playerCache.set(playerUuid, player);
-      this.playerIdCache.set(player.id, player);
+      await this.setCache(`playerCache-${playerUuid}`, JSON.stringify(player));
+      await this.setCache(`playerIdCache-${player.id}`, JSON.stringify(player));
+      return player;
     }
-    return player;
   }
 
   public async getPlayerById(id: number, update = false): Promise<Player> {
-    let player = this.playerIdCache.get(id);
-    if (update) {
-      player = undefined;
-    }
-
-    if (!player) {
-      player = await getRepository(Player).findOne({
+    const getResp = await this.getCache(`playerIdCache-${id}`);
+    if (getResp.success && getResp.data && !update) {
+      return JSON.parse(getResp.data) as Player;
+    } else {
+      const player = await getRepository(Player).findOne({
         where: {id: id},
       });
       if (!player) {
         throw new Error(`Cannot find player: ${id}`);
       }
-      this.playerCache.set(player.uuid, player);
-      this.playerIdCache.set(player.id, player);
+      await this.setCache(`playerCache-${player.uuid}`, JSON.stringify(player));
+      await this.setCache(`playerIdCache-${player.id}`, JSON.stringify(player));
+      return player;
     }
-    return player;
   }
 
   public async getClubMember(
@@ -119,24 +160,25 @@ class GameCache {
     update = false
   ): Promise<ClubMember | null> {
     const key = `${clubCode}:${playerUuid}`;
-    let clubMember = this.clubMemberCache.get(key);
-    if (!clubMember || update) {
+    const getResp = await this.getCache(`clubMemberCache-${key}`);
+    if (getResp.success && getResp.data && !update) {
+      return JSON.parse(getResp.data) as ClubMember;
+    } else {
       const club = await this.getClub(clubCode);
       const player = await this.getPlayer(playerUuid);
-      const clubMembers = await getRepository(ClubMember).find({
+      const clubMember = await getRepository(ClubMember).findOne({
         relations: ['player', 'club'],
         where: {
           club: {id: club.id},
           player: {id: player.id},
         },
       });
-      if (!clubMembers || clubMembers.length === 0) {
+      if (!clubMember) {
         return null;
       }
-      clubMember = clubMembers[0];
-      this.clubMemberCache.set(key, clubMember);
+      await this.setCache(`clubMemberCache-${key}`, JSON.stringify(clubMember));
+      return clubMember;
     }
-    return clubMember;
   }
 
   public async isClubMember(
@@ -151,63 +193,48 @@ class GameCache {
   }
 
   public async getGameById(gameID: number): Promise<PokerGame | undefined> {
-    const gameCode = this.gameIdGameCodeCache.get(gameID);
-    if (!gameCode) {
+    const getResp = await this.getCache(`gameIdCache-${gameID}`);
+    if (getResp.success && getResp.data) {
+      return JSON.parse(getResp.data) as PokerGame;
+    } else {
       const game = await getRepository(PokerGame).findOne({
+        relations: ['club', 'host', 'startedBy', 'endedBy'],
         where: {id: gameID},
-        cache: true,
       });
       if (!game) {
         return game;
       }
-
-      this.gameIdGameCodeCache.set(gameID, game.gameCode);
-      this.gameCache.set(game.gameCode, game);
+      await this.setCache(`gameIdCache-${gameID}`, JSON.stringify(game));
       return game;
-    } else {
-      return this.gameCache.get(gameCode);
     }
   }
 
-  public removeGame(gameCode: string) {
-    const game = this.gameCache.get(gameCode);
-    if (game) {
-      this.gameCache.delete(gameCode);
-      this.gameIdGameCodeCache.delete(game.id);
+  public async removeGame(gameCode: string) {
+    const getResp = await this.getCache(`gameCache-${gameCode}`);
+    if (getResp.success && getResp.data) {
+      const game = JSON.parse(getResp.data) as PokerGame;
+      await this.removeCache(`gameCache-${gameCode}`);
+      await this.removeCache(`gameIdCache-${game.id}`);
     }
   }
 
-  public removeClub(clubCode: string) {
-    this.clubCache.delete(clubCode);
+  public async removeClub(clubCode: string) {
+    await this.removeCache(`clubCache-${clubCode}`);
   }
 
-  public removeClubMember(playerUuid: string, clubCode: string) {
+  public async removeClubMember(playerUuid: string, clubCode: string) {
     const key = `${clubCode}:${playerUuid}`;
-    this.clubMemberCache.delete(key);
+    await this.removeCache(`clubMemberCache-${key}`);
   }
 
   public reset() {
-    this.gameCache = new Map<string, PokerGame>();
-    this.clubCache = new Map<string, Club>();
-    this.playerCache = new Map<string, Player>();
-    this.clubMemberCache = new Map<string, ClubMember>();
-    this.gameIdGameCodeCache = new Map<number, string>();
+    return new Promise(async (resolve, reject) => {
+      client.flushall((err, succeeded) => {
+        console.log(succeeded);
+        resolve(true);
+      });
+    });
   }
-}
-
-export async function getGame(gameCode: string): Promise<PokerGame> {
-  const games = await getRepository(PokerGame).find({
-    where: {gameCode: gameCode},
-    cache: true,
-  });
-  if (games.length > 1) {
-    throw new Error(`More than one game found for code: ${gameCode}`);
-  }
-  if (games.length === 0) {
-    throw new Error(`Cannot find with game code: ${gameCode}`);
-  }
-
-  return games[0];
 }
 
 export const Cache = new GameCache();

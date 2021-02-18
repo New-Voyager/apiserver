@@ -6,23 +6,23 @@ jobs:
     executor: node/default
     steps:
       - checkout
-      - node/install-packages:
-          pkg-manager: yarn
       - run:
           name: Lint
           command: make lint
       - run: 
           name: Compile TS
           command: make build
+      - setup_remote_docker:
+          version: 19.03.13
+      - run:
+          name: Build test images
+          command: make docker-build-test      
       - run:
           name: Run unit tests
-          command: make unit-tests
-      - run:
-          name: Run tests
-          command: make tests
+          command: make docker-unit-tests
       - run:
           name: Run script tests
-          command: make script-tests          
+          command: make docker-script-tests      
 workflows:
     build-and-test:
       jobs:

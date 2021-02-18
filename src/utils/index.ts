@@ -24,3 +24,19 @@ export function stringCards(cards: Array<number>): Array<string | undefined> {
 export function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+export function redisHost(): String {
+  if (process.env.REDIS_HOST) {
+    return process.env.REDIS_HOST;
+  } else {
+    return 'localhost';
+  }
+}
+
+export function redisPort(): number {
+  if (process.env.REDIS_PORT) {
+    return parseInt(process.env.REDIS_PORT);
+  } else {
+    return 6379;
+  }
+}

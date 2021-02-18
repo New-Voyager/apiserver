@@ -57,7 +57,7 @@ export async function resetDB() {
     await deleteAll('hand_winners', transactionEntityManager);
     await deleteAll('hand_history', transactionEntityManager);
   });
-  Cache.reset();
+  await Cache.reset();
   logger.info('****** ENDING TRANSACTION TO RESET tables');
   return true;
 }
