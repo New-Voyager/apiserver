@@ -599,6 +599,7 @@ class GameRepositoryImpl {
     );
 
     if (newPlayer) {
+      await Cache.removeGameObserver(game.gameCode, player);
       // send a message to gameserver
       newPlayerSat(game, player, seatNo, playerInGame);
 
