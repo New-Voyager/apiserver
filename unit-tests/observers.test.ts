@@ -149,7 +149,7 @@ describe('Observers APIs', () => {
     const resp1 = await observers(owner, game.gameCode);
     expect(resp1).toHaveLength(0);
     const resp2 = await exitGame(playerUuids[0], game.gameCode);
-    expect(resp2).toBe(false);
+    expect(resp2).toBe(true);
 
     const resp3 = await observeGame(playerUuids[0], game.gameCode);
     expect(resp3).toBe(true);
@@ -185,7 +185,7 @@ describe('Observers APIs', () => {
     const resp1 = await observers(owner, game.gameCode);
     expect(resp1).toHaveLength(0);
     const resp2 = await exitGame(playerUuids[0], game.gameCode);
-    expect(resp2).toBe(false);
+    expect(resp2).toBe(true);
 
     const resp3 = await observeGame(playerUuids[0], game.gameCode);
     expect(resp3).toBe(true);
