@@ -153,3 +153,13 @@ docker-script-tests: create-network run-redis
 		-e REDIS_PORT=6379 \
 		-e REDIS_DB=0 \
 		api-server-test sh -c "sh ./run_script_tests.sh"
+
+.PHONY: docker-tests
+docker-tests: create-network run-redis
+	docker run -t --rm \
+		--name api-server-test \
+		--network $(DEFAULT_DOCKER_NET) \
+		-e REDIS_HOST=redis \
+		-e REDIS_PORT=6379 \
+		-e REDIS_DB=0 \
+		api-server-test sh -c "sh ./run_system_tests.sh"

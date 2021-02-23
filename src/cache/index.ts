@@ -13,7 +13,7 @@ interface CachedHighHandTracking {
 
 const client = redis.createClient(redisPort(), redisHost());
 client.on('error', error => {
-  console.error(error);
+  console.log(error);
   process.exit(0);
 });
 
@@ -43,7 +43,7 @@ class GameCache {
         });
       } catch (error) {
         console.log('getCache Handle rejected promise (' + error + ') here.');
-        reject({success: false, data: error});
+        reject({success: false});
       }
     });
   }
@@ -59,9 +59,27 @@ class GameCache {
         console.log(
           'removeCache Handle rejected promise (' + error + ') here.'
         );
-        reject({success: false, data: error});
+        reject({success: false});
       }
     });
+  }
+
+  public async scanCache(pattern: string) {
+    return new Promise<{success: boolean; data: any}>(
+      async (resolve, reject) => {
+        try {
+          client.keys(pattern, (err: any, reply: any) => {
+            if (err) resolve({success: false, data: err});
+            resolve({success: true, data: reply});
+          });
+        } catch (error) {
+          console.log(
+            'scanCache Handle rejected promise (' + error + ') here.'
+          );
+          reject({success: false, data: error});
+        }
+      }
+    );
   }
 
   public async updateGameHighHand(gameCode: string, rank: number) {
@@ -70,6 +88,43 @@ class GameCache {
       const game: PokerGame = JSON.parse(getResp.data) as PokerGame;
       game.highHandRank = rank;
       await this.setCache(`gameCache-${gameCode}`, JSON.stringify(game));
+    }
+  }
+
+  public async observeGame(gameCode: string, player: Player): Promise<boolean> {
+    const setResp = await this.setCache(
+      `observersCache-${gameCode}-${player.uuid}`,
+      JSON.stringify(player)
+    );
+    return setResp.success;
+  }
+
+  public async gameObservers(gameCode: string): Promise<Array<Player>> {
+    const observersList = await this.scanCache(`observersCache-${gameCode}-*`);
+    const observers = new Array<Player>();
+    for await (const key of observersList.data) {
+      const getResp = await this.getCache(key);
+      if (getResp.success && getResp.data) {
+        observers.push(JSON.parse(getResp.data) as Player);
+      }
+    }
+    return observers;
+  }
+
+  public async removeGameObserver(
+    gameCode: string,
+    player: Player
+  ): Promise<boolean> {
+    const getResp = await this.removeCache(
+      `observersCache-${gameCode}-${player.uuid}`
+    );
+    return getResp.success;
+  }
+
+  public async removeAllObservers(gameCode: string) {
+    const observersList = await this.scanCache(`observersCache-${gameCode}-*`);
+    for await (const key of observersList.data) {
+      await this.removeCache(key);
     }
   }
 
