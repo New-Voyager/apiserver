@@ -37,6 +37,7 @@ export async function getClubMembers(playerId: string, args: any) {
   const members = new Array<any>();
   for (const member of clubMembers) {
     const memberAny = member as any;
+    memberAny.memberId = member.id;
     memberAny.name = member.player.name;
     memberAny.playerId = member.player.uuid;
     const today = new Date();

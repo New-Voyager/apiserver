@@ -38,7 +38,9 @@ class HostMessageRepositoryImpl {
     club: Club,
     memberID: number,
     messageType: HostMessageType,
-    name: string
+    name: string,
+    playerUuid: string,
+    playerId: number
   ): Promise<any> {
     try {
       const hostMessageRepository = getRepository(ClubHostMessages);
@@ -60,7 +62,8 @@ class HostMessageRepositoryImpl {
         readStatus: false,
       });
       return {
-        memberID: memberID,
+        memberId: memberID,
+        playerId: playerUuid,
         memberName: name,
         memberImageId: null,
         newMessageCount: count,
@@ -77,7 +80,7 @@ class HostMessageRepositoryImpl {
   public async hostMessageSummary(club: Club): Promise<any> {
     try {
       const query = `
-        SELECT DISTINCT chm.member as "memberId", p.name FROM club_host_messages chm
+        SELECT DISTINCT chm.member as "memberId", p.name, p.uuid as "playerUuid", p.id as "playerId" FROM club_host_messages chm
         INNER JOIN club_member cm on cm.id = chm.member
         INNER JOIN player p on cm.player_id = p.id 
         where chm.club = ${club.id} order by chm.member DESC`;
@@ -89,7 +92,9 @@ class HostMessageRepositoryImpl {
           club,
           member.memberId,
           HostMessageType.TO_HOST,
-          member.name
+          member.name,
+          member.playerUuid,
+          member.playerId,
         );
         if (resp) summary.push(resp);
       }
@@ -123,7 +128,9 @@ class HostMessageRepositoryImpl {
         messages.push({
           id: message.id,
           clubCode: club.clubCode,
-          memberID: clubMember.id,
+          memberId: clubMember.id,
+          playerId: clubMember.player.uuid,
+          memberName: clubMember.player.name,
           messageTime: message.messageTime,
           messageType: HostMessageType[message.messageType],
           text: message.text,

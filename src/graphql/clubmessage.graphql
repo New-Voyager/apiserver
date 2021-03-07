@@ -34,14 +34,17 @@ type ClubMessage {
 type HostMessage {
   id: Int!
   clubCode: String!
-  memberID: Int!
+  memberId: Int!
+  playerId: String!
+  memberName: String!
   messageTime: DateTime
   messageType: HostMessageType!
   text: String!
 }
 
 type HostMessageSummary {
-  memberID: Int!
+  memberId: Int!
+  playerId: String!
   memberName: String!
   memberImageId: String
   newMessageCount: Int!

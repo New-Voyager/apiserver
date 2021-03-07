@@ -39,6 +39,7 @@ input ClubMemberUpdateInput {
 
 type ClubMember {
   name: String!
+  memberId: Int!
   playerId: String!
   joinedDate: DateTime!
   status: ClubMemberStatus!
