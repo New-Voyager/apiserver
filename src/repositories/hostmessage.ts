@@ -94,7 +94,7 @@ class HostMessageRepositoryImpl {
           HostMessageType.TO_HOST,
           member.name,
           member.playerUuid,
-          member.playerId,
+          member.playerId
         );
         if (resp) summary.push(resp);
       }
