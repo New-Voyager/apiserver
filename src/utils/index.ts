@@ -25,7 +25,7 @@ export function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export function redisHost(): String {
+export function redisHost(): string {
   if (process.env.REDIS_HOST) {
     return process.env.REDIS_HOST;
   } else {

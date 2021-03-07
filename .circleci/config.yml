@@ -22,7 +22,10 @@ jobs:
           command: make docker-unit-tests
       - run:
           name: Run script tests
-          command: make docker-script-tests      
+          command: make docker-script-tests
+      - run:
+          name: Run tests
+          command: make docker-tests      
 workflows:
     build-and-test:
       jobs:
