@@ -87,6 +87,10 @@ const resolvers: any = {
       const ret = await getAudioToken(ctx.req.playerId, args.gameCode);
       return ret;
     },
+    idsToPlayersInfo: async (parent, args, ctx, info) => {
+      const ret = await idsToPlayerInfo(ctx.req.playerId, args.ids);
+      return ret;
+    },
   },
   Mutation: {
     createPlayer: async (parent, args, ctx, info) => {
@@ -172,6 +176,23 @@ export async function getPlayerInfo(playerId: string) {
     lastActiveTime: player.updatedAt,
   };
 }
+
+export async function idsToPlayerInfo(playerId: string, ids: Array<number>) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const players = await PlayerRepository.idsToPlayerInfo(ids);
+  return players.map( x =>  {
+    return {
+      uuid: x.uuid,
+      id: x.id,
+      name: x.name,
+      email: x.email,
+      lastActiveTime: x.updatedAt,
+    }
+  });
+}
+
 
 export async function getClubPlayerInfo(playerId: string, clubCode: string) {
   if (!playerId) {

@@ -1,4 +1,4 @@
-import {EntityManager, Repository, getRepository} from 'typeorm';
+import {EntityManager, Repository, getRepository, In} from 'typeorm';
 import {v4 as uuidv4} from 'uuid';
 import {Player} from '@src/entity/player';
 
@@ -76,6 +76,16 @@ class PlayerRepositoryImpl {
     const player = await repository.findOne({where: {uuid: playerId}});
     return player;
   }
+
+  public async idsToPlayerInfo(ids: Array<number>): Promise<Array<Player>> {
+    const repository = getRepository(Player);
+    const resp = await repository.find({
+      where: {
+        id: In(ids),
+      },
+    });
+    return resp;
+  }  
 }
 
 export const PlayerRepository = new PlayerRepositoryImpl();
