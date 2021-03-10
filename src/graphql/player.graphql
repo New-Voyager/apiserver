@@ -106,7 +106,6 @@ type SearchClubResult {
   status: ClubStatus
 }
 
-
 type Query {
   myClubs: [PlayerClub!]
   allPlayers: [Player!]
@@ -117,4 +116,5 @@ type Query {
   clubInfo (clubCode: String!): ClubInfo!
   searchClub (clubCode: String!): SearchClubResult
   liveAudioToken(gameCode: String!): String!
+  idsToPlayersInfo(ids: [Int!]): [PlayerInfo]
 }
