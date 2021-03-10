@@ -72,8 +72,8 @@ export async function processPendingUpdates(gameId: number) {
 
     // delete hand updates for the game
     await getConnection().query(
-      fixQuery('DELETE FROM next_hand_updates WHERE game_id=?'),
-      [gameId]
+      fixQuery('DELETE FROM next_hand_updates WHERE game_id=? AND new_update = ?'),
+      [gameId, NextHandUpdate.PAUSE_GAME]
     );
     return;
   }

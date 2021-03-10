@@ -958,7 +958,7 @@ class GameRepositoryImpl {
       nextHandUpdate.newUpdate = NextHandUpdate.PAUSE_GAME;
       repository.save(nextHandUpdate);
 
-      // notify users that the game will end in the next hand
+      // notify users that the game will pause in the next hand
     }
   }
 

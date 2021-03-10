@@ -304,7 +304,7 @@ type Mutation {
   leaveGame(gameCode: String!): Boolean!
   pauseGame(gameCode: String!): GameStatus!
   endGame(gameCode: String!): GameStatus!
-  #resumeGame(gameCode: String!): GameStatus!
+  resumeGame(gameCode: String!): GameStatus!
   kickOut(gameCode: String!, playerUuid: String!): Boolean!
   addToWaitingList(gameCode: String!): Boolean!
   removeFromWaitingList(gameCode: String!, playerUuid: String): Boolean!
