@@ -277,12 +277,12 @@ describe('Club message APIs', () => {
     const resp1 = await hostMessageSummary(ownerUuid, clubCode);
     expect(resp1).toHaveLength(2);
     expect(resp1[0].memberName).toBe('player2');
-    expect(resp1[0].memberID).toBe(clubMember2[0].id);
+    expect(resp1[0].memberId).toBe(clubMember2[0].id);
     expect(resp1[0].newMessageCount).toBe(50);
     expect(resp1[0].messageType).toBe('TO_HOST');
     expect(resp1[0].lastMessageText).toBe('Member Message:49');
     expect(resp1[1].memberName).toBe('player1');
-    expect(resp1[1].memberID).toBe(clubMember1[0].id);
+    expect(resp1[1].memberId).toBe(clubMember1[0].id);
     expect(resp1[1].newMessageCount).toBe(100);
     expect(resp1[1].messageType).toBe('FROM_HOST');
     expect(resp1[1].lastMessageText).toBe('Host Message:99');
