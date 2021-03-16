@@ -304,7 +304,7 @@ type Mutation {
   leaveGame(gameCode: String!): Boolean!
   pauseGame(gameCode: String!): GameStatus!
   endGame(gameCode: String!): GameStatus!
-  #resumeGame(gameCode: String!): GameStatus!
+  resumeGame(gameCode: String!): GameStatus!
   kickOut(gameCode: String!, playerUuid: String!): Boolean!
   addToWaitingList(gameCode: String!): Boolean!
   removeFromWaitingList(gameCode: String!, playerUuid: String): Boolean!
@@ -316,7 +316,7 @@ type Mutation {
   confirmSeatChange(gameCode: String!, seatNo: Int): Boolean!
   beginHostSeatChange(gameCode: String!): Boolean
   seatChangeSwapSeats(gameCode: String!, seatNo1: Int!, seatNo2: Int!): Boolean!
-  seatChangeComplete(gameCode: String!): Boolean
+  seatChangeComplete(gameCode: String!, cancelChanges: Boolean): Boolean
 }
 
 type gameId{

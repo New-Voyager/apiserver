@@ -1,4 +1,4 @@
-import {GameRepository} from '@src/repositories/game';
+import { GameRepository } from '@src/repositories/game';
 import {
   GameStatus,
   GameType,
@@ -8,16 +8,17 @@ import {
   ApprovalType,
   ApprovalStatus,
 } from '@src/entity/types';
-import {getLogger} from '@src/utils/log';
-import {Cache} from '@src/cache/index';
-import {WaitListMgmt} from '@src/repositories/waitlist';
-import {default as _} from 'lodash';
-import {BuyIn} from '@src/repositories/buyin';
-import {PokerGame} from '@src/entity/game';
-import {fillSeats} from '@src/botrunner';
-import {ClubRepository} from '@src/repositories/club';
-import {getCurrentHandLog} from '@src/gameserver';
-import {isHostOrManagerOrOwner} from './util';
+import { getLogger } from '@src/utils/log';
+import { Cache } from '@src/cache/index';
+import { WaitListMgmt } from '@src/repositories/waitlist';
+import { default as _ } from 'lodash';
+import { BuyIn } from '@src/repositories/buyin';
+import { PokerGame } from '@src/entity/game';
+import { fillSeats } from '@src/botrunner';
+import { ClubRepository } from '@src/repositories/club';
+import { getCurrentHandLog } from '@src/gameserver';
+import { isHostOrManagerOrOwner } from './util';
+import { processPendingUpdates } from '@src/repositories/pendingupdates';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -399,7 +400,7 @@ export async function completedGame(playerId: string, gameCode: string) {
     if (game.endedAt) {
       const runTime = resp.endedAt - resp.startedAt;
       resp.runTime = runTime;
-      resp.runTimeStr = humanizeDuration(runTime, {round: true});
+      resp.runTimeStr = humanizeDuration(runTime, { round: true });
     }
 
     if (resp.sessionTime) {
@@ -455,10 +456,10 @@ function getSessionTimeStr(totalSeconds: number): string {
   }
   if (totalSeconds < 3600) {
     // "## minutes"
-    return humanizeDuration(totalSeconds * 1000, {units: ['m'], round: true});
+    return humanizeDuration(totalSeconds * 1000, { units: ['m'], round: true });
   }
   // "## hours"
-  return humanizeDuration(totalSeconds * 1000, {units: ['h'], round: true});
+  return humanizeDuration(totalSeconds * 1000, { units: ['h'], round: true });
 }
 
 export async function approveRequest(
@@ -662,8 +663,7 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error(
-      `Failed to get game information. Message: ${
-        err.message
+      `Failed to get game information. Message: ${err.message
       } err: ${JSON.stringify(err)}`
     );
   }
@@ -1084,6 +1084,44 @@ export async function pauseGame(playerId: string, gameCode: string) {
     throw new Error('Failed to pause the game. ' + err.message);
   }
 }
+
+
+export async function resumeGame(playerId: string, gameCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const errors = new Array<string>();
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+  try {
+    const game = await Cache.getGame(gameCode);
+
+    const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
+    if (!isAuthorized) {
+      logger.error(
+        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot resume game`
+      );
+      throw new Error(
+        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot resume game`
+      );
+    }
+
+    if (game.status === GameStatus.PAUSED) {
+      logger.info(`Resume game: ${gameCode}`);
+      const status = await GameRepository.markGameStatus(
+        game.id,
+        GameStatus.ACTIVE
+      );
+      await processPendingUpdates(game.id);
+      return GameStatus[status];
+    }
+    return GameStatus[game.status];
+  } catch (err) {
+    logger.error(err.message);
+    throw new Error(`Failed to resume game:  ${err.message}. Game code: ${gameCode}`);
+  }
+}
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -1209,6 +1247,9 @@ const resolvers: any = {
     },
     pauseGame: async (parent, args, ctx, info) => {
       return pauseGame(ctx.req.playerId, args.gameCode);
+    },
+    resumeGame: async (parent, args, ctx, info) => {
+      return resumeGame(ctx.req.playerId, args.gameCode);
     },
     buyIn: async (parent, args, ctx, info) => {
       const status = await buyIn(ctx.req.playerId, args.gameCode, args.amount);
