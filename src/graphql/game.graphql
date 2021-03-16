@@ -316,7 +316,7 @@ type Mutation {
   confirmSeatChange(gameCode: String!, seatNo: Int): Boolean!
   beginHostSeatChange(gameCode: String!): Boolean
   seatChangeSwapSeats(gameCode: String!, seatNo1: Int!, seatNo2: Int!): Boolean!
-  seatChangeComplete(gameCode: String!): Boolean
+  seatChangeComplete(gameCode: String!, cancelChanges: Boolean): Boolean
 }
 
 type gameId{
