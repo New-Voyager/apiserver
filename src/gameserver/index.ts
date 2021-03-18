@@ -3,7 +3,7 @@ import {getLogger} from '@src/utils/log';
 import {PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
-import {GameStatus, PlayerStatus} from '@src/entity/types';
+import {GameStatus, PlayerStatus, TableStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {NewUpdate} from '@src/repositories/types';
 import * as Constants from '../const';
@@ -117,7 +117,7 @@ export async function playerBuyIn(
   }
 }
 
-export async function changeGameStatus(game: PokerGame, status: GameStatus) {
+export async function changeGameStatus(game: PokerGame, status: GameStatus, tableStatus: TableStatus) {
   if (!notifyGameServer) {
     return;
   }
@@ -127,6 +127,7 @@ export async function changeGameStatus(game: PokerGame, status: GameStatus) {
     type: 'GameStatus',
     gameId: game.id,
     gameStatus: status,
+    tableStatus: tableStatus,
   };
   const newGameUrl = `${gameServerUrl}/game-update-status`;
   const resp = await axios.post(newGameUrl, message);

@@ -993,7 +993,7 @@ class GameRepositoryImpl {
       .execute();
 
     // update the game server with new status
-    changeGameStatus(game, status);
+    await changeGameStatus(game, status, game.tableStatus);
 
     // if game ended
     if (status === GameStatus.ENDED) {

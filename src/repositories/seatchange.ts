@@ -548,7 +548,7 @@ export class SeatChangeProcess {
       });
       for (const player of seatChangedPlayers) {
         if (player.playerId != null) {
-          playerGameTrackerRepo.update(
+          await playerGameTrackerRepo.update(
             {
               game: {id: this.game.id},
               player: {id: player.playerId},
