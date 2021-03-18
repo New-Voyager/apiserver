@@ -182,17 +182,16 @@ export async function idsToPlayerInfo(playerId: string, ids: Array<number>) {
     throw new Error('Unauthorized');
   }
   const players = await PlayerRepository.idsToPlayerInfo(ids);
-  return players.map( x =>  {
+  return players.map(x => {
     return {
       uuid: x.uuid,
       id: x.id,
       name: x.name,
       email: x.email,
       lastActiveTime: x.updatedAt,
-    }
+    };
   });
 }
-
 
 export async function getClubPlayerInfo(playerId: string, clubCode: string) {
   if (!playerId) {

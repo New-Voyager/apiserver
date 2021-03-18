@@ -158,6 +158,11 @@ type GameInfo {
   # updates
   lastHandNum: Int
   rakeCollected: Float
+
+  # player role
+  isHost: Boolean
+  isOwner: Boolean
+  isManager: Boolean
 }
 
 input GameUpdateInput {

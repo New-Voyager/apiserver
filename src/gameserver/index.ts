@@ -1,13 +1,13 @@
 import axios from 'axios';
-import { getLogger } from '@src/utils/log';
-import { PokerGame } from '@src/entity/game';
-import { Player } from '@src/entity/player';
-import { PlayerGameTracker } from '@src/entity/chipstrack';
-import { GameStatus, PlayerStatus } from '@src/entity/types';
-import { GameRepository } from '@src/repositories/game';
-import { NewUpdate } from '@src/repositories/types';
+import {getLogger} from '@src/utils/log';
+import {PokerGame} from '@src/entity/game';
+import {Player} from '@src/entity/player';
+import {PlayerGameTracker} from '@src/entity/chipstrack';
+import {GameStatus, PlayerStatus} from '@src/entity/types';
+import {GameRepository} from '@src/repositories/game';
+import {NewUpdate} from '@src/repositories/types';
 import * as Constants from '../const';
-import { SeatMove, SeatUpdate } from '@src/types';
+import {SeatMove, SeatUpdate} from '@src/types';
 
 let notifyGameServer = false;
 const logger = getLogger('gameServer');

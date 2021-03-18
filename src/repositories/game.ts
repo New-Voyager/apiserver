@@ -116,6 +116,7 @@ class GameRepositoryImpl {
 
     game.startedAt = new Date();
     game.startedBy = player;
+    game.host = player;
 
     try {
       logger.info('****** STARTING TRANSACTION TO CREATE a private game');

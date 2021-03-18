@@ -85,7 +85,7 @@ class PlayerRepositoryImpl {
       },
     });
     return resp;
-  }  
+  }
 }
 
 export const PlayerRepository = new PlayerRepositoryImpl();

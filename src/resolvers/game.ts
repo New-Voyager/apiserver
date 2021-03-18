@@ -1,4 +1,4 @@
-import { GameRepository } from '@src/repositories/game';
+import {GameRepository} from '@src/repositories/game';
 import {
   GameStatus,
   GameType,
@@ -8,17 +8,17 @@ import {
   ApprovalType,
   ApprovalStatus,
 } from '@src/entity/types';
-import { getLogger } from '@src/utils/log';
-import { Cache } from '@src/cache/index';
-import { WaitListMgmt } from '@src/repositories/waitlist';
-import { default as _ } from 'lodash';
-import { BuyIn } from '@src/repositories/buyin';
-import { PokerGame } from '@src/entity/game';
-import { fillSeats } from '@src/botrunner';
-import { ClubRepository } from '@src/repositories/club';
-import { getCurrentHandLog } from '@src/gameserver';
-import { isHostOrManagerOrOwner } from './util';
-import { processPendingUpdates } from '@src/repositories/pendingupdates';
+import {getLogger} from '@src/utils/log';
+import {Cache} from '@src/cache/index';
+import {WaitListMgmt} from '@src/repositories/waitlist';
+import {default as _} from 'lodash';
+import {BuyIn} from '@src/repositories/buyin';
+import {PokerGame} from '@src/entity/game';
+import {fillSeats} from '@src/botrunner';
+import {ClubRepository} from '@src/repositories/club';
+import {getCurrentHandLog} from '@src/gameserver';
+import {isHostOrManagerOrOwner} from './util';
+import {processPendingUpdates} from '@src/repositories/pendingupdates';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -400,7 +400,7 @@ export async function completedGame(playerId: string, gameCode: string) {
     if (game.endedAt) {
       const runTime = resp.endedAt - resp.startedAt;
       resp.runTime = runTime;
-      resp.runTimeStr = humanizeDuration(runTime, { round: true });
+      resp.runTimeStr = humanizeDuration(runTime, {round: true});
     }
 
     if (resp.sessionTime) {
@@ -456,10 +456,10 @@ function getSessionTimeStr(totalSeconds: number): string {
   }
   if (totalSeconds < 3600) {
     // "## minutes"
-    return humanizeDuration(totalSeconds * 1000, { units: ['m'], round: true });
+    return humanizeDuration(totalSeconds * 1000, {units: ['m'], round: true});
   }
   // "## hours"
-  return humanizeDuration(totalSeconds * 1000, { units: ['h'], round: true });
+  return humanizeDuration(totalSeconds * 1000, {units: ['h'], round: true});
 }
 
 export async function approveRequest(
@@ -621,8 +621,11 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
       throw new Error(`Game ${gameCode} is not found`);
     }
     let clubCode = '';
+    let isHost = false;
+    let isManager = false;
+    let isOwner = false;
     if (game.club) {
-      const clubMember = await Cache.isClubMember(
+      const clubMember = await Cache.getClubMember(
         playerUuid,
         game.club.clubCode
       );
@@ -635,11 +638,21 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
           `Player: ${playerUuid} is not authorized to play game ${gameCode}`
         );
       }
+
+      isOwner = clubMember.isOwner;
+      isManager = clubMember.isManager;
     }
 
     const player = await Cache.getPlayer(playerUuid);
 
     const ret = _.cloneDeep(game) as any;
+
+    if (ret.host) {
+      if (ret.host.uuid == playerUuid) {
+        isHost = true;
+      }
+    }
+
     if (ret.startedBy) {
       ret.startedBy = ret.startedBy.name;
     }
@@ -659,11 +672,18 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.handToAllChannel = `hand.${game.gameCode}.player.all`;
     ret.handToPlayerChannel = `hand.${game.gameCode}.player.${player.id}`;
     ret.gameChatChannel = `game.${game.gameCode}.chat`;
+
+    // player's role
+    ret.isManager = isManager;
+    ret.isHost = isHost;
+    ret.isOwner = isOwner;
+
     return ret;
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error(
-      `Failed to get game information. Message: ${err.message
+      `Failed to get game information. Message: ${
+        err.message
       } err: ${JSON.stringify(err)}`
     );
   }
@@ -1085,7 +1105,6 @@ export async function pauseGame(playerId: string, gameCode: string) {
   }
 }
 
-
 export async function resumeGame(playerId: string, gameCode: string) {
   if (!playerId) {
     throw new Error('Unauthorized');
@@ -1119,7 +1138,9 @@ export async function resumeGame(playerId: string, gameCode: string) {
     return GameStatus[game.status];
   } catch (err) {
     logger.error(err.message);
-    throw new Error(`Failed to resume game:  ${err.message}. Game code: ${gameCode}`);
+    throw new Error(
+      `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
+    );
   }
 }
 const resolvers: any = {

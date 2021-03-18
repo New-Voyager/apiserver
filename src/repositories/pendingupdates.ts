@@ -1,18 +1,18 @@
-import { getRepository, getConnection, Not } from 'typeorm';
-import { fixQuery } from '@src/utils';
-import { GameStatus, NextHandUpdate, PlayerStatus } from '@src/entity/types';
-import { GameRepository } from './game';
-import { getLogger } from '@src/utils/log';
-import { NextHandUpdates, PokerGame, PokerGameUpdates } from '@src/entity/game';
-import { PlayerGameTracker } from '@src/entity/chipstrack';
+import {getRepository, getConnection, Not} from 'typeorm';
+import {fixQuery} from '@src/utils';
+import {GameStatus, NextHandUpdate, PlayerStatus} from '@src/entity/types';
+import {GameRepository} from './game';
+import {getLogger} from '@src/utils/log';
+import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game';
+import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {
   pendingProcessDone,
   playerBuyIn,
   playerKickedOut,
   playerLeftGame,
 } from '@src/gameserver';
-import { occupiedSeats, WaitListMgmt } from './waitlist';
-import { SeatChangeProcess } from './seatchange';
+import {occupiedSeats, WaitListMgmt} from './waitlist';
+import {SeatChangeProcess} from './seatchange';
 
 const logger = getLogger('pending-updates');
 
@@ -22,12 +22,12 @@ export async function processPendingUpdates(gameId: number) {
   let newOpenSeat = false;
 
   const gameRespository = getRepository(PokerGame);
-  const game = await gameRespository.findOne({ id: gameId });
+  const game = await gameRespository.findOne({id: gameId});
   if (!game) {
     throw new Error(`Game: ${gameId} is not found`);
   }
   const gameUpdatesRepo = getRepository(PokerGameUpdates);
-  const gameUpdate = await gameUpdatesRepo.findOne({ gameID: game.id });
+  const gameUpdate = await gameUpdatesRepo.findOne({gameID: game.id});
   if (!gameUpdate) {
     return;
   }
@@ -72,7 +72,9 @@ export async function processPendingUpdates(gameId: number) {
 
     // delete hand updates for the game
     await getConnection().query(
-      fixQuery('DELETE FROM next_hand_updates WHERE game_id=? AND new_update = ?'),
+      fixQuery(
+        'DELETE FROM next_hand_updates WHERE game_id=? AND new_update = ?'
+      ),
       [gameId, NextHandUpdate.PAUSE_GAME]
     );
     return;
@@ -82,7 +84,7 @@ export async function processPendingUpdates(gameId: number) {
   const updates = await pendingUpdatesRepo.find({
     relations: ['game', 'player'],
     where: {
-      game: { id: gameId },
+      game: {id: gameId},
     },
   });
 
@@ -162,8 +164,8 @@ async function kickoutPlayer(
 ) {
   await playerGameTrackerRepository.update(
     {
-      game: { id: game.id },
-      player: { id: update.player.id },
+      game: {id: game.id},
+      player: {id: update.player.id},
     },
     {
       status: PlayerStatus.KICKED_OUT,
@@ -173,14 +175,14 @@ async function kickoutPlayer(
 
   const playerInGame = await playerGameTrackerRepository.findOne({
     where: {
-      game: { id: game.id },
-      player: { id: update.player.id },
+      game: {id: game.id},
+      player: {id: update.player.id},
     },
   });
 
   const count = await playerGameTrackerRepository.count({
     where: {
-      game: { id: game.id },
+      game: {id: game.id},
       status: PlayerStatus.PLAYING,
     },
   });
@@ -190,7 +192,7 @@ async function kickoutPlayer(
     {
       gameID: game.id,
     },
-    { playersInSeats: count }
+    {playersInSeats: count}
   );
 
   if (playerInGame) {
@@ -198,7 +200,7 @@ async function kickoutPlayer(
     playerKickedOut(game, update.player, playerInGame.seatNo);
   }
   // delete this update
-  pendingUpdatesRepo.delete({ id: update.id });
+  pendingUpdatesRepo.delete({id: update.id});
 }
 
 async function leaveGame(
@@ -209,15 +211,15 @@ async function leaveGame(
 ) {
   const playerInGame = await playerGameTrackerRepository.findOne({
     where: {
-      game: { id: game.id },
-      player: { id: update.player.id },
+      game: {id: game.id},
+      player: {id: update.player.id},
     },
   });
 
   await playerGameTrackerRepository.update(
     {
-      game: { id: game.id },
-      player: { id: update.player.id },
+      game: {id: game.id},
+      player: {id: update.player.id},
     },
     {
       status: PlayerStatus.LEFT,
@@ -227,7 +229,7 @@ async function leaveGame(
 
   const count = await playerGameTrackerRepository.count({
     where: {
-      game: { id: game.id },
+      game: {id: game.id},
       seatNo: Not(0),
     },
   });
@@ -237,7 +239,7 @@ async function leaveGame(
     {
       gameID: game.id,
     },
-    { playersInSeats: count }
+    {playersInSeats: count}
   );
 
   if (playerInGame) {
@@ -245,7 +247,7 @@ async function leaveGame(
     playerLeftGame(game, update.player, playerInGame.seatNo);
   }
   // delete this update
-  pendingUpdatesRepo.delete({ id: update.id });
+  pendingUpdatesRepo.delete({id: update.id});
 }
 
 async function buyinApproved(
@@ -263,8 +265,8 @@ async function buyinApproved(
 
   const playerInGame = await playerGameTrackerRepository.findOne({
     where: {
-      game: { id: game.id },
-      player: { id: update.player.id },
+      game: {id: game.id},
+      player: {id: update.player.id},
     },
   });
 
@@ -274,8 +276,8 @@ async function buyinApproved(
   playerInGame.noOfBuyins += 1;
   await playerGameTrackerRepository.update(
     {
-      game: { id: game.id },
-      player: { id: update.player.id },
+      game: {id: game.id},
+      player: {id: update.player.id},
     },
     {
       status: playerInGame.status,
@@ -290,5 +292,5 @@ async function buyinApproved(
     await playerBuyIn(game, update.player, playerInGame);
   }
   // delete this update
-  await pendingUpdatesRepo.delete({ id: update.id });
+  await pendingUpdatesRepo.delete({id: update.id});
 }
