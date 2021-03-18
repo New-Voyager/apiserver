@@ -117,7 +117,11 @@ export async function playerBuyIn(
   }
 }
 
-export async function changeGameStatus(game: PokerGame, status: GameStatus, tableStatus: TableStatus) {
+export async function changeGameStatus(
+  game: PokerGame,
+  status: GameStatus,
+  tableStatus: TableStatus
+) {
   if (!notifyGameServer) {
     return;
   }
