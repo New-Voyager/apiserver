@@ -146,6 +146,9 @@ export async function joinGame(
 
     const player = await Cache.getPlayer(playerUuid);
     const status = await GameRepository.joinGame(player, game, seatNo);
+    logger.info(
+      `Player: ${player.name} isBot: ${player.bot} joined game: ${game.gameCode}`
+    );
     // player is good to go
     const playerStatus = PlayerStatus[status];
     return playerStatus;
@@ -689,6 +692,62 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
   }
 }
 
+async function getPlayerRole(playerUuid: string, gameCode: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+    let clubCode = '';
+    let isHost = false;
+    let isManager = false;
+    let isOwner = false;
+    if (game.club) {
+      const clubMember = await Cache.getClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
+      clubCode = game.club.clubCode;
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode}`
+        );
+      }
+
+      isOwner = clubMember.isOwner;
+      isManager = clubMember.isManager;
+    }
+
+    const player = await Cache.getPlayer(playerUuid);
+    if (game.host) {
+      if (game.host.uuid == playerUuid) {
+        isHost = true;
+      }
+    }
+    // player's role
+    let ret: any = {};
+    ret.isManager = isManager;
+    ret.isHost = isHost;
+    ret.isOwner = isOwner;
+
+    return ret;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error(
+      `Failed to get game information. Message: ${
+        err.message
+      } err: ${JSON.stringify(err)}`
+    );
+  }
+}
+
 export async function leaveGame(playerUuid: string, gameCode: string) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
@@ -1159,6 +1218,9 @@ const resolvers: any = {
     },
     gameInfo: async (parent, args, ctx, info) => {
       return await getGameInfo(ctx.req.playerId, args.gameCode);
+    },
+    playerRole: async (parent, args, ctx, info) => {
+      return await getPlayerRole(ctx.req.playerId, args.gameCode);
     },
     waitingList: async (parent, args, ctx, info) => {
       return await waitingList(ctx.req.playerId, args.gameCode);

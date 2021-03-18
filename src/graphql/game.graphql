@@ -165,6 +165,13 @@ type GameInfo {
   isManager: Boolean
 }
 
+type PlayerRole {
+    # player role
+  isHost: Boolean
+  isOwner: Boolean
+  isManager: Boolean
+}
+
 input GameUpdateInput {
   status: GameStatus
   muckLosingHand: Boolean
@@ -348,4 +355,7 @@ type Query {
   # seat change queries
   seatChangeRequests(gameCode: String!): [PlayerSeatChange]
   seatPositions(gameCode: String!, seatChange: Boolean): [SeatInfo!]
+
+  # returns player role in a game
+  playerRole(gameCode: String!): PlayerRole
 }
