@@ -2,8 +2,10 @@ import {Cache} from '@src/cache/index';
 import {PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {PlayerStatus} from '@src/entity/types';
-import {SeatChangeProcess} from '@src/repositories/seatchange';
+import { GameRepository } from '@src/repositories/game';
+import {hostSeatChangePlayers, SeatChangeProcess} from '@src/repositories/seatchange';
 import {getLogger} from '@src/utils/log';
+import { argsToArgsConfig } from 'graphql/type/definition';
 import {isHostOrManagerOrOwner} from './util';
 const logger = getLogger('game');
 
@@ -13,7 +15,7 @@ const resolvers: any = {
       return await seatChangeRequests(ctx.req.playerId, args.gameCode);
     },
     seatPositions: async (parent, args, ctx, info) => {
-      return null;
+      return await seatPositions(ctx.req.playerId, args.gameCode, args.seatChange);
     },
   },
   Mutation: {
@@ -168,6 +170,55 @@ export async function seatChangeRequests(playerUuid: string, gameCode: string) {
     );
   }
 }
+
+export async function seatPositions(playerUuid: string, gameCode: string, seatChange: boolean) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubMember = await Cache.getClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
+        );
+      }
+    }
+    if (seatChange) {
+      // get seat positions from current seat change process
+      const playersInSeats = await hostSeatChangePlayers(game.gameCode);
+      for (const player of playersInSeats) {
+        player.status = PlayerStatus[player.status];
+      }
+      return playersInSeats;
+    } else {
+      // get seat positions from table
+      const playersInSeats = await GameRepository.getPlayersInSeats(game.id);
+      for (const player of playersInSeats) {
+        player.status = PlayerStatus[player.status];
+      }
+      return playersInSeats;
+    }
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error(
+      `Failed to get seat change requests. ${JSON.stringify(err)}`
+    );
+  }
+}
+
 
 export async function beginHostSeatChange(
   playerUuid: string,

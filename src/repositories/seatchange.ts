@@ -32,6 +32,7 @@ import {GameRepository} from './game';
 import {HostSeatChangeProcess} from '@src/entity/seatchange';
 import * as Constants from '../const';
 import {SeatMove, SeatUpdate} from '@src/types';
+import { fixQuery } from '@src/utils';
 
 const logger = getLogger('seatchange');
 
@@ -620,4 +621,21 @@ export async function getCurrentSeats(
     }
   }
   return seatUpdates;
+}
+
+export async function hostSeatChangePlayers(
+  gameCode: string,
+  transactionManager?: EntityManager
+): Promise<Array<any>> {
+  const query = fixQuery(`SELECT player_id as "playerId", name, 
+        player_uuid as "playerUuid", stack, 
+        seat_no as "seatNo", open_seat as "openSeat" 
+        FROM host_seat_change_process WHERE game_code=?`);
+  let resp;
+  if (transactionManager) {
+    resp = await transactionManager.query(query, [gameCode]);
+  } else {
+    resp = await getConnection().query(query, [gameCode]);
+  }
+  return resp;
 }
