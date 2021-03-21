@@ -630,7 +630,7 @@ export async function hostSeatChangePlayers(
   const query = fixQuery(`SELECT player_id as "playerId", name, 
         player_uuid as "playerUuid", stack, 
         seat_no as "seatNo", open_seat as "openSeat" 
-        FROM host_seat_change_process WHERE game_code=?`);
+        FROM host_seat_change_process WHERE game_code=? ORDER BY seat_no`);
   let resp;
   if (transactionManager) {
     resp = await transactionManager.query(query, [gameCode]);

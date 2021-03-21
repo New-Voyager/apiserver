@@ -11,18 +11,18 @@ export class HostSeatChangeProcess {
   @Column({name: 'seat_no'})
   public seatNo!: number;
 
-  @Column({name: 'player_id'})
+  @Column({name: 'player_id', nullable: true})
   public playerId!: number;
 
-  @Column({name: 'player_uuid'})
+  @Column({name: 'player_uuid', nullable: true})
   public playerUuid!: string;
 
-  @Column({name: 'name'})
+  @Column({name: 'name', nullable: true})
   public name!: string;
 
-  @Column({name: 'open_seat'})
+  @Column({name: 'open_seat', default: false})
   public openSeat!: boolean;
 
-  @Column({name: 'stack'})
+  @Column({name: 'stack', default: 0})
   public stack!: number;
 }

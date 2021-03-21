@@ -2,10 +2,12 @@ import {Cache} from '@src/cache/index';
 import {PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {PlayerStatus} from '@src/entity/types';
+import { openSeat } from '@src/gameserver';
 import { GameRepository } from '@src/repositories/game';
 import {hostSeatChangePlayers, SeatChangeProcess} from '@src/repositories/seatchange';
 import {getLogger} from '@src/utils/log';
 import { argsToArgsConfig } from 'graphql/type/definition';
+import _ from 'lodash';
 import {isHostOrManagerOrOwner} from './util';
 const logger = getLogger('game');
 
@@ -201,13 +203,33 @@ export async function seatPositions(playerUuid: string, gameCode: string, seatCh
       const playersInSeats = await hostSeatChangePlayers(game.gameCode);
       for (const player of playersInSeats) {
         player.status = PlayerStatus[player.status];
+        if (player.openSeat) {
+          player.name = "open";
+          player.playerUuid = "open";
+        }
       }
       return playersInSeats;
     } else {
       // get seat positions from table
-      const playersInSeats = await GameRepository.getPlayersInSeats(game.id);
-      for (const player of playersInSeats) {
+      const players = await GameRepository.getPlayersInSeats(game.id);
+      for (const player of players) {
+        player.openSeat = false;
         player.status = PlayerStatus[player.status];
+      }
+      const playersMap = _.keyBy(players, "seatNo")
+      const playersInSeats: Array<any> = [];
+      for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+        if (!playersMap[seatNo]) {
+          // open seat
+          playersInSeats[seatNo-1] = {
+            name: "open",
+            playerUuid: "open",
+            seatNo: seatNo,
+            openSeat: true
+          }
+        } else {
+          playersInSeats[seatNo-1] = playersMap[seatNo];
+        }
       }
       return playersInSeats;
     }

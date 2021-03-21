@@ -101,6 +101,7 @@ type SeatInfo {
   buyIn: Float
   stack: Float
   status: PlayerGameStatus
+  openSeat: Boolean
 }
 
 type TableSeats {
