@@ -161,7 +161,7 @@ function addInternalRoutes(app: any) {
   );
 
   app.get(
-    '/internal/get-game-server/club_id/:clubCode/game_num/:gameCode',
+    '/internal/get-game/club_id/:clubCode/game_num/:gameCode',
     GameAPI.getGame
   );
 
