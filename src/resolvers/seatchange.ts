@@ -2,11 +2,14 @@ import {Cache} from '@src/cache/index';
 import {PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {PlayerStatus} from '@src/entity/types';
-import { openSeat } from '@src/gameserver';
-import { GameRepository } from '@src/repositories/game';
-import {hostSeatChangePlayers, SeatChangeProcess} from '@src/repositories/seatchange';
+import {openSeat} from '@src/gameserver';
+import {GameRepository} from '@src/repositories/game';
+import {
+  hostSeatChangePlayers,
+  SeatChangeProcess,
+} from '@src/repositories/seatchange';
 import {getLogger} from '@src/utils/log';
-import { argsToArgsConfig } from 'graphql/type/definition';
+import {argsToArgsConfig} from 'graphql/type/definition';
 import _ from 'lodash';
 import {isHostOrManagerOrOwner} from './util';
 const logger = getLogger('game');
@@ -17,7 +20,11 @@ const resolvers: any = {
       return await seatChangeRequests(ctx.req.playerId, args.gameCode);
     },
     seatPositions: async (parent, args, ctx, info) => {
-      return await seatPositions(ctx.req.playerId, args.gameCode, args.seatChange);
+      return await seatPositions(
+        ctx.req.playerId,
+        args.gameCode,
+        args.seatChange
+      );
     },
   },
   Mutation: {
@@ -173,7 +180,11 @@ export async function seatChangeRequests(playerUuid: string, gameCode: string) {
   }
 }
 
-export async function seatPositions(playerUuid: string, gameCode: string, seatChange: boolean) {
+export async function seatPositions(
+  playerUuid: string,
+  gameCode: string,
+  seatChange: boolean
+) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }
@@ -204,8 +215,8 @@ export async function seatPositions(playerUuid: string, gameCode: string, seatCh
       for (const player of playersInSeats) {
         player.status = PlayerStatus[player.status];
         if (player.openSeat) {
-          player.name = "open";
-          player.playerUuid = "open";
+          player.name = 'open';
+          player.playerUuid = 'open';
         }
       }
       return playersInSeats;
@@ -216,19 +227,19 @@ export async function seatPositions(playerUuid: string, gameCode: string, seatCh
         player.openSeat = false;
         player.status = PlayerStatus[player.status];
       }
-      const playersMap = _.keyBy(players, "seatNo")
+      const playersMap = _.keyBy(players, 'seatNo');
       const playersInSeats: Array<any> = [];
       for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
         if (!playersMap[seatNo]) {
           // open seat
-          playersInSeats[seatNo-1] = {
-            name: "open",
-            playerUuid: "open",
+          playersInSeats[seatNo - 1] = {
+            name: 'open',
+            playerUuid: 'open',
             seatNo: seatNo,
-            openSeat: true
-          }
+            openSeat: true,
+          };
         } else {
-          playersInSeats[seatNo-1] = playersMap[seatNo];
+          playersInSeats[seatNo - 1] = playersMap[seatNo];
         }
       }
       return playersInSeats;
@@ -240,7 +251,6 @@ export async function seatPositions(playerUuid: string, gameCode: string, seatCh
     );
   }
 }
-
 
 export async function beginHostSeatChange(
   playerUuid: string,
