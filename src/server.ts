@@ -156,7 +156,7 @@ function addInternalRoutes(app: any) {
     GameAPI.processPendingUpdates
   );
   app.get(
-    '/internal/get-game-server/club_id/:clubCode/game_num/:gameCode',
+    '/internal/get-game-server/game_num/:gameCode',
     GameServerAPI.getSpecificGameServer
   );
 
