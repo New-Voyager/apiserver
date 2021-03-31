@@ -32,7 +32,7 @@ import {GameRepository} from './game';
 import {HostSeatChangeProcess} from '@src/entity/seatchange';
 import * as Constants from '../const';
 import {SeatMove, SeatUpdate} from '@src/types';
-import { fixQuery } from '@src/utils';
+import {fixQuery} from '@src/utils';
 
 const logger = getLogger('seatchange');
 

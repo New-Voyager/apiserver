@@ -182,13 +182,13 @@ describe('Game server APIs', () => {
     });
     await createReward(player, club);
     const game = await configureGame(player, club, holdemGameInput);
-    const server = await getParticularGameServer(club, game.gameCode);
+    const server = await getParticularGameServer(game.gameCode);
     if (!server) {
       expect(true).toBeFalsy();
     } else {
       expect(server).not.toBeUndefined();
       expect(server).not.toBeNull();
-      expect(server.gameServer.ipAddress).not.toBe(null);
+      expect(server.ipAddress).not.toBe(null);
     }
   });
 
@@ -217,13 +217,13 @@ describe('Game server APIs', () => {
     });
 
     const game = await configureGameByPlayer(player, holdemGameInput);
-    const server = await getParticularGameServer('000000', game.gameCode);
+    const server = await getParticularGameServer(game.gameCode);
     if (!server) {
       expect(true).toBeFalsy();
     } else {
       expect(server).not.toBeUndefined();
       expect(server).not.toBeNull();
-      expect(server.gameServer.ipAddress).not.toBe(null);
+      expect(server.ipAddress).not.toBe(null);
     }
   });
 });

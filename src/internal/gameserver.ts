@@ -89,13 +89,9 @@ class GameServerAPIs {
   }
 
   public async getSpecificGameServer(req: any, resp: any) {
-    const clubCode = req.params.clubCode;
     const gameCode = req.params.gameCode;
     const errors = new Array<string>();
     try {
-      if (!clubCode) {
-        errors.push('clubCode is missing');
-      }
       if (!gameCode) {
         errors.push('gameCode is missing');
       }
@@ -108,7 +104,7 @@ class GameServerAPIs {
       resp.status(500).send(JSON.stringify(errors));
       return;
     }
-    const response = await getParticularGameServer(clubCode, gameCode);
+    const response = await getParticularGameServer(gameCode);
     resp.status(200).send(JSON.stringify({server: response}));
   }
 
@@ -256,10 +252,7 @@ export async function getAllGameServers() {
   return gameServers;
 }
 
-export async function getParticularGameServer(
-  clubCode: string,
-  gameCode: string
-) {
+export async function getParticularGameServer(gameCode: string) {
   const game = await GameRepository.getGameByCode(gameCode);
   if (!game) {
     throw new Error('Game not found');
@@ -270,7 +263,7 @@ export async function getParticularGameServer(
       game: {id: game.id},
     },
   });
-  return trackGameServer;
+  return trackGameServer?.gameServer;
 }
 
 export async function getGamesForGameServer(
