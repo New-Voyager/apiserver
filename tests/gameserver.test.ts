@@ -198,7 +198,7 @@ describe('Game server APIs', () => {
       let resp;
       try {
         resp = await axios.get(
-          `${GAMESERVER_API}/get-game-server/club_id/${clubCode}/game_num/${game1.gameCode}`
+          `${GAMESERVER_API}/get-game-server/game_num/${game1.gameCode}`
         );
       } catch (err) {
         console.error(JSON.stringify(err));
@@ -249,10 +249,9 @@ describe('Game server APIs', () => {
       );
 
       let resp;
-      const clubCode = '000000';
       try {
         resp = await axios.get(
-          `${GAMESERVER_API}/get-game-server/club_id/${clubCode}/game_num/${game1.gameCode}`
+          `${GAMESERVER_API}/get-game-server/game_num/${game1.gameCode}`
         );
       } catch (err) {
         console.error(JSON.stringify(err));
