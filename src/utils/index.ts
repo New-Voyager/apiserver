@@ -40,3 +40,13 @@ export function redisPort(): number {
     return 6379;
   }
 }
+
+export function utcTime(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), 
+                  date.getUTCMonth(), 
+                  date.getUTCDate(),
+                  date.getUTCHours(), 
+                  date.getUTCMinutes(), 
+                  date.getUTCSeconds()
+                 ));
+}

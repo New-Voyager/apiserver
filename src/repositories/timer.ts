@@ -2,6 +2,7 @@ import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {NextHandUpdates, PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {NextHandUpdate, PlayerStatus} from '@src/entity/types';
+import { playerStatusChanged } from '@src/gameserver';
 import {getLogger} from '@src/utils/log';
 import {getRepository} from 'typeorm';
 import {SeatChangeProcess} from './seatchange';
@@ -11,6 +12,7 @@ import {
   BUYIN_TIMEOUT,
   BUYIN_APPROVAL_TIMEOUT,
   RELOAD_APPROVAL_TIMEOUT,
+  NewUpdate,
 } from './types';
 import {WaitListMgmt} from './waitlist';
 
@@ -98,23 +100,44 @@ export async function buyInTimeoutExpired(gameID: number, playerID: number) {
     throw new Error(`Player: ${playerID} is not found`);
   }
 
-  // SOMA: This is buggy
-  // Check the status of the player. If the player is playing, then cancel timer was not called
-  // We forgot to cancel the timer
-  /*
-  // handle buyin timeout
+
   const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-  await playerGameTrackerRepository.update(
-    {
+
+  // find the player
+  const playerInSeat = await playerGameTrackerRepository.findOne({
+    relations: ['player'],
+    where: {
       game: {id: game.id},
       player: {id: player.id},
     },
-    {
-      status: PlayerStatus.NOT_PLAYING,
-      seatNo: 0,
-    }
-  );
-  */
+  });
+
+  if (!playerInSeat) {
+    // We shouldn't be here
+    return;
+  }
+
+  if (playerInSeat.status == PlayerStatus.WAIT_FOR_BUYIN) {
+    // buyin timeout expired
+
+    // mark the player as not playing
+    await playerGameTrackerRepository.update(
+      {
+        game: {id: game.id},
+        player: {id: player.id},
+      },
+      {
+        status: PlayerStatus.NOT_PLAYING,
+        seatNo: 0,
+      }
+    );
+
+    // update the clients with new status
+    playerStatusChanged(game, player, playerInSeat.status, NewUpdate.BUYIN_TIMEDOUT, playerInSeat.seatNo);
+
+  } else if(playerInSeat.status == PlayerStatus.PLAYING) {
+    // cancel timer wasn't called (ignore the timeout callback)
+  }
 }
 
 export async function buyInApprovalTimeoutExpired(

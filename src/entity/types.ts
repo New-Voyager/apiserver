@@ -78,6 +78,7 @@ export enum ClubMemberStatus {
 }
 
 export enum PlayerStatus {
+  PLAYER_UNKNOWN_STATUS,
   NOT_PLAYING,
   PLAYING,
   IN_QUEUE,

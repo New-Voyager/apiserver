@@ -206,6 +206,7 @@ export class BuyIn {
               stack: playerInGame.stack,
               buyIn: playerInGame.buyIn,
               status: playerInGame.status,
+              buyInExpAt:  undefined,
             })
             .where({
               game: {id: this.game.id},

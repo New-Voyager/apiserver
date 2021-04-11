@@ -38,6 +38,7 @@ import {BUYIN_TIMEOUT} from './types';
 import {Cache} from '@src/cache/index';
 import {StatsRepository} from './stats';
 import {getAgoraToken} from '@src/3rdparty/agora';
+import {utcTime} from '@src/utils'; 
 
 const logger = getLogger('game');
 
@@ -592,6 +593,17 @@ class GameRepositoryImpl {
           const buyinTimeExp = new Date();
           const timeout = 60;
           buyinTimeExp.setSeconds(buyinTimeExp.getSeconds() + timeout);
+          const exp = utcTime(buyinTimeExp);
+          await playerGameTrackerRepository.update(
+            {
+              game: {id: game.id},
+              player: {id: player.id},
+            },
+            {
+              buyInExpAt: exp,
+            }
+          );
+  
           startTimer(game.id, player.id, BUYIN_TIMEOUT, buyinTimeExp);
         }
 
@@ -831,11 +843,17 @@ class GameRepositoryImpl {
       logger.error(`Game: ${gameId} not available`);
       throw new Error(`Game: ${gameId} not available`);
     }
+
+    const now = new Date();
+    const timeout = 60;
+    now.setSeconds(now.getSeconds() + timeout);
+    const exp = utcTime(now);
+
     await playerGameTrackerRepository
       .createQueryBuilder()
       .update()
       .set({
-        breakTimeAt: new Date(),
+        breakTimeExpAt: exp,
       })
       .execute();
 
@@ -1029,7 +1047,9 @@ class GameRepositoryImpl {
     gameId: number,
     transactionManager?: EntityManager
   ): Promise<Array<any>> {
-    const query = fixQuery(`SELECT p.id as "playerId", name, uuid as "playerUuid", buy_in as "buyIn", stack, status, seat_no as "seatNo", status FROM 
+    const query = fixQuery(`SELECT p.id as "playerId", name, uuid as "playerUuid", buy_in as "buyIn", stack, status, seat_no as "seatNo", status,
+          buyin_exp_at as "buyInExpTime", break_time_exp_at as "breakTimeExp", game_token AS "gameToken"
+          FROM 
           player_game_tracker pgt JOIN player p ON pgt.pgt_player_id = p.id
           AND pgt.pgt_game_id = ? AND pgt.seat_no <> 0`);
     let resp;

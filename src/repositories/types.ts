@@ -10,7 +10,7 @@ export interface PlayerSitInput {
 }
 
 export enum NewUpdate {
-  UNKNOWN_PLAYE_UPDATE,
+  UNKNOWN_PLAYER_UPDATE,
   NEW_PLAYER,
   RELOAD_CHIPS,
   SWITCH_SEAT,
@@ -19,6 +19,7 @@ export enum NewUpdate {
   LEFT_THE_GAME,
   EMPTY_STACK,
   NEW_BUYIN,
+  BUYIN_TIMEDOUT,
 }
 
 export interface HighHandWinnerResult {

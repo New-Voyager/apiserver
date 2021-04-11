@@ -8,6 +8,7 @@ import {GameRepository} from '@src/repositories/game';
 import {NewUpdate} from '@src/repositories/types';
 import * as Constants from '../const';
 import {SeatMove, SeatUpdate} from '@src/types';
+import { NetworkStatus } from 'apollo-client';
 
 let notifyGameServer = false;
 const logger = getLogger('gameServer');
@@ -190,6 +191,38 @@ export async function pendingProcessDone(gameId: number) {
   if (resp.status !== 200) {
     logger.error(`Failed to update pending updates: ${newGameUrl}`);
     throw new Error(`Failed to update pending updates: ${newGameUrl}`);
+  }
+}
+
+export async function playerStatusChanged(
+  game: PokerGame,
+  player: Player,
+  oldStatus: PlayerStatus,
+  newStatus: NewUpdate,
+  seatNo: number
+) {
+  if (!notifyGameServer) {
+    return;
+  }
+
+  const gameServerUrl = await getGameServerUrl(game.id);
+
+  const message = {
+    type: 'PlayerUpdate',
+    gameId: game.id,
+    playerId: player.id,
+    playerUuid: player.uuid,
+    name: player.name,
+    seatNo: seatNo,
+    status: oldStatus,
+    newUpdate: newStatus,
+  };
+
+  const newGameUrl = `${gameServerUrl}/player-update`;
+  const resp = await axios.post(newGameUrl, message);
+  if (resp.status !== 200) {
+    logger.error(`Failed to update player status: ${newGameUrl}`);
+    throw new Error(`Failed to update player status: ${newGameUrl}`);
   }
 }
 

@@ -116,12 +116,20 @@ export class PlayerGameTracker {
   public leftAt!: Date;
 
   @DbAwareColumn({
-    name: 'break_time_at',
+    name: 'break_time_exp_at',
     type: 'timestamp',
     nullable: true,
     default: null,
   })
-  public breakTimeAt!: Date;
+  public breakTimeExpAt!: Date;
+
+  @DbAwareColumn({
+    name: 'buyin_exp_at',
+    type: 'timestamp',
+    nullable: true,
+    default: null,
+  })
+  public buyInExpAt!: Date;
 
   @DbAwareColumn({
     name: 'waiting_from',

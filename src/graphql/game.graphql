@@ -102,6 +102,9 @@ type SeatInfo {
   stack: Float
   status: PlayerGameStatus
   openSeat: Boolean
+  buyInExpTime: DateTime
+  breakExpTime: DateTime
+  gameToken: String
 }
 
 type TableSeats {

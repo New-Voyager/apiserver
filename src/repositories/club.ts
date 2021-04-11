@@ -170,6 +170,7 @@ class ClubRepositoryImpl {
     while (true) {
       // generate a club code
       clubCode = await getClubCode(input.name);
+      clubCode = 'TEST';
       const club = await clubRepository.findOne({where: {clubCode: clubCode}});
 
       if (!club) {
