@@ -38,7 +38,7 @@ import {BUYIN_TIMEOUT} from './types';
 import {Cache} from '@src/cache/index';
 import {StatsRepository} from './stats';
 import {getAgoraToken} from '@src/3rdparty/agora';
-import {utcTime} from '@src/utils'; 
+import {utcTime} from '@src/utils';
 
 const logger = getLogger('game');
 
@@ -603,7 +603,7 @@ class GameRepositoryImpl {
               buyInExpAt: exp,
             }
           );
-  
+
           startTimer(game.id, player.id, BUYIN_TIMEOUT, buyinTimeExp);
         }
 

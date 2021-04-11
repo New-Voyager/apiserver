@@ -42,11 +42,14 @@ export function redisPort(): number {
 }
 
 export function utcTime(date: Date): Date {
-  return new Date(Date.UTC(date.getUTCFullYear(), 
-                  date.getUTCMonth(), 
-                  date.getUTCDate(),
-                  date.getUTCHours(), 
-                  date.getUTCMinutes(), 
-                  date.getUTCSeconds()
-                 ));
+  return new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      date.getUTCHours(),
+      date.getUTCMinutes(),
+      date.getUTCSeconds()
+    )
+  );
 }

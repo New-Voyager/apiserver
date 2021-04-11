@@ -2,7 +2,7 @@ import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {NextHandUpdates, PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {NextHandUpdate, PlayerStatus} from '@src/entity/types';
-import { playerStatusChanged } from '@src/gameserver';
+import {playerStatusChanged} from '@src/gameserver';
 import {getLogger} from '@src/utils/log';
 import {getRepository} from 'typeorm';
 import {SeatChangeProcess} from './seatchange';
@@ -100,7 +100,6 @@ export async function buyInTimeoutExpired(gameID: number, playerID: number) {
     throw new Error(`Player: ${playerID} is not found`);
   }
 
-
   const playerGameTrackerRepository = getRepository(PlayerGameTracker);
 
   // find the player
@@ -133,9 +132,14 @@ export async function buyInTimeoutExpired(gameID: number, playerID: number) {
     );
 
     // update the clients with new status
-    playerStatusChanged(game, player, playerInSeat.status, NewUpdate.BUYIN_TIMEDOUT, playerInSeat.seatNo);
-
-  } else if(playerInSeat.status == PlayerStatus.PLAYING) {
+    playerStatusChanged(
+      game,
+      player,
+      playerInSeat.status,
+      NewUpdate.BUYIN_TIMEDOUT,
+      playerInSeat.seatNo
+    );
+  } else if (playerInSeat.status == PlayerStatus.PLAYING) {
     // cancel timer wasn't called (ignore the timeout callback)
   }
 }
