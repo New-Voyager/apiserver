@@ -45,6 +45,7 @@ enum PlayerGameStatus {
   JOINING
   WAITLIST_SEATING
   PENDING_UPDATES
+  WAIT_FOR_BUYIN_APPROVAL
 }
 
 enum BuyInApprovalStatus {
