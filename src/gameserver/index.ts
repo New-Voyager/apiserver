@@ -269,7 +269,8 @@ export async function cancelTimer(
 export async function playerSwitchSeat(
   game: PokerGame,
   player: Player,
-  playerGameInfo: PlayerGameTracker
+  playerGameInfo: PlayerGameTracker,
+  oldSeatNo: number
 ) {
   if (!notifyGameServer) {
     return;
@@ -283,6 +284,7 @@ export async function playerSwitchSeat(
     playerId: player.id,
     playerUuid: player.uuid,
     name: player.name,
+    oldSeatNo: oldSeatNo,
     seatNo: playerGameInfo.seatNo,
     stack: playerGameInfo.stack,
     status: playerGameInfo.status,

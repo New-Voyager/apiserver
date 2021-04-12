@@ -1202,6 +1202,54 @@ export async function resumeGame(playerId: string, gameCode: string) {
     );
   }
 }
+
+export async function switchSeat(
+  playerUuid: string,
+  gameCode: string,
+  seatNo: number
+) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubMember = await Cache.isClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode}`
+        );
+      }
+    }
+
+    const player = await Cache.getPlayer(playerUuid);
+    const status = await GameRepository.switchSeat(player, game, seatNo);
+    logger.info(
+      `Player: ${player.name} isBot: ${player.bot} switched seat game: ${game.gameCode}`
+    );
+    // player is good to go
+    const playerStatus = PlayerStatus[status];
+    return playerStatus;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    console.log(err);
+    throw new Error(
+      `Player: ${playerUuid} Failed to join the game. ${JSON.stringify(err)}`
+    );
+  }
+}
+
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -1380,6 +1428,9 @@ const resolvers: any = {
     },
     declineWaitlistSeat: async (parent, args, ctx, info) => {
       return declineWaitlistSeat(ctx.req.playerId, args.gameCode);
+    },
+    switchSeat: async (parent, args, ctx, info) => {
+      return switchSeat(ctx.req.playerId, args.gameCode, args.seatNo);
     },
   },
 };

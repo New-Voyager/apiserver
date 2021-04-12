@@ -136,6 +136,12 @@ export class SeatChangeProcess {
               const playerGameTrackerRepository = transactionEntityManager.getRepository(
                 PlayerGameTracker
               );
+
+              const playerOldSeat = await playerGameTrackerRepository.findOne({
+                game: {id: this.game.id},
+                player: {id: player.id},
+              });
+
               await playerGameTrackerRepository.update(
                 {
                   game: {id: this.game.id},
@@ -149,6 +155,7 @@ export class SeatChangeProcess {
               seatsTaken.push(requestedSeat);
               switchedSeats.push({
                 player: player,
+                oldSeatNo: playerOldSeat?.seatNo,
                 seatNo: requestedSeat,
               });
             }
@@ -180,7 +187,12 @@ export class SeatChangeProcess {
         continue;
       }
 
-      await playerSwitchSeat(this.game, playerInGame.player, playerInGame);
+      await playerSwitchSeat(
+        this.game,
+        playerInGame.player,
+        playerInGame,
+        switchedSeat.oldSeatNo
+      );
     }
 
     // mark the seat change process is done

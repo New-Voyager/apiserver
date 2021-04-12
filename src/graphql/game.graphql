@@ -326,6 +326,7 @@ type Mutation {
   removeFromWaitingList(gameCode: String!, playerUuid: String): Boolean!
   applyWaitlistOrder(gameCode: String!, playerUuid: [String!]): Boolean!
   declineWaitlistSeat(gameCode: String!): Boolean
+  switchSeat(gameCode: String!, seatNo: Int!): PlayerGameStatus!
 
   # seat change APIs
   requestSeatChange(gameCode: String!): DateTime!
