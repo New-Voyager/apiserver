@@ -344,7 +344,9 @@ export async function pendingApprovalsForClub(
     return resp;
   } catch (err) {
     logger.error(JSON.stringify(err));
-    throw new Error(`Failed to approve buyin. ${JSON.stringify(err)}`);
+    throw new Error(
+      `Failed to fetch approval requests. ${JSON.stringify(err)}`
+    );
   }
 }
 

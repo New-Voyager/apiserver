@@ -5,7 +5,7 @@ import {
   SavedHands,
   StarredHands,
 } from '@src/entity/hand';
-import {GameType, WonAtStatus} from '@src/entity/types';
+import {GameType, PlayerStatus, WonAtStatus} from '@src/entity/types';
 import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {PokerGame, PokerGameUpdates} from '@src/entity/game';
@@ -227,8 +227,23 @@ class HandRepositoryImpl {
 
       // extract player before/after balance
       const playerBalance = {};
-      for (const playerID of Object.keys(result.players)) {
-        playerBalance[playerID] = result.players[playerID].balance;
+      const playerGameTrackerRepo = getRepository(PlayerGameTracker);
+      for (const seatNo of Object.keys(result.players)) {
+        const player = result.players[seatNo];
+        playerBalance[player.id] = player.balance;
+
+        if (playerBalance[player.id].after == 0) {
+          // if player balance is 0, we need to mark this player to add buyin
+          playerGameTrackerRepo.update(
+            {
+              game: {id: game.id},
+              player: {id: player.id},
+            },
+            {
+              status: PlayerStatus.WAIT_FOR_BUYIN,
+            }
+          );
+        }
       }
       handHistory.playersStack = JSON.stringify(playerBalance);
       logger.info('****** STARTING TRANSACTION TO SAVE a hand result');

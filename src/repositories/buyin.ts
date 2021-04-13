@@ -13,10 +13,16 @@ import {
 } from '@src/entity/types';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {GameRepository} from './game';
-import {cancelTimer, playerBuyIn, startTimer} from '@src/gameserver';
+import {
+  cancelTimer,
+  playerBuyIn,
+  playerStatusChanged,
+  startTimer,
+} from '@src/gameserver';
 import {
   BUYIN_APPROVAL_TIMEOUT,
   BUYIN_TIMEOUT,
+  NewUpdate,
   RELOAD_APPROVAL_TIMEOUT,
 } from './types';
 import {Club, ClubMember} from '@src/entity/club';
@@ -79,8 +85,16 @@ export class BuyIn {
     if (!clubMember) {
       throw new Error(`The player ${this.player.uuid} is not in the club`);
     }
+
+    // clubMember.autoBuyinApproval = false;
+
     let playerStatus: PlayerStatus = PlayerStatus.WAIT_FOR_BUYIN;
-    if (clubMember.autoBuyinApproval || this.game.buyInApproval) {
+    if (
+      clubMember.isOwner ||
+      clubMember.isManager ||
+      clubMember.autoBuyinApproval ||
+      this.game.buyInApproval
+    ) {
       approved = true;
       playerStatus = await this.approveBuyInRequest(
         amount,
@@ -121,20 +135,21 @@ export class BuyIn {
           transactionEntityManager
         );
 
-        const buyinApprovalTimeExp = new Date();
-        //const buyinTimeout = this.game.buyInTimeout;
-        const timeout = 60;
-        buyinApprovalTimeExp.setSeconds(
-          buyinApprovalTimeExp.getSeconds() + timeout
-        );
-        startTimer(
-          this.game.id,
-          this.player.id,
-          BUYIN_APPROVAL_TIMEOUT,
-          buyinApprovalTimeExp
-        );
+        // const buyinApprovalTimeExp = new Date();
+        // //const buyinTimeout = this.game.buyInTimeout;
+        // const timeout = 60;
+        // buyinApprovalTimeExp.setSeconds(
+        //   buyinApprovalTimeExp.getSeconds() + timeout
+        // );
+        // startTimer(
+        //   this.game.id,
+        //   this.player.id,
+        //   BUYIN_APPROVAL_TIMEOUT,
+        //   buyinApprovalTimeExp
+        // );
+
         playerInGame.status = PlayerStatus.PENDING_UPDATES;
-        playerStatus = PlayerStatus.WAIT_FOR_BUYIN;
+        playerStatus = PlayerStatus.WAIT_FOR_BUYIN_APPROVAL;
         approved = false;
       }
     }
@@ -187,11 +202,49 @@ export class BuyIn {
         }
 
         if (this.game.club) {
+          const prevStatus = await playerGameTrackerRepository.findOne({
+            game: {id: this.game.id},
+            player: {id: this.player.id},
+          });
+
+          if (!prevStatus) {
+            throw new Error(`Player ${this.player.name} is not in the game`);
+          }
+
           // club game
           [playerStatus, approved] = await this.clubMemberBuyInApproval(
             amount,
             playerInGame,
             transactionEntityManager
+          );
+          await playerGameTrackerRepository.update(
+            {
+              game: {id: this.game.id},
+              player: {id: this.player.id},
+            },
+            {
+              status: playerStatus,
+            }
+          );
+
+          let seatNo = 0;
+          if (prevStatus.seatNo) {
+            seatNo = prevStatus.seatNo;
+          }
+          let newUpdate: NewUpdate = NewUpdate.UNKNOWN_PLAYER_UPDATE;
+          if (playerStatus == PlayerStatus.WAIT_FOR_BUYIN_APPROVAL) {
+            newUpdate = NewUpdate.WAIT_FOR_BUYIN_APPROVAL;
+          }
+          logger.info(
+            `************ [${this.game.gameCode}]: Player ${this.player.name} is waiting for approval`
+          );
+          // refresh the screen
+          playerStatusChanged(
+            this.game,
+            this.player,
+            prevStatus.status,
+            newUpdate,
+            seatNo
           );
         } else {
           // individual game
@@ -463,7 +516,7 @@ export class BuyIn {
       from next_hand_updates nhu 
       join poker_game g on g.club_id = ${
         club.id
-      } and g.ended_at is NULL and g.game_status = ${GameStatus.ACTIVE} 
+      } and g.ended_at is NULL and g.game_status <> ${GameStatus.ENDED} 
       join player p on p.id = nhu.player_id 
       where nhu.new_update in (
         ${[
@@ -645,7 +698,62 @@ export class BuyIn {
     update.buyinAmount = amount;
     await nextHandUpdatesRepository.save(update);
     // cancel timer
-    cancelTimer(this.game.id, this.player.id, BUYIN_TIMEOUT);
-    cancelTimer(this.game.id, this.player.id, BUYIN_APPROVAL_TIMEOUT);
+    //cancelTimer(this.game.id, this.player.id, BUYIN_TIMEOUT);
+    //cancelTimer(this.game.id, this.player.id, BUYIN_APPROVAL_TIMEOUT);
+  }
+
+  public async timerExpired() {
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+
+    // find the player
+    const playerInSeat = await playerGameTrackerRepository.findOne({
+      relations: ['player'],
+      where: {
+        game: {id: this.game.id},
+        player: {id: this.player.id},
+      },
+    });
+
+    if (!playerInSeat) {
+      // We shouldn't be here
+      return;
+    }
+
+    if (
+      playerInSeat.status == PlayerStatus.WAIT_FOR_BUYIN ||
+      playerInSeat.status == PlayerStatus.WAIT_FOR_BUYIN_APPROVAL
+    ) {
+      // buyin timeout expired
+
+      // mark the player as not playing
+      await playerGameTrackerRepository.update(
+        {
+          game: {id: this.game.id},
+          player: {id: this.player.id},
+        },
+        {
+          status: PlayerStatus.NOT_PLAYING,
+          seatNo: 0,
+        }
+      );
+
+      // delete the row in pending updates table
+      const pendingUpdatesRepo = getRepository(NextHandUpdates);
+      await pendingUpdatesRepo.delete({
+        game: {id: this.game.id},
+        player: {id: this.player.id},
+        newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
+      });
+      // update the clients with new status
+      await playerStatusChanged(
+        this.game,
+        this.player,
+        playerInSeat.status,
+        NewUpdate.BUYIN_TIMEDOUT,
+        playerInSeat.seatNo
+      );
+    } else if (playerInSeat.status == PlayerStatus.PLAYING) {
+      // cancel timer wasn't called (ignore the timeout callback)
+    }
   }
 }

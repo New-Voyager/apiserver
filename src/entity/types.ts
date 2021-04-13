@@ -94,6 +94,7 @@ export enum PlayerStatus {
   JOINING,
   WAITLIST_SEATING,
   PENDING_UPDATES,
+  WAIT_FOR_BUYIN_APPROVAL,
 }
 
 export enum PromotionType {

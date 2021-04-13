@@ -591,22 +591,7 @@ class GameRepositoryImpl {
         );
 
         if (playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN) {
-          // TODO: start a buy-in timer
-          const buyinTimeExp = new Date();
-          const timeout = 60;
-          buyinTimeExp.setSeconds(buyinTimeExp.getSeconds() + timeout);
-          const exp = utcTime(buyinTimeExp);
-          await playerGameTrackerRepository.update(
-            {
-              game: {id: game.id},
-              player: {id: player.id},
-            },
-            {
-              buyInExpAt: exp,
-            }
-          );
-
-          startTimer(game.id, player.id, BUYIN_TIMEOUT, buyinTimeExp);
+          await this.startBuyinTimer(game, player, transactionEntityManager);
         }
 
         return [playerInGame, true];
@@ -1372,6 +1357,35 @@ class GameRepositoryImpl {
       return PlayerStatus.PLAYER_UNKNOWN_STATUS;
     }
     return playerInGame.status;
+  }
+
+  public async startBuyinTimer(
+    game: PokerGame,
+    player: Player,
+    transactionEntityManager: EntityManager
+  ) {
+    logger.info(
+      `[${game.gameCode}] Starting buyin timer for player: ${player.name}`
+    );
+    const playerGameTrackerRepository = transactionEntityManager.getRepository(
+      PlayerGameTracker
+    );
+    // TODO: start a buy-in timer
+    const buyinTimeExp = new Date();
+    const timeout = 60;
+    buyinTimeExp.setSeconds(buyinTimeExp.getSeconds() + timeout);
+    const exp = utcTime(buyinTimeExp);
+    await playerGameTrackerRepository.update(
+      {
+        game: {id: game.id},
+        player: {id: player.id},
+      },
+      {
+        buyInExpAt: exp,
+      }
+    );
+
+    startTimer(game.id, player.id, BUYIN_TIMEOUT, buyinTimeExp);
   }
 }
 

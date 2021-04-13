@@ -5,6 +5,7 @@ import {NextHandUpdate, PlayerStatus} from '@src/entity/types';
 import {playerStatusChanged} from '@src/gameserver';
 import {getLogger} from '@src/utils/log';
 import {getRepository} from 'typeorm';
+import {BuyIn} from './buyin';
 import {SeatChangeProcess} from './seatchange';
 import {
   SEATCHANGE_PROGRSS,
@@ -85,9 +86,6 @@ export async function seatChangeTimeoutExpired(gameID: number) {
 }
 
 export async function buyInTimeoutExpired(gameID: number, playerID: number) {
-  logger.info(
-    `Buyin timeout expired. GameID: ${gameID}, playerID: ${playerID}`
-  );
   const gameRepository = getRepository(PokerGame);
   const game = await gameRepository.findOne({id: gameID});
   if (!game) {
@@ -99,49 +97,12 @@ export async function buyInTimeoutExpired(gameID: number, playerID: number) {
   if (!player) {
     throw new Error(`Player: ${playerID} is not found`);
   }
+  logger.info(
+    `[${game.gameCode}] Buyin timeout expired. player: ${player.name}`
+  );
 
-  const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-
-  // find the player
-  const playerInSeat = await playerGameTrackerRepository.findOne({
-    relations: ['player'],
-    where: {
-      game: {id: game.id},
-      player: {id: player.id},
-    },
-  });
-
-  if (!playerInSeat) {
-    // We shouldn't be here
-    return;
-  }
-
-  if (playerInSeat.status == PlayerStatus.WAIT_FOR_BUYIN) {
-    // buyin timeout expired
-
-    // mark the player as not playing
-    await playerGameTrackerRepository.update(
-      {
-        game: {id: game.id},
-        player: {id: player.id},
-      },
-      {
-        status: PlayerStatus.NOT_PLAYING,
-        seatNo: 0,
-      }
-    );
-
-    // update the clients with new status
-    playerStatusChanged(
-      game,
-      player,
-      playerInSeat.status,
-      NewUpdate.BUYIN_TIMEDOUT,
-      playerInSeat.seatNo
-    );
-  } else if (playerInSeat.status == PlayerStatus.PLAYING) {
-    // cancel timer wasn't called (ignore the timeout callback)
-  }
+  const buyIn = new BuyIn(game, player);
+  buyIn.timerExpired();
 }
 
 export async function buyInApprovalTimeoutExpired(
