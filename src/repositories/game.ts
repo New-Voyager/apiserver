@@ -41,6 +41,7 @@ import {Cache} from '@src/cache/index';
 import {StatsRepository} from './stats';
 import {getAgoraToken} from '@src/3rdparty/agora';
 import {utcTime} from '@src/utils';
+import _ from 'lodash';
 
 const logger = getLogger('game');
 
@@ -591,7 +592,12 @@ class GameRepositoryImpl {
         );
 
         if (playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN) {
-          await this.startBuyinTimer(game, player, transactionEntityManager);
+          await this.startBuyinTimer(
+            game,
+            player,
+            {},
+            transactionEntityManager
+          );
         }
 
         return [playerInGame, true];
@@ -1362,27 +1368,37 @@ class GameRepositoryImpl {
   public async startBuyinTimer(
     game: PokerGame,
     player: Player,
-    transactionEntityManager: EntityManager
+    props?: any,
+    transactionEntityManager?: EntityManager
   ) {
     logger.info(
       `[${game.gameCode}] Starting buyin timer for player: ${player.name}`
     );
-    const playerGameTrackerRepository = transactionEntityManager.getRepository(
-      PlayerGameTracker
-    );
+    let playerGameTrackerRepository: Repository<PlayerGameTracker>;
+
+    if (transactionEntityManager) {
+      playerGameTrackerRepository = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
+    } else {
+      playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    }
     // TODO: start a buy-in timer
     const buyinTimeExp = new Date();
     const timeout = 60;
     buyinTimeExp.setSeconds(buyinTimeExp.getSeconds() + timeout);
     const exp = utcTime(buyinTimeExp);
+    let setProps: any = {};
+    if (props) {
+      setProps = _.merge(setProps, props);
+    }
+    setProps.buyInExpAt = exp;
     await playerGameTrackerRepository.update(
       {
         game: {id: game.id},
         player: {id: player.id},
       },
-      {
-        buyInExpAt: exp,
-      }
+      setProps
     );
 
     startTimer(game.id, player.id, BUYIN_TIMEOUT, buyinTimeExp);

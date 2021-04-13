@@ -63,6 +63,8 @@ export interface PlayerInSeat {
   buyIn?: number;
   stack?: number;
   status?: number; // PlayerStatus
+  buyInTimeExpAt?: string; // date time when buyin time expires
+  breakTimeExpAt?: string; // date time when break time expires
   gameToken: string;
 }
 

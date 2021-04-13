@@ -18,6 +18,7 @@ import {SaveHandResult} from './types';
 import {Player} from '@src/entity/player';
 import {Club} from '@src/entity/club';
 import {StatsRepository} from './stats';
+import {GameRepository} from './game';
 
 const logger = getLogger('hand');
 
@@ -227,23 +228,9 @@ class HandRepositoryImpl {
 
       // extract player before/after balance
       const playerBalance = {};
-      const playerGameTrackerRepo = getRepository(PlayerGameTracker);
       for (const seatNo of Object.keys(result.players)) {
         const player = result.players[seatNo];
         playerBalance[player.id] = player.balance;
-
-        if (playerBalance[player.id].after == 0) {
-          // if player balance is 0, we need to mark this player to add buyin
-          playerGameTrackerRepo.update(
-            {
-              game: {id: game.id},
-              player: {id: player.id},
-            },
-            {
-              status: PlayerStatus.WAIT_FOR_BUYIN,
-            }
-          );
-        }
       }
       handHistory.playersStack = JSON.stringify(playerBalance);
       logger.info('****** STARTING TRANSACTION TO SAVE a hand result');
@@ -338,6 +325,19 @@ class HandRepositoryImpl {
           return saveResult;
         }
       );
+
+      for (const seatNo of Object.keys(result.players)) {
+        const player = result.players[seatNo];
+        playerBalance[player.id] = player.balance;
+
+        if (playerBalance[player.id].after == 0) {
+          // if player balance is 0, we need to mark this player to add buyin
+          await GameRepository.startBuyinTimer(game, player, {
+            status: PlayerStatus.WAIT_FOR_BUYIN,
+          });
+        }
+      }
+
       logger.info(`Result: ${JSON.stringify(saveResult)}`);
       logger.info('****** ENDING TRANSACTION TO SAVE a hand result');
       return saveResult;

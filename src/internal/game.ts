@@ -308,6 +308,15 @@ class GameAPIs {
               gameToken: '',
             });
           } else {
+            let buyInExpTime = '';
+            let breakTimeExp = '';
+            if (playerSeat.buyInExpTime) {
+              buyInExpTime = playerSeat.buyInExpTime.toISOString();
+            }
+            if (playerSeat.breakTimeExp) {
+              breakTimeExp = playerSeat.breakTimeExp.toISOString();
+            }
+
             // player is in a seat
             nextHandInfo.playersInSeats.push({
               seatNo: seatNo,
@@ -318,6 +327,8 @@ class GameAPIs {
               stack: playerSeat.stack,
               buyIn: playerSeat.buyIn,
               status: playerSeat.status,
+              buyInTimeExpAt: buyInExpTime,
+              breakTimeExpAt: breakTimeExp,
               gameToken: '',
             });
           }
