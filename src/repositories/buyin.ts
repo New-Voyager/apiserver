@@ -86,7 +86,8 @@ export class BuyIn {
       throw new Error(`The player ${this.player.uuid} is not in the club`);
     }
 
-    clubMember.autoBuyinApproval = false;
+    // clubMember.autoBuyinApproval = false;
+
     let playerStatus: PlayerStatus = PlayerStatus.WAIT_FOR_BUYIN;
     if (
       clubMember.isOwner ||
