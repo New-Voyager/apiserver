@@ -1,4 +1,11 @@
-import {EntityManager, getConnection, getManager, getRepository} from 'typeorm';
+import {
+  EntityManager,
+  getConnection,
+  getManager,
+  getRepository,
+  In,
+  Repository,
+} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player';
@@ -44,26 +51,15 @@ export class BuyIn {
     playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
   ) {
-    // if (
-    //   this.game.status === GameStatus.ACTIVE &&
-    //   this.game.tableStatus === TableStatus.GAME_RUNNING
-    // ) {
-    //   // add buyin to next hand update
-    //   await this.addBuyInToNextHand(
-    //     amount,
-    //     NextHandUpdate.BUYIN_APPROVED,
-    //     transactionEntityManager
-    //   );
-    //   playerInGame.status = PlayerStatus.PENDING_UPDATES;
-    // } else {
     playerInGame.noOfBuyins++;
     playerInGame.stack += amount;
     playerInGame.buyIn += amount;
     // if the player is in the seat and waiting for buyin
     // then mark his status as playing
     if (
-      playerInGame.seatNo !== 0 &&
-      playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN
+      (playerInGame.seatNo !== 0 &&
+        playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN) ||
+      playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN_APPROVAL
     ) {
       playerInGame.status = PlayerStatus.PLAYING;
     }
@@ -150,25 +146,75 @@ export class BuyIn {
           transactionEntityManager
         );
 
-        // const buyinApprovalTimeExp = new Date();
-        // //const buyinTimeout = this.game.buyInTimeout;
-        // const timeout = 60;
-        // buyinApprovalTimeExp.setSeconds(
-        //   buyinApprovalTimeExp.getSeconds() + timeout
-        // );
-        // startTimer(
-        //   this.game.id,
-        //   this.player.id,
-        //   BUYIN_APPROVAL_TIMEOUT,
-        //   buyinApprovalTimeExp
-        // );
-
         playerInGame.status = PlayerStatus.PENDING_UPDATES;
         playerStatus = PlayerStatus.WAIT_FOR_BUYIN_APPROVAL;
         approved = false;
       }
     }
     return [playerStatus, approved];
+  }
+
+  public async buyInApproved(
+    playerInGame: PlayerGameTracker,
+    transactionEntityManager: EntityManager
+  ) {
+    let playerGameTrackerRepository = transactionEntityManager.getRepository(
+      PlayerGameTracker
+    );
+    const count = await playerGameTrackerRepository
+      .createQueryBuilder()
+      .where({
+        game: {id: this.game.id},
+        status: In([
+          PlayerStatus.PLAYING,
+          PlayerStatus.IN_BREAK,
+          PlayerStatus.WAIT_FOR_BUYIN,
+          PlayerStatus.WAIT_FOR_BUYIN_APPROVAL,
+        ]),
+      })
+      .getCount();
+
+    const gameUpdatesRepo = transactionEntityManager.getRepository(
+      PokerGameUpdates
+    );
+    await gameUpdatesRepo
+      .createQueryBuilder()
+      .update()
+      .set({
+        playersInSeats: count,
+      })
+      .where({
+        gameID: this.game.id,
+      })
+      .execute();
+
+    cancelTimer(this.game.id, this.player.id, BUYIN_TIMEOUT);
+
+    // send a message to gameserver
+    // get game server of this game
+    const gameServer = await GameRepository.getGameServer(this.game.id);
+    if (gameServer) {
+      playerBuyIn(this.game, this.player, playerInGame);
+    }
+  }
+
+  public async buyInDenied(
+    playerInGame: PlayerGameTracker,
+    transactionEntityManager: EntityManager
+  ) {
+    // send a message to gameserver
+    // get game server of this game
+    const gameServer = await GameRepository.getGameServer(this.game.id);
+    if (gameServer) {
+      await playerStatusChanged(
+        this.game,
+        this.player,
+        playerInGame.status,
+        NewUpdate.BUYIN_DENIED,
+        playerInGame.stack,
+        playerInGame.seatNo
+      );
+    }
   }
 
   public async request(amount: number): Promise<buyInRequest> {
@@ -185,19 +231,6 @@ export class BuyIn {
         const playerGameTrackerRepository = transactionEntityManager.getRepository(
           PlayerGameTracker
         );
-        // const playerInGames = await playerGameTrackerRepository
-        //   .createQueryBuilder()
-        //   .where({
-        //     game: {id: this.game.id},
-        //     player: {id: this.player.id},
-        //   })
-        //   .select('stack')
-        //   .addSelect('status')
-        //   .addSelect('no_of_buyins', 'noOfBuyins')
-        //   .addSelect('seat_no', 'seatNo')
-        //   .addSelect('buy_in', 'buyIn')
-        //   .execute();
-
         const playerInGame = await playerGameTrackerRepository.findOne({
           game: {id: this.game.id},
           player: {id: this.player.id},
@@ -283,52 +316,7 @@ export class BuyIn {
           throw new Error('Individual game is not implemented yet');
         }
         if (approved) {
-          await playerGameTrackerRepository
-            .createQueryBuilder()
-            .update()
-            .set({
-              noOfBuyins: playerInGame.noOfBuyins,
-              stack: playerInGame.stack,
-              buyIn: playerInGame.buyIn,
-              status: playerInGame.status,
-              buyInExpAt: undefined,
-            })
-            .where({
-              game: {id: this.game.id},
-              player: {id: this.player.id},
-            })
-            .execute();
-
-          const count = await playerGameTrackerRepository
-            .createQueryBuilder()
-            .where({
-              game: {id: this.game.id},
-              status: PlayerStatus.PLAYING,
-            })
-            .getCount();
-
-          const gameUpdatesRepo = transactionEntityManager.getRepository(
-            PokerGameUpdates
-          );
-          await gameUpdatesRepo
-            .createQueryBuilder()
-            .update()
-            .set({
-              playersInSeats: count,
-            })
-            .where({
-              gameID: this.game.id,
-            })
-            .execute();
-
-          cancelTimer(this.game.id, this.player.id, BUYIN_TIMEOUT);
-
-          // send a message to gameserver
-          // get game server of this game
-          const gameServer = await GameRepository.getGameServer(this.game.id);
-          if (gameServer) {
-            playerBuyIn(this.game, this.player, playerInGame);
-          }
+          await this.buyInApproved(playerInGame, transactionEntityManager);
         }
 
         return [playerStatus, approved];
@@ -607,10 +595,13 @@ export class BuyIn {
 
     const result = new Array<pendingApprovalsForClubData>();
     for await (const data of resp1) {
-      const outstandingBalance = await this.calcOutstandingBalance(
-        data.clubId,
-        data.playerId
-      );
+      let outstandingBalance = 0.0;
+      if (data.clubId) {
+        outstandingBalance = await this.calcOutstandingBalance(
+          data.clubId,
+          data.playerId
+        );
+      }
       result.push({
         gameCode: data.gameCode,
         playerUuid: data.playerUuid,
@@ -632,14 +623,105 @@ export class BuyIn {
   ): Promise<boolean> {
     if (type === ApprovalType.BUYIN_REQUEST) {
       if (status === ApprovalStatus.APPROVED) {
-        await this.updateNextHandrecord(
-          NextHandUpdate.WAIT_BUYIN_APPROVAL,
-          NextHandUpdate.BUYIN_APPROVED
+        return await getManager().transaction(
+          async transactionEntityManager => {
+            // get amount from the next hand update table
+            const pendingUpdatesRepo = transactionEntityManager.getRepository(
+              NextHandUpdates
+            );
+            const buyInRequest = await pendingUpdatesRepo.findOne({
+              game: {id: this.game.id},
+              player: {id: this.player.id},
+              newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
+            });
+            if (!buyInRequest) {
+              return false;
+            }
+
+            // update player game tracker
+            const playerInGameRepo = transactionEntityManager.getRepository(
+              PlayerGameTracker
+            );
+            const playerInGame = await playerInGameRepo.findOne({
+              game: {id: this.game.id},
+              player: {id: this.player.id},
+            });
+            if (!playerInGame) {
+              return false;
+            }
+            const updatedPlayerInGame = await this.approveBuyInRequest(
+              buyInRequest.buyinAmount,
+              playerInGame,
+              transactionEntityManager
+            );
+
+            // remove row from NextHandUpdates table
+            await pendingUpdatesRepo.delete({
+              game: {id: this.game.id},
+              player: {id: this.player.id},
+              newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
+            });
+
+            await this.buyInApproved(
+              updatedPlayerInGame,
+              transactionEntityManager
+            );
+            return true;
+          }
         );
       } else {
-        await this.updateNextHandrecord(
-          NextHandUpdate.WAIT_BUYIN_APPROVAL,
-          NextHandUpdate.BUYIN_DENIED
+        // denied
+        return await getManager().transaction(
+          async transactionEntityManager => {
+            // get amount from the next hand update table
+            const pendingUpdatesRepo = transactionEntityManager.getRepository(
+              NextHandUpdates
+            );
+            const buyInRequest = await pendingUpdatesRepo.findOne({
+              game: {id: this.game.id},
+              player: {id: this.player.id},
+              newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
+            });
+            if (!buyInRequest) {
+              return false;
+            }
+
+            // update player game tracker
+            const playerInGameRepo = transactionEntityManager.getRepository(
+              PlayerGameTracker
+            );
+            const playerInGame = await playerInGameRepo.findOne({
+              game: {id: this.game.id},
+              player: {id: this.player.id},
+            });
+            if (!playerInGame) {
+              return false;
+            }
+
+            // remove row from NextHandUpdates table
+            await pendingUpdatesRepo.delete({
+              game: {id: this.game.id},
+              player: {id: this.player.id},
+              newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
+            });
+
+            // mark the player not playing
+            playerInGameRepo.update(
+              {
+                game: {id: this.game.id},
+                player: {id: this.player.id},
+              },
+              {
+                seatNo: 0,
+                status: PlayerStatus.NOT_PLAYING,
+                buyInExpAt: undefined,
+              }
+            );
+
+            cancelTimer(this.game.id, this.player.id, BUYIN_TIMEOUT);
+            await this.buyInDenied(playerInGame, transactionEntityManager);
+            return true;
+          }
         );
       }
     } else if (type === ApprovalType.RELOAD_REQUEST) {
@@ -729,9 +811,6 @@ export class BuyIn {
     update.newUpdate = status;
     update.buyinAmount = amount;
     await nextHandUpdatesRepository.save(update);
-    // cancel timer
-    //cancelTimer(this.game.id, this.player.id, BUYIN_TIMEOUT);
-    //cancelTimer(this.game.id, this.player.id, BUYIN_APPROVAL_TIMEOUT);
   }
 
   public async timerExpired() {

@@ -299,7 +299,9 @@ class ClubRepositoryImpl {
     clubMember.joinedDate = new Date();
     clubMember.status = ClubMemberStatus.PENDING;
     if (player.bot) {
+      // bots are allowed to buy as much as they wantt
       clubMember.status = ClubMemberStatus.ACTIVE;
+      clubMember.autoBuyinApproval = true;
     }
 
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);

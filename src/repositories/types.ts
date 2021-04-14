@@ -21,6 +21,7 @@ export enum NewUpdate {
   NEW_BUYIN,
   BUYIN_TIMEDOUT,
   WAIT_FOR_BUYIN_APPROVAL,
+  BUYIN_DENIED,
 }
 
 export interface HighHandWinnerResult {

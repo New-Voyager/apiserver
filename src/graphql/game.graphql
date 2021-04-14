@@ -231,11 +231,13 @@ enum ApprovalStatus {
 
 type PendingApproval {
   gameCode: String!
+  gameType: GameType
+  clubCode: String
   playerUuid: String!
   name: String!
   approvalType: ApprovalType!
   amount: Float!
-  outstandingBalance: Float!  
+  outstandingBalance: Float
 }
 
 
@@ -364,4 +366,5 @@ type Query {
 
   # returns player role in a game
   playerRole(gameCode: String!): PlayerRole
+
 }

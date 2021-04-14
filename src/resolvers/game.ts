@@ -497,7 +497,6 @@ export async function approveRequest(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
         );
       }
-
       const clubHost = await Cache.getClubMember(hostUuid, game.club.clubCode);
       if (!clubHost || !(clubHost.isManager || clubHost.isOwner)) {
         logger.error(
@@ -508,7 +507,6 @@ export async function approveRequest(
         );
       }
     }
-
     const player = await Cache.getPlayer(playerUuid);
     const buyin = new BuyIn(game, player);
     const resp = await buyin.approve(type, status);
@@ -1252,6 +1250,72 @@ export async function switchSeat(
   }
 }
 
+export async function approveBuyIn(
+  playerId: string,
+  gameCode: string,
+  requestPlayerId: string
+) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const errors = new Array<string>();
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+  try {
+    const game = await Cache.getGame(gameCode);
+
+    const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
+    if (!isAuthorized) {
+      logger.error(
+        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot approve/deny requests`
+      );
+      throw new Error(
+        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot approve/deny requests`
+      );
+    }
+
+    const player = await Cache.getPlayer(playerId);
+  } catch (err) {
+    logger.error(err.message);
+    throw new Error(
+      `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
+    );
+  }
+}
+
+export async function denyBuyIn(
+  playerId: string,
+  gameCode: string,
+  requestPlayerId: string
+) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const errors = new Array<string>();
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+  try {
+    const game = await Cache.getGame(gameCode);
+
+    const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
+    if (!isAuthorized) {
+      logger.error(
+        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot approve/deny requests`
+      );
+      throw new Error(
+        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot approve/deny requests`
+      );
+    }
+  } catch (err) {
+    logger.error(err.message);
+    throw new Error(
+      `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
+    );
+  }
+}
+
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -1392,12 +1456,27 @@ const resolvers: any = {
       return reload(ctx.req.playerId, args.gameCode, args.amount);
     },
     approveRequest: async (parent, args, ctx, info) => {
+      let approvalType: ApprovalType = ApprovalType.BUYIN_REQUEST;
+      const type = ApprovalType[ApprovalType.BUYIN_REQUEST];
+      if (args.type === ApprovalType[ApprovalType.BUYIN_REQUEST]) {
+        approvalType = ApprovalType.BUYIN_REQUEST;
+      } else if (args.type === ApprovalType[ApprovalType.RELOAD_REQUEST]) {
+        approvalType = ApprovalType.RELOAD_REQUEST;
+      }
+
+      let status: ApprovalStatus = ApprovalStatus.DENIED;
+      if (args.status === ApprovalStatus[ApprovalStatus.APPROVED]) {
+        status = ApprovalStatus.APPROVED;
+      } else if (args.status === ApprovalStatus[ApprovalStatus.DENIED]) {
+        status = ApprovalStatus.DENIED;
+      }
+
       return approveRequest(
         ctx.req.playerId,
         args.playerUuid,
         args.gameCode,
-        args.type,
-        args.status
+        approvalType,
+        status
       );
     },
     startGame: async (parent, args, ctx, info) => {

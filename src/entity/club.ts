@@ -162,7 +162,7 @@ export class ClubMember {
   @Column({name: 'notes', type: 'text', default: ''})
   public notes!: string;
 
-  @Column({name: 'auto_buyin_approval', default: true})
+  @Column({name: 'auto_buyin_approval', default: false})
   public autoBuyinApproval!: boolean;
 
   @Column({
