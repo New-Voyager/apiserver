@@ -44,32 +44,45 @@ export class BuyIn {
     playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
   ) {
+    // if (
+    //   this.game.status === GameStatus.ACTIVE &&
+    //   this.game.tableStatus === TableStatus.GAME_RUNNING
+    // ) {
+    //   // add buyin to next hand update
+    //   await this.addBuyInToNextHand(
+    //     amount,
+    //     NextHandUpdate.BUYIN_APPROVED,
+    //     transactionEntityManager
+    //   );
+    //   playerInGame.status = PlayerStatus.PENDING_UPDATES;
+    // } else {
+    playerInGame.noOfBuyins++;
+    playerInGame.stack += amount;
+    playerInGame.buyIn += amount;
+    // if the player is in the seat and waiting for buyin
+    // then mark his status as playing
     if (
-      this.game.status === GameStatus.ACTIVE &&
-      this.game.tableStatus === TableStatus.GAME_RUNNING
+      playerInGame.seatNo !== 0 &&
+      playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN
     ) {
-      // add buyin to next hand update
-      await this.addBuyInToNextHand(
-        amount,
-        NextHandUpdate.BUYIN_APPROVED,
-        transactionEntityManager
-      );
-      playerInGame.status = PlayerStatus.PENDING_UPDATES;
-    } else {
-      playerInGame.noOfBuyins++;
-      playerInGame.stack += amount;
-      playerInGame.buyIn += amount;
-      // if the player is in the seat and waiting for buyin
-      // then mark his status as playing
-      if (
-        playerInGame.seatNo !== 0 &&
-        playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN
-      ) {
-        playerInGame.status = PlayerStatus.PLAYING;
-      }
+      playerInGame.status = PlayerStatus.PLAYING;
     }
+    //}
+    const repo = transactionEntityManager.getRepository(PlayerGameTracker);
+    await repo.update(
+      {
+        game: {id: this.game.id},
+        player: {id: this.player.id},
+      },
+      {
+        status: playerInGame.status,
+        stack: playerInGame.stack,
+        buyIn: playerInGame.buyIn,
+        noOfBuyins: playerInGame.noOfBuyins,
+      }
+    );
 
-    return playerInGame.status;
+    return playerInGame;
   }
 
   protected async clubMemberBuyInApproval(
@@ -89,6 +102,7 @@ export class BuyIn {
     // clubMember.autoBuyinApproval = false;
 
     let playerStatus: PlayerStatus = PlayerStatus.WAIT_FOR_BUYIN;
+    let updatedPlayerInGame: PlayerGameTracker;
     if (
       clubMember.isOwner ||
       clubMember.isManager ||
@@ -96,11 +110,12 @@ export class BuyIn {
       this.game.buyInApproval
     ) {
       approved = true;
-      playerStatus = await this.approveBuyInRequest(
+      updatedPlayerInGame = await this.approveBuyInRequest(
         amount,
         playerInGame,
         transactionEntityManager
       );
+      playerStatus = updatedPlayerInGame.status;
     } else {
       const query =
         'SELECT SUM(buy_in) current_buyin FROM player_game_tracker pgt, poker_game pg WHERE pgt.pgt_player_id = ' +
@@ -170,20 +185,23 @@ export class BuyIn {
         const playerGameTrackerRepository = transactionEntityManager.getRepository(
           PlayerGameTracker
         );
-        const playerInGames = await playerGameTrackerRepository
-          .createQueryBuilder()
-          .where({
-            game: {id: this.game.id},
-            player: {id: this.player.id},
-          })
-          .select('stack')
-          .addSelect('status')
-          .addSelect('no_of_buyins', 'noOfBuyins')
-          .addSelect('seat_no', 'seatNo')
-          .addSelect('buy_in', 'buyIn')
-          .execute();
+        // const playerInGames = await playerGameTrackerRepository
+        //   .createQueryBuilder()
+        //   .where({
+        //     game: {id: this.game.id},
+        //     player: {id: this.player.id},
+        //   })
+        //   .select('stack')
+        //   .addSelect('status')
+        //   .addSelect('no_of_buyins', 'noOfBuyins')
+        //   .addSelect('seat_no', 'seatNo')
+        //   .addSelect('buy_in', 'buyIn')
+        //   .execute();
 
-        const playerInGame = playerInGames[0];
+        const playerInGame = await playerGameTrackerRepository.findOne({
+          game: {id: this.game.id},
+          player: {id: this.player.id},
+        });
         if (!playerInGame) {
           logger.error(
             `Player ${this.player.uuid} is not in the game: ${this.game.gameCode}`
@@ -231,9 +249,22 @@ export class BuyIn {
           if (prevStatus.seatNo) {
             seatNo = prevStatus.seatNo;
           }
+          let stack = prevStatus.stack;
           let newUpdate: NewUpdate = NewUpdate.UNKNOWN_PLAYER_UPDATE;
           if (playerStatus == PlayerStatus.WAIT_FOR_BUYIN_APPROVAL) {
             newUpdate = NewUpdate.WAIT_FOR_BUYIN_APPROVAL;
+          } else if (approved) {
+            newUpdate = NewUpdate.NEW_BUYIN;
+
+            // get current stack
+            const updated = await playerGameTrackerRepository.findOne({
+              game: {id: this.game.id},
+              player: {id: this.player.id},
+            });
+            if (!updated) {
+              throw new Error('Unable to get the updated row');
+            }
+            stack = updated?.stack;
           }
           logger.info(
             `************ [${this.game.gameCode}]: Player ${this.player.name} is waiting for approval`
@@ -244,6 +275,7 @@ export class BuyIn {
             this.player,
             prevStatus.status,
             newUpdate,
+            stack,
             seatNo
           );
         } else {
@@ -750,6 +782,7 @@ export class BuyIn {
         this.player,
         playerInSeat.status,
         NewUpdate.BUYIN_TIMEDOUT,
+        playerInSeat.stack,
         playerInSeat.seatNo
       );
     } else if (playerInSeat.status == PlayerStatus.PLAYING) {

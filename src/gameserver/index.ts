@@ -199,6 +199,7 @@ export async function playerStatusChanged(
   player: Player,
   oldStatus: PlayerStatus,
   newStatus: NewUpdate,
+  stack: number,
   seatNo: number
 ) {
   if (!notifyGameServer) {
@@ -214,6 +215,7 @@ export async function playerStatusChanged(
     playerUuid: player.uuid,
     name: player.name,
     seatNo: seatNo,
+    stack: stack,
     status: oldStatus,
     newUpdate: newStatus,
   };
