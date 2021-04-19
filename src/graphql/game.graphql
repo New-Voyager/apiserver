@@ -238,6 +238,9 @@ type PendingApproval {
   approvalType: ApprovalType!
   amount: Float!
   outstandingBalance: Float
+  clubName: String
+  smallBlind: Float
+  bigBlind: Float
 }
 
 
@@ -359,6 +362,7 @@ type Query {
   currentHandLog(gameCode: String!): Json
   gameResultTable(gameCode: String!): [GameResultTableRow!]
   gamePlayers(gameCode: String!): [PlayerInfo!]
+  pendingApprovals(clubCode: String gameCode: String): [PendingApproval!]
 
   # seat change queries
   seatChangeRequests(gameCode: String!): [PlayerSeatChange]

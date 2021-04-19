@@ -34,6 +34,7 @@ import {
 } from './types';
 import {Club, ClubMember} from '@src/entity/club';
 import {buyInRequest, pendingApprovalsForClubData} from '@src/types';
+import {fixQuery} from '@src/utils';
 
 const logger = getLogger('buyin');
 
@@ -99,12 +100,22 @@ export class BuyIn {
 
     let playerStatus: PlayerStatus = PlayerStatus.WAIT_FOR_BUYIN;
     let updatedPlayerInGame: PlayerGameTracker;
+    let isHost = false;
+    if (this.game.startedBy.uuid === this.player.uuid) {
+      isHost = true;
+    }
+
     if (
       clubMember.isOwner ||
       clubMember.isManager ||
       clubMember.autoBuyinApproval ||
-      this.game.buyInApproval
+      !this.game.buyInApproval ||
+      isHost
     ) {
+      logger.info(`[${this.game.gameCode}] Player: ${this.player.name} buyin approved. 
+            clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager} 
+            Auto approval: ${clubMember.autoBuyinApproval} 
+            isHost: {isHost} Game.buyInApproval: ${this.game.buyInApproval}`);
       approved = true;
       updatedPlayerInGame = await this.approveBuyInRequest(
         amount,
@@ -522,39 +533,125 @@ export class BuyIn {
     };
   }
 
-  public async pendingApprovalsForClub(
-    club: Club
-  ): Promise<Array<pendingApprovalsForClubData>> {
-    const query1 = `select 
-      g.game_code as "gameCode", 
-      g.id as "gameId", 
+  public async pendingApprovalsForPlayer(): Promise<
+    Array<pendingApprovalsForClubData>
+  > {
+    let query = `
+    select
+	  c.name as "clubName",
+    c.id as "clubId",
+	  c.club_code as "clubCode",
+      pg.game_code as "gameCode", 
+      pg.id as "gameId",
+      pg.game_type  as "gameType",
+      pg.small_blind as "smallBlind",
+      pg.big_blind  as "bigBlind",
       p.uuid as "playerUuid", 
       p.name as "name", 
       p.id as "playerId", 
       nhu.buyin_amount as "amount", 
       nhu.new_update as "update" 
-      from next_hand_updates nhu 
-      join poker_game g on g.club_id = ${
-        club.id
-      } and g.ended_at is NULL and g.game_status <> ${GameStatus.ENDED} 
-      join player p on p.id = nhu.player_id 
-      where nhu.new_update in (
-        ${[
-          NextHandUpdate.WAIT_BUYIN_APPROVAL,
-          NextHandUpdate.WAIT_RELOAD_APPROVAL,
-        ]}
-      );`;
+      from next_hand_updates nhu
+	 join     
+	 player p on p.id = nhu.player_id
+	 join
+	 poker_game pg on pg.id = nhu.game_id 
+	 join club_member cm
+     on pg.club_id  = cm.club_id 
+        and cm.player_id = ?
+        and (cm.is_owner = true or cm.is_manager = true) 
+       and pg.ended_at  is null
+     join club c on cm.club_id = c.id
+      where nhu.new_update in (?, ?)`;
+    query = fixQuery(query);
 
-    const resp1 = await getConnection().query(query1);
+    const resp1 = await getConnection().query(query, [
+      this.player.id,
+      NextHandUpdate.WAIT_BUYIN_APPROVAL,
+      NextHandUpdate.WAIT_RELOAD_APPROVAL,
+    ]);
 
     const result = new Array<pendingApprovalsForClubData>();
     for await (const data of resp1) {
+      const clubId = data.clubId;
       const outstandingBalance = await this.calcOutstandingBalance(
-        club.id,
+        clubId,
         data.playerId
       );
+
       result.push({
         gameCode: data.gameCode,
+        clubCode: data.clubCode,
+        gameType: data.gameType,
+        smallBlind: data.smallBlind,
+        bigBlind: data.bigBlind,
+        playerUuid: data.playerUuid,
+        name: data.name,
+        amount: data.amount,
+        approvalType:
+          data.update === NextHandUpdate.WAIT_BUYIN_APPROVAL
+            ? ApprovalType[ApprovalType.BUYIN_REQUEST]
+            : ApprovalType[ApprovalType.RELOAD_REQUEST],
+        outstandingBalance: outstandingBalance,
+      });
+    }
+
+    return result;
+  }
+
+  public async pendingApprovalsForClub(
+    club: Club
+  ): Promise<Array<pendingApprovalsForClubData>> {
+    let query = `
+    select
+	  c.name as "clubName",
+    c.id as "clubId",
+	  c.club_code as "clubCode",
+      pg.game_code as "gameCode", 
+      pg.id as "gameId",
+      pg.game_type  as "gameType",
+      pg.small_blind as "smallBlind",
+      pg.big_blind  as "bigBlind",
+      p.uuid as "playerUuid", 
+      p.name as "name", 
+      p.id as "playerId", 
+      nhu.buyin_amount as "amount", 
+      nhu.new_update as "update" 
+      from next_hand_updates nhu
+	 join     
+	 player p on p.id = nhu.player_id
+	 join
+	 poker_game pg on pg.id = nhu.game_id 
+	 join club_member cm
+     on pg.club_id  = cm.club_id 
+        and cm.player_id = ?
+        and (cm.is_owner = true or cm.is_manager = true) 
+       and pg.ended_at  is null
+     join club c on cm.club_id = c.id
+      where nhu.new_update in (?, ?) and c.id = (?)`;
+    query = fixQuery(query);
+
+    const resp1 = await getConnection().query(query, [
+      this.player.id,
+      NextHandUpdate.WAIT_BUYIN_APPROVAL,
+      NextHandUpdate.WAIT_RELOAD_APPROVAL,
+      club.id,
+    ]);
+
+    const result = new Array<pendingApprovalsForClubData>();
+    for await (const data of resp1) {
+      const clubId = data.clubId;
+      const outstandingBalance = await this.calcOutstandingBalance(
+        clubId,
+        data.playerId
+      );
+
+      result.push({
+        gameCode: data.gameCode,
+        clubCode: data.clubCode,
+        gameType: data.gameType,
+        smallBlind: data.smallBlind,
+        bigBlind: data.bigBlind,
         playerUuid: data.playerUuid,
         name: data.name,
         amount: data.amount,
@@ -575,6 +672,9 @@ export class BuyIn {
     const query1 = `select 
       g.game_code as "gameCode", 
       g.id as "gameId", 
+      g.game_type as "gameType",
+      g.small_blind as "smallBlind",
+      g.bigBlind as "bigBlind",
       p.uuid as "playerUuid", 
       p.name as "name", 
       p.id as "playerId", 
@@ -595,15 +695,18 @@ export class BuyIn {
 
     const result = new Array<pendingApprovalsForClubData>();
     for await (const data of resp1) {
-      let outstandingBalance = 0.0;
-      if (data.clubId) {
-        outstandingBalance = await this.calcOutstandingBalance(
-          data.clubId,
-          data.playerId
-        );
-      }
+      const clubId = data.clubId;
+      const outstandingBalance = await this.calcOutstandingBalance(
+        clubId,
+        data.playerId
+      );
+
       result.push({
         gameCode: data.gameCode,
+        clubCode: data.clubCode,
+        gameType: data.gameType,
+        smallBlind: data.smallBlind,
+        bigBlind: data.bigBlind,
         playerUuid: data.playerUuid,
         name: data.name,
         amount: data.amount,

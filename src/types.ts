@@ -1,4 +1,4 @@
-import {PlayerStatus} from './entity/types';
+import {GameType, PlayerStatus} from './entity/types';
 
 export interface PageOptions {
   prev?: number;
@@ -43,6 +43,10 @@ export interface pendingApprovalsForClubData {
   amount: number;
   approvalType: string;
   outstandingBalance: number;
+  clubCode: string;
+  gameType: GameType;
+  smallBlind: number;
+  bigBlind: number;
 }
 
 export interface getMembersFilterData {

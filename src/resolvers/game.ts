@@ -19,6 +19,8 @@ import {ClubRepository} from '@src/repositories/club';
 import {getCurrentHandLog} from '@src/gameserver';
 import {isHostOrManagerOrOwner} from './util';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
+import {argsToArgsConfig} from 'graphql/type/definition';
+import {pendingApprovalsForClubData} from '@src/types';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -317,31 +319,47 @@ export async function reload(
   }
 }
 
-export async function pendingApprovalsForClub(
+export async function pendingApprovals(
   hostUuid: string,
-  clubCode: string
+  clubCode: string,
+  gameCode: string
 ) {
   if (!hostUuid) {
     throw new Error('Unauthorized');
   }
   try {
-    const clubHost = await Cache.getClubMember(hostUuid, clubCode);
-    if (!clubHost || !(clubHost.isManager || clubHost.isOwner)) {
-      logger.error(
-        `Player: ${hostUuid} is not authorized to approve buyIn in club ${clubCode}`
-      );
-      throw new Error(
-        `Player: ${hostUuid} is not authorized to approve buyIn in club ${clubCode}`
-      );
+    let club;
+    if (clubCode) {
+      const clubHost = await Cache.getClubMember(hostUuid, clubCode);
+      if (!clubHost || !(clubHost.isManager || clubHost.isOwner)) {
+        logger.error(
+          `Player: ${hostUuid} is not authorized to approve buyIn in club ${clubCode}`
+        );
+        throw new Error(
+          `Player: ${hostUuid} is not authorized to approve buyIn in club ${clubCode}`
+        );
+      }
+      club = await Cache.getClub(clubCode);
     }
 
     const player = await Cache.getPlayer(hostUuid);
-    const club = await Cache.getClub(clubCode);
 
     const buyin = new BuyIn(new PokerGame(), player);
-    const resp = await buyin.pendingApprovalsForClub(club);
+    let resp: Array<pendingApprovalsForClubData>;
+    if (club) {
+      resp = await buyin.pendingApprovalsForClub(club);
+    } else {
+      resp = await buyin.pendingApprovalsForPlayer();
+    }
 
-    return resp;
+    let ret = new Array<any>();
+    for (let item of resp) {
+      let itemRet = item as any;
+      itemRet.gameType = GameType[item.gameType];
+      ret.push(itemRet);
+    }
+
+    return ret;
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error(
@@ -380,11 +398,50 @@ export async function pendingApprovalsForGame(
 
     const buyin = new BuyIn(game, player);
     const resp = await buyin.pendingApprovalsForGame();
+    let ret = new Array<any>();
+    for (let item of resp) {
+      let itemRet = item as any;
+      itemRet.gameType = GameType[item.gameType];
+      ret.push(itemRet);
+    }
+
+    return ret;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error(`Failed to approve buyin. ${JSON.stringify(err)}`);
+  }
+}
+
+export async function pendingApprovalsForClub(
+  hostUuid: string,
+  clubCode: string
+) {
+  if (!hostUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    const clubHost = await Cache.getClubMember(hostUuid, clubCode);
+    if (!clubHost || !(clubHost.isManager || clubHost.isOwner)) {
+      logger.error(
+        `Player: ${hostUuid} is not authorized to approve buyIn in club ${clubCode}`
+      );
+      throw new Error(
+        `Player: ${hostUuid} is not authorized to approve buyIn in club ${clubCode}`
+      );
+    }
+
+    const player = await Cache.getPlayer(hostUuid);
+    const club = await Cache.getClub(clubCode);
+
+    const buyin = new BuyIn(new PokerGame(), player);
+    const resp = await buyin.pendingApprovalsForClub(club);
 
     return resp;
   } catch (err) {
     logger.error(JSON.stringify(err));
-    throw new Error(`Failed to approve buyin. ${JSON.stringify(err)}`);
+    throw new Error(
+      `Failed to fetch approval requests. ${JSON.stringify(err)}`
+    );
   }
 }
 
@@ -1344,6 +1401,13 @@ const resolvers: any = {
     },
     pendingApprovalsForGame: async (parent, args, ctx, info) => {
       return await pendingApprovalsForGame(ctx.req.playerId, args.gameCode);
+    },
+    pendingApprovals: async (parent, args, ctx, info) => {
+      return await pendingApprovals(
+        ctx.req.playerId,
+        args.clubCode,
+        args.gameCode
+      );
     },
     completedGame: async (parent, args, ctx, info) => {
       return await completedGame(ctx.req.playerId, args.gameCode);
