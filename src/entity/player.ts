@@ -22,6 +22,10 @@ export class Player {
   @Column({name: 'device_id', unique: true, nullable: true})
   public deviceId!: string;
 
+  @Index()
+  @Column({name: 'firebase_token', nullable: true})
+  public firebaseToken!: string;
+
   @Column({name: 'is_active'})
   public isActive!: boolean;
   /**

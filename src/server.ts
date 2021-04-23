@@ -24,6 +24,27 @@ import {Player} from './entity/player';
 import {initializeGameServer} from './gameserver';
 import {timerCallback} from './repositories/timer';
 import {seed} from './initdb';
+var admin = require('firebase-admin');
+
+var serviceAccount = {
+  type: 'service_account',
+  project_id: 'poker-club-app',
+  private_key_id: '811278dd416bccf8abf0170f18f27dbfdc63a024',
+  private_key:
+    '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDmKAF1gpHuajJS\nQdPCz5UwKtuob3jQhKxUre6gTYt+A5EcJik4YcQfAQN9j4TZfnAldCzDE8ZOX0f4\nDBKX6Z1EABHBXy4pjS8tD5gVJseYh0u0j4op/lRLmrXWLsJX1c04CGeIhgVseYza\n8X3TxDIYRN2A9CQL5knEBuJQc3BJRzgDWffAIkm+iSwBpUME4nwY4OROY30Hv3iR\n1ONm0JdP0sjiEdy2dmLK00H+0Kw2vzHPWVInr+HuiYSWoJ/J15lhnpA3OYJ08beP\n6dZaxF67wzWGUQDYbOJsG+r5j0C5dV6zcG7kuNg/6NWLZzKXIkwXNUDUfE6HCBCb\nOV+oScJ5AgMBAAECggEABpXZhkQenOLvNXNjqBBH9nlS4t3ag1pLUwOo4ZQcJUQl\nXE7dXG1hs4Kvl8Y8PWmZV8q3pLtsgh3GmH9vpcJQRIlviugRdb7UdA1K7GDd26fv\nqNlTSBuIAv8Rx4L7x+us+ttZRrz/Pc2Bitqgsac6JG1pbvEIzEnvzXZmP4xDLFT1\nMDhVP8cirI4rfQGPUT9qrwqXEDdU7q6WTHYIu9bc1hXNS41g9Swx5bwBOHgDQ4rC\nBLsgK6NLQkp/IJpUccdSIztqNkSHYeocTWioeNM2c+gjSh0BSwV0PTw5J2VIw+kI\ngIJCvyUW/0iU9MvXaECuGkcCW+ZquX5RbE4bHZFlXQKBgQD8gwmlncyoisLYf3Il\ncFp1g8JOJo5GlNzs2X2qRoE/5MI92wmZmY0eycupYpMNjSEmI9NZ/yZREcH0lqUU\nbvf/cBq5pMUlCxYpFwAPbs7FeJn1Cq+VtJTIFua+2EYZ06wRfnxGf4KL2XmjTLWc\nYLNI7c0MNrvaf2Ivy4Jd9PlytQKBgQDpVelZhnQrBdFjXWQgRgPLrgB+b/COFAym\nezKTMXqUb3BUFBSSbxmYEjmfUqsTy156NEmJ19vUHcgu4GOMANYQ7GSn4a+01BEI\nfBZ6tienajaM6ib8uIFkOlZ73bT2Jx1MRlQ/c2/6d1oicJcacbDodVTKkSJ98Jl2\nGptggnPXNQKBgDJ3VfQ9p2t/4BU4021cGRgnbywDVKgSlFzZ0t23HZnRdGi8YBzM\nrYGbvxJpWw54SEnBGzp/Xf8R13u0p+V/kB0DILQ9lBElOBaaPC7ZbIXW5p4sto7q\n+llLCm7V9pyuy1LrvpawYTzmCAN1D07jnLFUpYhtX/n5P3xh5fo1Pa2JAoGBAIRy\n+OeRk8WMIuRlcd2EAMmQNsWOoxzzMo8Z5YZ6EpvJehiv4VGR8RRKXB0dHvE4gqOZ\npJizSBxq32QEiV1CaEDo/uXxDPz3V8faMCRt26qDdv2cOI9B6GjNWKQtIHiNkWrn\njRELZOfm8eoUwSEIoiQB3iSyJ8MXXPUWe1ZYFot1AoGBAPAmyAdhweZyNi6BKisN\n8cB1065QrE55lMb7EpXYi/xrAdTikDkBoQVA/00asdCNb7cvOt3YAq5vf3eU1Oqj\n+01d2sHkr1/cKbiCV0IkNAhlZjUYbUKxYkqP620/IhLGTg92pvRkmu97iEFaFVeS\n+Skb+Wi1OY3tn5fhdMUbYtlz\n-----END PRIVATE KEY-----\n',
+  client_email:
+    'firebase-adminsdk-e4h53@poker-club-app.iam.gserviceaccount.com',
+  client_id: '101014893742098390947',
+  auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+  token_uri: 'https://oauth2.googleapis.com/token',
+  auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
+  client_x509_cert_url:
+    'https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-e4h53%40poker-club-app.iam.gserviceaccount.com',
+}; //require("poker-club-app-firebase-adminsdk-e4h53-811278dd41.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
 const logger = getLogger('server');
 const JWT_EXPIRY_DAYS = 3;
@@ -107,7 +128,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     await createConnection({...options, name: 'default'});
   }
 
-  //initializeNats();
+  initializeNats();
   initializeGameServer();
 
   // get config vars
@@ -290,4 +311,8 @@ function generateAccessToken(payload) {
 // returns nats urls
 async function natsUrls(req: any, resp: any) {
   resp.status(200).send(JSON.stringify({urls: process.env.NATS_URL}));
+}
+
+function initializeNats() {
+  // throw new Error('Function not implemented.');
 }
