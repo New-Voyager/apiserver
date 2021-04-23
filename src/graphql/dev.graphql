@@ -1,0 +1,5 @@
+# graphql used for development
+
+type Mutation {
+  deleteGame(gameCode: String, includeGame: Boolean): Boolean
+}

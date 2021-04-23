@@ -42,6 +42,7 @@ import {StatsRepository} from './stats';
 import {getAgoraToken} from '@src/3rdparty/agora';
 import {utcTime} from '@src/utils';
 import _ from 'lodash';
+import {PlayerGameStats} from '@src/entity/stats';
 
 const logger = getLogger('game');
 
@@ -1402,6 +1403,70 @@ class GameRepositoryImpl {
     );
 
     startTimer(game.id, player.id, BUYIN_TIMEOUT, buyinTimeExp);
+  }
+
+  public async deleteGame(
+    playerId: string,
+    gameCode: string,
+    includeGame: boolean
+  ) {
+    await getManager().transaction(async transactionEntityManager => {
+      if (gameCode) {
+        const gameRepo = transactionEntityManager.getRepository(PokerGame);
+        const game = await gameRepo.findOne({gameCode: gameCode});
+        if (!game) {
+          throw new Error(`Game ${gameCode} is not found`);
+        }
+        await transactionEntityManager
+          .getRepository(PlayerGameTracker)
+          .delete({game: {id: game.id}});
+        await transactionEntityManager
+          .getRepository(PlayerGameStats)
+          .delete({game: {id: game.id}});
+        await transactionEntityManager
+          .getRepository(NextHandUpdates)
+          .delete({game: {id: game.id}});
+        await transactionEntityManager
+          .getRepository(TrackGameServer)
+          .delete({game: {id: game.id}});
+
+        if (!includeGame) {
+          await transactionEntityManager
+            .getRepository(PokerGame)
+            .delete({id: game.id});
+        }
+      } else {
+        await transactionEntityManager
+          .getRepository(PlayerGameTracker)
+          .createQueryBuilder()
+          .delete()
+          .execute();
+        await transactionEntityManager
+          .getRepository(PlayerGameStats)
+          .createQueryBuilder()
+          .delete()
+          .execute();
+        await transactionEntityManager
+          .getRepository(NextHandUpdates)
+          .createQueryBuilder()
+          .delete()
+          .execute();
+        await transactionEntityManager
+          .getRepository(TrackGameServer)
+          .createQueryBuilder()
+          .delete()
+          .execute();
+
+        if (!includeGame) {
+          await transactionEntityManager
+            .getRepository(PokerGame)
+            .createQueryBuilder()
+            .delete()
+            .execute();
+        }
+      }
+    });
+    return true;
   }
 }
 
