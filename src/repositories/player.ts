@@ -1,6 +1,9 @@
 import {EntityManager, Repository, getRepository, In} from 'typeorm';
 import {v4 as uuidv4} from 'uuid';
 import {Player} from '@src/entity/player';
+import {loggers} from 'winston';
+import {getLogger} from '@src/utils/log';
+const logger = getLogger('player');
 
 class PlayerRepositoryImpl {
   public async createPlayer(
@@ -38,6 +41,27 @@ class PlayerRepositoryImpl {
 
     await repository.save(player);
     return player.uuid;
+  }
+
+  // Updates firebase token for the player
+  public async updateFirebaseToken(playerId: string, token: string) {
+    const player = await getRepository(Player).findOne({
+      uuid: playerId,
+    });
+    if (!player) {
+      logger.error(`Player is not found for uuid: ${playerId}`);
+      throw new Error(`Player is not found for uuid: ${playerId}`);
+    }
+
+    logger.info(`Updated token for player: ${player.name} token: ${token}`);
+    await getRepository(Player).update(
+      {
+        uuid: playerId,
+      },
+      {
+        firebaseToken: token,
+      }
+    );
   }
 
   public async getPlayers(): Promise<Array<any>> {

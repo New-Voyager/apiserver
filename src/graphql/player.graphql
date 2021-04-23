@@ -14,13 +14,6 @@ type Player {
   clubs: [PlayerClub!]
 }
 
-
-type Mutation {
-  createPlayer(player: PlayerCreateInput!): String!
-  authenticatePlayer(name: String!, uuid: String!, deviceId: String!): Boolean
-  leaveClub(clubCode: String!): ClubMemberStatus
-}
-
 type PlayerClub {
   name: String
   host: String
@@ -117,4 +110,11 @@ type Query {
   searchClub (clubCode: String!): SearchClubResult
   liveAudioToken(gameCode: String!): String!
   idsToPlayersInfo(ids: [Int!]): [PlayerInfo]
+}
+
+type Mutation {
+  createPlayer(player: PlayerCreateInput!): String!
+  authenticatePlayer(name: String!, uuid: String!, deviceId: String!): Boolean
+  leaveClub(clubCode: String!): ClubMemberStatus
+  updateFirebaseToken(token: String!): Boolean
 }

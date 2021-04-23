@@ -99,6 +99,9 @@ const resolvers: any = {
     leaveClub: async (parent, args, ctx, info) => {
       return leaveClub(ctx.req.playerId, args);
     },
+    updateFirebaseToken: async (parent, args, ctx, info) => {
+      return updateFirebaseToken(ctx.req.playerId, args.token);
+    },
   },
   Player: {
     clubs: async (parent, args, ctx, info) => {
@@ -272,6 +275,16 @@ export async function createPlayer(args: any) {
     function isEmpty(value: any) {
       return value === undefined || value === '';
     }
+  }
+}
+
+export async function updateFirebaseToken(playerId: string, token: string) {
+  try {
+    await PlayerRepository.updateFirebaseToken(playerId, token);
+    return true;
+  } catch (err) {
+    logger.error(`Failed to update firebase token. Error: ${err.toString}`);
+    throw err;
   }
 }
 
