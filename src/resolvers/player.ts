@@ -15,6 +15,7 @@ import {
 } from '@src/entity/types';
 import {getHighHandsByGame} from './reward';
 import {getAgoraToken} from '@src/3rdparty/agora';
+import {Nats} from '@src/nats';
 const logger = getLogger('player');
 
 async function getClubs(playerId: string): Promise<Array<any>> {
@@ -177,6 +178,7 @@ export async function getPlayerInfo(playerId: string) {
     name: player.name,
     email: player.email,
     lastActiveTime: player.updatedAt,
+    channel: Nats.getPlayerChannel(player),
   };
 }
 

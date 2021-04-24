@@ -2,7 +2,7 @@ import {Cache} from '@src/cache';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {Player} from '@src/entity/player';
-import {PlayerStatus} from '@src/entity/types';
+import {GameType, PlayerStatus} from '@src/entity/types';
 import {cancelTimer, startTimer, waitlistSeating} from '@src/gameserver';
 import {fixQuery} from '@src/utils';
 import {getLogger} from '@src/utils/log';
@@ -17,6 +17,7 @@ import {
 import {BUYIN_TIMEOUT, WAITLIST_SEATING} from './types';
 import * as crypto from 'crypto';
 import {BuyIn} from './buyin';
+import {Nats} from '@src/nats';
 
 const logger = getLogger('waitlist');
 
@@ -298,6 +299,23 @@ export class WaitListMgmt {
     );
     // we will send a notification which player is coming to the table
     waitlistSeating(nextPlayer.game, nextPlayer.player, timeout);
+    const game = nextPlayer.game;
+    let clubName: string = '';
+    if (game.club !== null) {
+      clubName = game.club.name;
+    }
+
+    const title = `${GameType[game.gameType]} ${game.smallBlind}/${
+      game.bigBlind
+    }`;
+    Nats.sendWaitlistMessage(
+      game.gameCode,
+      game.gameType,
+      title,
+      clubName,
+      nextPlayer.player,
+      waitingListTimeExp
+    );
   }
 
   public async addToWaitingList(playerUuid: string) {

@@ -25,6 +25,7 @@ import {initializeGameServer} from './gameserver';
 import {timerCallback} from './repositories/timer';
 import {seed} from './initdb';
 import {Firebase} from './firebase';
+import {Nats} from './nats';
 
 const logger = getLogger('server');
 const JWT_EXPIRY_DAYS = 3;
@@ -296,4 +297,8 @@ async function natsUrls(req: any, resp: any) {
 
 function initializeNats() {
   // throw new Error('Function not implemented.');
+  if (!process.env.NATS_URL) {
+    throw new Error('Nats url must be specified');
+  }
+  Nats.init(process.env.NATS_URL);
 }

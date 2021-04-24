@@ -80,7 +80,8 @@ type PlayerInfo {
   id: Int!
   name: String!
   email: String
-  lastActiveTime: DateTime  
+  lastActiveTime: DateTime 
+  channel: String
 }
 
 type ClubInfo {

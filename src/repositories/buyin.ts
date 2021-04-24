@@ -35,8 +35,8 @@ import {
 import {Club, ClubMember} from '@src/entity/club';
 import {buyInRequest, pendingApprovalsForClubData} from '@src/types';
 import {fixQuery} from '@src/utils';
-import { Firebase } from '@src/firebase';
-import { PlayerRepository } from './player';
+import {Firebase} from '@src/firebase';
+import {PlayerRepository} from './player';
 
 const logger = getLogger('buyin');
 
@@ -318,7 +318,12 @@ export class BuyIn {
 
           // notify game host that the player is waiting for buyin
           const host = await Cache.getPlayerById(this.game.host.id, true);
-          await Firebase.notifyBuyInRequest(this.game, this.player, host, amount);
+          await Firebase.notifyBuyInRequest(
+            this.game,
+            this.player,
+            host,
+            amount
+          );
 
           // refresh the screen
           playerStatusChanged(

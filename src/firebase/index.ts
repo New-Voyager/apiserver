@@ -1,5 +1,5 @@
-import { PokerGame } from '@src/entity/game';
-import { Player } from '@src/entity/player';
+import {PokerGame} from '@src/entity/game';
+import {Player} from '@src/entity/player';
 import {getLogger} from '@src/utils/log';
 import * as firebase from 'firebase-admin';
 import {ServiceAccount} from 'firebase-admin';
@@ -56,19 +56,26 @@ class FirebaseClass {
     logger.info(`message id: ${ret}`);
   }
 
-  public async notifyBuyInRequest(game: PokerGame, requestingPlayer: Player, host: Player, amount: number) {
-    const message: firebase.messaging.TokenMessage = {
-      data: {
-        "amount": amount.toString(),
-        "gameCode": game.gameCode,
-        "playerName": requestingPlayer.name,
-        "playerUuid": requestingPlayer.uuid,
-        "type": "BUYIN_REQUEST"
-      },
-      token: host.firebaseToken,
-    };
-    const ret = await firebase.messaging().send(message, false);
-    logger.info(`message id: ${ret}`);
+  public async notifyBuyInRequest(
+    game: PokerGame,
+    requestingPlayer: Player,
+    host: Player,
+    amount: number
+  ) {
+    if (host.firebaseToken !== null && host.firebaseToken.length > 0) {
+      const message: firebase.messaging.TokenMessage = {
+        data: {
+          amount: amount.toString(),
+          gameCode: game.gameCode,
+          playerName: requestingPlayer.name,
+          playerUuid: requestingPlayer.uuid,
+          type: 'BUYIN_REQUEST',
+        },
+        token: host.firebaseToken,
+      };
+      const ret = await firebase.messaging().send(message, false);
+      logger.info(`message id: ${ret}`);
+    }
   }
 }
 
