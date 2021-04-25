@@ -43,6 +43,7 @@ import {getAgoraToken} from '@src/3rdparty/agora';
 import {utcTime} from '@src/utils';
 import _ from 'lodash';
 import {PlayerGameStats} from '@src/entity/stats';
+import {WaitlistSeatError} from '@src/errors';
 
 const logger = getLogger('game');
 

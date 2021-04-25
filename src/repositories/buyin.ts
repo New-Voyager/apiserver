@@ -202,6 +202,7 @@ export class BuyIn {
       .execute();
 
     cancelTimer(this.game.id, this.player.id, BUYIN_TIMEOUT);
+    logger.info(`buyin timer is cancelled. player: ${this.player.name}`);
 
     // send a message to gameserver
     // get game server of this game
@@ -312,33 +313,39 @@ export class BuyIn {
             }
             stack = updated?.stack;
           }
-          logger.info(
-            `************ [${this.game.gameCode}]: Player ${this.player.name} is waiting for approval`
-          );
 
-          // notify game host that the player is waiting for buyin
-          const host = await Cache.getPlayerById(this.game.host.id, true);
-          await Firebase.notifyBuyInRequest(
-            this.game,
-            this.player,
-            host,
-            amount
-          );
+          if (!approved) {
+            logger.info(
+              `************ [${this.game.gameCode}]: Player ${this.player.name} is waiting for approval`
+            );
+            // notify game host that the player is waiting for buyin
+            const host = await Cache.getPlayerById(this.game.host.id, true);
+            await Firebase.notifyBuyInRequest(
+              this.game,
+              this.player,
+              host,
+              amount
+            );
 
-          // refresh the screen
-          playerStatusChanged(
-            this.game,
-            this.player,
-            prevStatus.status,
-            newUpdate,
-            stack,
-            seatNo
-          );
+            // refresh the screen
+            playerStatusChanged(
+              this.game,
+              this.player,
+              prevStatus.status,
+              newUpdate,
+              stack,
+              seatNo
+            );
+          }
         } else {
           // individual game
           throw new Error('Individual game is not implemented yet');
         }
         if (approved) {
+          logger.info(
+            `************ [${this.game.gameCode}]: Player ${this.player.name} bot: ${this.player.bot} buyin is approved`
+          );
+
           await this.buyInApproved(playerInGame, transactionEntityManager);
         }
 

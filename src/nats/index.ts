@@ -44,7 +44,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getPlayerChannel(player);
-    this.client.publish(subject, message);
+    this.client.publish(subject, messageStr);
   }
 
   public getPlayerChannel(player: Player) {

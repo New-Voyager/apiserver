@@ -18,6 +18,7 @@ import {BUYIN_TIMEOUT, WAITLIST_SEATING} from './types';
 import * as crypto from 'crypto';
 import {BuyIn} from './buyin';
 import {Nats} from '@src/nats';
+import {WaitlistSeatError} from '@src/errors';
 
 const logger = getLogger('waitlist');
 
@@ -65,9 +66,7 @@ export class WaitListMgmt {
       // continue to sit this player in the seat
     } else {
       if (playerAskedToSit.player.id !== player.id) {
-        throw new Error(
-          `Waitlist seating inprogress. Player ${player.name} cannot sit in the table`
-        );
+        throw new WaitlistSeatError(playerAskedToSit.player.name);
       }
 
       cancelTimer(this.game.id, player.id, WAITLIST_SEATING);

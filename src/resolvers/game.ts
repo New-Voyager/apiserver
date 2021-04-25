@@ -21,6 +21,7 @@ import {isHostOrManagerOrOwner} from './util';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {argsToArgsConfig} from 'graphql/type/definition';
 import {pendingApprovalsForClubData} from '@src/types';
+import {ApolloError} from 'apollo-server-express';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -124,6 +125,7 @@ export async function joinGame(
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }
+  let playerName = playerUuid;
   try {
     // get game using game code
     const game = await Cache.getGame(gameCode);
@@ -147,6 +149,7 @@ export async function joinGame(
     }
 
     const player = await Cache.getPlayer(playerUuid);
+    playerName = player.name;
     const status = await GameRepository.joinGame(player, game, seatNo);
     logger.info(
       `Player: ${player.name} isBot: ${player.bot} joined game: ${game.gameCode}`
@@ -157,9 +160,13 @@ export async function joinGame(
   } catch (err) {
     logger.error(JSON.stringify(err));
     console.log(err);
-    throw new Error(
-      `Player: ${playerUuid} Failed to join the game. ${JSON.stringify(err)}`
-    );
+    if (err instanceof ApolloError) {
+      throw err;
+    } else {
+      throw new Error(
+        `Player: ${playerName} Failed to join the game. ${JSON.stringify(err)}`
+      );
+    }
   }
 }
 
@@ -209,9 +216,20 @@ export async function startGame(
     if (game.botGame && players.length < game.maxPlayers) {
       // fill the empty seats with bots
       await fillSeats(game.club.clubCode, game.gameCode);
-      await new Promise(r => setTimeout(r, 10000));
-    }
 
+      let allFilled = false;
+      while (!allFilled) {
+        await new Promise(r => setTimeout(r, 1000));
+        players = await GameRepository.getPlayersInSeats(game.id);
+        if (players.length != game.maxPlayers) {
+          logger.info(
+            `[${game.gameCode}] Waiting for bots to take empty seats`
+          );
+        } else {
+          allFilled = true;
+        }
+      }
+    }
     players = await GameRepository.getPlayersInSeats(game.id);
     // do we have enough players in the table
     // if (players.length <= 1) {
