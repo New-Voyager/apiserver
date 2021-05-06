@@ -1,3 +1,4 @@
+import {PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {GameType} from '@src/entity/types';
 import {getLogger} from '@src/utils/log';
@@ -16,10 +17,12 @@ class NatsClass {
   public sendWaitlistMessage(
     gameCode: string,
     gameType: GameType,
+    game: PokerGame,
     title: string,
     clubName: string,
     player: Player,
-    expTime: Date
+    expTime: Date,
+    messageId: string
   ) {
     if (this.client === null) {
       return;
@@ -38,9 +41,12 @@ class NatsClass {
       type: 'WAITLIST_SEATING',
       gameCode: gameCode,
       gameType: GameType[gameType],
+      smallBlind: game.smallBlind,
+      bigBlind: game.bigBlind,
       title: title,
       clubName: clubName,
       expTime: expTime.toISOString(),
+      requestId: messageId,
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getPlayerChannel(player);

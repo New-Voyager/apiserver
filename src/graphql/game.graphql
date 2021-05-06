@@ -93,6 +93,7 @@ input GameCreateInput {
   buyInWaitTime: Int        # default 3 minutes
   seatChangeAllowed: Boolean
   botGame: Boolean
+  runItTwiceAllowed: Boolean
 }
 
 type SeatInfo {
@@ -137,7 +138,7 @@ type GameInfo {
   buyInMin: Float
   buyInMax: Float
   actionTime: Int
-  muckLosingHand: Boolean
+  muckLosingHand: Boolean         # default game setting
   waitForBigBlind: Boolean
   startedBy: String
   startedAt: DateTime
@@ -148,17 +149,22 @@ type GameInfo {
   tableStatus: TableStatus
   seatInfo: TableSeats
   gameToken: String
-  playerGameStatus: PlayerGameStatus
   waitlistSittingTimeout: Int
   hhEligible: Boolean           # true if this game is eligible for high hand
   botGame: Boolean
-  
+  runItTwiceAllowed: Boolean
+
   # NATS channels
   gameToPlayerChannel: String
   handToAllChannel: String
   playerToHandChannel: String
   handToPlayerChannel: String
   gameChatChannel: String
+
+  # current player status
+  playerGameStatus: PlayerGameStatus
+  playerRunItTwiceConfig: Boolean
+  playerMuckLosingHandConfig: Boolean 
 
   # updates
   lastHandNum: Int
@@ -295,6 +301,11 @@ type GameResultTableRow {
   rakePaid: Float!
 }
 
+input GameConfigChangeInput {
+  muckLosingHand: Boolean
+  runItTwicePrompt: Boolean
+}
+
 type Mutation {
   # Not implemented
   configureGameFromTemplate(clubCode: String!, templateId: Int!): GameInfo!
@@ -333,6 +344,9 @@ type Mutation {
   applyWaitlistOrder(gameCode: String!, playerUuid: [String!]): Boolean!
   declineWaitlistSeat(gameCode: String!): Boolean
   switchSeat(gameCode: String!, seatNo: Int!): PlayerGameStatus!
+
+  # player changes in live game
+  updateGameConfig(gameCode: String!, config: GameConfigChangeInput!): Boolean
 
   # seat change APIs
   requestSeatChange(gameCode: String!): DateTime!

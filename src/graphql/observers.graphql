@@ -1,10 +1,3 @@
-type PlayerInfo {
-  uuid: String!
-  id: Int!
-  name: String!
-  email: String
-}
-
 type Mutation {
   observeGame(gameCode: String!): Boolean
   exitGame(gameCode: String!): Boolean

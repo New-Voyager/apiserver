@@ -1,0 +1,440 @@
+{
+	"gameId": "1",
+	"handNum": 16,
+	"gameType": "HOLDEM",
+	"handLog": {
+		"preflopActions": {
+			"pot": 85,
+			"actions": [{
+				"seatNo": 2,
+				"action": "SB",
+				"amount": 1,
+				"timedOut": false,
+				"stack": 0
+			}, {
+				"seatNo": 3,
+				"action": "BB",
+				"amount": 2,
+				"timedOut": false,
+				"stack": 0
+			}, {
+				"seatNo": 4,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"stack": 50
+			}, {
+				"seatNo": 5,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"stack": 48
+			}, {
+				"seatNo": 6,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"stack": 389
+			}, {
+				"seatNo": 7,
+				"action": "FOLD",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 52
+			}, {
+				"seatNo": 8,
+				"action": "FOLD",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 50
+			}, {
+				"seatNo": 1,
+				"action": "FOLD",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 158
+			}, {
+				"seatNo": 2,
+				"action": "FOLD",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 120
+			}, {
+				"seatNo": 3,
+				"action": "CALL",
+				"amount": 40,
+				"timedOut": false,
+				"stack": 445
+			}, {
+				"seatNo": 4,
+				"action": "FOLD",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 50
+			}, {
+				"seatNo": 5,
+				"action": "FOLD",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 48
+			}, {
+				"seatNo": 6,
+				"action": "CALL",
+				"amount": 40,
+				"timedOut": false,
+				"stack": 351
+			}]
+		},
+		"flopActions": {
+			"pot": 0,
+			"actions": [{
+				"seatNo": 3,
+				"action": "CHECK",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 484
+			}, {
+				"seatNo": 6,
+				"action": "CHECK",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 351
+			}]
+		},
+		"turnActions": {
+			"pot": 0,
+			"actions": [{
+				"seatNo": 3,
+				"action": "CHECK",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 484
+			}, {
+				"seatNo": 6,
+				"action": "CHECK",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 351
+			}]
+		},
+		"riverActions": {
+			"pot": 0,
+			"actions": [{
+				"seatNo": 3,
+				"action": "CHECK",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 484
+			}, {
+				"seatNo": 6,
+				"action": "CHECK",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 351
+			}]
+		},
+		"potWinners": {
+			"0": {
+				"hiWinners": [{
+					"seatNo": 6,
+					"loCard": false,
+					"amount": 85,
+					"winningCards": [68, 113, 129, 65, 130],
+					"winningCardsStr": "[ 6♦  9♠  T♠  6♠  T❤ ]",
+					"rankStr": "Two Pair",
+					"rank": 2967,
+					"playerCards": [65, 130],
+					"boardCards": [68, 113, 129]
+				}],
+				"lowWinners": []
+			}
+		},
+		"wonAt": "SHOW_DOWN",
+		"showDown": null,
+		"handStartedAt": "1613447930",
+		"handEndedAt": "1613447977"
+	},
+	"rewardTrackingIds": [],
+	"boardCards": [68, 113, 97, 36, 129],
+	"boardCards2": [],
+	"flop": [68, 113, 97],
+	"turn": 36,
+	"river": 129,
+	"players": {
+		"1": {
+			"id": "1",
+			"cards": [8, 24],
+			"bestCards": [],
+			"rank": 4294967295,
+			"playedUntil": "RIVER",
+			"balance": {
+				"before": 158,
+				"after": 158
+			},
+			"hhCards": [],
+			"hhRank": 4294967295,
+			"received": 0,
+			"rakePaid": 0
+		},
+		"2": {
+			"id": "2",
+			"cards": [193, 56],
+			"bestCards": [],
+			"rank": 4294967295,
+			"playedUntil": "RIVER",
+			"balance": {
+				"before": 121,
+				"after": 120
+			},
+			"hhCards": [],
+			"hhRank": 4294967295,
+			"received": 0,
+			"rakePaid": 0
+		},
+		"3": {
+			"id": "3",
+			"cards": [194, 178],
+			"bestCards": [113, 97, 129, 194, 178],
+			"rank": 6266,
+			"playedUntil": "SHOW_DOWN",
+			"balance": {
+				"before": 485,
+				"after": 484
+			},
+			"hhCards": [194, 178, 113, 97, 129],
+			"hhRank": 6266,
+			"received": 0,
+			"rakePaid": 0
+		},
+		"4": {
+			"id": "4",
+			"cards": [132, 18],
+			"bestCards": [],
+			"rank": 4294967295,
+			"playedUntil": "RIVER",
+			"balance": {
+				"before": 52,
+				"after": 50
+			},
+			"hhCards": [],
+			"hhRank": 4294967295,
+			"received": 0,
+			"rakePaid": 0
+		},
+		"5": {
+			"id": "5",
+			"cards": [168, 17],
+			"bestCards": [],
+			"rank": 4294967295,
+			"playedUntil": "RIVER",
+			"balance": {
+				"before": 50,
+				"after": 48
+			},
+			"hhCards": [],
+			"hhRank": 4294967295,
+			"received": 0,
+			"rakePaid": 0
+		},
+		"6": {
+			"id": "6",
+			"cards": [65, 130],
+			"bestCards": [68, 113, 129, 65, 130],
+			"rank": 2967,
+			"playedUntil": "SHOW_DOWN",
+			"balance": {
+				"before": 391,
+				"after": 436
+			},
+			"hhCards": [65, 130, 68, 113, 129],
+			"hhRank": 2967,
+			"received": 85,
+			"rakePaid": 0
+		},
+		"7": {
+			"id": "7",
+			"cards": [161, 164],
+			"bestCards": [],
+			"rank": 4294967295,
+			"playedUntil": "RIVER",
+			"balance": {
+				"before": 52,
+				"after": 52
+			},
+			"hhCards": [],
+			"hhRank": 4294967295,
+			"received": 0,
+			"rakePaid": 0
+		},
+		"8": {
+			"id": "8",
+			"cards": [152, 180],
+			"bestCards": [],
+			"rank": 4294967295,
+			"playedUntil": "RIVER",
+			"balance": {
+				"before": 50,
+				"after": 50
+			},
+			"hhCards": [],
+			"hhRank": 4294967295,
+			"received": 0,
+			"rakePaid": 0
+		}
+	},
+	"rakeCollected": 0,
+	"highHand": null,
+	"playerStats": {
+		"1": {
+			"preflopRaise": false,
+			"postflopRaise": false,
+			"threeBet": false,
+			"cbet": false,
+			"vpip": false,
+			"allin": false,
+			"wentToShowdown": false,
+			"wonChipsAtShowdown": false,
+			"headsup": false,
+			"headsupPlayer": "0",
+			"wonHeadsup": false,
+			"badbeat": false,
+			"inPreflop": true,
+			"inFlop": false,
+			"inTurn": false,
+			"inRiver": false
+		},
+		"2": {
+			"preflopRaise": false,
+			"postflopRaise": false,
+			"threeBet": false,
+			"cbet": false,
+			"vpip": false,
+			"allin": false,
+			"wentToShowdown": false,
+			"wonChipsAtShowdown": false,
+			"headsup": false,
+			"headsupPlayer": "0",
+			"wonHeadsup": false,
+			"badbeat": false,
+			"inPreflop": true,
+			"inFlop": false,
+			"inTurn": false,
+			"inRiver": false
+		},
+		"3": {
+			"preflopRaise": false,
+			"postflopRaise": false,
+			"threeBet": false,
+			"cbet": false,
+			"vpip": true,
+			"allin": false,
+			"wentToShowdown": true,
+			"wonChipsAtShowdown": false,
+			"headsup": true,
+			"headsupPlayer": "6",
+			"wonHeadsup": false,
+			"badbeat": false,
+			"inPreflop": true,
+			"inFlop": true,
+			"inTurn": true,
+			"inRiver": true
+		},
+		"4": {
+			"preflopRaise": false,
+			"postflopRaise": false,
+			"threeBet": false,
+			"cbet": false,
+			"vpip": true,
+			"allin": false,
+			"wentToShowdown": false,
+			"wonChipsAtShowdown": false,
+			"headsup": false,
+			"headsupPlayer": "0",
+			"wonHeadsup": false,
+			"badbeat": false,
+			"inPreflop": true,
+			"inFlop": false,
+			"inTurn": false,
+			"inRiver": false
+		},
+		"5": {
+			"preflopRaise": false,
+			"postflopRaise": false,
+			"threeBet": false,
+			"cbet": false,
+			"vpip": true,
+			"allin": false,
+			"wentToShowdown": false,
+			"wonChipsAtShowdown": false,
+			"headsup": false,
+			"headsupPlayer": "0",
+			"wonHeadsup": false,
+			"badbeat": false,
+			"inPreflop": true,
+			"inFlop": false,
+			"inTurn": false,
+			"inRiver": false
+		},
+		"6": {
+			"preflopRaise": false,
+			"postflopRaise": false,
+			"threeBet": false,
+			"cbet": false,
+			"vpip": true,
+			"allin": false,
+			"wentToShowdown": true,
+			"wonChipsAtShowdown": true,
+			"headsup": true,
+			"headsupPlayer": "3",
+			"wonHeadsup": true,
+			"badbeat": false,
+			"inPreflop": true,
+			"inFlop": true,
+			"inTurn": true,
+			"inRiver": true
+		},
+		"7": {
+			"preflopRaise": false,
+			"postflopRaise": false,
+			"threeBet": false,
+			"cbet": false,
+			"vpip": false,
+			"allin": false,
+			"wentToShowdown": false,
+			"wonChipsAtShowdown": false,
+			"headsup": false,
+			"headsupPlayer": "0",
+			"wonHeadsup": false,
+			"badbeat": false,
+			"inPreflop": true,
+			"inFlop": false,
+			"inTurn": false,
+			"inRiver": false
+		},
+		"8": {
+			"preflopRaise": false,
+			"postflopRaise": false,
+			"threeBet": false,
+			"cbet": false,
+			"vpip": false,
+			"allin": false,
+			"wentToShowdown": false,
+			"wonChipsAtShowdown": false,
+			"headsup": false,
+			"headsupPlayer": "0",
+			"wonHeadsup": false,
+			"badbeat": false,
+			"inPreflop": true,
+			"inFlop": false,
+			"inTurn": false,
+			"inRiver": false
+		}
+	},
+	"handStats": {
+		"endedAtPreflop": false,
+		"endedAtFlop": false,
+		"endedAtTurn": false,
+		"endedAtRiver": false,
+		"endedAtShowdown": true
+	}
+}

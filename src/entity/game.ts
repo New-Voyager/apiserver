@@ -157,6 +157,9 @@ export class PokerGame {
   @Column({name: 'waitlist_sitting_timeout', type: 'int', default: 180})
   public waitlistSittingTimeout!: number;
 
+  @Column({name: 'run_it_twice_allowed', default: false})
+  public runItTwiceAllowed!: boolean;
+
   @Column({
     name: 'rake_percentage',
     type: 'decimal',

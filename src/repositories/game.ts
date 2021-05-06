@@ -1066,7 +1066,9 @@ class GameRepositoryImpl {
       status AS "playerStatus",
       stack AS stack,
       "buyIn_status" as "buyInStatus",
-      seat_no as "seatNo"
+      seat_no as "seatNo",
+      run_it_twice_prompt as "runItTwicePrompt",
+      muck_losing_hand as "muckLosingHand"
     FROM  player_game_tracker pgt 
     JOIN player p ON pgt.pgt_player_id = p.id 
     AND p.uuid = ? 
@@ -1365,6 +1367,34 @@ class GameRepositoryImpl {
       return PlayerStatus.PLAYER_UNKNOWN_STATUS;
     }
     return playerInGame.status;
+  }
+
+  public async updateGamePlayerConfig(
+    player: Player,
+    game: PokerGame,
+    config: any
+  ): Promise<void> {
+    await getManager().transaction(async transactionEntityManager => {
+      let updates: any = {};
+      if (config.muckLosingHand !== undefined) {
+        updates.muckLosingHand = config.muckLosingHand;
+      }
+      if (config.runItTwicePrompt !== undefined) {
+        updates.runItTwicePrompt = config.runItTwicePrompt;
+      }
+
+      // get game updates
+      const gameUpdateRepo = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
+      await gameUpdateRepo.update(
+        {
+          game: {id: game.id},
+          player: {id: player.id},
+        },
+        updates
+      );
+    });
   }
 
   public async startBuyinTimer(

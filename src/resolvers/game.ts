@@ -744,6 +744,17 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
       ret.rakeCollected = updates.rake;
       ret.lastHandNum = updates.lastHandNum;
     }
+    // get player's game state
+    const playerState = await GameRepository.getGamePlayerState(
+      game.id,
+      playerUuid
+    );
+    if (playerState) {
+      ret.gameToken = playerState.gameToken;
+      ret.playerGameStatus = PlayerStatus[playerState.playerStatus];
+      ret.playerMuckLosingHandConfig = playerState.muckLosingHand;
+      ret.playerRunItTwiceConfig = playerState.runItTwicePrompt;
+    }
 
     ret.gameToPlayerChannel = `game.${game.gameCode}.player`;
     ret.playerToHandChannel = `player.${game.gameCode}.hand`;
@@ -1391,6 +1402,37 @@ export async function denyBuyIn(
   }
 }
 
+export async function updateGameConfig(
+  playerId: string,
+  gameCode: string,
+  config: any
+) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const errors = new Array<string>();
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+  try {
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error('Game is not found');
+    }
+    const player = await Cache.getPlayer(playerId);
+    if (!player) {
+      throw new Error('Player is not found');
+    }
+
+    await GameRepository.updateGamePlayerConfig(player, game, config);
+    return true;
+  } catch (err) {
+    logger.error(err.message);
+    throw new Error(
+      `Failed to update game config:  ${err.message}. Game code: ${gameCode}`
+    );
+  }
+}
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -1594,6 +1636,9 @@ const resolvers: any = {
     },
     switchSeat: async (parent, args, ctx, info) => {
       return switchSeat(ctx.req.playerId, args.gameCode, args.seatNo);
+    },
+    updateGameConfig: async (parent, args, ctx, info) => {
+      return updateGameConfig(ctx.req.playerId, args.gameCode, args.config);
     },
   },
 };

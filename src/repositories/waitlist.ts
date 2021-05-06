@@ -17,6 +17,7 @@ import {
 import {BUYIN_TIMEOUT, WAITLIST_SEATING} from './types';
 import * as crypto from 'crypto';
 import {BuyIn} from './buyin';
+import {v4 as uuidv4} from 'uuid';
 import {Nats} from '@src/nats';
 import {WaitlistSeatError} from '@src/errors';
 
@@ -303,17 +304,19 @@ export class WaitListMgmt {
     if (game.club !== null) {
       clubName = game.club.name;
     }
-
+    const messageId = uuidv4();
     const title = `${GameType[game.gameType]} ${game.smallBlind}/${
       game.bigBlind
     }`;
     Nats.sendWaitlistMessage(
       game.gameCode,
       game.gameType,
+      game,
       title,
       clubName,
       nextPlayer.player,
-      waitingListTimeExp
+      waitingListTimeExp,
+      messageId
     );
   }
 

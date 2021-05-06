@@ -26,6 +26,7 @@ import {timerCallback} from './repositories/timer';
 import {seed} from './initdb';
 import {Firebase} from './firebase';
 import {Nats} from './nats';
+import {generateBotScript} from './internal/bot';
 
 const logger = getLogger('server');
 const JWT_EXPIRY_DAYS = 3;
@@ -189,6 +190,8 @@ function addInternalRoutes(app: any) {
 
   app.post('/auth/login', login);
   app.get('/nats-urls', natsUrls);
+
+  app.get('/bot-script', generateBotScript);
 }
 
 /**
