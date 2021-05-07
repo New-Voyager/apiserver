@@ -498,3 +498,18 @@ export async function hostSeatChangeSeatMove(
     throw new Error(`Failed to update table status: ${newGameUrl}`);
   }
 }
+
+export async function playerConfigUpdate(game: PokerGame, update: any) {
+  if (!notifyGameServer) {
+    return;
+  }
+
+  const gameServerUrl = await getGameServerUrl(game.id);
+
+  const newGameUrl = `${gameServerUrl}/player-config-update`;
+  const resp = await axios.post(newGameUrl, update);
+  if (resp.status !== 200) {
+    logger.error(`Failed to update player config status: ${newGameUrl}`);
+    throw new Error(`Failed to update player config status: ${newGameUrl}`);
+  }
+}

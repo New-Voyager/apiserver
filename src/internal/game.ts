@@ -306,6 +306,8 @@ class GameAPIs {
               openSeat: true,
               status: PlayerStatus.NOT_PLAYING,
               gameToken: '',
+              runItTwicePrompt: false,
+              muckLosingHand: false,
             });
           } else {
             let buyInExpTime = '';
@@ -330,6 +332,8 @@ class GameAPIs {
               buyInTimeExpAt: buyInExpTime,
               breakTimeExpAt: breakTimeExp,
               gameToken: '',
+              runItTwicePrompt: playerSeat.runItTwicePrompt,
+              muckLosingHand: playerSeat.muckLosingHand,
             });
           }
         }

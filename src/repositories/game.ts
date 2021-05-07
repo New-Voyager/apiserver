@@ -31,6 +31,7 @@ import {
   startTimer,
   playerLeftGame,
   playerSwitchSeat,
+  playerConfigUpdate,
 } from '@src/gameserver';
 import {fixQuery} from '@src/utils';
 import {WaitListMgmt} from './waitlist';
@@ -526,6 +527,8 @@ class GameRepositoryImpl {
           const randomBytes = Buffer.from(crypto.randomBytes(5));
           playerInGame.gameToken = randomBytes.toString('hex');
           playerInGame.status = PlayerStatus.NOT_PLAYING;
+          playerInGame.runItTwicePrompt = game.runItTwiceAllowed;
+          playerInGame.muckLosingHand = game.muckLosingHand;
 
           try {
             await playerGameTrackerRepository.save(playerInGame);
@@ -1044,8 +1047,11 @@ class GameRepositoryImpl {
     gameId: number,
     transactionManager?: EntityManager
   ): Promise<Array<any>> {
-    const query = fixQuery(`SELECT p.id as "playerId", name, uuid as "playerUuid", buy_in as "buyIn", stack, status, seat_no as "seatNo", status,
-          buyin_exp_at as "buyInExpTime", break_time_exp_at as "breakTimeExp", game_token AS "gameToken"
+    const query = fixQuery(`SELECT p.id as "playerId", name, uuid as "playerUuid", 
+          buy_in as "buyIn", stack, status, seat_no as "seatNo", status,
+          buyin_exp_at as "buyInExpTime", break_time_exp_at as "breakTimeExp", game_token AS "gameToken",
+          run_it_twice_prompt as "runItTwicePrompt",
+          muck_losing_hand as "muckLosingHand"
           FROM 
           player_game_tracker pgt JOIN player p ON pgt.pgt_player_id = p.id
           AND pgt.pgt_game_id = ? AND pgt.seat_no <> 0`);
@@ -1387,13 +1393,49 @@ class GameRepositoryImpl {
       const gameUpdateRepo = transactionEntityManager.getRepository(
         PlayerGameTracker
       );
-      await gameUpdateRepo.update(
-        {
-          game: {id: game.id},
-          player: {id: player.id},
-        },
-        updates
-      );
+      let row = await gameUpdateRepo.findOne({
+        game: {id: game.id},
+        player: {id: player.id},
+      });
+      if (row != null) {
+        await gameUpdateRepo.update(
+          {
+            game: {id: game.id},
+            player: {id: player.id},
+          },
+          updates
+        );
+      } else {
+        // create a row
+        const playerTrack = new PlayerGameTracker();
+        playerTrack.game = game;
+        playerTrack.player = player;
+        playerTrack.status = PlayerStatus.NOT_PLAYING;
+        playerTrack.buyIn = 0;
+        playerTrack.stack = 0;
+        if (config.muckLosingHand !== undefined) {
+          playerTrack.muckLosingHand = config.muckLosingHand;
+        }
+        if (config.runItTwicePrompt !== undefined) {
+          playerTrack.runItTwicePrompt = config.runItTwicePrompt;
+        }
+        await gameUpdateRepo.save(playerTrack);
+      }
+      row = await gameUpdateRepo.findOne({
+        game: {id: game.id},
+        player: {id: player.id},
+      });
+
+      if (row) {
+        const update: any = {
+          playerId: player.id,
+          gameId: game.id,
+          muckLosingHand: row?.muckLosingHand,
+          runItTwicePrompt: row?.runItTwicePrompt,
+        };
+
+        await playerConfigUpdate(game, update);
+      }
     });
   }
 

@@ -67,6 +67,8 @@ export interface PlayerInSeat {
   buyInTimeExpAt?: string; // date time when buyin time expires
   breakTimeExpAt?: string; // date time when break time expires
   gameToken: string;
+  runItTwicePrompt: boolean;
+  muckLosingHand: boolean;
 }
 
 export interface NewHandInfo {
