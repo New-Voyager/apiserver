@@ -99,7 +99,7 @@ input GameCreateInput {
 type SeatInfo {
   seatNo: Int!
   playerUuid: String!
-  playerId: number
+  playerId: Int
   name: String!
   buyIn: Float
   stack: Float
