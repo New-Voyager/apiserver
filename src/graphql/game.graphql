@@ -99,6 +99,7 @@ input GameCreateInput {
 type SeatInfo {
   seatNo: Int!
   playerUuid: String!
+  playerId: number
   name: String!
   buyIn: Float
   stack: Float
@@ -107,6 +108,7 @@ type SeatInfo {
   buyInExpTime: DateTime
   breakExpTime: DateTime
   gameToken: String
+  isBot: Boolean
 }
 
 type TableSeats {
