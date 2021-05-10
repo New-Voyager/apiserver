@@ -5,6 +5,7 @@ import {ClubMessageType} from '../entity/types';
 import {Player} from '@src/entity/player';
 import {PageOptions} from '@src/types';
 import {getLogger} from '@src/utils/log';
+import {PlaygroundRenderPageOptions} from 'apollo-server-core';
 const logger = getLogger('clubmessage');
 
 export interface ClubMessageInputFormat {
@@ -18,6 +19,7 @@ export interface ClubMessageInputFormat {
 
 class ClubMessageRepositoryImpl {
   public async sendClubMessage(
+    player: Player,
     clubCode: string,
     message: ClubMessageInputFormat
   ) {
@@ -46,18 +48,18 @@ class ClubMessageRepositoryImpl {
           message.text !== '' &&
           message.text !== undefined
         ) {
-          return this.saveMessage(0, clubCode, message);
+          return this.saveMessage(0, clubCode, message, player);
         } else if (
           message.messageType.toString() === 'GIPHY' &&
           message.giphyLink !== '' &&
           message.giphyLink !== undefined
         ) {
-          return this.saveMessage(2, clubCode, message);
+          return this.saveMessage(2, clubCode, message, player);
         } else if (
           message.messageType.toString() === 'HAND' &&
           message.handNum !== undefined
         ) {
-          return this.saveMessage(1, clubCode, message);
+          return this.saveMessage(1, clubCode, message, player);
         } else {
           throw new Error('Bad parameters');
         }
@@ -70,7 +72,8 @@ class ClubMessageRepositoryImpl {
   public async saveMessage(
     messageType: number,
     clubCode: string,
-    message: ClubMessageInputFormat
+    message: ClubMessageInputFormat,
+    player: Player
   ) {
     const sendMessage = new ClubMessageInput();
     sendMessage.text = message.text;
@@ -80,6 +83,7 @@ class ClubMessageRepositoryImpl {
     sendMessage.handNum = message.handNum;
     sendMessage.giphyLink = message.giphyLink;
     sendMessage.playerTags = message.playerTags;
+    sendMessage.player = player;
     const repository = getRepository(ClubMessageInput);
     const response = await repository.save(sendMessage);
     return response.id;
@@ -121,7 +125,7 @@ class ClubMessageRepositoryImpl {
           }
         }
 
-        logger.info(`pageOptions count: ${pageOptions.count}`);
+        //logger.info(`pageOptions count: ${pageOptions.count}`);
         let take = pageOptions.count;
         if (!take || take > 50) {
           take = 50;

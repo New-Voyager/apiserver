@@ -298,6 +298,23 @@ class GameAPIs {
           transactionEntityManager
         );
         const takenSeats = _.keyBy(playersInSeats, 'seatNo');
+
+        for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+          const playerSeat = takenSeats[seatNo];
+          if (
+            playerSeat &&
+            playerSeat['stack'] === 0 &&
+            playerSeat['status'] == PlayerStatus.PLAYING
+          ) {
+            const player = await Cache.getPlayerById(playerSeat['playerId']);
+            // if player balance is 0, we need to mark this player to add buyin
+            await GameRepository.startBuyinTimer(game, player, {
+              status: PlayerStatus.WAIT_FOR_BUYIN,
+            });
+            playerSeat['status'] = PlayerStatus.WAIT_FOR_BUYIN;
+          }
+        }
+
         for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
           const playerSeat = takenSeats[seatNo];
           if (!playerSeat) {

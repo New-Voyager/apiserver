@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 import {Club, ClubMember} from './club';
 import {DbAwareUpdateDateColumn} from './dbaware';
+import {Player} from './player';
 import {ClubMessageType, HostMessageType} from './types';
 
 @Entity({name: 'club_messages'})
@@ -22,6 +23,10 @@ export class ClubMessageInput {
 
   @Column({name: 'club_code', nullable: false})
   public clubCode!: string;
+
+  @ManyToOne(type => Player, {nullable: false, eager: true})
+  @JoinColumn({name: 'player_id'})
+  public player!: Player;
 
   @Column({name: 'hand_number', type: 'int', nullable: true})
   public handNum!: number;

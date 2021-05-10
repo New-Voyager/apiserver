@@ -26,6 +26,7 @@ type ClubMessage {
   gameNum: Int
   handNum: Int
   giphyLink: String
+  sender: String          # uuid of the sender
   playerTags: String
   messageTime: DateTime
   messageTimeInEpoc: Int

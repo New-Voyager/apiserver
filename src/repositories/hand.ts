@@ -326,17 +326,17 @@ class HandRepositoryImpl {
         }
       );
 
-      for (const seatNo of Object.keys(result.players)) {
-        const player = result.players[seatNo];
-        playerBalance[player.id] = player.balance;
+      // for (const seatNo of Object.keys(result.players)) {
+      //   const player = result.players[seatNo];
+      //   playerBalance[player.id] = player.balance;
 
-        if (playerBalance[player.id].after == 0) {
-          // if player balance is 0, we need to mark this player to add buyin
-          await GameRepository.startBuyinTimer(game, player, {
-            status: PlayerStatus.WAIT_FOR_BUYIN,
-          });
-        }
-      }
+      //   if (playerBalance[player.id].after == 0) {
+      //     // if player balance is 0, we need to mark this player to add buyin
+      //     await GameRepository.startBuyinTimer(game, player, {
+      //       status: PlayerStatus.WAIT_FOR_BUYIN,
+      //     });
+      //   }
+      // }
 
       logger.info(`Result: ${JSON.stringify(saveResult)}`);
       logger.info('****** ENDING TRANSACTION TO SAVE a hand result');
@@ -408,7 +408,7 @@ class HandRepositoryImpl {
       }
     }
 
-    logger.info(`pageOptions count: ${pageOptions.count}`);
+    //logger.info(`pageOptions count: ${pageOptions.count}`);
     let take = pageOptions.count;
     if (!take || take > 10) {
       take = 10;

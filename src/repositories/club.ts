@@ -681,7 +681,7 @@ class ClubRepositoryImpl {
         pageWhere = LessThan(pageOptions.prev);
       }
     }
-    logger.info(`pageOptions count: ${pageOptions.count}`);
+    //logger.info(`pageOptions count: ${pageOptions.count}`);
     let take = pageOptions.count;
     if (!take || take > 20) {
       take = 20;

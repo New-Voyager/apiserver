@@ -47,6 +47,7 @@ export async function getClubMsg(
       giphyLink: x.giphyLink,
       gameNum: x.gameNum,
       playerTags: x.playerTags,
+      sender: x.player.uuid,
       clubCode: x.clubCode,
       text: x.text,
       messageTime: x.updatedAt,
@@ -81,7 +82,8 @@ export async function sendClubMsg(
   }
 
   try {
-    return ClubMessageRepository.sendClubMessage(clubCode, message);
+    const player = await Cache.getPlayer(playerId);
+    return ClubMessageRepository.sendClubMessage(player, clubCode, message);
   } catch (err) {
     logger.error(err);
     throw new Error('Failed to send the message');
