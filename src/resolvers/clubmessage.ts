@@ -5,6 +5,7 @@ import {ClubRepository} from '@src/repositories/club';
 import {
   ClubMemberStatus,
   ClubMessageType,
+  GameType,
   HostMessageType,
 } from '@src/entity/types';
 import {PageOptions} from '@src/types';
@@ -39,21 +40,58 @@ export async function getClubMsg(
     clubCode,
     pageOptions
   );
-  return _.map(messages, x => {
-    return {
-      id: x.id,
-      messageType: ClubMessageType[x.messageType],
-      handNum: x.handNum,
-      giphyLink: x.giphyLink,
-      gameNum: x.gameNum,
-      playerTags: x.playerTags,
-      sender: x.player.uuid,
-      clubCode: x.clubCode,
-      text: x.text,
-      messageTime: x.updatedAt,
-      messageTimeInEpoc: Math.floor(x.updatedAt.getTime() / 1000),
-    };
-  });
+  let clubmessages = new Array<any>();
+  for (const x of messages) {
+    let m: any = {};
+    if (x.messageType == ClubMessageType.HAND) {
+      m = {
+        id: x.id,
+        messageType: ClubMessageType[x.messageType],
+        giphyLink: x.giphyLink,
+        playerTags: x.playerTags,
+        sender: x.sharedHand.sharedBy.uuid,
+        clubCode: x.clubCode,
+        messageTime: x.updatedAt,
+        messageTimeInEpoc: Math.floor(x.updatedAt.getTime() / 1000),
+      };
+      /*
+        type SharedHand {
+          id: Int!
+          sharedBy: String!
+          gameCode: String!
+          gameType: GameType!
+          handNum: Int!
+          data: Json!
+        }
+      */
+      const hand: any = {};
+      hand['id'] = x.sharedHand.id;
+      hand['sharedByPlayerId'] = x.sharedHand.sharedBy.id;
+      hand['sharedByPlayerUuid'] = x.sharedHand.sharedBy.uuid;
+      hand['sharedByPlayerName'] = x.sharedHand.sharedBy.name;
+      hand['gameCode'] = x.sharedHand.gameCode;
+      hand['gameType'] = GameType[x.sharedHand.gameType];
+      hand['handNum'] = x.sharedHand.handNum;
+      hand['data'] = JSON.parse(x.sharedHand.data);
+      m['sharedHand'] = hand;
+    } else {
+      m = {
+        id: x.id,
+        messageType: ClubMessageType[x.messageType],
+        handNum: x.handNum,
+        giphyLink: x.giphyLink,
+        gameNum: x.gameNum,
+        playerTags: x.playerTags,
+        sender: x.player.uuid,
+        clubCode: x.clubCode,
+        text: x.text,
+        messageTime: x.updatedAt,
+        messageTimeInEpoc: Math.floor(x.updatedAt.getTime() / 1000),
+      };
+    }
+    clubmessages.push(m);
+  }
+  return clubmessages;
 }
 
 export async function sendClubMsg(

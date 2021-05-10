@@ -133,11 +133,14 @@ export class SavedHands {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @ManyToOne(() => Player, sharedBy => sharedBy.id, {nullable: true})
+  @ManyToOne(() => Player, sharedBy => sharedBy.id, {
+    nullable: true,
+    eager: true,
+  })
   @JoinColumn({name: 'shared_by'})
   public sharedBy!: Player;
 
-  @ManyToOne(() => Player, savedBy => savedBy.id, {nullable: true})
+  @ManyToOne(() => Player, savedBy => savedBy.id, {nullable: true, eager: true})
   @JoinColumn({name: 'saved_by'})
   public savedBy!: Player;
 
@@ -145,9 +148,11 @@ export class SavedHands {
   @JoinColumn({name: 'shared_to'})
   public sharedTo!: Club;
 
-  @ManyToOne(() => PokerGame, game => game.id)
-  @JoinColumn({name: 'game_id'})
-  public game!: PokerGame;
+  @Column({name: 'game_code'})
+  public gameCode!: string;
+
+  @Column({name: 'game_type'})
+  public gameType!: GameType;
 
   @Column({name: 'hand_num', type: 'int'})
   public handNum!: number;

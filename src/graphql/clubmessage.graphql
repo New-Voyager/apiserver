@@ -18,6 +18,17 @@ input ClubMessageInput {
   playerTags: String
 }
 
+type SharedHand {
+  id: Int!
+  sharedPlayerId: Int!
+  sharedByPlayerUuid: String!
+  sharedByPlayerName: String!
+  gameCode: String!
+  gameType: GameType!
+  handNum: Int!
+  data: Json!
+}
+
 type ClubMessage {
   id: Int!               
   messageType: ClubMessageType!
@@ -30,6 +41,7 @@ type ClubMessage {
   playerTags: String
   messageTime: DateTime
   messageTimeInEpoc: Int
+  sharedHand: SharedHand
 }
 
 type HostMessage {

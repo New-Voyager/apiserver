@@ -5,7 +5,12 @@ import {
   SavedHands,
   StarredHands,
 } from '@src/entity/hand';
-import {GameType, PlayerStatus, WonAtStatus} from '@src/entity/types';
+import {
+  ClubMessageType,
+  GameType,
+  PlayerStatus,
+  WonAtStatus,
+} from '@src/entity/types';
 import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {PokerGame, PokerGameUpdates} from '@src/entity/game';
@@ -19,6 +24,8 @@ import {Player} from '@src/entity/player';
 import {Club} from '@src/entity/club';
 import {StatsRepository} from './stats';
 import {GameRepository} from './game';
+import {identity} from 'lodash';
+import {ClubMessageInput} from '@src/entity/clubmessage';
 
 const logger = getLogger('hand');
 
@@ -502,14 +509,15 @@ class HandRepositoryImpl {
       const savedHandsRepository = getRepository(SavedHands);
 
       let bookmarkedHand = await savedHandsRepository.findOne({
-        game: {id: game.id},
+        gameCode: game.gameCode,
         handNum: handHistory.handNum,
         savedBy: {id: player.id},
       });
 
       if (!bookmarkedHand) {
         bookmarkedHand = new SavedHands();
-        bookmarkedHand.game = game;
+        bookmarkedHand.gameCode = game.gameCode;
+        bookmarkedHand.gameType = game.gameType;
         bookmarkedHand.handNum = handHistory.handNum;
         bookmarkedHand.savedBy = player;
         bookmarkedHand.data = handHistory.data;
@@ -532,28 +540,45 @@ class HandRepositoryImpl {
     handHistory: HandHistory
   ): Promise<number> {
     try {
-      const savedHandsRepository = getRepository(SavedHands);
+      const id = await getManager().transaction(
+        async transactionEntityManager => {
+          const savedHandsRepository = transactionEntityManager.getRepository(
+            SavedHands
+          );
 
-      let sharedHand = await savedHandsRepository.findOne({
-        game: {id: game.id},
-        handNum: handHistory.handNum,
-        savedBy: {id: player.id},
-        sharedTo: {id: club.id},
-      });
+          let sharedHand = await savedHandsRepository.findOne({
+            gameCode: game.gameCode,
+            handNum: handHistory.handNum,
+            savedBy: {id: player.id},
+            sharedTo: {id: club.id},
+          });
 
-      if (!sharedHand) {
-        sharedHand = new SavedHands();
-        sharedHand.game = game;
-        sharedHand.handNum = handHistory.handNum;
-        sharedHand.sharedBy = player;
-        sharedHand.sharedTo = club;
-        sharedHand.data = handHistory.data;
-      }
+          if (!sharedHand) {
+            sharedHand = new SavedHands();
+            sharedHand.gameCode = game.gameCode;
+            sharedHand.gameType = game.gameType;
+            sharedHand.handNum = handHistory.handNum;
+            sharedHand.sharedBy = player;
+            sharedHand.sharedTo = club;
+            sharedHand.data = handHistory.data;
+          }
 
-      const resp = await savedHandsRepository.save(sharedHand);
-      return resp.id;
+          const resp = await savedHandsRepository.save(sharedHand);
+          const clubMsgRepo = transactionEntityManager.getRepository(
+            ClubMessageInput
+          );
+          const message = new ClubMessageInput();
+          message.clubCode = club.clubCode;
+          message.player = player;
+          message.messageType = ClubMessageType.HAND;
+          message.sharedHand = resp;
+          await clubMsgRepo.save(message);
+          return resp.id;
+        }
+      );
+      return id;
     } catch (error) {
-      logger.error(`Error when trying to share hands: ${error.toString}`);
+      logger.error(`Error when trying to share hands: ${error.toString()}`);
       throw error;
     }
   }
