@@ -20,7 +20,7 @@ input ClubMessageInput {
 
 type SharedHand {
   id: Int!
-  sharedPlayerId: Int!
+  sharedByPlayerId: Int!
   sharedByPlayerUuid: String!
   sharedByPlayerName: String!
   gameCode: String!
