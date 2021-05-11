@@ -23,7 +23,7 @@ class HostMessageRepositoryImpl {
       return {
         id: resp.id,
         clubCode: resp.club.clubCode,
-        memberID: resp.member.id,
+        memberId: resp.member.id,
         messageTime: resp.messageTime,
         messageType: HostMessageType[resp.messageType],
         text: resp.text,
