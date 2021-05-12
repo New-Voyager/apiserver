@@ -100,6 +100,18 @@ type SearchClubResult {
   status: ClubStatus
 }
 
+enum StoreType {
+  UNKNOWN
+  IOS_APP_STORE
+  GOOGLE_PLAY_STORE
+  STRIPE_PAYMENT
+}
+
+type IapReceipt {
+  valid: Boolean!
+  duplicate: Boolean
+}
+
 type Query {
   myClubs: [PlayerClub!]
   allPlayers: [Player!]
@@ -111,6 +123,8 @@ type Query {
   searchClub (clubCode: String!): SearchClubResult
   liveAudioToken(gameCode: String!): String!
   idsToPlayersInfo(ids: [Int!]): [PlayerInfo]
+  availableAppCoins: Int!
+  availableProducts: [String!]
 }
 
 type Mutation {
@@ -118,4 +132,5 @@ type Mutation {
   authenticatePlayer(name: String!, uuid: String!, deviceId: String!): Boolean
   leaveClub(clubCode: String!): ClubMemberStatus
   updateFirebaseToken(token: String!): Boolean
+  appCoinPurchase(storeType: StoreType!, receipt: String!): IapReceipt!
 }
