@@ -32,7 +32,7 @@ const logger = getLogger('hand');
 const MAX_STARRED_HAND = 25;
 
 class HandRepositoryImpl {
-  private getSummary(result: any): any {
+  private async getSummary(result: any): Promise<any> {
     // returns hand summary information
     const summary: any = {};
     summary.boardCards = new Array<any>();
@@ -59,8 +59,10 @@ class HandRepositoryImpl {
         const seatNo = winner.seatNo;
         const player = result.players[seatNo];
         if (!hiWinners[player.id]) {
+          const cachedPlayer = await Cache.getPlayerById(player.id);
           hiWinners[player.id] = {};
           hiWinners[player.id].playerId = player.id;
+          hiWinners[player.id].playerName = cachedPlayer.name;
           hiWinners[player.id].amount = 0;
           hiWinners[player.id].cards = player.cards;
           if (isShowDown) {
@@ -74,8 +76,10 @@ class HandRepositoryImpl {
         const seatNo = winner.seatNo;
         const player = result.players[seatNo];
         if (!lowWinners[player.id]) {
+          const cachedPlayer = await Cache.getPlayerById(player.id);
           lowWinners[player.id] = {};
           lowWinners[player.id].playerId = player.id;
+          lowWinners[player.id].playerName = cachedPlayer.name;
           lowWinners[player.id].amount = 0;
           lowWinners[player.id].cards = player.cards;
           if (isShowDown) {
@@ -143,8 +147,6 @@ class HandRepositoryImpl {
       }
       handHistory.timeStarted = handLog.handStartedAt;
       handHistory.timeEnded = handLog.handEndedAt;
-      handHistory.data = JSON.stringify(result);
-      handHistory.summary = JSON.stringify(this.getSummary(result));
 
       if (typeof handLog.handStartedAt === 'string') {
         handLog.handStartedAt = parseInt(handLog.handStartedAt);
@@ -195,6 +197,14 @@ class HandRepositoryImpl {
         new Date(handLog.handEndedAt).getTime() -
         new Date(handLog.handStartedAt).getTime();
 
+      // store the player name
+      for (const seatNo of Object.keys(result.players)) {
+        const player = result.players[seatNo];
+        const playerId = player.id;
+        const cachedPlayer = await Cache.getPlayerById(player.id);
+        player.name = cachedPlayer.name;
+      }
+
       // we want to track player stats until what stage he played
       const playerRound = {};
       for (const seatNo of Object.keys(result.players)) {
@@ -240,6 +250,10 @@ class HandRepositoryImpl {
         playerBalance[player.id] = player.balance;
       }
       handHistory.playersStack = JSON.stringify(playerBalance);
+      handHistory.data = JSON.stringify(result);
+      const summary = await this.getSummary(result);
+      handHistory.summary = JSON.stringify(summary);
+
       logger.info('****** STARTING TRANSACTION TO SAVE a hand result');
       const saveResult = await getManager().transaction(
         async transactionEntityManager => {
