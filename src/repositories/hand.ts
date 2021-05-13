@@ -299,7 +299,6 @@ class HandRepositoryImpl {
             .update()
             .set({
               rake: () => `rake + ${handRake}`,
-              lastHandNum: handNum,
             })
             .where({
               gameID: gameID,

@@ -107,12 +107,35 @@ class GameRepositoryImpl {
     }
 
     // create the game
-    const game: PokerGame = {...input} as PokerGame;
     const gameTypeStr: string = input['gameType'];
     const gameType: GameType = GameType[gameTypeStr];
+
+    // validate data
+    if (gameType == GameType.DEALER_CHOICE) {
+      if (
+        input.dealerChoiceGames === null ||
+        input.dealerChoiceGames.length === 0
+      ) {
+        throw new Error('dealerChoiceGames must be specified');
+      }
+    } else if (gameType == GameType.ROE) {
+      if (input.roeGames === null || input.roeGames.length === 0) {
+        throw new Error('roeGames must be specified');
+      }
+      const roeGames = input.roeGames.toString();
+      input['roeGames'] = roeGames;
+    }
+    const game: PokerGame = {...input} as PokerGame;
+
     game.gameType = gameType;
     game.isTemplate = template;
     game.status = GameStatus.CONFIGURED;
+    if (!game.title) {
+      game.title = `${gameType.toString()} ${game.smallBlind}/${game.bigBlind}`;
+    }
+    if (!game.straddleBet) {
+      game.straddleBet = game.bigBlind * 2;
+    }
     if (club) {
       game.club = club;
     }
@@ -360,7 +383,7 @@ class GameRepositoryImpl {
             pgu.players_in_seats as "tableCount", 
             g.game_status as "gameStatus",
             pgt.status as "playerStatus",
-            pgu.last_hand_num as "handsDealt"
+            pgu.hand_num as "handsDealt"
           FROM poker_game as g JOIN poker_game_updates as pgu ON 
           g.id = pgu.game_id JOIN my_clubs as c ON 
             g.club_id = c.id 
@@ -401,7 +424,7 @@ class GameRepositoryImpl {
             pgt.session_time as "sessionTime",
             pgt.buy_in as "buyIn",
             pgt.stack as "stack",
-            pgu.last_hand_num as "handsDealt"
+            pgu.hand_num as "handsDealt"
           FROM poker_game g JOIN poker_game_updates pgu ON 
           g.id = pgu.game_id JOIN my_clubs c 
           ON 
@@ -1178,7 +1201,7 @@ class GameRepositoryImpl {
         pg.ended_at as "endedAt", pg.ended_by as "endedBy", 
         pg.started_at as "startedAt", pgt.session_time as "sessionTime", 
         pgt.stack as balance,
-        pgu.last_hand_num as "handsDealt"
+        pgu.hand_num as "handsDealt"
         FROM
         poker_game pg JOIN club c ON pg.club_id  = c.id AND pg.game_code = ?
         JOIN poker_game_updates pgu ON pg.id = pgu.game_id

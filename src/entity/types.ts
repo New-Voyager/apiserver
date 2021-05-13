@@ -5,6 +5,8 @@ export enum GameType {
   PLO_HILO,
   FIVE_CARD_PLO,
   FIVE_CARD_PLO_HILO,
+  ROE,
+  DEALER_CHOICE,
 }
 
 // Game status track the host actions on a game

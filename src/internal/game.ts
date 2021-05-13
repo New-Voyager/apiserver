@@ -1,4 +1,4 @@
-import {GameStatus, TableStatus} from '@src/entity/types';
+import {GameStatus, GameType, TableStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {getLogger} from '@src/utils/log';
@@ -10,6 +10,7 @@ import {getManager, getRepository} from 'typeorm';
 import {NewHandInfo, PlayerInSeat} from '@src/repositories/types';
 import _ from 'lodash';
 import {delay} from '@src/utils';
+import {Player} from '@src/entity/player';
 
 const logger = getLogger('GameAPIs');
 
@@ -277,22 +278,6 @@ class GameAPIs {
           return;
         }
         const gameUpdate = gameUpdates[0];
-        if (!gameUpdate.buttonPos) {
-          gameUpdate.buttonPos = -1;
-        }
-
-        const nextHandInfo: NewHandInfo = {
-          gameCode: gameCode,
-          gameType: game.gameType,
-          announceGameType: false,
-          playersInSeats: new Array<PlayerInSeat>(),
-          smallBlind: game.smallBlind,
-          bigBlind: game.bigBlind,
-          maxPlayers: game.maxPlayers,
-          buttonPos: gameUpdate.buttonPos,
-          handNum: gameUpdate.lastHandNum + 1,
-        };
-
         const playersInSeats = await GameRepository.getPlayersInSeats(
           game.id,
           transactionEntityManager
@@ -315,10 +300,16 @@ class GameAPIs {
           }
         }
 
+        const seats = new Array<PlayerInSeat>();
+        const occupiedSeats = new Array<number>();
+        // dealer
+        occupiedSeats.push(0);
         for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
           const playerSeat = takenSeats[seatNo];
+
           if (!playerSeat) {
-            nextHandInfo.playersInSeats.push({
+            occupiedSeats.push(0);
+            seats.push({
               seatNo: seatNo,
               openSeat: true,
               status: PlayerStatus.NOT_PLAYING,
@@ -327,6 +318,11 @@ class GameAPIs {
               muckLosingHand: false,
             });
           } else {
+            if (playerSeat.status == PlayerStatus.PLAYING) {
+              occupiedSeats.push(playerSeat.playerId);
+            } else {
+              occupiedSeats.push(0);
+            }
             let buyInExpTime = '';
             let breakTimeExp = '';
             if (playerSeat.buyInExpTime) {
@@ -335,9 +331,8 @@ class GameAPIs {
             if (playerSeat.breakTimeExp) {
               breakTimeExp = playerSeat.breakTimeExp.toISOString();
             }
-
             // player is in a seat
-            nextHandInfo.playersInSeats.push({
+            seats.push({
               seatNo: seatNo,
               openSeat: false,
               playerId: playerSeat.playerId,
@@ -353,6 +348,80 @@ class GameAPIs {
               muckLosingHand: playerSeat.muckLosingHand,
             });
           }
+        }
+
+        // determine button pos
+        const lastButtonPos = gameUpdate.buttonPos;
+        let buttonPassedDealer = false;
+        let buttonPos = gameUpdate.buttonPos;
+        let maxPlayers = game.maxPlayers;
+        while (maxPlayers > 0) {
+          buttonPos++;
+          if (buttonPos > maxPlayers) {
+            buttonPassedDealer = true;
+            buttonPos = 1;
+          }
+          if (occupiedSeats[buttonPos] !== 0) {
+            break;
+          }
+          maxPlayers--;
+        }
+        gameUpdate.handNum++;
+        gameUpdate.buttonPos = buttonPos;
+        const prevGameType = gameUpdate.gameType;
+        // determine new game type (ROE)
+        if (game.gameType === GameType.ROE) {
+          if (gameUpdate.handNum !== 1) {
+            if (buttonPassedDealer) {
+              // button passed dealer
+              const roeGames = game.roeGames.split(',');
+              const gameTypeStr = GameType[gameUpdate.gameType];
+              let index = roeGames.indexOf(gameTypeStr.toString());
+              index++;
+              if (index >= roeGames.length) {
+                index = 0;
+              }
+              gameUpdate.gameType = GameType[roeGames[index]];
+            }
+          } else {
+            const roeGames = game.roeGames.split(',');
+            gameUpdate.gameType = GameType[roeGames[0]];
+          }
+        } else {
+          gameUpdate.gameType = game.gameType;
+        }
+
+        // update button pos and gameType
+        await gameUpdatesRepo
+          .createQueryBuilder()
+          .update()
+          .set({
+            gameType: gameUpdate.gameType,
+            buttonPos: gameUpdate.buttonPos,
+            handNum: gameUpdate.handNum,
+          })
+          .where({
+            gameID: game.id,
+          })
+          .execute();
+
+        const nextHandInfo: NewHandInfo = {
+          gameCode: gameCode,
+          gameType: gameUpdate.gameType,
+          announceGameType: false,
+          playersInSeats: seats,
+          smallBlind: game.smallBlind,
+          bigBlind: game.bigBlind,
+          maxPlayers: game.maxPlayers,
+          buttonPos: gameUpdate.buttonPos,
+          handNum: gameUpdate.handNum,
+        };
+
+        if (prevGameType !== gameUpdate.gameType) {
+          // announce the new game type
+          logger.info(
+            `Game type is changed. New game type: ${gameUpdate.gameType}`
+          );
         }
         return nextHandInfo;
       }

@@ -33,7 +33,7 @@ type playerTrack{
 type clubTrack{
   rake: Int
   promotion: Int
-  lastHandNum: Int
+  handNum: Int
 }
 
 type Query {

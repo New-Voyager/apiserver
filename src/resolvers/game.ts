@@ -48,6 +48,7 @@ export async function configureGame(
     );
     const ret: any = gameInfo as any;
     ret.gameType = GameType[gameInfo.gameType];
+    ret.status = GameStatus[gameInfo.status];
     ret.tableStatus = TableStatus[gameInfo.tableStatus];
     return ret;
   } catch (err) {
@@ -742,7 +743,7 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
     const updates = await GameRepository.getGameUpdates(game.id);
     if (updates) {
       ret.rakeCollected = updates.rake;
-      ret.lastHandNum = updates.lastHandNum;
+      ret.handNum = updates.handNum;
     }
     // get player's game state
     const playerState = await GameRepository.getGamePlayerState(

@@ -44,11 +44,14 @@ export class PokerGameUpdates {
   @Column({name: 'rake', type: 'decimal', precision: 8, scale: 2, default: 0.0})
   public rake!: number;
 
-  @Column({name: 'last_hand_num', nullable: false, default: 0})
-  public lastHandNum!: number;
+  @Column({name: 'hand_num', nullable: false, default: 0})
+  public handNum!: number;
 
   @Column({name: 'button_pos', nullable: true, default: 0})
   public buttonPos!: number;
+
+  @Column({name: 'game_type', default: GameType.UNKNOWN})
+  public gameType!: GameType;
 }
 
 @Entity({name: 'poker_game'})
@@ -204,6 +207,9 @@ export class PokerGame {
 
   @Column({name: 'wait_for_bigblind', default: true})
   public waitForBigBlind!: boolean;
+
+  @Column({name: 'roe_games', default: ''})
+  public roeGames!: string; // comma separated list of round of each games
 
   @DbAwareColumn({
     name: 'started_at',
