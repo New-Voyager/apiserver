@@ -401,13 +401,14 @@ class GameAPIs {
         }
 
         let announceGameType = false;
-        if (
-          game.gameType === GameType.ROE ||
-          game.gameType === GameType.DEALER_CHOICE
-        ) {
+        if (game.gameType === GameType.ROE) {
           if (gameUpdate.gameType !== prevGameType) {
             announceGameType = true;
           }
+        }
+
+        if (game.gameType === GameType.DEALER_CHOICE) {
+          announceGameType = true;
         }
 
         // update button pos and gameType
@@ -435,6 +436,11 @@ class GameAPIs {
           buttonPos: gameUpdate.buttonPos,
           handNum: gameUpdate.handNum,
         };
+
+        if (game.gameType === GameType.DEALER_CHOICE) {
+          // if the game is dealer's choice, then prompt the user for next hand
+          await markDealerChoiceNextHand(game, transactionEntityManager);
+        }
 
         if (prevGameType !== gameUpdate.gameType) {
           // announce the new game type

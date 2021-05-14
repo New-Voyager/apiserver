@@ -46,6 +46,7 @@ export async function processPendingUpdates(gameId: number) {
   // this flag indicates whether we need to start seat change process or not
   // seat change is done, only if a player leaves, kicked out, or left due to connection issues
   let newOpenSeat = false;
+  let dealerChoiceUpdate: NextHandUpdates | null = null;
 
   const gameRespository = getRepository(PokerGame);
   const game = await gameRespository.findOne({id: gameId});
@@ -151,7 +152,7 @@ export async function processPendingUpdates(gameId: number) {
         pendingUpdatesRepo
       );
     } else if (update.newUpdate === NextHandUpdate.WAIT_FOR_DEALER_CHOICE) {
-      await handleDealersChoice(game, update, pendingUpdatesRepo);
+      dealerChoiceUpdate = update;
     }
   }
 
@@ -180,7 +181,11 @@ export async function processPendingUpdates(gameId: number) {
   }
 
   if (endPendingProcess) {
-    await pendingProcessDone(gameId);
+    if (dealerChoiceUpdate) {
+      await handleDealersChoice(game, dealerChoiceUpdate, pendingUpdatesRepo);
+    } else {
+      await pendingProcessDone(gameId);
+    }
   }
 }
 

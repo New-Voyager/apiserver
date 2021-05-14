@@ -342,12 +342,6 @@ class HandRepositoryImpl {
             handNum,
             transactionEntityManager
           );
-
-          if (game.gameType === GameType.DEALER_CHOICE) {
-            // if the game is dealer's choice, then prompt the user for next hand
-            await markDealerChoiceNextHand(game, transactionEntityManager);
-          }
-
           return saveResult;
         }
       );
