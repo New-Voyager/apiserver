@@ -1434,6 +1434,28 @@ export async function updateGameConfig(
     );
   }
 }
+
+export async function dealerChoice(
+  playerId: string,
+  gameCode: string,
+  gameTypeStr: string
+) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    const gameType: GameType = GameType[gameTypeStr];
+    const game = await Cache.getGame(gameCode);
+    const player = await Cache.getPlayer(playerId);
+    await GameRepository.updateDealerChoice(game, player, gameType);
+  } catch (err) {
+    logger.error(err.message);
+    throw new Error(
+      `Failed to update set dealer choice:  ${err.message}. Game code: ${gameCode}`
+    );
+  }
+}
+
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -1640,6 +1662,9 @@ const resolvers: any = {
     },
     updateGameConfig: async (parent, args, ctx, info) => {
       return updateGameConfig(ctx.req.playerId, args.gameCode, args.config);
+    },
+    dealerChoice: async (parent, args, ctx, info) => {
+      return dealerChoice(ctx.req.playerId, args.gameCode, args.gameType);
     },
   },
 };

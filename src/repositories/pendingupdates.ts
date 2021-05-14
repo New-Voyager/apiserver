@@ -1,4 +1,10 @@
-import {getRepository, getConnection, Not} from 'typeorm';
+import {
+  getRepository,
+  getConnection,
+  Not,
+  EntityManager,
+  Repository,
+} from 'typeorm';
 import {fixQuery} from '@src/utils';
 import {GameStatus, NextHandUpdate, PlayerStatus} from '@src/entity/types';
 import {GameRepository} from './game';
@@ -10,11 +16,31 @@ import {
   playerBuyIn,
   playerKickedOut,
   playerLeftGame,
+  startTimer,
 } from '@src/gameserver';
 import {occupiedSeats, WaitListMgmt} from './waitlist';
 import {SeatChangeProcess} from './seatchange';
+import {BUYIN_TIMEOUT, DEALER_CHOICE_TIMEOUT} from './types';
+import _ from 'lodash';
+import {Nats} from '@src/nats';
 
 const logger = getLogger('pending-updates');
+
+export async function markDealerChoiceNextHand(
+  game: PokerGame,
+  entityManager?: EntityManager
+) {
+  let nextHandUpdatesRepository;
+  if (entityManager) {
+    nextHandUpdatesRepository = entityManager.getRepository(NextHandUpdates);
+  } else {
+    nextHandUpdatesRepository = getRepository(NextHandUpdates);
+  }
+  const nextHandUpdate = new NextHandUpdates();
+  nextHandUpdate.game = game;
+  nextHandUpdate.newUpdate = NextHandUpdate.WAIT_FOR_DEALER_CHOICE;
+  nextHandUpdatesRepository.save(nextHandUpdate);
+}
 
 export async function processPendingUpdates(gameId: number) {
   // this flag indicates whether we need to start seat change process or not
@@ -124,6 +150,8 @@ export async function processPendingUpdates(gameId: number) {
         update,
         pendingUpdatesRepo
       );
+    } else if (update.newUpdate === NextHandUpdate.WAIT_FOR_DEALER_CHOICE) {
+      await handleDealersChoice(game, update, pendingUpdatesRepo);
     }
   }
 
@@ -291,6 +319,80 @@ async function buyinApproved(
     // notify game server, player has a new buyin
     await playerBuyIn(game, update.player, playerInGame);
   }
+  // delete this update
+  await pendingUpdatesRepo.delete({id: update.id});
+}
+
+async function handleDealersChoice(
+  game: PokerGame,
+  update: NextHandUpdates,
+  pendingUpdatesRepo: Repository<NextHandUpdates>
+) {
+  const dealerChoiceTimeout = new Date();
+  const timeout = 60;
+  dealerChoiceTimeout.setSeconds(dealerChoiceTimeout.getSeconds() + timeout);
+
+  // start a timer
+  startTimer(game.id, 0, DEALER_CHOICE_TIMEOUT, dealerChoiceTimeout);
+
+  // delete this update
+  await pendingUpdatesRepo.delete({id: update.id});
+
+  // get next player and send the notification
+  const playersInSeats = await GameRepository.getPlayersInSeats(game.id);
+  const takenSeats = _.keyBy(playersInSeats, 'seatNo');
+
+  const gameUpdatesRepo = getRepository(PokerGameUpdates);
+  const gameUpdates = await gameUpdatesRepo.find({
+    gameID: game.id,
+  });
+  if (gameUpdates.length === 0) {
+    return;
+  }
+
+  const gameUpdate = gameUpdates[0];
+  const occupiedSeats = new Array<number>();
+  // dealer
+  occupiedSeats.push(0);
+  for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+    const playerSeat = takenSeats[seatNo];
+    if (!playerSeat) {
+      occupiedSeats.push(0);
+    } else {
+      if (playerSeat.status == PlayerStatus.PLAYING) {
+        occupiedSeats.push(playerSeat.playerId);
+      } else {
+        occupiedSeats.push(0);
+      }
+    }
+  }
+  // determine button pos
+  let buttonPos = gameUpdate.buttonPos;
+  let playerId = 0;
+  let maxPlayers = game.maxPlayers;
+  while (maxPlayers > 0) {
+    buttonPos++;
+    if (buttonPos > maxPlayers) {
+      buttonPos = 1;
+    }
+    if (occupiedSeats[buttonPos] !== 0) {
+      playerId = occupiedSeats[buttonPos];
+      break;
+    }
+    maxPlayers--;
+  }
+
+  await gameUpdatesRepo.update(
+    {
+      dealerChoiceSeat: playerId,
+    },
+    {
+      gameID: game.id,
+    }
+  );
+
+  Nats.sendDealersChoiceMessage(game, playerId);
+
   // delete this update
   await pendingUpdatesRepo.delete({id: update.id});
 }

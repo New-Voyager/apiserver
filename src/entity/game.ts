@@ -50,6 +50,9 @@ export class PokerGameUpdates {
   @Column({name: 'button_pos', nullable: true, default: 0})
   public buttonPos!: number;
 
+  @Column({name: 'dealer_choice_seat', nullable: true, default: 0})
+  public dealerChoiceSeat!: number;
+
   @Column({name: 'game_type', default: GameType.UNKNOWN})
   public gameType!: GameType;
 }
@@ -208,8 +211,11 @@ export class PokerGame {
   @Column({name: 'wait_for_bigblind', default: true})
   public waitForBigBlind!: boolean;
 
-  @Column({name: 'roe_games', default: ''})
+  @Column({name: 'roe_games', nullable: true, default: ''})
   public roeGames!: string; // comma separated list of round of each games
+
+  @Column({name: 'dealer_choice_games', nullable: true, default: ''})
+  public dealerChoiceGames!: string; // comma separated list of round of each games
 
   @DbAwareColumn({
     name: 'started_at',

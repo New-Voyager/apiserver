@@ -53,9 +53,39 @@ class NatsClass {
     this.client.publish(subject, messageStr);
   }
 
+  public sendDealersChoiceMessage(game: PokerGame, playerId: number) {
+    if (this.client === null) {
+      return;
+    }
+    const tick = new Date().getTime();
+    const message: any = {
+      version: '1.0',
+      gameCode: game.gameCode,
+      playerId: playerId.toString(),
+      gameToken: '',
+      messageId: `DEALERCHOICE:${tick}`,
+      messages: [
+        {
+          messageType: 'DEALER_CHOICE',
+          dealerChoice: {
+            playerId: playerId.toString(),
+            games: game.dealerChoiceGames.split(',').map(e => GameType[e]),
+          },
+        },
+      ],
+    };
+    const channel = this.getPlayerHandChannel(game.gameCode, playerId);
+    const messageStr = JSON.stringify(message);
+    this.client.publish(channel, messageStr);
+  }
+
   public getPlayerChannel(player: Player) {
     const subject = `player.${player.id}`;
     return subject;
+  }
+
+  public getPlayerHandChannel(gameCode: string, playerId: number) {
+    return `hand.${gameCode}.player.${playerId}`;
   }
 }
 
