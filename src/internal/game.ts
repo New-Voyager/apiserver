@@ -391,6 +391,16 @@ class GameAPIs {
           gameUpdate.gameType = game.gameType;
         }
 
+        let announceGameType = false;
+        if (
+          game.gameType === GameType.ROE ||
+          game.gameType === GameType.DEALER_CHOICE
+        ) {
+          if (gameUpdate.gameType !== prevGameType) {
+            announceGameType = true;
+          }
+        }
+
         // update button pos and gameType
         await gameUpdatesRepo
           .createQueryBuilder()
@@ -408,7 +418,7 @@ class GameAPIs {
         const nextHandInfo: NewHandInfo = {
           gameCode: gameCode,
           gameType: gameUpdate.gameType,
-          announceGameType: false,
+          announceGameType: announceGameType,
           playersInSeats: seats,
           smallBlind: game.smallBlind,
           bigBlind: game.bigBlind,
