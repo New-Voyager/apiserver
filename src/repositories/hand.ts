@@ -26,6 +26,7 @@ import {StatsRepository} from './stats';
 import {GameRepository} from './game';
 import {identity} from 'lodash';
 import {ClubMessageInput} from '@src/entity/clubmessage';
+import {markDealerChoiceNextHand} from './pendingupdates';
 
 const logger = getLogger('hand');
 
@@ -341,7 +342,6 @@ class HandRepositoryImpl {
             handNum,
             transactionEntityManager
           );
-
           return saveResult;
         }
       );

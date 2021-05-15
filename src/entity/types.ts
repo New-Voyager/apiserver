@@ -47,6 +47,7 @@ export enum NextHandUpdate {
   RELOAD_APPROVED,
   BUYIN_DENIED,
   RELOAD_DENIED,
+  WAIT_FOR_DEALER_CHOICE,
 }
 
 export enum WonAtStatus {

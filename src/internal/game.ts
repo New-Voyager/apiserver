@@ -1,6 +1,9 @@
 import {GameStatus, GameType, TableStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
-import {processPendingUpdates} from '@src/repositories/pendingupdates';
+import {
+  markDealerChoiceNextHand,
+  processPendingUpdates,
+} from '@src/repositories/pendingupdates';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
 import {PokerGame, PokerGameUpdates} from '@src/entity/game';
@@ -253,6 +256,7 @@ class GameAPIs {
       resp.status(500).send(JSON.stringify(res));
       return;
     }
+    logger.info(`New hand info: ${gameCode}`);
 
     const ret = await getManager().transaction(
       async transactionEntityManager => {
@@ -277,7 +281,6 @@ class GameAPIs {
           resp.status(500).send(JSON.stringify(res));
           return;
         }
-        const gameUpdate = gameUpdates[0];
         const playersInSeats = await GameRepository.getPlayersInSeats(
           game.id,
           transactionEntityManager
@@ -350,6 +353,7 @@ class GameAPIs {
           }
         }
 
+        const gameUpdate = gameUpdates[0];
         // determine button pos
         const lastButtonPos = gameUpdate.buttonPos;
         let buttonPassedDealer = false;
@@ -387,18 +391,24 @@ class GameAPIs {
             const roeGames = game.roeGames.split(',');
             gameUpdate.gameType = GameType[roeGames[0]];
           }
+        } else if (game.gameType === GameType.DEALER_CHOICE) {
+          if (gameUpdate.handNum === 1) {
+            const dealerChoiceGames = game.dealerChoiceGames.split(',');
+            gameUpdate.gameType = GameType[dealerChoiceGames[0]];
+          }
         } else {
           gameUpdate.gameType = game.gameType;
         }
 
         let announceGameType = false;
-        if (
-          game.gameType === GameType.ROE ||
-          game.gameType === GameType.DEALER_CHOICE
-        ) {
+        if (game.gameType === GameType.ROE) {
           if (gameUpdate.gameType !== prevGameType) {
             announceGameType = true;
           }
+        }
+
+        if (game.gameType === GameType.DEALER_CHOICE) {
+          announceGameType = true;
         }
 
         // update button pos and gameType
@@ -426,6 +436,11 @@ class GameAPIs {
           buttonPos: gameUpdate.buttonPos,
           handNum: gameUpdate.handNum,
         };
+
+        if (game.gameType === GameType.DEALER_CHOICE) {
+          // if the game is dealer's choice, then prompt the user for next hand
+          await markDealerChoiceNextHand(game, transactionEntityManager);
+        }
 
         if (prevGameType !== gameUpdate.gameType) {
           // announce the new game type

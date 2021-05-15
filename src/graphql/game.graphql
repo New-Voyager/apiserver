@@ -159,6 +159,8 @@ type GameInfo {
   hhEligible: Boolean           # true if this game is eligible for high hand
   botGame: Boolean
   runItTwiceAllowed: Boolean
+  roeGames: [GameType!]
+  dealerChoiceGames: [GameType!]
 
   # NATS channels
   gameToPlayerChannel: String
@@ -196,7 +198,10 @@ input GameUpdateInput {
   buyInMin: Float
   buyInMax: Float
   title: String
+  roeGames: [GameType!]
+  dealerChoiceGames: [GameType!]
 }
+
 
 type PlayerGameState {
   playerUuid: String
@@ -360,6 +365,9 @@ type Mutation {
   beginHostSeatChange(gameCode: String!): Boolean
   seatChangeSwapSeats(gameCode: String!, seatNo1: Int!, seatNo2: Int!): Boolean!
   seatChangeComplete(gameCode: String!, cancelChanges: Boolean): Boolean  
+
+  # dealer choice game
+  dealerChoice(gameCode: String!, gameType: GameType!): Boolean
 }
 
 type gameId{
@@ -390,5 +398,4 @@ type Query {
 
   # returns player role in a game
   playerRole(gameCode: String!): PlayerRole
-
 }

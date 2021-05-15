@@ -32,12 +32,14 @@ import {
   playerLeftGame,
   playerSwitchSeat,
   playerConfigUpdate,
+  cancelTimer,
+  pendingProcessDone,
 } from '@src/gameserver';
 import {fixQuery} from '@src/utils';
 import {WaitListMgmt} from './waitlist';
 import {Reward, GameRewardTracking, GameReward} from '@src/entity/reward';
 import {ChipsTrackRepository} from './chipstrack';
-import {BUYIN_TIMEOUT} from './types';
+import {BUYIN_TIMEOUT, DEALER_CHOICE_TIMEOUT} from './types';
 import {Cache} from '@src/cache/index';
 import {StatsRepository} from './stats';
 import {getAgoraToken} from '@src/3rdparty/agora';
@@ -118,6 +120,9 @@ class GameRepositoryImpl {
       ) {
         throw new Error('dealerChoiceGames must be specified');
       }
+
+      const dealerChoiceGames = input.dealerChoiceGames.toString();
+      input['dealerChoiceGames'] = dealerChoiceGames;
     } else if (gameType == GameType.ROE) {
       if (input.roeGames === null || input.roeGames.length === 0) {
         throw new Error('roeGames must be specified');
@@ -1563,6 +1568,32 @@ class GameRepositoryImpl {
       }
     });
     return true;
+  }
+
+  public async updateDealerChoice(
+    game: PokerGame,
+    player: Player,
+    gameType: GameType
+  ) {
+    // cancel the dealer choice timer
+    cancelTimer(game.id, 0, DEALER_CHOICE_TIMEOUT);
+
+    logger.info(
+      `Game: ${game.gameType} dealers choice: ${gameType.toString()}`
+    );
+    // update game type in the GameUpdates table
+    const gameUpdatesRepo = getRepository(PokerGameUpdates);
+    await gameUpdatesRepo.update(
+      {
+        gameID: game.id,
+      },
+      {
+        gameType: gameType,
+      }
+    );
+
+    // pending updates done
+    await pendingProcessDone(game.id);
   }
 }
 
