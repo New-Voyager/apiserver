@@ -53,7 +53,11 @@ class NatsClass {
     this.client.publish(subject, messageStr);
   }
 
-  public sendDealersChoiceMessage(game: PokerGame, playerId: number) {
+  public sendDealersChoiceMessage(
+    game: PokerGame,
+    playerId: number,
+    timeout: number
+  ) {
     if (this.client === null) {
       return;
     }
@@ -70,6 +74,7 @@ class NatsClass {
           dealerChoice: {
             playerId: playerId.toString(),
             games: game.dealerChoiceGames.split(',').map(e => GameType[e]),
+            timeout: timeout,
           },
         },
       ],

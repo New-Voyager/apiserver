@@ -334,7 +334,7 @@ async function handleDealersChoice(
   pendingUpdatesRepo: Repository<NextHandUpdates>
 ) {
   const dealerChoiceTimeout = new Date();
-  const timeout = 60;
+  const timeout = 10;
   dealerChoiceTimeout.setSeconds(dealerChoiceTimeout.getSeconds() + timeout);
 
   // start a timer
@@ -396,7 +396,7 @@ async function handleDealersChoice(
     }
   );
 
-  Nats.sendDealersChoiceMessage(game, playerId);
+  Nats.sendDealersChoiceMessage(game, playerId, timeout);
 
   // delete this update
   await pendingUpdatesRepo.delete({id: update.id});
