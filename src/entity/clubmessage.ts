@@ -6,7 +6,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import {Club, ClubMember} from './club';
-import {DbAwareUpdateDateColumn} from './dbaware';
+import {DbAwareCreateDateColumn, DbAwareUpdateDateColumn} from './dbaware';
 import {SavedHands} from './hand';
 import {Player} from './player';
 import {ClubMessageType, HostMessageType} from './types';
@@ -79,7 +79,7 @@ export class ClubHostMessages {
   @Column({name: 'read_status', default: false})
   public readStatus!: boolean;
 
-  @DbAwareUpdateDateColumn({
+  @DbAwareCreateDateColumn({
     type: 'timestamp',
     name: 'message_time',
   })
