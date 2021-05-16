@@ -2,7 +2,7 @@ import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {NextHandUpdates, PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {NextHandUpdate, PlayerStatus} from '@src/entity/types';
-import {playerStatusChanged} from '@src/gameserver';
+import {pendingProcessDone, playerStatusChanged} from '@src/gameserver';
 import {getLogger} from '@src/utils/log';
 import {getRepository} from 'typeorm';
 import {BuyIn} from './buyin';
@@ -14,6 +14,7 @@ import {
   BUYIN_APPROVAL_TIMEOUT,
   RELOAD_APPROVAL_TIMEOUT,
   NewUpdate,
+  DEALER_CHOICE_TIMEOUT,
 } from './types';
 import {WaitListMgmt} from './waitlist';
 
@@ -55,6 +56,8 @@ export async function timerCallback(req: any, resp: any) {
     await buyInApprovalTimeoutExpired(gameID, playerID);
   } else if (purpose === RELOAD_APPROVAL_TIMEOUT) {
     await reloadApprovalTimeoutExpired(gameID, playerID);
+  } else if (purpose === DEALER_CHOICE_TIMEOUT) {
+    await dealerChoiceTimeout(gameID, playerID);
   }
 
   resp.status(200).send({status: 'OK'});
@@ -210,4 +213,12 @@ export async function reloadApprovalTimeoutExpired(
       })
       .execute();
   }
+}
+
+export async function dealerChoiceTimeout(gameID: number, playerID: number) {
+  logger.info(
+    `Dealer choice timeout expired. GameID: ${gameID}, playerID: ${playerID}`
+  );
+  // pending updates done (resume game)
+  await pendingProcessDone(gameID);
 }
