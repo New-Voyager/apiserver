@@ -81,8 +81,7 @@ export class ClubHostMessages {
 
   @DbAwareUpdateDateColumn({
     type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
+    name: 'message_time',
   })
   public messageTime!: Date;
 }
