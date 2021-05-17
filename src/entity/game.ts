@@ -55,6 +55,12 @@ export class PokerGameUpdates {
 
   @Column({name: 'game_type', default: GameType.UNKNOWN})
   public gameType!: GameType;
+
+  @Column({name: 'janus_session_id', nullable: true, default: ''})
+  public janusSessionId!: string;
+
+  @Column({name: 'janus_plugin_handle', nullable: true, default: ''})
+  public janusPluginHandle!: string;
 }
 
 @Entity({name: 'poker_game'})

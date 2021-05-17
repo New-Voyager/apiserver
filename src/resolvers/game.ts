@@ -22,6 +22,7 @@ import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {argsToArgsConfig} from 'graphql/type/definition';
 import {pendingApprovalsForClubData} from '@src/types';
 import {ApolloError} from 'apollo-server-express';
+import {JanusSession, JANUS_APISECRET} from '@src/janus';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -50,6 +51,27 @@ export async function configureGame(
     ret.gameType = GameType[gameInfo.gameType];
     ret.status = GameStatus[gameInfo.status];
     ret.tableStatus = TableStatus[gameInfo.tableStatus];
+    ret.gameID = game.id;
+
+    logger.info(`Joining Janus audio conference: ${game.id}`);
+    try {
+      const session = await JanusSession.create(JANUS_APISECRET);
+      await session.attachAudio();
+      await session.createRoom(gameInfo.id, 'abcd');
+      await GameRepository.updateJanus(
+        game.id,
+        session.getId(),
+        session.getHandleId()
+      );
+      logger.info(`Successfully joined Janus audio conference: ${game.id}`);
+    } catch (err) {
+      logger.info(
+        `Failed to join Janus audio conference: ${
+          game.id
+        }. Error: ${err.toString()}`
+      );
+    }
+
     return ret;
   } catch (err) {
     logger.error(JSON.stringify(err));
@@ -739,6 +761,7 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.gameType = GameType[game.gameType];
     ret.tableStatus = TableStatus[game.tableStatus];
     ret.status = GameStatus[game.status];
+    ret.gameID = game.id;
 
     const updates = await GameRepository.getGameUpdates(game.id);
     if (updates) {
