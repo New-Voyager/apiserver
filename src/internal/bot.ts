@@ -127,6 +127,18 @@ class Deck {
     if (gameType === 'OMAHA') {
       noOfCards = 4;
     }
+    if (gameType === 'PLO') {
+      noOfCards = 4;
+    }
+    if (gameType === 'PLO_HILO') {
+      noOfCards = 4;
+    }
+    if (gameType === 'FIVE_CARD_PLO_HILO') {
+      noOfCards = 4;
+    }
+    if (gameType === 'FIVE_CARD_PLO') {
+      noOfCards = 4;
+    }
 
     let cards: Array<number> = [];
     for (let i = 0; i < noOfCards; i++) {
@@ -168,7 +180,7 @@ export async function generateBotScript(req: any, resp: any) {
   console.log(`current directory: ${__dirname}`);
   try {
     let rawdata = fs
-      .readFileSync(`${__dirname}/../bugs/handlog1.json`)
+      .readFileSync(`${__dirname}/../bugs/handlog2.json`)
       .toString();
     let handlog = JSON.parse(rawdata);
 
@@ -259,10 +271,18 @@ export async function generateBotScript(req: any, resp: any) {
     const seatCards = Array<any>();
     // get cards for each player
     for (const seatNo of occupiedSeats) {
-      seatCards.push({
-        seat: seatNo,
-        cards: getCards(deck.popCards(gameType)),
-      });
+      const player = handlog['players'][seatNo];
+      if (player['cards']) {
+        seatCards.push({
+          seat: seatNo,
+          cards: getCards(player['cards']),
+        });
+      } else {
+        seatCards.push({
+          seat: seatNo,
+          cards: getCards(deck.popCards(gameType)),
+        });
+      }
     }
     setup['seat-cards'] = seatCards;
 
