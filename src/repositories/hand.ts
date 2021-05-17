@@ -635,12 +635,16 @@ class HandRepositoryImpl {
       const savedHandsRepository = getRepository(SavedHands);
 
       const bookmarkedHands = await savedHandsRepository.find({
-        relations: ['game', 'savedBy'],
+        relations: ['savedBy'],
         where: {
           savedBy: {id: player.id},
         },
         order: {id: 'DESC'},
       });
+
+      for (const hand of bookmarkedHands) {
+        hand.data = JSON.parse(hand.data);
+      }
       return bookmarkedHands;
     } catch (error) {
       logger.error(

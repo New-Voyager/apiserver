@@ -81,7 +81,7 @@ type SavedHand {
   sharedBy: Player
   savedBy: Player
   sharedTo: Club
-  game: Game!
+  gameCode: String!
   handNum: Int!
   data: Json!
   updatedAt: DateTime!
