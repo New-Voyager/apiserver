@@ -1605,7 +1605,9 @@ class GameRepositoryImpl {
   public async updateJanus(
     gameID: number,
     sessionId: string,
-    handleId: string
+    handleId: string,
+    roomId: number,
+    roomPin: string
   ) {
     const gameUpdatesRepo = getRepository(PokerGameUpdates);
     await gameUpdatesRepo.update(
@@ -1615,6 +1617,8 @@ class GameRepositoryImpl {
       {
         janusSessionId: sessionId,
         janusPluginHandle: handleId,
+        janusRoomId: roomId,
+        janusRoomPin: roomPin,
       }
     );
   }

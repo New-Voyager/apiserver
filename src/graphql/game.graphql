@@ -98,6 +98,7 @@ input GameCreateInput {
   runItTwiceAllowed: Boolean
   roeGames: [GameType!]
   dealerChoiceGames: [GameType!]
+  audioConfEnabled: Boolean
 }
 
 type SeatInfo {
@@ -183,6 +184,14 @@ type GameInfo {
   isHost: Boolean
   isOwner: Boolean
   isManager: Boolean
+
+  # audio conference options
+  audioConfEnabled: Boolean
+  janusUrl: String
+  janusToken: String
+  janusSecret: String
+  janusRoomId: Int
+  janusRoomPin: String
 }
 
 type PlayerRole {

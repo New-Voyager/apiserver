@@ -1,5 +1,5 @@
 import {Firebase} from '@src/firebase';
-import {closeAudioSession, getAudioSession, JanusSession} from '@src/janus';
+import {JanusSession} from '@src/janus';
 import {PlayerRepository} from '@src/repositories/player';
 
 async function sendTestMessage(playerId: string) {

@@ -61,6 +61,14 @@ export class PokerGameUpdates {
 
   @Column({name: 'janus_plugin_handle', nullable: true, default: ''})
   public janusPluginHandle!: string;
+
+  // janus room id
+  @Column({name: 'janus_room_id', default: 0})
+  public janusRoomId!: number;
+
+  // janus room pin
+  @Column({name: 'janus_room_pin', default: ''})
+  public janusRoomPin!: string;
 }
 
 @Entity({name: 'poker_game'})
@@ -274,6 +282,10 @@ export class PokerGame {
   // used for tracking game number for club games
   @Column({name: 'hh_tracked', default: false})
   public highHandTracked!: boolean;
+
+  // used for tracking game number for club games
+  @Column({name: 'audio_conf_enabled', default: false})
+  public audioConfEnabled!: boolean;
 
   // This is not a database column and used for tracking highhand in the cache
   public highHandRank = 0;

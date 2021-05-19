@@ -22,7 +22,13 @@ import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {argsToArgsConfig} from 'graphql/type/definition';
 import {pendingApprovalsForClubData} from '@src/types';
 import {ApolloError} from 'apollo-server-express';
-import {JanusSession, JANUS_APISECRET} from '@src/janus';
+import {
+  JanusSession,
+  JANUS_APISECRET,
+  JANUS_SECRET,
+  JANUS_TOKEN,
+  JANUS_URL,
+} from '@src/janus';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -42,6 +48,7 @@ export async function configureGame(
   }
   try {
     logger.info(`Game type: ${game.gameType}`);
+    game.audioConfEnabled = true;
     const gameInfo = await GameRepository.createPrivateGame(
       clubCode,
       playerId,
@@ -51,25 +58,33 @@ export async function configureGame(
     ret.gameType = GameType[gameInfo.gameType];
     ret.status = GameStatus[gameInfo.status];
     ret.tableStatus = TableStatus[gameInfo.tableStatus];
-    ret.gameID = game.id;
+    ret.gameID = gameInfo.id;
 
-    logger.info(`Joining Janus audio conference: ${game.id}`);
-    try {
-      const session = await JanusSession.create(JANUS_APISECRET);
-      await session.attachAudio();
-      await session.createRoom(gameInfo.id, 'abcd');
-      await GameRepository.updateJanus(
-        game.id,
-        session.getId(),
-        session.getHandleId()
-      );
-      logger.info(`Successfully joined Janus audio conference: ${game.id}`);
-    } catch (err) {
-      logger.info(
-        `Failed to join Janus audio conference: ${
-          game.id
-        }. Error: ${err.toString()}`
-      );
+    if (game.audioConfEnabled) {
+      ret.janusRoomPin = 'abcd'; // randomize
+      ret.janusRoomId = gameInfo.id;
+
+      logger.info(`Joining Janus audio conference: ${game.id}`);
+      try {
+        const session = await JanusSession.create(JANUS_APISECRET);
+        await session.attachAudio();
+        await session.createRoom(ret.janusRoomId, ret.janusRoomPin);
+        await GameRepository.updateJanus(
+          gameInfo.id,
+          session.getId(),
+          session.getHandleId(),
+          ret.janusRoomId,
+          ret.janusRoomPin
+        );
+        logger.info(`Successfully joined Janus audio conference: ${game.id}`);
+      } catch (err) {
+        logger.info(
+          `Failed to join Janus audio conference: ${
+            game.id
+          }. Error: ${err.toString()}`
+        );
+        game.audioConfEnabled = false;
+      }
     }
 
     return ret;
@@ -767,6 +782,8 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
     if (updates) {
       ret.rakeCollected = updates.rake;
       ret.handNum = updates.handNum;
+      ret.janusRoomId = updates.janusRoomId;
+      ret.janusRoomPin = updates.janusRoomPin;
     }
     // get player's game state
     const playerState = await GameRepository.getGamePlayerState(
@@ -791,6 +808,10 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.isHost = isHost;
     ret.isOwner = isOwner;
 
+    // janus info
+    ret.janusUrl = JANUS_URL;
+    ret.janusSecret = JANUS_SECRET;
+    ret.janusToken = JANUS_TOKEN;
     return ret;
   } catch (err) {
     logger.error(JSON.stringify(err));
