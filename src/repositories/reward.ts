@@ -41,11 +41,13 @@ class RewardRepositoryImpl {
         createReward.endHour = reward.endHour;
         createReward.minRank = reward.minRank;
         createReward.schedule =
-          ScheduleType[reward.schedule as unknown as keyof typeof ScheduleType];
+          ScheduleType[
+            (reward.schedule as unknown) as keyof typeof ScheduleType
+          ];
         createReward.name = reward.name;
         createReward.startHour = reward.startHour;
         createReward.type =
-          RewardType[reward.type as unknown as keyof typeof RewardType];
+          RewardType[(reward.type as unknown) as keyof typeof RewardType];
         const repository = getRepository(Reward);
         const response = await repository.save(createReward);
         return response.id;
@@ -203,8 +205,9 @@ class RewardRepositoryImpl {
         const playerId = parseInt(highHandPlayer.id);
         let rewardTrackRepo: Repository<GameRewardTracking>;
         if (transactionManager) {
-          rewardTrackRepo =
-            transactionManager.getRepository(GameRewardTracking);
+          rewardTrackRepo = transactionManager.getRepository(
+            GameRewardTracking
+          );
         } else {
           rewardTrackRepo = getRepository(GameRewardTracking);
         }

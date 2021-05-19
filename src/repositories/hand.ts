@@ -555,8 +555,9 @@ class HandRepositoryImpl {
     try {
       const id = await getManager().transaction(
         async transactionEntityManager => {
-          const savedHandsRepository =
-            transactionEntityManager.getRepository(SavedHands);
+          const savedHandsRepository = transactionEntityManager.getRepository(
+            SavedHands
+          );
 
           let sharedHand = await savedHandsRepository.findOne({
             gameCode: game.gameCode,
@@ -576,8 +577,9 @@ class HandRepositoryImpl {
           }
 
           const resp = await savedHandsRepository.save(sharedHand);
-          const clubMsgRepo =
-            transactionEntityManager.getRepository(ClubMessageInput);
+          const clubMsgRepo = transactionEntityManager.getRepository(
+            ClubMessageInput
+          );
           const message = new ClubMessageInput();
           message.clubCode = club.clubCode;
           message.player = player;

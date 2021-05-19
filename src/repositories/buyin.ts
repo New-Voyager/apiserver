@@ -171,8 +171,9 @@ export class BuyIn {
     playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
   ) {
-    let playerGameTrackerRepository =
-      transactionEntityManager.getRepository(PlayerGameTracker);
+    let playerGameTrackerRepository = transactionEntityManager.getRepository(
+      PlayerGameTracker
+    );
     const count = await playerGameTrackerRepository
       .createQueryBuilder()
       .where({
@@ -186,8 +187,9 @@ export class BuyIn {
       })
       .getCount();
 
-    const gameUpdatesRepo =
-      transactionEntityManager.getRepository(PokerGameUpdates);
+    const gameUpdatesRepo = transactionEntityManager.getRepository(
+      PokerGameUpdates
+    );
     await gameUpdatesRepo
       .createQueryBuilder()
       .update()
@@ -240,8 +242,9 @@ export class BuyIn {
         // if auto approval is set, add the buyin
         // make sure buyin within min and maxBuyin
         // send a message to game server that buyer stack has been updated
-        const playerGameTrackerRepository =
-          transactionEntityManager.getRepository(PlayerGameTracker);
+        const playerGameTrackerRepository = transactionEntityManager.getRepository(
+          PlayerGameTracker
+        );
         const playerInGame = await playerGameTrackerRepository.findOne({
           game: {id: this.game.id},
           player: {id: this.player.id},
@@ -362,8 +365,9 @@ export class BuyIn {
       approved = false;
     const status = await getManager().transaction(
       async transactionEntityManager => {
-        const playerGameTrackerRepository =
-          transactionEntityManager.getRepository(PlayerGameTracker);
+        const playerGameTrackerRepository = transactionEntityManager.getRepository(
+          PlayerGameTracker
+        );
         const playerInGames = await playerGameTrackerRepository
           .createQueryBuilder()
           .where({
@@ -518,8 +522,9 @@ export class BuyIn {
           })
           .getCount();
 
-        const gameUpdatesRepo =
-          transactionEntityManager.getRepository(PokerGameUpdates);
+        const gameUpdatesRepo = transactionEntityManager.getRepository(
+          PokerGameUpdates
+        );
         await gameUpdatesRepo
           .createQueryBuilder()
           .update()
@@ -743,8 +748,9 @@ export class BuyIn {
         return await getManager().transaction(
           async transactionEntityManager => {
             // get amount from the next hand update table
-            const pendingUpdatesRepo =
-              transactionEntityManager.getRepository(NextHandUpdates);
+            const pendingUpdatesRepo = transactionEntityManager.getRepository(
+              NextHandUpdates
+            );
             const buyInRequest = await pendingUpdatesRepo.findOne({
               game: {id: this.game.id},
               player: {id: this.player.id},
@@ -755,8 +761,9 @@ export class BuyIn {
             }
 
             // update player game tracker
-            const playerInGameRepo =
-              transactionEntityManager.getRepository(PlayerGameTracker);
+            const playerInGameRepo = transactionEntityManager.getRepository(
+              PlayerGameTracker
+            );
             const playerInGame = await playerInGameRepo.findOne({
               game: {id: this.game.id},
               player: {id: this.player.id},
@@ -789,8 +796,9 @@ export class BuyIn {
         return await getManager().transaction(
           async transactionEntityManager => {
             // get amount from the next hand update table
-            const pendingUpdatesRepo =
-              transactionEntityManager.getRepository(NextHandUpdates);
+            const pendingUpdatesRepo = transactionEntityManager.getRepository(
+              NextHandUpdates
+            );
             const buyInRequest = await pendingUpdatesRepo.findOne({
               game: {id: this.game.id},
               player: {id: this.player.id},
@@ -801,8 +809,9 @@ export class BuyIn {
             }
 
             // update player game tracker
-            const playerInGameRepo =
-              transactionEntityManager.getRepository(PlayerGameTracker);
+            const playerInGameRepo = transactionEntityManager.getRepository(
+              PlayerGameTracker
+            );
             const playerInGame = await playerInGameRepo.findOne({
               game: {id: this.game.id},
               player: {id: this.player.id},
@@ -912,8 +921,9 @@ export class BuyIn {
   ) {
     let nextHandUpdatesRepository;
     if (transactionEntityManager) {
-      nextHandUpdatesRepository =
-        transactionEntityManager.getRepository(NextHandUpdates);
+      nextHandUpdatesRepository = transactionEntityManager.getRepository(
+        NextHandUpdates
+      );
     } else {
       nextHandUpdatesRepository = getRepository(NextHandUpdates);
     }

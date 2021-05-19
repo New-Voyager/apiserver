@@ -91,8 +91,9 @@ export class SeatChangeProcess {
     const switchedSeats = await getManager().transaction(
       async transactionEntityManager => {
         // get all the switch seat requests
-        const nextHandUpdatesRepository =
-          transactionEntityManager.getRepository(NextHandUpdates);
+        const nextHandUpdatesRepository = transactionEntityManager.getRepository(
+          NextHandUpdates
+        );
         const requests = await nextHandUpdatesRepository.find({
           where: {
             game: {id: this.game.id},
@@ -132,8 +133,9 @@ export class SeatChangeProcess {
               logger.info(
                 `Player: ${player.name} (${player.id}) will switch to new seat: ${requestedSeat}`
               );
-              const playerGameTrackerRepository =
-                transactionEntityManager.getRepository(PlayerGameTracker);
+              const playerGameTrackerRepository = transactionEntityManager.getRepository(
+                PlayerGameTracker
+              );
 
               const playerOldSeat = await playerGameTrackerRepository.findOne({
                 game: {id: this.game.id},
@@ -346,8 +348,9 @@ export class SeatChangeProcess {
   async getSeatChangeRequestedPlayers(transactionManager?: EntityManager) {
     let playerGameTrackerRepository: Repository<PlayerGameTracker>;
     if (transactionManager) {
-      playerGameTrackerRepository =
-        transactionManager.getRepository(PlayerGameTracker);
+      playerGameTrackerRepository = transactionManager.getRepository(
+        PlayerGameTracker
+      );
     } else {
       playerGameTrackerRepository = getRepository(PlayerGameTracker);
     }
@@ -368,8 +371,9 @@ export class SeatChangeProcess {
   ) {
     let playerGameTrackerRepository: Repository<PlayerGameTracker>;
     if (transactionManager) {
-      playerGameTrackerRepository =
-        transactionManager.getRepository(PlayerGameTracker);
+      playerGameTrackerRepository = transactionManager.getRepository(
+        PlayerGameTracker
+      );
     } else {
       playerGameTrackerRepository = getRepository(PlayerGameTracker);
     }
@@ -412,8 +416,9 @@ export class SeatChangeProcess {
     });
 
     await getManager().transaction(async transactionEntityManager => {
-      const playerGameTrackerRepo =
-        transactionEntityManager.getRepository(PlayerGameTracker);
+      const playerGameTrackerRepo = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
       const seatChangeProcessRepo = transactionEntityManager.getRepository(
         HostSeatChangeProcess
       );
@@ -548,8 +553,9 @@ export class SeatChangeProcess {
       const seatChangeProcessRepo = transactionEntityManager.getRepository(
         HostSeatChangeProcess
       );
-      const playerGameTrackerRepo =
-        transactionEntityManager.getRepository(PlayerGameTracker);
+      const playerGameTrackerRepo = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
       const seatChangedPlayers = await seatChangeProcessRepo.find({
         gameCode: this.game.gameCode,
       });
