@@ -166,7 +166,8 @@ export async function processPendingUpdates(gameId: number) {
       logger.info(`[${game.gameCode}] Seat Change is in Progress`);
       // open seat
       const seatChangeProcess = new SeatChangeProcess(game);
-      const waitingPlayers = await seatChangeProcess.getSeatChangeRequestedPlayers();
+      const waitingPlayers =
+        await seatChangeProcess.getSeatChangeRequestedPlayers();
       if (waitingPlayers.length > 0) {
         endPendingProcess = false;
         await seatChangeProcess.start();

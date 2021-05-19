@@ -100,9 +100,9 @@ class ClubRepositoryImpl {
       clubMember.notes = updateData.notes.toString();
     }
     if (updateData.status) {
-      clubMember.status = (ClubMemberStatus[
+      clubMember.status = ClubMemberStatus[
         updateData.status
-      ] as unknown) as ClubMemberStatus;
+      ] as unknown as ClubMemberStatus;
     }
     if (updateData.isManager || updateData.isManager === false) {
       clubMember.isManager = updateData.isManager;

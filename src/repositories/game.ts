@@ -163,9 +163,8 @@ class GameRepositoryImpl {
 
         if (!game.isTemplate) {
           // create a entry in PokerGameUpdates
-          const gameUpdatesRepo = transactionEntityManager.getRepository(
-            PokerGameUpdates
-          );
+          const gameUpdatesRepo =
+            transactionEntityManager.getRepository(PokerGameUpdates);
           const gameUpdates = new PokerGameUpdates();
           gameUpdates.gameID = savedGame.id;
           await gameUpdatesRepo.save(gameUpdates);
@@ -177,17 +176,15 @@ class GameRepositoryImpl {
           const rewardTrackingIds = new Array<number>();
           if (input.rewardIds) {
             for await (const rewardId of input.rewardIds) {
-              const rewardRepository = transactionEntityManager.getRepository(
-                Reward
-              );
+              const rewardRepository =
+                transactionEntityManager.getRepository(Reward);
               const reward = await rewardRepository.findOne({id: rewardId});
               if (!reward) {
                 throw new Error(`Reward: ${rewardId} is not found`);
               }
 
-              const rewardTrackRepo = transactionEntityManager.getRepository(
-                GameRewardTracking
-              );
+              const rewardTrackRepo =
+                transactionEntityManager.getRepository(GameRewardTracking);
               const rewardTrack = await rewardTrackRepo.findOne({
                 reward: {id: rewardId},
                 active: true,
@@ -197,9 +194,8 @@ class GameRepositoryImpl {
                 createRewardTrack.reward = reward;
                 createRewardTrack.day = new Date();
 
-                const rewardTrackRepository = transactionEntityManager.getRepository(
-                  GameRewardTracking
-                );
+                const rewardTrackRepository =
+                  transactionEntityManager.getRepository(GameRewardTracking);
                 const rewardTrackResponse = await rewardTrackRepository.save(
                   createRewardTrack
                 );
@@ -208,9 +204,8 @@ class GameRepositoryImpl {
                 createGameReward.rewardId = rewardId;
                 createGameReward.rewardTrackingId = rewardTrackResponse;
                 rewardTrackingIds.push(rewardTrackResponse.id);
-                const gameRewardRepository = transactionEntityManager.getRepository(
-                  GameReward
-                );
+                const gameRewardRepository =
+                  transactionEntityManager.getRepository(GameReward);
                 await gameRewardRepository.save(createGameReward);
               } else {
                 rewardTrackingIds.push(rewardTrack.id);
@@ -219,9 +214,8 @@ class GameRepositoryImpl {
                 createGameReward.rewardId = rewardId;
                 createGameReward.rewardTrackingId = rewardTrack;
 
-                const gameRewardRepository = transactionEntityManager.getRepository(
-                  GameReward
-                );
+                const gameRewardRepository =
+                  transactionEntityManager.getRepository(GameReward);
                 await gameRewardRepository.save(createGameReward);
               }
             }
@@ -262,9 +256,8 @@ class GameRepositoryImpl {
             {tableStatus: tableStatus}
           );
 
-          const trackgameServerRepository = transactionEntityManager.getRepository(
-            TrackGameServer
-          );
+          const trackgameServerRepository =
+            transactionEntityManager.getRepository(TrackGameServer);
           const trackServer = new TrackGameServer();
           trackServer.game = savedGame;
           trackServer.gameServer = gameServers[pick];
@@ -467,9 +460,8 @@ class GameRepositoryImpl {
     const [playerInGame, newPlayer] = await getManager().transaction(
       async transactionEntityManager => {
         // get game updates
-        const gameUpdateRepo = transactionEntityManager.getRepository(
-          PokerGameUpdates
-        );
+        const gameUpdateRepo =
+          transactionEntityManager.getRepository(PokerGameUpdates);
         const gameUpdate = await gameUpdateRepo.findOne({
           where: {
             gameID: game.id,
@@ -488,9 +480,8 @@ class GameRepositoryImpl {
           );
         }
 
-        const playerGameTrackerRepository = transactionEntityManager.getRepository(
-          PlayerGameTracker
-        );
+        const playerGameTrackerRepository =
+          transactionEntityManager.getRepository(PlayerGameTracker);
 
         if (gameUpdate.waitlistSeatingInprogress) {
           // wait list seating in progress
@@ -614,9 +605,8 @@ class GameRepositoryImpl {
           },
         });
 
-        const gameUpdatesRepo = transactionEntityManager.getRepository(
-          PokerGameUpdates
-        );
+        const gameUpdatesRepo =
+          transactionEntityManager.getRepository(PokerGameUpdates);
         await gameUpdatesRepo.update(
           {
             gameID: game.id,
@@ -912,7 +902,7 @@ class GameRepositoryImpl {
       logger.error(`Game: ${gameId} not available`);
       throw new Error(`Game: ${gameId} not available`);
     }
-    const playerStatus = (PlayerStatus[status] as unknown) as PlayerStatus;
+    const playerStatus = PlayerStatus[status] as unknown as PlayerStatus;
     await playerGameTrackerRepository
       .createQueryBuilder()
       .update()
@@ -1075,7 +1065,8 @@ class GameRepositoryImpl {
     gameId: number,
     transactionManager?: EntityManager
   ): Promise<Array<any>> {
-    const query = fixQuery(`SELECT p.id as "playerId", name, uuid as "playerUuid", p.is_bot as "isBot",
+    const query =
+      fixQuery(`SELECT p.id as "playerId", name, uuid as "playerUuid", p.is_bot as "isBot",
           buy_in as "buyIn", stack, status, seat_no as "seatNo", status,
           buyin_exp_at as "buyInExpTime", break_time_exp_at as "breakTimeExp", game_token AS "gameToken",
           run_it_twice_prompt as "runItTwicePrompt",
@@ -1121,9 +1112,8 @@ class GameRepositoryImpl {
       if (!game) {
         throw new Error(`Game ${gameCode} is not found`);
       }
-      const playerGameTrackerRepository = transactionEntityManager.getRepository(
-        PlayerGameTracker
-      );
+      const playerGameTrackerRepository =
+        transactionEntityManager.getRepository(PlayerGameTracker);
       const playerInGame = await playerGameTrackerRepository.findOne({
         where: {
           game: {id: game.id},
@@ -1155,9 +1145,8 @@ class GameRepositoryImpl {
           },
         });
 
-        const gameUpdatesRepo = transactionEntityManager.getRepository(
-          PokerGameUpdates
-        );
+        const gameUpdatesRepo =
+          transactionEntityManager.getRepository(PokerGameUpdates);
         await gameUpdatesRepo.update(
           {
             gameID: game.id,
@@ -1169,9 +1158,8 @@ class GameRepositoryImpl {
       } else {
         // game is running, so kickout the user in next hand
         // deal with this in the next hand update
-        const nextHandUpdatesRepository = transactionEntityManager.getRepository(
-          NextHandUpdates
-        );
+        const nextHandUpdatesRepository =
+          transactionEntityManager.getRepository(NextHandUpdates);
         const update = new NextHandUpdates();
         update.game = game;
         update.player = player;
@@ -1310,9 +1298,8 @@ class GameRepositoryImpl {
     const [playerInGame, newPlayer] = await getManager().transaction(
       async transactionEntityManager => {
         // get game updates
-        const gameUpdateRepo = transactionEntityManager.getRepository(
-          PokerGameUpdates
-        );
+        const gameUpdateRepo =
+          transactionEntityManager.getRepository(PokerGameUpdates);
         const gameUpdate = await gameUpdateRepo.findOne({
           where: {
             gameID: game.id,
@@ -1333,9 +1320,8 @@ class GameRepositoryImpl {
           );
         }
 
-        const playerGameTrackerRepository = transactionEntityManager.getRepository(
-          PlayerGameTracker
-        );
+        const playerGameTrackerRepository =
+          transactionEntityManager.getRepository(PlayerGameTracker);
 
         // make sure the seat is available
         let playerInSeat = await playerGameTrackerRepository.findOne({
@@ -1418,9 +1404,8 @@ class GameRepositoryImpl {
       }
 
       // get game updates
-      const gameUpdateRepo = transactionEntityManager.getRepository(
-        PlayerGameTracker
-      );
+      const gameUpdateRepo =
+        transactionEntityManager.getRepository(PlayerGameTracker);
       let row = await gameUpdateRepo.findOne({
         game: {id: game.id},
         player: {id: player.id},
@@ -1479,9 +1464,8 @@ class GameRepositoryImpl {
     let playerGameTrackerRepository: Repository<PlayerGameTracker>;
 
     if (transactionEntityManager) {
-      playerGameTrackerRepository = transactionEntityManager.getRepository(
-        PlayerGameTracker
-      );
+      playerGameTrackerRepository =
+        transactionEntityManager.getRepository(PlayerGameTracker);
     } else {
       playerGameTrackerRepository = getRepository(PlayerGameTracker);
     }

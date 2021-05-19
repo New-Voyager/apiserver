@@ -73,7 +73,7 @@ class GameAPIs {
     if (typeof req.body.status === 'number') {
       tableStatus = req.body.status;
     } else {
-      tableStatus = (TableStatus[req.body.status] as unknown) as TableStatus;
+      tableStatus = TableStatus[req.body.status] as unknown as TableStatus;
     }
     if (!tableStatus) {
       const res = {error: 'Invalid table status'};
@@ -170,9 +170,8 @@ class GameAPIs {
                 availableSeats.push(seatNo);
               }
             }
-            const gameRewardRepository = transactionEntityManager.getRepository(
-              GameReward
-            );
+            const gameRewardRepository =
+              transactionEntityManager.getRepository(GameReward);
             const gameRewards: GameReward[] = await gameRewardRepository.find({
               where: {
                 gameId: game.id,
@@ -271,9 +270,8 @@ class GameAPIs {
           resp.status(500).send(JSON.stringify(res));
         }
 
-        const gameUpdatesRepo = transactionEntityManager.getRepository(
-          PokerGameUpdates
-        );
+        const gameUpdatesRepo =
+          transactionEntityManager.getRepository(PokerGameUpdates);
         const gameUpdates = await gameUpdatesRepo.find({
           gameID: game.id,
         });

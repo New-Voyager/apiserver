@@ -13,9 +13,8 @@ class AppCoinRepositoryImpl {
     receipt: string
   ): Promise<boolean> {
     return await getManager().transaction(async transactionEntityManager => {
-      const coinTransactionRepo = transactionEntityManager.getRepository(
-        CoinTransaction
-      );
+      const coinTransactionRepo =
+        transactionEntityManager.getRepository(CoinTransaction);
       const coinTrans = new CoinTransaction();
       coinTrans.productId = productId;
       coinTrans.storeType = storeType;
