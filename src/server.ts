@@ -172,7 +172,7 @@ function addInternalRoutes(app: any) {
   app.get('/internal/game-info/game_num/:gameCode', GameAPI.getGameInfo);
 
   app.get(
-    '/internal/next-hand-info/game_num/:gameCode',
+    '/internal/next-hand-info/game_num/:gameCode/hand_num/:handNum',
     GameAPI.getNextHandInfo
   );
 

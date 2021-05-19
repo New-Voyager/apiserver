@@ -251,6 +251,7 @@ class GameAPIs {
 
   public async getNextHandInfo(req: any, resp: any) {
     const gameCode = req.params.gameCode;
+    const gameServerHandNum = req.params.handNum;
     if (!gameCode) {
       const res = {error: 'Invalid game code'};
       resp.status(500).send(JSON.stringify(res));
@@ -354,76 +355,78 @@ class GameAPIs {
         }
 
         const gameUpdate = gameUpdates[0];
-        // determine button pos
-        const lastButtonPos = gameUpdate.buttonPos;
-        let buttonPassedDealer = false;
-        let buttonPos = gameUpdate.buttonPos;
-        let maxPlayers = game.maxPlayers;
-        while (maxPlayers > 0) {
-          buttonPos++;
-          if (buttonPos > maxPlayers) {
-            buttonPassedDealer = true;
-            buttonPos = 1;
-          }
-          if (occupiedSeats[buttonPos] !== 0) {
-            break;
-          }
-          maxPlayers--;
-        }
-        gameUpdate.handNum++;
-        gameUpdate.buttonPos = buttonPos;
         const prevGameType = gameUpdate.gameType;
-        // determine new game type (ROE)
-        if (game.gameType === GameType.ROE) {
-          if (gameUpdate.handNum !== 1) {
-            if (buttonPassedDealer) {
-              // button passed dealer
-              const roeGames = game.roeGames.split(',');
-              const gameTypeStr = GameType[gameUpdate.gameType];
-              let index = roeGames.indexOf(gameTypeStr.toString());
-              index++;
-              if (index >= roeGames.length) {
-                index = 0;
+        let announceGameType = false;
+        if (gameServerHandNum !== gameUpdate.handNum) {
+          // determine button pos
+          const lastButtonPos = gameUpdate.buttonPos;
+          let buttonPassedDealer = false;
+          let buttonPos = gameUpdate.buttonPos;
+          let maxPlayers = game.maxPlayers;
+          while (maxPlayers > 0) {
+            buttonPos++;
+            if (buttonPos > maxPlayers) {
+              buttonPassedDealer = true;
+              buttonPos = 1;
+            }
+            if (occupiedSeats[buttonPos] !== 0) {
+              break;
+            }
+            maxPlayers--;
+          }
+          gameUpdate.handNum++;
+          gameUpdate.buttonPos = buttonPos;
+          // determine new game type (ROE)
+          if (game.gameType === GameType.ROE) {
+            if (gameUpdate.handNum !== 1) {
+              if (buttonPassedDealer) {
+                // button passed dealer
+                const roeGames = game.roeGames.split(',');
+                const gameTypeStr = GameType[gameUpdate.gameType];
+                let index = roeGames.indexOf(gameTypeStr.toString());
+                index++;
+                if (index >= roeGames.length) {
+                  index = 0;
+                }
+                gameUpdate.gameType = GameType[roeGames[index]];
               }
-              gameUpdate.gameType = GameType[roeGames[index]];
+            } else {
+              const roeGames = game.roeGames.split(',');
+              gameUpdate.gameType = GameType[roeGames[0]];
+            }
+          } else if (game.gameType === GameType.DEALER_CHOICE) {
+            if (gameUpdate.handNum === 1) {
+              const dealerChoiceGames = game.dealerChoiceGames.split(',');
+              gameUpdate.gameType = GameType[dealerChoiceGames[0]];
             }
           } else {
-            const roeGames = game.roeGames.split(',');
-            gameUpdate.gameType = GameType[roeGames[0]];
+            gameUpdate.gameType = game.gameType;
           }
-        } else if (game.gameType === GameType.DEALER_CHOICE) {
-          if (gameUpdate.handNum === 1) {
-            const dealerChoiceGames = game.dealerChoiceGames.split(',');
-            gameUpdate.gameType = GameType[dealerChoiceGames[0]];
-          }
-        } else {
-          gameUpdate.gameType = game.gameType;
-        }
 
-        let announceGameType = false;
-        if (game.gameType === GameType.ROE) {
-          if (gameUpdate.gameType !== prevGameType) {
+          if (game.gameType === GameType.ROE) {
+            if (gameUpdate.gameType !== prevGameType) {
+              announceGameType = true;
+            }
+          }
+
+          if (game.gameType === GameType.DEALER_CHOICE) {
             announceGameType = true;
           }
-        }
 
-        if (game.gameType === GameType.DEALER_CHOICE) {
-          announceGameType = true;
+          // update button pos and gameType
+          await gameUpdatesRepo
+            .createQueryBuilder()
+            .update()
+            .set({
+              gameType: gameUpdate.gameType,
+              buttonPos: gameUpdate.buttonPos,
+              handNum: gameUpdate.handNum,
+            })
+            .where({
+              gameID: game.id,
+            })
+            .execute();
         }
-
-        // update button pos and gameType
-        await gameUpdatesRepo
-          .createQueryBuilder()
-          .update()
-          .set({
-            gameType: gameUpdate.gameType,
-            buttonPos: gameUpdate.buttonPos,
-            handNum: gameUpdate.handNum,
-          })
-          .where({
-            gameID: game.id,
-          })
-          .execute();
 
         const nextHandInfo: NewHandInfo = {
           gameCode: gameCode,
