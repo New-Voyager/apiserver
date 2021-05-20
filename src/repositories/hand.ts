@@ -546,6 +546,32 @@ class HandRepositoryImpl {
     }
   }
 
+  public async removeBookmark(
+    player: Player,
+    bookmarkId: number
+  ): Promise<void> {
+    try {
+      const savedHandsRepository = getRepository(SavedHands);
+
+      let bookmarkedHand = await savedHandsRepository.findOne({
+        savedBy: {id: player.id},
+        id: bookmarkId
+      });
+
+      if (!bookmarkedHand) {
+        await savedHandsRepository.delete({
+          savedBy: {id: player.id},
+          id: bookmarkId
+        });
+      }
+    } catch (error) {
+      logger.error(
+        `Error when trying to deleting bookmarked hand: ${error.toString}`
+      );
+      throw error;
+    }
+  }
+
   public async shareHand(
     game: PokerGame,
     player: Player,
@@ -653,6 +679,31 @@ class HandRepositoryImpl {
       throw error;
     }
   }
+
+  public async bookmarkedHandsByGame(player: Player, gameCode: string): Promise<any> {
+    try {
+      const savedHandsRepository = getRepository(SavedHands);
+
+      const bookmarkedHands = await savedHandsRepository.find({
+        relations: ['savedBy'],
+        where: {
+          gameType: gameCode,
+          savedBy: {id: player.id},
+        },
+        order: {id: 'DESC'},
+      });
+
+      for (const hand of bookmarkedHands) {
+        hand.data = JSON.parse(hand.data);
+      }
+      return bookmarkedHands;
+    } catch (error) {
+      logger.error(
+        `Error when trying to get bookmarked hands: ${error.toString}`
+      );
+      throw error;
+    }
+  }  
 }
 
 export const HandRepository = new HandRepositoryImpl();
