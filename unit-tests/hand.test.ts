@@ -743,7 +743,7 @@ describe('Hand server APIs', () => {
   });
 
   test('Handtest: Share hands', async () => {
-    try {
+    //try {
       const [
         owner,
         clubCode,
@@ -800,9 +800,9 @@ describe('Hand server APIs', () => {
       });
       expect(allSharedHands1.id).toBe(id);
       expect(allSharedHands1.sharedTo.name).toBe(clubInput.name);
-    } catch (err) {
-      logger.error(JSON.stringify(err));
-      expect(true).toBeFalsy();
-    }
+    // } catch (err) {
+    //   logger.error(JSON.stringify(err));
+    //   expect(true).toBeFalsy();
+    // }
   });
 });

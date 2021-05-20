@@ -630,7 +630,7 @@ class HandRepositoryImpl {
     try {
       const savedHandsRepository = getRepository(SavedHands);
       const sharedHand = await savedHandsRepository.findOne({
-        relations: ['sharedBy', 'game', 'sharedTo'],
+        relations: ['sharedBy', 'sharedTo'],
         where: {
           id: id,
         },
@@ -647,7 +647,7 @@ class HandRepositoryImpl {
       const savedHandsRepository = getRepository(SavedHands);
 
       const sharedHands = await savedHandsRepository.find({
-        relations: ['sharedBy', 'game', 'sharedTo'],
+        relations: ['sharedBy', 'sharedTo'],
         where: {
           sharedTo: {id: club.id},
         },

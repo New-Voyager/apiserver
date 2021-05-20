@@ -41,14 +41,9 @@ describe('Club message APIs', () => {
       playerTags: ownerId,
     };
 
-    try {
-      const resp = await sendClubMsg(ownerId, clubCode, messageInput);
-      expect(resp).not.toBeNull();
-      expect(resp).not.toBeUndefined();
-    } catch (e) {
-      logger.error(JSON.stringify(e));
-      expect(true).toBeFalsy();
-    }
+    const resp = await sendClubMsg(ownerId, clubCode, messageInput);
+    expect(resp).not.toBeNull();
+    expect(resp).not.toBeUndefined();
   });
 
   test('send a GIPHY message', async () => {
@@ -67,14 +62,9 @@ describe('Club message APIs', () => {
       playerTags: ownerId,
     };
 
-    try {
-      const resp = await sendClubMsg(ownerId, clubCode, messageInput);
-      expect(resp).not.toBeNull();
-      expect(resp).not.toBeUndefined();
-    } catch (e) {
-      logger.error(JSON.stringify(e));
-      expect(true).toBeFalsy();
-    }
+    const resp = await sendClubMsg(ownerId, clubCode, messageInput);
+    expect(resp).not.toBeNull();
+    expect(resp).not.toBeUndefined();
   });
 
   test('send a hand message', async () => {
@@ -94,14 +84,9 @@ describe('Club message APIs', () => {
       playerTags: ownerId,
     };
 
-    try {
-      const resp = await sendClubMsg(ownerId, clubCode, messageInput);
-      expect(resp).not.toBeNull();
-      expect(resp).not.toBeUndefined();
-    } catch (e) {
-      logger.error(JSON.stringify(e));
-      expect(true).toBeFalsy();
-    }
+    const resp = await sendClubMsg(ownerId, clubCode, messageInput);
+    expect(resp).not.toBeNull();
+    expect(resp).not.toBeUndefined();
   });
 
   test('get message', async () => {
@@ -123,16 +108,11 @@ describe('Club message APIs', () => {
     for (let i = 0; i < msgCount; i++) {
       await sendClubMsg(ownerId, clubCode, messageInput);
     }
-    try {
-      const resp = await getClubMsg(ownerId, clubCode);
-      expect(resp).not.toBeNull();
-      expect(resp).not.toBeUndefined();
-      expect(resp).toHaveLength(50);
-    } catch (e) {
-      logger.error(JSON.stringify(e));
-      expect(true).toBeFalsy();
-    }
-  });
+    const resp = await getClubMsg(ownerId, clubCode);
+    expect(resp).not.toBeNull();
+    expect(resp).not.toBeUndefined();
+    expect(resp).toHaveLength(50);
+   });
 
   test('get message pagination', async () => {
     const msgCount = 60;
@@ -153,23 +133,18 @@ describe('Club message APIs', () => {
     for (let i = 0; i < msgCount; i++) {
       await sendClubMsg(ownerId, clubCode, messageInput);
     }
-    try {
-      let message = await getClubMsg(ownerId, clubCode);
-      expect(message).toHaveLength(50);
-      message = await getClubMsg(ownerId, clubCode, {
-        count: 25,
-        next: 5,
-      });
-      expect(message).toHaveLength(25);
-      expect(message).not.toBeNull();
-      expect(message).not.toBeUndefined();
-    } catch (e) {
-      logger.error(JSON.stringify(e));
-      expect(true).toBeFalsy();
-    }
+    let message = await getClubMsg(ownerId, clubCode);
+    expect(message).toHaveLength(50);
+    message = await getClubMsg(ownerId, clubCode, {
+      count: 25,
+      next: 5,
+    });
+    expect(message).toHaveLength(25);
+    expect(message).not.toBeNull();
+    expect(message).not.toBeUndefined();
   });
 
-  test('send host messages', async () => {
+  test.skip('send host messages', async () => {
     const ownerUuid = await createPlayer({
       player: {name: 'owner', deviceId: 'test'},
     });
