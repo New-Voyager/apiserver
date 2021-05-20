@@ -47,6 +47,7 @@ import {utcTime} from '@src/utils';
 import _ from 'lodash';
 import {PlayerGameStats} from '@src/entity/stats';
 import {WaitlistSeatError} from '@src/errors';
+import {JanusSession} from '@src/janus';
 
 const logger = getLogger('game');
 
@@ -1045,6 +1046,11 @@ class GameRepositoryImpl {
     if (status === GameStatus.ENDED) {
       // complete books
       await ChipsTrackRepository.settleClubBalances(game);
+
+      // destroy Janus game
+      try {
+        await this.deleteAudioConf(game.id);
+      } catch (err) {}
     }
 
     // update cached game
@@ -1594,6 +1600,41 @@ class GameRepositoryImpl {
 
     // pending updates done
     await pendingProcessDone(game.id);
+  }
+
+  public async updateJanus(
+    gameID: number,
+    sessionId: string,
+    handleId: string,
+    roomId: number,
+    roomPin: string
+  ) {
+    const gameUpdatesRepo = getRepository(PokerGameUpdates);
+    await gameUpdatesRepo.update(
+      {
+        gameID: gameID,
+      },
+      {
+        janusSessionId: sessionId,
+        janusPluginHandle: handleId,
+        janusRoomId: roomId,
+        janusRoomPin: roomPin,
+      }
+    );
+  }
+
+  public async deleteAudioConf(gameID: number) {
+    const gameUpdatesRepo = getRepository(PokerGameUpdates);
+    const gameUpdates = await gameUpdatesRepo.findOne({gameID: gameID});
+    if (gameUpdates) {
+      if (gameUpdates.janusSessionId && gameUpdates.janusPluginHandle) {
+        logger.info(`Deleting janus room: ${gameID}`);
+        const session = JanusSession.joinSession(gameUpdates.janusSessionId);
+        session.attachAudioWithId(gameUpdates.janusPluginHandle);
+        session.deleteRoom(gameID);
+        logger.info(`Janus room: ${gameID} is deleted`);
+      }
+    }
   }
 }
 

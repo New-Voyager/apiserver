@@ -1,4 +1,5 @@
 import {Firebase} from '@src/firebase';
+import {JanusSession} from '@src/janus';
 import {PlayerRepository} from '@src/repositories/player';
 
 async function sendTestMessage(playerId: string) {
@@ -18,7 +19,17 @@ const resolvers: any = {
   },
   Mutation: {
     sendTestMessage: async (parent, args, ctx, info) => {
-      sendTestMessage(ctx.req.playerId);
+      // sendTestMessage(ctx.req.playerId);
+      //const [sessionId, pluginId] = await getAudioSession(100, '1234');
+      //await closeAudioSession(10, sessionId, pluginId);
+
+      const session = await JanusSession.create('janusrocks');
+      await session.attachAudio();
+      await session.createRoom(100, 'abcd');
+
+      const session1 = await JanusSession.joinSession(session.getId());
+      session1.attachAudioWithId(session.getHandleId());
+      await session.leaveRoom(100);
       return true;
     },
   },
