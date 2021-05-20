@@ -250,6 +250,7 @@ class HandRepositoryImpl {
         const player = result.players[seatNo];
         playerBalance[player.id] = player.balance;
       }
+      result.gameCode = game.gameCode;
       handHistory.playersStack = JSON.stringify(playerBalance);
       handHistory.data = JSON.stringify(result);
       const summary = await this.getSummary(result);
@@ -429,17 +430,18 @@ class HandRepositoryImpl {
     }
 
     //logger.info(`pageOptions count: ${pageOptions.count}`);
-    let take = pageOptions.count;
-    if (!take || take > 10) {
-      take = 10;
-    }
+
     const findOptions: any = {
       where: {
         gameId: gameId,
       },
       order: order,
-      take: take,
     };
+
+    let take = pageOptions.count;
+    if (take) {
+      findOptions.take = take;
+    }
 
     if (pageWhere) {
       findOptions['where']['id'] = pageWhere;
@@ -555,14 +557,16 @@ class HandRepositoryImpl {
 
       let bookmarkedHand = await savedHandsRepository.findOne({
         savedBy: {id: player.id},
-        id: bookmarkId
+        id: bookmarkId,
       });
 
-      if (!bookmarkedHand) {
+      if (bookmarkedHand) {
         await savedHandsRepository.delete({
-          savedBy: {id: player.id},
-          id: bookmarkId
+          id: bookmarkId,
         });
+        logger.info('Bookmark is removed');
+      } else {
+        logger.info('Bookmark is not found');
       }
     } catch (error) {
       logger.error(
@@ -680,14 +684,17 @@ class HandRepositoryImpl {
     }
   }
 
-  public async bookmarkedHandsByGame(player: Player, gameCode: string): Promise<any> {
+  public async bookmarkedHandsByGame(
+    player: Player,
+    gameCode: string
+  ): Promise<any> {
     try {
       const savedHandsRepository = getRepository(SavedHands);
 
       const bookmarkedHands = await savedHandsRepository.find({
         relations: ['savedBy'],
         where: {
-          gameType: gameCode,
+          gameCode: gameCode,
           savedBy: {id: player.id},
         },
         order: {id: 'DESC'},
@@ -703,7 +710,7 @@ class HandRepositoryImpl {
       );
       throw error;
     }
-  }  
+  }
 }
 
 export const HandRepository = new HandRepositoryImpl();

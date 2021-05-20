@@ -37,6 +37,9 @@ const resolvers: any = {
     bookmarkedHands: async (parent, args, ctx, info) => {
       return await bookmarkedHands(ctx.req.playerId, args);
     },
+    bookmarkedHandsByGame: async (parent, args, ctx, info) => {
+      return await bookmarkedHandsByGame(ctx.req.playerId, args);
+    },
   },
   Mutation: {
     saveStarredHand: async (parent, args, ctx, info) => {
@@ -47,6 +50,9 @@ const resolvers: any = {
     },
     bookmarkHand: async (parent, args, ctx, info) => {
       return await bookmarkHand(ctx.req.playerId, args);
+    },
+    removeBookmark: async (parent, args, ctx, info) => {
+      return await removeBookmark(ctx.req.playerId, args);
     },
   },
 };
@@ -527,5 +533,36 @@ export async function bookmarkedHands(playerId: string, args: any) {
   }
 
   const resp = await HandRepository.bookmarkedHands(player);
+  return resp;
+}
+
+export async function bookmarkedHandsByGame(playerId: string, args: any) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+
+  const resp = await HandRepository.bookmarkedHandsByGame(
+    player,
+    args.gameCode
+  );
+  return resp;
+}
+
+export async function removeBookmark(playerId: string, args: any) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+
+  const resp = await HandRepository.removeBookmark(player, args.bookmarkId);
   return resp;
 }
