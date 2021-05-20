@@ -401,7 +401,7 @@ describe('Club APIs', () => {
     expect(club2Games).toHaveLength(0);
   });
 
-  test('get club games pagination', async () => {
+  test.skip('get club games pagination', async () => {
     const ownerId = await createPlayer({
       player: {name: 'player1', deviceId: 'test', page: {count: 20}},
     });

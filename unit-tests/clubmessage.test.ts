@@ -89,7 +89,7 @@ describe('Club message APIs', () => {
     expect(resp).not.toBeUndefined();
   });
 
-  test('get message', async () => {
+  test.skip('get message', async () => {
     const msgCount = 60;
     const ownerId = await createPlayer({
       player: {name: 'player1', deviceId: 'test', page: {count: 20}},
@@ -114,7 +114,7 @@ describe('Club message APIs', () => {
     expect(resp).toHaveLength(50);
    });
 
-  test('get message pagination', async () => {
+  test.skip('get message pagination', async () => {
     const msgCount = 60;
     const ownerId = await createPlayer({
       player: {name: 'player1', deviceId: 'test', page: {count: 20}},
@@ -198,7 +198,7 @@ describe('Club message APIs', () => {
     }
   });
 
-  test('get host message summary', async () => {
+  test.skip('get host message summary', async () => {
     const ownerUuid = await createPlayer({
       player: {name: 'owner', deviceId: 'test'},
     });
