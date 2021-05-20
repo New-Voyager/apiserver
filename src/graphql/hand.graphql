@@ -94,6 +94,7 @@ type Mutation {
   ): String!
   shareHand(gameCode: String!, handNum: Int!, clubCode: String!): Int!
   bookmarkHand(gameCode: String!, handNum: Int!): Int!
+  removeBookmark(bookmarkId: Int!): Boolean
 }
 
 type Query {
@@ -124,4 +125,5 @@ type Query {
   sharedHand(id: Int!, clubCode: String!): SavedHand!
   sharedHands(clubCode: String!): [SavedHand!]
   bookmarkedHands: [SavedHand!]
+  bookmarkedHandsByGame(gameCode: String!): [SavedHand!]
 }

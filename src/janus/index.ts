@@ -83,6 +83,7 @@ export class JanusSession {
         pin: pin,
         is_private: true,
         audiolevel_event: true,
+        audio_level_average: 60,
       },
     };
     const url = `${JANUS_HTTP_URL}/${this._id}/${this._handleId}`;

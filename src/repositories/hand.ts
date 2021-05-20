@@ -250,6 +250,7 @@ class HandRepositoryImpl {
         const player = result.players[seatNo];
         playerBalance[player.id] = player.balance;
       }
+      result.gameCode = game.gameCode;
       handHistory.playersStack = JSON.stringify(playerBalance);
       handHistory.data = JSON.stringify(result);
       const summary = await this.getSummary(result);
@@ -429,17 +430,18 @@ class HandRepositoryImpl {
     }
 
     //logger.info(`pageOptions count: ${pageOptions.count}`);
-    let take = pageOptions.count;
-    if (!take || take > 10) {
-      take = 10;
-    }
+
     const findOptions: any = {
       where: {
         gameId: gameId,
       },
       order: order,
-      take: take,
     };
+
+    let take = pageOptions.count;
+    if (take) {
+      findOptions.take = take;
+    }
 
     if (pageWhere) {
       findOptions['where']['id'] = pageWhere;
@@ -546,6 +548,34 @@ class HandRepositoryImpl {
     }
   }
 
+  public async removeBookmark(
+    player: Player,
+    bookmarkId: number
+  ): Promise<void> {
+    try {
+      const savedHandsRepository = getRepository(SavedHands);
+
+      let bookmarkedHand = await savedHandsRepository.findOne({
+        savedBy: {id: player.id},
+        id: bookmarkId,
+      });
+
+      if (bookmarkedHand) {
+        await savedHandsRepository.delete({
+          id: bookmarkId,
+        });
+        logger.info('Bookmark is removed');
+      } else {
+        logger.info('Bookmark is not found');
+      }
+    } catch (error) {
+      logger.error(
+        `Error when trying to deleting bookmarked hand: ${error.toString}`
+      );
+      throw error;
+    }
+  }
+
   public async shareHand(
     game: PokerGame,
     player: Player,
@@ -600,7 +630,7 @@ class HandRepositoryImpl {
     try {
       const savedHandsRepository = getRepository(SavedHands);
       const sharedHand = await savedHandsRepository.findOne({
-        relations: ['sharedBy', 'game', 'sharedTo'],
+        relations: ['sharedBy', 'sharedTo'],
         where: {
           id: id,
         },
@@ -617,7 +647,7 @@ class HandRepositoryImpl {
       const savedHandsRepository = getRepository(SavedHands);
 
       const sharedHands = await savedHandsRepository.find({
-        relations: ['sharedBy', 'game', 'sharedTo'],
+        relations: ['sharedBy', 'sharedTo'],
         where: {
           sharedTo: {id: club.id},
         },
@@ -637,6 +667,34 @@ class HandRepositoryImpl {
       const bookmarkedHands = await savedHandsRepository.find({
         relations: ['savedBy'],
         where: {
+          savedBy: {id: player.id},
+        },
+        order: {id: 'DESC'},
+      });
+
+      for (const hand of bookmarkedHands) {
+        hand.data = JSON.parse(hand.data);
+      }
+      return bookmarkedHands;
+    } catch (error) {
+      logger.error(
+        `Error when trying to get bookmarked hands: ${error.toString}`
+      );
+      throw error;
+    }
+  }
+
+  public async bookmarkedHandsByGame(
+    player: Player,
+    gameCode: string
+  ): Promise<any> {
+    try {
+      const savedHandsRepository = getRepository(SavedHands);
+
+      const bookmarkedHands = await savedHandsRepository.find({
+        relations: ['savedBy'],
+        where: {
+          gameCode: gameCode,
           savedBy: {id: player.id},
         },
         order: {id: 'DESC'},

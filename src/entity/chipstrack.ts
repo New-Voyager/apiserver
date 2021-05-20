@@ -141,10 +141,10 @@ export class PlayerGameTracker {
   @Column({name: 'waitlist_num', type: 'int', default: 0})
   public waitlistNum!: number;
 
-  @Column({name: 'run_it_twice_prompt', type: 'bool', default: false})
+  @Column({name: 'run_it_twice_prompt', default: false})
   public runItTwicePrompt!: boolean;
 
-  @Column({name: 'muck_losing_hand', type: 'bool', default: false})
+  @Column({name: 'muck_losing_hand', default: false})
   public muckLosingHand!: boolean;
 
   // this user is notified to take a seat and the time will expire at this time
