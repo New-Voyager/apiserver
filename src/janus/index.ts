@@ -82,6 +82,7 @@ export class JanusSession {
         room: roomId,
         pin: pin,
         is_private: true,
+        audiolevel_event: true,
       },
     };
     const url = `${JANUS_HTTP_URL}/${this._id}/${this._handleId}`;
