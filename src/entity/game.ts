@@ -53,6 +53,9 @@ export class PokerGameUpdates {
   @Column({name: 'dealer_choice_seat', nullable: true, default: 0})
   public dealerChoiceSeat!: number;
 
+  @Column({name: 'prev_game_type', default: GameType.UNKNOWN})
+  public prevGameType!: GameType;
+
   @Column({name: 'game_type', default: GameType.UNKNOWN})
   public gameType!: GameType;
 
