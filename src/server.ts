@@ -177,6 +177,11 @@ function addInternalRoutes(app: any) {
   );
 
   app.post(
+    '/internal/move-to-next-hand/game_num/:gameCode/hand_num/:currentHandNum',
+    GameAPI.moveToNextHand
+  );
+
+  app.post(
     '/internal/timer-callback/gameId/:gameID/playerId/:playerID/purpose/:purpose',
     timerCallback
   );

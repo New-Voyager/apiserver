@@ -249,6 +249,183 @@ class GameAPIs {
     }
   }
 
+  public async moveToNextHand(req: any, resp: any) {
+    if (!req.params?.gameCode) {
+      const res = {
+        error: `Invalid game code [${req.params?.gameCode}] in moveToNextHand`,
+      };
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    if (!req.params?.currentHandNum) {
+      const res = {
+        error: `Invalid current hand number [${req.params?.currentHandNum}] in moveToNextHand`,
+      };
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    const gameCode = req.params.gameCode;
+    const gameServerHandNum = parseInt(req.params.currentHandNum, 10);
+    logger.info(
+      `moveToNextHand called for game: ${gameCode} current hand number: ${gameServerHandNum}`
+    );
+    if (gameServerHandNum < 0) {
+      const res = {
+        error: `Invalid hand number [${gameServerHandNum}] in moveToNextHand. Must be a positive number`,
+      };
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+
+    const ret = await getManager().transaction(
+      async transactionEntityManager => {
+        const game: PokerGame = await Cache.getGame(
+          gameCode,
+          false,
+          transactionEntityManager
+        );
+        if (!game) {
+          const res = {error: `Game code: ${gameCode} not found`};
+          resp.status(500).send(JSON.stringify(res));
+        }
+
+        const gameUpdatesRepo = transactionEntityManager.getRepository(
+          PokerGameUpdates
+        );
+        const gameUpdates = await gameUpdatesRepo.find({
+          gameID: game.id,
+        });
+        if (gameUpdates.length === 0) {
+          const res = {error: 'GameUpdates not found'};
+          resp.status(500).send(JSON.stringify(res));
+          return;
+        }
+        const gameUpdate = gameUpdates[0];
+        if (gameUpdate.handNum > gameServerHandNum) {
+          // API server has already moved to the next hand and is ahead of the game server.
+          // Perhaps game server crashed after already having called this endpoint and is recovering now.
+          // Don't do anything in that case.
+          return {
+            gameCode: gameCode,
+            handNum: gameUpdate.handNum,
+          };
+        }
+
+        const playersInSeats = await GameRepository.getPlayersInSeats(
+          game.id,
+          transactionEntityManager
+        );
+        const takenSeats = _.keyBy(playersInSeats, 'seatNo');
+
+        for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+          const playerSeat = takenSeats[seatNo];
+          if (
+            playerSeat &&
+            playerSeat['stack'] === 0 &&
+            playerSeat['status'] == PlayerStatus.PLAYING
+          ) {
+            playerSeat['status'] = PlayerStatus.WAIT_FOR_BUYIN;
+          }
+        }
+
+        const occupiedSeats = new Array<number>();
+        // dealer
+        occupiedSeats.push(0);
+        for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+          const playerSeat = takenSeats[seatNo];
+
+          if (!playerSeat) {
+            occupiedSeats.push(0);
+          } else {
+            if (playerSeat.status == PlayerStatus.PLAYING) {
+              occupiedSeats.push(playerSeat.playerId);
+            } else {
+              occupiedSeats.push(0);
+            }
+          }
+        }
+
+        const prevGameType = gameUpdate.gameType;
+        // determine button pos
+        let buttonPassedDealer = false;
+        let buttonPos = gameUpdate.buttonPos;
+        let maxPlayers = game.maxPlayers;
+        while (maxPlayers > 0) {
+          buttonPos++;
+          if (buttonPos > maxPlayers) {
+            buttonPassedDealer = true;
+            buttonPos = 1;
+          }
+          if (occupiedSeats[buttonPos] !== 0) {
+            break;
+          }
+          maxPlayers--;
+        }
+        gameUpdate.handNum++;
+        gameUpdate.buttonPos = buttonPos;
+        // determine new game type (ROE)
+        if (game.gameType === GameType.ROE) {
+          if (gameUpdate.handNum !== 1) {
+            if (buttonPassedDealer) {
+              // button passed dealer
+              const roeGames = game.roeGames.split(',');
+              const gameTypeStr = GameType[gameUpdate.gameType];
+              let index = roeGames.indexOf(gameTypeStr.toString());
+              index++;
+              if (index >= roeGames.length) {
+                index = 0;
+              }
+              gameUpdate.gameType = GameType[roeGames[index]];
+            }
+          } else {
+            const roeGames = game.roeGames.split(',');
+            gameUpdate.gameType = GameType[roeGames[0]];
+          }
+        } else if (game.gameType === GameType.DEALER_CHOICE) {
+          if (gameUpdate.handNum === 1) {
+            const dealerChoiceGames = game.dealerChoiceGames.split(',');
+            gameUpdate.gameType = GameType[dealerChoiceGames[0]];
+          }
+        } else {
+          gameUpdate.gameType = game.gameType;
+        }
+
+        // update button pos and gameType
+        await gameUpdatesRepo
+          .createQueryBuilder()
+          .update()
+          .set({
+            gameType: gameUpdate.gameType,
+            prevGameType: prevGameType,
+            buttonPos: gameUpdate.buttonPos,
+            handNum: gameUpdate.handNum,
+          })
+          .where({
+            gameID: game.id,
+          })
+          .execute();
+
+        if (game.gameType === GameType.DEALER_CHOICE) {
+          // if the game is dealer's choice, then prompt the user for next hand
+          await markDealerChoiceNextHand(game, transactionEntityManager);
+        }
+
+        if (prevGameType !== gameUpdate.gameType) {
+          // announce the new game type
+          logger.info(
+            `Game type is changed. New game type: ${gameUpdate.gameType}`
+          );
+        }
+        return {
+          gameCode: gameCode,
+          handNum: gameUpdate.handNum,
+        };
+      }
+    );
+
+    resp.status(200).send(JSON.stringify(ret));
+  }
+
   public async getNextHandInfo(req: any, resp: any) {
     const gameCode = req.params.gameCode;
     if (!gameCode) {
@@ -304,14 +481,10 @@ class GameAPIs {
         }
 
         const seats = new Array<PlayerInSeat>();
-        const occupiedSeats = new Array<number>();
-        // dealer
-        occupiedSeats.push(0);
         for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
           const playerSeat = takenSeats[seatNo];
 
           if (!playerSeat) {
-            occupiedSeats.push(0);
             seats.push({
               seatNo: seatNo,
               openSeat: true,
@@ -321,11 +494,6 @@ class GameAPIs {
               muckLosingHand: false,
             });
           } else {
-            if (playerSeat.status == PlayerStatus.PLAYING) {
-              occupiedSeats.push(playerSeat.playerId);
-            } else {
-              occupiedSeats.push(0);
-            }
             let buyInExpTime = '';
             let breakTimeExp = '';
             if (playerSeat.buyInExpTime) {
@@ -354,76 +522,15 @@ class GameAPIs {
         }
 
         const gameUpdate = gameUpdates[0];
-        // determine button pos
-        const lastButtonPos = gameUpdate.buttonPos;
-        let buttonPassedDealer = false;
-        let buttonPos = gameUpdate.buttonPos;
-        let maxPlayers = game.maxPlayers;
-        while (maxPlayers > 0) {
-          buttonPos++;
-          if (buttonPos > maxPlayers) {
-            buttonPassedDealer = true;
-            buttonPos = 1;
-          }
-          if (occupiedSeats[buttonPos] !== 0) {
-            break;
-          }
-          maxPlayers--;
-        }
-        gameUpdate.handNum++;
-        gameUpdate.buttonPos = buttonPos;
-        const prevGameType = gameUpdate.gameType;
-        // determine new game type (ROE)
-        if (game.gameType === GameType.ROE) {
-          if (gameUpdate.handNum !== 1) {
-            if (buttonPassedDealer) {
-              // button passed dealer
-              const roeGames = game.roeGames.split(',');
-              const gameTypeStr = GameType[gameUpdate.gameType];
-              let index = roeGames.indexOf(gameTypeStr.toString());
-              index++;
-              if (index >= roeGames.length) {
-                index = 0;
-              }
-              gameUpdate.gameType = GameType[roeGames[index]];
-            }
-          } else {
-            const roeGames = game.roeGames.split(',');
-            gameUpdate.gameType = GameType[roeGames[0]];
-          }
-        } else if (game.gameType === GameType.DEALER_CHOICE) {
-          if (gameUpdate.handNum === 1) {
-            const dealerChoiceGames = game.dealerChoiceGames.split(',');
-            gameUpdate.gameType = GameType[dealerChoiceGames[0]];
-          }
-        } else {
-          gameUpdate.gameType = game.gameType;
-        }
-
         let announceGameType = false;
         if (game.gameType === GameType.ROE) {
-          if (gameUpdate.gameType !== prevGameType) {
+          if (gameUpdate.gameType !== gameUpdate.prevGameType) {
             announceGameType = true;
           }
         }
-
         if (game.gameType === GameType.DEALER_CHOICE) {
           announceGameType = true;
         }
-
-        // update button pos and gameType
-        await gameUpdatesRepo
-          .createQueryBuilder()
-          .update()
-          .set({
-            gameType: gameUpdate.gameType,
-            buttonPos: gameUpdate.buttonPos,
-            handNum: gameUpdate.handNum,
-          })
-          .where({
-            gameID: game.id,
-          })
-          .execute();
 
         const nextHandInfo: NewHandInfo = {
           gameCode: gameCode,
@@ -437,17 +544,6 @@ class GameAPIs {
           handNum: gameUpdate.handNum,
         };
 
-        if (game.gameType === GameType.DEALER_CHOICE) {
-          // if the game is dealer's choice, then prompt the user for next hand
-          await markDealerChoiceNextHand(game, transactionEntityManager);
-        }
-
-        if (prevGameType !== gameUpdate.gameType) {
-          // announce the new game type
-          logger.info(
-            `Game type is changed. New game type: ${gameUpdate.gameType}`
-          );
-        }
         return nextHandInfo;
       }
     );
