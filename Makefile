@@ -133,6 +133,12 @@ run-redis:
 stop-redis:
 	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-redis.yaml down
 
+run-nats:
+	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-nats.yaml up -d
+
+stop-nats:
+	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-nats.yaml down
+
 .PHONY: docker-unit-tests
 docker-unit-tests: create-network run-redis
 	docker run -t --rm \
@@ -155,7 +161,7 @@ docker-script-tests: create-network run-redis
 		api-server-test sh -c "sh ./run_script_tests.sh"
 
 .PHONY: docker-tests
-docker-tests: create-network run-redis
+docker-tests: create-network run-redis run-nats
 	docker run -t --rm \
 		--name api-server-test \
 		--network $(DEFAULT_DOCKER_NET) \
