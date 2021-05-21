@@ -163,7 +163,7 @@ async function defaultHandData(
   return data;
 }
 
-describe('Hand Server', () => {
+describe('Hand Tests', () => {
   beforeEach(async done => {
     await resetDatabase();
     done();
@@ -693,67 +693,6 @@ describe('Hand Server', () => {
     }
   });
 
-  test('Handtest: Bookmark hands', async () => {
-    try {
-      const [
-        owner,
-        clubCode,
-        clubId,
-        playerUuids,
-        playerIds,
-      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-      const rewardId = await createReward(owner, clubCode);
-      const [gameCode, gameId] = await setupGameEnvironment(
-        owner,
-        clubCode,
-        playerUuids,
-        100
-      );
-      const rewardTrackId = await rewardutils.getRewardtrack(
-        playerUuids[0],
-        gameCode,
-        rewardId.toString()
-      );
-
-      const files = await glob.sync('**/*.json', {
-        onlyFiles: false,
-        cwd: 'highhand-results',
-        deep: 5,
-      });
-
-      let lastHand = 0;
-      for await (const file of files) {
-        const data = await defaultHandData(
-          file,
-          gameId,
-          rewardTrackId,
-          playerIds
-        );
-        const resp = await axios.post(
-          `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
-          data
-        );
-        expect(resp.status).toBe(200);
-        await handutils.saveBookmarkHand(
-          gameCode,
-          playerUuids[0],
-          data.handNum
-        );
-        lastHand += 1;
-      }
-      const bookmarkedHand = await handutils.getBookmarkedHands(playerUuids[0]);
-      expect(bookmarkedHand).toHaveLength(lastHand);
-
-      const bookmarkedHand1 = await handutils.getBookmarkedHands(
-        playerUuids[1]
-      );
-      expect(bookmarkedHand1).toHaveLength(0);
-    } catch (err) {
-      logger.error(JSON.stringify(err));
-      expect(true).toBeFalsy();
-    }
-  });
-
   test('Handtest: Share hands', async () => {
     try {
       const [
@@ -822,4 +761,62 @@ describe('Hand Server', () => {
       expect(true).toBeFalsy();
     }
   });
+
+
+  test('Handtest: Bookmark hands', async () => {
+      const [
+        owner,
+        clubCode,
+        clubId,
+        playerUuids,
+        playerIds,
+      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+      const rewardId = await createReward(owner, clubCode);
+      const [gameCode, gameId] = await setupGameEnvironment(
+        owner,
+        clubCode,
+        playerUuids,
+        100
+      );
+      const rewardTrackId = await rewardutils.getRewardtrack(
+        playerUuids[0],
+        gameCode,
+        rewardId.toString()
+      );
+
+      const files = await glob.sync('**/*.json', {
+        onlyFiles: false,
+        cwd: 'highhand-results',
+        deep: 5,
+      });
+
+      let lastHand = 0;
+      for await (const file of files) {
+        const data = await defaultHandData(
+          file,
+          gameId,
+          rewardTrackId,
+          playerIds
+        );
+        const resp = await axios.post(
+          `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
+          data
+        );
+        expect(resp.status).toBe(200);
+        await handutils.saveBookmarkHand(
+          gameCode,
+          playerUuids[0],
+          data.handNum
+        );
+        lastHand += 1;
+      }
+      const bookmarkedHand = await handutils.getBookmarkedHands(playerUuids[0]);
+      expect(bookmarkedHand).toHaveLength(lastHand);
+
+      const bookmarkedHand1 = await handutils.getBookmarkedHands(
+        playerUuids[1]
+      );
+      expect(bookmarkedHand1).toHaveLength(0);
+  });
+
 });

@@ -70,6 +70,10 @@ export class JanusSession {
   }
 
   public async createRoom(roomId: number, pin: string) {
+    if (roomId > 0) {
+      return;
+    }
+
     const tranId = uuidv4();
 
     const payload: any = {

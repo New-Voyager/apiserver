@@ -128,10 +128,7 @@ export const bookmarkedHands = gql`
         name
         uuid
       }
-      game {
-        title
-        gameCode
-      }
+      gameCode
       handNum
       data
       updatedAt
@@ -151,10 +148,7 @@ export const sharedHand = gql`
         name
         clubCode
       }
-      game {
-        title
-        gameCode
-      }
+      gameCode
       handNum
       data
       updatedAt
@@ -174,10 +168,7 @@ export const sharedHands = gql`
         name
         clubCode
       }
-      game {
-        title
-        gameCode
-      }
+      gameCode
       handNum
       data
       updatedAt

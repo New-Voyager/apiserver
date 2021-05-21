@@ -47,7 +47,7 @@ const holdemGameInput = {
 
 async function saveReward(playerId, clubCode) {
   const rewardInput = {
-    amount: 100.4,
+    amount: 100,
     endHour: 4,
     minRank: 1,
     name: 'brady',
@@ -237,6 +237,7 @@ describe('Tests: Game APIs', () => {
       },
     ]);
     await saveReward(ownerId, clubCode);
+    holdemGameInput.buyInApproval = false;
     const game = await gameutils.configureGame(
       ownerId,
       clubCode,
@@ -275,8 +276,10 @@ describe('Tests: Game APIs', () => {
     ]);
     await saveReward(ownerId, clubCode);
     const gameInput = holdemGameInput;
-    gameInput.buyInApproval = false;
+    gameInput.buyInApproval = true;
+    console.log('===================================')
     const game = await gameutils.configureGame(ownerId, clubCode, gameInput);
+    console.log('===================================')
 
     // Join a game
     const data = await gameutils.joinGame(players[0], game.gameCode, 1);
@@ -286,7 +289,7 @@ describe('Tests: Game APIs', () => {
 
     // buyin
     const resp = await gameutils.buyin(players[0], game.gameCode, 100);
-    expect(resp.approved).toBe(true);
+    expect(resp.approved).toBe(false);
 
     // setting autoBuyinApproval false and creditLimit
     const resp1 = await clubutils.updateClubMember(
@@ -306,7 +309,12 @@ describe('Tests: Game APIs', () => {
 
     // Buyin more than credit limit and autoBuyinApproval false
     const resp3 = await gameutils.buyin(players[0], game.gameCode, 100);
-    expect(resp3.approved).toBe(false);
+    expect(resp3.approved).toBe(true);
+
+    // Buyin more than credit limit and autoBuyinApproval false
+    const resp4 = await gameutils.buyin(players[0], game.gameCode, 100);
+    expect(resp4.approved).toBe(false);
+    
   });
 
   test('pending approvals for a club and game', async () => {
@@ -321,6 +329,7 @@ describe('Tests: Game APIs', () => {
       },
     ]);
     await saveReward(ownerId, clubCode);
+    holdemGameInput.buyInApproval = true;
     const game = await gameutils.configureGame(
       ownerId,
       clubCode,
@@ -335,9 +344,9 @@ describe('Tests: Game APIs', () => {
     const data1 = await gameutils.joinGame(players[1], game.gameCode, 2);
     expect(data1).toBe('WAIT_FOR_BUYIN');
 
-    // buyin
-    const resp = await gameutils.buyin(players[0], game.gameCode, 100);
-    expect(resp.approved).toBe(true);
+    // // buyin
+    // const resp = await gameutils.buyin(players[0], game.gameCode, 100);
+    // expect(resp.approved).toBe(true);
 
     // setting autoBuyinApproval false and creditLimit
     await clubutils.updateClubMember(clubCode, ownerId, players[0], {
@@ -375,7 +384,7 @@ describe('Tests: Game APIs', () => {
     ]);
     await saveReward(ownerId, clubCode);
     const gameInput = holdemGameInput;
-    gameInput.buyInApproval = false;
+    gameInput.buyInApproval = true;
     const game = await gameutils.configureGame(ownerId, clubCode, gameInput);
 
     // Join a game
@@ -386,7 +395,7 @@ describe('Tests: Game APIs', () => {
 
     // buyin
     const resp = await gameutils.buyin(players[0], game.gameCode, 100);
-    expect(resp.approved).toBe(true);
+    expect(resp.approved).toBe(false);
 
     // setting autoBuyinApproval false and creditLimit
     const resp1 = await clubutils.updateClubMember(
@@ -400,7 +409,7 @@ describe('Tests: Game APIs', () => {
     );
     expect(resp1.status).toBe('ACTIVE');
 
-    // Buyin within credit limit and autoBuyinApproval false
+    // Buyin within credit limit and buyInApproval false
     const resp2 = await gameutils.buyin(players[0], game.gameCode, 100);
     expect(resp2.approved).toBe(false);
 
@@ -443,6 +452,7 @@ describe('Tests: Game APIs', () => {
       },
     ]);
     await saveReward(ownerId, clubCode);
+    holdemGameInput.buyInApproval = false;
     const game = await gameutils.configureGame(
       ownerId,
       clubCode,
@@ -523,6 +533,7 @@ describe('Tests: Game APIs', () => {
       },
     ]);
     await saveReward(ownerId, clubCode);
+    holdemGameInput.buyInApproval = false;
     const game = await gameutils.configureGame(
       ownerId,
       clubCode,

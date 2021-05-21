@@ -690,56 +690,52 @@ describe('Hand server APIs', () => {
   });
 
   test('Handtest: Bookmark hands', async () => {
-    try {
-      const [
-        owner,
-        clubCode,
-        clubId,
-        playerUuids,
-        playerIds,
-      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-      const rewardId = await createReward(owner, clubCode);
-      const [gameCode, gameId] = await setupGameEnvironment(
-        owner,
-        clubCode,
-        playerUuids,
-        100
-      );
-      const rewardTrackId = await getRewardTrack(
-        playerUuids[0],
-        gameCode,
-        rewardId.toString()
-      );
+    const [
+      owner,
+      clubCode,
+      clubId,
+      playerUuids,
+      playerIds,
+    ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+    const rewardId = await createReward(owner, clubCode);
+    const [gameCode, gameId] = await setupGameEnvironment(
+      owner,
+      clubCode,
+      playerUuids,
+      100
+    );
+    const rewardTrackId = await getRewardTrack(
+      playerUuids[0],
+      gameCode,
+      rewardId.toString()
+    );
 
-      const files = await glob.sync('**/*.json', {
-        onlyFiles: false,
-        cwd: 'highhand-results',
-        deep: 5,
+    const files = await glob.sync('**/*.json', {
+      onlyFiles: false,
+      cwd: 'highhand-results',
+      deep: 5,
+    });
+
+    let lastHand = 0;
+    for await (const file of files) {
+      const data = await defaultHandData(
+        file,
+        gameId,
+        rewardTrackId,
+        playerIds
+      );
+      const resp = await postHand(gameId, data.handNum, data);
+      expect(resp).not.toBe(null);
+      await bookmarkHand(playerUuids[0], {
+        gameCode: gameCode,
+        handNum: data.handNum,
       });
-
-      let lastHand = 0;
-      for await (const file of files) {
-        const data = await defaultHandData(
-          file,
-          gameId,
-          rewardTrackId,
-          playerIds
-        );
-        const resp = await postHand(gameId, data.handNum, data);
-        expect(resp).not.toBe(null);
-        await bookmarkHand(playerUuids[0], {
-          gameCode: gameCode,
-          handNum: data.handNum,
-        });
-        lastHand += 1;
-      }
-
-      const bookmarkedHand = await bookmarkedHands(playerUuids[0], {});
-      expect(bookmarkedHand).toHaveLength(lastHand);
-    } catch (err) {
-      logger.error(JSON.stringify(err));
-      expect(true).toBeFalsy();
+      lastHand += 1;
     }
+
+    const bookmarkedHand = await bookmarkedHands(playerUuids[0], {});
+    expect(bookmarkedHand).toHaveLength(lastHand);
+   
   });
 
   test('Handtest: Share hands', async () => {

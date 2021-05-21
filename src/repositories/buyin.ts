@@ -106,7 +106,9 @@ export class BuyIn {
     if (this.game.startedBy.uuid === this.player.uuid) {
       isHost = true;
     }
-
+    logger.info(
+      `\n\nBuyin approval is required: ${this.game.buyInApproval}\n\n`
+    );
     if (
       clubMember.isOwner ||
       clubMember.isManager ||
@@ -114,10 +116,10 @@ export class BuyIn {
       !this.game.buyInApproval ||
       isHost
     ) {
-      logger.info(`[${this.game.gameCode}] Player: ${this.player.name} buyin approved. 
+      logger.info(`***** [${this.game.gameCode}] Player: ${this.player.name} buyin approved. 
             clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager} 
             Auto approval: ${clubMember.autoBuyinApproval} 
-            isHost: {isHost} Game.buyInApproval: ${this.game.buyInApproval}`);
+            isHost: ${isHost} Game.buyInApproval: ${this.game.buyInApproval} *****`);
       approved = true;
       updatedPlayerInGame = await this.approveBuyInRequest(
         amount,
@@ -139,6 +141,13 @@ export class BuyIn {
       if (currentBuyin) {
         outstandingBalance += currentBuyin;
       }
+      logger.info(`[${this.game.gameCode}] Player: ${this.player.name} buyin request. 
+            clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager} 
+            Auto approval: ${clubMember.autoBuyinApproval} 
+            isHost: {isHost}`);
+      logger.info(
+        `Game.buyInApproval: ${this.game.buyInApproval} creditLimit: ${clubMember.creditLimit} outstandingBalance: ${outstandingBalance}`
+      );
 
       let availableCredit = 0.0;
       if (clubMember.creditLimit >= 0) {
@@ -693,7 +702,7 @@ export class BuyIn {
       g.id as "gameId", 
       g.game_type as "gameType",
       g.small_blind as "smallBlind",
-      g.bigBlind as "bigBlind",
+      g.big_blind as "bigBlind",
       p.uuid as "playerUuid", 
       p.name as "name", 
       p.id as "playerId", 

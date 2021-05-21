@@ -133,6 +133,7 @@ describe('Tests: seat change APIs', () => {
     const gameInput = holdemGameInput;
     gameInput.maxPlayers = 3;
     gameInput.minPlayers = 2;
+    gameInput.buyInApproval = false;
     const game = await gameutils.configureGame(ownerId, clubCode, gameInput);
 
     // join a game

@@ -1,5 +1,6 @@
 import {resetDatabase, getClient} from './utils';
 import {gql} from 'apollo-boost';
+import { loggers } from 'winston';
 
 export const configureGameQuery = gql`
   mutation($clubCode: String!, $gameInput: GameCreateInput!) {
@@ -187,6 +188,7 @@ export async function configureGame(
   clubCode: string,
   gameInput: GameInput
 ): Promise<any> {
+
   const resp = await getClient(playerId).mutate({
     variables: {
       clubCode: clubCode,

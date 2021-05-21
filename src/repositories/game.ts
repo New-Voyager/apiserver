@@ -132,7 +132,7 @@ class GameRepositoryImpl {
       input['roeGames'] = roeGames;
     }
     const game: PokerGame = {...input} as PokerGame;
-
+    logger.info(`\n\nCreating new game.. ${game.buyInApproval}\n\n`);
     game.gameType = gameType;
     game.isTemplate = template;
     game.status = GameStatus.CONFIGURED;
@@ -161,6 +161,9 @@ class GameRepositoryImpl {
         savedGame = await transactionEntityManager
           .getRepository(PokerGame)
           .save(game);
+        logger.info(
+          `\n\n\n [${savedGame.gameCode}] Saved game.. ${game.buyInApproval}\n\n\n`
+        );
 
         if (!game.isTemplate) {
           // create a entry in PokerGameUpdates
