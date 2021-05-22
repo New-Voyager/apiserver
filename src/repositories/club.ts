@@ -302,6 +302,12 @@ class ClubRepositoryImpl {
       // bots are allowed to buy as much as they wantt
       clubMember.status = ClubMemberStatus.ACTIVE;
       clubMember.autoBuyinApproval = true;
+
+      if (player.uuid === 'c2dc2c3d-13da-46cc-8c66-caa0c77459de') {
+        // Making one of the bots as the manager.
+        // This is for the botrunner to start an app game with a club created by a human.
+        clubMember.isManager = true;
+      }
     }
 
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);
