@@ -124,6 +124,14 @@ export class PlayerGameTracker {
   public breakTimeExpAt!: Date;
 
   @DbAwareColumn({
+    name: 'break_time_started_at',
+    type: 'timestamp',
+    nullable: true,
+    default: null,
+  })
+  public breakTimeStartedAt!: Date;
+
+  @DbAwareColumn({
     name: 'buyin_exp_at',
     type: 'timestamp',
     nullable: true,

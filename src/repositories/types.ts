@@ -22,6 +22,7 @@ export enum NewUpdate {
   BUYIN_TIMEDOUT,
   WAIT_FOR_BUYIN_APPROVAL,
   BUYIN_DENIED,
+  NEWUPDATE_NOT_PLAYING,
 }
 
 export interface HighHandWinnerResult {
@@ -89,6 +90,7 @@ export const BUYIN_TIMEOUT = 'BUYIN_TIMEOUT';
 export const BUYIN_APPROVAL_TIMEOUT = 'BUYIN_APPROVAL_TIMEOUT';
 export const RELOAD_APPROVAL_TIMEOUT = 'RELOAD_APPROVAL_TIMEOUT';
 export const DEALER_CHOICE_TIMEOUT = 'DEALER_CHOICE_TIMEOUT';
+export const BREAK_TIMEOUT = 'BREAK_TIMEOUT';
 
 // full house rank
 export const MIN_FULLHOUSE_RANK = 322;

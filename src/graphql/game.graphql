@@ -111,6 +111,7 @@ type SeatInfo {
   status: PlayerGameStatus
   openSeat: Boolean
   buyInExpTime: DateTime
+  breakStartedTime: DateTime
   breakExpTime: DateTime
   gameToken: String
   isBot: Boolean

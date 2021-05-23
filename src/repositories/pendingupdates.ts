@@ -23,6 +23,8 @@ import {SeatChangeProcess} from './seatchange';
 import {BUYIN_TIMEOUT, DEALER_CHOICE_TIMEOUT} from './types';
 import _ from 'lodash';
 import {Nats} from '@src/nats';
+import {TakeBreak} from './takebreak';
+import {Cache} from '@src/cache';
 
 const logger = getLogger('pending-updates');
 
@@ -153,6 +155,9 @@ export async function processPendingUpdates(gameId: number) {
       );
     } else if (update.newUpdate === NextHandUpdate.WAIT_FOR_DEALER_CHOICE) {
       dealerChoiceUpdate = update;
+    } else if (update.newUpdate === NextHandUpdate.TAKE_BREAK) {
+      const takeBreak = new TakeBreak(game, update.player);
+      takeBreak.processPendingUpdate(update);
     }
   }
 

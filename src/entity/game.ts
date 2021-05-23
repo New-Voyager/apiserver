@@ -156,7 +156,7 @@ export class PokerGame {
   @Column({name: 'sit_in_approval', default: false})
   public sitInApproval!: boolean;
 
-  @Column({name: 'break_length', default: 15})
+  @Column({name: 'break_length', default: 1})
   public breakLength!: number;
 
   @Column({name: 'seat_change_allowed', default: true})

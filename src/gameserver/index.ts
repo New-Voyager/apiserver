@@ -44,6 +44,9 @@ export async function publishNewGame(game: any, gameServer: any) {
   };
 
   const newGameUrl = `${gameServerUrl}/new-game`;
+  logger.info(
+    `Game server: ${gameServer.url} is requested host ${game.gameCode}`
+  );
   const resp = await axios.post(newGameUrl, message);
   if (resp.status !== 200) {
     logger.error(`Failed to create a new game at: ${newGameUrl}`);

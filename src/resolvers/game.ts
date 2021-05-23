@@ -16,7 +16,7 @@ import {BuyIn} from '@src/repositories/buyin';
 import {PokerGame} from '@src/entity/game';
 import {fillSeats} from '@src/botrunner';
 import {ClubRepository} from '@src/repositories/club';
-import {getCurrentHandLog} from '@src/gameserver';
+import {getCurrentHandLog, playerStatusChanged} from '@src/gameserver';
 import {isHostOrManagerOrOwner} from './util';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {argsToArgsConfig} from 'graphql/type/definition';
@@ -29,6 +29,8 @@ import {
   JANUS_TOKEN,
   JANUS_URL,
 } from '@src/janus';
+import {NewUpdate} from '@src/repositories/types';
+import {TakeBreak} from '@src/repositories/takebreak';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -54,6 +56,7 @@ export async function configureGame(
       playerId,
       game
     );
+    logger.info(`Game ${gameInfo.gameCode} is created.`);
     const ret: any = gameInfo as any;
     ret.gameType = GameType[gameInfo.gameType];
     ret.status = GameStatus[gameInfo.status];
@@ -786,10 +789,7 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
       ret.janusRoomPin = updates.janusRoomPin;
     }
     // get player's game state
-    const playerState = await GameRepository.getGamePlayerState(
-      game.id,
-      playerUuid
-    );
+    const playerState = await GameRepository.getGamePlayerState(game, player);
     if (playerState) {
       ret.gameToken = playerState.gameToken;
       ret.playerGameStatus = PlayerStatus[playerState.playerStatus];
@@ -940,7 +940,8 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
       }
     }
     const player = await Cache.getPlayer(playerUuid);
-    const status = await GameRepository.takeBreak(player, game);
+    const takeBreak = new TakeBreak(game, player);
+    const status = await takeBreak.takeBreak();
     return status;
   } catch (err) {
     logger.error(JSON.stringify(err));
@@ -978,7 +979,7 @@ export async function sitBack(playerUuid: string, gameCode: string) {
     return status;
   } catch (err) {
     logger.error(err);
-    throw new Error(`Failed to take break. ${JSON.stringify(err)}`);
+    throw new Error(`Failed to sit back in the seat. ${JSON.stringify(err)}`);
   }
 }
 
@@ -1575,11 +1576,9 @@ const resolvers: any = {
       const game = await Cache.getGame(parent.gameCode);
       let playerState = ctx['playerState'];
       if (!playerState) {
+        const player = await Cache.getPlayer(ctx.req.playerId);
         // get player's game state
-        playerState = await GameRepository.getGamePlayerState(
-          game.id,
-          ctx.req.playerId
-        );
+        playerState = await GameRepository.getGamePlayerState(game, player);
         ctx['playerState'] = playerState;
       }
       if (playerState) {
@@ -1591,11 +1590,9 @@ const resolvers: any = {
       const game = await Cache.getGame(parent.gameCode);
       let playerState = ctx['playerState'];
       if (!playerState) {
+        const player = await Cache.getPlayer(ctx.req.playerId);
         // get player's game state
-        playerState = await GameRepository.getGamePlayerState(
-          game.id,
-          ctx.req.playerId
-        );
+        playerState = await GameRepository.getGamePlayerState(game, player);
         ctx['playerState'] = playerState;
       }
       if (playerState) {

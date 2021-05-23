@@ -7,6 +7,7 @@ import {getLogger} from '@src/utils/log';
 import {getRepository} from 'typeorm';
 import {BuyIn} from './buyin';
 import {SeatChangeProcess} from './seatchange';
+import {breakTimeoutExpired} from './takebreak';
 import {
   SEATCHANGE_PROGRSS,
   WAITLIST_SEATING,
@@ -15,6 +16,7 @@ import {
   RELOAD_APPROVAL_TIMEOUT,
   NewUpdate,
   DEALER_CHOICE_TIMEOUT,
+  BREAK_TIMEOUT,
 } from './types';
 import {WaitListMgmt} from './waitlist';
 
@@ -58,6 +60,8 @@ export async function timerCallback(req: any, resp: any) {
     await reloadApprovalTimeoutExpired(gameID, playerID);
   } else if (purpose === DEALER_CHOICE_TIMEOUT) {
     await dealerChoiceTimeout(gameID, playerID);
+  } else if (purpose === BREAK_TIMEOUT) {
+    await breakTimeoutExpired(gameID, playerID);
   }
 
   resp.status(200).send({status: 'OK'});
