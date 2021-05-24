@@ -52,17 +52,17 @@ class ChipsTrackRepositoryImpl {
         const playerBigWinLoss = {};
         const hands = await transactionEntityManager
           .getRepository(HandHistory)
-          .find({gameId: game.id});
+          .find({where: {gameId: game.id}, order: {handNum: 'ASC'}});
 
         // determine big win/loss hands
         for (const hand of hands) {
           const playerStacks = JSON.parse(hand.playersStack);
-          for (const seatNo of Object.keys(playerStacks)) {
-            const playerStack = playerStacks[seatNo];
+          for (const playerId of Object.keys(playerStacks)) {
+            const playerStack = playerStacks[playerId];
             const diff = playerStack.after - playerStack.before;
-            if (!playerBigWinLoss[seatNo]) {
-              playerBigWinLoss[seatNo] = {
-                seatNo: seatNo,
+            if (!playerBigWinLoss[playerId]) {
+              playerBigWinLoss[playerId] = {
+                playerId: playerId,
                 bigWin: 0,
                 bigLoss: 0,
                 bigWinHand: 0,
@@ -71,17 +71,17 @@ class ChipsTrackRepositoryImpl {
               };
             }
 
-            if (diff > 0 && diff > playerBigWinLoss[seatNo].bigWin) {
-              playerBigWinLoss[seatNo].bigWin = diff;
-              playerBigWinLoss[seatNo].bigWinHand = hand.handNum;
+            if (diff > 0 && diff > playerBigWinLoss[playerId].bigWin) {
+              playerBigWinLoss[playerId].bigWin = diff;
+              playerBigWinLoss[playerId].bigWinHand = hand.handNum;
             }
 
-            if (diff < 0 && diff < playerBigWinLoss[seatNo].bigLoss) {
-              playerBigWinLoss[seatNo].bigLoss = diff;
-              playerBigWinLoss[seatNo].bigLossHand = hand.handNum;
+            if (diff < 0 && diff < playerBigWinLoss[playerId].bigLoss) {
+              playerBigWinLoss[playerId].bigLoss = diff;
+              playerBigWinLoss[playerId].bigLossHand = hand.handNum;
             }
             // gather player stack from each hand
-            playerBigWinLoss[seatNo].playerStack.push({
+            playerBigWinLoss[playerId].playerStack.push({
               hand: hand.handNum,
               playerStack,
             });
@@ -89,21 +89,23 @@ class ChipsTrackRepositoryImpl {
         }
 
         const chipUpdates = new Array<Promise<UpdateResult>>();
-        for (const seatNoStr of Object.keys(playerBigWinLoss)) {
-          const seatNo = parseInt(seatNoStr);
+        for (const playerIdStr of Object.keys(playerBigWinLoss)) {
+          const playerId = parseInt(playerIdStr);
           const result = await transactionEntityManager
             .getRepository(PlayerGameTracker)
             .update(
               {
-                seatNo: seatNo,
+                player: {id: playerId},
                 game: {id: game.id},
               },
               {
-                bigWin: playerBigWinLoss[seatNo].bigWin,
-                bigWinHand: playerBigWinLoss[seatNo].bigWinHand,
-                bigLoss: playerBigWinLoss[seatNo].bigLoss,
-                bigLossHand: playerBigWinLoss[seatNo].bigLossHand,
-                handStack: JSON.stringify(playerBigWinLoss[seatNo].playerStack),
+                bigWin: playerBigWinLoss[playerIdStr].bigWin,
+                bigWinHand: playerBigWinLoss[playerIdStr].bigWinHand,
+                bigLoss: playerBigWinLoss[playerIdStr].bigLoss,
+                bigLossHand: playerBigWinLoss[playerIdStr].bigLossHand,
+                handStack: JSON.stringify(
+                  playerBigWinLoss[playerIdStr].playerStack
+                ),
               }
             );
           logger.info(JSON.stringify(result));
