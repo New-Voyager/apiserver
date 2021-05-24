@@ -402,6 +402,7 @@ type Query {
   gameResultTable(gameCode: String!): [GameResultTableRow!]
   gamePlayers(gameCode: String!): [PlayerInfo!]
   pendingApprovals(clubCode: String gameCode: String): [PendingApproval!]
+  downloadResult(gameCode: String!): String!
 
   # seat change queries
   seatChangeRequests(gameCode: String!): [PlayerSeatChange]

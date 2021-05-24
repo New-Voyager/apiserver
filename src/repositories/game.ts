@@ -1207,12 +1207,14 @@ class GameRepositoryImpl {
 
   public async getGameResultTable(gameCode: string): Promise<any> {
     const query = fixQuery(`
-      SELECT pgt.session_time AS "sessionTime",
+      SELECT 
+        pgt.session_time AS "sessionTime",
         pgt.no_hands_played AS "handsPlayed",
         pgt.buy_in AS "buyIn",
         pgt.stack - pgt.buy_in AS "profit",
         pgt.rake_paid AS "rakePaid",
-        p.name AS "playerName"
+        p.name AS "playerName",
+        p.uuid AS "playerId"
       FROM player_game_tracker pgt
       INNER JOIN player p ON pgt.pgt_player_id = p.id
       INNER JOIN poker_game pg ON pgt.pgt_game_id = pg.id

@@ -31,6 +31,7 @@ import {
 } from '@src/janus';
 import {NewUpdate} from '@src/repositories/types';
 import {TakeBreak} from '@src/repositories/takebreak';
+import {Player} from '@src/entity/player';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -552,6 +553,45 @@ export async function getGameResultTable(gameCode: string) {
     }
 
     return resp;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error(`Failed to get game result table. ${JSON.stringify(err)}`);
+  }
+}
+
+export async function downloadResult(playerId: string, gameCode: string) {
+  try {
+    const game = await Cache.getGame(gameCode);
+    let includeTips = false;
+    if (game.club) {
+      const owner: Player | undefined = await Promise.resolve(game.club.owner);
+      if (owner) {
+        if (owner.uuid === playerId) {
+          includeTips = true;
+        }
+      }
+    }
+    const resp = await GameRepository.getGameResultTable(gameCode);
+    const headers: Array<string> = ['name', 'id', 'hands', 'buyin', 'profit'];
+    if (includeTips) {
+      headers.push('tips');
+    }
+    const csvRows = new Array<string>();
+    csvRows.push(headers.join(','));
+    for (const row of resp) {
+      const fields = new Array<string>();
+      fields.push(row.playerName);
+      fields.push(row.playerId);
+      fields.push(row.handsPlayed);
+      fields.push(row.buyIn);
+      fields.push(row.profit);
+      if (includeTips) {
+        fields.push(row.rakePaid);
+      }
+      csvRows.push(fields.join(','));
+    }
+    const output = csvRows.join('\n');
+    return output;
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error(`Failed to get game result table. ${JSON.stringify(err)}`);
@@ -1550,6 +1590,9 @@ const resolvers: any = {
     },
     gamePlayers: async (parent, args, ctx, info) => {
       return await getGamePlayers(args.gameCode);
+    },
+    downloadResult: async (parent, args, ctx, info) => {
+      return await downloadResult(ctx.req.playerId, args.gameCode);
     },
   },
   GameInfo: {
