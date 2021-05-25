@@ -477,24 +477,30 @@ class GameRepositoryImpl {
       throw new Error('Invalid seat number');
     }
     const waitlistMgmt = new WaitListMgmt(game);
-
+    let startTime = new Date().getTime();
     const [playerInGame, newPlayer] = await getManager().transaction(
       async transactionEntityManager => {
         // get game updates
         const gameUpdateRepo = transactionEntityManager.getRepository(
           PokerGameUpdates
         );
-        const gameUpdate = await gameUpdateRepo.findOne({
-          where: {
+
+        const gameUpdates = await gameUpdateRepo
+          .createQueryBuilder()
+          .where({
             gameID: game.id,
-          },
-        });
-        if (!gameUpdate) {
+          })
+          .select('seat_change_inprogress', 'seatChangeInProgress')
+          .addSelect('waitlist_seating_inprogress', 'waitlistSeatingInprogress')
+          .execute();
+
+        if (gameUpdates.length == 0) {
           logger.error(`Game status is not found for game: ${game.gameCode}`);
           throw new Error(
             `Game status is not found for game: ${game.gameCode}`
           );
         }
+        const gameUpdate = gameUpdates[0];
 
         if (gameUpdate.seatChangeInProgress) {
           throw new Error(
@@ -581,17 +587,11 @@ class GameRepositoryImpl {
               transactionEntityManager
             );
           } catch (err) {
-            const doesGameExist = await this.getGameByCode(
-              game.gameCode,
-              transactionEntityManager
+            logger.error(
+              `Failed to update player_game_tracker and player_game_stats table ${err.toString()} Game: ${
+                game.id
+              }`
             );
-            if (doesGameExist) {
-              logger.error(
-                `Failed to update player_game_tracker and player_game_stats table ${err.toString()} Game: ${
-                  doesGameExist.id
-                }`
-              );
-            }
             throw err;
           }
         }
@@ -650,7 +650,9 @@ class GameRepositoryImpl {
         return [playerInGame, true];
       }
     );
-
+    let timeTaken = new Date().getTime() - startTime;
+    logger.info(`joingame database time taken: ${timeTaken}`);
+    startTime = new Date().getTime();
     if (newPlayer) {
       await Cache.removeGameObserver(game.gameCode, player);
       // send a message to gameserver
@@ -659,6 +661,9 @@ class GameRepositoryImpl {
       // continue to run wait list seating
       waitlistMgmt.runWaitList();
     }
+    timeTaken = new Date().getTime() - startTime;
+    logger.info(`joingame server notification time taken: ${timeTaken}`);
+    startTime = new Date().getTime();
     return playerInGame.status;
   }
 
@@ -1019,7 +1024,7 @@ class GameRepositoryImpl {
 
       // destroy Janus game
       try {
-        await this.deleteAudioConf(game.id);
+        //await this.deleteAudioConf(game.id);
       } catch (err) {}
     }
 

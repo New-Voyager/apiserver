@@ -49,6 +49,7 @@ export async function configureGame(
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
   }
+  const startTime = new Date().getTime();
   try {
     logger.info(`Game type: ${game.gameType}`);
     game.audioConfEnabled = true;
@@ -64,6 +65,7 @@ export async function configureGame(
     ret.tableStatus = TableStatus[gameInfo.tableStatus];
     ret.gameID = gameInfo.id;
 
+    game.audioConfEnabled = false;
     if (game.audioConfEnabled) {
       ret.janusRoomPin = 'abcd'; // randomize
       ret.janusRoomId = gameInfo.id;
@@ -90,7 +92,12 @@ export async function configureGame(
         game.audioConfEnabled = false;
       }
     }
-
+    const endTime = new Date().getTime();
+    logger.info(
+      `Time taken to create a new game: ${ret.gameCode} ${
+        endTime - startTime
+      }ms`
+    );
     return ret;
   } catch (err) {
     logger.error(JSON.stringify(err));
@@ -168,7 +175,12 @@ export async function joinGame(
     throw new Error('Unauthorized');
   }
   let playerName = playerUuid;
+  const startTime = new Date().getTime();
   try {
+    const player = await Cache.getPlayer(playerUuid);
+    playerName = player.name;
+
+    logger.info(`Player ${playerName} is joining game ${gameCode}`);
     // get game using game code
     const game = await Cache.getGame(gameCode);
     if (!game) {
@@ -190,8 +202,6 @@ export async function joinGame(
       }
     }
 
-    const player = await Cache.getPlayer(playerUuid);
-    playerName = player.name;
     const status = await GameRepository.joinGame(player, game, seatNo);
     logger.info(
       `Player: ${player.name} isBot: ${player.bot} joined game: ${game.gameCode}`
@@ -209,6 +219,9 @@ export async function joinGame(
         `Player: ${playerName} Failed to join the game. ${JSON.stringify(err)}`
       );
     }
+  } finally {
+    const timeTaken = new Date().getTime() - startTime;
+    logger.info(`joinGame took ${timeTaken} ms`);
   }
 }
 
@@ -305,6 +318,7 @@ export async function buyIn(
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }
+  const startTime = new Date().getTime();
   try {
     // get game using game code
     const game = await Cache.getGame(gameCode);
@@ -330,9 +344,14 @@ export async function buyIn(
     const player = await Cache.getPlayer(playerUuid);
     const buyin = new BuyIn(game, player);
     const status = await buyin.request(amount);
+
+    const timeTaken = new Date().getTime() - startTime;
+    logger.info(`Buyin took ${timeTaken}ms`);
     // player is good to go
     return status;
   } catch (err) {
+    const timeTaken = new Date().getTime() - startTime;
+    logger.info(`Buyin took ${timeTaken}ms`);
     logger.error(JSON.stringify(err));
     throw new Error(`Failed to update buyin. ${JSON.stringify(err)}`);
   }
@@ -1745,7 +1764,11 @@ const resolvers: any = {
       return switchSeat(ctx.req.playerId, args.gameCode, args.seatNo);
     },
     updateGameConfig: async (parent, args, ctx, info) => {
-      return updateGameConfig(ctx.req.playerId, args.gameCode, args.config);
+      return await updateGameConfig(
+        ctx.req.playerId,
+        args.gameCode,
+        args.config
+      );
     },
     dealerChoice: async (parent, args, ctx, info) => {
       return dealerChoice(ctx.req.playerId, args.gameCode, args.gameType);
