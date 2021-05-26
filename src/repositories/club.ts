@@ -208,14 +208,14 @@ class ClubRepositoryImpl {
     clubMember.joinedDate = new Date();
     clubMember.status = ClubMemberStatus.ACTIVE;
 
-    logger.info('****** STARTING TRANSACTION TO SAVE club and club member');
+    //logger.info('****** STARTING TRANSACTION TO SAVE club and club member');
     await getManager().transaction(async transactionEntityManager => {
       await transactionEntityManager.getRepository(Club).save(club);
       await transactionEntityManager
         .getRepository<ClubMember>(ClubMember)
         .save(clubMember);
     });
-    logger.info('****** ENDING TRANSACTION  SAVE club and club member');
+    //logger.info('****** ENDING TRANSACTION  SAVE club and club member');
 
     return club.clubCode;
   }

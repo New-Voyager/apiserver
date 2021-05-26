@@ -45,19 +45,23 @@ export async function configureGame(
   if (!playerId) {
     throw new Error('Unauthorized');
   }
+
   const errors = new Array<string>();
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
   }
   const startTime = new Date().getTime();
+  let createGameTime, audioConfCreateTime;
+
   try {
-    logger.info(`Game type: ${game.gameType}`);
+    createGameTime = new Date().getTime();
     game.audioConfEnabled = true;
     const gameInfo = await GameRepository.createPrivateGame(
       clubCode,
       playerId,
       game
     );
+    createGameTime = new Date().getTime() - createGameTime;
     logger.info(`Game ${gameInfo.gameCode} is created.`);
     const ret: any = gameInfo as any;
     ret.gameType = GameType[gameInfo.gameType];
@@ -69,6 +73,7 @@ export async function configureGame(
     ret.janusRoomId = gameInfo.id;
     //game.audioConfEnabled = false;
     if (game.audioConfEnabled) {
+      audioConfCreateTime = new Date().getTime();
       logger.info(`Joining Janus audio conference: ${game.id}`);
       try {
         const sessionId = 'abcd';
@@ -92,12 +97,13 @@ export async function configureGame(
         );
         game.audioConfEnabled = false;
       }
+      audioConfCreateTime = new Date().getTime() - audioConfCreateTime;
     }
     const endTime = new Date().getTime();
     logger.info(
       `Time taken to create a new game: ${ret.gameCode} ${
         endTime - startTime
-      }ms`
+      }ms  audioConfCreateTime: ${audioConfCreateTime} createGameTime: ${createGameTime}`
     );
     return ret;
   } catch (err) {

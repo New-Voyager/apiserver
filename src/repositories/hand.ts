@@ -256,7 +256,7 @@ class HandRepositoryImpl {
       const summary = await this.getSummary(result);
       handHistory.summary = JSON.stringify(summary);
 
-      logger.info('****** STARTING TRANSACTION TO SAVE a hand result');
+      //logger.info('****** STARTING TRANSACTION TO SAVE a hand result');
       const saveResult = await getManager().transaction(
         async transactionEntityManager => {
           /**
@@ -359,8 +359,8 @@ class HandRepositoryImpl {
       //   }
       // }
 
-      logger.info(`Result: ${JSON.stringify(saveResult)}`);
-      logger.info('****** ENDING TRANSACTION TO SAVE a hand result');
+      //logger.info(`Result: ${JSON.stringify(saveResult)}`);
+      //logger.info('****** ENDING TRANSACTION TO SAVE a hand result');
       return saveResult;
     } catch (err) {
       logger.error(`Error when trying to save hand log: ${err.toString()}`);

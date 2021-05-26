@@ -25,7 +25,7 @@ class ChipsTrackRepositoryImpl {
       if (!gameUpdates) {
         throw new Error(`Game Updates for ${gameId} is not found`);
       }
-      logger.info('****** STARTING TRANSACTION FOR RAKE CALCULATION');
+      //logger.info('****** STARTING TRANSACTION FOR RAKE CALCULATION');
       await getManager().transaction(async transactionEntityManager => {
         const clubChipsTransaction = new ClubChipsTransaction();
         clubChipsTransaction.club = game.club;
@@ -108,7 +108,7 @@ class ChipsTrackRepositoryImpl {
                 ),
               }
             );
-          logger.info(JSON.stringify(result));
+          //logger.info(JSON.stringify(result));
         }
 
         // update club member balance
@@ -143,7 +143,7 @@ class ChipsTrackRepositoryImpl {
         }
         await Promise.all(chipUpdates);
       });
-      logger.info('****** ENDING TRANSACTION FOR RAKE CALCULATION');
+      //logger.info('****** ENDING TRANSACTION FOR RAKE CALCULATION');
       return true;
     } catch (e) {
       logger.error(`Error: ${JSON.stringify(e)}`);

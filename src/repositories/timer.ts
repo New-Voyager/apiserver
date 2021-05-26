@@ -83,33 +83,36 @@ export async function waitlistTimeoutExpired(gameID: number, playerID: number) {
 
 export async function seatChangeTimeoutExpired(gameID: number) {
   logger.info(`Seat change timeout expired. GameID: ${gameID}`);
+
   const gameRepository = getRepository(PokerGame);
   const game = await gameRepository.findOne({id: gameID});
   if (!game) {
-    throw new Error(`Game: ${gameID} is not found`);
+    logger.error(`Game: ${gameID} is not found`);
+  } else {
+    const seatChange = new SeatChangeProcess(game);
+    await seatChange.finish();
   }
-  const seatChange = new SeatChangeProcess(game);
-  await seatChange.finish();
 }
 
 export async function buyInTimeoutExpired(gameID: number, playerID: number) {
   const gameRepository = getRepository(PokerGame);
   const game = await gameRepository.findOne({id: gameID});
   if (!game) {
-    throw new Error(`Game: ${gameID} is not found`);
-  }
+    logger.error(`Game: ${gameID} is not found`);
+  } else {
+    const playerRepository = getRepository(Player);
+    const player = await playerRepository.findOne({id: playerID});
+    if (!player) {
+      logger.error(`Player: ${playerID} is not found`);
+    } else {
+      logger.info(
+        `[${game.gameCode}] Buyin timeout expired. player: ${player.name}`
+      );
 
-  const playerRepository = getRepository(Player);
-  const player = await playerRepository.findOne({id: playerID});
-  if (!player) {
-    throw new Error(`Player: ${playerID} is not found`);
+      const buyIn = new BuyIn(game, player);
+      buyIn.timerExpired();
+    }
   }
-  logger.info(
-    `[${game.gameCode}] Buyin timeout expired. player: ${player.name}`
-  );
-
-  const buyIn = new BuyIn(game, player);
-  buyIn.timerExpired();
 }
 
 export async function buyInApprovalTimeoutExpired(
@@ -122,38 +125,41 @@ export async function buyInApprovalTimeoutExpired(
   const gameRepository = getRepository(PokerGame);
   const game = await gameRepository.findOne({id: gameID});
   if (!game) {
-    throw new Error(`Game: ${gameID} is not found`);
-  }
+    logger.error(`Game: ${gameID} is not found`);
+  } else {
+    const playerRepository = getRepository(Player);
+    const player = await playerRepository.findOne({id: playerID});
+    if (!player) {
+      logger.error(`Player: ${playerID} is not found`);
+    } else {
+      logger.info(
+        `[${game.gameCode}] Buyin timeout expired. player: ${player.name}`
+      );
+      // handle buyin approval timeout
+      const nextHandUpdatesRepository = getRepository(NextHandUpdates);
+      await nextHandUpdatesRepository
+        .createQueryBuilder()
+        .delete()
+        .where({
+          game: {id: gameID},
+          player: {id: playerID},
+          newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
+        })
+        .execute();
 
-  const playerRepository = getRepository(Player);
-  const player = await playerRepository.findOne({id: playerID});
-  if (!player) {
-    throw new Error(`Player: ${playerID} is not found`);
-  }
-
-  // handle buyin approval timeout
-  const nextHandUpdatesRepository = getRepository(NextHandUpdates);
-  await nextHandUpdatesRepository
-    .createQueryBuilder()
-    .delete()
-    .where({
-      game: {id: gameID},
-      player: {id: playerID},
-      newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
-    })
-    .execute();
-
-  const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-  await playerGameTrackerRepository.update(
-    {
-      game: {id: game.id},
-      player: {id: player.id},
-    },
-    {
-      status: PlayerStatus.NOT_PLAYING,
-      seatNo: 0,
+      const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+      await playerGameTrackerRepository.update(
+        {
+          game: {id: game.id},
+          player: {id: player.id},
+        },
+        {
+          status: PlayerStatus.NOT_PLAYING,
+          seatNo: 0,
+        }
+      );
     }
-  );
+  }
 }
 
 export async function reloadApprovalTimeoutExpired(
@@ -166,56 +172,58 @@ export async function reloadApprovalTimeoutExpired(
   const gameRepository = getRepository(PokerGame);
   const game = await gameRepository.findOne({id: gameID});
   if (!game) {
-    throw new Error(`Game: ${gameID} is not found`);
-  }
+    logger.error(`Game: ${gameID} is not found`);
+  } else {
+    const playerRepository = getRepository(Player);
+    const player = await playerRepository.findOne({id: playerID});
+    if (!player) {
+      logger.error(`Player: ${playerID} is not found`);
+    } else {
+      // handle reload approval timeout
+      const nextHandUpdatesRepository = getRepository(NextHandUpdates);
+      await nextHandUpdatesRepository
+        .createQueryBuilder()
+        .delete()
+        .where({
+          game: {id: gameID},
+          player: {id: playerID},
+          newUpdate: NextHandUpdate.WAIT_RELOAD_APPROVAL,
+        })
+        .execute();
 
-  const playerRepository = getRepository(Player);
-  const player = await playerRepository.findOne({id: playerID});
-  if (!player) {
-    throw new Error(`Player: ${playerID} is not found`);
-  }
+      const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+      const playerInGames = await playerGameTrackerRepository
+        .createQueryBuilder()
+        .where({
+          game: {id: game.id},
+          player: {id: player.id},
+        })
+        .select('stack')
+        .execute();
 
-  // handle reload approval timeout
-  const nextHandUpdatesRepository = getRepository(NextHandUpdates);
-  await nextHandUpdatesRepository
-    .createQueryBuilder()
-    .delete()
-    .where({
-      game: {id: gameID},
-      player: {id: playerID},
-      newUpdate: NextHandUpdate.WAIT_RELOAD_APPROVAL,
-    })
-    .execute();
+      const playerInGame = playerInGames[0];
+      if (!playerInGame) {
+        logger.error(
+          `Player ${player.uuid} is not in the game: ${game.gameCode}`
+        );
+        throw new Error(`Player ${player.uuid} is not in the game`);
+      }
 
-  const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-  const playerInGames = await playerGameTrackerRepository
-    .createQueryBuilder()
-    .where({
-      game: {id: game.id},
-      player: {id: player.id},
-    })
-    .select('stack')
-    .execute();
-
-  const playerInGame = playerInGames[0];
-  if (!playerInGame) {
-    logger.error(`Player ${player.uuid} is not in the game: ${game.gameCode}`);
-    throw new Error(`Player ${player.uuid} is not in the game`);
-  }
-
-  if (playerInGame.stack <= 0) {
-    await playerGameTrackerRepository
-      .createQueryBuilder()
-      .update()
-      .set({
-        status: PlayerStatus.NOT_PLAYING,
-        seatNo: 0,
-      })
-      .where({
-        game: {id: game.id},
-        player: {id: player.id},
-      })
-      .execute();
+      if (playerInGame.stack <= 0) {
+        await playerGameTrackerRepository
+          .createQueryBuilder()
+          .update()
+          .set({
+            status: PlayerStatus.NOT_PLAYING,
+            seatNo: 0,
+          })
+          .where({
+            game: {id: game.id},
+            player: {id: player.id},
+          })
+          .execute();
+      }
+    }
   }
 }
 

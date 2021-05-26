@@ -186,7 +186,12 @@ export async function createGameServer(
     gameServer.lastHeartBeatTime = new Date();
     gameServer.noActiveGames = 0;
     gameServer.noActivePlayers = 0;
-    gameServer.url = registerPayload.url;
+    let url: string = registerPayload.url;
+    url = url.toLowerCase();
+    if (url.indexOf('mayas-macbook-pro.local') != -1) {
+      url = url.replace('mayas-macbook-pro.local', '127.0.0.1');
+    }
+    gameServer.url = url; //registerPayload.url;
 
     //gameServer.serverNumber = 1;
     await gameServerRepository.save(gameServer);

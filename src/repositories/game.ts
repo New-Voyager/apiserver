@@ -159,15 +159,18 @@ class GameRepositoryImpl {
     game.startedBy = player;
     game.host = player;
 
+    let saveTime, saveUpdateTime, publishNewTime;
     try {
-      logger.info('****** STARTING TRANSACTION TO CREATE a private game');
+      //logger.info('****** STARTING TRANSACTION TO CREATE a private game');
 
       await getManager().transaction(async transactionEntityManager => {
+        saveTime = new Date().getTime();
         savedGame = await transactionEntityManager
           .getRepository(PokerGame)
           .save(game);
-
+        saveTime = new Date().getTime() - saveTime;
         if (!game.isTemplate) {
+          saveUpdateTime = new Date().getTime();
           // create a entry in PokerGameUpdates
           const gameUpdatesRepo = transactionEntityManager.getRepository(
             PokerGameUpdates
@@ -175,6 +178,7 @@ class GameRepositoryImpl {
           const gameUpdates = new PokerGameUpdates();
           gameUpdates.gameID = savedGame.id;
           await gameUpdatesRepo.save(gameUpdates);
+          saveUpdateTime = new Date().getTime() - saveUpdateTime;
           let pick = 0;
           if (gameServers.length > 0) {
             pick = Number.parseInt(savedGame.id) % gameServers.length;
@@ -233,6 +237,7 @@ class GameRepositoryImpl {
             }
           }
 
+          publishNewTime = new Date().getTime();
           let tableStatus = TableStatus.WAITING_TO_BE_STARTED;
           let scanServer = 0;
           let gameServer;
@@ -263,6 +268,7 @@ class GameRepositoryImpl {
               pick = 0;
             }
           }
+          publishNewTime = new Date().getTime() - publishNewTime;
 
           if (!gameServer) {
             // could not assign game server for the game
@@ -285,7 +291,10 @@ class GameRepositoryImpl {
           await trackgameServerRepository.save(trackServer);
         }
       });
-      logger.info('****** ENDING TRANSACTION TO CREATE a private game');
+      //logger.info('****** ENDING TRANSACTION TO CREATE a private game');
+      logger.info(
+        `createPrivateGame saveTime: ${saveTime}, saveUpdateTime: ${saveUpdateTime}, publishNewTime: ${publishNewTime}`
+      );
     } catch (err) {
       logger.error(
         `Couldn't create game and retry again. Error: ${err.toString()}`

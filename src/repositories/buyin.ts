@@ -106,9 +106,9 @@ export class BuyIn {
     if (this.game.startedBy.uuid === this.player.uuid) {
       isHost = true;
     }
-    logger.info(
-      `\n\nBuyin approval is required: ${this.game.buyInApproval}\n\n`
-    );
+    // logger.info(
+    //   `\n\nBuyin approval is required: ${this.game.buyInApproval}\n\n`
+    // );
     if (
       clubMember.isOwner ||
       clubMember.isManager ||
@@ -116,10 +116,10 @@ export class BuyIn {
       !this.game.buyInApproval ||
       isHost
     ) {
-      logger.info(`***** [${this.game.gameCode}] Player: ${this.player.name} buyin approved. 
-            clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager} 
-            Auto approval: ${clubMember.autoBuyinApproval} 
-            isHost: ${isHost} Game.buyInApproval: ${this.game.buyInApproval} *****`);
+      // logger.info(`***** [${this.game.gameCode}] Player: ${this.player.name} buyin approved.
+      //       clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager}
+      //       Auto approval: ${clubMember.autoBuyinApproval}
+      //       isHost: ${isHost} Game.buyInApproval: ${this.game.buyInApproval} *****`);
       approved = true;
       updatedPlayerInGame = await this.approveBuyInRequest(
         amount,
@@ -180,6 +180,9 @@ export class BuyIn {
     playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
   ) {
+    let databaseTime = new Date().getTime();
+    let cancelTime;
+
     let playerGameTrackerRepository = transactionEntityManager.getRepository(
       PlayerGameTracker
     );
@@ -209,16 +212,24 @@ export class BuyIn {
         gameID: this.game.id,
       })
       .execute();
+    databaseTime = new Date().getTime() - databaseTime;
 
+    cancelTime = new Date().getTime();
     cancelTimer(this.game.id, this.player.id, BUYIN_TIMEOUT);
-    logger.info(`buyin timer is cancelled. player: ${this.player.name}`);
+    cancelTime = new Date().getTime() - cancelTime;
 
+    let gameServerTime = new Date().getTime();
     // send a message to gameserver
     // get game server of this game
     const gameServer = await GameRepository.getGameServer(this.game.id);
     if (gameServer) {
       playerBuyIn(this.game, this.player, playerInGame);
     }
+    gameServerTime = new Date().getTime() - gameServerTime;
+
+    logger.info(
+      `buyInApproved. player: ${this.player.name} gameServerTime: ${gameServerTime} cancelTime: ${cancelTime} databaseTime: ${databaseTime}`
+    );
   }
 
   public async buyInDenied(
@@ -242,8 +253,15 @@ export class BuyIn {
 
   public async request(amount: number): Promise<buyInRequest> {
     const timeout = 60;
+
+    const startTime = new Date().getTime();
+    let databaseTime = 0;
+    let buyInApprovedTime = 0;
+    let firebaseTime = 0;
+
     const [status, approved] = await getManager().transaction(
       async transactionEntityManager => {
+        databaseTime = new Date().getTime();
         let playerStatus: PlayerStatus;
         let approved: boolean;
         // player must be already in a seat or waiting list
@@ -322,7 +340,7 @@ export class BuyIn {
             }
             stack = updated?.stack;
           }
-
+          databaseTime = new Date().getTime() - databaseTime;
           if (!approved) {
             logger.info(
               `************ [${this.game.gameCode}]: Player ${this.player.name} is waiting for approval`
@@ -354,15 +372,19 @@ export class BuyIn {
           logger.info(
             `************ [${this.game.gameCode}]: Player ${this.player.name} bot: ${this.player.bot} buyin is approved`
           );
-
+          buyInApprovedTime = new Date().getTime();
           await this.buyInApproved(playerInGame, transactionEntityManager);
+          buyInApprovedTime = new Date().getTime() - buyInApprovedTime;
         }
 
         return [playerStatus, approved];
       }
     );
+    const timeTaken = new Date().getTime() - startTime;
+    logger.info(
+      `Buyin process total time: ${timeTaken} buyInApprovedTime: ${buyInApprovedTime} databaseTime: ${databaseTime}`
+    );
 
-    logger.info(`Status: ${status}`);
     return {
       expireSeconds: timeout,
       approved: approved,

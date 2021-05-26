@@ -196,7 +196,7 @@ export class WaitListMgmt {
       },
     });
     if (waitingPlayers.length === 0) {
-      logger.info(`Game: ${this.game.gameCode} No players in the waiting list`);
+      // logger.info(`Game: ${this.game.gameCode} No players in the waiting list`);
       return;
     }
 
@@ -254,7 +254,7 @@ export class WaitListMgmt {
         }
       );
 
-      logger.info(`Game: ${gameId} No players in the waiting list`);
+      //logger.info(`Game: ${gameId} No players in the waiting list`);
       // notify all the users waiting list process is complete
       return;
     }
