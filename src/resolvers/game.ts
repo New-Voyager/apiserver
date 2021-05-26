@@ -65,20 +65,21 @@ export async function configureGame(
     ret.tableStatus = TableStatus[gameInfo.tableStatus];
     ret.gameID = gameInfo.id;
 
-    game.audioConfEnabled = false;
+    ret.janusRoomPin = 'abcd'; // randomize
+    ret.janusRoomId = gameInfo.id;
+    //game.audioConfEnabled = false;
     if (game.audioConfEnabled) {
-      ret.janusRoomPin = 'abcd'; // randomize
-      ret.janusRoomId = gameInfo.id;
-
       logger.info(`Joining Janus audio conference: ${game.id}`);
       try {
-        const session = await JanusSession.create(JANUS_APISECRET);
-        await session.attachAudio();
-        await session.createRoom(ret.janusRoomId, ret.janusRoomPin);
+        const sessionId = 'abcd';
+        const handleId = 'xyz';
+        // const session = await JanusSession.create(JANUS_APISECRET);
+        // await session.attachAudio();
+        // await session.createRoom(ret.janusRoomId, ret.janusRoomPin);
         await GameRepository.updateJanus(
           gameInfo.id,
-          session.getId(),
-          session.getHandleId(),
+          sessionId,
+          handleId,
           ret.janusRoomId,
           ret.janusRoomPin
         );
