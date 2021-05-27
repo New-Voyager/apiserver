@@ -162,9 +162,17 @@ export async function createGameServer(
       registerPayload.url = `http://${registerPayload.ipAddress}:8080`;
     }
 
+    let url: string = registerPayload.url;
+    url = url.toLowerCase();
+
+    // HACK: SOMA: The name resloution is slow in my system for some reasons
+    if (url.indexOf('mayas-macbook-pro.local') != -1) {
+      url = url.replace('mayas-macbook-pro.local', '127.0.0.1');
+    }
+
     const gameServerRepository = getRepository(GameServer);
     let gameServer = await gameServerRepository.findOne({
-      url: registerPayload.url,
+      url: url,
     });
     if (!gameServer) {
       gameServer = new GameServer();
@@ -186,11 +194,6 @@ export async function createGameServer(
     gameServer.lastHeartBeatTime = new Date();
     gameServer.noActiveGames = 0;
     gameServer.noActivePlayers = 0;
-    let url: string = registerPayload.url;
-    url = url.toLowerCase();
-    if (url.indexOf('mayas-macbook-pro.local') != -1) {
-      url = url.replace('mayas-macbook-pro.local', '127.0.0.1');
-    }
     gameServer.url = url; //registerPayload.url;
 
     //gameServer.serverNumber = 1;
