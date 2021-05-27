@@ -18,7 +18,7 @@ jobs:
           version: 19.03.13
       - run:
           name: Build test images
-          command: make docker-build-test      
+          command: make docker-build-test
       - run:
           name: Run unit tests
           command: make docker-unit-tests
