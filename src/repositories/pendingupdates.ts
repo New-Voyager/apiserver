@@ -16,8 +16,8 @@ import {
   playerBuyIn,
   playerKickedOut,
   playerLeftGame,
-  startTimer,
 } from '@src/gameserver';
+import {startTimer} from '@src/timer';
 import {occupiedSeats, WaitListMgmt} from './waitlist';
 import {SeatChangeProcess} from './seatchange';
 import {BUYIN_TIMEOUT, DEALER_CHOICE_TIMEOUT} from './types';
