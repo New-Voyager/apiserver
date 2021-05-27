@@ -21,11 +21,11 @@ import {
   initiateSeatChangeProcess,
   pendingProcessDone,
   playerSwitchSeat,
-  startTimer,
   hostSeatChangeProcessEnded,
   hostSeatChangeProcessStarted,
   hostSeatChangeSeatMove,
 } from '@src/gameserver';
+import {startTimer} from '@src/timer';
 import {WaitListMgmt} from './waitlist';
 import {SEATCHANGE_PROGRSS} from './types';
 import {GameRepository} from './game';

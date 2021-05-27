@@ -1,7 +1,8 @@
 import {EntityManager, getConnection, SelectQueryBuilder} from 'typeorm';
 import {getManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
-import {isGameServerEnabled, startTimer} from '@src/gameserver';
+import {isGameServerEnabled} from '@src/gameserver';
+import {startTimer} from '@src/timer';
 import {Cache} from '@src/cache';
 const logger = getLogger('reset');
 

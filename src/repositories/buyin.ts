@@ -20,12 +20,8 @@ import {
 } from '@src/entity/types';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {GameRepository} from './game';
-import {
-  cancelTimer,
-  playerBuyIn,
-  playerStatusChanged,
-  startTimer,
-} from '@src/gameserver';
+import {playerBuyIn, playerStatusChanged} from '@src/gameserver';
+import {startTimer, cancelTimer} from '@src/timer';
 import {
   BUYIN_APPROVAL_TIMEOUT,
   BUYIN_TIMEOUT,

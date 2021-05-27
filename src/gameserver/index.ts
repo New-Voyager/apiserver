@@ -231,46 +231,6 @@ export async function playerStatusChanged(
   }
 }
 
-export async function startTimer(
-  gameId: number,
-  playerId: number,
-  purpose: string,
-  expAt: Date
-) {
-  if (!notifyGameServer) {
-    return;
-  }
-
-  // time in seconds
-  const expSeconds = Math.round(expAt.getTime() / 1000);
-  const gameServerUrl = await getGameServerUrl(gameId);
-  const newGameUrl = `${gameServerUrl}/start-timer?game-id=${gameId}&player-id=${playerId}&purpose=${purpose}&timeout-at=${expSeconds}`;
-  const resp = await axios.post(newGameUrl);
-  if (resp.status !== 200) {
-    logger.error(`Failed to start a timer: ${newGameUrl}`);
-    throw new Error(`Failed to start a timer: ${newGameUrl}`);
-  }
-}
-
-export async function cancelTimer(
-  gameId: number,
-  playerId: number,
-  purpose: string
-) {
-  if (!notifyGameServer) {
-    return;
-  }
-
-  // time in seconds
-  const gameServerUrl = await getGameServerUrl(gameId);
-  const newGameUrl = `${gameServerUrl}/cancel-timer?game-id=${gameId}&player-id=${playerId}&purpose=${purpose}`;
-  const resp = await axios.post(newGameUrl);
-  if (resp.status !== 200) {
-    logger.error(`Failed to cancel a timer: ${newGameUrl}`);
-    throw new Error(`Failed to cancel a timer: ${newGameUrl}`);
-  }
-}
-
 export async function playerSwitchSeat(
   game: PokerGame,
   player: Player,

@@ -28,14 +28,13 @@ import {
   publishNewGame,
   changeGameStatus,
   playerKickedOut,
-  startTimer,
   playerLeftGame,
   playerSwitchSeat,
   playerConfigUpdate,
-  cancelTimer,
   pendingProcessDone,
   playerStatusChanged,
 } from '@src/gameserver';
+import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery} from '@src/utils';
 import {WaitListMgmt} from './waitlist';
 import {Reward, GameRewardTracking, GameReward} from '@src/entity/reward';

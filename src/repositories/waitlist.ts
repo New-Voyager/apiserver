@@ -3,7 +3,8 @@ import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {GameType, PlayerStatus} from '@src/entity/types';
-import {cancelTimer, startTimer, waitlistSeating} from '@src/gameserver';
+import {waitlistSeating} from '@src/gameserver';
+import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery} from '@src/utils';
 import {getLogger} from '@src/utils/log';
 import {
