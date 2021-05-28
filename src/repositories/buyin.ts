@@ -228,54 +228,7 @@ export class BuyIn {
     }
     gameServerTime = new Date().getTime() - gameServerTime;
 
-    const playingCount = await playerGameTrackerRepository
-      .createQueryBuilder()
-      .where({
-        game: {id: this.game.id},
-        status: PlayerStatus.PLAYING,
-      })
-      .getCount();
-    logger.info(
-      `buyInApproved. playingCount: ${playingCount} player: ${this.player.name} gameServerTime: ${gameServerTime} cancelTime: ${cancelTime} databaseTime: ${databaseTime}`
-    );
-
-    if (playingCount >= 2) {
-      try {
-        const gameRepo = getRepository(PokerGame);
-        const rows = await gameRepo
-          .createQueryBuilder()
-          .where({id: this.game.id})
-          .select('game_status', 'status')
-          .addSelect('table_status', 'tableStatus')
-          .execute();
-        if (rows) {
-          const row = rows[0];
-
-          // if game is active, there are more players in playing status, resume the game again
-          if (
-            row.status === GameStatus.ACTIVE &&
-            row.tableStatus === TableStatus.NOT_ENOUGH_PLAYERS
-          ) {
-            // update game status
-            await gameRepo.update(
-              {
-                id: this.game.id,
-              },
-              {
-                tableStatus: TableStatus.GAME_RUNNING,
-              }
-            );
-            // refresh the cache
-            const game = await Cache.getGame(this.game.gameCode, true);
-
-            // resume the game
-            await pendingProcessDone(game.id, game.status, game.tableStatus);
-          }
-        }
-      } catch (err) {
-        logger.error(`Error handling buyin approval. ${err.toString()}`);
-      }
-    }
+    await GameRepository.restartGameIfNeeded(this.game);
   }
 
   public async buyInDenied(
