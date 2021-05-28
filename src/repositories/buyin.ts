@@ -20,7 +20,11 @@ import {
 } from '@src/entity/types';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {GameRepository} from './game';
-import {playerBuyIn, playerStatusChanged} from '@src/gameserver';
+import {
+  pendingProcessDone,
+  playerBuyIn,
+  playerStatusChanged,
+} from '@src/gameserver';
 import {startTimer, cancelTimer} from '@src/timer';
 import {
   BUYIN_APPROVAL_TIMEOUT,
@@ -74,6 +78,7 @@ export class BuyIn {
         stack: playerInGame.stack,
         buyIn: playerInGame.buyIn,
         noOfBuyins: playerInGame.noOfBuyins,
+        buyInExpAt: undefined,
       }
     );
 
@@ -223,9 +228,54 @@ export class BuyIn {
     }
     gameServerTime = new Date().getTime() - gameServerTime;
 
+    const playingCount = await playerGameTrackerRepository
+      .createQueryBuilder()
+      .where({
+        game: {id: this.game.id},
+        status: PlayerStatus.PLAYING,
+      })
+      .getCount();
     logger.info(
-      `buyInApproved. player: ${this.player.name} gameServerTime: ${gameServerTime} cancelTime: ${cancelTime} databaseTime: ${databaseTime}`
+      `buyInApproved. playingCount: ${playingCount} player: ${this.player.name} gameServerTime: ${gameServerTime} cancelTime: ${cancelTime} databaseTime: ${databaseTime}`
     );
+
+    if (playingCount >= 2) {
+      try {
+        const gameRepo = getRepository(PokerGame);
+        const rows = await gameRepo
+          .createQueryBuilder()
+          .where({id: this.game.id})
+          .select('game_status', 'status')
+          .addSelect('table_status', 'tableStatus')
+          .execute();
+        if (rows) {
+          const row = rows[0];
+
+          // if game is active, there are more players in playing status, resume the game again
+          if (
+            row.status === GameStatus.ACTIVE &&
+            row.tableStatus === TableStatus.NOT_ENOUGH_PLAYERS
+          ) {
+            // update game status
+            await gameRepo.update(
+              {
+                id: this.game.id,
+              },
+              {
+                tableStatus: TableStatus.GAME_RUNNING,
+              }
+            );
+            // refresh the cache
+            const game = await Cache.getGame(this.game.gameCode, true);
+
+            // resume the game
+            await pendingProcessDone(game.id, game.status, game.tableStatus);
+          }
+        }
+      } catch (err) {
+        logger.error(`Error handling buyin approval. ${err.toString()}`);
+      }
+    }
   }
 
   public async buyInDenied(
@@ -994,6 +1044,7 @@ export class BuyIn {
         {
           status: PlayerStatus.NOT_PLAYING,
           seatNo: 0,
+          buyInExpAt: undefined,
         }
       );
 
@@ -1016,5 +1067,47 @@ export class BuyIn {
     } else if (playerInSeat.status == PlayerStatus.PLAYING) {
       // cancel timer wasn't called (ignore the timeout callback)
     }
+  }
+
+  /**
+   * Walks through all active players in the game. If a player has 0 stack, then start
+   * a buyin timer.
+   * @param game
+   */
+  public static async startBuyInTimers(game: PokerGame) {
+    await getManager().transaction(async transactionEntityManager => {
+      const playerGameTrackerRepo = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
+      const emptyStackPlayers = await playerGameTrackerRepo.find({
+        game: {id: game.id},
+        status: PlayerStatus.PLAYING,
+        stack: 0,
+      });
+      for (const player of emptyStackPlayers) {
+        logger.info(
+          `Player: ${player.player.name} stack is empty. Starting a buyin timer`
+        );
+        // if player balance is 0, we need to mark this player to add buyin
+        await GameRepository.startBuyinTimer(
+          game,
+          player.player,
+          {
+            status: PlayerStatus.WAIT_FOR_BUYIN,
+          },
+          transactionEntityManager
+        );
+
+        // notify clients to update the new status
+        await playerStatusChanged(
+          game,
+          player.player,
+          player.status,
+          NewUpdate.WAIT_FOR_BUYIN_APPROVAL,
+          player.stack,
+          player.seatNo
+        );
+      }
+    });
   }
 }

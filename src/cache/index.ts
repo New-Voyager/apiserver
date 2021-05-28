@@ -91,6 +91,25 @@ class GameCache {
     }
   }
 
+  /**
+   * Update the cache there is a pending updates for this game.
+   * e.g. When a player's stack goes to 0, we need to start the buyin timer,
+   * before we move to next hand.
+   * @param gameCode
+   * @param pendingUpdates
+   */
+  public async updateGamePendingUpdates(
+    gameCode: string,
+    pendingUpdates: boolean
+  ) {
+    const getResp = await this.getCache(`gameCache-${gameCode}`);
+    if (getResp.success && getResp.data) {
+      const game: PokerGame = JSON.parse(getResp.data) as PokerGame;
+      game.pendingUpdates = pendingUpdates;
+      await this.setCache(`gameCache-${gameCode}`, JSON.stringify(game));
+    }
+  }
+
   public async observeGame(gameCode: string, player: Player): Promise<boolean> {
     const setResp = await this.setCache(
       `observersCache-${gameCode}-${player.uuid}`,
@@ -150,11 +169,41 @@ class GameCache {
       if (!game) {
         throw new Error(`Cannot find with game code: ${gameCode}`);
       }
+      await this.updateGameIdGameCodeChange(game.id, game.gameCode);
+
+      if (getResp.data) {
+        const oldGame = JSON.parse(getResp.data) as PokerGame;
+        game.highHandRank = oldGame.highHandRank;
+        game.pendingUpdates = oldGame.pendingUpdates;
+      }
 
       await this.setCache(`gameCache-${gameCode}`, JSON.stringify(game));
       await this.setCache(`gameIdCache-${game.id}`, JSON.stringify(game));
       return game;
     }
+  }
+
+  private async gameCodeFromId(gameId: number): Promise<string | null> {
+    const getResp = await this.getCache(`gameIdGameCodeCache`);
+    if (getResp.success && getResp.data) {
+      const gameIdToCode = JSON.parse(getResp.data);
+      return gameIdToCode[gameId.toString()];
+    } else {
+      return null;
+    }
+  }
+
+  private async updateGameIdGameCodeChange(gameId: number, gameCode: string) {
+    const getResp = await this.getCache(`gameIdGameCodeCache`);
+    let data: any = {};
+    if (getResp.success && getResp.data) {
+      data = JSON.parse(getResp.data);
+      data[gameId.toString()] = gameCode;
+    } else {
+      data[gameId.toString()] = gameCode;
+    }
+
+    await this.setCache(`gameIdGameCodeCache`, JSON.stringify(data));
   }
 
   public async getClub(clubCode: string, update = false): Promise<Club> {
@@ -167,7 +216,7 @@ class GameCache {
         where: {clubCode: clubCode},
       });
       if (!club) {
-        throw new Error(`Cannot find with game code: ${clubCode}`);
+        throw new Error(`Cannot find with club code: ${clubCode}`);
       }
 
       await this.setCache(`clubCache-${clubCode}`, JSON.stringify(club));
@@ -248,10 +297,8 @@ class GameCache {
   }
 
   public async getGameById(gameID: number): Promise<PokerGame | undefined> {
-    const getResp = await this.getCache(`gameIdCache-${gameID}`);
-    if (getResp.success && getResp.data) {
-      return JSON.parse(getResp.data) as PokerGame;
-    } else {
+    const gameCode = await this.gameCodeFromId(gameID);
+    if (!gameCode) {
       const game = await getRepository(PokerGame).findOne({
         relations: ['club', 'host', 'startedBy', 'endedBy'],
         where: {id: gameID},
@@ -259,8 +306,9 @@ class GameCache {
       if (!game) {
         return game;
       }
-      await this.setCache(`gameIdCache-${gameID}`, JSON.stringify(game));
       return game;
+    } else {
+      return this.getGame(gameCode);
     }
   }
 
