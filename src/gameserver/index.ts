@@ -184,16 +184,24 @@ export async function playerKickedOut(
   }
 }
 
-export async function pendingProcessDone(gameId: number) {
+export async function pendingProcessDone(
+  gameId: number,
+  gameStatus: GameStatus,
+  tableStatus: TableStatus
+) {
   if (!notifyGameServer) {
     return;
   }
   const gameServerUrl = await getGameServerUrl(gameId);
-  const newGameUrl = `${gameServerUrl}/pending-updates?game-id=${gameId}&done=1`;
-  const resp = await axios.post(newGameUrl);
-  if (resp.status !== 200) {
-    logger.error(`Failed to update pending updates: ${newGameUrl}`);
-    throw new Error(`Failed to update pending updates: ${newGameUrl}`);
+  const newGameUrl = `${gameServerUrl}/pending-updates?game-id=${gameId}&done=1&status=${gameStatus}&table-status=${tableStatus}`;
+  try {
+    const resp = await axios.post(newGameUrl);
+    if (resp.status !== 200) {
+      logger.error(`Failed to update pending updates: ${newGameUrl}`);
+      throw new Error(`Failed to update pending updates: ${newGameUrl}`);
+    }
+  } catch (err) {
+    logger.error(`Failed to update pending updates for game: ${gameId}.`);
   }
 }
 

@@ -273,7 +273,7 @@ class ClubRepositoryImpl {
     clubCode: string,
     playerId: string
   ): Promise<ClubMemberStatus> {
-    clubCode = clubCode.toUpperCase();
+    clubCode = clubCode.toLowerCase();
     let clubMember = await Cache.getClubMember(playerId, clubCode);
     const player = await Cache.getPlayer(playerId);
     if (clubMember) {
@@ -753,7 +753,7 @@ class ClubRepositoryImpl {
   }
 
   public async searchClub(clubCode: string): Promise<Club | null> {
-    clubCode = clubCode.toUpperCase();
+    clubCode = clubCode.toLowerCase();
     try {
       const clubs = await getRepository(Club).find({
         where: {clubCode: clubCode},

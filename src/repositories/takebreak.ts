@@ -93,12 +93,14 @@ export class TakeBreak {
         player: {id: this.player.id},
       })
       .select('status')
+      .select('seat_no', 'seatNo')
       .execute();
     if (!rows && rows.length === 0) {
       throw new Error('Player is not found in the game');
     }
-    await this.startTimer(playerGameTrackerRepository);
     const playerInGame = rows[0];
+
+    await this.startTimer(playerGameTrackerRepository);
 
     const pendingUpdatesRepo = getRepository(NextHandUpdates);
     pendingUpdatesRepo.delete({id: update.id});
@@ -107,7 +109,7 @@ export class TakeBreak {
     await playerStatusChanged(
       this.game,
       this.player,
-      playerInGame.status,
+      PlayerStatus.IN_BREAK,
       NewUpdate.TAKE_BREAK,
       playerInGame.stack,
       playerInGame.seatNo
@@ -121,7 +123,8 @@ export class TakeBreak {
     const breakTimeExpAt = new Date();
     let timeoutInMins = this.game.breakLength;
     timeoutInMins = 1;
-    breakTimeExpAt.setMinutes(breakTimeExpAt.getMinutes() + timeoutInMins);
+    const timeoutInSeconds = timeoutInMins * 10 * 60;
+    breakTimeExpAt.setSeconds(breakTimeExpAt.getSeconds() + timeoutInSeconds);
     const exp = utcTime(breakTimeExpAt);
     logger.info(
       `Player ${

@@ -1,5 +1,10 @@
 import {Player} from '@src/entity/player';
-import {GameType, PlayerStatus} from '@src/entity/types';
+import {
+  GameStatus,
+  GameType,
+  PlayerStatus,
+  TableStatus,
+} from '@src/entity/types';
 
 export interface PlayerSitInput {
   clubId: number;
@@ -82,6 +87,8 @@ export interface NewHandInfo {
   handNum: number;
   announceGameType: boolean;
   playersInSeats: Array<PlayerInSeat>;
+  gameStatus: GameStatus;
+  tableStatus: TableStatus;
 }
 
 export const WAITLIST_SEATING = 'WAITLIST_SEATING';

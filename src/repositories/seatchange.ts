@@ -207,7 +207,11 @@ export class SeatChangeProcess {
     );
 
     // notify game server to resume the game
-    await pendingProcessDone(this.game.id);
+    await pendingProcessDone(
+      this.game.id,
+      this.game.status,
+      this.game.tableStatus
+    );
 
     // run wait list processing
     const waitlistProcess = new WaitListMgmt(this.game);
