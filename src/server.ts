@@ -27,6 +27,7 @@ import {seed} from './initdb';
 import {Firebase} from './firebase';
 import {Nats} from './nats';
 import {generateBotScript} from './internal/bot';
+import {restartTimers} from '@src/timer';
 
 const logger = getLogger('server');
 const JWT_EXPIRY_DAYS = 3;
@@ -187,6 +188,7 @@ function addInternalRoutes(app: any) {
   );
 
   app.post('/internal/restart-games', GameServerAPI.restartGames);
+  app.post('/internal/restart-timers', restartTimers);
 
   app.post(
     '/internal/save-hand/gameId/:gameId/handNum/:handNum',
