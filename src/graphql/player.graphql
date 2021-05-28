@@ -125,6 +125,7 @@ type Query {
   idsToPlayersInfo(ids: [Int!]): [PlayerInfo]
   availableAppCoins: Int!
   availableProducts: [String!]
+  notes(playerId: String playerUuid: String): String
 }
 
 type Mutation {
@@ -133,4 +134,5 @@ type Mutation {
   leaveClub(clubCode: String!): ClubMemberStatus
   updateFirebaseToken(token: String!): Boolean
   appCoinPurchase(storeType: StoreType!, receipt: String!): IapReceipt!
+  setNotes(playerId: String playerUuid: String, notes: String): Boolean
 }

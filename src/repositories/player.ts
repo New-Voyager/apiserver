@@ -1,9 +1,10 @@
 import {EntityManager, Repository, getRepository, In} from 'typeorm';
 import {v4 as uuidv4} from 'uuid';
-import {Player} from '@src/entity/player';
+import {Player, PlayerNotes} from '@src/entity/player';
 import {loggers} from 'winston';
 import {getLogger} from '@src/utils/log';
 const logger = getLogger('player');
+import {Cache} from '@src/cache/index';
 
 class PlayerRepositoryImpl {
   public async createPlayer(
@@ -109,6 +110,70 @@ class PlayerRepositoryImpl {
       },
     });
     return resp;
+  }
+
+  // Updates firebase token for the player
+  public async getNotes(
+    playerId: string,
+    notesPlayerId: number,
+    notesPlayerUuid: string
+  ): Promise<string> {
+    const player = await Cache.getPlayer(playerId);
+    let notesPlayer;
+    if (notesPlayerId) {
+      notesPlayer = await Cache.getPlayerById(notesPlayerId);
+    } else if (notesPlayerUuid) {
+      notesPlayer = await Cache.getPlayer(notesPlayerUuid);
+    }
+    if (!notesPlayer) {
+      throw new Error(`Could not get notes palyer id`);
+    }
+    const notesRepo = getRepository(PlayerNotes);
+    const notes = await notesRepo.findOne({
+      player: {id: player.id},
+      notesToPlayer: {id: notesPlayer.id},
+    });
+    if (!notes) {
+      return '';
+    }
+    return notes.notes;
+  }
+
+  public async updateNotes(
+    playerId: string,
+    notesPlayerId: number,
+    notesPlayerUuid: string,
+    notes: string
+  ) {
+    const player = await Cache.getPlayer(playerId);
+    let notesPlayer;
+    if (notesPlayerId) {
+      notesPlayer = await Cache.getPlayerById(notesPlayerId);
+    } else if (notesPlayerUuid) {
+      notesPlayer = await Cache.getPlayer(notesPlayerUuid);
+    }
+    if (!notesPlayer) {
+      throw new Error(`Could not get notes palyer id`);
+    }
+    const notesRepo = getRepository(PlayerNotes);
+    let affectedRows = await notesRepo.update(
+      {
+        player: {id: player.id},
+        notesToPlayer: {id: notesPlayer.id},
+      },
+      {
+        notes: notes,
+      }
+    );
+    if (affectedRows.affected == 0) {
+      // insert
+      affectedRows = await notesRepo.insert({
+        player: {id: player.id},
+        notesToPlayer: {id: notesPlayer.id},
+        notes: notes,
+      });
+    }
+    logger.info(`Affected rows: ${affectedRows}`);
   }
 }
 

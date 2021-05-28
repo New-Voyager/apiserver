@@ -1,5 +1,16 @@
-import {Entity, PrimaryGeneratedColumn, Column, Index} from 'typeorm';
-import {DbAwareCreateDateColumn, DbAwareUpdateDateColumn} from './dbaware';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  Index,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import {
+  DbAwareColumn,
+  DbAwareCreateDateColumn,
+  DbAwareUpdateDateColumn,
+} from './dbaware';
 
 @Entity()
 export class Player {
@@ -49,4 +60,18 @@ export class Player {
 
   @Column({name: 'is_bot', nullable: true, default: false})
   public bot!: boolean;
+}
+
+@Entity({name: 'player_notes'})
+export class PlayerNotes {
+  @ManyToOne(() => Player, player => player.id, {primary: true})
+  @JoinColumn({name: 'player1_id'})
+  public player!: Player;
+
+  @ManyToOne(() => Player, player => player.id, {primary: true})
+  @JoinColumn({name: 'player2_id'})
+  public notesToPlayer!: Player;
+
+  @DbAwareColumn({name: 'notes', type: 'text'})
+  public notes!: string;
 }
