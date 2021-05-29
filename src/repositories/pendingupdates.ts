@@ -210,6 +210,13 @@ async function kickoutPlayer(
   update: NextHandUpdates,
   pendingUpdatesRepo
 ) {
+  const playerInGame = await playerGameTrackerRepository.findOne({
+    where: {
+      game: {id: game.id},
+      player: {id: update.player.id},
+    },
+  });
+
   await playerGameTrackerRepository.update(
     {
       game: {id: game.id},
@@ -220,13 +227,6 @@ async function kickoutPlayer(
       seatNo: 0,
     }
   );
-
-  const playerInGame = await playerGameTrackerRepository.findOne({
-    where: {
-      game: {id: game.id},
-      player: {id: update.player.id},
-    },
-  });
 
   const count = await playerGameTrackerRepository.count({
     where: {
