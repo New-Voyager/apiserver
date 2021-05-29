@@ -25,6 +25,7 @@ import _ from 'lodash';
 import {Nats} from '@src/nats';
 import {TakeBreak} from './takebreak';
 import {Cache} from '@src/cache';
+import {BuyIn} from './buyin';
 
 const logger = getLogger('pending-updates');
 
@@ -55,6 +56,8 @@ export async function processPendingUpdates(gameId: number) {
   if (!game) {
     throw new Error(`Game: ${gameId} is not found`);
   }
+
+  await Cache.updateGamePendingUpdates(game?.gameCode, false);
   const gameUpdatesRepo = getRepository(PokerGameUpdates);
   const gameUpdate = await gameUpdatesRepo.findOne({gameID: game.id});
   if (!gameUpdate) {
@@ -117,65 +120,62 @@ export async function processPendingUpdates(gameId: number) {
     },
   });
 
-  if (updates.length === 0) {
-    // resume game
-    await pendingProcessDone(gameId);
-    return;
-  }
-  const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-
-  for (const update of updates) {
-    // walk through each update
-    if (update.newUpdate === NextHandUpdate.KICKOUT) {
-      // kick out a player
-      await kickoutPlayer(
-        playerGameTrackerRepository,
-        game,
-        update,
-        pendingUpdatesRepo
-      );
-      newOpenSeat = true;
-    } else if (update.newUpdate === NextHandUpdate.LEAVE) {
-      await leaveGame(
-        playerGameTrackerRepository,
-        game,
-        update,
-        pendingUpdatesRepo
-      );
-      newOpenSeat = true;
-    } else if (
-      update.newUpdate === NextHandUpdate.RELOAD_APPROVED ||
-      update.newUpdate === NextHandUpdate.BUYIN_APPROVED
-    ) {
-      await buyinApproved(
-        playerGameTrackerRepository,
-        game,
-        update,
-        pendingUpdatesRepo
-      );
-    } else if (update.newUpdate === NextHandUpdate.WAIT_FOR_DEALER_CHOICE) {
-      dealerChoiceUpdate = update;
-    } else if (update.newUpdate === NextHandUpdate.TAKE_BREAK) {
-      const takeBreak = new TakeBreak(game, update.player);
-      takeBreak.processPendingUpdate(update);
-    }
-  }
-
   let endPendingProcess = true;
   let seatChangeInProgress = false;
-  let seatChangeAllowed = game.seatChangeAllowed;
-  const seats = await occupiedSeats(game.id);
-  seatChangeAllowed = true; // debugging
-  if (seatChangeAllowed) {
-    if (newOpenSeat && seats < game.maxPlayers) {
-      logger.info(`[${game.gameCode}] Seat Change is in Progress`);
-      // open seat
-      const seatChangeProcess = new SeatChangeProcess(game);
-      const waitingPlayers = await seatChangeProcess.getSeatChangeRequestedPlayers();
-      if (waitingPlayers.length > 0) {
-        endPendingProcess = false;
-        await seatChangeProcess.start();
-        seatChangeInProgress = true;
+  if (updates.length !== 0) {
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+
+    for (const update of updates) {
+      // walk through each update
+      if (update.newUpdate === NextHandUpdate.KICKOUT) {
+        // kick out a player
+        await kickoutPlayer(
+          playerGameTrackerRepository,
+          game,
+          update,
+          pendingUpdatesRepo
+        );
+        newOpenSeat = true;
+      } else if (update.newUpdate === NextHandUpdate.LEAVE) {
+        await leaveGame(
+          playerGameTrackerRepository,
+          game,
+          update,
+          pendingUpdatesRepo
+        );
+        newOpenSeat = true;
+      } else if (
+        update.newUpdate === NextHandUpdate.RELOAD_APPROVED ||
+        update.newUpdate === NextHandUpdate.BUYIN_APPROVED
+      ) {
+        await buyinApproved(
+          playerGameTrackerRepository,
+          game,
+          update,
+          pendingUpdatesRepo
+        );
+      } else if (update.newUpdate === NextHandUpdate.WAIT_FOR_DEALER_CHOICE) {
+        dealerChoiceUpdate = update;
+      } else if (update.newUpdate === NextHandUpdate.TAKE_BREAK) {
+        const takeBreak = new TakeBreak(game, update.player);
+        takeBreak.processPendingUpdate(update);
+      }
+    }
+
+    let seatChangeAllowed = game.seatChangeAllowed;
+    const seats = await occupiedSeats(game.id);
+    seatChangeAllowed = true; // debugging
+    if (seatChangeAllowed) {
+      if (newOpenSeat && seats < game.maxPlayers) {
+        logger.info(`[${game.gameCode}] Seat Change is in Progress`);
+        // open seat
+        const seatChangeProcess = new SeatChangeProcess(game);
+        const waitingPlayers = await seatChangeProcess.getSeatChangeRequestedPlayers();
+        if (waitingPlayers.length > 0) {
+          endPendingProcess = false;
+          await seatChangeProcess.start();
+          seatChangeInProgress = true;
+        }
       }
     }
   }
@@ -186,10 +186,20 @@ export async function processPendingUpdates(gameId: number) {
   }
 
   if (endPendingProcess) {
-    if (dealerChoiceUpdate) {
+    // start buy in timers for the player's whose stack is 0 and playing
+    await BuyIn.startBuyInTimers(game);
+
+    // if the game does not have more than 1 active player, then the game cannot continue
+    const canContinue = await GameRepository.determineGameStatus(game.id);
+    if (canContinue && dealerChoiceUpdate) {
       await handleDealersChoice(game, dealerChoiceUpdate, pendingUpdatesRepo);
     } else {
-      await pendingProcessDone(gameId);
+      const cachedGame = await Cache.getGame(game.gameCode);
+      await pendingProcessDone(
+        gameId,
+        cachedGame.status,
+        cachedGame.tableStatus
+      );
     }
   }
 }

@@ -347,17 +347,16 @@ class HandRepositoryImpl {
         }
       );
 
-      // for (const seatNo of Object.keys(result.players)) {
-      //   const player = result.players[seatNo];
-      //   playerBalance[player.id] = player.balance;
-
-      //   if (playerBalance[player.id].after == 0) {
-      //     // if player balance is 0, we need to mark this player to add buyin
-      //     await GameRepository.startBuyinTimer(game, player, {
-      //       status: PlayerStatus.WAIT_FOR_BUYIN,
-      //     });
-      //   }
-      // }
+      for (const seatNo of Object.keys(result.players)) {
+        const player = result.players[seatNo];
+        if (player.balance.after == 0) {
+          logger.info(
+            `Game [${game.gameCode}]: A player balance stack went to 0`
+          );
+          await Cache.updateGamePendingUpdates(game.gameCode, true);
+          break;
+        }
+      }
 
       //logger.info(`Result: ${JSON.stringify(saveResult)}`);
       //logger.info('****** ENDING TRANSACTION TO SAVE a hand result');

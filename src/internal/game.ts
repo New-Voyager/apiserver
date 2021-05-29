@@ -463,7 +463,7 @@ class GameAPIs {
           transactionEntityManager
         );
         const takenSeats = _.keyBy(playersInSeats, 'seatNo');
-
+        let activeSeats = 0;
         for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
           const playerSeat = takenSeats[seatNo];
           if (
@@ -502,6 +502,10 @@ class GameAPIs {
             if (playerSeat.breakTimeExp) {
               breakTimeExp = playerSeat.breakTimeExp.toISOString();
             }
+            if (playerSeat.status == PlayerStatus.PLAYING) {
+              activeSeats++;
+            }
+
             // player is in a seat
             seats.push({
               seatNo: seatNo,
@@ -519,6 +523,16 @@ class GameAPIs {
               muckLosingHand: playerSeat.muckLosingHand,
             });
           }
+        }
+        let tableStatus = game.tableStatus;
+        let gameStatus = game.status;
+        if (activeSeats == 1) {
+          // not enough players
+          await GameRepository.markTableStatus(
+            game.id,
+            TableStatus.NOT_ENOUGH_PLAYERS
+          );
+          tableStatus = TableStatus.NOT_ENOUGH_PLAYERS;
         }
 
         const gameUpdate = gameUpdates[0];
@@ -542,6 +556,8 @@ class GameAPIs {
           maxPlayers: game.maxPlayers,
           buttonPos: gameUpdate.buttonPos,
           handNum: gameUpdate.handNum,
+          gameStatus: gameStatus,
+          tableStatus: tableStatus,
         };
 
         return nextHandInfo;

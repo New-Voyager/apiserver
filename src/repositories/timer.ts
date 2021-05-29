@@ -1,13 +1,19 @@
 import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {NextHandUpdates, PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
-import {NextHandUpdate, PlayerStatus} from '@src/entity/types';
+import {
+  GameStatus,
+  NextHandUpdate,
+  PlayerStatus,
+  TableStatus,
+} from '@src/entity/types';
 import {pendingProcessDone, playerStatusChanged} from '@src/gameserver';
 import {getLogger} from '@src/utils/log';
 import {getRepository} from 'typeorm';
 import {BuyIn} from './buyin';
 import {SeatChangeProcess} from './seatchange';
 import {breakTimeoutExpired} from './takebreak';
+import {Cache} from '@src/cache/index';
 import {
   SEATCHANGE_PROGRSS,
   WAITLIST_SEATING,
@@ -232,5 +238,12 @@ export async function dealerChoiceTimeout(gameID: number, playerID: number) {
     `Dealer choice timeout expired. GameID: ${gameID}, playerID: ${playerID}`
   );
   // pending updates done (resume game)
-  await pendingProcessDone(gameID);
+  const game = await Cache.getGameById(gameID);
+  let gameStatus: GameStatus = GameStatus.ACTIVE;
+  let tableStatus: TableStatus = TableStatus.GAME_RUNNING;
+  if (game) {
+    gameStatus = game.status;
+    tableStatus = game.tableStatus;
+  }
+  await pendingProcessDone(gameID, gameStatus, tableStatus);
 }

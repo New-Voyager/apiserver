@@ -6,6 +6,7 @@ import {
   In,
   Repository,
   EntityManager,
+  TableIndex,
 } from 'typeorm';
 import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game';
 import {
@@ -805,6 +806,7 @@ class GameRepositoryImpl {
       },
       {
         status: playerInGame.status,
+        breakTimeExpAt: undefined,
       }
     );
 
@@ -817,9 +819,6 @@ class GameRepositoryImpl {
       playerInGame.stack,
       playerInGame.seatNo
     );
-    //}
-
-    // } else {
     const nextHandUpdate = await nextHandUpdatesRepository.findOne({
       where: {
         game: {id: game.id},
@@ -831,9 +830,62 @@ class GameRepositoryImpl {
     if (nextHandUpdate) {
       await nextHandUpdatesRepository.delete({id: nextHandUpdate.id});
     }
-    //}
-
+    await this.restartGameIfNeeded(game);
     return true;
+  }
+
+  public async restartGameIfNeeded(game: PokerGame): Promise<void> {
+    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+
+    const playingCount = await playerGameTrackerRepository
+      .createQueryBuilder()
+      .where({
+        game: {id: game.id},
+        status: PlayerStatus.PLAYING,
+      })
+      .getCount();
+
+    if (playingCount >= 2) {
+      try {
+        const gameRepo = getRepository(PokerGame);
+        const rows = await gameRepo
+          .createQueryBuilder()
+          .where({id: game.id})
+          .select('game_status', 'status')
+          .addSelect('table_status', 'tableStatus')
+          .execute();
+        if (rows) {
+          const row = rows[0];
+
+          // if game is active, there are more players in playing status, resume the game again
+          if (
+            row.status === GameStatus.ACTIVE &&
+            row.tableStatus === TableStatus.NOT_ENOUGH_PLAYERS
+          ) {
+            // update game status
+            await gameRepo.update(
+              {
+                id: game.id,
+              },
+              {
+                tableStatus: TableStatus.GAME_RUNNING,
+              }
+            );
+            // refresh the cache
+            const gameUpdate = await Cache.getGame(game.gameCode, true);
+
+            // resume the game
+            await pendingProcessDone(
+              gameUpdate.id,
+              gameUpdate.status,
+              gameUpdate.tableStatus
+            );
+          }
+        }
+      } catch (err) {
+        logger.error(`Error handling buyin approval. ${err.toString()}`);
+      }
+    }
   }
 
   public async updateBreakTime(playerId: number, gameId: number) {
@@ -939,6 +991,11 @@ class GameRepositoryImpl {
   }
 
   public async anyPendingUpdates(gameId: number): Promise<boolean> {
+    const game = await Cache.getGameById(gameId);
+    if (game && game.pendingUpdates) {
+      return true;
+    }
+
     const query = fixQuery(
       'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ?'
     );
@@ -1589,7 +1646,7 @@ class GameRepositoryImpl {
     );
 
     // pending updates done
-    await pendingProcessDone(game.id);
+    await pendingProcessDone(game.id, game.status, game.tableStatus);
   }
 
   public async updateJanus(
@@ -1625,6 +1682,25 @@ class GameRepositoryImpl {
         logger.info(`Janus room: ${gameID} is deleted`);
       }
     }
+  }
+
+  public async determineGameStatus(gameID: number): Promise<boolean> {
+    // if only one player or zero player is active, then mark the game not enough players
+    const playerGameTrackerRepo = getRepository(PlayerGameTracker);
+    // get number of players in the seats
+    const count = await playerGameTrackerRepo.count({
+      where: {
+        game: {id: gameID},
+        status: PlayerStatus.PLAYING,
+      },
+    });
+
+    if (count <= 1) {
+      // only one player is active, mark the game not enough players
+      await this.markTableStatus(gameID, TableStatus.NOT_ENOUGH_PLAYERS);
+      return false;
+    }
+    return true;
   }
 }
 
