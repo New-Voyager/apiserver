@@ -166,7 +166,7 @@ export async function processPendingUpdates(gameId: number) {
     const seats = await occupiedSeats(game.id);
     seatChangeAllowed = true; // debugging
     if (seatChangeAllowed) {
-      if (newOpenSeat && seats < game.maxPlayers) {
+      if (newOpenSeat && seats <= game.maxPlayers - 1) {
         logger.info(`[${game.gameCode}] Seat Change is in Progress`);
         // open seat
         const seatChangeProcess = new SeatChangeProcess(game);

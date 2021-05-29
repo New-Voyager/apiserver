@@ -34,6 +34,9 @@ const resolvers: any = {
     confirmSeatChange: async (parent, args, ctx, info) => {
       return confirmSeatChange(ctx.req.playerId, args.gameCode, args.seatNo);
     },
+    declineSeatChange: async (parent, args, ctx, info) => {
+      return declineSeatChange(ctx.req.playerId, args.gameCode);
+    },
     beginHostSeatChange: async (parent, args, ctx, info) => {
       return beginHostSeatChange(ctx.req.playerId, args.gameCode);
     },
@@ -87,6 +90,41 @@ export async function confirmSeatChange(
     const player = await Cache.getPlayer(playerUuid);
     const seatChange = new SeatChangeProcess(game);
     const seatChangeStatus = await seatChange.confirmSeatChange(player, seatNo);
+    return seatChangeStatus;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error(`Failed to confirm seat change. ${JSON.stringify(err)}`);
+  }
+}
+
+export async function declineSeatChange(playerUuid: string, gameCode: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.club) {
+      const clubMember = await Cache.getClubMember(
+        playerUuid,
+        game.club.clubCode
+      );
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not a club member in club ${game.club.name}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to make seat change ${gameCode}`
+        );
+      }
+    }
+    const player = await Cache.getPlayer(playerUuid);
+    const seatChange = new SeatChangeProcess(game);
+    const seatChangeStatus = await seatChange.declineSeatChange(player);
     return seatChangeStatus;
   } catch (err) {
     logger.error(JSON.stringify(err));

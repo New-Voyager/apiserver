@@ -373,6 +373,7 @@ type Mutation {
   # seat change APIs
   requestSeatChange(gameCode: String!): DateTime!
   confirmSeatChange(gameCode: String!, seatNo: Int): Boolean!
+  declineSeatChange(gameCode: String!): Boolean!
   beginHostSeatChange(gameCode: String!): Boolean
   seatChangeSwapSeats(gameCode: String!, seatNo1: Int!, seatNo2: Int!): Boolean!
   seatChangeComplete(gameCode: String!, cancelChanges: Boolean): Boolean  
