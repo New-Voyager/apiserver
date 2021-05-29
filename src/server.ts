@@ -141,6 +141,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
 }
 
 function addInternalRoutes(app: any) {
+  app.get('/internal/ready', readyCheck);
   app.post('/internal/register-game-server', GameServerAPI.registerGameServer);
   app.post('/internal/update-game-server', GameServerAPI.updateGameServer);
   app.get('/internal/game-servers', GameServerAPI.getGameServers);
@@ -199,6 +200,10 @@ function addInternalRoutes(app: any) {
   app.get('/nats-urls', natsUrls);
 
   app.get('/bot-script', generateBotScript);
+}
+
+async function readyCheck(req: any, resp: any) {
+  resp.status(200).send(JSON.stringify({status: 'OK'}));
 }
 
 /**
