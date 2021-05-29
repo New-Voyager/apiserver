@@ -30,6 +30,7 @@ const resolvers: any = {
 export async function resetDB() {
   //logger.info('****** STARTING TRANSACTION TO RESET tables');
   await getManager().transaction(async transactionEntityManager => {
+    await deleteAll('player_notes', transactionEntityManager);
     await deleteAll('club_messages', transactionEntityManager);
     await deleteAll('saved_hands', transactionEntityManager);
     await deleteAll('high_hand', transactionEntityManager);

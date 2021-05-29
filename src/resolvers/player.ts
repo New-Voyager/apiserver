@@ -92,6 +92,14 @@ const resolvers: any = {
       const ret = await idsToPlayerInfo(ctx.req.playerId, args.ids);
       return ret;
     },
+    notes: async (parent, args, ctx, info) => {
+      const ret = await getNotes(
+        ctx.req.playerId,
+        args.playerId,
+        args.playerUuid
+      );
+      return ret;
+    },
   },
   Mutation: {
     createPlayer: async (parent, args, ctx, info) => {
@@ -102,6 +110,15 @@ const resolvers: any = {
     },
     updateFirebaseToken: async (parent, args, ctx, info) => {
       return updateFirebaseToken(ctx.req.playerId, args.token);
+    },
+    setNotes: async (parent, args, ctx, info) => {
+      const ret = await setNotes(
+        ctx.req.playerId,
+        args.playerId,
+        args.playerUuid,
+        args.notes
+      );
+      return ret;
     },
   },
   Player: {
@@ -378,4 +395,32 @@ async function getAudioToken(
   const token = GameRepository.getAudioToken(playerInfo, gameExists);
   logger.info(`Player: ${playerId} is using agora token for game ${gameCode}`);
   return token;
+}
+
+async function getNotes(
+  playerId: string,
+  notesPlayerId: number,
+  notesPlayerUuid: string
+): Promise<string> {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  return PlayerRepository.getNotes(playerId, notesPlayerId, notesPlayerUuid);
+}
+
+async function setNotes(
+  playerId: string,
+  notesPlayerId: number,
+  notesPlayerUuid: string,
+  notes: string
+): Promise<void> {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  return await PlayerRepository.updateNotes(
+    playerId,
+    notesPlayerId,
+    notesPlayerUuid,
+    notes
+  );
 }
