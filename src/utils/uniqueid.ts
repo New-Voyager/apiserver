@@ -20,6 +20,7 @@ export async function getGameCodeForClub(
   const gameCount = await GameRepository.getGameCountByClubId(clubId);
   const currentSec = new Date().getSeconds();
   const gameCode = hashIds.encode(clubId, gameCount, currentSec);
+//  return 'test';
   return 'cg' + gameCode.toLowerCase();
 }
 

@@ -86,6 +86,7 @@ class NatsClass {
 
   public sendSeatChangePrompt(
     gameCode: string,
+    openedSeat: number,
     playerId: number,
     playerUuid: string,
     name: string,
@@ -112,6 +113,7 @@ class NatsClass {
     const message: any = {
       type: 'PLAYER_SEAT_CHANGE_PROMPT',
       gameCode: gameCode,
+      openedSeat: openedSeat,
       playerName: name,
       playerId: playerId,
       playerUuid: playerUuid,

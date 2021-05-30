@@ -29,12 +29,11 @@ import {
   HostSeatChangeProcess,
   PlayerSeatChangeProcess,
 } from '@src/entity/seatchange';
-import * as Constants from '../const';
 import {SeatMove, SeatUpdate} from '@src/types';
 import {fixQuery, utcTime} from '@src/utils';
 import {Nats} from '@src/nats';
 import {Cache} from '@src/cache/index';
-import {timingSafeEqual} from 'crypto';
+import {processPendingUpdates} from './pendingupdates';
 
 const logger = getLogger('seatchange');
 
@@ -45,7 +44,7 @@ export class SeatChangeProcess {
     this.game = game;
   }
 
-  public async start() {
+  public async start(openedSeat: number) {
     const players = await this.getSeatChangeRequestedPlayers();
     if (players.length === 0) {
       return;
@@ -69,10 +68,20 @@ export class SeatChangeProcess {
       playerSeatChange.stack = player.stack;
       await playerSeatChangeRepo.save(playerSeatChange);
     }
-    this.promptPlayer();
+
+    const gameUpdatesRepo = getRepository(PokerGameUpdates);
+    gameUpdatesRepo.update(
+      {
+        gameID: this.game.id,
+      },
+      {
+        seatChangeOpenSeat: openedSeat,
+      }
+    );
+    this.promptPlayer(openedSeat);
   }
 
-  public async promptPlayer() {
+  public async promptPlayer(openedSeat: number) {
     logger.info(
       `[${this.game.gameCode}] Seat change process. Prompting next player`
     );
@@ -100,6 +109,7 @@ export class SeatChangeProcess {
       where: {game: {id: this.game.id}, status: PlayerStatus.PLAYING},
     });
 
+    const gameUpdatesRepo = getRepository(PokerGameUpdates);
     if (
       seatChangeRequestedPlayers.length === 0 ||
       count === this.game.maxPlayers
@@ -108,7 +118,6 @@ export class SeatChangeProcess {
         `[${this.game.gameCode}] Seat change process is done. Resuming the game`
       );
       Nats.sendPlayerSeatChangeDone(this.game.gameCode);
-      const gameUpdatesRepo = getRepository(PokerGameUpdates);
       await gameUpdatesRepo.update(
         {
           gameID: this.game.id,
@@ -119,16 +128,35 @@ export class SeatChangeProcess {
       );
       // seat change process is over, resume game
       const game = await Cache.getGame(this.game.gameCode, true);
-      await GameRepository.restartGameIfNeeded(game);
+      processPendingUpdates(game.id);
       return;
     }
+    // get the open seat
+    if (openedSeat === 0) {
+      const gameUpdate = await gameUpdatesRepo.findOne({
+        gameID: this.game.id,
+      });
+      if (
+        gameUpdate === undefined ||
+        gameUpdate.seatChangeOpenSeat === undefined
+      ) {
+        // seat change process is over, resume game
+        const game = await Cache.getGame(this.game.gameCode, true);
+        processPendingUpdates(game.id);
+        //await GameRepository.restartGameIfNeeded(game);
+      }
+      if (gameUpdate) {
+        openedSeat = gameUpdate.seatChangeOpenSeat;
+      }
+    }
+
     const player = seatChangeRequestedPlayers[0];
     logger.info(
       `[${this.game.gameCode}] Seat change process. Prompting player ${player.name}, id: ${player.id}`
     );
 
     const expTime = new Date();
-    const promptTime = 10;
+    const promptTime = 30;
     expTime.setSeconds(expTime.getSeconds() + promptTime);
     const exp = utcTime(expTime);
 
@@ -143,6 +171,7 @@ export class SeatChangeProcess {
     // pick the first player and prompt
     Nats.sendSeatChangePrompt(
       this.game.gameCode,
+      openedSeat,
       player.playerId,
       player.playerUuid,
       player.name,
@@ -159,7 +188,7 @@ export class SeatChangeProcess {
       playerId: playerId,
     });
     // go to the next player
-    this.promptPlayer();
+    this.promptPlayer(0);
   }
 
   public async requestSeatChange(player: Player): Promise<Date | null> {
@@ -239,7 +268,7 @@ export class SeatChangeProcess {
     );
 
     // move to next player
-    this.promptPlayer();
+    this.promptPlayer(0);
     return true;
   }
 
@@ -247,7 +276,7 @@ export class SeatChangeProcess {
     player: Player,
     seatNo: number
   ): Promise<boolean> {
-    await getManager().transaction(async tran => {
+    const playerOldSeat = await getManager().transaction(async tran => {
       logger.info(
         `[${this.game.gameCode}] Received confirm seat change from player. ${player.id} ${player.name}`
       );
@@ -319,6 +348,15 @@ export class SeatChangeProcess {
           seatNo: 0,
         }
       );
+      const gameUpdatesRepo = tran.getRepository(PokerGameUpdates);
+      gameUpdatesRepo.update(
+        {
+          gameID: this.game.id,
+        },
+        {
+          seatChangeOpenSeat: playerInGame.seatNo,
+        }
+      );
 
       // send a message in NATS (the UI will do an animation)
       Nats.sendPlayerSeatMove(
@@ -329,9 +367,10 @@ export class SeatChangeProcess {
         playerInGame.seatNo,
         seatNo
       );
+      return playerInGame.seatNo;
     });
     // move to the next player
-    this.promptPlayer();
+    this.promptPlayer(playerOldSeat);
 
     return true;
   }

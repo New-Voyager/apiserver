@@ -122,6 +122,7 @@ export async function processPendingUpdates(gameId: number) {
 
   let endPendingProcess = true;
   let seatChangeInProgress = false;
+  let openedSeat = 0;
   if (updates.length !== 0) {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
 
@@ -137,7 +138,7 @@ export async function processPendingUpdates(gameId: number) {
         );
         newOpenSeat = true;
       } else if (update.newUpdate === NextHandUpdate.LEAVE) {
-        await leaveGame(
+        openedSeat = await leaveGame(
           playerGameTrackerRepository,
           game,
           update,
@@ -173,7 +174,7 @@ export async function processPendingUpdates(gameId: number) {
         const waitingPlayers = await seatChangeProcess.getSeatChangeRequestedPlayers();
         if (waitingPlayers.length > 0) {
           endPendingProcess = false;
-          await seatChangeProcess.start();
+          await seatChangeProcess.start(openedSeat);
           seatChangeInProgress = true;
         }
       }
@@ -263,6 +264,7 @@ async function leaveGame(
       player: {id: update.player.id},
     },
   });
+  const openedSeat = playerInGame.seatNo;
 
   await playerGameTrackerRepository.update(
     {
@@ -296,6 +298,7 @@ async function leaveGame(
   }
   // delete this update
   pendingUpdatesRepo.delete({id: update.id});
+  return openedSeat;
 }
 
 async function buyinApproved(
