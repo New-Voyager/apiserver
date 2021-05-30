@@ -27,6 +27,7 @@ import {seed} from './initdb';
 import {Firebase} from './firebase';
 import {Nats} from './nats';
 import {generateBotScript} from './internal/bot';
+import {restartTimers} from '@src/timer';
 
 const logger = getLogger('server');
 const JWT_EXPIRY_DAYS = 3;
@@ -140,6 +141,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
 }
 
 function addInternalRoutes(app: any) {
+  app.get('/internal/ready', readyCheck);
   app.post('/internal/register-game-server', GameServerAPI.registerGameServer);
   app.post('/internal/update-game-server', GameServerAPI.updateGameServer);
   app.get('/internal/game-servers', GameServerAPI.getGameServers);
@@ -187,6 +189,7 @@ function addInternalRoutes(app: any) {
   );
 
   app.post('/internal/restart-games', GameServerAPI.restartGames);
+  app.post('/internal/restart-timers', restartTimers);
 
   app.post(
     '/internal/save-hand/gameId/:gameId/handNum/:handNum',
@@ -197,6 +200,10 @@ function addInternalRoutes(app: any) {
   app.get('/nats-urls', natsUrls);
 
   app.get('/bot-script', generateBotScript);
+}
+
+async function readyCheck(req: any, resp: any) {
+  resp.status(200).send(JSON.stringify({status: 'OK'}));
 }
 
 /**

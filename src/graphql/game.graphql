@@ -92,7 +92,7 @@ input GameCreateInput {
   waitlistSittingTimeout: Int
   rewardIds: [Int]
   pauseAfterShowdown: Int   # default 2 seconds
-  buyInWaitTime: Int        # default 3 minutes
+  buyInTimeout: Int        # default 60 seconds
   seatChangeAllowed: Boolean
   botGame: Boolean
   runItTwiceAllowed: Boolean

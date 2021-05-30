@@ -185,6 +185,9 @@ export class PokerGame {
   @Column({name: 'seatchange_timeout', type: 'int', default: 30})
   public seatChangeTimeout!: number;
 
+  @Column({name: 'buyin_timeout', type: 'int', default: 60})
+  public buyInTimeout!: number;
+
   @Column({name: 'waitlist_sitting_timeout', type: 'int', default: 180})
   public waitlistSittingTimeout!: number;
 

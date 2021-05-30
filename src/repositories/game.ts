@@ -1540,7 +1540,7 @@ class GameRepositoryImpl {
     }
     // TODO: start a buy-in timer
     const buyinTimeExp = new Date();
-    const timeout = 60;
+    const timeout = game.buyInTimeout;
     buyinTimeExp.setSeconds(buyinTimeExp.getSeconds() + timeout);
     const exp = utcTime(buyinTimeExp);
     let setProps: any = {};
