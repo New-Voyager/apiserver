@@ -38,6 +38,14 @@ export class PokerGameUpdates {
   @Column({name: 'seat_change_inprogress', default: false})
   public seatChangeInProgress!: boolean;
 
+  @Column({
+    name: 'seat_change_open_seat',
+    default: 0,
+    nullable: true,
+    type: 'int',
+  })
+  public seatChangeOpenSeat!: number;
+
   @Column({name: 'seat_change', default: null, nullable: true})
   public seatChange!: SeatChangeProcessType;
 

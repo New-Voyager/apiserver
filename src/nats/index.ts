@@ -84,8 +84,147 @@ class NatsClass {
     this.client.publish(channel, messageStr);
   }
 
+  public sendSeatChangePrompt(
+    gameCode: string,
+    openedSeat: number,
+    playerId: number,
+    playerUuid: string,
+    name: string,
+    expTime: Date,
+    expSeconds: number
+  ) {
+    if (this.client === null) {
+      return;
+    }
+    const tick = new Date().getTime();
+
+    const messageId = `SEATCHANGE:${tick}`;
+
+    /*
+    {
+      "type": "PLAYER_SEAT_CHANGE_PROMPT",
+      "gameCode": "ABCDE",
+      "expTime": "ISO time stamp",
+      "playerId": <player id>,
+      "playerUuid": <player uuid>,
+      "requestId": messageId,
+    }
+    */
+    const message: any = {
+      type: 'PLAYER_SEAT_CHANGE_PROMPT',
+      gameCode: gameCode,
+      openedSeat: openedSeat,
+      playerName: name,
+      playerId: playerId,
+      playerUuid: playerUuid,
+      expTime: expTime.toISOString(),
+      promptSecs: expSeconds,
+      requestId: messageId,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getGameChannel(gameCode);
+    this.client.publish(subject, messageStr);
+  }
+
+  public sendPlayerSeatMove(
+    gameCode: string,
+    playerId: number,
+    playerUuid: string,
+    name: string,
+    oldSeatNo: number,
+    newSeatNo: number
+  ) {
+    if (this.client === null) {
+      return;
+    }
+    const tick = new Date().getTime();
+
+    const messageId = `SEATMOVE:${tick}`;
+
+    const message: any = {
+      type: 'PLAYER_SEAT_MOVE',
+      gameCode: gameCode,
+      playerName: name,
+      playerId: playerId,
+      playerUuid: playerUuid,
+      oldSeatNo: oldSeatNo,
+      newSeatNo: newSeatNo,
+      requestId: messageId,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getGameChannel(gameCode);
+    this.client.publish(subject, messageStr);
+  }
+
+  public sendPlayerSeatChangeDeclined(
+    gameCode: string,
+    playerId: number,
+    playerUuid: string,
+    name: string
+  ) {
+    if (this.client === null) {
+      return;
+    }
+    const tick = new Date().getTime();
+
+    const messageId = `SEATMOVE:${tick}`;
+
+    const message: any = {
+      type: 'PLAYER_SEAT_CHANGE_DECLINED',
+      gameCode: gameCode,
+      playerName: name,
+      playerId: playerId,
+      playerUuid: playerUuid,
+      requestId: messageId,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getGameChannel(gameCode);
+    this.client.publish(subject, messageStr);
+  }
+
+  public sendPlayerSeatChangeStart(gameCode: string) {
+    if (this.client === null) {
+      return;
+    }
+    const tick = new Date().getTime();
+
+    const messageId = `SEATMOVE:${tick}`;
+
+    const message: any = {
+      type: 'PLAYER_SEAT_CHANGE_START',
+      gameCode: gameCode,
+      requestId: messageId,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getGameChannel(gameCode);
+    this.client.publish(subject, messageStr);
+  }
+
+  public sendPlayerSeatChangeDone(gameCode: string) {
+    if (this.client === null) {
+      return;
+    }
+    const tick = new Date().getTime();
+
+    const messageId = `SEATMOVE:${tick}`;
+
+    const message: any = {
+      type: 'PLAYER_SEAT_CHANGE_DONE',
+      gameCode: gameCode,
+      requestId: messageId,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getGameChannel(gameCode);
+    this.client.publish(subject, messageStr);
+  }
+
   public getPlayerChannel(player: Player) {
     const subject = `player.${player.id}`;
+    return subject;
+  }
+
+  public getGameChannel(gameCode: string) {
+    const subject = `game.${gameCode}.player`;
     return subject;
   }
 

@@ -23,6 +23,7 @@ import {
   NewUpdate,
   DEALER_CHOICE_TIMEOUT,
   BREAK_TIMEOUT,
+  PLAYER_SEATCHANGE_PROMPT,
 } from './types';
 import {WaitListMgmt} from './waitlist';
 
@@ -56,8 +57,8 @@ export async function timerCallback(req: any, resp: any) {
 
   if (purpose === WAITLIST_SEATING) {
     await waitlistTimeoutExpired(gameID, playerID);
-  } else if (purpose === SEATCHANGE_PROGRSS) {
-    await seatChangeTimeoutExpired(gameID);
+    // } else if (purpose === SEATCHANGE_PROGRSS) {
+    //   await seatChangeTimeoutExpired(gameID);
   } else if (purpose === BUYIN_TIMEOUT) {
     await buyInTimeoutExpired(gameID, playerID);
   } else if (purpose === BUYIN_APPROVAL_TIMEOUT) {
@@ -68,6 +69,8 @@ export async function timerCallback(req: any, resp: any) {
     await dealerChoiceTimeout(gameID, playerID);
   } else if (purpose === BREAK_TIMEOUT) {
     await breakTimeoutExpired(gameID, playerID);
+  } else if (purpose === PLAYER_SEATCHANGE_PROMPT) {
+    await playerSeatChangeTimeoutExpired(gameID, playerID);
   }
 
   resp.status(200).send({status: 'OK'});
@@ -87,7 +90,23 @@ export async function waitlistTimeoutExpired(gameID: number, playerID: number) {
   await waitlistMgmt.runWaitList();
 }
 
-export async function seatChangeTimeoutExpired(gameID: number) {
+// export async function seatChangeTimeoutExpired(gameID: number) {
+//   logger.info(`Seat change timeout expired. GameID: ${gameID}`);
+
+//   const gameRepository = getRepository(PokerGame);
+//   const game = await gameRepository.findOne({id: gameID});
+//   if (!game) {
+//     logger.error(`Game: ${gameID} is not found`);
+//   } else {
+//     const seatChange = new SeatChangeProcess(game);
+//     await seatChange.finish();
+//   }
+// }
+
+export async function playerSeatChangeTimeoutExpired(
+  gameID: number,
+  playerID: number
+) {
   logger.info(`Seat change timeout expired. GameID: ${gameID}`);
 
   const gameRepository = getRepository(PokerGame);
@@ -96,7 +115,7 @@ export async function seatChangeTimeoutExpired(gameID: number) {
     logger.error(`Game: ${gameID} is not found`);
   } else {
     const seatChange = new SeatChangeProcess(game);
-    await seatChange.finish();
+    await seatChange.timerExpired(playerID);
   }
 }
 

@@ -18,21 +18,22 @@ import {
 } from 'typeorm';
 import * as _ from 'lodash';
 import {
-  initiateSeatChangeProcess,
-  pendingProcessDone,
-  playerSwitchSeat,
   hostSeatChangeProcessEnded,
   hostSeatChangeProcessStarted,
   hostSeatChangeSeatMove,
 } from '@src/gameserver';
-import {startTimer} from '@src/timer';
-import {WaitListMgmt} from './waitlist';
-import {SEATCHANGE_PROGRSS} from './types';
+import {cancelTimer, startTimer} from '@src/timer';
+import {PLAYER_SEATCHANGE_PROMPT} from './types';
 import {GameRepository} from './game';
-import {HostSeatChangeProcess} from '@src/entity/seatchange';
-import * as Constants from '../const';
+import {
+  HostSeatChangeProcess,
+  PlayerSeatChangeProcess,
+} from '@src/entity/seatchange';
 import {SeatMove, SeatUpdate} from '@src/types';
-import {fixQuery} from '@src/utils';
+import {fixQuery, utcTime} from '@src/utils';
+import {Nats} from '@src/nats';
+import {Cache} from '@src/cache/index';
+import {processPendingUpdates} from './pendingupdates';
 
 const logger = getLogger('seatchange');
 
@@ -43,180 +44,151 @@ export class SeatChangeProcess {
     this.game = game;
   }
 
-  public async start() {
+  public async start(openedSeat: number) {
     const players = await this.getSeatChangeRequestedPlayers();
     if (players.length === 0) {
       return;
     }
 
-    const playerIds = players.map(x => x.id);
-    const playerSeatNos = await this.getSeatChangeRequestedPlayersSeatNo();
-
-    // first set the game that we are in seat change process
-    const gameUpdatesRepo = getRepository(PokerGameUpdates);
-    await gameUpdatesRepo.update(
-      {
-        gameID: this.game.id,
-      },
-      {
-        seatChangeInProgress: true,
-      }
-    );
-    const expTime = new Date();
-    const timeout = this.game.seatChangeTimeout;
-    expTime.setSeconds(expTime.getSeconds() + timeout);
-    logger.info(
-      `[${
-        this.game.gameCode
-      }] Started Seat change timer. Expires at ${expTime.toISOString()}`
-    );
-
-    // notify game server, seat change process has begun
-    await initiateSeatChangeProcess(
-      this.game,
-      0,
-      timeout,
-      playerIds,
-      playerSeatNos
-    );
-
-    // start seat change process timer
-    await startTimer(this.game.id, 0, SEATCHANGE_PROGRSS, expTime);
-  }
-
-  // called from the seat change timer callback to finish seat change processing
-  public async finish() {
-    logger.info('****** STARTING TRANSACTION TO FINISH seat change');
-    logger.info(`[${this.game.gameCode}] Seat change timer expired`);
-    const switchedSeats = await getManager().transaction(
-      async transactionEntityManager => {
-        // get all the switch seat requests
-        const nextHandUpdatesRepository = transactionEntityManager.getRepository(
-          NextHandUpdates
-        );
-        const requests = await nextHandUpdatesRepository.find({
-          where: {
-            game: {id: this.game.id},
-            newUpdate: NextHandUpdate.SWITCH_SEAT,
-          },
-        });
-        const switchedSeats: Array<any> = new Array<any>();
-
-        if (requests.length !== 0) {
-          // get list of players ids who have confirmed to change seat
-          const playerIDs = requests.map(x => x.player.id);
-          const seatChangePlayers = await this.getSeatChangeRequestedPlayers(
-            transactionEntityManager
-          );
-          const seatsTaken = new Array<number>();
-          for (const player of seatChangePlayers) {
-            if (playerIDs.indexOf(player.id) !== -1) {
-              // find the seat the user requested
-              const playerRequests = _.filter(
-                requests,
-                x => x.player.id === player.id
-              );
-              // there should be only one
-              if (playerRequests.length !== 1) {
-                continue;
-              }
-              // if the requested seat is already taken, skip this player
-              const requestedSeat = playerRequests[0].newSeat;
-              if (seatsTaken.indexOf(requestedSeat) !== -1) {
-                logger.info(
-                  `Player: ${player.name} (${player.id}) is already taken by antoher player`
-                );
-                continue;
-              }
-
-              // this user will be granted to switch seat
-              logger.info(
-                `Player: ${player.name} (${player.id}) will switch to new seat: ${requestedSeat}`
-              );
-              const playerGameTrackerRepository = transactionEntityManager.getRepository(
-                PlayerGameTracker
-              );
-
-              const playerOldSeat = await playerGameTrackerRepository.findOne({
-                game: {id: this.game.id},
-                player: {id: player.id},
-              });
-
-              await playerGameTrackerRepository.update(
-                {
-                  game: {id: this.game.id},
-                  player: {id: player.id},
-                },
-                {
-                  seatNo: requestedSeat,
-                  seatChangeRequestedAt: null,
-                }
-              );
-              seatsTaken.push(requestedSeat);
-              switchedSeats.push({
-                player: player,
-                oldSeatNo: playerOldSeat?.seatNo,
-                seatNo: requestedSeat,
-              });
-            }
-          }
-        }
-
-        // remove switch seat updates for the game
-        await nextHandUpdatesRepository.delete({
-          game: {id: this.game.id},
-          newUpdate: NextHandUpdate.SWITCH_SEAT,
-        });
-
-        return switchedSeats;
-      }
-    );
-    logger.info('****** ENDING TRANSACTION TO FINISH seat change');
-
-    // send message to game server with new updates
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-    for (const switchedSeat of switchedSeats) {
-      const playerInGame = await playerGameTrackerRepository.findOne({
-        relations: ['player', 'game'],
-        where: {
-          game: {id: this.game.id},
-          player: {id: switchedSeat.player.id},
-        },
-      });
-      if (!playerInGame) {
-        continue;
-      }
-
-      await playerSwitchSeat(
-        this.game,
-        playerInGame.player,
-        playerInGame,
-        switchedSeat.oldSeatNo
-      );
+    const playerSeatChangeRepo = getRepository(PlayerSeatChangeProcess);
+    // clear old rows if any
+    await playerSeatChangeRepo.delete({
+      gameCode: this.game.gameCode,
+    });
+    // copy the players to temp table
+    for (const player of players) {
+      let playerSeatChange = new PlayerSeatChangeProcess();
+      playerSeatChange.gameCode = this.game.gameCode;
+      playerSeatChange.playerId = player.player.id;
+      playerSeatChange.seatChangeRequestedAt = player.seatChangeRequestedAt;
+      playerSeatChange.name = player.player.name;
+      playerSeatChange.playerUuid = player.player.uuid;
+      playerSeatChange.prompted = false;
+      playerSeatChange.seatNo = player.seatNo;
+      playerSeatChange.stack = player.stack;
+      await playerSeatChangeRepo.save(playerSeatChange);
     }
 
-    // mark the seat change process is done
     const gameUpdatesRepo = getRepository(PokerGameUpdates);
-    await gameUpdatesRepo.update(
+    gameUpdatesRepo.update(
       {
         gameID: this.game.id,
       },
       {
-        seatChangeInProgress: false,
+        seatChangeOpenSeat: openedSeat,
       }
     );
+    this.promptPlayer(openedSeat);
+  }
 
-    // notify game server to resume the game
-    await pendingProcessDone(
-      this.game.id,
-      this.game.status,
-      this.game.tableStatus
+  public async promptPlayer(openedSeat: number) {
+    logger.info(
+      `[${this.game.gameCode}] Seat change process. Prompting next player`
     );
 
-    // run wait list processing
-    const waitlistProcess = new WaitListMgmt(this.game);
-    waitlistProcess.runWaitList();
-    return switchedSeats;
+    const playerSeatChangeRepo = getRepository(PlayerSeatChangeProcess);
+
+    // delete the player who has the prompt
+    await playerSeatChangeRepo.delete({
+      gameCode: this.game.gameCode,
+      prompted: true,
+    });
+
+    const seatChangeRequestedPlayers = await playerSeatChangeRepo.find({
+      order: {
+        seatChangeRequestedAt: 'ASC',
+      },
+      where: {
+        gameCode: this.game.gameCode,
+      },
+    });
+
+    // make sure seats are opened
+    const playerGameTrackerRepo = getRepository(PlayerGameTracker);
+    const count = await playerGameTrackerRepo.count({
+      where: {game: {id: this.game.id}, status: PlayerStatus.PLAYING},
+    });
+
+    const gameUpdatesRepo = getRepository(PokerGameUpdates);
+    if (
+      seatChangeRequestedPlayers.length === 0 ||
+      count === this.game.maxPlayers
+    ) {
+      logger.info(
+        `[${this.game.gameCode}] Seat change process is done. Resuming the game`
+      );
+      Nats.sendPlayerSeatChangeDone(this.game.gameCode);
+      await gameUpdatesRepo.update(
+        {
+          gameID: this.game.id,
+        },
+        {
+          seatChangeInProgress: false,
+        }
+      );
+      // seat change process is over, resume game
+      const game = await Cache.getGame(this.game.gameCode, true);
+      processPendingUpdates(game.id);
+      return;
+    }
+    // get the open seat
+    if (openedSeat === 0) {
+      const gameUpdate = await gameUpdatesRepo.findOne({
+        gameID: this.game.id,
+      });
+      if (
+        gameUpdate === undefined ||
+        gameUpdate.seatChangeOpenSeat === undefined
+      ) {
+        // seat change process is over, resume game
+        const game = await Cache.getGame(this.game.gameCode, true);
+        processPendingUpdates(game.id);
+        //await GameRepository.restartGameIfNeeded(game);
+      }
+      if (gameUpdate) {
+        openedSeat = gameUpdate.seatChangeOpenSeat;
+      }
+    }
+
+    const player = seatChangeRequestedPlayers[0];
+    logger.info(
+      `[${this.game.gameCode}] Seat change process. Prompting player ${player.name}, id: ${player.id}`
+    );
+
+    const expTime = new Date();
+    const promptTime = 30;
+    expTime.setSeconds(expTime.getSeconds() + promptTime);
+    const exp = utcTime(expTime);
+
+    await playerSeatChangeRepo.update({id: player.id}, {prompted: true});
+    await startTimer(
+      this.game.id,
+      player.playerId,
+      PLAYER_SEATCHANGE_PROMPT,
+      expTime
+    );
+
+    // pick the first player and prompt
+    Nats.sendSeatChangePrompt(
+      this.game.gameCode,
+      openedSeat,
+      player.playerId,
+      player.playerUuid,
+      player.name,
+      exp,
+      promptTime
+    );
+  }
+
+  public async timerExpired(playerId: number) {
+    // remove the prompted player
+    const playerSeatChangeRepo = getRepository(PlayerSeatChangeProcess);
+    await playerSeatChangeRepo.delete({
+      gameCode: this.game.gameCode,
+      playerId: playerId,
+    });
+    // go to the next player
+    this.promptPlayer(0);
   }
 
   public async requestSeatChange(player: Player): Promise<Date | null> {
@@ -282,69 +254,123 @@ export class SeatChangeProcess {
     return seatChangeRequestedPlayers;
   }
 
+  public async declineSeatChange(player: Player): Promise<boolean> {
+    logger.info(
+      `[${this.game.gameCode}] Received decline seat change from player. ${player.id} ${player.name}`
+    );
+    cancelTimer(this.game.id, player.id, PLAYER_SEATCHANGE_PROMPT);
+    // send a message in NATS (the UI will do an animation)
+    Nats.sendPlayerSeatChangeDeclined(
+      this.game.gameCode,
+      player.id,
+      player.uuid,
+      player.name
+    );
+
+    // move to next player
+    this.promptPlayer(0);
+    return true;
+  }
+
   public async confirmSeatChange(
     player: Player,
     seatNo: number
   ): Promise<boolean> {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-    let playerInGame = await playerGameTrackerRepository.findOne({
-      relations: ['player', 'game'],
-      where: {
-        game: {id: this.game.id},
-        player: {id: player.id},
-      },
-    });
+    const playerOldSeat = await getManager().transaction(async tran => {
+      logger.info(
+        `[${this.game.gameCode}] Received confirm seat change from player. ${player.id} ${player.name}`
+      );
+      cancelTimer(this.game.id, player.id, PLAYER_SEATCHANGE_PROMPT);
 
-    if (!playerInGame) {
-      logger.error(`Game: ${this.game.gameCode} not available`);
-      throw new Error(`Game: ${this.game.gameCode} not available`);
-    }
+      const playerGameTrackerRepository = tran.getRepository(PlayerGameTracker);
+      let playerInGame = await playerGameTrackerRepository.findOne({
+        where: {
+          game: {id: this.game.id},
+          player: {id: player.id},
+        },
+      });
 
-    if (playerInGame.status !== PlayerStatus.PLAYING) {
-      logger.error(`player status is ${PlayerStatus[playerInGame.status]}`);
-      throw new Error(`player status is ${PlayerStatus[playerInGame.status]}`);
-    }
-    if (!seatNo) {
-      // get a first open seat
-      seatNo = await this.getNextAvailableSeat();
-      if (!seatNo) {
-        throw new Error(`No seats avaialble in game ${this.game.gameCode}`);
+      if (seatNo > this.game.maxPlayers) {
+        throw new Error(`Invalid seat no`);
       }
-    }
 
-    // make sure this seat is open
-    playerInGame = await playerGameTrackerRepository.findOne({
-      relations: ['player', 'game'],
-      where: {
-        game: {id: this.game.id},
-        seatNo: seatNo,
-      },
-    });
-    if (playerInGame) {
-      // there is a player in the seat
-      throw new Error('A player already sits in the seat');
-    }
+      if (!playerInGame) {
+        logger.error(
+          `Game: ${this.game.gameCode} Player: ${player.id} is not playing in this table`
+        );
+        throw new Error(
+          `Game: ${this.game.gameCode} Player: ${player.id} is not playing in this table`
+        );
+      }
 
-    // if the user has an existing switch seat request, update to the new seat request
-    const nextHandUpdatesRepository = getRepository(NextHandUpdates);
-    const existingRequest = await nextHandUpdatesRepository.findOne({
-      where: {
-        game: {id: this.game.id},
-        player: {id: player.id},
-        newUpdate: NextHandUpdate.SWITCH_SEAT,
-      },
+      if (playerInGame.status !== PlayerStatus.PLAYING) {
+        logger.error(
+          `Game: ${this.game.gameCode} Player: ${player.id} is not playing in this table`
+        );
+        throw new Error(
+          `Game: ${this.game.gameCode} Player: ${player.id} is not playing in this table`
+        );
+      }
+
+      // make sure this seat is open
+      const playerInSeat = await playerGameTrackerRepository.findOne({
+        where: {
+          game: {id: this.game.id},
+          seatNo: seatNo,
+        },
+      });
+      if (playerInSeat) {
+        logger.error(
+          `Game: ${this.game.gameCode} Player: ${player.id} A player already exists in the table`
+        );
+        // there is a player in the seat
+        throw new Error('A player already sits in the seat');
+      }
+
+      // move the player to new seat
+      await playerGameTrackerRepository.update(
+        {
+          game: {id: this.game.id},
+          player: {id: player.id},
+        },
+        {
+          seatNo: seatNo,
+        }
+      );
+
+      // make his seat open
+      await playerGameTrackerRepository.update(
+        {
+          game: {id: this.game.id},
+          seatNo: playerInGame.seatNo,
+        },
+        {
+          seatNo: 0,
+        }
+      );
+      const gameUpdatesRepo = tran.getRepository(PokerGameUpdates);
+      gameUpdatesRepo.update(
+        {
+          gameID: this.game.id,
+        },
+        {
+          seatChangeOpenSeat: playerInGame.seatNo,
+        }
+      );
+
+      // send a message in NATS (the UI will do an animation)
+      Nats.sendPlayerSeatMove(
+        this.game.gameCode,
+        player.id,
+        player.uuid,
+        player.name,
+        playerInGame.seatNo,
+        seatNo
+      );
+      return playerInGame.seatNo;
     });
-    if (!existingRequest) {
-      const update = new NextHandUpdates();
-      update.game = this.game;
-      update.player = player;
-      update.newUpdate = NextHandUpdate.SWITCH_SEAT;
-      update.newSeat = seatNo;
-      await nextHandUpdatesRepository.save(update);
-    } else {
-      existingRequest.newSeat = seatNo;
-      await nextHandUpdatesRepository.save(existingRequest);
-    }
+    // move to the next player
+    this.promptPlayer(playerOldSeat);
 
     return true;
   }
@@ -367,50 +393,7 @@ export class SeatChangeProcess {
         status: PlayerStatus.PLAYING,
       },
     });
-    return players.map(x => x.player);
-  }
-
-  async getSeatChangeRequestedPlayersSeatNo(
-    transactionManager?: EntityManager
-  ) {
-    let playerGameTrackerRepository: Repository<PlayerGameTracker>;
-    if (transactionManager) {
-      playerGameTrackerRepository = transactionManager.getRepository(
-        PlayerGameTracker
-      );
-    } else {
-      playerGameTrackerRepository = getRepository(PlayerGameTracker);
-    }
-    const players = await playerGameTrackerRepository.find({
-      relations: ['player'],
-      order: {seatChangeRequestedAt: 'ASC'},
-      where: {
-        game: {id: this.game.id},
-        seatChangeRequestedAt: Not(IsNull()),
-        status: PlayerStatus.PLAYING,
-      },
-    });
-    return players.map(x => x.seatNo);
-  }
-
-  async getNextAvailableSeat(): Promise<number> {
-    const playersInSeats = await GameRepository.getPlayersInSeats(this.game.id);
-    for (const player of playersInSeats) {
-      player.status = PlayerStatus[player.status];
-    }
-
-    const takenSeats = playersInSeats.map(x => x.seatNo);
-    const availableSeats: Array<number> = [];
-    for (let seatNo = 1; seatNo <= this.game.maxPlayers; seatNo++) {
-      if (takenSeats.indexOf(seatNo) === -1) {
-        availableSeats.push(seatNo);
-      }
-    }
-
-    if (availableSeats.length === 0) {
-      return 0;
-    }
-    return availableSeats[0];
+    return players;
   }
 
   public async beginHostSeatChange(host: Player) {

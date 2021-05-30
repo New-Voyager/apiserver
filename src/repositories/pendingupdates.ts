@@ -122,6 +122,7 @@ export async function processPendingUpdates(gameId: number) {
 
   let endPendingProcess = true;
   let seatChangeInProgress = false;
+  let openedSeat = 0;
   if (updates.length !== 0) {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
 
@@ -137,7 +138,7 @@ export async function processPendingUpdates(gameId: number) {
         );
         newOpenSeat = true;
       } else if (update.newUpdate === NextHandUpdate.LEAVE) {
-        await leaveGame(
+        openedSeat = await leaveGame(
           playerGameTrackerRepository,
           game,
           update,
@@ -166,14 +167,14 @@ export async function processPendingUpdates(gameId: number) {
     const seats = await occupiedSeats(game.id);
     seatChangeAllowed = true; // debugging
     if (seatChangeAllowed) {
-      if (newOpenSeat && seats < game.maxPlayers) {
+      if (newOpenSeat && seats <= game.maxPlayers - 1) {
         logger.info(`[${game.gameCode}] Seat Change is in Progress`);
         // open seat
         const seatChangeProcess = new SeatChangeProcess(game);
         const waitingPlayers = await seatChangeProcess.getSeatChangeRequestedPlayers();
         if (waitingPlayers.length > 0) {
           endPendingProcess = false;
-          await seatChangeProcess.start();
+          await seatChangeProcess.start(openedSeat);
           seatChangeInProgress = true;
         }
       }
@@ -210,6 +211,13 @@ async function kickoutPlayer(
   update: NextHandUpdates,
   pendingUpdatesRepo
 ) {
+  const playerInGame = await playerGameTrackerRepository.findOne({
+    where: {
+      game: {id: game.id},
+      player: {id: update.player.id},
+    },
+  });
+
   await playerGameTrackerRepository.update(
     {
       game: {id: game.id},
@@ -220,13 +228,6 @@ async function kickoutPlayer(
       seatNo: 0,
     }
   );
-
-  const playerInGame = await playerGameTrackerRepository.findOne({
-    where: {
-      game: {id: game.id},
-      player: {id: update.player.id},
-    },
-  });
 
   const count = await playerGameTrackerRepository.count({
     where: {
@@ -263,6 +264,7 @@ async function leaveGame(
       player: {id: update.player.id},
     },
   });
+  const openedSeat = playerInGame.seatNo;
 
   await playerGameTrackerRepository.update(
     {
@@ -296,6 +298,7 @@ async function leaveGame(
   }
   // delete this update
   pendingUpdatesRepo.delete({id: update.id});
+  return openedSeat;
 }
 
 async function buyinApproved(
