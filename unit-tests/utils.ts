@@ -1,5 +1,5 @@
 import {createConnection, getConnectionOptions} from 'typeorm';
-import {Player} from '../src/entity/player';
+import {Player, PlayerNotes} from '../src/entity/player';
 import {Club, ClubMember} from '../src/entity/club';
 import {
   PokerGame,
@@ -70,6 +70,7 @@ export async function sqlliteConnection() {
       ClubTokenTransactions,
       HostSeatChangeProcess,
       PlayerGameStats,
+      PlayerNotes
     ],
     dropSchema: true,
     synchronize: true,

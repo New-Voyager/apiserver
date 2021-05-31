@@ -89,6 +89,8 @@ export interface NewHandInfo {
   playersInSeats: Array<PlayerInSeat>;
   gameStatus: GameStatus;
   tableStatus: TableStatus;
+  sbPos?: number;
+  bbPos?: number;
 }
 
 export const WAITLIST_SEATING = 'WAITLIST_SEATING';

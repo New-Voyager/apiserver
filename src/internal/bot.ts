@@ -1,3 +1,5 @@
+import {HandHistory} from '@src/entity/hand';
+import {HandRepository} from '@src/repositories/hand';
 import {getLogger} from '@src/utils/log';
 import * as fs from 'fs';
 import {remove, shuffle} from 'lodash';
@@ -179,10 +181,27 @@ export async function generateBotScript(req: any, resp: any) {
   //resp.status(200).send(JSON.stringify({urls: process.env.NATS_URL}));
   console.log(`current directory: ${__dirname}`);
   try {
-    let rawdata = fs
-      .readFileSync(`${__dirname}/../bugs/handlog2.json`)
-      .toString();
-    let handlog = JSON.parse(rawdata);
+    const gameCode = req.params.gameCode;
+    if (!gameCode) {
+      const res = {error: 'Invalid game code'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    const handNum = parseInt(req.params.handNum, 10);
+    if (!handNum) {
+      const res = {error: 'Invalid hand number'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    let handlog = await HandRepository.getHandLog(gameCode, handNum);
+    // let rawdata = fs
+    //   .readFileSync(`${__dirname}/../bugs/handlog2.json`)
+    //   .toString();
+    // let handlog = JSON.parse(rawdata);
+    if (handlog == null) {
+      resp.status(404).send(JSON.stringify({error: 'Cannot find the hand'}));
+      return;
+    }
 
     for (const seatNo in handlog['players']) {
       const name = playerIdName[seatNo];

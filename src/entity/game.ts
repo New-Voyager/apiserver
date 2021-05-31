@@ -52,11 +52,22 @@ export class PokerGameUpdates {
   @Column({name: 'rake', type: 'decimal', precision: 8, scale: 2, default: 0.0})
   public rake!: number;
 
+  // json field that stores the players who played in the last hand
+  // this is used for calculating button position (dead button), small blind (dead small) and big blind
+  @Column({name: 'players_in_last_hand', nullable: true, default: '[]'})
+  public playersInLastHand!: string;
+
   @Column({name: 'hand_num', nullable: false, default: 0})
   public handNum!: number;
 
   @Column({name: 'button_pos', nullable: true, default: 0})
   public buttonPos!: number;
+
+  @Column({name: 'sb_pos', nullable: true, default: 0})
+  public sbPos!: number;
+
+  @Column({name: 'bb_pos', nullable: true, default: 0})
+  public bbPos!: number;
 
   @Column({name: 'dealer_choice_seat', nullable: true, default: 0})
   public dealerChoiceSeat!: number;
