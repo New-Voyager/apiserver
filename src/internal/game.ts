@@ -361,13 +361,28 @@ class GameAPIs {
           playerInSeatsInPrevHand = occupiedSeats;
         }
 
-        // determine button pos
+        // we use the players sitting in the previous hand to determine the button position and small blind position and big blind position
+        // Let us use examples to describe different scenarios
+        // Prev Hand Players: [D, 1, 2, 3, 4], buttonPos: 1
+        // * Seat 2 leaves in this hand
+        // The new button position 2, and it is dead button
+        // Prev Hand Players: [D, 1, 0, 3, 4], buttonPos: 1
+        // * A new player joins in seat 2
+        // the new button positions is seat 3
+
+        // Small blind
+        // Prev Hand Players: [D, 1, 2, 3, 4], buttonPos: 1, sb: 2, bb: 3
+        // * Seat 3 leaves in this hand
+        // The new button position is 2, 3: dead small, 4: bb
+        // next hand
+        // button position: 3 dead button, 4: sb, 1: bb
+
         let buttonPassedDealer = false;
         let buttonPos = gameUpdate.buttonPos;
         let maxPlayers = game.maxPlayers;
         while (maxPlayers > 0) {
           buttonPos++;
-          if (buttonPos > maxPlayers) {
+          if (buttonPos > game.maxPlayers) {
             buttonPassedDealer = true;
             buttonPos = 1;
           }
@@ -435,7 +450,21 @@ class GameAPIs {
           gameUpdate.gameType = game.gameType;
         }
 
-        const playerInSeatsInThisHand = occupiedSeats;
+        let playerInSeatsInThisHand = occupiedSeats;
+        if (
+          playerInSeatsInPrevHand[sbPos] !== 0 && // there was a player in the previous hand
+          occupiedSeats[sbPos] === 0 // the player is not playing this hand or left the game
+        ) {
+          // we have a dead small now
+          // so the next button will move to the dead small seat (not to the current big blind seat)
+
+          // Prev Hand Players: [D, 1, 2, 3, 4], buttonPos: 1, sb: 2, bb: 3
+          // * Seat 3 leaves in this hand
+          // The new button position is 2, 3: dead small, 4: bb
+          // next hand
+          // button position: 3 dead button, 4: sb, 1: bb
+          playerInSeatsInThisHand = playerInSeatsInPrevHand;
+        }
 
         // update button pos and gameType
         await gameUpdatesRepo
