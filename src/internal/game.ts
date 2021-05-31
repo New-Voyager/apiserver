@@ -311,6 +311,11 @@ class GameAPIs {
           };
         }
 
+        let playerInSeatsInPrevHand: Array<number> = [];
+        if (gameUpdate.playersInLastHand != null) {
+          playerInSeatsInPrevHand = JSON.parse(gameUpdate.playersInLastHand);
+        }
+
         const playersInSeats = await GameRepository.getPlayersInSeats(
           game.id,
           transactionEntityManager
@@ -345,7 +350,17 @@ class GameAPIs {
           }
         }
 
+        logger.info(
+          `Previous hand: [${playerInSeatsInPrevHand.toString()}] Current hand: [${occupiedSeats.toString()}]`
+        );
+
         const prevGameType = gameUpdate.gameType;
+
+        // if this is the first hand, then use the currently occupied seats to determine button position
+        if (playerInSeatsInPrevHand.length == 0) {
+          playerInSeatsInPrevHand = occupiedSeats;
+        }
+
         // determine button pos
         let buttonPassedDealer = false;
         let buttonPos = gameUpdate.buttonPos;
@@ -356,13 +371,43 @@ class GameAPIs {
             buttonPassedDealer = true;
             buttonPos = 1;
           }
-          if (occupiedSeats[buttonPos] !== 0) {
+          if (playerInSeatsInPrevHand[buttonPos] !== 0) {
             break;
           }
           maxPlayers--;
         }
         gameUpdate.handNum++;
         gameUpdate.buttonPos = buttonPos;
+
+        maxPlayers = game.maxPlayers;
+        let sbPos = buttonPos;
+        while (maxPlayers > 0) {
+          sbPos++;
+          if (sbPos > maxPlayers) {
+            sbPos = 1;
+          }
+          if (playerInSeatsInPrevHand[sbPos] !== 0) {
+            break;
+          }
+          maxPlayers--;
+        }
+        let bbPos = sbPos;
+        while (maxPlayers > 0) {
+          bbPos++;
+          if (bbPos > maxPlayers) {
+            bbPos = 1;
+          }
+          if (occupiedSeats[bbPos] !== 0) {
+            break;
+          }
+          maxPlayers--;
+        }
+        gameUpdate.sbPos = sbPos;
+        gameUpdate.bbPos = bbPos;
+        logger.info(
+          `Hand number: ${gameUpdate.handNum} buttonPos: ${buttonPos} sbPos: ${sbPos} bbPos: ${bbPos}`
+        );
+
         // determine new game type (ROE)
         if (game.gameType === GameType.ROE) {
           if (gameUpdate.handNum !== 1) {
@@ -390,6 +435,8 @@ class GameAPIs {
           gameUpdate.gameType = game.gameType;
         }
 
+        const playerInSeatsInThisHand = occupiedSeats;
+
         // update button pos and gameType
         await gameUpdatesRepo
           .createQueryBuilder()
@@ -398,7 +445,10 @@ class GameAPIs {
             gameType: gameUpdate.gameType,
             prevGameType: prevGameType,
             buttonPos: gameUpdate.buttonPos,
+            sbPos: gameUpdate.sbPos,
+            bbPos: gameUpdate.bbPos,
             handNum: gameUpdate.handNum,
+            playersInLastHand: JSON.stringify(playerInSeatsInThisHand),
           })
           .where({
             gameID: game.id,
@@ -558,6 +608,8 @@ class GameAPIs {
           handNum: gameUpdate.handNum,
           gameStatus: gameStatus,
           tableStatus: tableStatus,
+          sbPos: gameUpdate.sbPos,
+          bbPos: gameUpdate.bbPos,
         };
 
         return nextHandInfo;

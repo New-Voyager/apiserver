@@ -710,6 +710,19 @@ class HandRepositoryImpl {
       throw error;
     }
   }
+
+  public async getHandLog(gameCode: string, handNum: number): Promise<any> {
+    const game = await Cache.getGame(gameCode);
+    const handHistoryRepo = getRepository(HandHistory);
+    const hand = await handHistoryRepo.findOne({
+      gameId: game.id,
+      handNum: handNum,
+    });
+    if (!hand) {
+      return null;
+    }
+    return JSON.parse(hand.data);
+  }
 }
 
 export const HandRepository = new HandRepositoryImpl();

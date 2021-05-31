@@ -199,7 +199,8 @@ function addInternalRoutes(app: any) {
   app.post('/auth/login', login);
   app.get('/nats-urls', natsUrls);
 
-  app.get('/bot-script', generateBotScript);
+  //app.get('/bot-script/game-code/:gameCode', generateBotScript);
+  app.get('/bot-script/game-code/:gameCode/hand/:handNum', generateBotScript);
 }
 
 async function readyCheck(req: any, resp: any) {
