@@ -398,7 +398,7 @@ class GameAPIs {
         let sbPos = buttonPos;
         while (maxPlayers > 0) {
           sbPos++;
-          if (sbPos > maxPlayers) {
+          if (sbPos > game.maxPlayers) {
             sbPos = 1;
           }
           if (playerInSeatsInPrevHand[sbPos] !== 0) {
@@ -407,9 +407,10 @@ class GameAPIs {
           maxPlayers--;
         }
         let bbPos = sbPos;
+        maxPlayers = game.maxPlayers;
         while (maxPlayers > 0) {
           bbPos++;
-          if (bbPos > maxPlayers) {
+          if (bbPos > game.maxPlayers) {
             bbPos = 1;
           }
           if (occupiedSeats[bbPos] !== 0) {
