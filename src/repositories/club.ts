@@ -770,6 +770,35 @@ class ClubRepositoryImpl {
     }
     return null;
   }
+
+  public async getClubOwnerManagerCount(
+    playerUuid: string
+  ): Promise<[number, number, number]> {
+    /*
+      select cm.is_manager, cm.is_owner from club_member cm JOIN
+      player p on cm.player_id = p.id where
+      p.uuid = 'c2dc2c3d-13da-46cc-8c66-caa0c77459de' and (cm.is_owner or cm.is_manager);
+      */
+    const clubMemberRepo = getRepository(ClubMember);
+    const player = await Cache.getPlayer(playerUuid);
+    const resp = await clubMemberRepo.find({
+      player: {id: player.id},
+      status: ClubMemberStatus.ACTIVE,
+    });
+    let ownerCount = 0,
+      managerCount = 0,
+      memberCount = 0;
+    for (const row of resp) {
+      if (row.isManager) {
+        managerCount++;
+      }
+      if (row.isOwner) {
+        ownerCount++;
+      }
+      memberCount++;
+    }
+    return [memberCount, ownerCount, managerCount];
+  }
 }
 
 export const ClubRepository = new ClubRepositoryImpl();

@@ -73,7 +73,7 @@ const resolvers: any = {
     },
 
     myInfo: async (parent, args, ctx, info) => {
-      return getPlayerInfo(ctx.req.playerId);
+      return getPlayerInfo(ctx.req.playerId, args.getPrivs);
     },
 
     clubInfo: async (parent, args, ctx, info) => {
@@ -181,13 +181,23 @@ export async function getPlayerById(playerId: string) {
   };
 }
 
-export async function getPlayerInfo(playerId: string) {
+export async function getPlayerInfo(playerId: string, getPrivs: boolean) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
   const player = await PlayerRepository.getPlayerInfo(playerId);
   if (!player) {
     throw new Error('Player not found');
+  }
+  let privileges: any = {};
+  if (getPrivs) {
+    try {
+      privileges = getPrivileges(playerId);
+    } catch (err) {
+      logger.error(
+        `Exception caught when getting privileges ${err.toString()}`
+      );
+    }
   }
   return {
     uuid: player.uuid,
@@ -196,6 +206,7 @@ export async function getPlayerInfo(playerId: string) {
     email: player.email,
     lastActiveTime: player.updatedAt,
     channel: Nats.getPlayerChannel(player),
+    privileges: privileges,
   };
 }
 
@@ -423,4 +434,35 @@ async function setNotes(
     notesPlayerUuid,
     notes
   );
+}
+
+async function getPrivileges(playerId: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get club member count
+    const [
+      memberCount,
+      ownerCount,
+      managerCount,
+    ] = await ClubRepository.getClubOwnerManagerCount(playerId);
+    const hostingCount = await GameRepository.hostingCount(playerId);
+
+    /*
+      clubOwner: Boolean
+      clubManager: Boolean
+      gameHost: Boolean
+    */
+
+    const ret = {
+      clubOwner: ownerCount > 0,
+      clubManager: managerCount > 0,
+      gameHost: hostingCount > 0,
+    };
+    return ret;
+  } catch (err) {
+    logger.error(`Exception caught when getting privileges ${err.toString()}`);
+    throw new Error('Failed to get privilegts');
+  }
 }

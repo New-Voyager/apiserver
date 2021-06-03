@@ -82,6 +82,13 @@ type PlayerInfo {
   email: String
   lastActiveTime: DateTime 
   channel: String
+  privileges: Privileges
+}
+
+type Privileges {
+  clubOwner: Boolean
+  clubManager: Boolean
+  gameHost: Boolean
 }
 
 type ClubInfo {
@@ -118,7 +125,7 @@ type Query {
   playerById: PlayerId!
   liveGames (clubCode: String): [LiveGame!]
   pastGames: [PastGame!]
-  myInfo: PlayerInfo!
+  myInfo (getPrivs: Boolean): PlayerInfo!
   clubInfo (clubCode: String!): ClubInfo!
   searchClub (clubCode: String!): SearchClubResult
   liveAudioToken(gameCode: String!): String!

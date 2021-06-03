@@ -1702,6 +1702,18 @@ class GameRepositoryImpl {
     }
     return true;
   }
+
+  public async hostingCount(playerUuid: string): Promise<number> {
+    const gameRepo = getRepository(PokerGame);
+    // get number of players in the seats
+    const count = await gameRepo.count({
+      where: {
+        host: {uuid: playerUuid},
+        status: In([GameStatus.ACTIVE, GameStatus.CONFIGURED]),
+      },
+    });
+    return count;
+  }
 }
 
 export const GameRepository = new GameRepositoryImpl();
