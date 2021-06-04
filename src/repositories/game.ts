@@ -1670,6 +1670,16 @@ class GameRepositoryImpl {
     );
   }
 
+  public async updateAudioConfDisabled(gameID: number) {
+    const gameUpdatesRepo = getRepository(PokerGame);
+    await gameUpdatesRepo.update(
+      {id: gameID},
+      {
+        audioConfEnabled: false,
+      }
+    );
+  }
+
   public async deleteAudioConf(gameID: number) {
     const gameUpdatesRepo = getRepository(PokerGameUpdates);
     const gameUpdates = await gameUpdatesRepo.findOne({gameID: gameID});

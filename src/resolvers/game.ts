@@ -55,7 +55,6 @@ export async function configureGame(
 
   try {
     createGameTime = new Date().getTime();
-    game.audioConfEnabled = true;
     const gameInfo = await GameRepository.createPrivateGame(
       clubCode,
       playerId,
@@ -71,22 +70,26 @@ export async function configureGame(
 
     ret.janusRoomPin = 'abcd'; // randomize
     ret.janusRoomId = gameInfo.id;
-    //game.audioConfEnabled = false;
     if (game.audioConfEnabled) {
       audioConfCreateTime = new Date().getTime();
       logger.info(`Joining Janus audio conference: ${game.id}`);
       try {
-        const sessionId = 'abcd';
-        const handleId = 'xyz';
-        // const session = await JanusSession.create(JANUS_APISECRET);
-        // await session.attachAudio();
-        // await session.createRoom(ret.janusRoomId, ret.janusRoomPin);
+        const session = await JanusSession.create(JANUS_APISECRET);
+        await session.attachAudio();
+        await session.createRoom(ret.janusRoomId, ret.janusRoomPin);
         await GameRepository.updateJanus(
           gameInfo.id,
-          sessionId,
-          handleId,
+          session.getId(),
+          session.getHandleId(),
           ret.janusRoomId,
           ret.janusRoomPin
+        );
+        audioConfCreateTime = new Date().getTime() - audioConfCreateTime;
+        const endTime = new Date().getTime();
+        logger.info(
+          `Time taken to create a new game: ${ret.gameCode} ${
+            endTime - startTime
+          }ms  audioConfCreateTime: ${audioConfCreateTime} createGameTime: ${createGameTime}`
         );
         logger.info(`Successfully joined Janus audio conference: ${game.id}`);
       } catch (err) {
@@ -95,16 +98,10 @@ export async function configureGame(
             game.id
           }. Error: ${err.toString()}`
         );
+        await GameRepository.updateAudioConfDisabled(gameInfo.id);
         game.audioConfEnabled = false;
       }
-      audioConfCreateTime = new Date().getTime() - audioConfCreateTime;
     }
-    const endTime = new Date().getTime();
-    logger.info(
-      `Time taken to create a new game: ${ret.gameCode} ${
-        endTime - startTime
-      }ms  audioConfCreateTime: ${audioConfCreateTime} createGameTime: ${createGameTime}`
-    );
     return ret;
   } catch (err) {
     logger.error(JSON.stringify(err));
