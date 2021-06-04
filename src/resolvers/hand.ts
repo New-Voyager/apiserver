@@ -9,6 +9,7 @@ import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player';
 import {getRepository} from 'typeorm';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
+import _ from 'lodash';
 const logger = getLogger('hand-resolvers');
 
 const resolvers: any = {
@@ -63,11 +64,23 @@ export function getResolvers() {
 
 async function generateHandHistoryData(
   handHistory: HandHistory,
+  requestingPlayer: Player,
   includeData?: boolean
 ) {
   const handTime = Math.round(
     (handHistory.timeEnded.getTime() - handHistory.timeStarted.getTime()) / 1000
   );
+  let playersInHand = new Array<number>();
+  let authorized = false;
+  if (handHistory.players != null) {
+    if (handHistory.players !== '') {
+      playersInHand = _.map(JSON.parse(handHistory.players), x => parseInt(x));
+    }
+    const playerId = requestingPlayer.id;
+    if (playersInHand.indexOf(playerId) !== -1) {
+      authorized = true;
+    }
+  }
 
   const ret: any = {
     pageId: handHistory.id,
@@ -84,10 +97,16 @@ async function generateHandHistoryData(
     winningCards: handHistory.winningCards,
     winningRank: handHistory.winningRank,
     wonAt: WonAtStatus[handHistory.wonAt],
+    playersInHand: playersInHand,
     summary: handHistory.summary,
+    authorized: authorized,
   };
   if (includeData) {
-    ret.data = JSON.parse(handHistory.data);
+    if (!authorized) {
+      ret.data = null;
+    } else {
+      ret.data = JSON.parse(handHistory.data);
+    }
   }
   return ret;
 }
@@ -114,7 +133,7 @@ export async function getLastHandHistory(playerId: string, args: any) {
   if (!game) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
-
+  const player = await Cache.getPlayer(playerId);
   if (game.club) {
     const clubMember = await Cache.getClubMember(playerId, game.club.clubCode);
     if (!clubMember) {
@@ -136,7 +155,7 @@ export async function getLastHandHistory(playerId: string, args: any) {
   if (!handHistory) {
     return null;
   }
-  return await generateHandHistoryData(handHistory, true);
+  return await generateHandHistoryData(handHistory, player, true);
 }
 
 export async function getSpecificHandHistory(playerId: string, args: any) {
@@ -148,6 +167,7 @@ export async function getSpecificHandHistory(playerId: string, args: any) {
   if (!game) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
+  const player = await Cache.getPlayer(playerId);
 
   if (game.club) {
     const clubMember = await Cache.getClubMember(playerId, game.club.clubCode);
@@ -173,7 +193,7 @@ export async function getSpecificHandHistory(playerId: string, args: any) {
   if (!handHistory) {
     throw new Error('No hand found');
   }
-  return await generateHandHistoryData(handHistory, true);
+  return await generateHandHistoryData(handHistory, player, true);
 }
 
 export async function getAllHandHistory(playerId: string, args: any) {
@@ -185,7 +205,7 @@ export async function getAllHandHistory(playerId: string, args: any) {
   if (!game) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
-
+  const player = await Cache.getPlayer(playerId);
   if (game.club) {
     // make sure this player is a club member
     const clubMember = await Cache.getClubMember(playerId, game.club.clubCode);
@@ -210,7 +230,7 @@ export async function getAllHandHistory(playerId: string, args: any) {
   );
   const hands = new Array<any>();
   for (const hand of handHistory) {
-    hands.push(await generateHandHistoryData(hand));
+    hands.push(await generateHandHistoryData(hand, player));
   }
   return hands;
 }
@@ -228,7 +248,6 @@ export async function getMyWinningHands(playerId: string, args: any) {
   if (!game) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
-
   if (game.club) {
     const clubMember = await Cache.getClubMember(playerId, game.club.clubCode);
     if (!clubMember) {
@@ -253,7 +272,7 @@ export async function getMyWinningHands(playerId: string, args: any) {
   );
   const hands = new Array<any>();
   for (const hand of handHistory) {
-    hands.push(await generateHandHistoryData(hand));
+    hands.push(await generateHandHistoryData(hand, player));
   }
 
   return hands;

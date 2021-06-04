@@ -74,8 +74,8 @@ export class HandHistory {
   @Column({name: 'lo_winning_rank', type: 'int', nullable: true})
   public loWinningRank!: number;
 
-  @DbAwareColumn({name: 'players', type: 'int', array: true, nullable: true})
-  public players!: Array<number>;
+  @Column({name: 'players', nullable: true})
+  public players!: string;
 
   @Index()
   @DbAwareColumn({name: 'time_started', type: 'timestamp'})

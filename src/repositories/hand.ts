@@ -246,15 +246,18 @@ class HandRepositoryImpl {
 
       // extract player before/after balance
       const playerBalance = {};
+      const playerIdsInHand = new Array<number>();
       for (const seatNo of Object.keys(result.players)) {
         const player = result.players[seatNo];
         playerBalance[player.id] = player.balance;
+        playerIdsInHand.push(player.id);
       }
       result.gameCode = game.gameCode;
       handHistory.playersStack = JSON.stringify(playerBalance);
       handHistory.data = JSON.stringify(result);
       const summary = await this.getSummary(result);
       handHistory.summary = JSON.stringify(summary);
+      handHistory.players = JSON.stringify(playerIdsInHand);
 
       //logger.info('****** STARTING TRANSACTION TO SAVE a hand result');
       const saveResult = await getManager().transaction(
@@ -404,7 +407,6 @@ class HandRepositoryImpl {
   ): Promise<Array<HandHistory>> {
     if (!pageOptions) {
       pageOptions = {
-        count: 10,
         prev: 0x7fffffff,
       };
     }
@@ -446,6 +448,45 @@ class HandRepositoryImpl {
       findOptions['where']['id'] = pageWhere;
     }
     const handHistoryRepository = getRepository(HandHistory);
+    /*
+      pageId: Int
+      handNum: Int!
+      noWinners: Int!
+      noLoWinners: Int
+      gameType: GameType!
+      wonAt: WonAtStatus!
+      showDown: Boolean!
+      playerCards: [Int],
+      winningCards: String
+      winningRank: Int
+      loWinningCards: String
+      loWinningRank: Int
+      timeStarted: DateTime!
+      timeEnded: DateTime!
+      handTime: Int
+      winners: Json
+      totalPot: Float!
+      playersInHand: [Int!]
+      data: Json
+      summary: String    
+    */
+    findOptions['select'] = [
+      'id',
+      'handNum',
+      'gameType',
+      'wonAt',
+      'showDown',
+      'winningCards',
+      'loWinningCards',
+      'loWinningRank',
+      'winningRank',
+      'timeStarted',
+      'timeEnded',
+      'totalPot',
+      'players',
+      'summary',
+    ];
+    //findOptions
     const handHistory = await handHistoryRepository.find(findOptions);
     return handHistory;
   }

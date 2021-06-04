@@ -33,8 +33,10 @@ type HandHistory {
   handTime: Int
   winners: Json
   totalPot: Float!
+  playersInHand: [Int!]
   data: Json
   summary: String
+  authorized: Boolean
 }
 
 type HandWinners {
