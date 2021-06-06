@@ -1724,6 +1724,18 @@ class GameRepositoryImpl {
     });
     return count;
   }
+
+  public async getLiveGameCount(club: Club): Promise<number> {
+    const gameRepo = getRepository(PokerGame);
+    // get number of players in the seats
+    const count = await gameRepo.count({
+      where: {
+        club: {id: club.id},
+        status: In([GameStatus.ACTIVE, GameStatus.CONFIGURED]),
+      },
+    });
+    return count;
+  }
 }
 
 export const GameRepository = new GameRepositoryImpl();

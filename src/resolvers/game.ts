@@ -1,3 +1,4 @@
+import {v4 as uuidv4} from 'uuid';
 import {GameRepository} from '@src/repositories/game';
 import {
   GameStatus,
@@ -29,9 +30,10 @@ import {
   JANUS_TOKEN,
   JANUS_URL,
 } from '@src/janus';
-import {NewUpdate} from '@src/repositories/types';
+import {ClubUpdateType, NewUpdate} from '@src/repositories/types';
 import {TakeBreak} from '@src/repositories/takebreak';
 import {Player} from '@src/entity/player';
+import {Nats} from '@src/nats';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -45,6 +47,8 @@ export async function configureGame(
   if (!playerId) {
     throw new Error('Unauthorized');
   }
+
+  const club = await Cache.getClub(clubCode);
 
   const errors = new Array<string>();
   if (errors.length > 0) {
@@ -102,6 +106,13 @@ export async function configureGame(
         game.audioConfEnabled = false;
       }
     }
+    const messageId = uuidv4();
+    Nats.sendClubUpdate(
+      clubCode,
+      club.name,
+      ClubUpdateType[ClubUpdateType.MEW_GAME],
+      messageId
+    );
     return ret;
   } catch (err) {
     logger.error(JSON.stringify(err));

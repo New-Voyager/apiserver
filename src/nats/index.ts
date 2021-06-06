@@ -57,7 +57,7 @@ class NatsClass {
     Used for sending an update to the app to refresh the club screen.
     changed: What changed in the club
       CLUB_CHAT, PENDING_APPROVAL, NEW_MEMBER, MEMBER_APPROVED, MEMBER_DENIED,
-      HOST_MESSAGE, ANNOUNCEMENT
+      HOST_MESSAGE, ANNOUNCEMENT, NEW_GAME
   */
   public sendClubUpdate(
     clubCode: string,

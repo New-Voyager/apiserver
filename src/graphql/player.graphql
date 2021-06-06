@@ -29,6 +29,7 @@ type PlayerClub {
   unreadMessageCount: Int
   memberUnreadMessageCount: Int
   hostUnreadMessageCount: Int
+  liveGameCount: Int
 }
 
 
@@ -107,6 +108,7 @@ type ClubInfo {
   unreadMessageCount: Int
   memberUnreadMessageCount: Int
   hostUnreadMessageCount: Int
+  liveGameCount: Int
 }
 
 type SearchClubResult {

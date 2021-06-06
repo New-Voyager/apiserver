@@ -132,6 +132,11 @@ const resolvers: any = {
       );
       return pendingMemberCount;
     },
+
+    liveGameCount: async (parent, args, ctx, info) => {
+      const count = await getLiveGameCount(parent.clubCode);
+      return count;
+    },
   },
   ClubInfo: {
     pendingMemberCount: async (parent, args, ctx, info) => {
@@ -596,6 +601,21 @@ export async function getMessageUnreadCount(
   let count = 0;
   try {
     count = await ClubMessageRepository.getUnreadMessageCount(club, player);
+  } catch (err) {
+    logger.error(`Could not get unread message count. ${err.toString()}`);
+  }
+  return count;
+}
+
+export async function getLiveGameCount(clubCode: string) {
+  logger.info(`Get live game count for club: ${clubCode}`);
+  const club = await Cache.getClub(clubCode);
+  if (!club) {
+    return 0;
+  }
+  let count = 0;
+  try {
+    count = await GameRepository.getLiveGameCount(club);
   } catch (err) {
     logger.error(`Could not get unread message count. ${err.toString()}`);
   }
