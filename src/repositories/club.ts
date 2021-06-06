@@ -304,7 +304,7 @@ class ClubRepositoryImpl {
     clubMember.status = ClubMemberStatus.PENDING;
     if (player.bot) {
       // bots are allowed to buy as much as they wantt
-      //clubMember.status = ClubMemberStatus.ACTIVE;
+      clubMember.status = ClubMemberStatus.ACTIVE;
       clubMember.autoBuyinApproval = true;
 
       if (player.uuid === 'c2dc2c3d-13da-46cc-8c66-caa0c77459de') {
