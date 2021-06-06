@@ -51,8 +51,8 @@ export async function getClubMsg(
         playerTags: x.playerTags,
         sender: x.sharedHand.sharedBy.uuid,
         clubCode: x.clubCode,
-        messageTime: x.updatedAt,
-        messageTimeInEpoc: Math.floor(x.updatedAt.getTime() / 1000),
+        messageTime: x.messageTime,
+        messageTimeInEpoc: Math.floor(x.messageTime.getTime() / 1000),
       };
       /*
         type SharedHand {
@@ -85,8 +85,8 @@ export async function getClubMsg(
         sender: x.player.uuid,
         clubCode: x.clubCode,
         text: x.text,
-        messageTime: x.updatedAt,
-        messageTimeInEpoc: Math.floor(x.updatedAt.getTime() / 1000),
+        messageTime: x.messageTime,
+        messageTimeInEpoc: Math.floor(x.messageTime.getTime() / 1000),
       };
     }
     clubmessages.push(m);
@@ -356,6 +356,36 @@ export async function markHostMsgRead(playerId: string, clubCode: string) {
   }
 }
 
+export async function markMessagesRead(playerId: string, clubCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+  const club = await Cache.getClub(clubCode);
+  if (!club) {
+    throw new Error(`Club ${clubCode} is not found`);
+  }
+  const clubMember = await Cache.getClubMember(player.uuid, club.clubCode);
+  if (!clubMember) {
+    logger.error(`Player: ${player.uuid} is not a member in club ${club.name}`);
+    throw new Error(
+      `Player: ${player.uuid} is not a member in club ${club.name}`
+    );
+  }
+
+  try {
+    await ClubMessageRepository.markMessagesRead(club, player);
+    return true;
+  } catch (err) {
+    logger.error(err);
+    //throw new Error('Failed to update messages read');
+    return false;
+  }
+}
+
 export async function markMemberMsgRead(
   playerId: string,
   clubCode: string,
@@ -450,6 +480,9 @@ const resolvers: any = {
     },
     markMemberMsgRead: async (parent, args, ctx, info) => {
       return markMemberMsgRead(ctx.req.playerId, args.clubCode, args.playerId);
+    },
+    markMessagesRead: async (parent, args, ctx, info) => {
+      return markMessagesRead(ctx.req.playerId, args.clubCode);
     },
   },
 };

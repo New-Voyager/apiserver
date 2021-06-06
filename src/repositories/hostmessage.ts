@@ -167,6 +167,37 @@ class HostMessageRepositoryImpl {
       throw new Error(e.message);
     }
   }
+
+  public async hostMessageUnreadCount(club: Club) {
+    try {
+      const hostMessageRepository = getRepository(ClubHostMessages);
+      const hostUnreadCount = await hostMessageRepository.count({
+        club: {id: club.id},
+        messageType: HostMessageType.TO_HOST,
+        readStatus: false,
+      });
+      return hostUnreadCount;
+    } catch (e) {
+      logger.error(JSON.stringify(e));
+      throw new Error(e.message);
+    }
+  }
+
+  public async memberMessageUnreadCount(club: Club, clubMember: ClubMember) {
+    try {
+      const hostMessageRepository = getRepository(ClubHostMessages);
+      const memberUnreadCount = await hostMessageRepository.count({
+        club: {id: club.id},
+        member: {id: clubMember.id},
+        messageType: HostMessageType.FROM_HOST,
+        readStatus: false,
+      });
+      return memberUnreadCount;
+    } catch (e) {
+      logger.error(JSON.stringify(e));
+      throw new Error(e.message);
+    }
+  }
 }
 
 export const HostMessageRepository = new HostMessageRepositoryImpl();

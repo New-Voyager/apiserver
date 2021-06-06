@@ -21,6 +21,9 @@ import {getLogger} from '@src/utils/log';
 import {getClubCode} from '@src/utils/uniqueid';
 import {fixQuery} from '@src/utils';
 import {Cache} from '@src/cache';
+import {ClubUpdateType} from './types';
+import {Nats} from '@src/nats';
+import {v4 as uuidv4} from 'uuid';
 
 const logger = getLogger('club-repository');
 
@@ -291,6 +294,7 @@ class ClubRepositoryImpl {
       }
       return clubMember.status;
     }
+    const club = await Cache.getClub(clubCode);
 
     // create a new membership
     clubMember = new ClubMember();
@@ -300,7 +304,7 @@ class ClubRepositoryImpl {
     clubMember.status = ClubMemberStatus.PENDING;
     if (player.bot) {
       // bots are allowed to buy as much as they wantt
-      clubMember.status = ClubMemberStatus.ACTIVE;
+      //clubMember.status = ClubMemberStatus.ACTIVE;
       clubMember.autoBuyinApproval = true;
 
       if (player.uuid === 'c2dc2c3d-13da-46cc-8c66-caa0c77459de') {
@@ -312,6 +316,18 @@ class ClubRepositoryImpl {
 
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);
     await clubMemberRepository.save(clubMember);
+    const messageId = uuidv4();
+    try {
+      // TODO: send firebase notification
+      Nats.sendClubUpdate(
+        clubCode,
+        club.name,
+        ClubUpdateType[ClubUpdateType.NEW_MEMBER],
+        messageId
+      );
+    } catch (err) {
+      logger.error(`Failed to send NATS message. Error: ${err.toString()}`);
+    }
     return clubMember.status;
   }
 
@@ -798,6 +814,15 @@ class ClubRepositoryImpl {
       memberCount++;
     }
     return [memberCount, ownerCount, managerCount];
+  }
+
+  public async getPendingMemberCount(club: Club): Promise<number> {
+    const clubMemberRepo = getRepository(ClubMember);
+    const count = await clubMemberRepo.count({
+      club: {id: club.id},
+      status: ClubMemberStatus.PENDING,
+    });
+    return count;
   }
 }
 

@@ -9,6 +9,7 @@ import {
 const mysqlSqliteTypeMapping: {[key: string]: ColumnType} = {
   mediumtext: 'text',
   timestamp: 'datetime',
+  timestampz: 'datetime',
   mediumblob: 'blob',
   json: 'text',
 };

@@ -25,6 +25,10 @@ type PlayerClub {
   private: Boolean
   memberStatus: ClubMemberStatus
   balance: Float
+  pendingMemberCount: Int
+  unreadMessageCount: Int
+  memberUnreadMessageCount: Int
+  hostUnreadMessageCount: Int
 }
 
 
@@ -99,6 +103,10 @@ type ClubInfo {
   gamesPlayed: Int
   isManager: Boolean
   isOwner: Boolean
+  pendingMemberCount: Int
+  unreadMessageCount: Int
+  memberUnreadMessageCount: Int
+  hostUnreadMessageCount: Int
 }
 
 type SearchClubResult {
