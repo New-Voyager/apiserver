@@ -70,7 +70,7 @@ export class JanusSession {
   }
 
   public async createRoom(roomId: number, pin: string) {
-    if (roomId > 0) {
+    if (roomId === 0) {
       return;
     }
 
@@ -92,6 +92,7 @@ export class JanusSession {
     };
     const url = `${JANUS_HTTP_URL}/${this._id}/${this._handleId}`;
     const resp = await axios.post(url, payload);
+    logger.info(`Created janus room: ${roomId}`);
     logger.info(JSON.stringify(resp.data));
   }
 

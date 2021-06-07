@@ -94,7 +94,11 @@ export class ClubMember {
   @Column({name: 'owner_notes', default: ''})
   public ownerNotes!: string;
 
-  @DbAwareColumn({name: 'last_played_date', type: 'timestamp', nullable: true})
+  @DbAwareColumn({
+    name: 'last_played_date',
+    type: 'timestamptz',
+    nullable: true,
+  })
   public lastGamePlayedDate!: Date;
 
   @DbAwareColumn({
@@ -104,8 +108,15 @@ export class ClubMember {
   })
   public joinedDate!: Date;
 
-  @DbAwareColumn({name: 'left_date', type: 'timestamp', nullable: true})
+  @DbAwareColumn({name: 'left_date', type: 'timestamptz', nullable: true})
   public leftDate!: Date;
+
+  @DbAwareColumn({
+    name: 'last_message_read',
+    type: 'timestamptz',
+    nullable: true,
+  }) // used for getting unread message count
+  public lastMessageRead!: Date;
 
   @Column({name: 'view_allowed', default: true})
   public viewAllowed!: boolean;
@@ -117,7 +128,7 @@ export class ClubMember {
    * DB insert time.
    */
   @DbAwareCreateDateColumn({
-    type: 'timestamp',
+    type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
   })
   public createdAt!: Date;
@@ -126,7 +137,7 @@ export class ClubMember {
    * DB last update time.
    */
   @DbAwareUpdateDateColumn({
-    type: 'timestamp',
+    type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
   })

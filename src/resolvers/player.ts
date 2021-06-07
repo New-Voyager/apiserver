@@ -16,6 +16,8 @@ import {
 import {getHighHandsByGame} from './reward';
 import {getAgoraToken} from '@src/3rdparty/agora';
 import {Nats} from '@src/nats';
+import {ClubMessageRepository} from '@src/repositories/clubmessage';
+import {HostMessageRepository} from '@src/repositories/hostmessage';
 const logger = getLogger('player');
 
 async function getClubs(playerId: string): Promise<Array<any>> {
@@ -99,6 +101,71 @@ const resolvers: any = {
         args.playerUuid
       );
       return ret;
+    },
+  },
+  PlayerClub: {
+    pendingMemberCount: async (parent, args, ctx, info) => {
+      const pendingMemberCount = await getPendingApprovalCount(
+        ctx.req.playerId,
+        parent.clubCode
+      );
+      return pendingMemberCount;
+    },
+    unreadMessageCount: async (parent, args, ctx, info) => {
+      const unreadCount = await getMessageUnreadCount(
+        ctx.req.playerId,
+        parent.clubCode
+      );
+      return unreadCount;
+    },
+    memberUnreadMessageCount: async (parent, args, ctx, info) => {
+      const pendingMemberCount = await getMemberUnreadCount(
+        ctx.req.playerId,
+        parent.clubCode
+      );
+      return pendingMemberCount;
+    },
+    hostUnreadMessageCount: async (parent, args, ctx, info) => {
+      const pendingMemberCount = await getHostMessageUnreadCount(
+        ctx.req.playerId,
+        parent.clubCode
+      );
+      return pendingMemberCount;
+    },
+
+    liveGameCount: async (parent, args, ctx, info) => {
+      const count = await getLiveGameCount(parent.clubCode);
+      return count;
+    },
+  },
+  ClubInfo: {
+    pendingMemberCount: async (parent, args, ctx, info) => {
+      const pendingMemberCount = await getPendingApprovalCount(
+        ctx.req.playerId,
+        parent.clubCode
+      );
+      return pendingMemberCount;
+    },
+    unreadMessageCount: async (parent, args, ctx, info) => {
+      const unreadCount = await getMessageUnreadCount(
+        ctx.req.playerId,
+        parent.clubCode
+      );
+      return unreadCount;
+    },
+    memberUnreadMessageCount: async (parent, args, ctx, info) => {
+      const pendingMemberCount = await getMemberUnreadCount(
+        ctx.req.playerId,
+        parent.clubCode
+      );
+      return pendingMemberCount;
+    },
+    hostUnreadMessageCount: async (parent, args, ctx, info) => {
+      const pendingMemberCount = await getHostMessageUnreadCount(
+        ctx.req.playerId,
+        parent.clubCode
+      );
+      return pendingMemberCount;
     },
   },
   Mutation: {
@@ -243,6 +310,7 @@ export async function getClubPlayerInfo(playerId: string, clubCode: string) {
     isManager: clubMember.isManager,
     isOwner: clubMember.isOwner,
     status: ClubMemberStatus[clubMember.status],
+    clubCode: clubCode,
   };
 }
 
@@ -465,4 +533,91 @@ async function getPrivileges(playerId: string) {
     logger.error(`Exception caught when getting privileges ${err.toString()}`);
     throw new Error('Failed to get privilegts');
   }
+}
+
+export async function getPendingApprovalCount(
+  playerId: string,
+  clubCode: string
+) {
+  logger.info(`Get unread message count club: ${clubCode} player: ${playerId}`);
+  const club = await Cache.getClub(clubCode);
+  const player = await Cache.getPlayer(playerId);
+  if (!club || !player) {
+    return 0;
+  }
+  const clubMember = await Cache.getClubMember(playerId, clubCode);
+  if (!clubMember || !clubMember.isOwner) {
+    return 0;
+  }
+
+  return ClubRepository.getPendingMemberCount(club);
+}
+
+export async function getHostMessageUnreadCount(
+  playerId: string,
+  clubCode: string
+) {
+  logger.info(
+    `Get unread host message unread count club: ${clubCode} player: ${playerId}`
+  );
+  const club = await Cache.getClub(clubCode);
+  const player = await Cache.getPlayer(playerId);
+  if (!club || !player) {
+    return 0;
+  }
+  const clubMember = await Cache.getClubMember(playerId, clubCode);
+  if (!clubMember || !clubMember.isOwner) {
+    return 0;
+  }
+  return HostMessageRepository.hostMessageUnreadCount(club);
+}
+
+export async function getMemberUnreadCount(playerId: string, clubCode: string) {
+  logger.info(
+    `Get unread host message unread count club: ${clubCode} player: ${playerId}`
+  );
+  const club = await Cache.getClub(clubCode);
+  const player = await Cache.getPlayer(playerId);
+  const clubMember = await Cache.getClubMember(playerId, clubCode);
+  if (!club || !player || !clubMember) {
+    return 0;
+  }
+  return HostMessageRepository.memberMessageUnreadCount(club, clubMember);
+}
+
+export async function getMessageUnreadCount(
+  playerId: string,
+  clubCode: string
+) {
+  logger.info(
+    `Get unread club message unread count club: ${clubCode} player: ${playerId}`
+  );
+  const club = await Cache.getClub(clubCode);
+  const player = await Cache.getPlayer(playerId);
+  const clubMember = await Cache.getClubMember(playerId, clubCode);
+  if (!club || !player || !clubMember) {
+    return 0;
+  }
+  let count = 0;
+  try {
+    count = await ClubMessageRepository.getUnreadMessageCount(club, player);
+  } catch (err) {
+    logger.error(`Could not get unread message count. ${err.toString()}`);
+  }
+  return count;
+}
+
+export async function getLiveGameCount(clubCode: string) {
+  logger.info(`Get live game count for club: ${clubCode}`);
+  const club = await Cache.getClub(clubCode);
+  if (!club) {
+    return 0;
+  }
+  let count = 0;
+  try {
+    count = await GameRepository.getLiveGameCount(club);
+  } catch (err) {
+    logger.error(`Could not get unread message count. ${err.toString()}`);
+  }
+  return count;
 }

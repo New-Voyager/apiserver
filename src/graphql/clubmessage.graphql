@@ -73,6 +73,7 @@ type Mutation {
   sendMessageToHost(clubCode: String!, text: String!): HostMessage!
   markHostMsgRead(clubCode: String!): Boolean!
   markMemberMsgRead(clubCode: String!, playerId: String!): Boolean!
+  markMessagesRead(clubCode: String!): Boolean
 }
 
 type Query {

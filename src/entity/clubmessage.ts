@@ -47,14 +47,13 @@ export class ClubMessageInput {
   public playerTags!: string;
 
   /**
-   * DB last update time.
+   * Message time
    */
-  @DbAwareUpdateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
+  @DbAwareCreateDateColumn({
+    type: 'timestamptz',
+    name: 'message_time',
   })
-  public updatedAt!: Date;
+  public messageTime!: Date;
 }
 
 @Entity({name: 'club_host_messages'})

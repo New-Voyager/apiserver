@@ -53,6 +53,40 @@ class NatsClass {
     this.client.publish(subject, messageStr);
   }
 
+  /*
+    Used for sending an update to the app to refresh the club screen.
+    changed: What changed in the club
+      CLUB_CHAT, PENDING_APPROVAL, NEW_MEMBER, MEMBER_APPROVED, MEMBER_DENIED,
+      HOST_MESSAGE, ANNOUNCEMENT, NEW_GAME
+  */
+  public sendClubUpdate(
+    clubCode: string,
+    clubName: string,
+    changed: string,
+    messageId: string
+  ) {
+    if (this.client === null) {
+      return;
+    }
+    /*
+    {
+      "type": "CLUB_UPDATED",
+      "clubName": "Manchester Club",
+      "clubCode": "<>"
+    }
+    */
+    const message: any = {
+      type: 'CLUB_UPDATED',
+      clubCode: clubCode,
+      clubName: clubName,
+      changed: changed,
+      requestId: messageId,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getClubChannel(clubCode);
+    this.client.publish(subject, messageStr);
+  }
+
   public sendDealersChoiceMessage(
     game: PokerGame,
     playerId: number,
@@ -220,6 +254,11 @@ class NatsClass {
 
   public getPlayerChannel(player: Player) {
     const subject = `player.${player.id}`;
+    return subject;
+  }
+
+  public getClubChannel(clubCode: string) {
+    const subject = `club.${clubCode}`;
     return subject;
   }
 

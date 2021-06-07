@@ -1,11 +1,15 @@
 import {ClubMessageInput} from '@src/entity/clubmessage';
-import {Club} from '@src/entity/club';
-import {getRepository, MoreThan, LessThan} from 'typeorm';
+import {Club, ClubMember} from '@src/entity/club';
+import {getRepository, MoreThan, LessThan, Not, getConnection} from 'typeorm';
 import {ClubMessageType} from '../entity/types';
 import {Player} from '@src/entity/player';
 import {PageOptions} from '@src/types';
 import {getLogger} from '@src/utils/log';
-import {PlaygroundRenderPageOptions} from 'apollo-server-core';
+import {v4 as uuidv4} from 'uuid';
+import {Nats} from '@src/nats';
+import {ClubUpdateType} from './types';
+import {Cache} from '@src/cache/index';
+
 const logger = getLogger('clubmessage');
 
 export interface ClubMessageInputFormat {
@@ -48,18 +52,18 @@ class ClubMessageRepositoryImpl {
           message.text !== '' &&
           message.text !== undefined
         ) {
-          return this.saveMessage(0, clubCode, message, player);
+          return this.saveMessage(0, club, message, player);
         } else if (
           message.messageType.toString() === 'GIPHY' &&
           message.giphyLink !== '' &&
           message.giphyLink !== undefined
         ) {
-          return this.saveMessage(2, clubCode, message, player);
+          return this.saveMessage(2, club, message, player);
         } else if (
           message.messageType.toString() === 'HAND' &&
           message.handNum !== undefined
         ) {
-          return this.saveMessage(1, clubCode, message, player);
+          return this.saveMessage(1, club, message, player);
         } else {
           throw new Error('Bad parameters');
         }
@@ -71,14 +75,14 @@ class ClubMessageRepositoryImpl {
 
   public async saveMessage(
     messageType: number,
-    clubCode: string,
+    club: Club,
     message: ClubMessageInputFormat,
     player: Player
   ) {
     const sendMessage = new ClubMessageInput();
     sendMessage.text = message.text;
     sendMessage.messageType = messageType;
-    sendMessage.clubCode = clubCode;
+    sendMessage.clubCode = club.clubCode;
     sendMessage.gameNum = message.gameNum;
     sendMessage.handNum = message.handNum;
     sendMessage.giphyLink = message.giphyLink;
@@ -86,6 +90,17 @@ class ClubMessageRepositoryImpl {
     sendMessage.player = player;
     const repository = getRepository(ClubMessageInput);
     const response = await repository.save(sendMessage);
+
+    const messageId = uuidv4();
+    // TODO: send firebase notification
+    // we need to send this message to all the club members
+    Nats.sendClubUpdate(
+      club.clubCode,
+      club.name,
+      ClubUpdateType[ClubUpdateType.CLUB_CHAT],
+      messageId
+    );
+
     return response.id;
   }
 
@@ -155,6 +170,47 @@ class ClubMessageRepositoryImpl {
     } catch (e) {
       throw new Error(e.message);
     }
+  }
+
+  public async getUnreadMessageCount(
+    club: Club,
+    player: Player
+  ): Promise<number> {
+    const clubMember = await Cache.getClubMember(player.uuid, club.clubCode);
+    if (!clubMember) {
+      return 0;
+    }
+    let date = clubMember.lastMessageRead;
+    if (date === null) {
+      date = clubMember.joinedDate;
+    }
+    const query = `SELECT COUNT(DISTINCT("ClubMessageInput"."id")) as "cnt" 
+              FROM "club_messages" "ClubMessageInput" 
+              WHERE "ClubMessageInput"."club_code" = $1 AND 
+              "ClubMessageInput"."player_id" != $2 AND 
+              "ClubMessageInput"."message_time" > $3`;
+
+    const result = await getConnection().query(query, [
+      club.clubCode,
+      player.id,
+      date,
+    ]);
+    return result[0]['cnt'];
+  }
+
+  public async markMessagesRead(club: Club, player: Player) {
+    const clubMemberRepo = getRepository(ClubMember);
+    const now = new Date();
+    await clubMemberRepo.update(
+      {
+        club: {id: club.id},
+        player: {id: player.id},
+      },
+      {
+        lastMessageRead: now.toISOString(),
+      }
+    );
+    return true;
   }
 }
 

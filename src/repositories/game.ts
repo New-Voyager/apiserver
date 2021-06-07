@@ -1670,6 +1670,16 @@ class GameRepositoryImpl {
     );
   }
 
+  public async updateAudioConfDisabled(gameID: number) {
+    const gameUpdatesRepo = getRepository(PokerGame);
+    await gameUpdatesRepo.update(
+      {id: gameID},
+      {
+        audioConfEnabled: false,
+      }
+    );
+  }
+
   public async deleteAudioConf(gameID: number) {
     const gameUpdatesRepo = getRepository(PokerGameUpdates);
     const gameUpdates = await gameUpdatesRepo.findOne({gameID: gameID});
@@ -1709,6 +1719,18 @@ class GameRepositoryImpl {
     const count = await gameRepo.count({
       where: {
         host: {uuid: playerUuid},
+        status: In([GameStatus.ACTIVE, GameStatus.CONFIGURED]),
+      },
+    });
+    return count;
+  }
+
+  public async getLiveGameCount(club: Club): Promise<number> {
+    const gameRepo = getRepository(PokerGame);
+    // get number of players in the seats
+    const count = await gameRepo.count({
+      where: {
+        club: {id: club.id},
         status: In([GameStatus.ACTIVE, GameStatus.CONFIGURED]),
       },
     });
