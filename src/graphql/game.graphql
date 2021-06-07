@@ -122,6 +122,12 @@ type TableSeats {
   availableSeats: [Int!]
 }
 
+type GamePlayer {
+  id: Int!
+  uuid: String!
+  name: String!
+}
+
 type GameInfo {
   gameID: Int
   gameCode: String!
@@ -186,6 +192,9 @@ type GameInfo {
   isOwner: Boolean
   isManager: Boolean
 
+  # all players in the game
+  allPlayers: [GamePlayer!]
+  
   # audio conference options
   audioConfEnabled: Boolean
   janusUrl: String

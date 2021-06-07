@@ -1677,6 +1677,12 @@ const resolvers: any = {
       }
       return PlayerStatus[PlayerStatus.NOT_PLAYING];
     },
+    allPlayers: async (parent, args, ctx, info) => {
+      const allPlayersInGame = GameRepository.getAllPlayersInGame(
+        parent.gameCode
+      );
+      return allPlayersInGame;
+    },
   },
   CompletedGame: {
     stackStat: async (parent, args, ctx, info) => {

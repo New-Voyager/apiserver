@@ -1736,6 +1736,28 @@ class GameRepositoryImpl {
     });
     return count;
   }
+
+  public async getAllPlayersInGame(gameCode: string): Promise<Array<any>> {
+    const gameTrackerRepo = getRepository(PlayerGameTracker);
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      return [];
+    }
+
+    const playersInDb = await gameTrackerRepo.find({
+      game: {id: game.id},
+    });
+
+    const players = new Array<any>();
+    for (const player of playersInDb) {
+      players.push({
+        id: player.player.id,
+        name: player.player.name,
+        uuid: player.player.uuid,
+      });
+    }
+    return players;
+  }
 }
 
 export const GameRepository = new GameRepositoryImpl();
