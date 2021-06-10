@@ -876,6 +876,8 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.handToAllChannel = `hand.${game.gameCode}.player.all`;
     ret.handToPlayerChannel = `hand.${game.gameCode}.player.${player.id}`;
     ret.gameChatChannel = `game.${game.gameCode}.chat`;
+    ret.pingToPlayerChannel = `ping.${game.gameCode}.player.${player.id}`;
+    ret.pongChannel = `pong.${game.gameCode}`;
 
     // player's role
     ret.isManager = isManager;
