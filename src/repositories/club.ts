@@ -354,10 +354,6 @@ class ClubRepositoryImpl {
       }
     }
 
-    if (clubMember.status === ClubMemberStatus.ACTIVE) {
-      return clubMember.status;
-    }
-
     const clubMemberRepository = getRepository<ClubMember>(ClubMember);
     await clubMemberRepository
       .createQueryBuilder()
@@ -370,6 +366,21 @@ class ClubRepositoryImpl {
       })
       .execute();
     await Cache.getClubMember(playerId, clubCode, true /* update cache */);
+
+    await clubMemberRepository.save(clubMember);
+    const messageId = uuidv4();
+    try {
+      // TODO: send firebase notification
+      Nats.sendClubUpdate(
+        clubCode,
+        club.name,
+        ClubUpdateType[ClubUpdateType.MEMBER_APPROVED],
+        messageId
+      );
+    } catch (err) {
+      logger.error(`Failed to send NATS message. Error: ${err.toString()}`);
+    }
+
     return ClubMemberStatus.ACTIVE;
   }
 
@@ -454,6 +465,20 @@ class ClubRepositoryImpl {
       })
       .execute();
     await Cache.getClubMember(playerId, clubCode, true /* update cache */);
+
+    const messageId = uuidv4();
+    try {
+      // TODO: send firebase notification
+      Nats.sendClubUpdate(
+        clubCode,
+        club.name,
+        ClubUpdateType[ClubUpdateType.MEMBER_DENIED],
+        messageId
+      );
+    } catch (err) {
+      logger.error(`Failed to send NATS message. Error: ${err.toString()}`);
+    }
+
     return ClubMemberStatus.KICKEDOUT;
   }
 
