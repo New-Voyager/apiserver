@@ -5,6 +5,7 @@ import {
   NextHandUpdate,
   PlayerStatus,
   SeatChangeProcessType,
+  TableStatus,
 } from '@src/entity/types';
 import {getLogger} from '@src/utils/log';
 import {
@@ -409,6 +410,17 @@ export class SeatChangeProcess {
       const seatChangeProcessRepo = transactionEntityManager.getRepository(
         HostSeatChangeProcess
       );
+      const gameRepo = transactionEntityManager.getRepository(PokerGame);
+
+      await gameRepo.update(
+        {
+          id: this.game.id,
+        },
+        {
+          tableStatus: TableStatus.HOST_SEATCHANGE_IN_PROGRESS,
+        }
+      );
+      await Cache.getGame(this.game.gameCode, true /** update */);
 
       // copy current seated players in the seats to the seat change process table
       const playersInSeats = await playerGameTrackerRepo.find({
@@ -535,7 +547,7 @@ export class SeatChangeProcess {
     return true;
   }
 
-  public async hostSeatChangeComplete(host: Player) {
+  public async hostSeatChangeComplete(host: Player, cancelChanges: boolean) {
     await getManager().transaction(async transactionEntityManager => {
       const seatChangeProcessRepo = transactionEntityManager.getRepository(
         HostSeatChangeProcess
@@ -543,23 +555,33 @@ export class SeatChangeProcess {
       const playerGameTrackerRepo = transactionEntityManager.getRepository(
         PlayerGameTracker
       );
-      const seatChangedPlayers = await seatChangeProcessRepo.find({
-        gameCode: this.game.gameCode,
-      });
-      for (const player of seatChangedPlayers) {
-        if (player.playerId != null) {
-          await playerGameTrackerRepo.update(
-            {
-              game: {id: this.game.id},
-              player: {id: player.playerId},
-            },
-            {
-              seatNo: player.seatNo,
-            }
-          );
+      if (!cancelChanges) {
+        const seatChangedPlayers = await seatChangeProcessRepo.find({
+          gameCode: this.game.gameCode,
+        });
+        for (const player of seatChangedPlayers) {
+          if (player.playerId != null) {
+            await playerGameTrackerRepo.update(
+              {
+                game: {id: this.game.id},
+                player: {id: player.playerId},
+              },
+              {
+                seatNo: player.seatNo,
+              }
+            );
+          }
         }
       }
-
+      const gameRepo = transactionEntityManager.getRepository(PokerGame);
+      await gameRepo.update(
+        {
+          id: this.game.id,
+        },
+        {
+          tableStatus: TableStatus.GAME_RUNNING,
+        }
+      );
       // delete rows from host seat process table
       await seatChangeProcessRepo.delete({
         gameCode: this.game.gameCode,

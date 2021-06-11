@@ -809,7 +809,7 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
   }
   try {
     // get game using game code
-    const game = await Cache.getGame(gameCode);
+    const game = await Cache.getGame(gameCode, true);
     if (!game) {
       throw new Error(`Game ${gameCode} is not found`);
     }

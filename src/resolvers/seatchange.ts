@@ -49,7 +49,11 @@ const resolvers: any = {
       );
     },
     seatChangeComplete: async (parent, args, ctx, info) => {
-      return seatChangeComplete(ctx.req.playerId, args.gameCode);
+      return seatChangeComplete(
+        ctx.req.playerId,
+        args.gameCode,
+        args.cancelChanges
+      );
     },
   },
 };
@@ -359,7 +363,11 @@ export async function swapSeats(
   }
 }
 
-export async function seatChangeComplete(playerUuid: string, gameCode: string) {
+export async function seatChangeComplete(
+  playerUuid: string,
+  gameCode: string,
+  cancelChanges: boolean
+) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }
@@ -381,7 +389,7 @@ export async function seatChangeComplete(playerUuid: string, gameCode: string) {
     }
     const host = await Cache.getPlayer(playerUuid);
     const seatChange = new SeatChangeProcess(game);
-    seatChange.hostSeatChangeComplete(host);
+    await seatChange.hostSeatChangeComplete(host, cancelChanges);
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error(
