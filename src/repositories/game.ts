@@ -834,8 +834,18 @@ class GameRepositoryImpl {
     return true;
   }
 
-  public async restartGameIfNeeded(game: PokerGame): Promise<void> {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+  public async restartGameIfNeeded(
+    game: PokerGame,
+    transactionEntityManager?: EntityManager
+  ): Promise<void> {
+    let playerGameTrackerRepository: Repository<PlayerGameTracker>;
+    if (transactionEntityManager) {
+      playerGameTrackerRepository = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
+    } else {
+      playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    }
 
     const playingCount = await playerGameTrackerRepository
       .createQueryBuilder()

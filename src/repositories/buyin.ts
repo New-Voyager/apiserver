@@ -228,7 +228,10 @@ export class BuyIn {
     }
     gameServerTime = new Date().getTime() - gameServerTime;
 
-    await GameRepository.restartGameIfNeeded(this.game);
+    await GameRepository.restartGameIfNeeded(
+      this.game,
+      transactionEntityManager
+    );
   }
 
   public async buyInDenied(
