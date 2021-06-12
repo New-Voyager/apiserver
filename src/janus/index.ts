@@ -6,7 +6,6 @@ const AUDIO_BRIDGE = 'janus.plugin.audiobridge';
 export const JANUS_APISECRET = 'janusrocks';
 export const JANUS_TOKEN = '';
 export const JANUS_SECRET = '';
-export const JANUS_URL = 'ws://139.59.57.29:8188/';
 const JANUS_HTTP_URL = 'http://139.59.57.29:8088/janus';
 
 const logger = getLogger('Janus');
@@ -16,6 +15,13 @@ export class JanusSession {
   private _handleId: string = '';
   private _apiSecret: string = '';
 
+  public static janusUrl(): string {
+    if (process.env.JANUS_URL) {
+      return process.env.JANUS_URL;
+    } else {
+      return 'http://139.59.73.106:8088/janus';
+    }
+  }
   public static async create(apiSecret: string) {
     const tranId = uuidv4();
     const payload: any = {
@@ -26,7 +32,7 @@ export class JanusSession {
     if (apiSecret) {
       payload.withCredentials = true;
     }
-    const resp = await axios.post(JANUS_HTTP_URL, payload);
+    const resp = await axios.post(JanusSession.janusUrl(), payload);
     logger.info(JSON.stringify(resp.data));
     const session = new JanusSession();
     session._apiSecret = apiSecret;
@@ -59,7 +65,7 @@ export class JanusSession {
       withCredentials: true,
       session_id: this._id,
     };
-    const url = `${JANUS_HTTP_URL}/${this._id}`;
+    const url = `${JanusSession.janusUrl()}/${this._id}`;
     const resp = await axios.post(url, payload);
     logger.info(JSON.stringify(resp.data));
     this._handleId = resp.data.data['id'];
@@ -90,7 +96,7 @@ export class JanusSession {
         audio_level_average: 60,
       },
     };
-    const url = `${JANUS_HTTP_URL}/${this._id}/${this._handleId}`;
+    const url = `${JanusSession.janusUrl()}/${this._id}/${this._handleId}`;
     const resp = await axios.post(url, payload);
     logger.info(`Created janus room: ${roomId}`);
     logger.info(JSON.stringify(resp.data));
@@ -109,7 +115,7 @@ export class JanusSession {
         room: roomId,
       },
     };
-    const url = `${JANUS_HTTP_URL}/${this._id}/${this._handleId}`;
+    const url = `${JanusSession.janusUrl()}/${this._id}/${this._handleId}`;
     const resp = await axios.post(url, payload);
     logger.info(JSON.stringify(resp.data));
   }
@@ -126,7 +132,7 @@ export class JanusSession {
         request: 'leave',
       },
     };
-    const url = `${JANUS_HTTP_URL}/${this._id}/${this._handleId}`;
+    const url = `${JanusSession.janusUrl()}/${this._id}/${this._handleId}`;
     const resp = await axios.post(url, payload);
     logger.info(JSON.stringify(resp.data));
   }
@@ -144,7 +150,7 @@ export class JanusSession {
         room: roomId,
       },
     };
-    const url = `${JANUS_HTTP_URL}/${this._id}/${this._handleId}`;
+    const url = `${JanusSession.janusUrl()}/${this._id}/${this._handleId}`;
     const resp = await axios.post(url, payload);
     logger.info(JSON.stringify(resp.data));
   }

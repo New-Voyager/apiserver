@@ -28,7 +28,6 @@ import {
   JANUS_APISECRET,
   JANUS_SECRET,
   JANUS_TOKEN,
-  JANUS_URL,
 } from '@src/janus';
 import {ClubUpdateType, NewUpdate} from '@src/repositories/types';
 import {TakeBreak} from '@src/repositories/takebreak';
@@ -885,7 +884,7 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.isOwner = isOwner;
 
     // janus info
-    ret.janusUrl = JANUS_URL;
+    ret.janusUrl = JanusSession.janusUrl();
     ret.janusSecret = JANUS_SECRET;
     ret.janusToken = JANUS_TOKEN;
     return ret;
