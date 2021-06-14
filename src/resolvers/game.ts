@@ -1576,6 +1576,33 @@ export async function dealerChoice(
   }
 }
 
+export async function openSeats(playerId: string, gameCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const errors = new Array<string>();
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+  try {
+    const game = await Cache.getGame(gameCode);
+    const playersInSeats = await GameRepository.getPlayersInSeats(game.id);
+    const takenSeats = playersInSeats.map(x => x.seatNo);
+    const availableSeats: Array<number> = [];
+    for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+      if (takenSeats.indexOf(seatNo) === -1) {
+        availableSeats.push(seatNo);
+      }
+    }
+    return availableSeats;
+  } catch (err) {
+    logger.error(err.message);
+    throw new Error(
+      `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
+    );
+  }
+}
+
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -1628,6 +1655,9 @@ const resolvers: any = {
     },
     downloadResult: async (parent, args, ctx, info) => {
       return await downloadResult(ctx.req.playerId, args.gameCode);
+    },
+    openSeats: async (parent, args, ctx, info) => {
+      return await openSeats(ctx.req.playerId, args.gameCode);
     },
   },
   GameInfo: {

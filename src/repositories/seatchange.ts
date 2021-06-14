@@ -77,6 +77,7 @@ export class SeatChangeProcess {
       },
       {
         seatChangeOpenSeat: openedSeat,
+        seatChangeInProgress: true,
       }
     );
     this.promptPlayer(openedSeat);
@@ -141,6 +142,14 @@ export class SeatChangeProcess {
         gameUpdate === undefined ||
         gameUpdate.seatChangeOpenSeat === undefined
       ) {
+        await gameUpdatesRepo.update(
+          {
+            gameID: this.game.id,
+          },
+          {
+            seatChangeInProgress: false,
+          }
+        );
         // seat change process is over, resume game
         const game = await Cache.getGame(this.game.gameCode, true);
         processPendingUpdates(game.id);
