@@ -1097,6 +1097,9 @@ class GameRepositoryImpl {
       // complete books
       await ChipsTrackRepository.settleClubBalances(game);
 
+      // roll up stats
+      await StatsRepository.rollupStats(game);
+
       // destroy Janus game
       try {
         //await this.deleteAudioConf(game.id);

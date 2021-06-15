@@ -201,7 +201,10 @@ export class SeatChangeProcess {
     this.promptPlayer(0);
   }
 
-  public async requestSeatChange(player: Player, cancel: boolean): Promise<Date | null> {
+  public async requestSeatChange(
+    player: Player,
+    cancel: boolean
+  ): Promise<Date | null> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
       relations: ['player', 'game'],

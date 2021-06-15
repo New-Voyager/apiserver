@@ -80,6 +80,7 @@ export async function resetDB() {
     await deleteAll('game_gameserver', transactionEntityManager);
     await deleteAll('poker_game_updates', transactionEntityManager);
     await deleteAll('player_game_stats', transactionEntityManager);
+    await deleteAll('player_hand_stats', transactionEntityManager);
     await deleteAll('PokerGame', transactionEntityManager);
     await deleteAll('ClubMember', transactionEntityManager);
     await deleteAll('Club', transactionEntityManager);

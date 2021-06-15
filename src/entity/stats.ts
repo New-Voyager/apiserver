@@ -1,12 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  Index,
-  ManyToOne,
-  JoinColumn,
-  OneToOne,
-} from 'typeorm';
+import {Entity, Column, ManyToOne, JoinColumn, OneToOne} from 'typeorm';
 import {Player} from './player';
 import {PokerGame} from './game';
 
@@ -16,7 +8,7 @@ export class PlayerGameStats {
   @JoinColumn({name: 'pgs_game_id'})
   public game!: PokerGame;
 
-  @ManyToOne(() => Player, player => player.id, {primary: true, eager: false})
+  @ManyToOne(() => Player, player => player.id, {primary: true, eager: true})
   @JoinColumn({name: 'pgs_player_id'})
   public player!: Player;
 
@@ -89,7 +81,7 @@ export class PlayerHandStats {
   public wentToShowDown!: number;
 
   @Column({name: 'won_at_showdown', default: 0})
-  public wentAtShowDown!: number;
+  public wonAtShowDown!: number;
 
   @Column({name: 'headsup_hands', default: 0})
   public headsupHands!: number;
@@ -97,8 +89,8 @@ export class PlayerHandStats {
   @Column({name: 'won_headsup_hands', default: 0})
   public wonHeadsupHands!: number;
 
-  @Column({name: 'headsup_hand_details', type: 'text', default: '[]'}) // json array headsup stats against other players [{"otherPlayer": id, "totalHands": 100, "wonHands": 25}]
-  public headsupHandDetails!: number;
+  @Column({name: 'headsup_hand_summary', type: 'text', default: '{}'}) // json dictionary headsup stats against other players [{"player-id": {"total": 100, "won": 25}}]
+  public headsupHandSummary!: string;
 
   // betting stats
   @Column({name: 'preflop_raise', default: 0})

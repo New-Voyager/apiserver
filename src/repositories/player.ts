@@ -5,6 +5,7 @@ import {loggers} from 'winston';
 import {getLogger} from '@src/utils/log';
 const logger = getLogger('player');
 import {Cache} from '@src/cache/index';
+import {StatsRepository} from './stats';
 
 class PlayerRepositoryImpl {
   public async createPlayer(
@@ -41,6 +42,7 @@ class PlayerRepositoryImpl {
     player.bot = isBot;
 
     await repository.save(player);
+    await StatsRepository.newPlayerHandStats(player);
     return player.uuid;
   }
 

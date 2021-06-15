@@ -1,10 +1,13 @@
 import {EntityManager, Repository, getRepository} from 'typeorm';
 import {v4 as uuidv4} from 'uuid';
 import {Player} from '@src/entity/player';
-import {PlayerGameStats} from '@src/entity/stats';
+import {PlayerGameStats, PlayerHandStats} from '@src/entity/stats';
 import {PokerGame, PokerGameUpdates} from '@src/entity/game';
-import {head} from 'lodash';
+import {isArray} from 'lodash';
+import {loggers} from 'winston';
+import {getLogger} from '@src/utils/log';
 
+const logger = getLogger('Stats');
 class StatsRepositoryImpl {
   public newGameStatsRow(
     game: PokerGame,
@@ -92,9 +95,9 @@ class StatsRepositoryImpl {
             vpipCount: () => `vpip_count + ${playerStat.vpip ? 1 : 0}`,
             allInCount: () => `allin_count + ${playerStat.allin ? 1 : 0}`,
             wentToShowDown: () =>
-              `went_to_showdown + ${playerStat.wentToShowDown ? 1 : 0}`,
+              `went_to_showdown + ${playerStat.wentToShowdown ? 1 : 0}`,
             wonAtShowDown: () =>
-              `won_at_showdown + ${playerStat.wonAtShowDown ? 1 : 0}`,
+              `won_at_showdown + ${playerStat.wonChipsAtShowdown ? 1 : 0}`,
             wonHeadsupHands: () =>
               `won_headsup_hands + ${playerStat.wonHeadsup ? 1 : 0}`,
             inPreflop: () => `in_preflop + ${playerStat.inPreflop ? 1 : 0}`,
@@ -126,6 +129,94 @@ class StatsRepositoryImpl {
       }
     }
     await Promise.all(updates);
+  }
+
+  public async rollupStats(game: PokerGame) {
+    try {
+      const playerStatsRepo = getRepository(PlayerHandStats);
+      const gameStatsRepo = getRepository(PlayerGameStats);
+      const rows = await gameStatsRepo.find({
+        game: {id: game.id},
+      });
+      const updates = new Array<any>();
+      for (const row of rows) {
+        let playerStat = await playerStatsRepo.findOne({
+          player: {id: row.player.id},
+        });
+        if (!playerStat) {
+          playerStat = new PlayerHandStats();
+          await playerStatsRepo.save(playerStat);
+        }
+        let handSummary = playerStat.headsupHandSummary;
+        if (!handSummary) {
+          handSummary = '{}';
+        }
+        let headsupDetails = row.headsupHandDetails;
+        if (!headsupDetails) {
+          headsupDetails = '[]';
+        }
+
+        const jsonSummary = JSON.parse(handSummary);
+        const jsonDetails = JSON.parse(headsupDetails);
+        let jsonDetailsChanged = false;
+        if (jsonDetails && isArray(jsonDetails)) {
+          for (const headsup of jsonDetails) {
+            jsonDetailsChanged = true;
+            const playerId = `${headsup['otherPlayer']}`;
+            if (!jsonSummary[playerId]) {
+              jsonSummary[playerId] = {
+                won: 0,
+                total: 0,
+              };
+            }
+            jsonSummary[playerId]['won'] += headsup['won'] ? 1 : 0;
+            jsonSummary[playerId]['total'] += 1;
+          }
+        }
+
+        const props = {
+          preflopRaise: () => `preflop_raise + ${row.preflopRaise}`,
+          postflopRaise: () => `postflop_raise + ${row.postflopRaise}`,
+          threeBet: () => `three_bet + ${row.threeBet}`,
+          contBet: () => `cont_bet + ${row.contBet}`,
+          vpipCount: () => `vpip_count + ${row.vpipCount}`,
+          allInCount: () => `allin_count + ${row.allInCount}`,
+          wentToShowDown: () => `went_to_showdown + ${row.wentToShowDown}`,
+          wonAtShowDown: () => `won_at_showdown + ${row.wonAtShowDown}`,
+          wonHeadsupHands: () => `won_headsup_hands + ${row.wonHeadsupHands}`,
+          inPreflop: () => `in_preflop + ${row.inPreflop}`,
+          inFlop: () => `in_flop + ${row.inFlop}`,
+          inTurn: () => `in_turn + ${row.inTurn}`,
+          inRiver: () => `in_river + ${row.inRiver}`,
+          headsupHands: () => `headsup_hands + ${row.headsupHands}`,
+        };
+
+        if (jsonDetailsChanged) {
+          props['headsupHandSummary'] = JSON.stringify(jsonSummary);
+        }
+
+        updates.push(
+          playerStatsRepo
+            .createQueryBuilder()
+            .update()
+            .set(props)
+            .where({
+              player: {id: row.player.id},
+            })
+            .execute()
+        );
+      }
+      await Promise.all(updates);
+    } catch (err) {
+      logger.error(`Failed to update player stats: ${err.toString()}`);
+    }
+  }
+
+  public async newPlayerHandStats(player: Player) {
+    const playerStatsRepo = getRepository(PlayerHandStats);
+    const playerStats = new PlayerHandStats();
+    playerStats.player = player;
+    await playerStatsRepo.save(playerStats);
   }
 }
 
