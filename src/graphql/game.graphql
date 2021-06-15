@@ -383,7 +383,7 @@ type Mutation {
   updateGameConfig(gameCode: String!, config: GameConfigChangeInput!): Boolean
 
   # seat change APIs
-  requestSeatChange(gameCode: String!): DateTime!
+  requestSeatChange(gameCode: String!, cancel: Boolean): DateTime!
   confirmSeatChange(gameCode: String!, seatNo: Int!): Boolean!
   declineSeatChange(gameCode: String!): Boolean!
   beginHostSeatChange(gameCode: String!): Boolean

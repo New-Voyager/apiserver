@@ -29,7 +29,7 @@ const resolvers: any = {
   },
   Mutation: {
     requestSeatChange: async (parent, args, ctx, info) => {
-      return requestSeatChange(ctx.req.playerId, args.gameCode);
+      return requestSeatChange(ctx.req.playerId, args.gameCode, args.cancel);
     },
     confirmSeatChange: async (parent, args, ctx, info) => {
       return confirmSeatChange(ctx.req.playerId, args.gameCode, args.seatNo);
@@ -136,11 +136,14 @@ export async function declineSeatChange(playerUuid: string, gameCode: string) {
   }
 }
 
-export async function requestSeatChange(playerUuid: string, gameCode: string) {
+export async function requestSeatChange(playerUuid: string, gameCode: string, cancel: boolean) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }
   try {
+    if (!cancel) {
+      cancel = false;
+    }
     // get game using game code
     const game = await Cache.getGame(gameCode);
     if (!game) {
@@ -163,7 +166,7 @@ export async function requestSeatChange(playerUuid: string, gameCode: string) {
     }
     const player = await Cache.getPlayer(playerUuid);
     const seatChange = new SeatChangeProcess(game);
-    const requestedAt = await seatChange.requestSeatChange(player);
+    const requestedAt = await seatChange.requestSeatChange(player, cancel);
     return requestedAt;
   } catch (err) {
     logger.error(JSON.stringify(err));

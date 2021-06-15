@@ -201,7 +201,7 @@ export class SeatChangeProcess {
     this.promptPlayer(0);
   }
 
-  public async requestSeatChange(player: Player): Promise<Date | null> {
+  public async requestSeatChange(player: Player, cancel: boolean): Promise<Date | null> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
       relations: ['player', 'game'],
@@ -221,10 +221,20 @@ export class SeatChangeProcess {
       throw new Error(`player status is ${PlayerStatus[playerInGame.status]}`);
     }
 
-    playerInGame.seatChangeRequestedAt = new Date();
-
-    const resp = await playerGameTrackerRepository.save(playerInGame);
-    return resp.seatChangeRequestedAt;
+    let seatChangeRequestedAt: Date | null = new Date();
+    if (cancel) {
+      seatChangeRequestedAt = null;
+    }
+    await playerGameTrackerRepository.update(
+      {
+        game: {id: this.game.id},
+        player: {id: player.id},
+      },
+      {
+        seatChangeRequestedAt: seatChangeRequestedAt,
+      }
+    );
+    return seatChangeRequestedAt;
   }
 
   public async seatChangeRequests(
@@ -345,6 +355,7 @@ export class SeatChangeProcess {
         },
         {
           seatNo: seatNo,
+          seatChangeRequestedAt: null,
         }
       );
 
