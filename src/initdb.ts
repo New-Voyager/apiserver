@@ -1,4 +1,5 @@
 import {ChatTextRepository} from './repositories/chat';
+import {StatsRepository} from './repositories/stats';
 
 const systemChatText = [
   'Donkey call',
@@ -18,4 +19,6 @@ export async function seed() {
   for (const text of systemChatText) {
     await ChatTextRepository.addSystemChatText(text);
   }
+
+  await StatsRepository.newSystemStats();
 }

@@ -1,0 +1,76 @@
+
+type Stats {
+  straight5Flush: Int
+  straight6Flush: Int
+  straight7Flush: Int
+  straight8Flush: Int
+  straight9Flush: Int
+  straightTFlush: Int
+  straightJFlush: Int
+  straightQFlush: Int
+  straightKFlush: Int
+  straightAFlush: Int
+
+  fourAAAA: Int
+  fourKKKK: Int
+  fourQQQQ: Int
+  fourJJJJ: Int
+  fourTTTT: Int
+  four9999: Int
+  four8888: Int
+  four7777: Int
+  four6666: Int
+  four5555: Int
+  four4444: Int
+  four3333: Int
+  four2222: Int
+
+  totalHands: Int
+}
+
+type PlayerGameStats {
+  inPreflop: Int
+  inFlop: Int
+  inTurn: Int
+  inRiver: Int
+  wentToShowDown: Int
+  wonAtShowDown: Int
+  headsupHands: Int
+  wonHeadsupHands: Int
+  headsupHandDetails: Json
+
+  preflopRaise: Int
+  postflopRaise: Int
+  threeBet: Int
+  contBet: Int
+  vpipCount: Int
+  allInCount: Int
+  totalHands: Int
+}
+
+type PlayerHandStats {
+  inPreflop: Int
+  inFlop: Int
+  inTurn: Int
+  inRiver: Int
+  wentToShowDown: Int
+  wonAtShowDown: Int
+  headsupHands: Int
+  wonHeadsupHands: Int
+  headsupHandSummary: Json
+
+  preflopRaise: Int
+  postflopRaise: Int
+  threeBet: Int
+  contBet: Int
+  vpipCount: Int
+  allInCount: Int
+  totalHands: Int
+}
+
+type Query {
+  clubStats(gameType: GameType!, clubCode: String!): Stats
+  systemStats: Stats
+  playerHandStats: PlayerHandStats!
+  playerGameStats(gameCode: String!): PlayerGameStats
+}

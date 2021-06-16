@@ -63,6 +63,7 @@ export async function resetDB() {
   await getManager().transaction(async transactionEntityManager => {
     await deleteAll('player_notes', transactionEntityManager);
     await deleteAll('club_messages', transactionEntityManager);
+    await deleteAll('club_stats', transactionEntityManager);
     await deleteAll('saved_hands', transactionEntityManager);
     await deleteAll('high_hand', transactionEntityManager);
     await deleteAll('host_seat_change_process', transactionEntityManager);
