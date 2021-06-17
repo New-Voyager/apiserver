@@ -82,6 +82,7 @@ input GameCreateInput {
   autoKickAfterBreak: Boolean
   waitlistSupported: Boolean
   sitInApproval: Boolean
+  highHandTracked: Boolean
   maxWaitList: Int
   rakePercentage: Float
   rakeCap: Float
@@ -148,6 +149,7 @@ type GameInfo {
   autoKickAfterBreak: Boolean
   waitlistSupported: Boolean
   sitInApproval: Boolean
+  highHandTracked: Boolean
   maxWaitList: Int
   rakePercentage: Float
   rakeCap: Float
@@ -322,6 +324,7 @@ type CompletedGame {
   showdownHands: Int
   buyIn: Float
   profit: Float
+  highHandTracked: Boolean
   stackStat: [GameStackStat!]
 }
 

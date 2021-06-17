@@ -63,6 +63,7 @@ export async function resetDB() {
   await getManager().transaction(async transactionEntityManager => {
     await deleteAll('player_notes', transactionEntityManager);
     await deleteAll('club_messages', transactionEntityManager);
+    await deleteAll('club_stats', transactionEntityManager);
     await deleteAll('saved_hands', transactionEntityManager);
     await deleteAll('high_hand', transactionEntityManager);
     await deleteAll('host_seat_change_process', transactionEntityManager);
@@ -80,6 +81,7 @@ export async function resetDB() {
     await deleteAll('game_gameserver', transactionEntityManager);
     await deleteAll('poker_game_updates', transactionEntityManager);
     await deleteAll('player_game_stats', transactionEntityManager);
+    await deleteAll('player_hand_stats', transactionEntityManager);
     await deleteAll('PokerGame', transactionEntityManager);
     await deleteAll('ClubMember', transactionEntityManager);
     await deleteAll('Club', transactionEntityManager);

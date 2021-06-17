@@ -1097,6 +1097,9 @@ class GameRepositoryImpl {
       // complete books
       await ChipsTrackRepository.settleClubBalances(game);
 
+      // roll up stats
+      await StatsRepository.rollupStats(game);
+
       // destroy Janus game
       try {
         //await this.deleteAudioConf(game.id);
@@ -1307,7 +1310,7 @@ class GameRepositoryImpl {
 
   public async getGamePlayers(gameCode: string): Promise<Array<any>> {
     const query = fixQuery(`
-      SELECT p.id AS "id", p.name AS "name", p.uuid AS "playerId"
+      SELECT p.id AS "id", p.name AS "name", p.uuid AS "uuid"
       FROM player_game_tracker pgt
       INNER JOIN player p ON pgt.pgt_player_id = p.id
       INNER JOIN poker_game pg ON pgt.pgt_game_id = pg.id

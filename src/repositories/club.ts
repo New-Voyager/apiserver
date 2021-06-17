@@ -24,6 +24,7 @@ import {Cache} from '@src/cache';
 import {ClubUpdateType} from './types';
 import {Nats} from '@src/nats';
 import {v4 as uuidv4} from 'uuid';
+import {StatsRepository} from './stats';
 
 const logger = getLogger('club-repository');
 
@@ -217,7 +218,9 @@ class ClubRepositoryImpl {
       await transactionEntityManager
         .getRepository<ClubMember>(ClubMember)
         .save(clubMember);
+      await StatsRepository.newClubStats(club, transactionEntityManager);
     });
+
     //logger.info('****** ENDING TRANSACTION  SAVE club and club member');
 
     return club.clubCode;

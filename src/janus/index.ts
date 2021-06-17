@@ -19,7 +19,8 @@ export class JanusSession {
     if (process.env.JANUS_URL) {
       return process.env.JANUS_URL;
     } else {
-      return 'http://139.59.73.106:8088/janus';
+      return JANUS_HTTP_URL;
+      //return 'http://139.59.73.106:8088/janus';
     }
   }
   public static async create(apiSecret: string) {
@@ -37,6 +38,7 @@ export class JanusSession {
     const session = new JanusSession();
     session._apiSecret = apiSecret;
     session._id = resp.data.data['id'];
+    logger.info(`Janus Room ${session._id} is created`);
     return session;
   }
 

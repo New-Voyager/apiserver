@@ -136,7 +136,11 @@ export async function declineSeatChange(playerUuid: string, gameCode: string) {
   }
 }
 
-export async function requestSeatChange(playerUuid: string, gameCode: string, cancel: boolean) {
+export async function requestSeatChange(
+  playerUuid: string,
+  gameCode: string,
+  cancel: boolean
+) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }
