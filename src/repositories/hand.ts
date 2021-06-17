@@ -23,10 +23,7 @@ import {SaveHandResult} from './types';
 import {Player} from '@src/entity/player';
 import {Club} from '@src/entity/club';
 import {StatsRepository} from './stats';
-import {GameRepository} from './game';
-import {identity} from 'lodash';
 import {ClubMessageInput} from '@src/entity/clubmessage';
-import {markDealerChoiceNextHand} from './pendingupdates';
 
 const logger = getLogger('hand');
 
@@ -315,7 +312,7 @@ class HandRepositoryImpl {
             success: true,
           };
           const highhandWinners = await RewardRepository.handleHighHand(
-            game.gameCode,
+            game,
             result,
             handHistory.timeEnded,
             transactionEntityManager
