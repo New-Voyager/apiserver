@@ -15,6 +15,13 @@
       "outFiles": [
         "${workspaceFolder}/**/*.js"
       ],
+      "env": {
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_USER": "game",
+        "POSTGRES_PASSWORD": "game",
+        "POSTGRES_DB": "game"
+      }
     },
     {
       "name": "Watch debug",
@@ -25,7 +32,14 @@
       "runtimeArgs": ["run-script", "watch-debug"],
       "port": 9235,
       "outputCapture": "std",
-      "console": "internalConsole"
+      "console": "internalConsole",
+      "env": {
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_USER": "game",
+        "POSTGRES_PASSWORD": "game",
+        "POSTGRES_DB": "game"
+      }
     },
     {
       "name": "Watch debug windows",
@@ -34,7 +48,14 @@
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run-script", "debug-windows"],
-      "port": 9235
+      "port": 9235,
+      "env": {
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_USER": "game",
+        "POSTGRES_PASSWORD": "game",
+        "POSTGRES_DB": "game"
+      }
     },           
     {
       "name": "Debug Jest Tests",
@@ -47,7 +68,14 @@
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
-      "port": 9229
+      "port": 9229,
+      "env": {
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_USER": "game",
+        "POSTGRES_PASSWORD": "game",
+        "POSTGRES_DB": "game"
+      }
     },
     {
       "name": "Run a specific jest test",
@@ -103,6 +131,13 @@
       "outFiles": [
         "${workspaceFolder}/**/*.js"
       ],
-    }    
+      "env": {
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_USER": "game",
+        "POSTGRES_PASSWORD": "game",
+        "POSTGRES_DB": "game"
+      }
+    }
   ]
 }
