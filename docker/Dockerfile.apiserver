@@ -8,7 +8,6 @@ WORKDIR /build
 RUN yarn install --production=true && \
   curl -sf https://gobinaries.com/tj/node-prune | sh
 COPY . .
-RUN mv ormconfig_postgres.json ormconfig.json
 
 RUN yarn compile && \
   rm -rf /usr/local/share/.cache/yarn && \

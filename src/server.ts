@@ -83,7 +83,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
 
   if (process.env.NODE_ENV !== 'test') {
     logger.debug('Running in dev/prod mode');
-    const options = await getConnectionOptions('default');
+    const options = await getConnectionOptions();
 
     // override database name if specified in the environment variable
     if (process.env.DB_NAME) {
@@ -107,7 +107,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
   } else {
     logger.debug('Running in TEST mode');
     process.env.DB_USED = 'sqllite';
-    const options = await getConnectionOptions('test');
+    const options = await getConnectionOptions();
     await createConnection({...options, name: 'default'});
   }
 
