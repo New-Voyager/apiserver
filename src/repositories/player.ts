@@ -40,6 +40,7 @@ class PlayerRepositoryImpl {
     player.isActive = true;
     player.deviceId = deviceId;
     player.bot = isBot;
+    player.encryptionKey = uuidv4();
 
     await repository.save(player);
     await StatsRepository.newPlayerHandStats(player);

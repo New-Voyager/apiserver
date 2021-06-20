@@ -133,6 +133,7 @@ type Query {
   myClubs: [PlayerClub!]
   allPlayers: [Player!]
   playerById: PlayerId!
+  encryptionKey: String!
   liveGames (clubCode: String): [LiveGame!]
   pastGames: [PastGame!]
   myInfo (getPrivs: Boolean): PlayerInfo!
