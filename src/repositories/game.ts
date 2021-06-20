@@ -1135,7 +1135,7 @@ class GameRepositoryImpl {
     transactionManager?: EntityManager
   ): Promise<Array<any>> {
     const query = fixQuery(`SELECT p.id as "playerId", name, uuid as "playerUuid", p.is_bot as "isBot",
-          p.encryption_key as "encryptionKey", buy_in as "buyIn", stack, status, seat_no as "seatNo", status,
+          buy_in as "buyIn", stack, status, seat_no as "seatNo", status,
           buyin_exp_at as "buyInExpTime", break_time_exp_at as "breakExpTime", game_token AS "gameToken",
           break_time_started_at as "breakStartedTime",
           run_it_twice_prompt as "runItTwicePrompt",
