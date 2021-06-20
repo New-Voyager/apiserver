@@ -37,6 +37,9 @@ export class Player {
   @Column({name: 'firebase_token', nullable: true})
   public firebaseToken!: string;
 
+  @Column({name: 'encryption_key', nullable: false})
+  public encryptionKey!: string;
+
   @Column({name: 'is_active'})
   public isActive!: boolean;
   /**

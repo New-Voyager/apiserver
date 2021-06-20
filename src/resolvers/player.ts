@@ -65,7 +65,9 @@ const resolvers: any = {
     playerById: async (parent, args, ctx, info) => {
       return getPlayerById(ctx.req.playerId);
     },
-
+    encryptionKey: async (parent, args, ctx, info) => {
+      return getEncryptionKey(ctx.req.playerId);
+    },
     liveGames: async (parent, args, ctx, info) => {
       return getLiveGames(ctx.req.playerId, args.clubCode);
     },
@@ -246,6 +248,17 @@ export async function getPlayerById(playerId: string) {
     email: player.email,
     lastActiveTime: player.updatedAt,
   };
+}
+
+export async function getEncryptionKey(playerId: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const player = await PlayerRepository.getPlayerById(playerId);
+  if (!player) {
+    throw new Error('Player not found');
+  }
+  return player.encryptionKey;
 }
 
 export async function getPlayerInfo(playerId: string, getPrivs: boolean) {
