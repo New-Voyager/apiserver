@@ -861,14 +861,35 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
       ret.janusRoomId = updates.janusRoomId;
       ret.janusRoomPin = updates.janusRoomPin;
     }
+    const now = new Date().getTime();
     // get player's game state
     const playerState = await GameRepository.getGamePlayerState(game, player);
     if (playerState) {
       ret.gameToken = playerState.gameToken;
-      ret.playerGameStatus = PlayerStatus[playerState.playerStatus];
+      ret.playerGameStatus = PlayerStatus[playerState.status];
       ret.playerMuckLosingHandConfig = playerState.muckLosingHand;
       ret.playerRunItTwiceConfig = playerState.runItTwicePrompt;
+      ret.sessionTime = 0;
+      logger.info(
+        `Session time: ${playerState.sessionTime} satAt: ${playerState.satAt}`
+      );
+      if (
+        playerState.sessionTime === undefined ||
+        playerState.sessionTime === null
+      ) {
+        playerState.sessionTime = 0;
+      }
+      if (playerState.satAt) {
+        const sessionTime = Math.round(
+          (now - playerState.satAt.getTime()) / 1000
+        );
+        ret.sessionTime = playerState.sessionTime + sessionTime;
+      }
+      ret.noHandsPlayed = playerState.noHandsPlayed;
+      ret.noHandsWon = playerState.noHandsWon;
     }
+    const runningTime = Math.round((now - game.startedAt.getTime()) / 1000);
+    ret.runningTime = runningTime;
 
     ret.gameToPlayerChannel = `game.${game.gameCode}.player`;
     ret.playerToHandChannel = `player.${game.gameCode}.hand`;
@@ -1603,6 +1624,35 @@ export async function openSeats(playerId: string, gameCode: string) {
   }
 }
 
+export async function playerStackStat(playerId: string, gameCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const errors = new Array<string>();
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+  try {
+    const player = await Cache.getPlayer(playerId);
+    const game = await Cache.getGame(gameCode);
+    const stackStat = await GameRepository.getPlayerStackStat(player, game);
+
+    /*
+    type GameStackStat {
+        handNum: Int
+        before: Float
+        after: Float
+      }
+      */
+    return stackStat;
+  } catch (err) {
+    logger.error(err.message);
+    throw new Error(
+      `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
+    );
+  }
+}
+
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -1658,6 +1708,9 @@ const resolvers: any = {
     },
     openSeats: async (parent, args, ctx, info) => {
       return await openSeats(ctx.req.playerId, args.gameCode);
+    },
+    playerStackStat: async (parent, args, ctx, info) => {
+      return playerStackStat(ctx.req.playerId, args.gameCode);
     },
   },
   GameInfo: {

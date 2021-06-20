@@ -25,8 +25,50 @@ class ChipsTrackRepositoryImpl {
       if (!gameUpdates) {
         throw new Error(`Game Updates for ${gameId} is not found`);
       }
+
       //logger.info('****** STARTING TRANSACTION FOR RAKE CALCULATION');
       await getManager().transaction(async transactionEntityManager => {
+        // update session time
+        const playerGameRepo = transactionEntityManager.getRepository(
+          PlayerGameTracker
+        );
+        const playerInGame = await playerGameRepo.find({
+          game: {id: game.id},
+        });
+        const updates = new Array<any>();
+        for (const player of playerInGame) {
+          let sessionTime = player.sessionTime;
+          if (player.satAt) {
+            const currentSessionTime = Math.round(
+              (new Date().getTime() - player.satAt.getTime()) / 1000
+            );
+            // in seconds
+            sessionTime = sessionTime + currentSessionTime;
+            logger.info(
+              `Session time in club: ${player.player.id} sessionTime: ${sessionTime}`
+            );
+
+            if (sessionTime === 0) {
+              sessionTime = 1;
+            }
+            logger.info(
+              `Session time in club: ${player.player.id} sessionTime: ${sessionTime}`
+            );
+            const update = playerGameRepo.update(
+              {
+                game: {id: game.id},
+              },
+              {
+                sessionTime: sessionTime,
+              }
+            );
+            updates.push(update);
+          }
+        }
+        if (updates.length > 0) {
+          await Promise.all(updates);
+        }
+
         const clubChipsTransaction = new ClubChipsTransaction();
         clubChipsTransaction.club = game.club;
         clubChipsTransaction.amount = gameUpdates.rake;

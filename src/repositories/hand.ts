@@ -18,7 +18,7 @@ import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/chipstrack';
 import {Cache} from '@src/cache';
 import {RewardRepository} from './reward';
-import {GameReward, GameRewardTracking} from '@src/entity/reward';
+import {GameReward} from '@src/entity/reward';
 import {SaveHandResult} from './types';
 import {Player} from '@src/entity/player';
 import {Club} from '@src/entity/club';
@@ -191,10 +191,6 @@ class HandRepositoryImpl {
         }
       }
 
-      const sessionTime =
-        new Date(handLog.handEndedAt).getTime() -
-        new Date(handLog.handStartedAt).getTime();
-
       // store the player name
       for (const seatNo of Object.keys(result.players)) {
         const player = result.players[seatNo];
@@ -246,15 +242,28 @@ class HandRepositoryImpl {
       const playerIdsInHand = new Array<number>();
       for (const seatNo of Object.keys(result.players)) {
         const player = result.players[seatNo];
-        playerBalance[player.id] = player.balance;
+        let balance: any = {};
+
+        // reduce json key
+        // b: before, a: after
+        balance['b'] = player.balance.before;
+        balance['a'] = player.balance.after;
+        playerBalance[player.id] = balance;
+
         playerIdsInHand.push(player.id);
       }
       result.gameCode = game.gameCode;
+      const playerStats = result.playerStats;
+      // don't store player stats
+      delete result.playerStats;
       handHistory.playersStack = JSON.stringify(playerBalance);
       handHistory.data = JSON.stringify(result);
       const summary = await this.getSummary(result);
       handHistory.summary = JSON.stringify(summary);
       handHistory.players = JSON.stringify(playerIdsInHand);
+
+      result.playerStats = playerStats;
+      result.playerRound = playerRound;
 
       //logger.info('****** STARTING TRANSACTION TO SAVE a hand result');
       const saveResult = await getManager().transaction(
@@ -280,7 +289,6 @@ class HandRepositoryImpl {
               .update()
               .set({
                 stack: player.balance.after,
-                sessionTime: () => `session_time + ${sessionTime}`,
                 noHandsWon: () => `no_hands_won + ${wonHand}`,
                 noHandsPlayed: () => 'no_hands_played + 1',
                 rakePaid: () => `rake_paid + ${rakePaidByPlayer}`,

@@ -69,6 +69,13 @@ export class PlayerGameTracker {
   @Column({name: 'session_time', default: 0})
   public sessionTime!: number;
 
+  @DbAwareColumn({
+    name: 'session_start_time',
+    type: 'timestamp',
+    nullable: true,
+  })
+  public sessionStartTime!: Date;
+
   @Column({name: 'no_hands_played', default: 0})
   public noHandsPlayed!: number;
 

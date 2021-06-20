@@ -87,6 +87,7 @@ export interface getClubGamesData {
   sessionTimeStr?: string;
   handsPlayed?: number;
   balance?: number;
+  satAt: Date;
 }
 
 export interface SeatMove {

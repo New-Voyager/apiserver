@@ -217,6 +217,11 @@ async function kickoutPlayer(
       player: {id: update.player.id},
     },
   });
+  // calculate session time
+  const currentSessionTime =
+    new Date().getTime() - playerInGame.satAt.getTime();
+  const roundMinutes = Math.round(currentSessionTime / 1000);
+  const sessionTime = playerInGame.sessionTime + roundMinutes;
 
   await playerGameTrackerRepository.update(
     {
@@ -225,7 +230,9 @@ async function kickoutPlayer(
     },
     {
       status: PlayerStatus.KICKED_OUT,
+      sessionTime: sessionTime,
       seatNo: 0,
+      satAt: undefined,
     }
   );
 
@@ -266,10 +273,18 @@ async function leaveGame(
   });
   const openedSeat = playerInGame.seatNo;
 
+  // calculate session time
+  const currentSessionTime =
+    new Date().getTime() - playerInGame.satAt.getTime();
+  const roundMinutes = Math.round(currentSessionTime / 1000);
+  const sessionTime = playerInGame.sessionTime + roundMinutes;
+
   await playerGameTrackerRepository.update(
     {
       game: {id: game.id},
       player: {id: update.player.id},
+      satAt: undefined,
+      sessionTime: sessionTime,
     },
     {
       status: PlayerStatus.LEFT,

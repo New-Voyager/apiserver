@@ -676,6 +676,7 @@ class ClubRepositoryImpl {
     const query = fixQuery(`
         SELECT pg.id, pg.game_code as "gameCode", pg.game_num as "gameNum",
         pgt.session_time as "sessionTime", pg.game_status as "status",
+        pgt.sat_at as "satAt",
         pg.small_blind as "smallBlind", pg.big_blind as "bigBlind",
         pgt.no_hands_played as "handsPlayed", 
         pgt.no_hands_won as "handsWon", in_flop as "flopHands", in_turn as "turnHands",

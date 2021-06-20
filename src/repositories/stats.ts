@@ -127,7 +127,7 @@ class StatsRepositoryImpl {
     for (const key of Object.keys(playerStats)) {
       const playerId = parseInt(key);
       const playerStat = playerStats[key];
-
+      const round = handResult.playerRound[playerId];
       let headsupRecord;
       if (playerStat.headsup) {
         // treat headsup special, get the existing record and add the count
@@ -178,10 +178,10 @@ class StatsRepositoryImpl {
               `won_at_showdown + ${playerStat.wonChipsAtShowdown ? 1 : 0}`,
             wonHeadsupHands: () =>
               `won_headsup_hands + ${playerStat.wonHeadsup ? 1 : 0}`,
-            inPreflop: () => `in_preflop + ${playerStat.inPreflop ? 1 : 0}`,
-            inFlop: () => `in_flop + ${playerStat.inFlop ? 1 : 0}`,
-            inTurn: () => `in_turn + ${playerStat.inTurn ? 1 : 0}`,
-            inRiver: () => `in_river + ${playerStat.inRiver ? 1 : 0}`,
+            inPreflop: () => `in_preflop + ${round.preflop ? 1 : 0}`,
+            inFlop: () => `in_flop + ${round.flop ? 1 : 0}`,
+            inTurn: () => `in_turn + ${round.turn ? 1 : 0}`,
+            inRiver: () => `in_river + ${round.river ? 1 : 0}`,
             headsupHands: () => `headsup_hands + ${playerStat.headsup ? 1 : 0}`,
             totalHands: () => `total_hands + 1`,
           })

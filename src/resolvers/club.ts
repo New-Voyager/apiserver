@@ -70,6 +70,7 @@ export async function getClubGames(
     completedGames
   );
   const ret = new Array<any>();
+  const now = new Date().getTime();
 
   for (const game of clubGames) {
     const retGame = game as any;
@@ -81,9 +82,11 @@ export async function getClubGames(
       game.runTimeStr = humanizeDuration(runTime, {round: true});
     }
 
-    if (game.sessionTime) {
-      const roundedTime = Math.ceil(game.sessionTime / 60);
-      const sessionTime = roundedTime * 60;
+    if (game.sessionTime && game.satAt) {
+      let sessionTime =
+        game.sessionTime + Math.round((now - game.satAt.getTime()) / 1000);
+      const roundedTime = Math.ceil(sessionTime / 60);
+      sessionTime = roundedTime * 60;
 
       game.sessionTimeStr = humanizeDuration(sessionTime * 1000, {
         round: true,

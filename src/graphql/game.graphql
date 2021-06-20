@@ -173,6 +173,7 @@ type GameInfo {
   runItTwiceAllowed: Boolean
   roeGames: [GameType!]
   dealerChoiceGames: [GameType!]
+  runningTime: Int
 
   # NATS channels
   gameToPlayerChannel: String
@@ -186,7 +187,10 @@ type GameInfo {
   # current player status
   playerGameStatus: PlayerGameStatus
   playerRunItTwiceConfig: Boolean
-  playerMuckLosingHandConfig: Boolean 
+  playerMuckLosingHandConfig: Boolean
+  sessionTime: Int
+  noHandsPlayed: Int
+  noHandsWon: Int
 
   # updates
   handNum: Int
@@ -419,6 +423,10 @@ type Query {
   gamePlayers(gameCode: String!): [PlayerInfo!]
   pendingApprovals(clubCode: String gameCode: String): [PendingApproval!]
   downloadResult(gameCode: String!): String!
+
+  # player stats from live game
+  playerStackStat(gameCode: String!): [GameStackStat!]
+
 
   # open seats. Returns open seat numbers
   openSeats(gameCode: String!): [Int!]

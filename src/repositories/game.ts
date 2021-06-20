@@ -54,6 +54,7 @@ import _ from 'lodash';
 import {PlayerGameStats} from '@src/entity/stats';
 import {WaitlistSeatError} from '@src/errors';
 import {JanusSession} from '@src/janus';
+import {HandHistory} from '@src/entity/hand';
 
 const logger = getLogger('game');
 
@@ -186,10 +187,13 @@ class GameRepositoryImpl {
 
           const rewardTrackingIds = new Array<number>();
           if (input.rewardIds) {
+            const rewardRepository = transactionEntityManager.getRepository(
+              Reward
+            );
             for await (const rewardId of input.rewardIds) {
-              const rewardRepository = transactionEntityManager.getRepository(
-                Reward
-              );
+              if (rewardId == 0) {
+                continue;
+              }
               const reward = await rewardRepository.findOne({id: rewardId});
               if (!reward) {
                 throw new Error(`Reward: ${rewardId} is not found`);
@@ -730,6 +734,8 @@ class GameRepositoryImpl {
         player: {id: player.id},
       })
       .select('status')
+      .addSelect('session_time', 'sessionTime')
+      .addSelect('sat_at', 'satAt')
       .execute();
     if (!rows && rows.length === 0) {
       throw new Error('Player is not found in the game');
@@ -747,8 +753,18 @@ class GameRepositoryImpl {
       update.newUpdate = NextHandUpdate.LEAVE;
       await nextHandUpdatesRepository.save(update);
     } else {
+      const seatNo = playerInGame.seatNo;
       playerInGame.status = PlayerStatus.NOT_PLAYING;
       playerInGame.seatNo = 0;
+
+      // calculate session time
+      const currentSessionTime =
+        new Date().getTime() - playerInGame.satAt.getTime();
+      const roundSeconds = Math.round(currentSessionTime / 1000);
+      const sessionTime = playerInGame.sessionTime + roundSeconds;
+      logger.info(
+        `Session Time: Player: ${player.id} sessionTime: ${sessionTime}`
+      );
       playerGameTrackerRepository.update(
         {
           game: {id: game.id},
@@ -757,10 +773,12 @@ class GameRepositoryImpl {
         {
           status: PlayerStatus.NOT_PLAYING,
           seatNo: 0,
+          satAt: undefined,
+          sessionTime: sessionTime,
         }
       );
 
-      playerLeftGame(game, player, playerInGame.seatNo);
+      playerLeftGame(game, player, seatNo);
     }
     return true;
   }
@@ -1155,27 +1173,13 @@ class GameRepositoryImpl {
   public async getGamePlayerState(
     game: PokerGame,
     player: Player
-  ): Promise<any | null> {
-    // const query = fixQuery(`SELECT game_token AS "gameToken",
-    //   status AS "playerStatus",
-    //   stack AS stack,
-    //   "buyIn_status" as "buyInStatus",
-    //   seat_no as "seatNo",
-    //   run_it_twice_prompt as "runItTwicePrompt",
-    //   muck_losing_hand as "muckLosingHand",
-    //   buy_in
-    // FROM  player_game_tracker pgt
-    // JOIN player p ON pgt.pgt_player_id = p.id
-    // AND p.uuid = ?
-    // AND pgt.pgt_game_id = ?`);
-    // const resp = await getConnection().query(query, [playerUuid, gameId]);
-
+  ): Promise<PlayerGameTracker | null> {
     const repo = getRepository(PlayerGameTracker);
     const resp = await repo.find({
       player: {id: player.id},
       game: {id: game.id},
     });
-    return resp;
+    return resp[0];
   }
 
   public async kickOutPlayer(gameCode: string, player: Player) {
@@ -1770,6 +1774,34 @@ class GameRepositoryImpl {
       });
     }
     return players;
+  }
+
+  public async getPlayerStackStat(
+    player: Player,
+    game: PokerGame
+  ): Promise<Array<any>> {
+    const hhrepo = getRepository(HandHistory);
+    const stacks = await hhrepo
+      .createQueryBuilder()
+      .where({
+        gameId: game.id,
+      })
+      .select('players_stack')
+      .addSelect('hand_num')
+      .orderBy('hand_num', 'ASC')
+      .execute();
+    const playerIdStr = `${player.id}`;
+    const playerStacks = new Array<any>();
+    for (const stack of stacks) {
+      const playerStack = JSON.parse(stack['players_stack'])[playerIdStr];
+      const stackRet = {
+        handNum: stack.hand_num,
+        before: playerStack.b,
+        after: playerStack.a,
+      };
+      playerStacks.push(stackRet);
+    }
+    return playerStacks;
   }
 }
 
