@@ -572,7 +572,6 @@ class GameAPIs {
               gameToken: '',
               runItTwicePrompt: false,
               muckLosingHand: false,
-              encryptionKey: '',
             });
           } else {
             let buyInExpTime = '';
@@ -602,7 +601,6 @@ class GameAPIs {
               gameToken: '',
               runItTwicePrompt: playerSeat.runItTwicePrompt,
               muckLosingHand: playerSeat.muckLosingHand,
-              encryptionKey: playerSeat.encryptionKey,
             });
           }
         }
