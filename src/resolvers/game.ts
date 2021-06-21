@@ -1775,8 +1775,8 @@ const resolvers: any = {
         return stack.map(x => {
           return {
             handNum: x.hand,
-            before: x.playerStack.before,
-            after: x.playerStack.after,
+            before: x.playerStack.b,
+            after: x.playerStack.a,
           };
         });
       } else {
