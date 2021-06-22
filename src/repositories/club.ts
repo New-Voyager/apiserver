@@ -370,7 +370,6 @@ class ClubRepositoryImpl {
       .execute();
     await Cache.getClubMember(playerId, clubCode, true /* update cache */);
 
-    await clubMemberRepository.save(clubMember);
     const messageId = uuidv4();
     try {
       // TODO: send firebase notification

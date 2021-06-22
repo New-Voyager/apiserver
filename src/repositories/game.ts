@@ -1300,6 +1300,7 @@ class GameRepositoryImpl {
         pgt.buy_in AS "buyIn",
         pgt.stack - pgt.buy_in AS "profit",
         pgt.rake_paid AS "rakePaid",
+        pgt.sat_at AS "satAt",
         p.name AS "playerName",
         p.uuid AS "playerId"
       FROM player_game_tracker pgt

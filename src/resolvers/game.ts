@@ -580,9 +580,19 @@ export async function getGameResultTable(gameCode: string) {
     const resp = await GameRepository.getGameResultTable(gameCode);
 
     for (const r of resp) {
-      if (r.sessionTime) {
-        r.sessionTimeStr = getSessionTimeStr(r.sessionTime);
+      let sessionTime = r.sessionTime;
+      if (!sessionTime) {
+        sessionTime = 0;
       }
+      if (r.satAt) {
+        const currentSessionTime = Math.round(
+          (new Date().getTime() - r.satAt.getTime()) / 1000
+        );
+        // in seconds
+        sessionTime = sessionTime + currentSessionTime;
+      }
+      r.sessionTime = sessionTime;
+      r.sessionTimeStr = getSessionTimeStr(r.sessionTime);
     }
 
     return resp;
