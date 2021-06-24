@@ -33,6 +33,7 @@ import {ClubUpdateType, NewUpdate} from '@src/repositories/types';
 import {TakeBreak} from '@src/repositories/takebreak';
 import {Player} from '@src/entity/player';
 import {Nats} from '@src/nats';
+import {Reload} from '@src/repositories/reload';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -707,9 +708,15 @@ export async function approveRequest(
       }
     }
     const player = await Cache.getPlayer(playerUuid);
-    const buyin = new BuyIn(game, player);
-    const resp = await buyin.approve(type, status);
-    // player is good to go
+
+    let resp: boolean;
+    if (type == ApprovalType.RELOAD_REQUEST) {
+      const reload = new Reload(game, player);
+      resp = await reload.approveDeny(status);
+    } else {
+      const buyin = new BuyIn(game, player);
+      resp = await buyin.approve(type, status);
+    }
     return resp;
   } catch (err) {
     logger.error(JSON.stringify(err));
