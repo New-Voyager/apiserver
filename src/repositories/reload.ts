@@ -192,7 +192,7 @@ export class Reload {
             `************ [${this.game.gameCode}]: Player ${this.player.name} bot: ${this.player.bot} buyin is approved`
           );
           buyInApprovedTime = new Date().getTime();
-          await this.approvedAndUpdateStack(amount);
+          await this.approve(amount, playerInGame, transactionEntityManager);
           buyInApprovedTime = new Date().getTime() - buyInApprovedTime;
         }
 
@@ -217,7 +217,8 @@ export class Reload {
   ): Promise<PlayerGameTracker> {
     if (
       this.game.status === GameStatus.ACTIVE &&
-      this.game.tableStatus === TableStatus.GAME_RUNNING
+      (this.game.tableStatus === null || // test mode
+        this.game.tableStatus === TableStatus.GAME_RUNNING)
     ) {
       // game is running
       await this.addToNextHand(
