@@ -28,7 +28,7 @@ const holdemGameInput = {
   minPlayers: 3,
   maxPlayers: 9,
   gameLength: 60,
-  buyInApproval: true,
+  buyInApproval: false,
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,
@@ -108,7 +108,7 @@ function sleep(ms: number) {
 
 const GAMESERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
-describe('Tests: seat change APIs', () => {
+describe('Tests: Reload API', () => {
   beforeEach(async done => {
     await resetDatabase();
     done();
@@ -118,68 +118,59 @@ describe('Tests: seat change APIs', () => {
     done();
   });
 
-  test('seat change functionality', async () => {
-    // Create club and owner
+  test('reload-test1', async () => {
+//    test('reload auto approval, game did not start', async () => {
+      // Create club and owner
     const [ownerId, clubCode, players] = await createClubWithMembers([
       {
         name: 'player1',
         devId: 'test321',
       },
+      {
+        name: 'player2',
+        devId: 'test322',
+      },
+      {
+        name: 'player3',
+        devId: 'test323',
+      },
+      {
+        name: 'player4',
+        devId: 'test324',
+      },
+      {
+        name: 'player5',
+        devId: 'test325',
+      },
     ]);
-    const player1 = ownerId;
-    const player2 = players[0];
 
     // create gameserver and game
     const gameInput = holdemGameInput;
     gameInput.maxPlayers = 3;
     gameInput.minPlayers = 2;
-    gameInput.buyInApproval = false;
     const game = await gameutils.configureGame(ownerId, clubCode, gameInput);
+    //await gameutils.startGame(ownerId, game.gameCode);
 
     // join a game
-    await gameutils.joinGame(player1, game.gameCode, 1);
-    await gameutils.joinGame(player2, game.gameCode, 2);
+    await gameutils.joinGame(players[0], game.gameCode, 1);
+    await gameutils.joinGame(players[1], game.gameCode, 2);
+    await gameutils.joinGame(players[2], game.gameCode, 3);
 
     // buyin
-    await gameutils.buyin(player1, game.gameCode, 100);
-    await gameutils.buyin(player2, game.gameCode, 100);
+    await gameutils.buyin(players[0], game.gameCode, 100);
+    await gameutils.buyin(players[1], game.gameCode, 100);
+    await gameutils.buyin(players[2], game.gameCode, 100);
 
-    await gameutils.startGame(ownerId, game.gameCode);
+    // reload game
+    await gameutils.reload(players[0], game.gameCode, 50);
+    const gameInfo = await gameutils.gameInfo(players[0], game.gameCode);
+    console.log(JSON.stringify(gameInfo));
 
-    // request seat change
-    const resp1 = await gameutils.requestSeatChange(player1, game.gameCode);
-    expect(resp1).not.toBeNull();
-    const resp2 = await gameutils.requestSeatChange(player2, game.gameCode);
-    expect(resp2).not.toBeNull();
-
-    // get all requested seat changes
-    const resp3 = await gameutils.seatChangeRequests(ownerId, game.gameCode);
-    expect(resp3).toHaveLength(2);
-
-    // confirm seat change
-    const resp4 = await gameutils.confirmSeatChange(player1, game.gameCode, 3);
-    expect(resp4).toBe(true);
-    const resp5 = await gameutils.confirmSeatChange(player2, game.gameCode, 3);
-    expect(resp5).toBe(true);
-
-    // wait for 6 seconds
-    await sleep(6000);
-
-    // call waitlistTimeoutExpired
-    const gameId = await gameutils.getGameById(game.gameCode);
-    const hostId = await handutils.getPlayerById(ownerId);
-    try {
-      await axios.post(
-        `${GAMESERVER_API}/timer-callback/gameId/${gameId}/playerId/${hostId}/purpose/SEATCHANGE_INPROGRESS`
-      );
-    } catch (err) {
-      console.error(JSON.stringify(err));
-      expect(true).toBeFalsy();
+    const seats = gameInfo.seatInfo.playersInSeats;
+    for(const seat of seats) {
+      if (seat.seatNo === 1) {
+        expect(seat.stack).toBe(150);
+      }
     }
-
-    // get all requested seat changes
-    const resp6 = await gameutils.seatChangeRequests(ownerId, game.gameCode);
-    expect(resp6).toHaveLength(1);
-    expect(resp6[0].playerUuid).toBe(player2);
   });
 });

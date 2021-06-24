@@ -40,7 +40,7 @@ let rewardId, rewardTrackID;
 
 async function saveReward(playerId, clubCode) {
   const rewardInput = {
-    amount: 100.4,
+    amount: 100,
     endHour: 4,
     minRank: 1,
     name: 'brady',

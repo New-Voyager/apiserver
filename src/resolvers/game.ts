@@ -403,8 +403,8 @@ export async function reload(
     }
 
     const player = await Cache.getPlayer(playerUuid);
-    const buyin = new BuyIn(game, player);
-    const status = await buyin.reloadRequest(amount);
+    const buyin = new Reload(game, player);
+    const status = await buyin.request(amount);
     // player is good to go
     return status;
   } catch (err) {

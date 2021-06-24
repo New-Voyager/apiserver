@@ -10,7 +10,7 @@ import * as Constants from '../const';
 import {SeatMove, SeatUpdate} from '@src/types';
 import {NetworkStatus} from 'apollo-client';
 
-let notifyGameServer = false;
+export let notifyGameServer = false;
 const logger = getLogger('gameServer');
 
 export function initializeGameServer() {
