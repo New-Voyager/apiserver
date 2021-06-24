@@ -488,10 +488,10 @@ class StatsRepositoryImpl {
     }
   }
 
-  public async newClubGame(club: Club) {
+  public async newClubGame(gameType: GameType, club: Club) {
     try {
-      const playerStatsRepo = getRepository(ClubStats);
-      await playerStatsRepo
+      const clubStatsRepo = getRepository(ClubStats);
+      await clubStatsRepo
         .createQueryBuilder()
         .update()
         .set({
@@ -499,6 +499,7 @@ class StatsRepositoryImpl {
         })
         .where({
           club: {id: club.id},
+          gameType: gameType,
         })
         .execute();
     } catch (err) {

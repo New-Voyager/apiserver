@@ -117,7 +117,24 @@ class HandRepositoryImpl {
       if (handNum === 1) {
         if (game.club) {
           try {
-            await StatsRepository.newClubGame(game.club);
+            let gameType: GameType = GameType.UNKNOWN;
+            switch (game.gameType) {
+              case GameType.HOLDEM:
+                gameType = GameType.HOLDEM;
+                break;
+              case GameType.PLO:
+              case GameType.PLO_HILO:
+                gameType = GameType.PLO;
+                break;
+              case GameType.FIVE_CARD_PLO:
+              case GameType.FIVE_CARD_PLO_HILO:
+                gameType = GameType.FIVE_CARD_PLO;
+                break;
+            }
+
+            if (gameType !== GameType.UNKNOWN) {
+              await StatsRepository.newClubGame(gameType, game.club);
+            }
           } catch (err) {}
         }
       }
