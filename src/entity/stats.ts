@@ -126,6 +126,9 @@ export class PlayerHandStats {
 
   @Column({name: 'total_hands', default: 0})
   public totalHands!: number;
+
+  @Column({name: 'total_games', default: 0})
+  public totalGames!: number;
 }
 
 @Entity({name: 'club_stats'})

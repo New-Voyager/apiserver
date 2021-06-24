@@ -290,10 +290,10 @@ async function leaveGame(
     {
       game: {id: game.id},
       player: {id: update.player.id},
-      satAt: undefined,
-      sessionTime: sessionTime,
     },
     {
+      satAt: undefined,
+      sessionTime: sessionTime,
       status: PlayerStatus.LEFT,
       seatNo: 0,
     }

@@ -593,6 +593,7 @@ class GameRepositoryImpl {
 
           try {
             await playerGameTrackerRepository.save(playerInGame);
+            await StatsRepository.joinedNewGame(player);
             // create a row in stats table
             await StatsRepository.newGameStatsRow(
               game,

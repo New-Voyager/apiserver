@@ -470,6 +470,24 @@ class StatsRepositoryImpl {
     }
   }
 
+  public async joinedNewGame(player: Player) {
+    try {
+      const playerStatsRepo = getRepository(PlayerHandStats);
+      await playerStatsRepo
+        .createQueryBuilder()
+        .update()
+        .set({
+          totalGames: () => `total_games + 1`,
+        })
+        .where({
+          player: {id: player.id},
+        })
+        .execute();
+    } catch (err) {
+      logger.error(`Failed to update player stats: ${err.toString()}`);
+    }
+  }
+
   public async newPlayerHandStats(player: Player) {
     const playerStatsRepo = getRepository(PlayerHandStats);
     const playerStats = new PlayerHandStats();

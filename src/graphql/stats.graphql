@@ -66,6 +66,7 @@ type PlayerHandStats {
   vpipCount: Int
   allInCount: Int
   totalHands: Int
+  totalGames: Int
 }
 
 type Query {
