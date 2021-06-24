@@ -137,6 +137,15 @@ export const buyinQuery = gql`
   }
 `;
 
+export const reloadQuery = gql`
+  mutation($gameCode: String!, $amount: Float!) {
+    status: reload(gameCode: $gameCode, amount: $amount) {
+      expireSeconds
+      approved
+    }
+  }
+`;
+
 export const approveQuery = gql`
   mutation(
     $gameCode: String!
@@ -180,6 +189,31 @@ export const myGameStateQuery = gql`
       waitlistNo
       seatNo
     }
+  }
+`;
+
+export const gameInfoQuery = gql`
+  query($gameCode: String!) {
+    gameInfo(gameCode: $gameCode) {
+      gameCode
+      gameID
+      audioConfEnabled
+      tableStatus
+      status
+      handNum
+      startedAt
+      sessionTime
+      runningTime
+      noHandsWon
+      noHandsPlayed
+      seatInfo {
+        playersInSeats {
+          stack
+          seatNo
+          playerId
+        }
+      }
+    }    
   }
 `;
 
@@ -386,6 +420,24 @@ export async function buyin(
   return resp.data.status;
 }
 
+export async function reload(
+  playerId: string,
+  gameCode: string,
+  amount: number
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+      amount: amount,
+    },
+    mutation: reloadQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+
 export async function pendingApprovalsForClub(
   playerId: string,
   clubCode: string
@@ -401,6 +453,23 @@ export async function pendingApprovalsForClub(
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
   return resp.data.status;
+}
+
+export async function gameInfo(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const variables: any = {
+    gameCode: gameCode,
+  };
+
+  const resp = await getClient(playerId).query({
+    variables: variables,
+    query: gameInfoQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.gameInfo;
 }
 
 export async function pendingApprovalsForGame(

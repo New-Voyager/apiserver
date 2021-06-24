@@ -4,6 +4,7 @@ import axios from 'axios';
 import {GameStatus} from '@src/entity/types';
 import {fixQuery} from '@src/utils';
 import {BUYIN_TIMEOUT, BREAK_TIMEOUT} from '@src/repositories/types';
+import {notifyGameServer} from '@src/gameserver';
 const logger = getLogger('timer');
 
 function getTimerUrl(): string {
@@ -20,6 +21,10 @@ export async function startTimer(
   expAt: Date
 ) {
   if (process.env.NOTIFY_GAME_SERVER !== '1') {
+    return;
+  }
+
+  if (!notifyGameServer) {
     return;
   }
 
@@ -40,6 +45,9 @@ export async function cancelTimer(
   purpose: string
 ) {
   if (process.env.NOTIFY_GAME_SERVER !== '1') {
+    return;
+  }
+  if (!notifyGameServer) {
     return;
   }
 

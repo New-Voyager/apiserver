@@ -77,6 +77,28 @@ class FirebaseClass {
       logger.info(`message id: ${ret}`);
     }
   }
+
+  public async notifyReloadRequest(
+    game: PokerGame,
+    requestingPlayer: Player,
+    host: Player,
+    amount: number
+  ) {
+    if (host.firebaseToken !== null && host.firebaseToken.length > 0) {
+      const message: firebase.messaging.TokenMessage = {
+        data: {
+          amount: amount.toString(),
+          gameCode: game.gameCode,
+          playerName: requestingPlayer.name,
+          playerUuid: requestingPlayer.uuid,
+          type: 'RELOAD_REQUEST',
+        },
+        token: host.firebaseToken,
+      };
+      const ret = await firebase.messaging().send(message, false);
+      logger.info(`message id: ${ret}`);
+    }
+  }
 }
 
 const Firebase = new FirebaseClass();

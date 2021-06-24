@@ -6,7 +6,12 @@ import {
   Repository,
 } from 'typeorm';
 import {fixQuery} from '@src/utils';
-import {GameStatus, NextHandUpdate, PlayerStatus} from '@src/entity/types';
+import {
+  ApprovalStatus,
+  GameStatus,
+  NextHandUpdate,
+  PlayerStatus,
+} from '@src/entity/types';
 import {GameRepository} from './game';
 import {getLogger} from '@src/utils/log';
 import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game';
@@ -26,6 +31,8 @@ import {Nats} from '@src/nats';
 import {TakeBreak} from './takebreak';
 import {Cache} from '@src/cache';
 import {BuyIn} from './buyin';
+import {reloadApprovalTimeoutExpired} from './timer';
+import {Reload} from './reload';
 
 const logger = getLogger('pending-updates');
 
@@ -145,16 +152,16 @@ export async function processPendingUpdates(gameId: number) {
           pendingUpdatesRepo
         );
         newOpenSeat = true;
-      } else if (
-        update.newUpdate === NextHandUpdate.RELOAD_APPROVED ||
-        update.newUpdate === NextHandUpdate.BUYIN_APPROVED
-      ) {
+      } else if (update.newUpdate === NextHandUpdate.BUYIN_APPROVED) {
         await buyinApproved(
           playerGameTrackerRepository,
           game,
           update,
           pendingUpdatesRepo
         );
+      } else if (update.newUpdate === NextHandUpdate.RELOAD_APPROVED) {
+        await reloadApproved(game, update, pendingUpdatesRepo);
+        continue;
       } else if (update.newUpdate === NextHandUpdate.WAIT_FOR_DEALER_CHOICE) {
         dealerChoiceUpdate = update;
       } else if (update.newUpdate === NextHandUpdate.TAKE_BREAK) {
@@ -359,6 +366,24 @@ async function buyinApproved(
   }
   // delete this update
   await pendingUpdatesRepo.delete({id: update.id});
+}
+
+async function reloadApproved(
+  game: PokerGame,
+  update: NextHandUpdates,
+  pendingUpdatesRepo
+) {
+  let amount = 0;
+  if (update.buyinAmount) {
+    amount = update.buyinAmount;
+  } else {
+    amount = update.reloadAmount;
+  }
+  // delete this update
+  await pendingUpdatesRepo.delete({id: update.id});
+
+  const reload = new Reload(game, update.player);
+  await reload.approvedAndUpdateStack(amount);
 }
 
 async function handleDealersChoice(

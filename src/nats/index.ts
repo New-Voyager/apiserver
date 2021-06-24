@@ -252,6 +252,110 @@ class NatsClass {
     this.client.publish(subject, messageStr);
   }
 
+  public sendReloadApproved(
+    gameCode: string,
+    playerId: number,
+    playerUuid: string,
+    name: string,
+    oldStack: number,
+    newStack: number,
+    reloadAmount: number
+  ) {
+    if (this.client === null) {
+      return;
+    }
+    const tick = new Date().getTime();
+
+    const messageId = `RELOADAPPROVED:${tick}`;
+
+    const message: any = {
+      type: 'STACK_RELOADED',
+      gameCode: gameCode,
+      playerName: name,
+      playerId: playerId,
+      playerUuid: playerUuid,
+      requestId: messageId,
+      oldStack: oldStack,
+      newStack: newStack,
+      reloadAmount: reloadAmount,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getGameChannel(gameCode);
+    this.client.publish(subject, messageStr);
+  }
+
+  public sendReloadApprovalRequest(
+    game: PokerGame,
+    clubName: string,
+    requestingPlayer: Player,
+    host: Player,
+    messageId: string
+  ) {
+    if (this.client === null) {
+      return;
+    }
+    const message: any = {
+      type: 'RELOAD_REQUEST',
+      gameCode: game.gameCode,
+      gameType: GameType[game.gameType],
+      smallBlind: game.smallBlind,
+      bigBlind: game.bigBlind,
+      clubName: clubName,
+      requestingPlayerId: requestingPlayer.id,
+      requestingPlayerName: requestingPlayer.name,
+      requestingPlayerUuid: requestingPlayer.uuid,
+      requestId: messageId,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getPlayerChannel(host);
+    this.client.publish(subject, messageStr);
+  }
+
+  public sendReloadWaitTime(
+    game: PokerGame,
+    clubName: string,
+    requestingPlayer: Player,
+    waitTime: number,
+    messageId: string
+  ) {
+    if (this.client === null) {
+      return;
+    }
+    const message: any = {
+      type: 'RELOAD_REQUEST_WAIT_FOR_APPROVAL',
+      gameCode: game.gameCode,
+      requestingPlayerId: requestingPlayer.id,
+      requestingPlayerName: requestingPlayer.name,
+      requestingPlayerUuid: requestingPlayer.uuid,
+      waitTime: waitTime,
+      requestId: messageId,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getPlayerChannel(requestingPlayer);
+    this.client.publish(subject, messageStr);
+  }
+
+  public sendReloadTimeout(
+    game: PokerGame,
+    requestingPlayer: Player,
+    messageId: string
+  ) {
+    if (this.client === null) {
+      return;
+    }
+    const message: any = {
+      type: 'RELOAD_TIMEOUT',
+      gameCode: game.gameCode,
+      requestingPlayerId: requestingPlayer.id,
+      requestingPlayerName: requestingPlayer.name,
+      requestingPlayerUuid: requestingPlayer.uuid,
+      requestId: messageId,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getPlayerChannel(requestingPlayer);
+    this.client.publish(subject, messageStr);
+  }
+
   public getPlayerChannel(player: Player) {
     const subject = `player.${player.id}`;
     return subject;
