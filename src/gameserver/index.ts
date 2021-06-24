@@ -17,7 +17,6 @@ export function initializeGameServer() {
   if (process.env.NOTIFY_GAME_SERVER === '1') {
     notifyGameServer = true;
   }
-  notifyGameServer = false;
   if (notifyGameServer) {
     logger.info('Notification to game server is enabled');
   } else {
