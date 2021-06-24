@@ -1,8 +1,10 @@
 import {PokerGame} from '@src/entity/game';
 import {Player} from '@src/entity/player';
 import {GameType} from '@src/entity/types';
+import {HighHandWinner} from '@src/repositories/types';
 import {getLogger} from '@src/utils/log';
 import * as nats from 'nats';
+import {v4 as uuidv4} from 'uuid';
 
 const logger = getLogger('nats');
 
@@ -353,6 +355,61 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getPlayerChannel(requestingPlayer);
+    this.client.publish(subject, messageStr);
+  }
+
+  /*
+  message HighHandWinner {
+    uint64 player_id = 1;
+    string player_name = 2;
+    uint32 hh_rank = 3;
+    repeated uint32 hh_cards = 4;
+    repeated uint32 player_cards = 5;
+    uint32 seat_no = 6;
+  }
+
+  message HighHand {
+    string gameCode = 1;
+    uint32 hand_num = 2;
+    repeated HighHandWinner winners = 3;
+  }
+  
+  {
+    "boardCards": [],
+    "rank": 1,
+    "gameCode": "",
+    "handNum": 1,
+    "winners": [
+      "hhCards": [],
+      "playerCards": [],
+    ]
+  }
+  */
+  public sendHighHandWinners(
+    game: PokerGame,
+    boardCards: Array<number>,
+    handNum: number,
+    winners: Array<HighHandWinner>,
+    messageId?: string
+  ) {
+    if (this.client === null) {
+      return;
+    }
+
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message: any = {
+      type: 'NEW_HIGHHAND_WINNER',
+      gameCode: game.gameCode,
+      handNum: handNum,
+      boardCards: boardCards,
+      winners: winners,
+      requestId: messageId,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getGameChannel(game.gameCode);
     this.client.publish(subject, messageStr);
   }
 

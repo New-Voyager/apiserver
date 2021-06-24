@@ -24,6 +24,7 @@ import {Player} from '@src/entity/player';
 import {Club} from '@src/entity/club';
 import {StatsRepository} from './stats';
 import {ClubMessageInput} from '@src/entity/clubmessage';
+import {Nats} from '@src/nats';
 
 const logger = getLogger('hand');
 
@@ -368,6 +369,15 @@ class HandRepositoryImpl {
               associatedGames: gameCodes,
               winners: highhandWinners.winners,
             };
+          }
+
+          if (highhandWinners !== null) {
+            Nats.sendHighHandWinners(
+              game,
+              result.boardCards,
+              handNum,
+              highhandWinners.winners
+            );
           }
 
           await StatsRepository.saveHandStats(
