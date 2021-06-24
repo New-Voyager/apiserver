@@ -114,6 +114,14 @@ class HandRepositoryImpl {
       game = gameFromCache;
       const playersInHand = result.players;
 
+      if (handNum === 1) {
+        if (game.club) {
+          try {
+            await StatsRepository.newClubGame(game.club);
+          } catch (err) {}
+        }
+      }
+
       /**
        * Assigning hand history values
        */

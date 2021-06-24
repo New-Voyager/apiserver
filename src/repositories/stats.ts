@@ -488,6 +488,24 @@ class StatsRepositoryImpl {
     }
   }
 
+  public async newClubGame(club: Club) {
+    try {
+      const playerStatsRepo = getRepository(ClubStats);
+      await playerStatsRepo
+        .createQueryBuilder()
+        .update()
+        .set({
+          totalGames: () => `total_games + 1`,
+        })
+        .where({
+          club: {id: club.id},
+        })
+        .execute();
+    } catch (err) {
+      logger.error(`Failed to update club stats: ${err.toString()}`);
+    }
+  }
+
   public async newPlayerHandStats(player: Player) {
     const playerStatsRepo = getRepository(PlayerHandStats);
     const playerStats = new PlayerHandStats();

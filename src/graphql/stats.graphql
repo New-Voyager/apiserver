@@ -26,6 +26,7 @@ type Stats {
   four2222: Int
 
   totalHands: Int
+  totalGames: Int
 }
 
 type PlayerGameStats {
