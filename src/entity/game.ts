@@ -205,6 +205,12 @@ export class PokerGame {
   @Column({name: 'run_it_twice_allowed', default: false})
   public runItTwiceAllowed!: boolean;
 
+  @Column({name: 'allow_rabbit_hunt', default: true})
+  public allowRabbitHunt!: boolean;
+
+  @Column({name: 'show_hand_rank', default: false})
+  public showHandRank!: boolean;
+
   @Column({
     name: 'rake_percentage',
     type: 'decimal',

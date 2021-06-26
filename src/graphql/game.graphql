@@ -101,6 +101,8 @@ input GameCreateInput {
   roeGames: [GameType!]
   dealerChoiceGames: [GameType!]
   audioConfEnabled: Boolean
+  allowRabbitHunt: Boolean
+  showHandRank: Boolean
 }
 
 type SeatInfo {
@@ -171,6 +173,9 @@ type GameInfo {
   hhEligible: Boolean           # true if this game is eligible for high hand
   botGame: Boolean
   runItTwiceAllowed: Boolean
+  allowRabbitHunt: Boolean
+  showHandRank: Boolean
+
   roeGames: [GameType!]
   dealerChoiceGames: [GameType!]
   runningTime: Int
