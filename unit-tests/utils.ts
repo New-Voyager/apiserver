@@ -3,15 +3,11 @@ import {Player, PlayerNotes} from '../src/entity/player';
 import {Club, ClubMember} from '../src/entity/club';
 import {
   PokerGame,
-  PokerGamePlayers,
-  PokerHand,
   NextHandUpdates,
   PokerGameUpdates,
 } from '../src/entity/game';
 import {
-  HandWinners,
   HandHistory,
-  StarredHands,
   SavedHands,
 } from '../src/entity/hand';
 import {
@@ -25,7 +21,6 @@ import {
   GameRewardTracking,
   HighHand,
 } from '../src/entity/reward';
-import {FavouriteMessage} from '../src/entity/clubfreqmessage';
 import {Announcement} from '../src/entity/announcements';
 import {ClubTokenTransactions} from '../src/entity/accounting';
 import {ClubMessageInput, ClubHostMessages} from '../src/entity/clubmessage';
@@ -47,15 +42,10 @@ export async function sqlliteConnection() {
       Club,
       ClubMember,
       PokerGame,
-      PokerHand,
-      PokerGamePlayers,
-      HandWinners,
       HandHistory,
       NextHandUpdates,
-      StarredHands,
       PlayerGameTracker,
       ClubChipsTransaction,
-      FavouriteMessage,
       ClubMessageInput,
       GameServer,
       TrackGameServer,
