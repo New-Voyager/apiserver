@@ -6,9 +6,8 @@ import {
   In,
   Repository,
   EntityManager,
-  TableIndex,
 } from 'typeorm';
-import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game';
+import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {
   GameType,
   GameStatus,
@@ -18,18 +17,15 @@ import {
   TableStatus,
   NextHandUpdate,
 } from '@src/entity/types';
-import {Club, ClubMember} from '@src/entity/club';
-import {Player} from '@src/entity/player';
-import {GameServer, TrackGameServer} from '@src/entity/gameserver';
+import {GameServer, TrackGameServer} from '@src/entity/game/gameserver';
 import {getLogger} from '@src/utils/log';
-import {PlayerGameTracker} from '@src/entity/chipstrack';
+import {PlayerGameTracker} from '@src/entity/game/chipstrack';
 import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
 import {
   newPlayerSat,
   publishNewGame,
   changeGameStatus,
   playerKickedOut,
-  playerLeftGame,
   playerSwitchSeat,
   playerConfigUpdate,
   pendingProcessDone,
@@ -38,7 +34,7 @@ import {
 import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery} from '@src/utils';
 import {WaitListMgmt} from './waitlist';
-import {Reward, GameRewardTracking, GameReward} from '@src/entity/reward';
+import {Reward, GameRewardTracking, GameReward} from '@src/entity/player/reward';
 import {ChipsTrackRepository} from './chipstrack';
 import {
   BREAK_TIMEOUT,
@@ -51,10 +47,11 @@ import {StatsRepository} from './stats';
 import {getAgoraToken} from '@src/3rdparty/agora';
 import {utcTime} from '@src/utils';
 import _ from 'lodash';
-import {PlayerGameStats} from '@src/entity/stats';
-import {WaitlistSeatError} from '@src/errors';
 import {JanusSession} from '@src/janus';
-import {HandHistory} from '@src/entity/hand';
+import {HandHistory} from '@src/entity/history/hand';
+import { Player } from '@src/entity/player/player';
+import { Club } from '@src/entity/player/club';
+import { PlayerGameStats } from '@src/entity/history/stats';
 
 const logger = getLogger('game');
 
@@ -68,46 +65,46 @@ class GameRepositoryImpl {
   }
 
   public async createPrivateGame(
-    clubCode: string,
-    playerId: string,
+    club: Club,
+    player: Player,
     input: any,
     template = false
   ): Promise<PokerGame> {
-    // first check whether this user can create a game in this club
-    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+    // // first check whether this user can create a game in this club
+    // const clubMemberRepository = getRepository<ClubMember>(ClubMember);
 
-    const clubRepository = getRepository(Club);
-    const club = await clubRepository.findOne({clubCode: clubCode});
-    if (!club) {
-      throw new Error(`Club ${clubCode} is not found`);
-    }
+    // const clubRepository = getRepository(Club);
+    // const club = await clubRepository.findOne({clubCode: clubCode});
+    // if (!club) {
+    //   throw new Error(`Club ${clubCode} is not found`);
+    // }
 
-    const playerRepository = getRepository(Player);
-    const player = await playerRepository.findOne({uuid: playerId});
-    if (!player) {
-      throw new Error(`Player ${playerId} is not found`);
-    }
+    // const playerRepository = getRepository(Player);
+    // const player = await playerRepository.findOne({uuid: playerId});
+    // if (!player) {
+    //   throw new Error(`Player ${playerId} is not found`);
+    // }
 
-    const clubMember = await clubMemberRepository.findOne({
-      where: {
-        club: {id: club.id},
-        player: {id: player.id},
-      },
-    });
-    if (!clubMember) {
-      throw new Error(`The player ${playerId} is not in the club`);
-    }
-    if (!(clubMember.isOwner || clubMember.isManager)) {
-      throw new Error(
-        `The player ${playerId} is not a owner or a manager of the club`
-      );
-    }
+    // const clubMember = await clubMemberRepository.findOne({
+    //   where: {
+    //     club: {id: club.id},
+    //     player: {id: player.id},
+    //   },
+    // });
+    // if (!clubMember) {
+    //   throw new Error(`The player ${playerId} is not in the club`);
+    // }
+    // if (!(clubMember.isOwner || clubMember.isManager)) {
+    //   throw new Error(
+    //     `The player ${playerId} is not a owner or a manager of the club`
+    //   );
+    // }
 
-    if (clubMember.isManager && clubMember.status !== ClubMemberStatus.ACTIVE) {
-      throw new Error(
-        `The player ${playerId} is not an approved manager to create a game`
-      );
-    }
+    // if (clubMember.isManager && clubMember.status !== ClubMemberStatus.ACTIVE) {
+    //   throw new Error(
+    //     `The player ${playerId} is not an approved manager to create a game`
+    //   );
+    // }
 
     const gameServerRepository = getRepository(GameServer);
     const gameServers = await gameServerRepository.find();
@@ -149,16 +146,20 @@ class GameRepositoryImpl {
       game.straddleBet = game.bigBlind * 2;
     }
     if (club) {
-      game.club = club;
+      game.clubId = club.id;
+      game.gameCode = await getGameCodeForClub(club.clubCode, club.id);
+    } else {
+      game.gameCode = await getGameCodeForClub(player.id.toString(), 1);
     }
     let savedGame;
     // use current time as the game id for now
-    game.gameCode = await getGameCodeForClub(clubCode, club.id);
+    game.gameCode = await getGameCodeForClub(club.clubCode, club.id);
     game.privateGame = true;
 
     game.startedAt = new Date();
-    game.startedBy = player;
-    game.host = player;
+    game.hostId = player.id;
+    game.hostName = player.name;
+    game.hostUuid = player.uuid;
 
     let saveTime, saveUpdateTime, publishNewTime;
     try {
@@ -218,7 +219,7 @@ class GameRepositoryImpl {
                   createRewardTrack
                 );
                 const createGameReward = new GameReward();
-                createGameReward.gameId = game;
+                createGameReward.gameId = game.id;
                 createGameReward.rewardId = rewardId;
                 createGameReward.rewardTrackingId = rewardTrackResponse;
                 rewardTrackingIds.push(rewardTrackResponse.id);
@@ -229,7 +230,7 @@ class GameRepositoryImpl {
               } else {
                 rewardTrackingIds.push(rewardTrack.id);
                 const createGameReward = new GameReward();
-                createGameReward.gameId = game;
+                createGameReward.gameId = game.id;
                 createGameReward.rewardId = rewardId;
                 createGameReward.rewardTrackingId = rewardTrack;
 
@@ -332,11 +333,12 @@ class GameRepositoryImpl {
     game.gameType = gameType;
     game.isTemplate = template;
     game.status = GameStatus.CONFIGURED;
-    game.host = player;
+    game.hostId = player.id;
+    game.hostUuid = player.uuid;
+    game.hostName = player.name;
     game.gameCode = await getGameCodeForPlayer(player.id);
     game.privateGame = true;
     game.startedAt = new Date();
-    game.startedBy = player;
 
     let savedGame;
     try {
@@ -545,14 +547,14 @@ class GameRepositoryImpl {
         });
 
         // if the current player in seat tried to sit in the same seat, do nothing
-        if (playerInSeat && playerInSeat.player.id === player.id) {
+        if (playerInSeat && playerInSeat.playerId === player.id) {
           return [playerInSeat, false];
         }
 
-        if (playerInSeat && playerInSeat.player.id !== player.id) {
+        if (playerInSeat && playerInSeat.playerId !== player.id) {
           // there is a player in the seat (unexpected)
           throw new Error(
-            `A player ${playerInSeat.player.name}:${playerInSeat.player.uuid} is sitting in seat: ${seatNo}`
+            `A player ${playerInSeat.playerName}:${playerInSeat.playerUuid} is sitting in seat: ${seatNo}`
           );
         }
         // if this player has already played this game before, we should have his record
@@ -560,7 +562,7 @@ class GameRepositoryImpl {
           .createQueryBuilder()
           .where({
             game: {id: game.id},
-            player: {id: player.id},
+            playerId: player.id,
           })
           .select('stack')
           .addSelect('status')
@@ -577,7 +579,9 @@ class GameRepositoryImpl {
           playerInGame.seatNo = seatNo;
         } else {
           playerInGame = new PlayerGameTracker();
-          playerInGame.player = player;
+          playerInGame.playerId = player.id;
+          playerInGame.playerUuid = player.uuid;
+          playerInGame.playerName = player.name;
           playerInGame.game = game;
           playerInGame.stack = 0;
           playerInGame.buyIn = 0;
@@ -620,7 +624,7 @@ class GameRepositoryImpl {
         await playerGameTrackerRepository.update(
           {
             game: {id: game.id},
-            player: {id: player.id},
+            playerId: player.id,
           },
           {
             seatNo: seatNo,
@@ -655,7 +659,8 @@ class GameRepositoryImpl {
         if (playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN) {
           await this.startBuyinTimer(
             game,
-            player,
+            player.id,
+            player.name,
             {},
             transactionEntityManager
           );
@@ -750,7 +755,7 @@ class GameRepositoryImpl {
     ) {
       const update = new NextHandUpdates();
       update.game = game;
-      update.player = player;
+      update.playerId = player.id;
       update.newUpdate = NextHandUpdate.LEAVE;
       await nextHandUpdatesRepository.save(update);
     } else {
@@ -769,7 +774,7 @@ class GameRepositoryImpl {
       await playerGameTrackerRepository.update(
         {
           game: {id: game.id},
-          player: {id: player.id},
+          playerId: player.id,
         },
         {
           status: PlayerStatus.NOT_PLAYING,
@@ -821,7 +826,7 @@ class GameRepositoryImpl {
     playerGameTrackerRepository.update(
       {
         game: {id: game.id},
-        player: {id: player.id},
+        playerId: player.id,
       },
       {
         status: playerInGame.status,
@@ -1177,7 +1182,7 @@ class GameRepositoryImpl {
   ): Promise<PlayerGameTracker | null> {
     const repo = getRepository(PlayerGameTracker);
     const resp = await repo.find({
-      player: {id: player.id},
+      playerId: player.id,
       game: {id: game.id},
     });
     return resp[0];
@@ -1210,7 +1215,7 @@ class GameRepositoryImpl {
         await playerGameTrackerRepository.update(
           {
             game: {id: game.id},
-            player: {id: player.id},
+            playerId: player.id,
           },
           {
             seatNo: 0,
@@ -1243,7 +1248,7 @@ class GameRepositoryImpl {
         );
         const update = new NextHandUpdates();
         update.game = game;
-        update.player = player;
+        update.playerId = player.id;
         update.newUpdate = NextHandUpdate.KICKOUT;
         await nextHandUpdatesRepository.save(update);
       }
@@ -1357,7 +1362,7 @@ class GameRepositoryImpl {
       await playerGameTrackerRepository.update(
         {
           game: {id: game.id},
-          player: {id: player.id},
+          playerId: player.id,
         },
         {
           audioToken: token,
@@ -1430,7 +1435,7 @@ class GameRepositoryImpl {
           relations: ['player'],
           where: {
             game: {id: game.id},
-            player: {id: player.id},
+            playerId: player.id,
           },
         });
         let oldSeatNo = playerInSeat?.seatNo;
@@ -1441,7 +1446,7 @@ class GameRepositoryImpl {
         await playerGameTrackerRepository.update(
           {
             game: {id: game.id},
-            player: {id: player.id},
+            playerId: player.id,
           },
           {
             seatNo: seatNo,
@@ -1495,13 +1500,13 @@ class GameRepositoryImpl {
       );
       let row = await gameUpdateRepo.findOne({
         game: {id: game.id},
-        player: {id: player.id},
+        playerId: player.id,
       });
       if (row != null) {
         await gameUpdateRepo.update(
           {
             game: {id: game.id},
-            player: {id: player.id},
+            playerId: player.id,
           },
           updates
         );
@@ -1509,7 +1514,9 @@ class GameRepositoryImpl {
         // create a row
         const playerTrack = new PlayerGameTracker();
         playerTrack.game = game;
-        playerTrack.player = player;
+        playerTrack.playerId = player.id;
+        playerTrack.playerUuid = player.uuid;
+        playerTrack.playerName = player.name;
         playerTrack.status = PlayerStatus.NOT_PLAYING;
         playerTrack.buyIn = 0;
         playerTrack.stack = 0;
@@ -1523,7 +1530,7 @@ class GameRepositoryImpl {
       }
       row = await gameUpdateRepo.findOne({
         game: {id: game.id},
-        player: {id: player.id},
+        playerId: player.id,
       });
 
       if (row) {
@@ -1541,12 +1548,13 @@ class GameRepositoryImpl {
 
   public async startBuyinTimer(
     game: PokerGame,
-    player: Player,
+    playerId: number,
+    playerName: string,
     props?: any,
     transactionEntityManager?: EntityManager
   ) {
     logger.info(
-      `[${game.gameCode}] Starting buyin timer for player: ${player.name}`
+      `[${game.gameCode}] Starting buyin timer for player: ${playerName}`
     );
     let playerGameTrackerRepository: Repository<PlayerGameTracker>;
 
@@ -1570,12 +1578,12 @@ class GameRepositoryImpl {
     await playerGameTrackerRepository.update(
       {
         game: {id: game.id},
-        player: {id: player.id},
+        playerId: playerId,
       },
       setProps
     );
 
-    startTimer(game.id, player.id, BUYIN_TIMEOUT, buyinTimeExp);
+    startTimer(game.id, playerId, BUYIN_TIMEOUT, buyinTimeExp);
   }
 
   public async deleteGame(
@@ -1595,7 +1603,7 @@ class GameRepositoryImpl {
           .delete({game: {id: game.id}});
         await transactionEntityManager
           .getRepository(PlayerGameStats)
-          .delete({game: {id: game.id}});
+          .delete({gameId: game.id});
         await transactionEntityManager
           .getRepository(NextHandUpdates)
           .delete({game: {id: game.id}});
@@ -1770,9 +1778,9 @@ class GameRepositoryImpl {
     const players = new Array<any>();
     for (const player of playersInDb) {
       players.push({
-        id: player.player.id,
-        name: player.player.name,
-        uuid: player.player.uuid,
+        id: player.playerId,
+        name: player.playerName,
+        uuid: player.playerUuid,
       });
     }
     return players;

@@ -7,15 +7,12 @@ import {
   JoinColumn,
   PrimaryColumn,
 } from 'typeorm';
-import {Player} from './player';
-import {Club} from './club';
-import {PokerGame} from './game';
 import {
   DbAwareColumn,
   DbAwareCreateDateColumn,
   DbAwareUpdateDateColumn,
-} from './dbaware';
-import {BuyInApprovalStatus, PlayerStatus} from './types';
+} from '../dbaware';
+import {BuyInApprovalStatus, PlayerStatus} from '../types';
 
 export enum StoreType {
   UNKNOWN,

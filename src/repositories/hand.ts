@@ -1,5 +1,6 @@
 import * as _ from 'lodash';
-import {HandHistory, SavedHands} from '@src/entity/hand';
+import {SavedHands} from '@src/entity/player/player';
+import {HandHistory} from '@src/entity/history/hand';
 import {
   ClubMessageType,
   GameType,
@@ -8,17 +9,17 @@ import {
 } from '@src/entity/types';
 import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
-import {PokerGame, PokerGameUpdates} from '@src/entity/game';
+import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {getLogger} from '@src/utils/log';
-import {PlayerGameTracker} from '@src/entity/chipstrack';
+import {PlayerGameTracker} from '@src/entity/game/chipstrack';
 import {Cache} from '@src/cache';
 import {RewardRepository} from './reward';
-import {GameReward} from '@src/entity/reward';
+import {GameReward} from '@src/entity/player/reward';
 import {SaveHandResult} from './types';
-import {Player} from '@src/entity/player';
-import {Club} from '@src/entity/club';
+import {Player} from '@src/entity/player/player';
+import {Club} from '@src/entity/player/club';
 import {StatsRepository} from './stats';
-import {ClubMessageInput} from '@src/entity/clubmessage';
+import {ClubMessageInput} from '@src/entity/player/clubmessage';
 import {Nats} from '@src/nats';
 
 const logger = getLogger('hand');
@@ -111,7 +112,7 @@ class HandRepositoryImpl {
       const playersInHand = result.players;
 
       if (handNum === 1) {
-        if (game.club) {
+        if (game.clubId) {
           try {
             let gameType: GameType = GameType.UNKNOWN;
             switch (game.gameType) {
@@ -129,7 +130,7 @@ class HandRepositoryImpl {
             }
 
             if (gameType !== GameType.UNKNOWN) {
-              await StatsRepository.newClubGame(gameType, game.club);
+              await StatsRepository.newClubGame(gameType, game.clubId);
             }
           } catch (err) {}
         }
@@ -337,7 +338,7 @@ class HandRepositoryImpl {
             const games = await getRepository(GameReward).find({
               rewardTrackingId: {id: highhandWinners.rewardTrackingId},
             });
-            const gameCodes = games.map(e => e.gameId.gameCode);
+            const gameCodes = games.map(e => e.gameCode);
             saveResult.highHand = {
               gameCode: game.gameCode,
               handNum: handNum,

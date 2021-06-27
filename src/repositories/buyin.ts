@@ -8,8 +8,8 @@ import {
 } from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
-import {Player} from '@src/entity/player';
-import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game';
+import {Player} from '@src/entity/player/player';
+import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {
   ApprovalStatus,
   ApprovalType,
@@ -18,7 +18,7 @@ import {
   PlayerStatus,
   TableStatus,
 } from '@src/entity/types';
-import {PlayerGameTracker} from '@src/entity/chipstrack';
+import {PlayerGameTracker} from '@src/entity/game/chipstrack';
 import {GameRepository} from './game';
 import {
   pendingProcessDone,
@@ -32,7 +32,7 @@ import {
   NewUpdate,
   RELOAD_APPROVAL_TIMEOUT,
 } from './types';
-import {Club, ClubMember} from '@src/entity/club';
+import {Club, ClubMember} from '@src/entity/player/club';
 import {buyInRequest, pendingApprovalsForClubData} from '@src/types';
 import {fixQuery} from '@src/utils';
 import {Firebase} from '@src/firebase';
@@ -71,7 +71,7 @@ export class BuyIn {
     await repo.update(
       {
         game: {id: this.game.id},
-        player: {id: this.player.id},
+        playerId: this.player.id,
       },
       {
         status: playerInGame.status,
@@ -93,7 +93,7 @@ export class BuyIn {
     let approved = false;
     const clubMember = await Cache.getClubMember(
       this.player.uuid,
-      this.game.club.clubCode
+      this.game.clubCode
     );
     if (!clubMember) {
       throw new Error(`The player ${this.player.uuid} is not in the club`);
@@ -104,7 +104,7 @@ export class BuyIn {
     let playerStatus: PlayerStatus = PlayerStatus.WAIT_FOR_BUYIN;
     let updatedPlayerInGame: PlayerGameTracker;
     let isHost = false;
-    if (this.game.startedBy.uuid === this.player.uuid) {
+    if (this.game.hostUuid === this.player.uuid) {
       isHost = true;
     }
     // logger.info(
@@ -276,7 +276,7 @@ export class BuyIn {
         );
         const playerInGame = await playerGameTrackerRepository.findOne({
           game: {id: this.game.id},
-          player: {id: this.player.id},
+          playerId: this.player.id,
         });
         if (!playerInGame) {
           logger.error(
@@ -295,10 +295,10 @@ export class BuyIn {
           );
         }
 
-        if (this.game.club) {
+        if (this.game.clubCode) {
           const prevStatus = await playerGameTrackerRepository.findOne({
             game: {id: this.game.id},
-            player: {id: this.player.id},
+            playerId: this.player.id,
           });
 
           if (!prevStatus) {
@@ -314,7 +314,7 @@ export class BuyIn {
           await playerGameTrackerRepository.update(
             {
               game: {id: this.game.id},
-              player: {id: this.player.id},
+              playerId: this.player.id,
             },
             {
               status: playerStatus,
@@ -335,7 +335,7 @@ export class BuyIn {
             // get current stack
             const updated = await playerGameTrackerRepository.findOne({
               game: {id: this.game.id},
-              player: {id: this.player.id},
+              playerId: this.player.id,
             });
             if (!updated) {
               throw new Error('Unable to get the updated row');
@@ -348,7 +348,7 @@ export class BuyIn {
               `************ [${this.game.gameCode}]: Player ${this.player.name} is waiting for approval`
             );
             // notify game host that the player is waiting for buyin
-            const host = await Cache.getPlayerById(this.game.host.id, true);
+            const host = await Cache.getPlayerById(this.game.hostId, true);
             await Firebase.notifyBuyInRequest(
               this.game,
               this.player,
@@ -594,7 +594,7 @@ export class BuyIn {
             );
             const buyInRequest = await pendingUpdatesRepo.findOne({
               game: {id: this.game.id},
-              player: {id: this.player.id},
+              playerId: this.player.id,
               newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
             });
             if (!buyInRequest) {
@@ -607,7 +607,7 @@ export class BuyIn {
             );
             const playerInGame = await playerInGameRepo.findOne({
               game: {id: this.game.id},
-              player: {id: this.player.id},
+              playerId: this.player.id,
             });
             if (!playerInGame) {
               return false;
@@ -621,7 +621,7 @@ export class BuyIn {
             // remove row from NextHandUpdates table
             await pendingUpdatesRepo.delete({
               game: {id: this.game.id},
-              player: {id: this.player.id},
+              playerId: this.player.id,
               newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
             });
 
@@ -642,7 +642,7 @@ export class BuyIn {
             );
             const buyInRequest = await pendingUpdatesRepo.findOne({
               game: {id: this.game.id},
-              player: {id: this.player.id},
+              playerId: this.player.id,
               newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
             });
             if (!buyInRequest) {
@@ -655,7 +655,7 @@ export class BuyIn {
             );
             const playerInGame = await playerInGameRepo.findOne({
               game: {id: this.game.id},
-              player: {id: this.player.id},
+              playerId: this.player.id,
             });
             if (!playerInGame) {
               return false;
@@ -664,7 +664,7 @@ export class BuyIn {
             // remove row from NextHandUpdates table
             await pendingUpdatesRepo.delete({
               game: {id: this.game.id},
-              player: {id: this.player.id},
+              playerId: this.player.id,
               newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
             });
 
@@ -672,7 +672,7 @@ export class BuyIn {
             playerInGameRepo.update(
               {
                 game: {id: this.game.id},
-                player: {id: this.player.id},
+                playerId: this.player.id,
               },
               {
                 seatNo: 0,
@@ -749,7 +749,7 @@ export class BuyIn {
       })
       .where({
         game: {id: this.game.id},
-        player: {id: this.player.id},
+        playerId: this.player.id,
         newUpdate: oldStatus,
       })
       .execute();
@@ -770,7 +770,7 @@ export class BuyIn {
     }
     const update = new NextHandUpdates();
     update.game = this.game;
-    update.player = this.player;
+    update.playerId = this.player.id;
     update.newUpdate = status;
     update.buyinAmount = amount;
     await nextHandUpdatesRepository.save(update);
@@ -784,7 +784,7 @@ export class BuyIn {
       relations: ['player'],
       where: {
         game: {id: this.game.id},
-        player: {id: this.player.id},
+        playerId: this.player.id,
       },
     });
 
@@ -803,7 +803,7 @@ export class BuyIn {
       await playerGameTrackerRepository.update(
         {
           game: {id: this.game.id},
-          player: {id: this.player.id},
+          playerId: this.player.id,
         },
         {
           status: PlayerStatus.NOT_PLAYING,
@@ -816,7 +816,7 @@ export class BuyIn {
       const pendingUpdatesRepo = getRepository(NextHandUpdates);
       await pendingUpdatesRepo.delete({
         game: {id: this.game.id},
-        player: {id: this.player.id},
+        playerId: this.player.id,
         newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
       });
       // update the clients with new status
@@ -850,12 +850,13 @@ export class BuyIn {
       });
       for (const player of emptyStackPlayers) {
         logger.info(
-          `Player: ${player.player.name} stack is empty. Starting a buyin timer`
+          `Player: ${player.playerName} stack is empty. Starting a buyin timer`
         );
         // if player balance is 0, we need to mark this player to add buyin
         await GameRepository.startBuyinTimer(
           game,
-          player.player,
+          player.playerId,
+          player.playerName,
           {
             status: PlayerStatus.WAIT_FOR_BUYIN,
           },
@@ -865,7 +866,11 @@ export class BuyIn {
         // notify clients to update the new status
         await playerStatusChanged(
           game,
-          player.player,
+          {
+            id: player.playerId,
+            uuid: player.playerUuid,
+            name: player.playerName,
+          },
           player.status,
           NewUpdate.WAIT_FOR_BUYIN_APPROVAL,
           player.stack,

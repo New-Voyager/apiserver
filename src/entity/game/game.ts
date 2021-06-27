@@ -6,20 +6,18 @@ import {
   Index,
   JoinColumn,
 } from 'typeorm';
-import {Club} from './club';
-import {Player} from './player';
 import {
   DbAwareColumn,
   DbAwareCreateDateColumn,
   DbAwareUpdateDateColumn,
-} from './dbaware';
+} from '../dbaware';
 import {
   GameStatus,
   GameType,
   TableStatus,
   NextHandUpdate,
   SeatChangeProcessType,
-} from './types';
+} from '../types';
 
 @Entity({name: 'poker_game_updates'})
 export class PokerGameUpdates {
@@ -103,14 +101,24 @@ export class PokerGame {
   public gameCode!: string;
 
   @Index('game-club-idx')
-  @ManyToOne(type => Club, {nullable: true, eager: true})
-  @JoinColumn({name: 'club_id'})
-  public club!: Club;
+  @Column({name: 'club_id'})
+  public clubId!: number;
+
+  @Column({name: 'club_name'})
+  public clubName!: string;
+
+  @Column({name: 'club_code'})
+  public clubCode!: string;
 
   @Index('game-host-idx')
-  @ManyToOne(type => Player)
-  @JoinColumn({name: 'host_id'})
-  public host!: Player;
+  @Column({name: 'host_id'})
+  public hostId!: number;
+
+  @Column({name: 'host_name'})
+  public hostName!: string;
+
+  @Column({name: 'host_uuid'})
+  public hostUuid!: string;
 
   @Column({name: 'private_game'})
   public privateGame!: boolean;
@@ -269,10 +277,6 @@ export class PokerGame {
   })
   public startedAt!: Date;
 
-  @ManyToOne(type => Player, {nullable: false, eager: true})
-  @JoinColumn({name: 'started_by'})
-  public startedBy!: Player;
-
   @DbAwareColumn({
     name: 'ended_at',
     type: 'timestamp',
@@ -280,9 +284,11 @@ export class PokerGame {
   })
   public endedAt!: Date;
 
-  @ManyToOne(type => Player, {nullable: true, eager: true})
-  @JoinColumn({name: 'ended_by'})
-  public endedBy!: Player;
+  @Column({name: 'ended_by_player_id'})
+  public endedBy!: number;
+
+  @Column({name: 'ended_by_name'})
+  public endedByName!: string;
 
   /**
    * DB insert time.
@@ -329,9 +335,8 @@ export class NextHandUpdates {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @ManyToOne(() => Player, player => player.id, {eager: true, nullable: true})
-  @JoinColumn({name: 'player_id'})
-  public player!: Player;
+  @Column({name: 'player_id'})
+  public playerId!: number;
 
   @ManyToOne(() => PokerGame, game => game.id, {eager: true})
   @JoinColumn({name: 'game_id'})

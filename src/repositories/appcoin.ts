@@ -1,4 +1,4 @@
-import {CoinTransaction, PlayerCoin, StoreType} from '@src/entity/appcoin';
+import {CoinTransaction, PlayerCoin, StoreType} from '@src/entity/player/appcoin';
 import {getManager, getRepository} from 'typeorm';
 var crypto = require('crypto');
 

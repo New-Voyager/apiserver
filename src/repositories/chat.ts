@@ -1,6 +1,6 @@
-import {ChatText} from '@src/entity/chat';
-import {Club} from '@src/entity/club';
-import {Player} from '@src/entity/player';
+import {ChatText} from '@src/entity/player/chat';
+import {Club} from '@src/entity/player/club';
+import {Player} from '@src/entity/player/player';
 import {ChatTextType} from '@src/entity/types';
 import {getRepository} from 'typeorm';
 import * as _ from 'lodash';

@@ -11,9 +11,9 @@ import {
   DbAwareColumn,
   DbAwareCreateDateColumn,
   DbAwareUpdateDateColumn,
-} from './dbaware';
+} from '../dbaware';
 import {Player} from './player';
-import {ClubMemberStatus, ClubStatus} from './types';
+import {ClubMemberStatus, ClubStatus} from '../types';
 
 @Entity()
 export class Club {
@@ -202,4 +202,31 @@ export class ClubMember {
     default: 0,
   })
   public rakePaid!: number;
+}
+
+@Entity({name: 'club_chips_transaction'})
+export class ClubChipsTransaction {
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @ManyToOne(type => Club)
+  @JoinColumn({name: 'club_id'})
+  public club!: Club;
+
+  @Column({name: 'description', type: 'text'})
+  public description!: string;
+
+  @Column({name: 'amount', type: 'decimal', precision: 8, scale: 2})
+  public amount!: number;
+
+  @Column({name: 'balance', type: 'decimal', precision: 8, scale: 2})
+  public balance!: number;
+
+  @DbAwareUpdateDateColumn({
+    name: 'updated_at',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  public updatedAt!: Date;
 }

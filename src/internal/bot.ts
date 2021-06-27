@@ -1,4 +1,4 @@
-import {HandHistory} from '@src/entity/hand';
+import {HandHistory} from '@src/entity/history/hand';
 import {HandRepository} from '@src/repositories/hand';
 import {getLogger} from '@src/utils/log';
 import * as fs from 'fs';

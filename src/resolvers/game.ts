@@ -14,7 +14,7 @@ import {Cache} from '@src/cache/index';
 import {WaitListMgmt} from '@src/repositories/waitlist';
 import {default as _} from 'lodash';
 import {BuyIn} from '@src/repositories/buyin';
-import {PokerGame} from '@src/entity/game';
+import {PokerGame} from '@src/entity/game/game';
 import {fillSeats} from '@src/botrunner';
 import {ClubRepository} from '@src/repositories/club';
 import {getCurrentHandLog, playerStatusChanged} from '@src/gameserver';
@@ -31,7 +31,7 @@ import {
 } from '@src/janus';
 import {ClubUpdateType, NewUpdate} from '@src/repositories/types';
 import {TakeBreak} from '@src/repositories/takebreak';
-import {Player} from '@src/entity/player';
+import {Player} from '@src/entity/player/player';
 import {Nats} from '@src/nats';
 import {Reload} from '@src/repositories/reload';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -59,9 +59,11 @@ export async function configureGame(
 
   try {
     createGameTime = new Date().getTime();
+    const club = await Cache.getClub(clubCode);
+    const player = await Cache.getPlayer(playerId);
     const gameInfo = await GameRepository.createPrivateGame(
-      clubCode,
-      playerId,
+      club,
+      player,
       game
     );
     createGameTime = new Date().getTime() - createGameTime;
@@ -156,10 +158,10 @@ export async function endGame(playerId: string, gameCode: string) {
     const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
     if (!isAuthorized) {
       logger.error(
-        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot end the game`
+        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot end the game`
       );
       throw new Error(
-        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot end the game`
+        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot end the game`
       );
     }
 
@@ -202,14 +204,14 @@ export async function joinGame(
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
+    if (game.clubCode) {
       const clubMember = await Cache.isClubMember(
         playerUuid,
-        game.club.clubCode
+        game.clubCode
       );
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to play game ${gameCode}`
@@ -255,14 +257,14 @@ export async function startGame(
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
+    if (game.clubCode) {
       const clubMember = await Cache.getClubMember(
         playerUuid,
-        game.club.clubCode
+        game.clubCode
       );
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
@@ -272,20 +274,20 @@ export async function startGame(
       if (!(clubMember.isManager || clubMember.isOwner)) {
         // this player cannot start this game
         logger.error(
-          `Player: ${playerUuid} is not manager or owner. The player is not authorized to start the game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not manager or owner. The player is not authorized to start the game ${gameCode} in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not manager or owner. The player is not authorized to start the game ${gameCode}`
         );
       }
 
-      gameNum = await ClubRepository.getNextGameNum(game.club.id);
+      gameNum = await ClubRepository.getNextGameNum(game.clubId);
     }
 
     let players = await GameRepository.getPlayersInSeats(game.id);
     if (game.botGame && players.length < game.maxPlayers) {
       // fill the empty seats with bots
-      await fillSeats(game.club.clubCode, game.gameCode);
+      await fillSeats(game.clubCode, game.gameCode);
 
       let allFilled = false;
       while (!allFilled) {
@@ -341,14 +343,14 @@ export async function buyIn(
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
+    if (game.clubCode) {
       const clubMember = await Cache.isClubMember(
         playerUuid,
-        game.club.clubCode
+        game.clubCode
       );
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to play game ${gameCode}`
@@ -387,14 +389,14 @@ export async function reload(
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
+    if (game.clubCode) {
       const clubMember = await Cache.isClubMember(
         playerUuid,
-        game.club.clubCode
+        game.clubCode
       );
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to play game ${gameCode}`
@@ -476,14 +478,14 @@ export async function pendingApprovalsForGame(
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
-      const clubHost = await Cache.getClubMember(hostUuid, game.club.clubCode);
+    if (game.clubCode) {
+      const clubHost = await Cache.getClubMember(hostUuid, game.clubCode);
       if (!clubHost || !(clubHost.isManager || clubHost.isOwner)) {
         logger.error(
-          `Player: ${hostUuid} is not authorized to approve buyIn in club ${game.club.name}`
+          `Player: ${hostUuid} is not authorized to approve buyIn in club ${game.clubName}`
         );
         throw new Error(
-          `Player: ${hostUuid} is not authorized to approve buyIn in club ${game.club.name}`
+          `Player: ${hostUuid} is not authorized to approve buyIn in club ${game.clubName}`
         );
       }
     }
@@ -607,8 +609,9 @@ export async function downloadResult(playerId: string, gameCode: string) {
   try {
     const game = await Cache.getGame(gameCode);
     let includeTips = false;
-    if (game.club) {
-      const owner: Player | undefined = await Promise.resolve(game.club.owner);
+    if (game.clubCode) {
+      const club = await Cache.getClub(game.clubCode);
+      const owner: Player | undefined = await Promise.resolve(club.owner);
       if (owner) {
         if (owner.uuid === playerId) {
           includeTips = true;
@@ -684,26 +687,26 @@ export async function approveRequest(
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
+    if (game.clubCode) {
       const clubMember = await Cache.getClubMember(
         playerUuid,
-        game.club.clubCode
+        game.clubCode
       );
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
         );
       }
-      const clubHost = await Cache.getClubMember(hostUuid, game.club.clubCode);
+      const clubHost = await Cache.getClubMember(hostUuid, game.clubCode);
       if (!clubHost || !(clubHost.isManager || clubHost.isOwner)) {
         logger.error(
-          `Player: ${hostUuid} is not authorized to approve buyIn in club ${game.club.name}`
+          `Player: ${hostUuid} is not authorized to approve buyIn in club ${game.clubName}`
         );
         throw new Error(
-          `Player: ${hostUuid} is not authorized to approve buyIn in club ${game.club.name}`
+          `Player: ${hostUuid} is not authorized to approve buyIn in club ${game.clubName}`
         );
       }
     }
@@ -735,14 +738,14 @@ export async function myGameState(playerUuid: string, gameCode: string) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
+    if (game.clubCode) {
       const clubMember = await Cache.getClubMember(
         playerUuid,
-        game.club.clubCode
+        game.clubCode
       );
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
@@ -781,14 +784,14 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
+    if (game.clubCode) {
       const clubMember = await Cache.getClubMember(
         playerUuid,
-        game.club.clubCode
+        game.clubCode
       );
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
@@ -801,7 +804,7 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
     const tableGameState = new Array<any>();
     gameState.map(data => {
       const gameState = {
-        playerUuid: data.player.uuid,
+        playerUuid: data.playerUuid,
         buyIn: data.buyIn,
         stack: data.stack,
         status: PlayerStatus[data.status],
@@ -833,15 +836,15 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
     let isHost = false;
     let isManager = false;
     let isOwner = false;
-    if (game.club) {
+    if (game.clubCode) {
       const clubMember = await Cache.getClubMember(
         playerUuid,
-        game.club.clubCode
+        game.clubCode
       );
-      clubCode = game.club.clubCode;
+      clubCode = game.clubCode;
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to play game ${gameCode}`
@@ -950,15 +953,15 @@ async function getPlayerRole(playerUuid: string, gameCode: string) {
     let isHost = false;
     let isManager = false;
     let isOwner = false;
-    if (game.club) {
+    if (game.clubCode) {
       const clubMember = await Cache.getClubMember(
         playerUuid,
-        game.club.clubCode
+        game.clubCode
       );
-      clubCode = game.club.clubCode;
+      clubCode = game.clubCode;
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to play game ${gameCode}`
@@ -970,8 +973,8 @@ async function getPlayerRole(playerUuid: string, gameCode: string) {
     }
 
     const player = await Cache.getPlayer(playerUuid);
-    if (game.host) {
-      if (game.host.uuid == playerUuid) {
+    if (game.hostUuid) {
+      if (game.hostUuid == playerUuid) {
         isHost = true;
       }
     }
@@ -1004,14 +1007,14 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
+    if (game.clubCode) {
       const clubMember = await Cache.getClubMember(
         playerUuid,
-        game.club.clubCode
+        game.clubCode
       );
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
@@ -1040,14 +1043,14 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
+    if (game.clubCode) {
       const clubMember = await Cache.getClubMember(
         playerUuid,
-        game.club.clubCode
+        game.clubCode
       );
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
@@ -1075,14 +1078,14 @@ export async function sitBack(playerUuid: string, gameCode: string) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
+    if (game.clubCode) {
       const clubMember = await Cache.getClubMember(
         playerUuid,
-        game.club.clubCode
+        game.clubCode
       );
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
@@ -1113,15 +1116,15 @@ export async function kickOutPlayer(
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
+    if (game.clubCode) {
       // club game
       const clubMember = await Cache.getClubMember(
         requestUser,
-        game.club.clubCode
+        game.clubCode
       );
       if (!clubMember) {
         logger.error(
-          `Player: ${requestUser} is not a club member in club ${game.club.name}`
+          `Player: ${requestUser} is not a club member in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${requestUser} is not authorized to kick out a user`
@@ -1131,7 +1134,7 @@ export async function kickOutPlayer(
       if (!(clubMember.isOwner || clubMember.isManager)) {
         // player is not a owner or a manager
         // did this user start the game?
-        if (game.startedBy.uuid !== requestUser) {
+        if (game.hostUuid !== requestUser) {
           logger.error(
             `Player: ${requestUser} cannot kick out a player in ${gameCode}`
           );
@@ -1142,7 +1145,7 @@ export async function kickOutPlayer(
       }
     } else {
       // hosted by individual user
-      if (game.startedBy.uuid !== requestUser) {
+      if (game.hostUuid !== requestUser) {
         logger.error(
           `Player: ${requestUser} cannot kick out a player in ${gameCode}`
         );
@@ -1172,15 +1175,15 @@ export async function addToWaitingList(playerId: string, gameCode: string) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
+    if (game.clubCode) {
       // club game
       const clubMember = await Cache.getClubMember(
         playerId,
-        game.club.clubCode
+        game.clubCode
       );
       if (!clubMember) {
         logger.error(
-          `Player: ${playerId} is not a club member in club ${game.club.name}`
+          `Player: ${playerId} is not a club member in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerId} is not authorized to kick out a user`
@@ -1210,15 +1213,15 @@ export async function removeFromWaitingList(
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
+    if (game.clubCode) {
       // club game
       const clubMember = await Cache.getClubMember(
         playerId,
-        game.club.clubCode
+        game.clubCode
       );
       if (!clubMember) {
         logger.error(
-          `Player: ${playerId} is not a club member in club ${game.club.name}`
+          `Player: ${playerId} is not a club member in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerId} is not authorized to kick out a user`
@@ -1248,15 +1251,15 @@ export async function waitingList(
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
+    if (game.clubCode) {
       // club game
       const clubMember = await Cache.getClubMember(
         playerId,
-        game.club.clubCode
+        game.clubCode
       );
       if (!clubMember) {
         logger.error(
-          `Player: ${playerId} is not a club member in club ${game.club.name}`
+          `Player: ${playerId} is not a club member in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerId} is not authorized to kick out a user`
@@ -1286,15 +1289,15 @@ export async function applyWaitlistOrder(
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
+    if (game.clubCode) {
       // club game
       const clubMember = await Cache.getClubMember(
         hostUuid,
-        game.club.clubCode
+        game.clubCode
       );
       if (!clubMember) {
         logger.error(
-          `Player: ${hostUuid} is not a club member in club ${game.club.name}`
+          `Player: ${hostUuid} is not a club member in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${hostUuid} is not authorized to kick out a user`
@@ -1304,7 +1307,7 @@ export async function applyWaitlistOrder(
       if (!(clubMember.isOwner || clubMember.isManager)) {
         // player is not a owner or a manager
         // did this user start the game?
-        if (game.startedBy.uuid !== hostUuid) {
+        if (game.hostUuid !== hostUuid) {
           logger.error(
             `Player: ${hostUuid} cannot change waitlist order in ${gameCode}`
           );
@@ -1315,7 +1318,7 @@ export async function applyWaitlistOrder(
       }
     } else {
       // hosted by individual user
-      if (game.startedBy.uuid !== hostUuid) {
+      if (game.hostUuid !== hostUuid) {
         logger.error(
           `Player: ${hostUuid} cannot change waitlist order in ${gameCode}`
         );
@@ -1345,15 +1348,15 @@ export async function declineWaitlistSeat(playerId: string, gameCode: string) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
+    if (game.clubCode) {
       // club game
       const clubMember = await Cache.getClubMember(
         playerId,
-        game.club.clubCode
+        game.clubCode
       );
       if (!clubMember) {
         logger.error(
-          `Player: ${playerId} is not a club member in club ${game.club.name}`
+          `Player: ${playerId} is not a club member in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerId} is not authorized to kick out a user`
@@ -1384,10 +1387,10 @@ export async function pauseGame(playerId: string, gameCode: string) {
     const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
     if (!isAuthorized) {
       logger.error(
-        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot pause game`
+        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot pause game`
       );
       throw new Error(
-        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot pause game`
+        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot pause game`
       );
     }
 
@@ -1425,10 +1428,10 @@ export async function resumeGame(playerId: string, gameCode: string) {
     const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
     if (!isAuthorized) {
       logger.error(
-        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot resume game`
+        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot resume game`
       );
       throw new Error(
-        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot resume game`
+        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot resume game`
       );
     }
 
@@ -1465,14 +1468,14 @@ export async function switchSeat(
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
+    if (game.clubCode) {
       const clubMember = await Cache.isClubMember(
         playerUuid,
-        game.club.clubCode
+        game.clubCode
       );
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to play game ${gameCode}`
@@ -1515,10 +1518,10 @@ export async function approveBuyIn(
     const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
     if (!isAuthorized) {
       logger.error(
-        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot approve/deny requests`
+        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot approve/deny requests`
       );
       throw new Error(
-        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot approve/deny requests`
+        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot approve/deny requests`
       );
     }
 
@@ -1549,10 +1552,10 @@ export async function denyBuyIn(
     const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
     if (!isAuthorized) {
       logger.error(
-        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot approve/deny requests`
+        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot approve/deny requests`
       );
       throw new Error(
-        `Player: ${playerId} is not a owner or a manager ${game.club.name}. Cannot approve/deny requests`
+        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot approve/deny requests`
       );
     }
   } catch (err) {

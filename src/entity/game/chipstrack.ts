@@ -1,16 +1,13 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
   Index,
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import {Player} from './player';
-import {Club} from './club';
 import {PokerGame} from './game';
-import {DbAwareColumn, DbAwareUpdateDateColumn} from './dbaware';
-import {BuyInApprovalStatus, PlayerStatus} from './types';
+import {DbAwareColumn, DbAwareUpdateDateColumn} from '../dbaware';
+import {BuyInApprovalStatus, PlayerStatus} from '../types';
 
 @Entity({name: 'player_game_tracker'})
 export class PlayerGameTracker {
@@ -24,14 +21,14 @@ export class PlayerGameTracker {
   public game!: PokerGame;
 
   @Index('player-game-tracker-player-idx')
-  @ManyToOne(() => Player, player => player.id, {primary: true, eager: true})
-  @JoinColumn({name: 'pgt_player_id'})
-  public player!: Player;
+  @Column({name: 'player_id', type: 'int'})
+  public playerId!: number;
 
-  // @Index('player-game-tracker-club-idx')
-  // @ManyToOne(() => Club, club => club.id, {primary: true, nullable: true})
-  // @JoinColumn({name: 'pgt_club_id'})
-  // public club!: Club;
+  @Column({name: 'player_name'})
+  public playerName!: string;
+
+  @Column({name: 'player_uuid'})
+  public playerUuid!: string;
 
   @Column({name: 'buy_in', type: 'decimal'})
   public buyIn!: number;
@@ -169,31 +166,4 @@ export class PlayerGameTracker {
     nullable: true,
   })
   public waitingListTimeExp!: Date | null;
-}
-
-@Entity({name: 'club_chips_transaction'})
-export class ClubChipsTransaction {
-  @PrimaryGeneratedColumn()
-  public id!: number;
-
-  @ManyToOne(type => Club)
-  @JoinColumn({name: 'club_id'})
-  public club!: Club;
-
-  @Column({name: 'description', type: 'text'})
-  public description!: string;
-
-  @Column({name: 'amount', type: 'decimal', precision: 8, scale: 2})
-  public amount!: number;
-
-  @Column({name: 'balance', type: 'decimal', precision: 8, scale: 2})
-  public balance!: number;
-
-  @DbAwareUpdateDateColumn({
-    name: 'updated_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
-  public updatedAt!: Date;
 }

@@ -1,7 +1,7 @@
 import {Cache} from '@src/cache';
-import {PlayerGameTracker} from '@src/entity/chipstrack';
-import {PokerGame, PokerGameUpdates} from '@src/entity/game';
-import {Player} from '@src/entity/player';
+import {PlayerGameTracker} from '@src/entity/game/chipstrack';
+import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {Player} from '@src/entity/player/player';
 import {GameType, PlayerStatus} from '@src/entity/types';
 import {waitlistSeating} from '@src/gameserver';
 import {startTimer, cancelTimer} from '@src/timer';
@@ -15,9 +15,8 @@ import {
   IsNull,
   Not,
 } from 'typeorm';
-import {BUYIN_TIMEOUT, WAITLIST_SEATING} from './types';
+import {WAITLIST_SEATING} from './types';
 import * as crypto from 'crypto';
-import {BuyIn} from './buyin';
 import {v4 as uuidv4} from 'uuid';
 import {Nats} from '@src/nats';
 import {WaitlistSeatError} from '@src/errors';
@@ -67,8 +66,8 @@ export class WaitListMgmt {
       );
       // continue to sit this player in the seat
     } else {
-      if (playerAskedToSit.player.id !== player.id) {
-        throw new WaitlistSeatError(playerAskedToSit.player.name);
+      if (playerAskedToSit.playerId !== player.id) {
+        throw new WaitlistSeatError(playerAskedToSit.playerName);
       }
 
       cancelTimer(this.game.id, player.id, WAITLIST_SEATING);
@@ -110,14 +109,14 @@ export class WaitListMgmt {
       },
     });
 
-    if (playerAskedToSit && playerAskedToSit.player.id === player.id) {
+    if (playerAskedToSit && playerAskedToSit.playerId === player.id) {
       cancelTimer(this.game.id, player.id, WAITLIST_SEATING);
 
       // remove this player from waiting list
       await playerGameTrackerRepository.update(
         {
           game: {id: this.game.id},
-          player: {id: player.id},
+          playerId: player.id,
         },
         {
           status: PlayerStatus.NOT_PLAYING,
@@ -215,7 +214,7 @@ export class WaitListMgmt {
           await playerGameTrackerRepository.update(
             {
               game: {id: gameId},
-              player: {id: player.player.id},
+              playerId: player.playerId,
             },
             {
               status: PlayerStatus.NOT_PLAYING,
@@ -266,7 +265,7 @@ export class WaitListMgmt {
     await playerGameTrackerRepository.update(
       {
         game: {id: gameId},
-        player: {id: nextPlayer.player.id},
+        playerId: nextPlayer.playerId,
       },
       {
         status: PlayerStatus.WAITLIST_SEATING,
@@ -290,20 +289,21 @@ export class WaitListMgmt {
 
     startTimer(
       nextPlayer.game.id,
-      nextPlayer.player.id,
+      nextPlayer.playerId,
       WAITLIST_SEATING,
       waitingListTimeExp
     );
 
     logger.info(
-      `Game: [${nextPlayer.game.gameCode}], Player: ${nextPlayer.player.name}:${nextPlayer.player.uuid} is requested to take open seat`
+      `Game: [${nextPlayer.game.gameCode}], Player: ${nextPlayer.playerName}:${nextPlayer.playerUuid} is requested to take open seat`
     );
     // we will send a notification which player is coming to the table
-    waitlistSeating(nextPlayer.game, nextPlayer.player, timeout);
+    const player = await Cache.getPlayer(nextPlayer.playerUuid);
+    waitlistSeating(nextPlayer.game, player, timeout);
     const game = nextPlayer.game;
     let clubName: string = '';
-    if (game.club !== null) {
-      clubName = game.club.name;
+    if (game.clubName !== null) {
+      clubName = game.clubName;
     }
     const messageId = uuidv4();
     const title = `${GameType[game.gameType]} ${game.smallBlind}/${
@@ -315,7 +315,7 @@ export class WaitListMgmt {
       game,
       title,
       clubName,
-      nextPlayer.player,
+      player,
       waitingListTimeExp,
       messageId
     );
@@ -347,7 +347,10 @@ export class WaitListMgmt {
       } else {
         // player is not in the game
         playerInGame = new PlayerGameTracker();
-        playerInGame.player = await Cache.getPlayer(playerUuid);
+        //playerInGame.player = await Cache.getPlayer(playerUuid);
+        playerInGame.playerId = player.id;
+        playerInGame.playerName = player.name;
+        playerInGame.playerUuid = player.uuid;
         playerInGame.game = this.game;
         playerInGame.buyIn = 0;
         playerInGame.stack = 0;
@@ -369,7 +372,7 @@ export class WaitListMgmt {
         })
         .where({
           game: {id: this.game.id},
-          player: {id: player.id},
+          playerId: player.id,
         })
         .execute();
       // update players in waiting list column
@@ -430,7 +433,7 @@ export class WaitListMgmt {
       await playerGameTrackerRepository.update(
         {
           game: {id: this.game.id},
-          player: {id: player.id},
+          playerId: player.id,
         },
         {
           status: PlayerStatus.NOT_PLAYING,
@@ -475,8 +478,8 @@ export class WaitListMgmt {
 
     const ret = waitListPlayers.map(x => {
       return {
-        playerUuid: x.player.uuid,
-        name: x.player.name,
+        playerUuid: x.playerUuid,
+        name: x.playerName,
         waitingFrom: x.waitingFrom,
         status: PlayerStatus[x.status],
         waitlistNum: x.waitlistNum,
@@ -523,7 +526,7 @@ export class WaitListMgmt {
         await playerGameTrackerRepository.update(
           {
             game: {id: this.game.id},
-            player: {id: player.id},
+            playerId: player.id,
           },
           {
             waitlistNum: i,

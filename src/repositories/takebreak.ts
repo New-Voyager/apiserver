@@ -1,6 +1,6 @@
-import {PlayerGameTracker} from '@src/entity/chipstrack';
-import {NextHandUpdates, PokerGame} from '@src/entity/game';
-import {Player} from '@src/entity/player';
+import {PlayerGameTracker} from '@src/entity/game/chipstrack';
+import {NextHandUpdates, PokerGame} from '@src/entity/game/game';
+import {Player} from '@src/entity/player/player';
 import {GameStatus, NextHandUpdate, PlayerStatus} from '@src/entity/types';
 import {playerStatusChanged} from '@src/gameserver';
 import {startTimer} from '@src/timer';
@@ -26,7 +26,7 @@ export class TakeBreak {
     const nextHandUpdatesRepository = getRepository(NextHandUpdates);
     const rows = await playerGameTrackerRepository.findOne({
       game: {id: this.game.id},
-      player: {id: this.player.id},
+      playerId: this.player.id,
     });
     if (!rows) {
       throw new Error('Player is not found in the game');
@@ -56,7 +56,7 @@ export class TakeBreak {
       playerGameTrackerRepository.update(
         {
           game: {id: this.game.id},
-          player: {id: this.player.id},
+          playerId: this.player.id,
         },
         {
           status: playerInGame.status,
@@ -76,7 +76,7 @@ export class TakeBreak {
     } else {
       const update = new NextHandUpdates();
       update.game = this.game;
-      update.player = this.player;
+      update.playerId = this.player.id;
       update.newUpdate = NextHandUpdate.TAKE_BREAK;
       await nextHandUpdatesRepository.save(update);
     }
@@ -135,7 +135,7 @@ export class TakeBreak {
     await playerGameTrackerRepository.update(
       {
         game: {id: this.game.id},
-        player: {id: this.player.id},
+        playerId: this.player.id,
       },
       {
         status: PlayerStatus.IN_BREAK,
@@ -158,7 +158,7 @@ export class TakeBreak {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     let rows = await playerGameTrackerRepository.findOne({
       game: {id: this.game.id},
-      player: {id: this.player.id},
+      playerId: this.player.id,
     });
     if (!rows) {
       throw new Error('Player is not found in the game');
@@ -168,7 +168,7 @@ export class TakeBreak {
     await playerGameTrackerRepository.update(
       {
         game: {id: this.game.id},
-        player: {id: this.player.id},
+        playerId: this.player.id,
       },
       {
         status: PlayerStatus.NOT_PLAYING,
@@ -177,7 +177,7 @@ export class TakeBreak {
     );
     rows = await playerGameTrackerRepository.findOne({
       game: {id: this.game.id},
-      player: {id: this.player.id},
+      playerId: this.player.id,
     });
     if (!rows) {
       throw new Error('Player is not found in the game');

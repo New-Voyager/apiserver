@@ -1,6 +1,6 @@
-import {Club, ClubMember} from '@src/entity/club';
-import {PokerGame} from '@src/entity/game';
-import {Player} from '@src/entity/player';
+import {Club, ClubMember} from '@src/entity/player/club';
+import {PokerGame} from '@src/entity/game/game';
+import {Player} from '@src/entity/player/player';
 import {EntityManager, getRepository, Repository} from 'typeorm';
 import * as redis from 'redis';
 import {redisHost, redisPort} from '@src/utils';

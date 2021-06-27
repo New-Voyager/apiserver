@@ -1,10 +1,10 @@
 import {getManager, getRepository, In} from 'typeorm';
-import {Club, ClubMember} from '@src/entity/club';
+import {Club, ClubMember} from '@src/entity/player/club';
 import {TransactionSubType, TransactionType} from '@src/entity/types';
 import {ClubTransaction, PlayerTransaction} from '@src/types';
-import {Player} from '@src/entity/player';
+import {Player} from '@src/entity/player/player';
 import {getLogger} from '@src/utils/log';
-import {ClubTokenTransactions} from '@src/entity/accounting';
+import {ClubTokenTransactions} from '@src/entity/player/accounting';
 const logger = getLogger('accounting - repositories');
 
 class AccountingRepositoryImpl {

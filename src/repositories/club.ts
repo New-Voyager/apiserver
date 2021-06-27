@@ -1,6 +1,6 @@
-import {Club, ClubMember} from '@src/entity/club';
+import {Club, ClubMember} from '@src/entity/player/club';
 import {ClubMemberStatus, ClubStatus} from '@src/entity/types';
-import {Player} from '@src/entity/player';
+import {Player} from '@src/entity/player/player';
 import {
   getConnection,
   getRepository,
@@ -10,7 +10,7 @@ import {
   MoreThan,
   In,
 } from 'typeorm';
-import {PokerGame} from '@src/entity/game';
+import {PokerGame} from '@src/entity/game/game';
 import {
   getClubGamesData,
   getMembersFilterData,

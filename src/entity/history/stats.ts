@@ -7,20 +7,15 @@ import {
   PrimaryGeneratedColumn,
   Index,
 } from 'typeorm';
-import {Player} from './player';
-import {PokerGame} from './game';
-import {Club} from './club';
-import {GameType} from './types';
+import {GameType} from '../types';
 
 @Entity({name: 'player_game_stats'})
 export class PlayerGameStats {
-  @ManyToOne(() => PokerGame, game => game.id, {primary: true})
-  @JoinColumn({name: 'pgs_game_id'})
-  public game!: PokerGame;
+  @Column({name: 'game_id', type: 'int', primary: true})
+  public gameId!: number;
 
-  @ManyToOne(() => Player, player => player.id, {primary: true, eager: true})
-  @JoinColumn({name: 'pgs_player_id'})
-  public player!: Player;
+  @Column({name: 'player_id', type: 'int', primary: true})
+  public playerId!: number;
 
   @Column({name: 'in_preflop', default: 0})
   public inPreflop!: number;
@@ -74,9 +69,8 @@ export class PlayerGameStats {
 
 @Entity({name: 'player_hand_stats'})
 export class PlayerHandStats {
-  @OneToOne(() => Player, player => player.id, {primary: true, eager: false})
-  @JoinColumn({name: 'player_id'})
-  public player!: Player;
+  @Column({name: 'player_id', type: 'int', primary: true})
+  public playerId!: number;
 
   @Column({name: 'in_preflop', default: 0})
   public inPreflop!: number;
@@ -137,9 +131,8 @@ export class ClubStats {
   public id!: number;
 
   @Index('club-stats-idx')
-  @ManyToOne(type => Club)
-  @JoinColumn({name: 'club_id'})
-  public club!: Club;
+  @Column({name: 'club_id', type: 'int', primary: true})
+  public clubId!: number;
 
   @Column({name: 'game_type'})
   public gameType!: GameType;

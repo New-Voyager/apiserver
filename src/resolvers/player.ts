@@ -4,7 +4,7 @@ import {ClubRepository} from '@src/repositories/club';
 import {getLogger} from '@src/utils/log';
 import {GameRepository} from '@src/repositories/game';
 import {Cache} from '@src/cache/index';
-import {Player} from '@src/entity/player';
+import {Player} from '@src/entity/player/player';
 
 import {
   GameStatus,
@@ -14,7 +14,6 @@ import {
   ClubStatus,
 } from '@src/entity/types';
 import {getHighHandsByGame} from './reward';
-import {getAgoraToken} from '@src/3rdparty/agora';
 import {Nats} from '@src/nats';
 import {ClubMessageRepository} from '@src/repositories/clubmessage';
 import {HostMessageRepository} from '@src/repositories/hostmessage';
@@ -338,6 +337,7 @@ export async function searchClub(playerId: string, clubCode: string) {
   }
   let ownerName = '';
   if (club.owner && club.owner instanceof Player) {
+    club.owner = await Promise.resolve(club.owner);
     ownerName = club.owner.name;
   }
   return {

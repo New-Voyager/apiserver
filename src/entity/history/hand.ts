@@ -6,11 +6,8 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import {Club} from './club';
-import {DbAwareColumn, DbAwareUpdateDateColumn} from './dbaware';
-import {PokerGame} from './game';
-import {Player} from './player';
-import {GameType, WonAtStatus} from './types';
+import {DbAwareColumn, DbAwareUpdateDateColumn} from '../dbaware';
+import {GameType, WonAtStatus} from '../types';
 
 @Entity({name: 'hand_history'})
 export class HandHistory {
@@ -77,45 +74,4 @@ export class HandHistory {
 
   @Column({name: 'hand_time', type: 'int', default: 0, nullable: true})
   public handTime!: number;
-}
-
-@Entity({name: 'saved_hands'})
-export class SavedHands {
-  @PrimaryGeneratedColumn()
-  public id!: number;
-
-  @ManyToOne(() => Player, sharedBy => sharedBy.id, {
-    nullable: true,
-    eager: true,
-  })
-  @JoinColumn({name: 'shared_by'})
-  public sharedBy!: Player;
-
-  @ManyToOne(() => Player, savedBy => savedBy.id, {nullable: true, eager: true})
-  @JoinColumn({name: 'saved_by'})
-  public savedBy!: Player;
-
-  @ManyToOne(() => Club, sharedTo => sharedTo.id, {nullable: true})
-  @JoinColumn({name: 'shared_to'})
-  public sharedTo!: Club;
-
-  @Column({name: 'game_code'})
-  public gameCode!: string;
-
-  @Column({name: 'game_type'})
-  public gameType!: GameType;
-
-  @Column({name: 'hand_num', type: 'int'})
-  public handNum!: number;
-
-  @Column({name: 'data', type: 'text'})
-  public data!: string;
-
-  @DbAwareUpdateDateColumn({
-    name: 'updated_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
-  public updatedAt!: Date;
 }

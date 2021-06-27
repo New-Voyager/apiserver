@@ -6,10 +6,9 @@ import {
   JoinColumn,
 } from 'typeorm';
 import {Club} from './club';
-import {DbAwareCreateDateColumn} from './dbaware';
-import {PokerGame} from './game';
+import {DbAwareCreateDateColumn} from '../dbaware';
 import {Player} from './player';
-import {TransactionType, TransactionSubType} from './types';
+import {TransactionType, TransactionSubType} from '../types';
 
 @Entity({name: 'club_token_transactions'})
 export class ClubTokenTransactions {
@@ -24,9 +23,8 @@ export class ClubTokenTransactions {
   @JoinColumn({name: 'host'})
   public host!: Player;
 
-  @ManyToOne(() => PokerGame, game => game.id, {nullable: true})
-  @JoinColumn({name: 'game'})
-  public game!: PokerGame;
+  @Column({name: 'game_id', type: 'int', nullable: true})
+  public gameId!: number;
 
   @ManyToOne(() => Player, player => player.id, {nullable: true})
   @JoinColumn({name: 'player'})

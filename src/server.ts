@@ -20,7 +20,7 @@ const bodyParser = require('body-parser');
 const GQL_PORT = 9501;
 import {getLogger} from '@src/utils/log';
 import {AdminAPI} from './internal/admin';
-import {Player} from './entity/player';
+import {Player} from './entity/player/player';
 import {initializeGameServer} from './gameserver';
 import {timerCallback} from './repositories/timer';
 import {seed} from './initdb';

@@ -1,17 +1,17 @@
 import {EntityManager, Repository, getRepository} from 'typeorm';
 import {v4 as uuidv4} from 'uuid';
-import {Player} from '@src/entity/player';
+import {Player} from '@src/entity/player/player';
 import {
   ClubStats,
   PlayerGameStats,
   PlayerHandStats,
   SystemStats,
-} from '@src/entity/stats';
-import {PokerGame, PokerGameUpdates} from '@src/entity/game';
+} from '@src/entity/history/stats';
+import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {isArray} from 'lodash';
 import {loggers} from 'winston';
 import {getLogger} from '@src/utils/log';
-import {Club} from '@src/entity/club';
+import {Club} from '@src/entity/player/club';
 import {GameType} from '@src/entity/types';
 import {Cache} from '@src/cache';
 
@@ -100,8 +100,8 @@ class StatsRepositoryImpl {
     }
     // player stats record
     const playerStats = new PlayerGameStats();
-    playerStats.player = player;
-    playerStats.game = game;
+    playerStats.playerId = player.id;
+    playerStats.gameId = game.id;
     repository.save(playerStats);
   }
 
@@ -216,7 +216,7 @@ class StatsRepositoryImpl {
     result: any,
     entityManager: EntityManager | undefined
   ) {
-    if (game.club === null || entityManager === undefined) {
+    if (game.clubId === null || entityManager === undefined) {
       return;
     }
     const clubStatsRepo = entityManager.getRepository(ClubStats);
@@ -238,7 +238,7 @@ class StatsRepositoryImpl {
         totalHands: () => `total_hands + 1`,
       })
       .where({
-        club: {id: game.club.id},
+        clubId: game.clubId,
         gameType: gameType,
       })
       .execute();
@@ -372,7 +372,7 @@ class StatsRepositoryImpl {
         .update()
         .set(props)
         .where({
-          club: {id: game.club.id},
+          clubId: game.clubId,
           gameType: gameType,
         })
         .execute();
@@ -393,12 +393,12 @@ class StatsRepositoryImpl {
       const playerStatsRepo = getRepository(PlayerHandStats);
       const gameStatsRepo = getRepository(PlayerGameStats);
       const rows = await gameStatsRepo.find({
-        game: {id: game.id},
+        gameId: game.id,
       });
       const updates = new Array<any>();
       for (const row of rows) {
         let playerStat = await playerStatsRepo.findOne({
-          player: {id: row.player.id},
+          playerId: row.playerId,
         });
         if (!playerStat) {
           playerStat = new PlayerHandStats();
@@ -459,7 +459,7 @@ class StatsRepositoryImpl {
             .update()
             .set(props)
             .where({
-              player: {id: row.player.id},
+              playerId: row.playerId,
             })
             .execute()
         );
@@ -488,7 +488,7 @@ class StatsRepositoryImpl {
     }
   }
 
-  public async newClubGame(gameType: GameType, club: Club) {
+  public async newClubGame(gameType: GameType, clubId: number) {
     try {
       const clubStatsRepo = getRepository(ClubStats);
       await clubStatsRepo
@@ -498,7 +498,7 @@ class StatsRepositoryImpl {
           totalGames: () => `total_games + 1`,
         })
         .where({
-          club: {id: club.id},
+          clubId: clubId,
           gameType: gameType,
         })
         .execute();
@@ -510,7 +510,7 @@ class StatsRepositoryImpl {
   public async newPlayerHandStats(player: Player) {
     const playerStatsRepo = getRepository(PlayerHandStats);
     const playerStats = new PlayerHandStats();
-    playerStats.player = player;
+    playerStats.playerId = player.id;
     await playerStatsRepo.save(playerStats);
   }
 
@@ -521,17 +521,17 @@ class StatsRepositoryImpl {
     const clubStatsRepo = transactionEntityManager.getRepository(ClubStats);
     let clubStats = new ClubStats();
     clubStats.gameType = GameType.HOLDEM;
-    clubStats.club = club;
+    clubStats.clubId = club.id;
     await clubStatsRepo.save(clubStats);
 
     clubStats = new ClubStats();
     clubStats.gameType = GameType.PLO;
-    clubStats.club = club;
+    clubStats.clubId = club.id;
     await clubStatsRepo.save(clubStats);
 
     clubStats = new ClubStats();
     clubStats.gameType = GameType.FIVE_CARD_PLO;
-    clubStats.club = club;
+    clubStats.clubId = club.id;
     await clubStatsRepo.save(clubStats);
   }
 
@@ -573,7 +573,7 @@ class StatsRepositoryImpl {
     const club = await Cache.getClub(clubCode);
     const stats = await clubStatsRepo.findOne({
       gameType: gameType,
-      club: {id: club.id},
+      clubId: club.id,
     });
     return stats;
   }
@@ -582,7 +582,7 @@ class StatsRepositoryImpl {
     const playerHandsRepo = getRepository(PlayerHandStats);
     const player = await Cache.getPlayer(playerId);
     const playerStatHand = await playerHandsRepo.findOne({
-      player: {id: player.id},
+      playerId: player.id,
     });
     return playerStatHand;
   }
@@ -595,8 +595,8 @@ class StatsRepositoryImpl {
     const player = await Cache.getPlayer(playerId);
     const game = await Cache.getGame(gameCode);
     const playerStatHand = await playerGameRepo.findOne({
-      game: {id: game.id},
-      player: {id: player.id},
+      gameId: game.id,
+      playerId: player.id,
     });
     return playerStatHand;
   }

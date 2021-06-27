@@ -9,23 +9,23 @@ import {
 import {
   HandHistory,
   SavedHands,
-} from '../src/entity/hand';
+} from '../src/entity/history/hand';
 import {
   PlayerGameTracker,
   ClubChipsTransaction,
-} from '../src/entity/chipstrack';
+} from '../src/entity/game/chipstrack';
 import {ClubStats, PlayerGameStats, PlayerHandStats} from '../src/entity/stats';
 import {
   Reward,
   GameReward,
   GameRewardTracking,
   HighHand,
-} from '../src/entity/reward';
+} from '../src/entity/game/reward';
 import {Announcement} from '../src/entity/announcements';
-import {ClubTokenTransactions} from '../src/entity/accounting';
-import {ClubMessageInput, ClubHostMessages} from '../src/entity/clubmessage';
+import {ClubTokenTransactions} from '../src/entity/player/accounting';
+import {ClubMessageInput, ClubHostMessages} from '../src/entity/player/clubmessage';
 import {GameServer, TrackGameServer} from '../src/entity/gameserver';
-import {HostSeatChangeProcess} from '../src/entity/seatchange';
+import {HostSeatChangeProcess} from '../src/entity/game/seatchange';
 
 export async function initializeSqlLite() {
   process.env.DB_USED = 'sqllite';

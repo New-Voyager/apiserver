@@ -1,8 +1,8 @@
 import axios from 'axios';
 import {getLogger} from '@src/utils/log';
-import {PokerGame} from '@src/entity/game';
-import {Player} from '@src/entity/player';
-import {PlayerGameTracker} from '@src/entity/chipstrack';
+import {PokerGame} from '@src/entity/game/game';
+import {Player} from '@src/entity/player/player';
+import {PlayerGameTracker} from '@src/entity/game/chipstrack';
 import {GameStatus, PlayerStatus, TableStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {NewUpdate} from '@src/repositories/types';
@@ -156,7 +156,7 @@ async function getGameServerUrl(gameId: number): Promise<string> {
 
 export async function playerKickedOut(
   game: PokerGame,
-  player: Player,
+  player: any,
   seatNo: number
 ) {
   if (!notifyGameServer) {
@@ -207,7 +207,7 @@ export async function pendingProcessDone(
 
 export async function playerStatusChanged(
   game: PokerGame,
-  player: Player,
+  player: any,
   oldStatus: PlayerStatus,
   newStatus: NewUpdate,
   stack: number,
