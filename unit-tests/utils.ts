@@ -1,30 +1,29 @@
 import {createConnection, getConnectionOptions} from 'typeorm';
-import {Player, PlayerNotes} from '../src/entity/player';
-import {Club, ClubMember} from '../src/entity/club';
+import {Player, PlayerNotes} from '../src/entity/player/player';
+import {Club, ClubMember} from '../src/entity/player/club';
+import {SavedHands} from '../src/entity/player/player';
 import {
   PokerGame,
   NextHandUpdates,
   PokerGameUpdates,
-} from '../src/entity/game';
+} from '../src/entity/game/game';
 import {
   HandHistory,
-  SavedHands,
 } from '../src/entity/history/hand';
 import {
   PlayerGameTracker,
-  ClubChipsTransaction,
 } from '../src/entity/game/chipstrack';
-import {ClubStats, PlayerGameStats, PlayerHandStats} from '../src/entity/stats';
+import {ClubStats, PlayerGameStats, PlayerHandStats} from '../src/entity/history/stats';
 import {
   Reward,
   GameReward,
   GameRewardTracking,
   HighHand,
-} from '../src/entity/game/reward';
-import {Announcement} from '../src/entity/announcements';
+} from '../src/entity/player/reward';
+import {Announcement} from '../src/entity/player/announcements';
 import {ClubTokenTransactions} from '../src/entity/player/accounting';
 import {ClubMessageInput, ClubHostMessages} from '../src/entity/player/clubmessage';
-import {GameServer, TrackGameServer} from '../src/entity/gameserver';
+import {GameServer, TrackGameServer} from '../src/entity/game/gameserver';
 import {HostSeatChangeProcess} from '../src/entity/game/seatchange';
 
 export async function initializeSqlLite() {
@@ -45,7 +44,6 @@ export async function sqlliteConnection() {
       HandHistory,
       NextHandUpdates,
       PlayerGameTracker,
-      ClubChipsTransaction,
       ClubMessageInput,
       GameServer,
       TrackGameServer,
