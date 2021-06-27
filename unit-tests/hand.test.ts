@@ -20,8 +20,6 @@ import {
   getSpecificHandHistory,
   getAllHandHistory,
   getMyWinningHands,
-  getAllStarredHands,
-  saveStarredHand,
   shareHand,
   sharedHand,
   sharedHands,
