@@ -203,7 +203,7 @@ export class ClubMember {
   })
   public rakePaid!: number;
 }
-
+/*
 @Entity({name: 'club_chips_transaction'})
 export class ClubChipsTransaction {
   @PrimaryGeneratedColumn()
@@ -230,3 +230,4 @@ export class ClubChipsTransaction {
   })
   public updatedAt!: Date;
 }
+*/

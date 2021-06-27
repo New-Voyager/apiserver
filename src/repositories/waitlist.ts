@@ -48,7 +48,6 @@ export class WaitListMgmt {
     // if WAITLIST_SEATING player is sitting, change status to PLAYING, update waitingFrom, waitlist_sitting_exp
     // cancel timer
     const playerAskedToSit = await playerGameTrackerRepository.findOne({
-      relations: ['player'],
       where: {
         game: {id: this.game.id},
         status: PlayerStatus.WAITLIST_SEATING,
@@ -102,7 +101,6 @@ export class WaitListMgmt {
     // if WAITLIST_SEATING player is sitting, change status to PLAYING, update waitingFrom, waitlist_sitting_exp
     // cancel timer
     const playerAskedToSit = await playerGameTrackerRepository.findOne({
-      relations: ['player'],
       where: {
         game: {id: this.game.id},
         status: PlayerStatus.WAITLIST_SEATING,
@@ -184,7 +182,6 @@ export class WaitListMgmt {
     // eslint-disable-next-line no-constant-condition
     // get the first guy from the wait list
     const waitingPlayers = await playerGameTrackerRepository.find({
-      relations: ['game', 'player'],
       where: {
         game: {id: gameId},
         waitingFrom: Not(IsNull()),
@@ -465,7 +462,6 @@ export class WaitListMgmt {
   public async getWaitingListUsers() {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const waitListPlayers = await playerGameTrackerRepository.find({
-      relations: ['player', 'game'],
       where: {
         game: {id: this.game.id},
         waitingFrom: Not(IsNull()),

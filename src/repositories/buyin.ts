@@ -785,7 +785,6 @@ export class BuyIn {
 
     // find the player
     const playerInSeat = await playerGameTrackerRepository.findOne({
-      relations: ['player'],
       where: {
         game: {id: this.game.id},
         playerId: this.player.id,

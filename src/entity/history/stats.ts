@@ -11,10 +11,13 @@ import {GameType} from '../types';
 
 @Entity({name: 'player_game_stats'})
 export class PlayerGameStats {
-  @Column({name: 'game_id', type: 'int', primary: true})
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @Column({name: 'game_id', type: 'int'})
   public gameId!: number;
 
-  @Column({name: 'player_id', type: 'int', primary: true})
+  @Column({name: 'player_id', type: 'int'})
   public playerId!: number;
 
   @Column({name: 'in_preflop', default: 0})
@@ -131,7 +134,7 @@ export class ClubStats {
   public id!: number;
 
   @Index('club-stats-idx')
-  @Column({name: 'club_id', type: 'int', primary: true})
+  @Column({name: 'club_id', type: 'int'})
   public clubId!: number;
 
   @Column({name: 'game_type'})

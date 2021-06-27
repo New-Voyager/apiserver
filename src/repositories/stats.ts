@@ -134,7 +134,7 @@ class StatsRepositoryImpl {
         const col = await repository
           .createQueryBuilder()
           .where({
-            player: {id: playerId},
+            playerId: playerId,
             game: {id: game.id},
           })
           .select('headsup_hand_details')
@@ -186,7 +186,7 @@ class StatsRepositoryImpl {
             totalHands: () => `total_hands + 1`,
           })
           .where({
-            player: {id: playerId},
+            playerId: playerId,
             game: {id: game.id},
           })
           .execute()
@@ -200,7 +200,7 @@ class StatsRepositoryImpl {
               headsupHandDetails: JSON.stringify(headsupRecord),
             })
             .where({
-              player: {id: playerId},
+              playerId: playerId,
               game: {id: game.id},
             })
             .execute()
@@ -480,7 +480,7 @@ class StatsRepositoryImpl {
           totalGames: () => `total_games + 1`,
         })
         .where({
-          player: {id: player.id},
+          playerId: player.id,
         })
         .execute();
     } catch (err) {

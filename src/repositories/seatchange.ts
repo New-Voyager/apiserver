@@ -211,7 +211,6 @@ export class SeatChangeProcess {
   ): Promise<Date | null> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
-      relations: ['player', 'game'],
       where: {
         game: {id: this.game.id},
         player: {id: player.id},
@@ -249,10 +248,9 @@ export class SeatChangeProcess {
   ): Promise<PlayerGameTracker[]> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
-      relations: ['player', 'game'],
       where: {
         game: {id: this.game.id},
-        player: {id: player.id},
+        playerId: player.id,
       },
     });
 
@@ -267,7 +265,6 @@ export class SeatChangeProcess {
     }
 
     const seatChangeRequestedPlayers = await playerGameTrackerRepository.find({
-      relations: ['player', 'game'],
       order: {
         seatChangeRequestedAt: 'ASC',
       },
@@ -416,7 +413,6 @@ export class SeatChangeProcess {
       playerGameTrackerRepository = getRepository(PlayerGameTracker);
     }
     const players = await playerGameTrackerRepository.find({
-      relations: ['player'],
       order: {seatChangeRequestedAt: 'ASC'},
       where: {
         game: {id: this.game.id},

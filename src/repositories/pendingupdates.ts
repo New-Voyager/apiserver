@@ -125,7 +125,6 @@ export async function processPendingUpdates(gameId: number) {
 
   const pendingUpdatesRepo = getRepository(NextHandUpdates);
   const updates = await pendingUpdatesRepo.find({
-    relations: ['game', 'player'],
     where: {
       game: {id: gameId},
     },

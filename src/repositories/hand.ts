@@ -298,7 +298,7 @@ class HandRepositoryImpl {
               })
               .where({
                 game: {id: gameID},
-                player: {id: playerId},
+                playerId: playerId,
               })
               .execute();
           }

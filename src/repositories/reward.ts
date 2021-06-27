@@ -351,7 +351,7 @@ class RewardRepositoryImpl {
     const game = await Cache.getGame(gameCode);
     try {
       const gameHighHands = await highHandRepo.find({
-        where: {game: {id: game.id}},
+        where: {gameId: game.id},
         order: {handTime: 'DESC'},
       });
       for await (const highHand of gameHighHands) {
@@ -397,7 +397,7 @@ class RewardRepositoryImpl {
     }
     try {
       const gameHighHands = await highHandRepo.find({
-        where: {game: {id: game.id}, reward: {id: rewardId}},
+        where: {gameId: game.id, reward: {id: rewardId}},
         order: {handTime: 'DESC'},
       });
       for await (const highHand of gameHighHands) {
@@ -430,7 +430,7 @@ class RewardRepositoryImpl {
   ): Promise<number> {
     const highHandRepo = getRepository(HighHand);
     const gameHighHands = await highHandRepo.find({
-      where: {game: {id: game.id}, reward: {id: rewardId}},
+      where: {gameId: game.id, reward: {id: rewardId}},
       order: {handTime: 'DESC'},
       take: 1,
     });
@@ -446,7 +446,7 @@ class RewardRepositoryImpl {
   ): Promise<number> {
     const highHandRepo = getRepository(HighHand);
     const gameHighHands = await highHandRepo.find({
-      where: {game: {id: game.id}},
+      where: {gameId: game.id},
       order: {handTime: 'DESC'},
       take: 1,
     });
@@ -504,7 +504,7 @@ class RewardRepositoryImpl {
       });
     } else {
       gameHighHands = await highHandRepo.find({
-        where: {game: {id: game.id}, winner: true},
+        where: {gameId: game.id, winner: true},
       });
     }
     try {

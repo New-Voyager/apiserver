@@ -155,13 +155,14 @@ class GameRepositoryImpl {
     }
     if (club) {
       game.clubId = club.id;
+      game.clubCode = club.clubCode;
+      game.clubName = club.name;
       game.gameCode = await getGameCodeForClub(club.clubCode, club.id);
     } else {
       game.gameCode = await getGameCodeForClub(player.id.toString(), 1);
     }
     let savedGame;
     // use current time as the game id for now
-    game.gameCode = await getGameCodeForClub(club.clubCode, club.id);
     game.privateGame = true;
 
     game.startedAt = new Date();
@@ -228,6 +229,7 @@ class GameRepositoryImpl {
                 );
                 const createGameReward = new GameReward();
                 createGameReward.gameId = game.id;
+                createGameReward.gameCode = game.gameCode;
                 createGameReward.rewardId = rewardId;
                 createGameReward.rewardTrackingId = rewardTrackResponse;
                 rewardTrackingIds.push(rewardTrackResponse.id);
@@ -239,6 +241,7 @@ class GameRepositoryImpl {
                 rewardTrackingIds.push(rewardTrack.id);
                 const createGameReward = new GameReward();
                 createGameReward.gameId = game.id;
+                createGameReward.gameCode = game.gameCode;
                 createGameReward.rewardId = rewardId;
                 createGameReward.rewardTrackingId = rewardTrack;
 
@@ -389,13 +392,13 @@ class GameRepositoryImpl {
 
   public async getGameCountByClubId(clubId: number): Promise<number> {
     const repository = getRepository(PokerGame);
-    const count = await repository.count({where: {club: {id: clubId}}});
+    const count = await repository.count({where: {clubId: clubId}});
     return count;
   }
 
   public async getGameCountByPlayerId(playerId: number): Promise<number> {
     const repository = getRepository(PokerGame);
-    const count = await repository.count({where: {host: {id: playerId}}});
+    const count = await repository.count({where: {hostId: playerId}});
     return count;
   }
 
@@ -547,7 +550,6 @@ class GameRepositoryImpl {
         // set the player status to waiting_for_buyin
         // send a message to game server that a new player is in the seat
         const playerInSeat = await playerGameTrackerRepository.findOne({
-          relations: ['player'],
           where: {
             game: {id: game.id},
             seatNo: seatNo,
@@ -706,7 +708,6 @@ class GameRepositoryImpl {
       },
     });
     const allPlayers = await playerGameTrackerRepository.find({
-      relations: ['player'],
       where: {
         game: {id: game.id},
       },
@@ -724,7 +725,6 @@ class GameRepositoryImpl {
   public async tableGameState(game: PokerGame): Promise<PlayerGameTracker[]> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.find({
-      relations: ['player'],
       where: {
         game: {id: game.id},
       },
@@ -1424,7 +1424,6 @@ class GameRepositoryImpl {
 
         // make sure the seat is available
         let playerInSeat = await playerGameTrackerRepository.findOne({
-          relations: ['player'],
           where: {
             game: {id: game.id},
             seatNo: seatNo,
@@ -1440,7 +1439,6 @@ class GameRepositoryImpl {
 
         // get player's old seat no
         playerInSeat = await playerGameTrackerRepository.findOne({
-          relations: ['player'],
           where: {
             game: {id: game.id},
             playerId: player.id,
@@ -1461,7 +1459,6 @@ class GameRepositoryImpl {
           }
         );
         playerInSeat = await playerGameTrackerRepository.findOne({
-          relations: ['player'],
           where: {
             game: {id: game.id},
             seatNo: seatNo,

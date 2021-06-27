@@ -101,13 +101,13 @@ export class PokerGame {
   public gameCode!: string;
 
   @Index('game-club-idx')
-  @Column({name: 'club_id'})
+  @Column({name: 'club_id', nullable: true})
   public clubId!: number;
 
-  @Column({name: 'club_name'})
+  @Column({name: 'club_name', nullable: true})
   public clubName!: string;
 
-  @Column({name: 'club_code'})
+  @Column({name: 'club_code', nullable: true})
   public clubCode!: string;
 
   @Index('game-host-idx')
@@ -284,10 +284,10 @@ export class PokerGame {
   })
   public endedAt!: Date;
 
-  @Column({name: 'ended_by_player_id'})
+  @Column({name: 'ended_by_player_id', nullable: true, type: 'int'})
   public endedBy!: number;
 
-  @Column({name: 'ended_by_name'})
+  @Column({name: 'ended_by_name', nullable: true})
   public endedByName!: string;
 
   /**

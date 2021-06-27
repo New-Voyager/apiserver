@@ -163,7 +163,6 @@ class GameCache {
         repo = getRepository(PokerGame);
       }
       const game = await repo.findOne({
-        relations: ['club', 'host', 'startedBy', 'endedBy'],
         where: {gameCode: gameCode},
       });
       if (!game) {
@@ -300,7 +299,6 @@ class GameCache {
     const gameCode = await this.gameCodeFromId(gameID);
     if (!gameCode) {
       const game = await getRepository(PokerGame).findOne({
-        relations: ['club', 'host', 'startedBy', 'endedBy'],
         where: {id: gameID},
       });
       if (!game) {

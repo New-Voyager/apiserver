@@ -159,7 +159,6 @@ class ChipsTrackRepositoryImpl {
         const playerChips = await transactionEntityManager
           .getRepository(PlayerGameTracker)
           .find({
-            relations: ['game', 'player'],
             where: {game: {id: gameId}},
           });
 
