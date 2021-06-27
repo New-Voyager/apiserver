@@ -1,7 +1,5 @@
 import {HandRepository} from '@src/repositories/hand';
-import {HandHistory, HandWinners} from '@src/entity/hand';
-import {ClubRepository} from '@src/repositories/club';
-import {Club} from '@src/entity/club';
+import {HandHistory} from '@src/entity/hand';
 import {WonAtStatus, GameType, ClubMemberStatus} from '@src/entity/types';
 import {PlayerRepository} from '@src/repositories/player';
 import {getLogger} from '@src/utils/log';
@@ -26,9 +24,6 @@ const resolvers: any = {
     myWinningHands: async (parent, args, ctx, info) => {
       return await getMyWinningHands(ctx.req.playerId, args);
     },
-    allStarredHands: async (parent, args, ctx, info) => {
-      return await getAllStarredHands(ctx.req.playerId, args);
-    },
     sharedHand: async (parent, args, ctx, info) => {
       return await sharedHand(ctx.req.playerId, args);
     },
@@ -43,9 +38,6 @@ const resolvers: any = {
     },
   },
   Mutation: {
-    saveStarredHand: async (parent, args, ctx, info) => {
-      return await saveStarredHand(ctx.req.playerId, args);
-    },
     shareHand: async (parent, args, ctx, info) => {
       return await shareHand(ctx.req.playerId, args);
     },
@@ -109,19 +101,6 @@ async function generateHandHistoryData(
     }
   }
   return ret;
-}
-
-async function generateHandWinnersData(hand: HandWinners) {
-  return {
-    pageId: hand.id,
-    gameId: hand.gameId,
-    handNum: hand.handNum,
-    playerId: hand.playerId,
-    isHigh: hand.isHigh,
-    winningCards: hand.winningCards,
-    winningRank: hand.winningRank,
-    pot: hand.received,
-  };
 }
 
 export async function getLastHandHistory(playerId: string, args: any) {
@@ -276,81 +255,6 @@ export async function getMyWinningHands(playerId: string, args: any) {
   }
 
   return hands;
-}
-
-export async function getAllStarredHands(playerId: string, args: any) {
-  if (!playerId) {
-    throw new Error('Unauthorized');
-  }
-  const player = await PlayerRepository.getPlayerById(playerId);
-  if (!player) {
-    throw new Error(`Player ${playerId} is not found`);
-  }
-  const handHistory = await HandRepository.getStarredHands(player.id);
-  return handHistory;
-}
-
-export async function saveStarredHand(playerId: string, args: any) {
-  if (!playerId) {
-    throw new Error('Unauthorized');
-  }
-  const errors = new Array<string>();
-  try {
-    if (!args.gameCode) {
-      errors.push('gameCode is missing');
-    }
-    if (!args.handNum) {
-      errors.push('HandNum is missing');
-    }
-  } catch (err) {
-    throw new Error('Internal server error');
-  }
-
-  if (errors.length) {
-    throw new Error(JSON.stringify(errors));
-  }
-  const player = await PlayerRepository.getPlayerById(playerId);
-  if (!player) {
-    throw new Error(`Player ${playerId} is not found`);
-  }
-  const game = await Cache.getGame(args.gameCode);
-  if (!game) {
-    throw new Error(`Game ${args.gameCode} is not found`);
-  }
-
-  if (game.club) {
-    const clubMember = await Cache.getClubMember(playerId, game.club.clubCode);
-    if (!clubMember) {
-      logger.error(
-        `Player: ${playerId} is not authorized to start the game ${args.gameCode} in club ${game.club.name}`
-      );
-      throw new Error(
-        `Player: ${playerId} is not authorized to start the game ${args.gameCode}`
-      );
-    }
-
-    if (clubMember.status !== ClubMemberStatus.ACTIVE) {
-      logger.error(`The user ${playerId} is not Active in ${args.clubCode}`);
-      throw new Error('Unauthorized');
-    }
-  }
-
-  const handHistory = await HandRepository.getSpecificHandHistory(
-    game.id,
-    parseInt(args.handNum)
-  );
-  if (!handHistory) {
-    logger.error(`The hand ${args.handNum} is not found`);
-    throw new Error('Hand not found');
-  }
-
-  const resp = await HandRepository.saveStarredHand(
-    game.id,
-    args.handNum,
-    player.id,
-    handHistory
-  );
-  return resp;
 }
 
 export async function shareHand(playerId: string, args: any) {

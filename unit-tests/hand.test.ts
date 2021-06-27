@@ -20,8 +20,6 @@ import {
   getSpecificHandHistory,
   getAllHandHistory,
   getMyWinningHands,
-  getAllStarredHands,
-  saveStarredHand,
   shareHand,
   sharedHand,
   sharedHands,
@@ -576,113 +574,6 @@ describe('Hand server APIs', () => {
         },
       });
       console.log(winningHands, winningHands1);
-    } catch (err) {
-      logger.error(JSON.stringify(err));
-      expect(true).toBeFalsy();
-    }
-  });
-
-  test('Handtest: Save starred hand', async () => {
-    try {
-      const [
-        owner,
-        clubCode,
-        clubId,
-        playerUuids,
-        playerIds,
-      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-      const rewardId = await createReward(owner, clubCode);
-      const [gameCode, gameId] = await setupGameEnvironment(
-        owner,
-        clubCode,
-        playerUuids,
-        100
-      );
-      const rewardTrackId = await getRewardTrack(
-        playerUuids[0],
-        gameCode,
-        rewardId.toString()
-      );
-
-      const files = await glob.sync('**/*.json', {
-        onlyFiles: false,
-        cwd: 'highhand-results',
-        deep: 5,
-      });
-
-      let lastHand = 0;
-      for await (const file of files) {
-        const data = await defaultHandData(
-          file,
-          gameId,
-          rewardTrackId,
-          playerIds
-        );
-        const resp = await postHand(gameId, data.handNum, data);
-        expect(resp).not.toBe(null);
-        lastHand += 1;
-      }
-
-      const starredHand = await saveStarredHand(playerUuids[0], {
-        clubCode: clubCode,
-        gameCode: gameCode,
-        handNum: 1,
-      });
-      expect(starredHand).toBe(true);
-    } catch (err) {
-      logger.error(JSON.stringify(err));
-      expect(true).toBeFalsy();
-    }
-  });
-
-  test('Handtest: Get starred hands', async () => {
-    try {
-      const [
-        owner,
-        clubCode,
-        clubId,
-        playerUuids,
-        playerIds,
-      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-      const rewardId = await createReward(owner, clubCode);
-      const [gameCode, gameId] = await setupGameEnvironment(
-        owner,
-        clubCode,
-        playerUuids,
-        100
-      );
-      const rewardTrackId = await getRewardTrack(
-        playerUuids[0],
-        gameCode,
-        rewardId.toString()
-      );
-
-      const files = await glob.sync('**/*.json', {
-        onlyFiles: false,
-        cwd: 'highhand-results',
-        deep: 5,
-      });
-
-      let lastHand = 0;
-      for await (const file of files) {
-        const data = await defaultHandData(
-          file,
-          gameId,
-          rewardTrackId,
-          playerIds
-        );
-        const resp = await postHand(gameId, data.handNum, data);
-        expect(resp).not.toBe(null);
-        await saveStarredHand(playerUuids[0], {
-          clubCode: clubCode,
-          gameCode: gameCode,
-          handNum: data.handNum,
-        });
-        lastHand += 1;
-      }
-
-      const starredHands = await getAllStarredHands(playerUuids[0], {});
-      expect(starredHands).toHaveLength(lastHand);
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();

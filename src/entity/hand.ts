@@ -12,35 +12,6 @@ import {PokerGame} from './game';
 import {Player} from './player';
 import {GameType, WonAtStatus} from './types';
 
-@Entity({name: 'hand_winners'})
-export class HandWinners {
-  @PrimaryGeneratedColumn()
-  public id!: number;
-
-  @Index()
-  @Column({name: 'game_id'})
-  public gameId!: number;
-
-  @Column({name: 'hand_num'})
-  public handNum!: number;
-
-  @Column({name: 'is_high', default: true})
-  public isHigh!: boolean;
-
-  @Column({name: 'winning_cards', nullable: true})
-  public winningCards!: string;
-
-  @Column({name: 'winning_rank', type: 'int', nullable: true})
-  public winningRank!: number;
-
-  @Index()
-  @Column({name: 'player_id'})
-  public playerId!: number;
-
-  @Column({name: 'received', type: 'float'})
-  public received!: number;
-}
-
 @Entity({name: 'hand_history'})
 export class HandHistory {
   @PrimaryGeneratedColumn()
@@ -106,26 +77,6 @@ export class HandHistory {
 
   @Column({name: 'hand_time', type: 'int', default: 0, nullable: true})
   public handTime!: number;
-}
-
-@Entity({name: 'starred_hands'})
-export class StarredHands {
-  @PrimaryGeneratedColumn()
-  public id!: number;
-
-  @Index()
-  @Column({name: 'player_id'})
-  public playerId!: number;
-
-  @Index()
-  @Column({name: 'game_id'})
-  public gameId!: number;
-
-  @Column({name: 'hand_num'})
-  public handNum!: number;
-
-  @ManyToOne(type => HandHistory)
-  public handHistory!: HandHistory;
 }
 
 @Entity({name: 'saved_hands'})

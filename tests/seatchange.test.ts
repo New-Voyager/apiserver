@@ -159,8 +159,14 @@ describe('Tests: seat change APIs', () => {
     // confirm seat change
     const resp4 = await gameutils.confirmSeatChange(player1, game.gameCode, 3);
     expect(resp4).toBe(true);
-    const resp5 = await gameutils.confirmSeatChange(player2, game.gameCode, 3);
-    expect(resp5).toBe(true);
+
+    // second player tries to take a seat that is already occupied
+    try {
+      const resp5 = await gameutils.confirmSeatChange(player2, game.gameCode, 3);
+      expect(true).toBeFalsy();
+    } catch (err) {
+      //console.error(JSON.stringify(err));
+    }
 
     // wait for 6 seconds
     await sleep(6000);

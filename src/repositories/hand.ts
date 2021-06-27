@@ -1,10 +1,5 @@
 import * as _ from 'lodash';
-import {
-  HandHistory,
-  HandWinners,
-  SavedHands,
-  StarredHands,
-} from '@src/entity/hand';
+import {HandHistory, SavedHands} from '@src/entity/hand';
 import {
   ClubMessageType,
   GameType,
@@ -186,34 +181,15 @@ class HandRepositoryImpl {
       /**
        * Assigning hand winners values
        */
-      const allHandWinners = new Array<HandWinners>();
       for await (const hiWinner of potWinners.hiWinners) {
-        const handWinners = new HandWinners();
-        handWinners.gameId = gameID;
-        handWinners.handNum = handNum;
-        if (wonAt === 'SHOW_DOWN') {
-          handWinners.winningCards = JSON.stringify(hiWinner.winningCards);
-          handWinners.winningRank = hiWinner.rank; // undefined
-        }
-        handWinners.playerId = parseInt(playersInHand[hiWinner.seatNo].id);
-        handWinners.received = hiWinner.amount;
-        allHandWinners.push(handWinners);
-        winners[handWinners.playerId] = true;
+        const playerId = parseInt(playersInHand[hiWinner.seatNo].id);
+        winners[playerId] = true;
       }
       if (potWinners.loWinners) {
         for await (const loWinner of potWinners.loWinners) {
-          const handWinners = new HandWinners();
-          handWinners.gameId = gameID;
-          handWinners.handNum = handNum;
-          if (wonAt === 'SHOW_DOWN') {
-            handWinners.winningCards = JSON.stringify(loWinner.winningCards);
-            handWinners.winningRank = loWinner.rank; // undefined
-          }
-          handWinners.playerId = parseInt(playersInHand[loWinner.seatNo].id);
-          handWinners.received = loWinner.amount;
-          handWinners.isHigh = false;
-          winners[handWinners.playerId] = true;
-          allHandWinners.push(handWinners);
+          const playerId = parseInt(playersInHand[loWinner.seatNo].id);
+          winners[playerId] = true;
+          winners[playerId] = true;
         }
       }
 
@@ -538,61 +514,27 @@ class HandRepositoryImpl {
   ): Promise<Array<HandHistory>> {
     const allHands = await this.getAllHandHistory(gameId);
     const playerIdMatch = `"playerId":"${playerId}"`;
+
+    /*
+    // summary
+        {
+          "boardCards": [
+            [33, 66, 17, 168, 146]
+          ],
+          "noCards": 2,
+          "flop": [33, 66, 17],
+          "turn": 168,
+          "river": 146,
+          "hiWinners": [{
+            "playerId": "303",
+            "playerName": "yong",
+            "amount": 7,
+            "cards": [34, 104]
+          }]
+        }
+    */
     const myHands = _.filter(allHands, e => e.summary.includes(playerIdMatch));
     return myHands;
-  }
-
-  public async saveStarredHand(
-    gameId: number,
-    handNum: number,
-    playerId: number,
-    handHistory: HandHistory
-  ): Promise<boolean> {
-    try {
-      const starredHandsRepository = getRepository(StarredHands);
-
-      const findOptions: any = {
-        where: {
-          playerId: playerId,
-        },
-        order: {id: 'ASC'},
-      };
-      const previousHands = await starredHandsRepository.find(findOptions);
-      if (previousHands.length >= MAX_STARRED_HAND) {
-        await starredHandsRepository.delete(previousHands[0].id);
-      }
-      const starredHand = new StarredHands();
-      starredHand.gameId = gameId;
-      starredHand.handNum = handNum;
-      starredHand.playerId = playerId;
-      starredHand.handHistory = handHistory;
-      await getManager().transaction(async transactionEntityManager => {
-        await transactionEntityManager
-          .getRepository(StarredHands)
-          .save(starredHand);
-      });
-      return true;
-    } catch (error) {
-      logger.error(
-        `Error when trying to save starred hands: ${error.toString}`
-      );
-      throw error;
-    }
-  }
-
-  public async getStarredHands(playerId: number): Promise<Array<StarredHands>> {
-    const starredHandsRepository = getRepository(StarredHands);
-
-    const findOptions: any = {
-      relations: ['handHistory'],
-      where: {
-        playerId: playerId,
-      },
-      order: {id: 'DESC'},
-    };
-
-    const starredHands = await starredHandsRepository.find(findOptions);
-    return starredHands;
   }
 
   public async bookmarkHand(

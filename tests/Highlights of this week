@@ -1,0 +1,25 @@
+Highlights of this week
+
+App
+1 Hive Store Game setting. Good foundation for future work.
+2 Statistics - I don't think other apps have this feature. We will add more charts in coming weeks.
+3 Game chat is solidified
+4 Rabbit hunt feature 
+5 Show folded cards to other players
+7 Most of the UI are following new theme colors
+8 Documenting Game rules and betting rules
+
+Resiliency and Fault tolerance (Server)
+8 Mesasge encryption and network connectivity check
+9 Notify the players with consecutive timeouts
+
+Goals for next week
+1 Wrap up theme work in all screens
+2 Address performance issues (rebuilding UI multiple times)
+3 Reload chips feature
+4 Muck losing hand feature
+5 Club member approval/deny related bugs
+6 Create flavors for dev/prod releases
+7 Start iOS testing
+8 Fix API server failures
+9 Solidify Janus integration

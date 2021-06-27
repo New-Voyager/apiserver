@@ -50,13 +50,6 @@ type HandWinners {
   pot: Float!
 }
 
-type StarredHands {
-  playerId: Int!
-  gameId: Int!
-  handNum: Int!
-  handHistory: HandHistory!
-}
-
 input PageInput {
   prev: Int
   next: Int
@@ -90,10 +83,6 @@ type SavedHand {
 }
 
 type Mutation {
-  saveStarredHand(
-    gameCode: String!
-    handNum: String!
-  ): String!
   shareHand(gameCode: String!, handNum: Int!, clubCode: String!): Int!
   bookmarkHand(gameCode: String!, handNum: Int!): Int!
   removeBookmark(bookmarkId: Int!): Boolean
@@ -120,9 +109,6 @@ type Query {
     gameCode: String!
     page: PageInput
   ): [HandHistory!]
-
-  # To get all starred message for a user (default count 25)
-  allStarredHands: [StarredHands!]
 
   sharedHand(id: Int!, clubCode: String!): SavedHand!
   sharedHands(clubCode: String!): [SavedHand!]

@@ -1023,7 +1023,9 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
     return status;
   } catch (err) {
     logger.error(JSON.stringify(err));
-    throw new Error(`Failed to leave game. ${JSON.stringify(err)}`);
+    throw new Error(
+      `Failed to leave game. ${err.toString()} ${JSON.stringify(err)}`
+    );
   }
 }
 

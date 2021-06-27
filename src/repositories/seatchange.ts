@@ -343,11 +343,14 @@ export class SeatChangeProcess {
         },
       });
       if (playerInSeat) {
+        const player = await Cache.getPlayer(playerInSeat.player.uuid);
         logger.error(
           `Game: ${this.game.gameCode} Player: ${player.id} A player already exists in the table`
         );
         // there is a player in the seat
-        throw new Error('A player already sits in the seat');
+        throw new Error(
+          `A player ${player.name}:${playerInSeat.player.id} already sits in the seat ${seatNo} `
+        );
       }
 
       // move the player to new seat

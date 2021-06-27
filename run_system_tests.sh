@@ -23,4 +23,3 @@ trap cleanup EXIT
 
 echo "Running tests"
 yarn test
-#echo "SOMA: Disabled system tests. I need help from Sanjay"

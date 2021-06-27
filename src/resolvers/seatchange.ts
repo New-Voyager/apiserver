@@ -97,7 +97,9 @@ export async function confirmSeatChange(
     return seatChangeStatus;
   } catch (err) {
     logger.error(JSON.stringify(err));
-    throw new Error(`Failed to confirm seat change. ${JSON.stringify(err)}`);
+    throw new Error(
+      `Failed to confirm seat change.  ${err.toString()} ${JSON.stringify(err)}`
+    );
   }
 }
 
