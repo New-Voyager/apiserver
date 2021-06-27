@@ -1,6 +1,6 @@
 import {resetDatabase, getClient} from './utils';
 import {gql} from 'apollo-boost';
-import {ClubMember} from '../../src/entity/club';
+import {ClubMember} from '../../src/entity/player/club';
 
 export const createPlayerQuery = gql`
   mutation($input: PlayerCreateInput!) {
