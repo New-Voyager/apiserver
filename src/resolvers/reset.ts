@@ -50,7 +50,6 @@ export async function resetGames() {
     await deleteAll('game_reward', transactionEntityManager);
     await deleteAll('game_reward_tracking', transactionEntityManager);
     await deleteAll('poker_game', transactionEntityManager);
-    await deleteAll('hand_winners', transactionEntityManager);
     await deleteAll('hand_history', transactionEntityManager);
   });
   await Cache.reset();
@@ -89,8 +88,6 @@ export async function resetDB() {
     if (!isGameServerEnabled()) {
       await deleteAll('game_server', transactionEntityManager);
     }
-    await deleteAll('starred_hands', transactionEntityManager);
-    await deleteAll('hand_winners', transactionEntityManager);
     await deleteAll('hand_history', transactionEntityManager);
   });
   await Cache.reset();
