@@ -324,7 +324,7 @@ export class WaitListMgmt {
     let playerInGame = await getRepository(PlayerGameTracker).findOne({
       where: {
         game: {id: this.game.id},
-        player: {id: player.id},
+        playerId: player.id,
       },
     });
     await getManager().transaction(async transactionEntityManager => {
@@ -399,7 +399,7 @@ export class WaitListMgmt {
       })
       .where({
         game: {id: this.game.id},
-        player: {id: player.id},
+        playerId: player.id,
       })
       .execute();
     logger.info('****** ENDING TRANSACTION TO ADD a player to waitlist');
@@ -415,7 +415,7 @@ export class WaitListMgmt {
       const playerInGame = await playerGameTrackerRepository.findOne({
         where: {
           game: {id: this.game.id},
-          player: {id: player.id},
+          playerId: player.id,
         },
       });
 

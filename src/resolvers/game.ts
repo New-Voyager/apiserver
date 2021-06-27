@@ -488,7 +488,9 @@ export async function pendingApprovalsForGame(
     return ret;
   } catch (err) {
     logger.error(JSON.stringify(err));
-    throw new Error(`Failed to approve buyin. ${JSON.stringify(err)}`);
+    throw new Error(
+      `Failed to get pending approvals list. ${JSON.stringify(err)}`
+    );
   }
 }
 

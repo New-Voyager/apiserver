@@ -704,7 +704,7 @@ class GameRepositoryImpl {
     const playerInGame = await playerGameTrackerRepository.findOne({
       where: {
         game: {id: game.id},
-        player: {id: player.id},
+        playerId: player.id,
       },
     });
     const allPlayers = await playerGameTrackerRepository.find({
@@ -745,7 +745,7 @@ class GameRepositoryImpl {
       .createQueryBuilder()
       .where({
         game: {id: game.id},
-        player: {id: player.id},
+        playerId: player.id,
       })
       .select('status')
       .addSelect('session_time', 'sessionTime')
@@ -804,7 +804,7 @@ class GameRepositoryImpl {
       .createQueryBuilder()
       .where({
         game: {id: game.id},
-        player: {id: player.id},
+        playerId: player.id,
       })
       .select('stack')
       .select('status')
@@ -854,7 +854,7 @@ class GameRepositoryImpl {
     const nextHandUpdate = await nextHandUpdatesRepository.findOne({
       where: {
         game: {id: game.id},
-        player: {id: player.id},
+        playerId: player.id,
         newUpdate: NextHandUpdate.TAKE_BREAK,
       },
     });
@@ -936,7 +936,7 @@ class GameRepositoryImpl {
       .createQueryBuilder()
       .where({
         game: {id: gameId},
-        player: {id: playerId},
+        playerId: playerId,
       })
       .select('status')
       .execute();
@@ -977,7 +977,7 @@ class GameRepositoryImpl {
       .createQueryBuilder()
       .where({
         game: {id: gameId},
-        player: {id: playerId},
+        playerId: playerId,
       })
       .select('status')
       .execute();
@@ -994,6 +994,10 @@ class GameRepositoryImpl {
     await playerGameTrackerRepository
       .createQueryBuilder()
       .update()
+      .where({
+        game: {id: gameId},
+        playerId: playerId,
+      })
       .set({
         status: playerStatus,
       })
@@ -1209,7 +1213,7 @@ class GameRepositoryImpl {
       const playerInGame = await playerGameTrackerRepository.findOne({
         where: {
           game: {id: game.id},
-          player: {id: player.id},
+          playerId: player.id,
         },
       });
 
@@ -1345,7 +1349,7 @@ class GameRepositoryImpl {
       .createQueryBuilder()
       .where({
         game: {id: game.id},
-        player: {id: player.id},
+        playerId: player.id,
       })
       .select('audio_token')
       .select('status')

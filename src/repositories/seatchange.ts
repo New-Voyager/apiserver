@@ -213,7 +213,7 @@ export class SeatChangeProcess {
     const playerInGame = await playerGameTrackerRepository.findOne({
       where: {
         game: {id: this.game.id},
-        player: {id: player.id},
+        playerId: player.id,
       },
     });
 
@@ -310,7 +310,7 @@ export class SeatChangeProcess {
       let playerInGame = await playerGameTrackerRepository.findOne({
         where: {
           game: {id: this.game.id},
-          player: {id: player.id},
+          playerId: player.id,
         },
       });
 
