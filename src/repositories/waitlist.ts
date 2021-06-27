@@ -237,13 +237,13 @@ export class WaitListMgmt {
     if (!nextPlayer) {
       const count = await playerGameTrackerRepository.count({
         where: {
-          game: {id: this.game.id},
+          game: {id: gameId},
           status: PlayerStatus.IN_QUEUE,
         },
       });
       await gameUpdatesRepo.update(
         {
-          gameID: this.game.id,
+          gameID: gameId,
         },
         {
           playersInWaitList: count,
@@ -271,13 +271,13 @@ export class WaitListMgmt {
     );
     const count = await playerGameTrackerRepository.count({
       where: {
-        game: {id: this.game.id},
+        game: {id: gameId},
         status: PlayerStatus.IN_QUEUE,
       },
     });
 
     await gameUpdatesRepo.update(
-      {gameID: nextPlayer.game.id},
+      {gameID: gameId},
       {
         waitlistSeatingInprogress: true,
         playersInWaitList: count,
@@ -285,19 +285,21 @@ export class WaitListMgmt {
     );
 
     startTimer(
-      nextPlayer.game.id,
+      gameId,
       nextPlayer.playerId,
       WAITLIST_SEATING,
       waitingListTimeExp
     );
-
+    const game = await Cache.getGameById(gameId);
+    if (!game) {
+      throw new Error(`Game: ${gameId} is not found`);
+    }
     logger.info(
-      `Game: [${nextPlayer.game.gameCode}], Player: ${nextPlayer.playerName}:${nextPlayer.playerUuid} is requested to take open seat`
+      `Game: [${game.gameCode}], Player: ${nextPlayer.playerName}:${nextPlayer.playerUuid} is requested to take open seat`
     );
     // we will send a notification which player is coming to the table
     const player = await Cache.getPlayer(nextPlayer.playerUuid);
     waitlistSeating(nextPlayer.game, player, timeout);
-    const game = nextPlayer.game;
     let clubName: string = '';
     if (game.clubName !== null) {
       clubName = game.clubName;
