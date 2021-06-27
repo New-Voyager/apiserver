@@ -1,10 +1,4 @@
-import {
-  Entity,
-  Column,
-  Index,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import {Entity, Column, Index, ManyToOne, JoinColumn} from 'typeorm';
 import {PokerGame} from './game';
 import {DbAwareColumn, DbAwareUpdateDateColumn} from '../dbaware';
 import {BuyInApprovalStatus, PlayerStatus} from '../types';

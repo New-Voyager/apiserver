@@ -61,11 +61,7 @@ export async function configureGame(
     createGameTime = new Date().getTime();
     const club = await Cache.getClub(clubCode);
     const player = await Cache.getPlayer(playerId);
-    const gameInfo = await GameRepository.createPrivateGame(
-      club,
-      player,
-      game
-    );
+    const gameInfo = await GameRepository.createPrivateGame(club, player, game);
     createGameTime = new Date().getTime() - createGameTime;
     logger.info(`Game ${gameInfo.gameCode} is created.`);
     const ret: any = gameInfo as any;
@@ -205,10 +201,7 @@ export async function joinGame(
     }
 
     if (game.clubCode) {
-      const clubMember = await Cache.isClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.isClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.clubName}`
@@ -258,10 +251,7 @@ export async function startGame(
     }
 
     if (game.clubCode) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
@@ -344,10 +334,7 @@ export async function buyIn(
     }
 
     if (game.clubCode) {
-      const clubMember = await Cache.isClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.isClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.clubName}`
@@ -390,10 +377,7 @@ export async function reload(
     }
 
     if (game.clubCode) {
-      const clubMember = await Cache.isClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.isClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.clubName}`
@@ -688,10 +672,7 @@ export async function approveRequest(
     }
 
     if (game.clubCode) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
@@ -739,10 +720,7 @@ export async function myGameState(playerUuid: string, gameCode: string) {
     }
 
     if (game.clubCode) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
@@ -785,10 +763,7 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
     }
 
     if (game.clubCode) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
@@ -837,10 +812,7 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
     let isManager = false;
     let isOwner = false;
     if (game.clubCode) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       clubCode = game.clubCode;
       if (!clubMember) {
         logger.error(
@@ -954,10 +926,7 @@ async function getPlayerRole(playerUuid: string, gameCode: string) {
     let isManager = false;
     let isOwner = false;
     if (game.clubCode) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       clubCode = game.clubCode;
       if (!clubMember) {
         logger.error(
@@ -1008,10 +977,7 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
     }
 
     if (game.clubCode) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
@@ -1044,10 +1010,7 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
     }
 
     if (game.clubCode) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
@@ -1079,10 +1042,7 @@ export async function sitBack(playerUuid: string, gameCode: string) {
     }
 
     if (game.clubCode) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
@@ -1118,10 +1078,7 @@ export async function kickOutPlayer(
 
     if (game.clubCode) {
       // club game
-      const clubMember = await Cache.getClubMember(
-        requestUser,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(requestUser, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${requestUser} is not a club member in club ${game.clubName}`
@@ -1177,10 +1134,7 @@ export async function addToWaitingList(playerId: string, gameCode: string) {
 
     if (game.clubCode) {
       // club game
-      const clubMember = await Cache.getClubMember(
-        playerId,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerId, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerId} is not a club member in club ${game.clubName}`
@@ -1215,10 +1169,7 @@ export async function removeFromWaitingList(
 
     if (game.clubCode) {
       // club game
-      const clubMember = await Cache.getClubMember(
-        playerId,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerId, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerId} is not a club member in club ${game.clubName}`
@@ -1253,10 +1204,7 @@ export async function waitingList(
 
     if (game.clubCode) {
       // club game
-      const clubMember = await Cache.getClubMember(
-        playerId,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerId, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerId} is not a club member in club ${game.clubName}`
@@ -1291,10 +1239,7 @@ export async function applyWaitlistOrder(
 
     if (game.clubCode) {
       // club game
-      const clubMember = await Cache.getClubMember(
-        hostUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(hostUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${hostUuid} is not a club member in club ${game.clubName}`
@@ -1350,10 +1295,7 @@ export async function declineWaitlistSeat(playerId: string, gameCode: string) {
 
     if (game.clubCode) {
       // club game
-      const clubMember = await Cache.getClubMember(
-        playerId,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerId, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerId} is not a club member in club ${game.clubName}`
@@ -1469,10 +1411,7 @@ export async function switchSeat(
     }
 
     if (game.clubCode) {
-      const clubMember = await Cache.isClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.isClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.clubName}`

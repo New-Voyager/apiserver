@@ -14,10 +14,7 @@ export async function isHostOrManagerOrOwner(
   }
 
   if (game.clubCode) {
-    const clubMember = await Cache.getClubMember(
-      playerUuid,
-      game.clubCode
-    );
+    const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
     if (!clubMember) {
       logger.error(
         `Player: ${playerUuid} is not a club member in club ${game.clubName}`

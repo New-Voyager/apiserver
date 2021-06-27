@@ -11,8 +11,8 @@ import {
   DbAwareCreateDateColumn,
   DbAwareUpdateDateColumn,
 } from '../dbaware';
-import { GameType } from '../types';
-import { Club } from './club';
+import {GameType} from '../types';
+import {Club} from './club';
 
 @Entity()
 export class Player {

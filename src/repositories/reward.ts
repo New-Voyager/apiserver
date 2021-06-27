@@ -1,7 +1,11 @@
 import {Club} from '@src/entity/player/club';
 import {EntityManager, getRepository, Not, Repository} from 'typeorm';
 import {RewardType, ScheduleType} from '@src/entity/types';
-import {GameReward, GameRewardTracking, Reward} from '@src/entity/player/reward';
+import {
+  GameReward,
+  GameRewardTracking,
+  Reward,
+} from '@src/entity/player/reward';
 export interface RewardInputFormat {
   name: string;
   type: RewardType;

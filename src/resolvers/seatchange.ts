@@ -78,10 +78,7 @@ export async function confirmSeatChange(
     }
 
     if (game.clubCode) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not a club member in club ${game.clubName}`
@@ -115,10 +112,7 @@ export async function declineSeatChange(playerUuid: string, gameCode: string) {
     }
 
     if (game.clubName) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not a club member in club ${game.clubName}`
@@ -157,10 +151,7 @@ export async function requestSeatChange(
     }
 
     if (game.clubCode) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
@@ -192,10 +183,7 @@ export async function seatChangeRequests(playerUuid: string, gameCode: string) {
     }
 
     if (game.clubCode) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
@@ -247,10 +235,7 @@ export async function seatPositions(
     }
 
     if (game.clubCode) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.clubCode
-      );
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`

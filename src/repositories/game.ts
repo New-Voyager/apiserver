@@ -7,7 +7,11 @@ import {
   Repository,
   EntityManager,
 } from 'typeorm';
-import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {
+  NextHandUpdates,
+  PokerGame,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
 import {
   GameType,
   GameStatus,
@@ -34,7 +38,11 @@ import {
 import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery} from '@src/utils';
 import {WaitListMgmt} from './waitlist';
-import {Reward, GameRewardTracking, GameReward} from '@src/entity/player/reward';
+import {
+  Reward,
+  GameRewardTracking,
+  GameReward,
+} from '@src/entity/player/reward';
 import {ChipsTrackRepository} from './chipstrack';
 import {
   BREAK_TIMEOUT,
@@ -49,9 +57,9 @@ import {utcTime} from '@src/utils';
 import _ from 'lodash';
 import {JanusSession} from '@src/janus';
 import {HandHistory} from '@src/entity/history/hand';
-import { Player } from '@src/entity/player/player';
-import { Club } from '@src/entity/player/club';
-import { PlayerGameStats } from '@src/entity/history/stats';
+import {Player} from '@src/entity/player/player';
+import {Club} from '@src/entity/player/club';
+import {PlayerGameStats} from '@src/entity/history/stats';
 
 const logger = getLogger('game');
 

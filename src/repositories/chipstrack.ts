@@ -68,7 +68,7 @@ class ChipsTrackRepositoryImpl {
         if (updates.length > 0) {
           await Promise.all(updates);
         }
-        
+
         /*
         const clubChipsTransaction = new ClubChipsTransaction();
         clubChipsTransaction.club = game.club;

@@ -2,7 +2,11 @@ import {EntityManager, getConnection, getManager, getRepository} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player/player';
-import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {
+  NextHandUpdates,
+  PokerGame,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
 import {
   ApprovalStatus,
   GameStatus,

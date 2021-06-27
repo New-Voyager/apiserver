@@ -1,5 +1,9 @@
 import {PlayerGameTracker} from '@src/entity/game/chipstrack';
-import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {
+  NextHandUpdates,
+  PokerGame,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {
   NextHandUpdate,

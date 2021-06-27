@@ -552,9 +552,14 @@ class GameAPIs {
           ) {
             const player = await Cache.getPlayerById(playerSeat['playerId']);
             // if player balance is 0, we need to mark this player to add buyin
-            await GameRepository.startBuyinTimer(game, playerSeat.playerId, playerSeat.playerName, {
-              status: PlayerStatus.WAIT_FOR_BUYIN,
-            });
+            await GameRepository.startBuyinTimer(
+              game,
+              playerSeat.playerId,
+              playerSeat.playerName,
+              {
+                status: PlayerStatus.WAIT_FOR_BUYIN,
+              }
+            );
             playerSeat['status'] = PlayerStatus.WAIT_FOR_BUYIN;
           }
         }
