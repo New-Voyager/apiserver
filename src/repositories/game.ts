@@ -754,19 +754,19 @@ class GameRepositoryImpl {
       update.newUpdate = NextHandUpdate.LEAVE;
       await nextHandUpdatesRepository.save(update);
     } else {
-      const seatNo = playerInGame.seatNo;
       playerInGame.status = PlayerStatus.NOT_PLAYING;
       playerInGame.seatNo = 0;
 
+      const satAt = new Date(Date.parse(playerInGame.satAt.toString()));
       // calculate session time
-      const currentSessionTime =
-        new Date().getTime() - playerInGame.satAt.getTime();
+      let sessionTime = playerInGame.sessionTime;
+      const currentSessionTime = new Date().getTime() - satAt.getTime();
       const roundSeconds = Math.round(currentSessionTime / 1000);
-      const sessionTime = playerInGame.sessionTime + roundSeconds;
+      sessionTime = sessionTime + roundSeconds;
       logger.info(
         `Session Time: Player: ${player.id} sessionTime: ${sessionTime}`
       );
-      playerGameTrackerRepository.update(
+      await playerGameTrackerRepository.update(
         {
           game: {id: game.id},
           player: {id: player.id},
@@ -779,7 +779,7 @@ class GameRepositoryImpl {
         }
       );
 
-      playerLeftGame(game, player, seatNo);
+      // playerLeftGame(game, player, seatNo);
     }
     return true;
   }
