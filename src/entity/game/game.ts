@@ -335,8 +335,14 @@ export class NextHandUpdates {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @Column({name: 'player_id'})
+  @Column({name: 'player_id', type: 'int', nullable: true})
   public playerId!: number;
+
+  @Column({name: 'player_uuid', nullable: true})
+  public playerUuid!: string;
+
+  @Column({name: 'player_name', nullable: true})
+  public playerName!: string;
 
   @ManyToOne(() => PokerGame, game => game.id, {eager: true})
   @JoinColumn({name: 'game_id'})

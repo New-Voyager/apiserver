@@ -114,10 +114,15 @@ class GameRepositoryImpl {
     //   );
     // }
 
+    let useGameServer = false;
+
     const gameServerRepository = getRepository(GameServer);
-    const gameServers = await gameServerRepository.find();
-    if (gameServers.length === 0) {
-      throw new Error('No game server is availabe');
+    let gameServers: Array<GameServer> = new Array<GameServer>();
+    if (useGameServer) {
+      gameServers = await gameServerRepository.find();
+      if (gameServers.length === 0) {
+        throw new Error('No game server is availabe');
+      }
     }
 
     // create the game
@@ -257,38 +262,45 @@ class GameRepositoryImpl {
           let tableStatus = TableStatus.WAITING_TO_BE_STARTED;
           let scanServer = 0;
           let gameServer;
-          for (scanServer = 0; scanServer < gameServers.length; scanServer++) {
-            // create a new game in game server within the transcation
-            try {
-              gameServer = gameServers[pick];
-              const gameInput = game as any;
-              gameInput.rewardTrackingIds = rewardTrackingIds;
-              logger.info(
-                `Game server ${gameServer.toString()} is requested to host ${
-                  game.gameCode
-                }`
-              );
-              tableStatus = await publishNewGame(gameInput, gameServer);
-              logger.info(
-                `Game ${game.gameCode} is hosted in ${gameServer.toString()}`
-              );
-              break;
-            } catch (err) {
-              logger.warn(
-                `Game Id: ${savedGame.id} cannot be hosted by game server: ${gameServer.url}`
-              );
-            }
-            gameServer = null;
-            pick++;
-            if (pick === gameServers.length) {
-              pick = 0;
-            }
-          }
-          publishNewTime = new Date().getTime() - publishNewTime;
 
-          if (!gameServer) {
-            // could not assign game server for the game
-            throw new Error('No game server is accepting this game');
+          if (useGameServer) {
+            for (
+              scanServer = 0;
+              scanServer < gameServers.length;
+              scanServer++
+            ) {
+              // create a new game in game server within the transcation
+              try {
+                gameServer = gameServers[pick];
+                const gameInput = game as any;
+                gameInput.rewardTrackingIds = rewardTrackingIds;
+                logger.info(
+                  `Game server ${gameServer.toString()} is requested to host ${
+                    game.gameCode
+                  }`
+                );
+                tableStatus = await publishNewGame(gameInput, gameServer);
+                logger.info(
+                  `Game ${game.gameCode} is hosted in ${gameServer.toString()}`
+                );
+                break;
+              } catch (err) {
+                logger.warn(
+                  `Game Id: ${savedGame.id} cannot be hosted by game server: ${gameServer.url}`
+                );
+              }
+              gameServer = null;
+              pick++;
+              if (pick === gameServers.length) {
+                pick = 0;
+              }
+            }
+            publishNewTime = new Date().getTime() - publishNewTime;
+
+            if (!gameServer) {
+              // could not assign game server for the game
+              throw new Error('No game server is accepting this game');
+            }
           }
           game.tableStatus = tableStatus;
           await transactionEntityManager.getRepository(PokerGame).update(
@@ -298,13 +310,15 @@ class GameRepositoryImpl {
             {tableStatus: tableStatus}
           );
 
-          const trackgameServerRepository = transactionEntityManager.getRepository(
-            TrackGameServer
-          );
-          const trackServer = new TrackGameServer();
-          trackServer.game = savedGame;
-          trackServer.gameServer = gameServers[pick];
-          await trackgameServerRepository.save(trackServer);
+          if (useGameServer) {
+            const trackgameServerRepository = transactionEntityManager.getRepository(
+              TrackGameServer
+            );
+            const trackServer = new TrackGameServer();
+            trackServer.game = savedGame;
+            trackServer.gameServer = gameServers[pick];
+            await trackgameServerRepository.save(trackServer);
+          }
         }
       });
       //logger.info('****** ENDING TRANSACTION TO CREATE a private game');
@@ -764,6 +778,8 @@ class GameRepositoryImpl {
       const update = new NextHandUpdates();
       update.game = game;
       update.playerId = player.id;
+      update.playerUuid = player.uuid;
+      update.playerName = player.name;
       update.newUpdate = NextHandUpdate.LEAVE;
       await nextHandUpdatesRepository.save(update);
     } else {
@@ -1261,6 +1277,8 @@ class GameRepositoryImpl {
         const update = new NextHandUpdates();
         update.game = game;
         update.playerId = player.id;
+        update.playerUuid = player.uuid;
+        update.playerName = player.name;
         update.newUpdate = NextHandUpdate.KICKOUT;
         await nextHandUpdatesRepository.save(update);
       }

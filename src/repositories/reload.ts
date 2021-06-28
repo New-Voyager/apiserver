@@ -484,6 +484,8 @@ export class Reload {
     const update = new NextHandUpdates();
     update.game = this.game;
     update.playerId = this.player.id;
+    update.playerUuid = this.player.uuid;
+    update.playerName = this.player.name;
     update.newUpdate = status;
     update.buyinAmount = amount;
     await nextHandUpdatesRepository.save(update);

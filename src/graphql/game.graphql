@@ -281,6 +281,7 @@ enum ApprovalStatus {
 }
 
 type PendingApproval {
+  requestId: Int!
   gameCode: String!
   gameType: GameType
   clubCode: String
@@ -426,7 +427,7 @@ type Query {
   currentHandLog(gameCode: String!): Json
   gameResultTable(gameCode: String!): [GameResultTableRow!]
   gamePlayers(gameCode: String!): [PlayerInfo!]
-  pendingApprovals(clubCode: String gameCode: String): [PendingApproval!]
+  pendingApprovals: [PendingApproval!]
   downloadResult(gameCode: String!): String!
 
   # player stats from live game

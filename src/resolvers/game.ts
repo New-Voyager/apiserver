@@ -114,7 +114,9 @@ export async function configureGame(
     return ret;
   } catch (err) {
     logger.error(JSON.stringify(err));
-    throw new Error(`Failed to create a new game. ${JSON.stringify(err)}`);
+    throw new Error(
+      `Failed to create a new game. ${err.toString()} ${JSON.stringify(err)}`
+    );
   }
 }
 
@@ -357,7 +359,7 @@ export async function buyIn(
     const timeTaken = new Date().getTime() - startTime;
     logger.info(`Buyin took ${timeTaken}ms`);
     logger.error(JSON.stringify(err));
-    throw new Error(`Failed to update buyin. ${JSON.stringify(err)}`);
+    throw new Error(`Failed to update buyin. ${err.toString()}`);
   }
 }
 
@@ -399,44 +401,36 @@ export async function reload(
   }
 }
 
-export async function pendingApprovals(
-  hostUuid: string,
-  clubCode: string,
-  gameCode: string
-) {
+export async function pendingApprovals(hostUuid: string) {
   if (!hostUuid) {
     throw new Error('Unauthorized');
   }
   try {
     let club;
-    if (clubCode) {
-      const clubHost = await Cache.getClubMember(hostUuid, clubCode);
-      if (!clubHost || !(clubHost.isManager || clubHost.isOwner)) {
-        logger.error(
-          `Player: ${hostUuid} is not authorized to approve buyIn in club ${clubCode}`
-        );
-        throw new Error(
-          `Player: ${hostUuid} is not authorized to approve buyIn in club ${clubCode}`
-        );
-      }
-      club = await Cache.getClub(clubCode);
-    }
 
     const player = await Cache.getPlayer(hostUuid);
 
     const buyin = new BuyIn(new PokerGame(), player);
-    let resp: Array<pendingApprovalsForClubData>;
-    if (club) {
-      resp = await buyin.pendingApprovalsForClub(club);
-    } else {
-      resp = await buyin.pendingApprovalsForPlayer();
-    }
+    let respClubs: Array<pendingApprovalsForClubData>;
+    let respPlayer: Array<pendingApprovalsForClubData>;
+    respClubs = await buyin.pendingApprovalsForClub();
+    respPlayer = await buyin.pendingApprovalsForPlayer();
 
     let ret = new Array<any>();
-    for (let item of resp) {
+    let added = new Array<number>();
+    for (let item of respClubs) {
       let itemRet = item as any;
       itemRet.gameType = GameType[item.gameType];
       ret.push(itemRet);
+      added.push(itemRet.requestId);
+    }
+    for (let item of respPlayer) {
+      let itemRet = item as any;
+      if (added.indexOf(itemRet.requestId) === -1) {
+        itemRet.gameType = GameType[item.gameType];
+        ret.push(itemRet);
+        added.push(itemRet.requestId);
+      }
     }
 
     return ret;
@@ -516,9 +510,15 @@ export async function pendingApprovalsForClub(
     const club = await Cache.getClub(clubCode);
 
     const buyin = new BuyIn(new PokerGame(), player);
-    const resp = await buyin.pendingApprovalsForClub(club);
+    const resp = await buyin.pendingApprovalsForClub();
+    let ret = new Array<any>();
+    for (let item of resp) {
+      let itemRet = item as any;
+      itemRet.gameType = GameType[item.gameType];
+      ret.push(itemRet);
+    }
 
-    return resp;
+    return ret;
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error(
@@ -1646,11 +1646,7 @@ const resolvers: any = {
       return await pendingApprovalsForGame(ctx.req.playerId, args.gameCode);
     },
     pendingApprovals: async (parent, args, ctx, info) => {
-      return await pendingApprovals(
-        ctx.req.playerId,
-        args.clubCode,
-        args.gameCode
-      );
+      return await pendingApprovals(ctx.req.playerId);
     },
     completedGame: async (parent, args, ctx, info) => {
       return await completedGame(ctx.req.playerId, args.gameCode);

@@ -77,6 +77,8 @@ export class TakeBreak {
       const update = new NextHandUpdates();
       update.game = this.game;
       update.playerId = this.player.id;
+      update.playerUuid = this.player.uuid;
+      update.playerName = this.player.name;
       update.newUpdate = NextHandUpdate.TAKE_BREAK;
       await nextHandUpdatesRepository.save(update);
     }
