@@ -114,7 +114,7 @@ class GameRepositoryImpl {
     //   );
     // }
 
-    let useGameServer = false;
+    let useGameServer = true;
 
     const gameServerRepository = getRepository(GameServer);
     let gameServers: Array<GameServer> = new Array<GameServer>();
