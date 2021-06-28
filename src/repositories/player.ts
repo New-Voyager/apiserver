@@ -1,7 +1,6 @@
 import {EntityManager, Repository, getRepository, In} from 'typeorm';
 import {v4 as uuidv4} from 'uuid';
-import {Player, PlayerNotes} from '@src/entity/player';
-import {loggers} from 'winston';
+import {Player, PlayerNotes} from '@src/entity/player/player';
 import {getLogger} from '@src/utils/log';
 const logger = getLogger('player');
 import {Cache} from '@src/cache/index';

@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import {Club} from './club';
 import {Player} from './player';
-import {ChatTextType} from './types';
+import {ChatTextType} from '../types';
 
 @Entity({name: 'chat_text'})
 export class ChatText {

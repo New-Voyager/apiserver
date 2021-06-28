@@ -10,8 +10,8 @@ import {
   DbAwareColumn,
   DbAwareCreateDateColumn,
   DbAwareUpdateDateColumn,
-} from './dbaware';
-import {AnnouncementType} from './types';
+} from '../dbaware';
+import {AnnouncementType} from '../types';
 
 @Entity({name: 'announcement'})
 export class Announcement {

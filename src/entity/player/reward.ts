@@ -9,9 +9,8 @@ import {
 } from 'typeorm';
 
 import {Player} from './player';
-import {RewardType, ScheduleType} from './types';
+import {RewardType, ScheduleType} from '../types';
 import {Club} from './club';
-import {PokerGame} from './game';
 
 @Entity({name: 'reward'})
 export class Reward {
@@ -59,12 +58,8 @@ export class GameRewardTracking {
   @Column({name: 'hh_rank', nullable: true})
   public hhRank!: number;
 
-  @ManyToOne(() => PokerGame, gameId => gameId.id, {
-    eager: true,
-    nullable: true,
-  })
-  @JoinColumn({name: 'game_id'})
-  public game!: PokerGame;
+  @Column({name: 'game_id', nullable: true})
+  public gameId!: number;
 
   @ManyToOne(() => Reward, rewardId => rewardId.id, {
     eager: true,
@@ -113,12 +108,11 @@ export class GameReward {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @ManyToOne(() => PokerGame, gameId => gameId.id, {
-    eager: true,
-    nullable: false,
-  })
-  @JoinColumn({name: 'game_id'})
-  public gameId!: PokerGame;
+  @Column({name: 'game_id', nullable: false})
+  public gameId!: number;
+
+  @Column({name: 'game_code', nullable: false})
+  public gameCode!: string;
 
   @ManyToOne(() => Reward, rewardId => rewardId.id, {
     eager: true,
@@ -141,12 +135,8 @@ export class HighHand {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @ManyToOne(() => PokerGame, gameId => gameId.id, {
-    eager: true,
-    nullable: false,
-  })
-  @JoinColumn({name: 'game_id'})
-  public game!: PokerGame;
+  @Column({name: 'game_id', nullable: false, type: 'int'})
+  public gameId!: number;
 
   @ManyToOne(() => Player, playerId => playerId.id, {
     eager: true,

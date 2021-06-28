@@ -37,6 +37,7 @@ export interface buyInRequest {
 }
 
 export interface pendingApprovalsForClubData {
+  requestId: number;
   gameCode: string;
   playerUuid: string;
   name: string;

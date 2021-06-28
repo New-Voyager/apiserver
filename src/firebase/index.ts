@@ -1,5 +1,5 @@
-import {PokerGame} from '@src/entity/game';
-import {Player} from '@src/entity/player';
+import {PokerGame} from '@src/entity/game/game';
+import {Player} from '@src/entity/player/player';
 import {getLogger} from '@src/utils/log';
 import * as firebase from 'firebase-admin';
 import {ServiceAccount} from 'firebase-admin';

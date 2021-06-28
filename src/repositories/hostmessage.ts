@@ -1,5 +1,5 @@
-import {ClubHostMessages} from '@src/entity/clubmessage';
-import {Club, ClubMember} from '@src/entity/club';
+import {ClubHostMessages} from '@src/entity/player/clubmessage';
+import {Club, ClubMember} from '@src/entity/player/club';
 import {getConnection, getRepository} from 'typeorm';
 import {HostMessageType} from '../entity/types';
 import {getLogger} from '@src/utils/log';

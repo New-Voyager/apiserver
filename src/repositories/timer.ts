@@ -1,6 +1,6 @@
-import {PlayerGameTracker} from '@src/entity/chipstrack';
-import {NextHandUpdates, PokerGame} from '@src/entity/game';
-import {Player} from '@src/entity/player';
+import {PlayerGameTracker} from '@src/entity/game/chipstrack';
+import {NextHandUpdates, PokerGame} from '@src/entity/game/game';
+import {Player} from '@src/entity/player/player';
 import {
   GameStatus,
   NextHandUpdate,
@@ -176,7 +176,7 @@ export async function buyInApprovalTimeoutExpired(
       await playerGameTrackerRepository.update(
         {
           game: {id: game.id},
-          player: {id: player.id},
+          playerId: player.id,
         },
         {
           status: PlayerStatus.NOT_PLAYING,
@@ -211,7 +211,7 @@ export async function reloadApprovalTimeoutExpired(
         .delete()
         .where({
           game: {id: gameID},
-          player: {id: playerID},
+          playerId: playerID,
           newUpdate: NextHandUpdate.WAIT_RELOAD_APPROVAL,
         })
         .execute();
@@ -221,7 +221,7 @@ export async function reloadApprovalTimeoutExpired(
         .createQueryBuilder()
         .where({
           game: {id: game.id},
-          player: {id: player.id},
+          playerId: player.id,
         })
         .select('stack')
         .execute();
@@ -244,7 +244,7 @@ export async function reloadApprovalTimeoutExpired(
           })
           .where({
             game: {id: game.id},
-            player: {id: player.id},
+            playerId: player.id,
           })
           .execute();
       }

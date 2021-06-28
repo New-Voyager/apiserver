@@ -1,12 +1,12 @@
 import {HandRepository} from '@src/repositories/hand';
-import {HandHistory} from '@src/entity/hand';
+import {HandHistory} from '@src/entity/history/hand';
 import {WonAtStatus, GameType, ClubMemberStatus} from '@src/entity/types';
 import {PlayerRepository} from '@src/repositories/player';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
-import {Player} from '@src/entity/player';
+import {Player} from '@src/entity/player/player';
 import {getRepository} from 'typeorm';
-import {PlayerGameTracker} from '@src/entity/chipstrack';
+import {PlayerGameTracker} from '@src/entity/game/chipstrack';
 import _ from 'lodash';
 const logger = getLogger('hand-resolvers');
 
@@ -113,11 +113,11 @@ export async function getLastHandHistory(playerId: string, args: any) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
   const player = await Cache.getPlayer(playerId);
-  if (game.club) {
-    const clubMember = await Cache.getClubMember(playerId, game.club.clubCode);
+  if (game.clubCode) {
+    const clubMember = await Cache.getClubMember(playerId, game.clubCode);
     if (!clubMember) {
       logger.error(
-        `Player: ${playerId} is not authorized to start the game ${args.gameCode} in club ${game.club.name}`
+        `Player: ${playerId} is not authorized to start the game ${args.gameCode} in club ${game.clubName}`
       );
       throw new Error(
         `Player: ${playerId} is not authorized to start the game ${args.gameCode}`
@@ -148,11 +148,11 @@ export async function getSpecificHandHistory(playerId: string, args: any) {
   }
   const player = await Cache.getPlayer(playerId);
 
-  if (game.club) {
-    const clubMember = await Cache.getClubMember(playerId, game.club.clubCode);
+  if (game.clubCode) {
+    const clubMember = await Cache.getClubMember(playerId, game.clubCode);
     if (!clubMember) {
       logger.error(
-        `Player: ${playerId} is not authorized to start the game ${args.gameCode} in club ${game.club.name}`
+        `Player: ${playerId} is not authorized to start the game ${args.gameCode} in club ${game.clubName}`
       );
       throw new Error(
         `Player: ${playerId} is not authorized to start the game ${args.gameCode}`
@@ -185,9 +185,9 @@ export async function getAllHandHistory(playerId: string, args: any) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
   const player = await Cache.getPlayer(playerId);
-  if (game.club) {
+  if (game.clubCode) {
     // make sure this player is a club member
-    const clubMember = await Cache.getClubMember(playerId, game.club.clubCode);
+    const clubMember = await Cache.getClubMember(playerId, game.clubCode);
     if (!clubMember) {
       logger.error(
         `The user ${playerId} is not a member of ${
@@ -227,11 +227,11 @@ export async function getMyWinningHands(playerId: string, args: any) {
   if (!game) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
-  if (game.club) {
-    const clubMember = await Cache.getClubMember(playerId, game.club.clubCode);
+  if (game.clubCode) {
+    const clubMember = await Cache.getClubMember(playerId, game.clubCode);
     if (!clubMember) {
       logger.error(
-        `Player: ${playerId} is not authorized to start the game ${args.gameCode} in club ${game.club.name}`
+        `Player: ${playerId} is not authorized to start the game ${args.gameCode} in club ${game.clubName}`
       );
       throw new Error(
         `Player: ${playerId} is not authorized to start the game ${args.gameCode}`
@@ -304,7 +304,7 @@ export async function shareHand(playerId: string, args: any) {
 
   const playerGameTrackerRepository = getRepository(PlayerGameTracker);
   const gamePlayer = await playerGameTrackerRepository.findOne({
-    player: {id: player.id},
+    playerId: player.id,
     game: {id: game.id},
   });
   if (!gamePlayer) {
@@ -355,7 +355,7 @@ export async function bookmarkHand(playerId: string, args: any) {
 
   const playerGameTrackerRepository = getRepository(PlayerGameTracker);
   const gamePlayer = await playerGameTrackerRepository.findOne({
-    player: {id: player.id},
+    playerId: player.id,
     game: {id: game.id},
   });
   if (!gamePlayer) {

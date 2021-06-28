@@ -1,17 +1,17 @@
-import {PokerGame, PokerGameUpdates} from '@src/entity/game';
-import {Club, ClubMember} from '@src/entity/club';
+import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {Club, ClubMember} from '@src/entity/player/club';
 import {getRepository, getManager, UpdateResult} from 'typeorm';
 import {getLogger} from '@src/utils/log';
-import {PlayerGameTracker, ClubChipsTransaction} from '@src/entity/chipstrack';
+import {PlayerGameTracker} from '@src/entity/game/chipstrack';
 import {Cache} from '@src/cache';
-import {HandHistory} from '@src/entity/hand';
+import {HandHistory} from '@src/entity/history/hand';
 
 const logger = getLogger('chipstrack');
 
 class ChipsTrackRepositoryImpl {
   public async settleClubBalances(game: PokerGame): Promise<boolean> {
     try {
-      if (!game.club) {
+      if (!game.clubCode) {
         // we don't track balances of individual host games
         return true;
       }
@@ -45,14 +45,14 @@ class ChipsTrackRepositoryImpl {
             // in seconds
             sessionTime = sessionTime + currentSessionTime;
             logger.info(
-              `Session time in club: ${player.player.id} sessionTime: ${sessionTime}`
+              `Session time in club: ${player.playerId} sessionTime: ${sessionTime}`
             );
 
             if (sessionTime === 0) {
               sessionTime = 1;
             }
             logger.info(
-              `Session time in club: ${player.player.id} sessionTime: ${sessionTime}`
+              `Session time in club: ${player.playerId} sessionTime: ${sessionTime}`
             );
             const update = playerGameRepo.update(
               {
@@ -69,6 +69,7 @@ class ChipsTrackRepositoryImpl {
           await Promise.all(updates);
         }
 
+        /*
         const clubChipsTransaction = new ClubChipsTransaction();
         clubChipsTransaction.club = game.club;
         clubChipsTransaction.amount = gameUpdates.rake;
@@ -89,6 +90,7 @@ class ChipsTrackRepositoryImpl {
             id: clubId,
           })
           .execute();
+          */
 
         // walk through the hand history and collect big win hands for each player
         const playerBigWinLoss = {};
@@ -137,7 +139,7 @@ class ChipsTrackRepositoryImpl {
             .getRepository(PlayerGameTracker)
             .update(
               {
-                player: {id: playerId},
+                playerId: playerId,
                 game: {id: game.id},
               },
               {
@@ -157,7 +159,6 @@ class ChipsTrackRepositoryImpl {
         const playerChips = await transactionEntityManager
           .getRepository(PlayerGameTracker)
           .find({
-            relations: ['game', 'player'],
             where: {game: {id: gameId}},
           });
 
@@ -177,8 +178,8 @@ class ChipsTrackRepositoryImpl {
               notes: '',
             })
             .where({
-              player: {id: playerChip.player.id},
-              club: {id: clubId},
+              player: {id: playerChip.playerId},
+              club: {id: game.clubId},
             })
             .execute();
           chipUpdates.push(playerGame);

@@ -1,8 +1,8 @@
-import {ClubMessageInput} from '@src/entity/clubmessage';
-import {Club, ClubMember} from '@src/entity/club';
+import {ClubMessageInput} from '@src/entity/player/clubmessage';
+import {Club, ClubMember} from '@src/entity/player/club';
 import {getRepository, MoreThan, LessThan, Not, getConnection} from 'typeorm';
-import {ClubMessageType} from '../entity/types';
-import {Player} from '@src/entity/player';
+import {ClubMessageType} from '@src/entity/types';
+import {Player} from '@src/entity/player/player';
 import {PageOptions} from '@src/types';
 import {getLogger} from '@src/utils/log';
 import {v4 as uuidv4} from 'uuid';

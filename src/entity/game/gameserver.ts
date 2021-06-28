@@ -7,9 +7,9 @@ import {
   JoinColumn,
 } from 'typeorm';
 
-import {DbAwareColumn} from './dbaware';
+import {DbAwareColumn} from '../dbaware';
 import {PokerGame} from './game';
-import {GameServerStatus} from './types';
+import {GameServerStatus} from '../types';
 
 @Entity({name: 'game_server'})
 export class GameServer {

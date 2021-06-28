@@ -1,6 +1,6 @@
 import {Cache} from '@src/cache/index';
-import {PokerGame} from '@src/entity/game';
-import {Player} from '@src/entity/player';
+import {PokerGame} from '@src/entity/game/game';
+import {Player} from '@src/entity/player/player';
 import {PlayerStatus} from '@src/entity/types';
 import {openSeat} from '@src/gameserver';
 import {GameRepository} from '@src/repositories/game';
@@ -77,14 +77,11 @@ export async function confirmSeatChange(
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.club.clubCode
-      );
+    if (game.clubCode) {
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not a club member in club ${game.club.name}`
+          `Player: ${playerUuid} is not a club member in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to make seat change ${gameCode}`
@@ -114,14 +111,11 @@ export async function declineSeatChange(playerUuid: string, gameCode: string) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.club.clubCode
-      );
+    if (game.clubName) {
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not a club member in club ${game.club.name}`
+          `Player: ${playerUuid} is not a club member in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to make seat change ${gameCode}`
@@ -156,14 +150,11 @@ export async function requestSeatChange(
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.club.clubCode
-      );
+    if (game.clubCode) {
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
@@ -191,14 +182,11 @@ export async function seatChangeRequests(playerUuid: string, gameCode: string) {
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.club.clubCode
-      );
+    if (game.clubCode) {
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
@@ -212,8 +200,8 @@ export async function seatChangeRequests(playerUuid: string, gameCode: string) {
     const playerSeatChange = new Array<any>();
     allPlayers.map(player => {
       const data = {
-        playerUuid: player.player.uuid,
-        name: player.player.name,
+        playerUuid: player.playerUuid,
+        name: player.playerName,
         status: PlayerStatus[player.status],
         seatNo: player.seatNo,
         sessionTime: player.sessionTime,
@@ -246,14 +234,11 @@ export async function seatPositions(
       throw new Error(`Game ${gameCode} is not found`);
     }
 
-    if (game.club) {
-      const clubMember = await Cache.getClubMember(
-        playerUuid,
-        game.club.clubCode
-      );
+    if (game.clubCode) {
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
       if (!clubMember) {
         logger.error(
-          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.club.name}`
+          `Player: ${playerUuid} is not authorized to start the game ${gameCode} in club ${game.clubName}`
         );
         throw new Error(
           `Player: ${playerUuid} is not authorized to start the game ${gameCode}`
@@ -320,10 +305,10 @@ export async function beginHostSeatChange(
     const isAuthorized = await isHostOrManagerOrOwner(playerUuid, game);
     if (!isAuthorized) {
       logger.error(
-        `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
+        `Player: ${playerUuid} is not a owner or a manager ${game.clubName}. Cannot make rearrange seats`
       );
       throw new Error(
-        `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
+        `Player: ${playerUuid} is not a owner or a manager ${game.clubName}. Cannot make rearrange seats`
       );
     }
     const host = await Cache.getPlayer(playerUuid);
@@ -357,10 +342,10 @@ export async function swapSeats(
     const isAuthorized = await isHostOrManagerOrOwner(playerUuid, game);
     if (!isAuthorized) {
       logger.error(
-        `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
+        `Player: ${playerUuid} is not a owner or a manager ${game.clubName}. Cannot make rearrange seats`
       );
       throw new Error(
-        `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
+        `Player: ${playerUuid} is not a owner or a manager ${game.clubName}. Cannot make rearrange seats`
       );
     }
     const seatChange = new SeatChangeProcess(game);
@@ -390,10 +375,10 @@ export async function seatChangeComplete(
     const isAuthorized = await isHostOrManagerOrOwner(playerUuid, game);
     if (!isAuthorized) {
       logger.error(
-        `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
+        `Player: ${playerUuid} is not a owner or a manager ${game.clubName}. Cannot make rearrange seats`
       );
       throw new Error(
-        `Player: ${playerUuid} is not a owner or a manager ${game.club.name}. Cannot make rearrange seats`
+        `Player: ${playerUuid} is not a owner or a manager ${game.clubName}. Cannot make rearrange seats`
       );
     }
     const host = await Cache.getPlayer(playerUuid);

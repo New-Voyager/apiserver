@@ -6,10 +6,9 @@ import {
   JoinColumn,
 } from 'typeorm';
 import {Club, ClubMember} from './club';
-import {DbAwareCreateDateColumn, DbAwareUpdateDateColumn} from './dbaware';
-import {SavedHands} from './hand';
-import {Player} from './player';
-import {ClubMessageType, HostMessageType} from './types';
+import {DbAwareCreateDateColumn, DbAwareUpdateDateColumn} from '../dbaware';
+import {Player, SavedHands} from './player';
+import {ClubMessageType, HostMessageType} from '../types';
 
 @Entity({name: 'club_messages'})
 export class ClubMessageInput {

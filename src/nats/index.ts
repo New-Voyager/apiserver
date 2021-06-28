@@ -1,5 +1,5 @@
-import {PokerGame} from '@src/entity/game';
-import {Player} from '@src/entity/player';
+import {PokerGame} from '@src/entity/game/game';
+import {Player} from '@src/entity/player/player';
 import {GameType} from '@src/entity/types';
 import {HighHandWinner} from '@src/repositories/types';
 import {getLogger} from '@src/utils/log';

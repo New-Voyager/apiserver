@@ -1,10 +1,10 @@
 import {getConnection, getRepository, In} from 'typeorm';
-import {GameServer, TrackGameServer} from '@src/entity/gameserver';
+import {GameServer, TrackGameServer} from '@src/entity/game/gameserver';
 import {GameServerStatus, GameStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {fixQuery} from '@src/utils';
 import {getLogger} from '@src/utils/log';
-import {PokerGame} from '@src/entity/game';
+import {PokerGame} from '@src/entity/game/game';
 import {publishNewGame} from '@src/gameserver';
 const logger = getLogger('internal::gameserver');
 

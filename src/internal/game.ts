@@ -6,14 +6,13 @@ import {
 } from '@src/repositories/pendingupdates';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
-import {PokerGame, PokerGameUpdates} from '@src/entity/game';
+import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {PlayerStatus} from '@src/entity/types';
-import {GameReward} from '@src/entity/reward';
+import {GameReward} from '@src/entity/player/reward';
 import {getManager, getRepository} from 'typeorm';
 import {NewHandInfo, PlayerInSeat} from '@src/repositories/types';
 import _ from 'lodash';
 import {delay} from '@src/utils';
-import {Player} from '@src/entity/player';
 
 const logger = getLogger('GameAPIs');
 
@@ -182,9 +181,8 @@ class GameAPIs {
               r => r.rewardTrackingId.id
             );
             const ret: any = {
-              clubId: game.club.id,
+              clubId: game.clubId,
               gameId: game.id,
-              clubCode: game.club.clubCode,
               gameCode: game.gameCode,
               gameType: game.gameType,
               title: game.title,
@@ -202,8 +200,8 @@ class GameAPIs {
               buyInMax: game.buyInMax,
               actionTime: game.actionTime,
               privateGame: game.privateGame,
-              startedBy: game.startedBy.name,
-              startedByUuid: game.startedBy.uuid,
+              startedBy: game.hostName,
+              startedByUuid: game.hostUuid,
               breakLength: game.breakLength,
               autoKickAfterBreak: game.autoKickAfterBreak,
               rewardTrackingIds: rewardTrackingIds,
@@ -553,9 +551,14 @@ class GameAPIs {
           ) {
             const player = await Cache.getPlayerById(playerSeat['playerId']);
             // if player balance is 0, we need to mark this player to add buyin
-            await GameRepository.startBuyinTimer(game, player, {
-              status: PlayerStatus.WAIT_FOR_BUYIN,
-            });
+            await GameRepository.startBuyinTimer(
+              game,
+              playerSeat.playerId,
+              playerSeat.playerName,
+              {
+                status: PlayerStatus.WAIT_FOR_BUYIN,
+              }
+            );
             playerSeat['status'] = PlayerStatus.WAIT_FOR_BUYIN;
           }
         }

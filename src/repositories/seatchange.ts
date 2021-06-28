@@ -1,6 +1,10 @@
-import {PlayerGameTracker} from '@src/entity/chipstrack';
-import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game';
-import {Player} from '@src/entity/player';
+import {PlayerGameTracker} from '@src/entity/game/chipstrack';
+import {
+  NextHandUpdates,
+  PokerGame,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
+import {Player} from '@src/entity/player/player';
 import {
   NextHandUpdate,
   PlayerStatus,
@@ -29,7 +33,7 @@ import {GameRepository} from './game';
 import {
   HostSeatChangeProcess,
   PlayerSeatChangeProcess,
-} from '@src/entity/seatchange';
+} from '@src/entity/game/seatchange';
 import {SeatMove, SeatUpdate} from '@src/types';
 import {fixQuery, utcTime} from '@src/utils';
 import {Nats} from '@src/nats';
@@ -60,10 +64,10 @@ export class SeatChangeProcess {
     for (const player of players) {
       let playerSeatChange = new PlayerSeatChangeProcess();
       playerSeatChange.gameCode = this.game.gameCode;
-      playerSeatChange.playerId = player.player.id;
+      playerSeatChange.playerId = player.playerId;
       playerSeatChange.seatChangeRequestedAt = player.seatChangeRequestedAt;
-      playerSeatChange.name = player.player.name;
-      playerSeatChange.playerUuid = player.player.uuid;
+      playerSeatChange.name = player.playerName;
+      playerSeatChange.playerUuid = player.playerUuid;
       playerSeatChange.prompted = false;
       playerSeatChange.seatNo = player.seatNo;
       playerSeatChange.stack = player.stack;
@@ -207,10 +211,9 @@ export class SeatChangeProcess {
   ): Promise<Date | null> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
-      relations: ['player', 'game'],
       where: {
         game: {id: this.game.id},
-        player: {id: player.id},
+        playerId: player.id,
       },
     });
 
@@ -231,7 +234,7 @@ export class SeatChangeProcess {
     await playerGameTrackerRepository.update(
       {
         game: {id: this.game.id},
-        player: {id: player.id},
+        playerId: player.id,
       },
       {
         seatChangeRequestedAt: seatChangeRequestedAt,
@@ -245,10 +248,9 @@ export class SeatChangeProcess {
   ): Promise<PlayerGameTracker[]> {
     const playerGameTrackerRepository = getRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
-      relations: ['player', 'game'],
       where: {
         game: {id: this.game.id},
-        player: {id: player.id},
+        playerId: player.id,
       },
     });
 
@@ -263,7 +265,6 @@ export class SeatChangeProcess {
     }
 
     const seatChangeRequestedPlayers = await playerGameTrackerRepository.find({
-      relations: ['player', 'game'],
       order: {
         seatChangeRequestedAt: 'ASC',
       },
@@ -309,7 +310,7 @@ export class SeatChangeProcess {
       let playerInGame = await playerGameTrackerRepository.findOne({
         where: {
           game: {id: this.game.id},
-          player: {id: player.id},
+          playerId: player.id,
         },
       });
 
@@ -343,13 +344,13 @@ export class SeatChangeProcess {
         },
       });
       if (playerInSeat) {
-        const player = await Cache.getPlayer(playerInSeat.player.uuid);
+        const player = await Cache.getPlayer(playerInSeat.playerUuid);
         logger.error(
           `Game: ${this.game.gameCode} Player: ${player.id} A player already exists in the table`
         );
         // there is a player in the seat
         throw new Error(
-          `A player ${player.name}:${playerInSeat.player.id} already sits in the seat ${seatNo} `
+          `A player ${player.name}:${playerInSeat.playerId} already sits in the seat ${seatNo} `
         );
       }
 
@@ -357,7 +358,7 @@ export class SeatChangeProcess {
       await playerGameTrackerRepository.update(
         {
           game: {id: this.game.id},
-          player: {id: player.id},
+          playerId: player.id,
         },
         {
           seatNo: seatNo,
@@ -412,7 +413,6 @@ export class SeatChangeProcess {
       playerGameTrackerRepository = getRepository(PlayerGameTracker);
     }
     const players = await playerGameTrackerRepository.find({
-      relations: ['player'],
       order: {seatChangeRequestedAt: 'ASC'},
       where: {
         game: {id: this.game.id},
@@ -464,9 +464,9 @@ export class SeatChangeProcess {
           // a player is in the seat
           seatChangePlayer = new HostSeatChangeProcess();
           seatChangePlayer.gameCode = this.game.gameCode;
-          seatChangePlayer.name = player.player.name;
-          seatChangePlayer.playerId = player.player.id;
-          seatChangePlayer.playerUuid = player.player.uuid;
+          seatChangePlayer.name = player.playerName;
+          seatChangePlayer.playerId = player.playerId;
+          seatChangePlayer.playerUuid = player.playerUuid;
           seatChangePlayer.seatNo = seatNo;
           seatChangePlayer.stack = player.stack;
           seatChangePlayer.openSeat = false;
@@ -590,7 +590,7 @@ export class SeatChangeProcess {
             await playerGameTrackerRepo.update(
               {
                 game: {id: this.game.id},
-                player: {id: player.playerId},
+                playerId: player.playerId,
               },
               {
                 seatNo: player.seatNo,
@@ -659,9 +659,9 @@ export async function getCurrentSeats(
       seatUpdates.push({
         seatNo: seatNo,
         openSeat: false,
-        playerId: playerInSeat.player.id,
-        playerUuid: playerInSeat.player.uuid,
-        name: playerInSeat.player.name,
+        playerId: playerInSeat.playerId,
+        playerUuid: playerInSeat.playerUuid,
+        name: playerInSeat.playerName,
         stack: playerInSeat.stack,
         status: playerInSeat.status,
       });

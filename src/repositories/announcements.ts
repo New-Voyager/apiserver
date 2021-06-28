@@ -1,6 +1,6 @@
 import {getRepository} from 'typeorm';
-import {Club} from '@src/entity/club';
-import {Announcement} from '@src/entity/announcements';
+import {Club} from '@src/entity/player/club';
+import {Announcement} from '@src/entity/player/announcements';
 import {AnnouncementType} from '@src/entity/types';
 import {AnnouncementData} from '@src/types';
 

@@ -1,4 +1,4 @@
-import {StoreType} from '@src/entity/appcoin';
+import {StoreType} from '@src/entity/player/appcoin';
 import {Firebase} from '@src/firebase';
 import {AppCoinRepository} from '@src/repositories/appcoin';
 import {PlayerRepository} from '@src/repositories/player';

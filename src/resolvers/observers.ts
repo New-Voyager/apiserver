@@ -1,5 +1,5 @@
 import {Cache} from '@src/cache';
-import {Player} from '@src/entity/player';
+import {Player} from '@src/entity/player/player';
 import {getLogger} from '@src/utils/log';
 const logger = getLogger('observers - resolvers');
 
@@ -15,14 +15,14 @@ export async function observeGame(
   if (!game) {
     throw new Error(`Game ${gameCode} is not found`);
   }
-  if (game.club) {
-    const clubMember = await Cache.getClubMember(hostId, game.club.clubCode);
+  if (game.clubCode) {
+    const clubMember = await Cache.getClubMember(hostId, game.clubCode);
     if (!clubMember) {
       logger.error(
-        `Player: ${hostId} is not a club member in club ${game.club.name}`
+        `Player: ${hostId} is not a club member in club ${game.clubName}`
       );
       throw new Error(
-        `Player: ${hostId} is not a club member in club ${game.club.name}`
+        `Player: ${hostId} is not a club member in club ${game.clubName}`
       );
     }
   }
@@ -41,14 +41,14 @@ export async function exitGame(
   if (!game) {
     throw new Error(`Game ${gameCode} is not found`);
   }
-  if (game.club) {
-    const clubMember = await Cache.getClubMember(hostId, game.club.clubCode);
+  if (game.clubCode) {
+    const clubMember = await Cache.getClubMember(hostId, game.clubCode);
     if (!clubMember) {
       logger.error(
-        `Player: ${hostId} is not a club member in club ${game.club.name}`
+        `Player: ${hostId} is not a club member in club ${game.clubName}`
       );
       throw new Error(
-        `Player: ${hostId} is not a club member in club ${game.club.name}`
+        `Player: ${hostId} is not a club member in club ${game.clubName}`
       );
     }
   }
@@ -68,16 +68,16 @@ export async function observers(
   if (!game) {
     throw new Error(`Game ${gameCode} is not found`);
   }
-  if (game.club) {
-    const clubMember = await Cache.getClubMember(hostId, game.club.clubCode);
+  if (game.clubCode) {
+    const clubMember = await Cache.getClubMember(hostId, game.clubCode);
     if (!clubMember || !clubMember.isOwner) {
-      logger.error(`Player: ${hostId} is not a host in club ${game.club.name}`);
+      logger.error(`Player: ${hostId} is not a host in club ${game.clubName}`);
       throw new Error(
-        `Player: ${hostId} is not a host in club ${game.club.name}`
+        `Player: ${hostId} is not a host in club ${game.clubName}`
       );
     }
   } else {
-    if (game.startedBy.uuid !== hostId) {
+    if (game.hostUuid !== hostId) {
       logger.error(`Player: ${hostId} is not a host in ${gameCode}`);
       throw new Error(`Player: ${hostId} is not a host in ${gameCode}`);
     }

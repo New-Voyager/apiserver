@@ -1,15 +1,19 @@
 import {EntityManager, getConnection, getManager, getRepository} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
-import {Player} from '@src/entity/player';
-import {NextHandUpdates, PokerGame, PokerGameUpdates} from '@src/entity/game';
+import {Player} from '@src/entity/player/player';
+import {
+  NextHandUpdates,
+  PokerGame,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
 import {
   ApprovalStatus,
   GameStatus,
   NextHandUpdate,
   TableStatus,
 } from '@src/entity/types';
-import {PlayerGameTracker} from '@src/entity/chipstrack';
+import {PlayerGameTracker} from '@src/entity/game/chipstrack';
 import {GameRepository} from './game';
 import {playerStatusChanged} from '@src/gameserver';
 import {startTimer, cancelTimer} from '@src/timer';
@@ -97,7 +101,7 @@ export class Reload {
         );
         const playerInGame = await playerGameTrackerRepository.findOne({
           game: {id: this.game.id},
-          player: {id: this.player.id},
+          playerId: this.player.id,
         });
         if (!playerInGame) {
           logger.error(
@@ -117,10 +121,10 @@ export class Reload {
           amount = this.game.buyInMax - playerInGame.stack;
         }
 
-        if (this.game.club) {
+        if (this.game.clubCode) {
           const prevStatus = await playerGameTrackerRepository.findOne({
             game: {id: this.game.id},
-            player: {id: this.player.id},
+            playerId: this.player.id,
           });
 
           if (!prevStatus) {
@@ -152,7 +156,7 @@ export class Reload {
               `************ [${this.game.gameCode}]: Player ${this.player.name} is waiting for approval`
             );
             // notify game host that the player is waiting for buyin
-            const host = await Cache.getPlayerById(this.game.host.id, true);
+            const host = await Cache.getPlayerById(this.game.hostId, true);
             const messageId = uuidv4();
             await Firebase.notifyReloadRequest(
               this.game,
@@ -164,7 +168,7 @@ export class Reload {
             // notify player to wait for approval
             Nats.sendReloadWaitTime(
               this.game,
-              this.game.club.name,
+              this.game.clubName,
               this.player,
               timeout,
               messageId
@@ -173,7 +177,7 @@ export class Reload {
             // NATS message, notify host for pending request
             Nats.sendReloadApprovalRequest(
               this.game,
-              this.game.club.name,
+              this.game.clubName,
               this.player,
               host,
               messageId
@@ -244,7 +248,7 @@ export class Reload {
     if (!playerInGame) {
       playerInGame = await playerGameTrackerRepository.findOne({
         game: {id: this.game.id},
-        player: {id: this.player.id},
+        playerId: this.player.id,
       });
       if (!playerInGame) {
         logger.error(
@@ -266,7 +270,7 @@ export class Reload {
         await playerGameTrackerRepository.update(
           {
             game: {id: this.game.id},
-            player: {id: this.player.id},
+            playerId: this.player.id,
           },
           {
             status: playerInGame.status,
@@ -297,14 +301,14 @@ export class Reload {
     let approved = false;
     const clubMember = await Cache.getClubMember(
       this.player.uuid,
-      this.game.club.clubCode
+      this.game.clubCode
     );
     if (!clubMember) {
       throw new Error(`The player ${this.player.uuid} is not in the club`);
     }
 
     let isHost = false;
-    if (this.game.startedBy.uuid === this.player.uuid) {
+    if (this.game.hostUuid === this.player.uuid) {
       isHost = true;
     }
     if (
@@ -386,7 +390,7 @@ export class Reload {
         );
         const reloadRequest = await pendingUpdatesRepo.findOne({
           game: {id: this.game.id},
-          player: {id: this.player.id},
+          playerId: this.player.id,
           newUpdate: NextHandUpdate.WAIT_RELOAD_APPROVAL,
         });
         if (!reloadRequest) {
@@ -399,7 +403,7 @@ export class Reload {
         );
         const playerInGame = await playerInGameRepo.findOne({
           game: {id: this.game.id},
-          player: {id: this.player.id},
+          playerId: this.player.id,
         });
         if (!playerInGame) {
           return false;
@@ -408,7 +412,7 @@ export class Reload {
         // remove row from NextHandUpdates table
         await pendingUpdatesRepo.delete({
           game: {id: this.game.id},
-          player: {id: this.player.id},
+          playerId: this.player.id,
           newUpdate: NextHandUpdate.WAIT_RELOAD_APPROVAL,
         });
 
@@ -439,7 +443,7 @@ export class Reload {
         );
         const request = await pendingUpdatesRepo.findOne({
           game: {id: this.game.id},
-          player: {id: this.player.id},
+          playerId: this.player.id,
           newUpdate: NextHandUpdate.WAIT_RELOAD_APPROVAL,
         });
         if (!request) {
@@ -452,7 +456,7 @@ export class Reload {
         );
         const playerInGame = await playerInGameRepo.findOne({
           game: {id: this.game.id},
-          player: {id: this.player.id},
+          playerId: this.player.id,
         });
         if (!playerInGame) {
           return false;
@@ -479,7 +483,9 @@ export class Reload {
     }
     const update = new NextHandUpdates();
     update.game = this.game;
-    update.player = this.player;
+    update.playerId = this.player.id;
+    update.playerUuid = this.player.uuid;
+    update.playerName = this.player.name;
     update.newUpdate = status;
     update.buyinAmount = amount;
     await nextHandUpdatesRepository.save(update);
@@ -492,7 +498,7 @@ export class Reload {
     const pendingUpdatesRepo = getRepository(NextHandUpdates);
     await pendingUpdatesRepo.delete({
       game: {id: this.game.id},
-      player: {id: this.player.id},
+      playerId: this.player.id,
       newUpdate: NextHandUpdate.WAIT_RELOAD_APPROVAL,
     });
     const messageId = uuidv4();

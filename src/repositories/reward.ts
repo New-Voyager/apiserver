@@ -1,7 +1,11 @@
-import {Club} from '@src/entity/club';
+import {Club} from '@src/entity/player/club';
 import {EntityManager, getRepository, Not, Repository} from 'typeorm';
 import {RewardType, ScheduleType} from '@src/entity/types';
-import {GameReward, GameRewardTracking, Reward} from '@src/entity/reward';
+import {
+  GameReward,
+  GameRewardTracking,
+  Reward,
+} from '@src/entity/player/reward';
 export interface RewardInputFormat {
   name: string;
   type: RewardType;
@@ -19,9 +23,9 @@ import {
 } from './types';
 import {Cache} from '@src/cache';
 import _ from 'lodash';
-import {HighHand} from '@src/entity/reward';
-import {Player} from '@src/entity/player';
-import {PokerGame} from '@src/entity/game';
+import {HighHand} from '@src/entity/player/reward';
+import {Player} from '@src/entity/player/player';
+import {PokerGame} from '@src/entity/game/game';
 import {stringCards} from '@src/utils';
 const logger = getLogger('rewardRepo');
 
@@ -247,7 +251,7 @@ class RewardRepositoryImpl {
             },
             {
               handNum: input.handNum,
-              game: {id: game.id},
+              gameId: game.id,
               player: {id: playerId},
               boardCards: JSON.stringify(input.boardCards),
               playerCards: JSON.stringify(highHandPlayer.cards),
@@ -325,7 +329,7 @@ class RewardRepositoryImpl {
       highhand.reward = reward;
       highhand.rewardTracking = rewardTracking;
     }
-    highhand.game = game;
+    highhand.gameId = game.id;
     highhand.player = player;
     highhand.highHand = JSON.stringify(highhandCards);
     highhand.handNum = handNum;
@@ -347,7 +351,7 @@ class RewardRepositoryImpl {
     const game = await Cache.getGame(gameCode);
     try {
       const gameHighHands = await highHandRepo.find({
-        where: {game: {id: game.id}},
+        where: {gameId: game.id},
         order: {handTime: 'DESC'},
       });
       for await (const highHand of gameHighHands) {
@@ -393,7 +397,7 @@ class RewardRepositoryImpl {
     }
     try {
       const gameHighHands = await highHandRepo.find({
-        where: {game: {id: game.id}, reward: {id: rewardId}},
+        where: {gameId: game.id, reward: {id: rewardId}},
         order: {handTime: 'DESC'},
       });
       for await (const highHand of gameHighHands) {
@@ -426,7 +430,7 @@ class RewardRepositoryImpl {
   ): Promise<number> {
     const highHandRepo = getRepository(HighHand);
     const gameHighHands = await highHandRepo.find({
-      where: {game: {id: game.id}, reward: {id: rewardId}},
+      where: {gameId: game.id, reward: {id: rewardId}},
       order: {handTime: 'DESC'},
       take: 1,
     });
@@ -442,7 +446,7 @@ class RewardRepositoryImpl {
   ): Promise<number> {
     const highHandRepo = getRepository(HighHand);
     const gameHighHands = await highHandRepo.find({
-      where: {game: {id: game.id}},
+      where: {gameId: game.id},
       order: {handTime: 'DESC'},
       take: 1,
     });
@@ -468,7 +472,7 @@ class RewardRepositoryImpl {
     if (!rewardId) {
       // get reward associated with the game code
       const gameRewards = await getRepository(GameReward).find({
-        gameId: {id: game.id},
+        gameId: game.id,
       });
       if (gameRewards && gameRewards.length >= 1) {
         // get highhand reward id
@@ -488,7 +492,7 @@ class RewardRepositoryImpl {
       }
       const rewardTrackRepo = getRepository(GameRewardTracking);
       const rewardtrack = await rewardTrackRepo.findOne({
-        game: game,
+        gameId: game.id,
         reward: reward,
       });
       if (!rewardtrack) {
@@ -500,7 +504,7 @@ class RewardRepositoryImpl {
       });
     } else {
       gameHighHands = await highHandRepo.find({
-        where: {game: {id: game.id}, winner: true},
+        where: {gameId: game.id, winner: true},
       });
     }
     try {

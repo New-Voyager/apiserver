@@ -5,7 +5,7 @@ import {
   ClubMemberUpdateInput,
 } from '@src/repositories/club';
 import {ClubMemberStatus, GameStatus, GameType} from '@src/entity/types';
-import {Player} from '@src/entity/player';
+import {Player} from '@src/entity/player/player';
 import {PageOptions} from '@src/types';
 import * as _ from 'lodash';
 import {getLogger} from '@src/utils/log';

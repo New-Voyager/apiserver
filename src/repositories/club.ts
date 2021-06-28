@@ -1,6 +1,6 @@
-import {Club, ClubMember} from '@src/entity/club';
+import {Club, ClubMember} from '@src/entity/player/club';
 import {ClubMemberStatus, ClubStatus} from '@src/entity/types';
-import {Player} from '@src/entity/player';
+import {Player} from '@src/entity/player/player';
 import {
   getConnection,
   getRepository,
@@ -10,7 +10,7 @@ import {
   MoreThan,
   In,
 } from 'typeorm';
-import {PokerGame} from '@src/entity/game';
+import {PokerGame} from '@src/entity/game/game';
 import {
   getClubGamesData,
   getMembersFilterData,
@@ -672,6 +672,31 @@ class ClubRepositoryImpl {
     if (completedGames) {
       endedAt = 'AND pg.ended_at IS NOT NULL';
     }
+    // const query = fixQuery(`
+    //     SELECT pg.id, pg.game_code as "gameCode", pg.game_num as "gameNum",
+    //     pgt.session_time as "sessionTime", pg.game_status as "status",
+    //     pgt.sat_at as "satAt",
+    //     pg.small_blind as "smallBlind", pg.big_blind as "bigBlind",
+    //     pgt.no_hands_played as "handsPlayed",
+    //     pgt.no_hands_won as "handsWon", in_flop as "flopHands", in_turn as "turnHands",
+    //     in_river as "riverHands", went_to_showdown as "showdownHands",
+    //     big_loss as "bigLoss", big_win as "bigWin", big_loss_hand as "bigLossHand",
+    //     big_win_hand as "bigWinHand", hand_stack,
+    //     cm.player_id, pg.game_type as "gameType",
+    //     pg.started_at as "startedAt", p.name as "startedBy",
+    //     pg.ended_at as "endedAt", pg.ended_by as "endedBy",
+    //     pg.started_at as "startedAt", pgt.session_time as "sessionTime",
+    //     (pgt.stack - pgt.buy_in) as balance
+    //     FROM
+    //     poker_game pg JOIN club c ON pg.club_id  = c.id ${endedAt}
+    //     JOIN player p ON pg.started_by = p.id
+    //     JOIN club_member cm  ON cm.club_id  = c.id AND cm.player_id = ? AND c.club_code = ?
+    //     LEFT OUTER JOIN player_game_tracker pgt ON
+    //     pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = cm.player_id
+    //     LEFT OUTER JOIN player_game_stats pgs ON
+    //     pgs.pgs_game_id = pg.id AND pgs.pgs_player_id = cm.player_id
+    //     ORDER BY pg.id DESC`);
+
     const query = fixQuery(`
         SELECT pg.id, pg.game_code as "gameCode", pg.game_num as "gameNum",
         pgt.session_time as "sessionTime", pg.game_status as "status",
@@ -682,23 +707,26 @@ class ClubRepositoryImpl {
         in_river as "riverHands", went_to_showdown as "showdownHands", 
         big_loss as "bigLoss", big_win as "bigWin", big_loss_hand as "bigLossHand", 
         big_win_hand as "bigWinHand", hand_stack,
-        cm.player_id, pg.game_type as "gameType", 
-        pg.started_at as "startedAt", p.name as "startedBy",
-        pg.ended_at as "endedAt", pg.ended_by as "endedBy", 
+        pg.game_type as "gameType", 
+        pg.started_at as "startedAt", pg.host_name as "startedBy",
+        pg.ended_at as "endedAt", pg.ended_by_name as "endedBy", 
         pg.started_at as "startedAt", pgt.session_time as "sessionTime", 
         (pgt.stack - pgt.buy_in) as balance 
         FROM
-        poker_game pg JOIN club c ON pg.club_id  = c.id ${endedAt}
-        JOIN player p ON pg.started_by = p.id
-        JOIN club_member cm  ON cm.club_id  = c.id AND cm.player_id = ? AND c.club_code = ?
+        poker_game pg  
         LEFT OUTER JOIN player_game_tracker pgt ON 
-        pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = cm.player_id
+        pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = ?
         LEFT OUTER JOIN player_game_stats pgs ON 
-        pgs.pgs_game_id = pg.id AND pgs.pgs_player_id = cm.player_id
+        pgs.game_id = pg.id AND pgs.player_id = ?
+        WHERE pg.club_code = ? ${endedAt}
         ORDER BY pg.id DESC`);
-
+    logger.info(query);
     // TODO: we need to do pagination here
-    const result = await getConnection().query(query, [playerId, clubCode]);
+    const result = await getConnection().query(query, [
+      playerId,
+      playerId,
+      clubCode,
+    ]);
     return result;
   }
 
