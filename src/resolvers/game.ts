@@ -20,7 +20,6 @@ import {ClubRepository} from '@src/repositories/club';
 import {getCurrentHandLog, playerStatusChanged} from '@src/gameserver';
 import {isHostOrManagerOrOwner} from './util';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
-import {argsToArgsConfig} from 'graphql/type/definition';
 import {pendingApprovalsForClubData} from '@src/types';
 import {ApolloError} from 'apollo-server-express';
 import {

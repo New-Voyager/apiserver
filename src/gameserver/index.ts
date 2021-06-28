@@ -37,9 +37,7 @@ export async function publishNewGame(game: any, gameServer: any) {
   const gameServerUrl = gameServer.url;
 
   const message = {
-    clubId: game.club.id,
     gameId: game.id,
-    clubCode: game.club.clubCode,
     gameCode: game.gameCode,
   };
 

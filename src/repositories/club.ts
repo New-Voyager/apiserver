@@ -713,13 +713,14 @@ class ClubRepositoryImpl {
         pg.started_at as "startedAt", pgt.session_time as "sessionTime", 
         (pgt.stack - pgt.buy_in) as balance 
         FROM
-        poker_game pg  ${endedAt}
+        poker_game pg  
         LEFT OUTER JOIN player_game_tracker pgt ON 
         pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = ?
         LEFT OUTER JOIN player_game_stats pgs ON 
         pgs.game_id = pg.id AND pgs.player_id = ?
-        WHERE pg.club_code = ?
+        WHERE pg.club_code = ? ${endedAt}
         ORDER BY pg.id DESC`);
+    logger.info(query);
     // TODO: we need to do pagination here
     const result = await getConnection().query(query, [
       playerId,

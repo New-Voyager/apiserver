@@ -135,7 +135,7 @@ class StatsRepositoryImpl {
           .createQueryBuilder()
           .where({
             playerId: playerId,
-            game: {id: game.id},
+            gameId: game.id,
           })
           .select('headsup_hand_details')
           .execute();
@@ -187,7 +187,7 @@ class StatsRepositoryImpl {
           })
           .where({
             playerId: playerId,
-            game: {id: game.id},
+            gameId: game.id,
           })
           .execute()
       );
@@ -201,7 +201,7 @@ class StatsRepositoryImpl {
             })
             .where({
               playerId: playerId,
-              game: {id: game.id},
+              gameId: game.id,
             })
             .execute()
         );

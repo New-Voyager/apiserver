@@ -1296,32 +1296,34 @@ class GameRepositoryImpl {
     playerId: number
   ): Promise<any> {
     const query = fixQuery(`
-        SELECT pg.id, pg.game_code as "gameCode", pg.game_num as "gameNum",
-        pgt.session_time as "sessionTime", pg.game_status as "status",
-        pg.small_blind as "smallBlind", pg.big_blind as "bigBlind",
-        pgt.no_hands_played as "handsPlayed", 
-        pgt.no_hands_won as "handsWon", in_flop as "flopHands", in_turn as "turnHands",
-        pgt.buy_in as "buyIn", (pgt.stack - pgt.buy_in) as "profit",
-        in_preflop as "preflopHands", in_river as "riverHands", went_to_showdown as "showdownHands", 
-        big_loss as "bigLoss", big_win as "bigWin", big_loss_hand as "bigLossHand", 
-        big_win_hand as "bigWinHand", hand_stack,
-        pg.game_type as "gameType", 
-        pg.started_at as "startedAt", p.name as "startedBy",
-        pg.ended_at as "endedAt", pg.ended_by as "endedBy", 
-        pg.started_at as "startedAt", pgt.session_time as "sessionTime", 
-        pgt.stack as balance,
-        pgu.hand_num as "handsDealt"
-        FROM
-        poker_game pg JOIN club c ON pg.club_id  = c.id AND pg.game_code = ?
-        JOIN poker_game_updates pgu ON pg.id = pgu.game_id
-        JOIN player p ON p.id = ?
-        LEFT OUTER JOIN player_game_tracker pgt ON 
-        pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = p.id
-        LEFT OUTER JOIN player_game_stats pgs ON 
-        pgs.pgs_game_id = pg.id AND pgs.pgs_player_id = p.id`);
+    SELECT pg.id, pg.game_code as "gameCode", pg.game_num as "gameNum",
+    pgt.session_time as "sessionTime", pg.game_status as "status",
+    pg.small_blind as "smallBlind", pg.big_blind as "bigBlind",
+    pgt.no_hands_played as "handsPlayed", 
+    pgt.no_hands_won as "handsWon", in_flop as "flopHands", in_turn as "turnHands",
+    pgt.buy_in as "buyIn", (pgt.stack - pgt.buy_in) as "profit",
+    in_preflop as "preflopHands", in_river as "riverHands", went_to_showdown as "showdownHands", 
+    big_loss as "bigLoss", big_win as "bigWin", big_loss_hand as "bigLossHand", 
+    big_win_hand as "bigWinHand", hand_stack,
+    pg.game_type as "gameType", 
+    pg.started_at as "startedAt", pg.host_name as "startedBy",
+    pg.ended_at as "endedAt", pg.ended_by_name as "endedBy", 
+    pg.started_at as "startedAt", pgt.session_time as "sessionTime", 
+    pgt.stack as balance,
+    pgu.hand_num as "handsDealt"
+    FROM
+    poker_game pg 
+    JOIN poker_game_updates pgu ON pg.id = pgu.game_id
+    LEFT OUTER JOIN player_game_tracker pgt ON 
+    pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = ?
+    LEFT OUTER JOIN player_game_stats pgs ON 
+    pgs.game_id = pg.id AND pgs.player_id = pgt.pgt_player_id
+    WHERE
+    pg.game_code = ?
+    `);
 
     // TODO: we need to do pagination here
-    const result = await getConnection().query(query, [gameCode, playerId]);
+    const result = await getConnection().query(query, [playerId, gameCode]);
     if (result.length > 0) {
       return result[0];
     }
@@ -1337,10 +1339,9 @@ class GameRepositoryImpl {
         pgt.stack - pgt.buy_in AS "profit",
         pgt.rake_paid AS "rakePaid",
         pgt.sat_at AS "satAt",
-        p.name AS "playerName",
-        p.uuid AS "playerId"
+        pgt.player_name AS "playerName",
+        pgt.player_uuid AS "playerId"
       FROM player_game_tracker pgt
-      INNER JOIN player p ON pgt.pgt_player_id = p.id
       INNER JOIN poker_game pg ON pgt.pgt_game_id = pg.id
       WHERE pg.game_code = ?
       AND pgt.no_hands_played > 0`);
@@ -1351,11 +1352,11 @@ class GameRepositoryImpl {
 
   public async getGamePlayers(gameCode: string): Promise<Array<any>> {
     const query = fixQuery(`
-      SELECT p.id AS "id", p.name AS "name", p.uuid AS "uuid"
-      FROM player_game_tracker pgt
-      INNER JOIN player p ON pgt.pgt_player_id = p.id
-      INNER JOIN poker_game pg ON pgt.pgt_game_id = pg.id
-      WHERE pg.game_code = ?`);
+    SELECT pgt.pgt_player_id AS "id", pgt.player_name AS "name", pgt.player_uuid AS "uuid"
+    FROM player_game_tracker pgt
+    JOIN
+     poker_game pg ON pgt.pgt_game_id = pg.id
+    WHERE pg.game_code = ?`);
 
     const result = await getConnection().query(query, [gameCode]);
     return result;

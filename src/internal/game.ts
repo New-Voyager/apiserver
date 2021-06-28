@@ -183,7 +183,6 @@ class GameAPIs {
             const ret: any = {
               clubId: game.clubId,
               gameId: game.id,
-              //clubCode: game.club.clubCode,
               gameCode: game.gameCode,
               gameType: game.gameType,
               title: game.title,
