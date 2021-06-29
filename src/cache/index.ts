@@ -183,7 +183,7 @@ class GameCache {
   }
 
   private async gameCodeFromId(gameId: number): Promise<string | null> {
-    const getResp = await this.getCache(`gameIdGameCodeCache`);
+    const getResp = await this.getCache('gameIdGameCodeCache');
     if (getResp.success && getResp.data) {
       const gameIdToCode = JSON.parse(getResp.data);
       return gameIdToCode[gameId.toString()];
@@ -193,7 +193,7 @@ class GameCache {
   }
 
   private async updateGameIdGameCodeChange(gameId: number, gameCode: string) {
-    const getResp = await this.getCache(`gameIdGameCodeCache`);
+    const getResp = await this.getCache('gameIdGameCodeCache');
     let data: any = {};
     if (getResp.success && getResp.data) {
       data = JSON.parse(getResp.data);
@@ -202,7 +202,7 @@ class GameCache {
       data[gameId.toString()] = gameCode;
     }
 
-    await this.setCache(`gameIdGameCodeCache`, JSON.stringify(data));
+    await this.setCache('gameIdGameCodeCache', JSON.stringify(data));
   }
 
   public async getClub(clubCode: string, update = false): Promise<Club> {

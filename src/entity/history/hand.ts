@@ -6,6 +6,8 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import {Player} from '../player/player';
+import {Reward, GameRewardTracking} from '../player/reward';
 import {DbAwareColumn, DbAwareUpdateDateColumn} from '../dbaware';
 import {GameType, WonAtStatus} from '../types';
 
@@ -74,4 +76,53 @@ export class HandHistory {
 
   @Column({name: 'hand_time', type: 'int', default: 0, nullable: true})
   public handTime!: number;
+}
+
+@Entity({name: 'high_hand_history'})
+export class HighHandHistory {
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @Column({name: 'game_id', nullable: false, type: 'int'})
+  public gameId!: number;
+
+  @Column({name: 'player_id', nullable: false, type: 'int'})
+  public playerId!: number;
+
+  @Column({name: 'reward_id', nullable: false, type: 'int'})
+  public rewardId!: number;
+
+  @Column({name: 'reward_tracking_id', nullable: false, type: 'int'})
+  public rewardTrackingId!: number;
+
+  @Column({name: 'hand_num', nullable: false})
+  public handNum!: number;
+
+  @Column({name: 'player_cards', nullable: false})
+  public playerCards!: string;
+
+  @Column({name: 'board_cards', nullable: false})
+  public boardCards!: string;
+
+  @Column({name: 'high_hand', nullable: false})
+  public highHand!: string;
+
+  // cards displayed in characters
+  @Column({name: 'high_hand_cards', nullable: true})
+  public highHandCards!: string;
+
+  @Column({name: 'rank', nullable: false})
+  public rank!: number;
+
+  @Column({name: 'winner', nullable: false})
+  public winner!: boolean;
+
+  @Column({name: 'hand_time', nullable: false})
+  public handTime!: Date;
+
+  @Column({name: 'start_hour', nullable: true})
+  public startHour!: boolean;
+
+  @Column({name: 'end_hour', nullable: true})
+  public endHour!: boolean;
 }

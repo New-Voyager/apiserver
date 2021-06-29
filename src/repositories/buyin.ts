@@ -189,7 +189,7 @@ export class BuyIn {
     let databaseTime = new Date().getTime();
     let cancelTime;
 
-    let playerGameTrackerRepository = transactionEntityManager.getRepository(
+    const playerGameTrackerRepository = transactionEntityManager.getRepository(
       PlayerGameTracker
     );
     const count = await playerGameTrackerRepository
@@ -264,7 +264,7 @@ export class BuyIn {
     const startTime = new Date().getTime();
     let databaseTime = 0;
     let buyInApprovedTime = 0;
-    let firebaseTime = 0;
+    const firebaseTime = 0;
 
     const [status, approved] = await getManager().transaction(
       async transactionEntityManager => {

@@ -42,6 +42,7 @@ import {
   Reward,
   GameRewardTracking,
   GameReward,
+  HighHand,
 } from '@src/entity/player/reward';
 import {ChipsTrackRepository} from './chipstrack';
 import {
@@ -59,8 +60,10 @@ import {JanusSession} from '@src/janus';
 import {HandHistory} from '@src/entity/history/hand';
 import {Player} from '@src/entity/player/player';
 import {Club} from '@src/entity/player/club';
+import {HighHandHistory} from '@src/entity/history/hand';
 import {PlayerGameStats} from '@src/entity/history/stats';
-
+import {GameHistory} from '@src/entity/history/game';
+import {PlayersInGame} from '@src/entity/history/player';
 const logger = getLogger('game');
 
 class GameRepositoryImpl {
@@ -114,7 +117,7 @@ class GameRepositoryImpl {
     //   );
     // }
 
-    let useGameServer = true;
+    const useGameServer = true;
 
     const gameServerRepository = getRepository(GameServer);
     let gameServers: Array<GameServer> = new Array<GameServer>();
@@ -184,6 +187,26 @@ class GameRepositoryImpl {
         savedGame = await transactionEntityManager
           .getRepository(PokerGame)
           .save(game);
+
+        const gameHistoryRepo = transactionEntityManager.getRepository(
+          GameHistory
+        );
+        const gameHistory = new GameHistory();
+        gameHistory.gameId = savedGame.id;
+        gameHistory.clubId = game.clubId;
+        gameHistory.dealerChoiceGames = game.dealerChoiceGames;
+        gameHistory.endedAt = game.endedAt;
+        gameHistory.endedBy = game.endedBy;
+        gameHistory.endedByName = game.endedByName;
+        gameHistory.gameCode = game.gameCode;
+        gameHistory.gameType = game.gameType;
+        gameHistory.hostId = game.hostId;
+        gameHistory.hostName = game.hostName;
+        gameHistory.hostUuid = game.hostUuid;
+        gameHistory.roeGames = game.roeGames;
+        gameHistory.startedAt = game.startedAt;
+        await gameHistoryRepo.save(gameHistory);
+
         saveTime = new Date().getTime() - saveTime;
         if (!game.isTemplate) {
           saveUpdateTime = new Date().getTime();
@@ -1049,6 +1072,78 @@ class GameRepositoryImpl {
   }
 
   public async markGameEnded(gameId: number): Promise<GameStatus> {
+    const repository = getRepository(PokerGame);
+    const game = await repository.findOne({where: {id: gameId}});
+    if (!game) {
+      throw new Error(`Game: ${gameId} is not found`);
+    }
+    const values: any = {
+      endedAt: game.endedAt,
+      endedBy: game.endedBy,
+      endedByName: game.endedByName,
+    };
+
+    await getConnection()
+      .createQueryBuilder()
+      .update(GameHistory)
+      .set(values)
+      .where('id = :id', {id: gameId})
+      .execute();
+
+    const playersInGameRepo = getRepository(PlayersInGame);
+    const playersInGame = new PlayersInGame();
+    const playerGameTrackerRepo = getRepository(PlayerGameTracker);
+    const playerGameTracker = await playerGameTrackerRepo.findOne({
+      where: {
+        game: {id: gameId},
+      },
+    });
+    if (!playerGameTracker) {
+      throw new Error(`Game: ${gameId} is not found`);
+    }
+    playersInGame.buyIn = playerGameTracker.buyIn;
+    playersInGame.gameCode = playerGameTracker.game.gameCode;
+    playersInGame.handStack = playerGameTracker.handStack;
+    playersInGame.leftAt = playerGameTracker.leftAt;
+    playersInGame.noHandsPlayed = playerGameTracker.noHandsPlayed;
+    playersInGame.noHandsWon = playerGameTracker.noHandsWon;
+    playersInGame.noOfBuyins = playerGameTracker.noOfBuyins;
+    playersInGame.playerId = playerGameTracker.playerId;
+    playersInGame.playerName = playerGameTracker.playerName;
+    playersInGame.playerUuid = playerGameTracker.playerUuid;
+    playersInGame.sessionTime = playerGameTracker.sessionTime;
+    playersInGame.gameId = playerGameTracker.game.id;
+
+    await playersInGameRepo.save(playersInGame);
+
+    const highHandHistoryRepo = getRepository(HighHandHistory);
+    const highHandHistory = new HighHandHistory();
+    const highHandRepo = getRepository(HighHand);
+    const highHand = await highHandRepo.findOne({
+      where: {
+        gameId: gameId,
+      },
+    });
+    if (!highHand) {
+      throw new Error(`Game: ${gameId} is not found`);
+    }
+    highHandHistory.boardCards = highHand.boardCards;
+    highHandHistory.endHour = highHand.endHour;
+    highHandHistory.gameId = highHand.gameId;
+    highHandHistory.handNum = highHand.handNum;
+    highHandHistory.handTime = highHand.handTime;
+    highHandHistory.highHand = highHand.highHand;
+    highHandHistory.highHandCards = highHand.highHandCards;
+    highHandHistory.playerCards = highHand.playerCards;
+    highHandHistory.playerId = highHand.player.id;
+    highHandHistory.rank = highHand.rank;
+    highHandHistory.rewardId = highHand.reward.id;
+    highHandHistory.rewardTrackingId = highHand.rewardTracking.id;
+    highHandHistory.startHour = highHand.startHour;
+    highHandHistory.winner = highHand.winner;
+
+    await highHandHistoryRepo.save(highHandHistory);
+
     return this.markGameStatus(gameId, GameStatus.ENDED);
   }
 
@@ -1457,7 +1552,7 @@ class GameRepositoryImpl {
 
         // if the current player in seat tried to sit in the same seat, do nothing
         if (playerInSeat != null) {
-          throw new Error(`A player is in the seat`);
+          throw new Error('A player is in the seat');
         }
 
         // get player's old seat no
@@ -1514,7 +1609,7 @@ class GameRepositoryImpl {
     config: any
   ): Promise<void> {
     await getManager().transaction(async transactionEntityManager => {
-      let updates: any = {};
+      const updates: any = {};
       if (config.muckLosingHand !== undefined) {
         updates.muckLosingHand = config.muckLosingHand;
       }

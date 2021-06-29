@@ -40,7 +40,7 @@ export async function getClubMsg(
     clubCode,
     pageOptions
   );
-  let clubmessages = new Array<any>();
+  const clubmessages = new Array<any>();
   for (const x of messages) {
     let m: any = {};
     if (x.messageType == ClubMessageType.HAND) {

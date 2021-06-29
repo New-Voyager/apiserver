@@ -128,7 +128,7 @@ class PlayerRepositoryImpl {
       notesPlayer = await Cache.getPlayer(notesPlayerUuid);
     }
     if (!notesPlayer) {
-      throw new Error(`Could not get notes palyer id`);
+      throw new Error('Could not get notes palyer id');
     }
     const notesRepo = getRepository(PlayerNotes);
     const notes = await notesRepo.findOne({
@@ -155,7 +155,7 @@ class PlayerRepositoryImpl {
       notesPlayer = await Cache.getPlayer(notesPlayerUuid);
     }
     if (!notesPlayer) {
-      throw new Error(`Could not get notes palyer id`);
+      throw new Error('Could not get notes palyer id');
     }
     const notesRepo = getRepository(PlayerNotes);
     let affectedRows = await notesRepo.update(

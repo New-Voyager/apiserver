@@ -4,7 +4,7 @@ import {getLogger} from '@src/utils/log';
 import * as firebase from 'firebase-admin';
 import {ServiceAccount} from 'firebase-admin';
 
-var serviceAccountOld = {
+const serviceAccountOld = {
   type: 'service_account',
   projectId: 'poker-club-app',
   privateKeyId: '811278dd416bccf8abf0170f18f27dbfdc63a024',
@@ -19,7 +19,7 @@ var serviceAccountOld = {
     'https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-e4h53%40poker-club-app.iam.gserviceaccount.com',
 }; //require("poker-club-app-firebase-adminsdk-e4h53-811278dd41.json");
 
-var serviceAccount = {
+const serviceAccount = {
   type: 'service_account',
   project_id: 'pokerclub-d6e60',
   private_key_id: '495fedfca7b70affee17363a8e3b8c626867c3f9',

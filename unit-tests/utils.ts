@@ -7,13 +7,13 @@ import {
   NextHandUpdates,
   PokerGameUpdates,
 } from '../src/entity/game/game';
+import {HandHistory} from '../src/entity/history/hand';
+import {PlayerGameTracker} from '../src/entity/game/chipstrack';
 import {
-  HandHistory,
-} from '../src/entity/history/hand';
-import {
-  PlayerGameTracker,
-} from '../src/entity/game/chipstrack';
-import {ClubStats, PlayerGameStats, PlayerHandStats} from '../src/entity/history/stats';
+  ClubStats,
+  PlayerGameStats,
+  PlayerHandStats,
+} from '../src/entity/history/stats';
 import {
   Reward,
   GameReward,
@@ -22,7 +22,10 @@ import {
 } from '../src/entity/player/reward';
 import {Announcement} from '../src/entity/player/announcements';
 import {ClubTokenTransactions} from '../src/entity/player/accounting';
-import {ClubMessageInput, ClubHostMessages} from '../src/entity/player/clubmessage';
+import {
+  ClubMessageInput,
+  ClubHostMessages,
+} from '../src/entity/player/clubmessage';
 import {GameServer, TrackGameServer} from '../src/entity/game/gameserver';
 import {HostSeatChangeProcess} from '../src/entity/game/seatchange';
 

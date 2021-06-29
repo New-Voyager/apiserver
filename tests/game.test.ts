@@ -277,9 +277,9 @@ describe('Tests: Game APIs', () => {
     await saveReward(ownerId, clubCode);
     const gameInput = holdemGameInput;
     gameInput.buyInApproval = true;
-    console.log('===================================')
+    console.log('===================================');
     const game = await gameutils.configureGame(ownerId, clubCode, gameInput);
-    console.log('===================================')
+    console.log('===================================');
 
     // Join a game
     const data = await gameutils.joinGame(players[0], game.gameCode, 1);
@@ -314,7 +314,6 @@ describe('Tests: Game APIs', () => {
     // Buyin more than credit limit and autoBuyinApproval false
     const resp4 = await gameutils.buyin(players[0], game.gameCode, 100);
     expect(resp4.approved).toBe(false);
-    
   });
 
   test('pending approvals for a club and game', async () => {

@@ -263,7 +263,7 @@ export class Reload {
       amount = 0;
     } else {
       // game is not running
-      let oldStack = playerInGame.stack;
+      const oldStack = playerInGame.stack;
       playerInGame.stack += amount;
       playerInGame.buyIn += amount;
       if (playerInGame.seatNo !== 0) {

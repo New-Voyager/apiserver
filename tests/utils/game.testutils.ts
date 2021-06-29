@@ -1,6 +1,6 @@
 import {resetDatabase, getClient} from './utils';
 import {gql} from 'apollo-boost';
-import { loggers } from 'winston';
+import {loggers} from 'winston';
 
 export const configureGameQuery = gql`
   mutation($clubCode: String!, $gameInput: GameCreateInput!) {
@@ -213,7 +213,7 @@ export const gameInfoQuery = gql`
           playerId
         }
       }
-    }    
+    }
   }
 `;
 
@@ -222,7 +222,6 @@ export async function configureGame(
   clubCode: string,
   gameInput: GameInput
 ): Promise<any> {
-
   const resp = await getClient(playerId).mutate({
     variables: {
       clubCode: clubCode,
@@ -436,7 +435,6 @@ export async function reload(
   expect(resp.data).not.toBeNull();
   return resp.data.status;
 }
-
 
 export async function pendingApprovalsForClub(
   playerId: string,

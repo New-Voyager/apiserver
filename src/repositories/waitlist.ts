@@ -300,7 +300,7 @@ export class WaitListMgmt {
     // we will send a notification which player is coming to the table
     const player = await Cache.getPlayer(nextPlayer.playerUuid);
     waitlistSeating(nextPlayer.game, player, timeout);
-    let clubName: string = '';
+    let clubName = '';
     if (game.clubName !== null) {
       clubName = game.clubName;
     }

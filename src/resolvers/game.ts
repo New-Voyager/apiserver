@@ -15,6 +15,7 @@ import {WaitListMgmt} from '@src/repositories/waitlist';
 import {default as _} from 'lodash';
 import {BuyIn} from '@src/repositories/buyin';
 import {PokerGame} from '@src/entity/game/game';
+import {GameHistory} from '@src/entity/history/game';
 import {fillSeats} from '@src/botrunner';
 import {ClubRepository} from '@src/repositories/club';
 import {getCurrentHandLog, playerStatusChanged} from '@src/gameserver';
@@ -415,16 +416,16 @@ export async function pendingApprovals(hostUuid: string) {
     respClubs = await buyin.pendingApprovalsForClub();
     respPlayer = await buyin.pendingApprovalsForPlayer();
 
-    let ret = new Array<any>();
-    let added = new Array<number>();
-    for (let item of respClubs) {
-      let itemRet = item as any;
+    const ret = new Array<any>();
+    const added = new Array<number>();
+    for (const item of respClubs) {
+      const itemRet = item as any;
       itemRet.gameType = GameType[item.gameType];
       ret.push(itemRet);
       added.push(itemRet.requestId);
     }
-    for (let item of respPlayer) {
-      let itemRet = item as any;
+    for (const item of respPlayer) {
+      const itemRet = item as any;
       if (added.indexOf(itemRet.requestId) === -1) {
         itemRet.gameType = GameType[item.gameType];
         ret.push(itemRet);
@@ -471,9 +472,9 @@ export async function pendingApprovalsForGame(
 
     const buyin = new BuyIn(game, player);
     const resp = await buyin.pendingApprovalsForGame();
-    let ret = new Array<any>();
-    for (let item of resp) {
-      let itemRet = item as any;
+    const ret = new Array<any>();
+    for (const item of resp) {
+      const itemRet = item as any;
       itemRet.gameType = GameType[item.gameType];
       ret.push(itemRet);
     }
@@ -510,9 +511,9 @@ export async function pendingApprovalsForClub(
 
     const buyin = new BuyIn(new PokerGame(), player);
     const resp = await buyin.pendingApprovalsForClub();
-    let ret = new Array<any>();
-    for (let item of resp) {
-      let itemRet = item as any;
+    const ret = new Array<any>();
+    for (const item of resp) {
+      const itemRet = item as any;
       itemRet.gameType = GameType[item.gameType];
       ret.push(itemRet);
     }
@@ -949,7 +950,7 @@ async function getPlayerRole(playerUuid: string, gameCode: string) {
       }
     }
     // player's role
-    let ret: any = {};
+    const ret: any = {};
     ret.isManager = isManager;
     ret.isHost = isHost;
     ret.isOwner = isOwner;
