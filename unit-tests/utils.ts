@@ -14,6 +14,9 @@ import {
   PlayerGameStats,
   PlayerHandStats,
 } from '../src/entity/history/stats';
+import {GameHistory} from '../src/entity/history/game';
+import {HighHandHistory} from '../src/entity/history/hand'
+import {PlayersInGame} from '../src/entity/history/player'
 import {
   Reward,
   GameReward,
@@ -64,6 +67,9 @@ export async function sqlliteConnection() {
       PlayerNotes,
       PlayerHandStats,
       ClubStats,
+      GameHistory,
+      HighHandHistory,
+      PlayersInGame,
     ],
     dropSchema: true,
     synchronize: true,
