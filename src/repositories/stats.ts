@@ -1,4 +1,4 @@
-import {EntityManager, Repository, getRepository} from 'typeorm';
+import {EntityManager, Repository, getRepository, getManager} from 'typeorm';
 import {v4 as uuidv4} from 'uuid';
 import {Player} from '@src/entity/player/player';
 import {
@@ -14,6 +14,7 @@ import {getLogger} from '@src/utils/log';
 import {Club} from '@src/entity/player/club';
 import {GameType} from '@src/entity/types';
 import {Cache} from '@src/cache';
+import {PlayerGameTracker} from '@src/entity/game/chipstrack';
 
 const logger = getLogger('Stats');
 
@@ -599,6 +600,67 @@ class StatsRepositoryImpl {
       playerId: player.id,
     });
     return playerStatHand;
+  }
+
+  public async gameEnded(game: PokerGame, players: Array<PlayerGameTracker>) {
+    const ret = await getManager().transaction(
+      async transactionEntityManager => {
+        const playerStatsRepo = transactionEntityManager.getRepository(
+          PlayerHandStats
+        );
+        // get the date
+        const date = `${game.startedAt.getFullYear()}-${game.startedAt.getMonth()}-${game.startedAt.getDay()}`;
+        for (const player of players) {
+          const playerStat = await playerStatsRepo.findOne({
+            playerId: player.playerId,
+          });
+          if (playerStat) {
+            // get recent performance data
+            let recentDataJson = playerStat.recentPerformance;
+            let recentPerformance = new Array<any>();
+            try {
+              recentPerformance = JSON.parse(recentDataJson);
+            } catch {}
+            let found = false;
+            const profit = player.stack - player.buyIn;
+            for (const perf in recentPerformance) {
+              if (perf['date'] == date) {
+                if (perf['profit']) {
+                  perf['profit'] = perf['profit'] + profit;
+                } else {
+                  perf['profit'] = profit;
+                }
+                found = true;
+              }
+            }
+
+            if (!found) {
+              const perf = {
+                date: date,
+                profit: profit,
+              };
+              recentPerformance.push(perf);
+
+              // if there are more than 20 items, remove the first item
+              if (recentPerformance.length > 20) {
+                const removeItems = recentPerformance.length - 20;
+                recentPerformance = recentPerformance.splice(0, removeItems);
+              }
+            }
+
+            await playerStatsRepo
+              .createQueryBuilder()
+              .update()
+              .set({
+                recentPerformance: JSON.stringify(recentPerformance),
+              })
+              .where({
+                playerId: player.playerId,
+              });
+          }
+        }
+      }
+    );
   }
 }
 

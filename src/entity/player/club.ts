@@ -15,7 +15,7 @@ import {
 import {Player} from './player';
 import {ClubMemberStatus, ClubStatus} from '../types';
 
-@Entity()
+@Entity({name: 'club'})
 export class Club {
   @PrimaryGeneratedColumn()
   public id!: number;
@@ -61,7 +61,7 @@ export class Club {
   public nextGameNum!: number;
 }
 
-@Entity()
+@Entity({name: 'club_member'})
 export class ClubMember {
   @PrimaryGeneratedColumn()
   public id!: number;
@@ -143,33 +143,6 @@ export class ClubMember {
   })
   public updatedAt!: Date;
 
-  @Column({
-    name: 'total_buyins',
-    type: 'decimal',
-    precision: 8,
-    scale: 2,
-    default: 0,
-  })
-  public totalBuyins!: number;
-
-  @Column({
-    name: 'total_winnings',
-    type: 'decimal',
-    precision: 8,
-    scale: 2,
-    default: 0,
-  })
-  public totalWinnings!: number;
-
-  @Column({
-    name: 'balance',
-    type: 'decimal',
-    precision: 8,
-    scale: 2,
-    default: 0,
-  })
-  public balance!: number;
-
   @Column({name: 'notes', type: 'text', default: ''})
   public notes!: string;
 
@@ -185,6 +158,33 @@ export class ClubMember {
   })
   public creditLimit!: number;
 
+  @Column({
+    name: 'total_buyins',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    default: 0,
+  })
+  public totalBuyins!: number;
+
+  @Column({
+    name: 'total_winnings',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    default: 0,
+  })
+  public totalWinnings!: number;
+
+  @Column({
+    name: 'balance',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    default: 0,
+  })
+  public balance!: number;
+
   @Column({name: 'total_games', type: 'int', nullable: true, default: 0})
   public totalGames!: number;
 
@@ -197,12 +197,13 @@ export class ClubMember {
   @Column({
     name: 'rake_paid',
     type: 'decimal',
-    precision: 8,
+    precision: 12,
     scale: 2,
     default: 0,
   })
   public rakePaid!: number;
 }
+
 /*
 @Entity({name: 'club_chips_transaction'})
 export class ClubChipsTransaction {

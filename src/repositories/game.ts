@@ -1118,10 +1118,15 @@ class GameRepositoryImpl {
     gameNum?: number
   ) {
     const repository = getRepository(PokerGame);
+    const playersInGame = getRepository(PlayerGameTracker);
     const game = await repository.findOne({where: {id: gameId}});
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
     }
+
+    const players = await playersInGame.find({
+      where: {game: {id: gameId}},
+    });
 
     const values: any = {
       status: status,
@@ -1151,6 +1156,9 @@ class GameRepositoryImpl {
 
       // roll up stats
       await StatsRepository.rollupStats(game);
+
+      // update player performance
+      await StatsRepository.gameEnded(game, players);
 
       // destroy Janus game
       try {
@@ -1785,7 +1793,7 @@ class GameRepositoryImpl {
     // get number of players in the seats
     const count = await gameRepo.count({
       where: {
-        club: {id: club.id},
+        clubId: club.id,
         status: In([GameStatus.ACTIVE, GameStatus.CONFIGURED]),
       },
     });

@@ -126,6 +126,9 @@ export class PlayerHandStats {
 
   @Column({name: 'total_games', default: 0})
   public totalGames!: number;
+
+  @Column({name: 'recent_performance', type: 'text', default: '[]'}) // json array of recent data
+  public recentPerformance!: string;
 }
 
 @Entity({name: 'club_stats'})
