@@ -32,7 +32,7 @@ export class GameHistory {
   @Column({name: 'big_blind'})
   public bigBlind!: number;
 
-  @Column({name: 'hands_dealt'})
+  @Column({name: 'hands_dealt', default: 0})
   public handsDealt!: number;
 
   @Column({name: 'roe_games', nullable: true, default: ''})

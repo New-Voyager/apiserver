@@ -1084,7 +1084,7 @@ class GameRepositoryImpl {
       endedBy: game.endedBy,
       endedByName: game.endedByName,
     };
-    const updates = await updatesRepo.findOne({where: {gameId: gameId}});
+    const updates = await updatesRepo.findOne({where: {gameID: gameId}});
     if (updates) {
       values.handsDealt = updates?.handNum;
     }
