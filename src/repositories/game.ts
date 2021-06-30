@@ -60,10 +60,8 @@ import {JanusSession} from '@src/janus';
 import {HandHistory} from '@src/entity/history/hand';
 import {Player} from '@src/entity/player/player';
 import {Club} from '@src/entity/player/club';
-import {HighHandHistory} from '@src/entity/history/hand';
 import {PlayerGameStats} from '@src/entity/history/stats';
-import {GameHistory} from '@src/entity/history/game';
-import {PlayersInGame} from '@src/entity/history/player';
+import {HistoryRepository} from './history';
 const logger = getLogger('game');
 
 class GameRepositoryImpl {
@@ -187,28 +185,13 @@ class GameRepositoryImpl {
         savedGame = await transactionEntityManager
           .getRepository(PokerGame)
           .save(game);
-
-        const gameHistoryRepo = transactionEntityManager.getRepository(
-          GameHistory
-        );
-        const gameHistory = new GameHistory();
-        gameHistory.gameId = savedGame.id;
-        gameHistory.gameCode = game.gameCode;
-        gameHistory.clubId = game.clubId;
-        gameHistory.dealerChoiceGames = game.dealerChoiceGames;
-        gameHistory.smallBlind = game.smallBlind;
-        gameHistory.bigBlind = game.bigBlind;
-        gameHistory.gameCode = game.gameCode;
-        gameHistory.gameType = game.gameType;
-        gameHistory.hostId = game.hostId;
-        gameHistory.hostName = game.hostName;
-        gameHistory.hostUuid = game.hostUuid;
-        gameHistory.roeGames = game.roeGames;
-        gameHistory.startedAt = game.startedAt;
-        await gameHistoryRepo.save(gameHistory);
+        game.id = savedGame.id;
 
         saveTime = new Date().getTime() - saveTime;
         if (!game.isTemplate) {
+          // create an entry in the history table
+          await HistoryRepository.newGameCreated(game);
+
           saveUpdateTime = new Date().getTime();
           // create a entry in PokerGameUpdates
           const gameUpdatesRepo = transactionEntityManager.getRepository(
@@ -1078,76 +1061,10 @@ class GameRepositoryImpl {
       throw new Error(`Game: ${gameId} is not found`);
     }
     const updatesRepo = getRepository(PokerGameUpdates);
-
-    const values: any = {
-      endedAt: game.endedAt,
-      endedBy: game.endedBy,
-      endedByName: game.endedByName,
-    };
     const updates = await updatesRepo.findOne({where: {gameID: gameId}});
-    if (updates) {
-      values.handsDealt = updates?.handNum;
-    }
 
-    await getConnection()
-      .createQueryBuilder()
-      .update(GameHistory)
-      .set(values)
-      .where('gameId = :gameId', {gameId: gameId})
-      .execute();
-
-    const playersInGameRepo = getRepository(PlayersInGame);
-    const playerGameTrackerRepo = getRepository(PlayerGameTracker);
-    const players = await playerGameTrackerRepo.find({
-      where: {
-        game: {id: gameId},
-      },
-    });
-
-    for (const player of players) {
-      const playersInGame = new PlayersInGame();
-      playersInGame.buyIn = player.buyIn;
-      playersInGame.handStack = player.handStack;
-      playersInGame.leftAt = player.leftAt;
-      playersInGame.noHandsPlayed = player.noHandsPlayed;
-      playersInGame.noHandsWon = player.noHandsWon;
-      playersInGame.noOfBuyins = player.noOfBuyins;
-      playersInGame.playerId = player.playerId;
-      playersInGame.playerName = player.playerName;
-      playersInGame.playerUuid = player.playerUuid;
-      playersInGame.sessionTime = player.sessionTime;
-      playersInGame.gameId = gameId;
-
-      await playersInGameRepo.save(playersInGame);
-    }
-
-    const highHandHistoryRepo = getRepository(HighHandHistory);
-    const highHandRepo = getRepository(HighHand);
-    const highHands = await highHandRepo.find({
-      where: {
-        gameId: gameId,
-      },
-    });
-
-    for (const highHand of highHands) {
-      const highHandHistory = new HighHandHistory();
-      highHandHistory.boardCards = highHand.boardCards;
-      highHandHistory.endHour = highHand.endHour;
-      highHandHistory.gameId = highHand.gameId;
-      highHandHistory.handNum = highHand.handNum;
-      highHandHistory.handTime = highHand.handTime;
-      highHandHistory.highHand = highHand.highHand;
-      highHandHistory.highHandCards = highHand.highHandCards;
-      highHandHistory.playerCards = highHand.playerCards;
-      highHandHistory.playerId = highHand.player.id;
-      highHandHistory.rank = highHand.rank;
-      highHandHistory.rewardId = highHand.reward.id;
-      highHandHistory.rewardTrackingId = highHand.rewardTracking.id;
-      highHandHistory.startHour = highHand.startHour;
-      highHandHistory.winner = highHand.winner;
-
-      await highHandHistoryRepo.save(highHandHistory);
-    }
+    // update history tables
+    await HistoryRepository.gameEnded(game, updates);
 
     return this.markGameStatus(gameId, GameStatus.ENDED);
   }
