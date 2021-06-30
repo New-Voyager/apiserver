@@ -1,16 +1,14 @@
-import {Entity, PrimaryGeneratedColumn, Column, Index} from 'typeorm';
+import {Entity, Column, Index} from 'typeorm';
 import {DbAwareColumn} from '../dbaware';
-import {GameStatus, GameType} from '../types';
+import {GameType} from '../types';
 
 @Entity({name: 'game_history'})
 export class GameHistory {
-  @PrimaryGeneratedColumn()
-  public id!: number;
-
   @Column({name: 'game_id', primary: true})
   public gameId!: number;
 
-  @Column({unique: true, name: 'game_code'})
+  @Index()
+  @Column({name: 'game_code'})
   public gameCode!: string;
 
   @Column({name: 'club_id', nullable: true})

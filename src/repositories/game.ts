@@ -193,6 +193,7 @@ class GameRepositoryImpl {
         );
         const gameHistory = new GameHistory();
         gameHistory.gameId = savedGame.id;
+        gameHistory.gameCode = game.gameCode;
         gameHistory.clubId = game.clubId;
         gameHistory.dealerChoiceGames = game.dealerChoiceGames;
         gameHistory.endedAt = game.endedAt;
@@ -1087,62 +1088,61 @@ class GameRepositoryImpl {
       .createQueryBuilder()
       .update(GameHistory)
       .set(values)
-      .where('id = :id', {id: gameId})
+      .where('gameId = :gameId', {gameId: gameId})
       .execute();
 
     const playersInGameRepo = getRepository(PlayersInGame);
-    const playersInGame = new PlayersInGame();
     const playerGameTrackerRepo = getRepository(PlayerGameTracker);
-    const playerGameTracker = await playerGameTrackerRepo.findOne({
+    const players = await playerGameTrackerRepo.find({
       where: {
         game: {id: gameId},
       },
     });
-    if (!playerGameTracker) {
-      throw new Error(`Game: ${gameId} is not found`);
-    }
-    playersInGame.buyIn = playerGameTracker.buyIn;
-    playersInGame.gameCode = playerGameTracker.game.gameCode;
-    playersInGame.handStack = playerGameTracker.handStack;
-    playersInGame.leftAt = playerGameTracker.leftAt;
-    playersInGame.noHandsPlayed = playerGameTracker.noHandsPlayed;
-    playersInGame.noHandsWon = playerGameTracker.noHandsWon;
-    playersInGame.noOfBuyins = playerGameTracker.noOfBuyins;
-    playersInGame.playerId = playerGameTracker.playerId;
-    playersInGame.playerName = playerGameTracker.playerName;
-    playersInGame.playerUuid = playerGameTracker.playerUuid;
-    playersInGame.sessionTime = playerGameTracker.sessionTime;
-    playersInGame.gameId = playerGameTracker.game.id;
 
-    await playersInGameRepo.save(playersInGame);
+    for (const player of players) {
+      const playersInGame = new PlayersInGame();
+      playersInGame.buyIn = player.buyIn;
+      playersInGame.handStack = player.handStack;
+      playersInGame.leftAt = player.leftAt;
+      playersInGame.noHandsPlayed = player.noHandsPlayed;
+      playersInGame.noHandsWon = player.noHandsWon;
+      playersInGame.noOfBuyins = player.noOfBuyins;
+      playersInGame.playerId = player.playerId;
+      playersInGame.playerName = player.playerName;
+      playersInGame.playerUuid = player.playerUuid;
+      playersInGame.sessionTime = player.sessionTime;
+      playersInGame.gameId = gameId;
+
+      await playersInGameRepo.save(playersInGame);
+    }
 
     const highHandHistoryRepo = getRepository(HighHandHistory);
-    const highHandHistory = new HighHandHistory();
     const highHandRepo = getRepository(HighHand);
-    const highHand = await highHandRepo.findOne({
+    const highHands = await highHandRepo.find({
       where: {
         gameId: gameId,
       },
     });
-    if (!highHand) {
-      throw new Error(`Game: ${gameId} is not found`);
-    }
-    highHandHistory.boardCards = highHand.boardCards;
-    highHandHistory.endHour = highHand.endHour;
-    highHandHistory.gameId = highHand.gameId;
-    highHandHistory.handNum = highHand.handNum;
-    highHandHistory.handTime = highHand.handTime;
-    highHandHistory.highHand = highHand.highHand;
-    highHandHistory.highHandCards = highHand.highHandCards;
-    highHandHistory.playerCards = highHand.playerCards;
-    highHandHistory.playerId = highHand.player.id;
-    highHandHistory.rank = highHand.rank;
-    highHandHistory.rewardId = highHand.reward.id;
-    highHandHistory.rewardTrackingId = highHand.rewardTracking.id;
-    highHandHistory.startHour = highHand.startHour;
-    highHandHistory.winner = highHand.winner;
 
-    await highHandHistoryRepo.save(highHandHistory);
+    for (const highHand of highHands) {
+      const highHandHistory = new HighHandHistory();
+      highHandHistory.boardCards = highHand.boardCards;
+      highHandHistory.endHour = highHand.endHour;
+      highHandHistory.gameId = highHand.gameId;
+      highHandHistory.handNum = highHand.handNum;
+      highHandHistory.handTime = highHand.handTime;
+      highHandHistory.highHand = highHand.highHand;
+      highHandHistory.highHandCards = highHand.highHandCards;
+      highHandHistory.playerCards = highHand.playerCards;
+      highHandHistory.playerId = highHand.player.id;
+      highHandHistory.rank = highHand.rank;
+      highHandHistory.rewardId = highHand.reward.id;
+      highHandHistory.rewardTrackingId = highHand.rewardTracking.id;
+      highHandHistory.startHour = highHand.startHour;
+      highHandHistory.winner = highHand.winner;
+
+      await highHandHistoryRepo.save(highHandHistory);
+    }
 
     return this.markGameStatus(gameId, GameStatus.ENDED);
   }

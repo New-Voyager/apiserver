@@ -1,14 +1,5 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  Index,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
-import {Player} from '../player/player';
-import {Reward, GameRewardTracking} from '../player/reward';
-import {DbAwareColumn, DbAwareUpdateDateColumn} from '../dbaware';
+import {Entity, PrimaryGeneratedColumn, Column, Index} from 'typeorm';
+import {DbAwareColumn} from '../dbaware';
 import {GameType, WonAtStatus} from '../types';
 
 @Entity({name: 'hand_history'})
@@ -83,6 +74,7 @@ export class HighHandHistory {
   @PrimaryGeneratedColumn()
   public id!: number;
 
+  @Index()
   @Column({name: 'game_id', nullable: false, type: 'int'})
   public gameId!: number;
 

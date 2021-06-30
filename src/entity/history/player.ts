@@ -1,11 +1,4 @@
-import {
-  Entity,
-  Column,
-  Index,
-  ManyToOne,
-  JoinColumn,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import {Entity, Column, Index, PrimaryGeneratedColumn} from 'typeorm';
 import {DbAwareColumn, DbAwareUpdateDateColumn} from '../dbaware';
 
 @Entity({name: 'players_in_game'})
@@ -17,11 +10,6 @@ export class PlayersInGame {
   @Column({name: 'game_id'})
   public gameId!: number;
 
-  @Index()
-  @Column({unique: true, name: 'game_code'})
-  public gameCode!: string;
-
-  @Index('player-id')
   @Column({name: 'player_id', type: 'int'})
   public playerId!: number;
 
