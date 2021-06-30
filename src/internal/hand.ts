@@ -1,3 +1,7 @@
+import {TakeBreak} from '@src/repositories/takebreak';
+import {getRepository, Repository} from 'typeorm';
+import {PokerGame} from '@src/entity/game/game';
+import {Cache} from '@src/cache';
 import {WonAtStatus} from '@src/entity/types';
 import {HandRepository} from '@src/repositories/hand';
 
@@ -98,6 +102,13 @@ class HandServerAPIs {
       return;
     }
     const result = req.body;
+    if (result.playerStats) {
+      // It seems that result.playerStats can be undefined in system tests.
+      await processPlayersWithConsecutiveActionTimeouts(
+        gameID,
+        result.playerStats
+      );
+    }
     const saveResult = await postHand(gameID, handNum, result);
     if (saveResult.success) {
       resp.status(200).send(saveResult);
@@ -112,4 +123,37 @@ export const HandServerAPI = new HandServerAPIs();
 export async function postHand(gameID: number, handNum: number, result: any) {
   const res = await HandRepository.saveHandNew(gameID, handNum, result);
   return res;
+}
+
+async function processPlayersWithConsecutiveActionTimeouts(
+  gameID: number,
+  playerStats: any
+) {
+  let gameRespository: Repository<PokerGame>;
+  let game: PokerGame | undefined;
+
+  for (const playerIdStr of Object.keys(playerStats)) {
+    const numConsecutiveTimeouts =
+      playerStats[playerIdStr].consecutiveActionTimeouts;
+    if (numConsecutiveTimeouts <= 0) {
+      continue;
+    }
+
+    if (!game) {
+      gameRespository = getRepository(PokerGame);
+      game = await gameRespository.findOne({id: gameID});
+      if (!game) {
+        throw new Error(`Game: ${gameID} is not found`);
+      }
+    }
+
+    const playerID = parseInt(playerIdStr);
+    const player = await Cache.getPlayerById(playerID);
+    const takeBreak = new TakeBreak(game, player);
+    await takeBreak.takeBreak();
+  }
+
+  if (game) {
+    await Cache.updateGamePendingUpdates(game.gameCode, true);
+  }
 }
