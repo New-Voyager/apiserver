@@ -26,6 +26,15 @@ export class GameHistory {
   @Column({name: 'game_type'})
   public gameType!: GameType;
 
+  @Column({name: 'small_blind'})
+  public smallBlind!: number;
+
+  @Column({name: 'big_blind'})
+  public bigBlind!: number;
+
+  @Column({name: 'hands_dealt'})
+  public handsDealt!: number;
+
   @Column({name: 'roe_games', nullable: true, default: ''})
   public roeGames!: string; // comma separated list of round of each games
 

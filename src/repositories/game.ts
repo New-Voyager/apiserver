@@ -196,9 +196,8 @@ class GameRepositoryImpl {
         gameHistory.gameCode = game.gameCode;
         gameHistory.clubId = game.clubId;
         gameHistory.dealerChoiceGames = game.dealerChoiceGames;
-        gameHistory.endedAt = game.endedAt;
-        gameHistory.endedBy = game.endedBy;
-        gameHistory.endedByName = game.endedByName;
+        gameHistory.smallBlind = game.smallBlind;
+        gameHistory.bigBlind = game.bigBlind;
         gameHistory.gameCode = game.gameCode;
         gameHistory.gameType = game.gameType;
         gameHistory.hostId = game.hostId;
@@ -1078,11 +1077,17 @@ class GameRepositoryImpl {
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
     }
+    const updatesRepo = getRepository(PokerGameUpdates);
+
     const values: any = {
       endedAt: game.endedAt,
       endedBy: game.endedBy,
       endedByName: game.endedByName,
     };
+    const updates = await updatesRepo.findOne({where: {gameId: gameId}});
+    if (updates) {
+      values.handsDealt = updates?.handNum;
+    }
 
     await getConnection()
       .createQueryBuilder()
