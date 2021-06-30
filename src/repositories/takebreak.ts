@@ -92,7 +92,7 @@ export class TakeBreak {
       .createQueryBuilder()
       .where({
         game: {id: this.game.id},
-        player: {id: this.player.id},
+        playerId: this.player.id,
       })
       .select('status')
       .select('seat_no', 'seatNo')
