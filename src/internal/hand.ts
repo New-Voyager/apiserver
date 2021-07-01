@@ -135,7 +135,10 @@ async function processPlayersWithConsecutiveActionTimeouts(
   for (const playerIdStr of Object.keys(playerStats)) {
     const numConsecutiveTimeouts =
       playerStats[playerIdStr].consecutiveActionTimeouts;
-    if (numConsecutiveTimeouts <= 0) {
+
+    // Put players with 5 or more consecutive timeouts
+    // in break.
+    if (numConsecutiveTimeouts <= 4) {
       continue;
     }
 
