@@ -1,6 +1,7 @@
 import {TakeBreak} from '@src/repositories/takebreak';
 import {getRepository, Repository} from 'typeorm';
 import {PokerGame} from '@src/entity/game/game';
+import {PlayerGameTracker} from '@src/entity/game/chipstrack';
 import {Cache} from '@src/cache';
 import {WonAtStatus} from '@src/entity/types';
 import {HandRepository} from '@src/repositories/hand';
@@ -129,37 +130,76 @@ async function processPlayersWithConsecutiveActionTimeouts(
   gameID: number,
   playerStats: any
 ) {
-  let gameRespository: Repository<PokerGame>;
-  let game: PokerGame | undefined;
+  // TODO: Make this function idempotent.
+  // Add hand number to the player_action_tracker table and check it
+  // before accumulating the timeout counts so that we don't add the count multiple times
+  // and put the player in break prematurely if game server crashes and this
+  // function gets called more than once.
+
+  const maxAllowedTimeouts = 4;
+
+  const gameRespository: Repository<PokerGame> = getRepository(PokerGame);
+  const game: PokerGame | undefined = await gameRespository.findOne({
+    id: gameID,
+  });
+  if (!game) {
+    throw new Error(
+      `Unable to find game with ID ${gameID} while processing consecutive action timeouts`
+    );
+  }
+  const playerGameTrackerRepository: Repository<PlayerGameTracker> = getRepository(
+    PlayerGameTracker
+  );
 
   for (const playerIdStr of Object.keys(playerStats)) {
-    const numConsecutiveTimeouts =
+    const currentHandTimeouts =
       playerStats[playerIdStr].consecutiveActionTimeouts;
-
-    // Put players with 5 or more consecutive timeouts
-    // in break.
-    if (numConsecutiveTimeouts <= 4) {
-      continue;
-    }
-
-    // TODO:
-    // - prevTimeouts = Get previous consecutive timeout value from DB.
-    // - if prevTimeouts > 0 and numConsecutiveTimeouts == 0, reset the value in the db to 0.
-    // - newTimeouts = prevTimeouts + numConsecutiveTimeouts
-    // - if prevTimeouts < 5 and newTimeouts >= 5, then put the player in break.
-
-    if (!game) {
-      gameRespository = getRepository(PokerGame);
-      game = await gameRespository.findOne({id: gameID});
-      if (!game) {
-        throw new Error(`Game: ${gameID} is not found`);
-      }
-    }
+    const didTheTimeoutsResetInCurrentHand =
+      playerStats[playerIdStr].isConsecutiveActionTimeoutsReset;
 
     const playerID = parseInt(playerIdStr);
-    const player = await Cache.getPlayerById(playerID);
-    const takeBreak = new TakeBreak(game, player);
-    await takeBreak.takeBreak();
+    const playerInGame:
+      | PlayerGameTracker
+      | undefined = await playerGameTrackerRepository.findOne({
+      game: {id: gameID},
+      playerId: playerID,
+    });
+    if (!playerInGame) {
+      throw new Error(
+        `Unable to find player tracker with game ID ${gameID} and player ID ${playerID} while processing consecutive action timeouts`
+      );
+    }
+
+    const prevTimeouts: number = playerInGame.consecutiveActionTimeouts;
+    let newTimeouts: number;
+    if (didTheTimeoutsResetInCurrentHand) {
+      newTimeouts = currentHandTimeouts;
+    } else {
+      newTimeouts = prevTimeouts + currentHandTimeouts;
+    }
+
+    if (
+      prevTimeouts <= maxAllowedTimeouts &&
+      newTimeouts > maxAllowedTimeouts
+    ) {
+      // Put the player in break.
+      const player = await Cache.getPlayerById(playerID);
+      const takeBreak = new TakeBreak(game, player);
+      await takeBreak.takeBreak();
+      newTimeouts = 0;
+    }
+
+    await playerGameTrackerRepository
+      .createQueryBuilder()
+      .update()
+      .where({
+        game: {id: gameID},
+        playerId: playerID,
+      })
+      .set({
+        consecutiveActionTimeouts: newTimeouts,
+      })
+      .execute();
   }
 
   if (game) {
