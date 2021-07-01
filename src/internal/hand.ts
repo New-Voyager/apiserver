@@ -135,9 +135,18 @@ async function processPlayersWithConsecutiveActionTimeouts(
   for (const playerIdStr of Object.keys(playerStats)) {
     const numConsecutiveTimeouts =
       playerStats[playerIdStr].consecutiveActionTimeouts;
-    if (numConsecutiveTimeouts <= 0) {
+
+    // Put players with 5 or more consecutive timeouts
+    // in break.
+    if (numConsecutiveTimeouts <= 4) {
       continue;
     }
+
+    // TODO:
+    // - prevTimeouts = Get previous consecutive timeout value from DB.
+    // - if prevTimeouts > 0 and numConsecutiveTimeouts == 0, reset the value in the db to 0.
+    // - newTimeouts = prevTimeouts + numConsecutiveTimeouts
+    // - if prevTimeouts < 5 and newTimeouts >= 5, then put the player in break.
 
     if (!game) {
       gameRespository = getRepository(PokerGame);
