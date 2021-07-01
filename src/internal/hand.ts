@@ -142,6 +142,12 @@ async function processPlayersWithConsecutiveActionTimeouts(
       continue;
     }
 
+    // TODO:
+    // - prevTimeouts = Get previous consecutive timeout value from DB.
+    // - if prevTimeouts > 0 and numConsecutiveTimeouts == 0, reset the value in the db to 0.
+    // - newTimeouts = prevTimeouts + numConsecutiveTimeouts
+    // - if prevTimeouts < 5 and newTimeouts >= 5, then put the player in break.
+
     if (!game) {
       gameRespository = getRepository(PokerGame);
       game = await gameRespository.findOne({id: gameID});
