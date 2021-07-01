@@ -88,6 +88,86 @@ export const gameByIdQuery = gql`
   }
 `;
 
+export const gameHistoryByIdQuery = gql`
+  query($gameCode: String!) {
+    gameHistory: gameHistoryById(gameCode: $gameCode) {
+      gameId
+      gameCode
+      clubId
+      hostId
+      hostName
+      hostUuid
+      gameType
+      smallBlind
+      bigBlind
+      handsDealt
+      roeGames
+      dealerChoiceGames
+      startedAt
+      endedAt
+      endedBy
+      endedByName
+    }
+  }
+`;
+
+export const gameDataByIdQuery = gql`
+  query($gameCode: String!) {
+    game: gameDataById(gameCode: $gameCode) {
+      gameId
+      gameCode
+      clubId
+      hostId
+      hostName
+      hostUuid
+      gameType
+      smallBlind
+      bigBlind
+      handsDealt
+      roeGames
+      dealerChoiceGames
+      startedAt
+      endedAt
+      endedBy
+      endedByName
+    }
+  }
+`;
+
+export const playersInGameByIdQuery = gql`
+  query($gameCode: String!) {
+    playerData: playersInGameById(gameCode: $gameCode) {
+      buyIn
+      handStack
+      leftAt
+      noHandsPlayed
+      noHandsWon
+      noOfBuyins
+      playerId
+      playerName
+      playerUuid
+      sessionTime
+    }
+  }
+`;
+
+export const playersGameTrackerByIdQuery = gql`
+  query($gameCode: String!) {
+    playerGameTrackerData: playersGameTrackerById(gameCode: $gameCode) {
+      buyIn
+      handStack
+      leftAt
+      noHandsPlayed
+      noHandsWon
+      noOfBuyins
+      playerId
+      playerName
+      playerUuid
+      sessionTime
+    }
+  }
+`;
+
 export interface GameInput {
   title: string;
   gameType: string;
@@ -325,6 +405,12 @@ export const pendingApprovalsForGameQuery = gql`
       amount
       outstandingBalance
     }
+  }
+`;
+
+export const endGameQuery = gql`
+  mutation($gameCode: String!) {
+    status: endGame(gameCode: $gameCode)
   }
 `;
 
@@ -680,4 +766,79 @@ export async function waitingList(
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
   return resp.data.status;
+}
+
+export async function endGame(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+    },
+    mutation: endGameQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+export async function gameHistory(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const resp = await getClient(playerId).query({
+    variables: {
+      gameCode: gameCode,
+    },
+    query: gameHistoryByIdQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.gameHistory;
+}
+
+export async function gameData(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const resp = await getClient(playerId).query({
+    variables: {
+      gameCode: gameCode,
+    },
+    query: gameDataByIdQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.game;
+}
+
+export async function playersInGameData(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const resp = await getClient(playerId).query({
+    variables: {
+      gameCode: gameCode,
+    },
+    query: playersInGameByIdQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.playerData;
+}
+
+export async function playersGameTrackerData(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const resp = await getClient(playerId).query({
+    variables: {
+      gameCode: gameCode,
+    },
+    query: playersGameTrackerByIdQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.playerGameTrackerData;
 }

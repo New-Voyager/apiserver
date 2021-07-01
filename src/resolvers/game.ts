@@ -34,6 +34,7 @@ import {TakeBreak} from '@src/repositories/takebreak';
 import {Player} from '@src/entity/player/player';
 import {Nats} from '@src/nats';
 import {Reload} from '@src/repositories/reload';
+import {PlayersInGame} from '@src/entity/history/player';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -1616,6 +1617,233 @@ export async function playerStackStat(playerId: string, gameCode: string) {
   }
 }
 
+export async function gameHistoryById(playerId: string, gameCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.clubCode) {
+      const clubMember = await Cache.getClubMember(playerId, game.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerId} is not authorized to start the game ${gameCode} in club ${game.clubName}`
+        );
+        throw new Error(
+          `Player: ${playerId} is not authorized to start the game ${gameCode}`
+        );
+      }
+    }
+    const gameHistory = await GameRepository.getGameHistoryById(game.id);
+    if (!gameHistory) {
+      logger.error(`No game history found for gameId ${game.id}`);
+      throw new Error(`No game history found for gameId ${game.id}`);
+    }
+
+    const gameHistorydata = {
+      gameId: gameHistory.gameId,
+      gameCode: gameHistory.gameCode,
+      clubId: gameHistory.clubId,
+      hostId: gameHistory.hostId,
+      hostName: gameHistory.hostName,
+      hostUuid: gameHistory.hostUuid,
+      gameType: GameType[gameHistory.gameType],
+      smallBlind: gameHistory.smallBlind,
+      bigBlind: gameHistory.bigBlind,
+      handsDealt: gameHistory.handsDealt,
+      roeGames: gameHistory.roeGames,
+      dealerChoiceGames: gameHistory.dealerChoiceGames,
+      startedAt: gameHistory.startedAt,
+      endedAt: gameHistory.endedAt,
+      endedBy: gameHistory.endedBy,
+      endedByName: gameHistory.endedByName,
+    };
+
+    return gameHistorydata;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error('Failed to retreive game history data');
+  }
+}
+
+export async function gameDataById(playerId: string, gameCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.clubCode) {
+      const clubMember = await Cache.getClubMember(playerId, game.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerId} is not authorized to start the game ${gameCode} in club ${game.clubName}`
+        );
+        throw new Error(
+          `Player: ${playerId} is not authorized to start the game ${gameCode}`
+        );
+      }
+    }
+
+    const updates = await GameRepository.getGameUpdatesById(game.id);
+    if (!updates) {
+      logger.error(
+        `Updates not found for the game ${gameCode} in club ${game.clubName}`
+      );
+      throw new Error(
+        `Updates not found for the game ${gameCode} in club ${game.clubName}`
+      );
+    }
+    const gamedata = {
+      gameId: game.id,
+      gameCode: game.gameCode,
+      clubId: game.clubId,
+      hostId: game.hostId,
+      hostName: game.hostName,
+      handsDealt: updates?.handNum,
+      hostUuid: game.hostUuid,
+      gameType: GameType[game.gameType],
+      smallBlind: game.smallBlind,
+      bigBlind: game.bigBlind,
+      roeGames: game.roeGames,
+      dealerChoiceGames: game.dealerChoiceGames,
+      startedAt: game.startedAt,
+      endedAt: game.endedAt,
+      endedBy: game.endedBy,
+      endedByName: game.endedByName,
+    };
+
+    return gamedata;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error('Failed to retreive game history data');
+  }
+}
+
+export async function playersInGameById(playerId: string, gameCode: string) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.clubCode) {
+      const clubMember = await Cache.getClubMember(playerId, game.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerId} is not authorized to start the game ${gameCode} in club ${game.clubName}`
+        );
+        throw new Error(
+          `Player: ${playerId} is not authorized to start the game ${gameCode}`
+        );
+      }
+    }
+
+    const playersInGame = await GameRepository.getPlayersInGameById(game.id);
+    if (!playersInGame) {
+      logger.error(
+        `playersInGame not found for the game ${gameCode} in club ${game.clubName}`
+      );
+      throw new Error(
+        `playersInGame not found for the game ${gameCode} in club ${game.clubName}`
+      );
+    }
+    const playersInGameData = new Array<any>();
+    playersInGame.map(data => {
+      const playerInGame = {
+        buyIn: data.buyIn,
+        handStack: data.handStack,
+        leftAt: data.leftAt,
+        noHandsPlayed: data.noHandsPlayed,
+        noHandsWon: data.noHandsWon,
+        noOfBuyins: data.noOfBuyins,
+        playerId: data.playerId,
+        playerName: data.playerName,
+        playerUuid: data.playerUuid,
+        sessionTime: data.sessionTime,
+      };
+      playersInGameData.push(playerInGame);
+    });
+    return playersInGameData;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error(`Failed to retreive players in game data - ${err}`);
+  }
+}
+
+export async function playersGameTrackerById(
+  playerId: string,
+  gameCode: string
+) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.clubCode) {
+      const clubMember = await Cache.getClubMember(playerId, game.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerId} is not authorized to start the game ${gameCode} in club ${game.clubName}`
+        );
+        throw new Error(
+          `Player: ${playerId} is not authorized to start the game ${gameCode}`
+        );
+      }
+    }
+
+    const playersGameTracker = await GameRepository.getPlayersGameTrackerById(
+      game.id
+    );
+    if (!playersGameTracker) {
+      logger.error(
+        `Player Game Tracker not found for the game ${gameCode} in club ${game.clubName}`
+      );
+      throw new Error(
+        `Player Game Tracker not found for the game ${gameCode} in club ${game.clubName}`
+      );
+    }
+    const playerGameTrackerData = new Array<any>();
+    playersGameTracker.map(data => {
+      const playerGameTracker = {
+        buyIn: data.buyIn,
+        handStack: data.handStack,
+        leftAt: data.leftAt,
+        noHandsPlayed: data.noHandsPlayed,
+        noHandsWon: data.noHandsWon,
+        noOfBuyins: data.noOfBuyins,
+        playerId: data.playerId,
+        playerName: data.playerName,
+        playerUuid: data.playerUuid,
+        sessionTime: data.sessionTime,
+      };
+      playerGameTrackerData.push(playerGameTracker);
+    });
+    return playerGameTrackerData;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error(`Failed to retreive players in game data - ${err}`);
+  }
+}
+
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -1670,6 +1898,18 @@ const resolvers: any = {
     },
     playerStackStat: async (parent, args, ctx, info) => {
       return playerStackStat(ctx.req.playerId, args.gameCode);
+    },
+    gameHistoryById: async (parent, args, ctx, info) => {
+      return await gameHistoryById(ctx.req.playerId, args.gameCode);
+    },
+    gameDataById: async (parent, args, ctx, info) => {
+      return await gameDataById(ctx.req.playerId, args.gameCode);
+    },
+    playersInGameById: async (parent, args, ctx, info) => {
+      return await playersInGameById(ctx.req.playerId, args.gameCode);
+    },
+    playersGameTrackerById: async (parent, args, ctx, info) => {
+      return await playersGameTrackerById(ctx.req.playerId, args.gameCode);
     },
   },
   GameInfo: {
