@@ -171,4 +171,7 @@ export class PlayerGameTracker {
     nullable: true,
   })
   public waitingListTimeExp!: Date | null;
+
+  @Column({name: 'consecutive_action_timeouts', type: 'int', default: 0})
+  public consecutiveActionTimeouts!: number;
 }
