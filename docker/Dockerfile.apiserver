@@ -4,6 +4,7 @@ WORKDIR /app
 
 RUN mkdir /build
 COPY package.json package-lock.json /build/
+COPY .yarnclean /build/
 WORKDIR /build
 RUN yarn install --production=true && \
   curl -sf https://gobinaries.com/tj/node-prune | sh

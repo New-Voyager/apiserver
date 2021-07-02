@@ -5,9 +5,6 @@ tests
 powered-test
 
 # asset directories
-docs
-!googleapis/build/src/apis/docs
-doc
 website
 images
 assets
