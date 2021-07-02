@@ -4,6 +4,7 @@ import {GameHistory} from '@src/entity/history/game';
 import {HighHandHistory} from '@src/entity/history/hand';
 import {PlayersInGame} from '@src/entity/history/player';
 import {HighHand} from '@src/entity/player/reward';
+import {playerTransactions} from '@src/resolvers/accounting';
 import {getManager, getRepository} from 'typeorm';
 
 class HistoryRepositoryImpl {
@@ -105,6 +106,26 @@ class HistoryRepositoryImpl {
         await highHandHistoryRepo.save(highHandHistory);
       }
     });
+  }
+
+  public async getGameHistory(
+    hostId: string,
+    clubId: number | null
+  ): Promise<GameHistory[]> {
+    const gameHistory = await getRepository(GameHistory)
+      .createQueryBuilder()
+      .where('club_id = :clubId OR host_id = :hostId', {
+        clubId: clubId,
+        hostId: hostId,
+      })
+      .getMany();
+    return gameHistory;
+  }
+
+  public async getPlayersInGame(gameId: number): Promise<PlayersInGame[]> {
+    const playersInGameRepo = await getRepository(PlayersInGame);
+    const playersInGame = playersInGameRepo.find({where: {gameId: gameId}});
+    return playersInGame;
   }
 }
 
