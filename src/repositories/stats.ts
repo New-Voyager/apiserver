@@ -603,64 +603,63 @@ class StatsRepositoryImpl {
   }
 
   public async gameEnded(game: PokerGame, players: Array<PlayerGameTracker>) {
-    const ret = await getManager().transaction(
-      async transactionEntityManager => {
-        const playerStatsRepo = transactionEntityManager.getRepository(
-          PlayerHandStats
-        );
-        // get the date
-        const date = `${game.startedAt.getFullYear()}-${game.startedAt.getMonth()}-${game.startedAt.getDay()}`;
-        for (const player of players) {
-          const playerStat = await playerStatsRepo.findOne({
-            playerId: player.playerId,
-          });
-          if (playerStat) {
-            // get recent performance data
-            let recentDataJson = playerStat.recentPerformance;
-            let recentPerformance = new Array<any>();
-            try {
-              recentPerformance = JSON.parse(recentDataJson);
-            } catch {}
-            let found = false;
-            const profit = player.stack - player.buyIn;
-            for (const perf in recentPerformance) {
-              if (perf['date'] == date) {
-                if (perf['profit']) {
-                  perf['profit'] = perf['profit'] + profit;
-                } else {
-                  perf['profit'] = profit;
-                }
-                found = true;
+    await getManager().transaction(async transactionEntityManager => {
+      const playerStatsRepo = transactionEntityManager.getRepository(
+        PlayerHandStats
+      );
+      // get the date
+      const date = `${game.startedAt.getFullYear()}-${game.startedAt.getMonth()}-${game.startedAt.getDay()}`;
+      for (const player of players) {
+        const playerStat = await playerStatsRepo.findOne({
+          playerId: player.playerId,
+        });
+        if (playerStat) {
+          // get recent performance data
+          let recentDataJson = playerStat.recentPerformance;
+          let recentPerformance = new Array<any>();
+          try {
+            recentPerformance = JSON.parse(recentDataJson);
+          } catch {}
+          let found = false;
+          const profit = player.stack - player.buyIn;
+          for (const perf of recentPerformance) {
+            if (perf['date'] == date) {
+              if (perf['profit']) {
+                perf['profit'] = perf['profit'] + profit;
+              } else {
+                perf['profit'] = profit;
               }
+              found = true;
+              break;
             }
-
-            if (!found) {
-              const perf = {
-                date: date,
-                profit: profit,
-              };
-              recentPerformance.push(perf);
-
-              // if there are more than 20 items, remove the first item
-              if (recentPerformance.length > 20) {
-                const removeItems = recentPerformance.length - 20;
-                recentPerformance = recentPerformance.splice(0, removeItems);
-              }
-            }
-
-            await playerStatsRepo
-              .createQueryBuilder()
-              .update()
-              .set({
-                recentPerformance: JSON.stringify(recentPerformance),
-              })
-              .where({
-                playerId: player.playerId,
-              });
           }
+
+          if (!found) {
+            const perf = {
+              date: date,
+              profit: profit,
+            };
+            recentPerformance.push(perf);
+
+            // if there are more than 20 items, remove the first item
+            if (recentPerformance.length > 20) {
+              const removeItems = recentPerformance.length - 20;
+              recentPerformance = recentPerformance.splice(0, removeItems);
+            }
+          }
+
+          const perfStr = JSON.stringify(recentPerformance);
+          await playerStatsRepo.update(
+            {
+              playerId: player.playerId,
+            },
+            {
+              recentPerformance: perfStr,
+            }
+          );
         }
       }
-    );
+    });
   }
 }
 
