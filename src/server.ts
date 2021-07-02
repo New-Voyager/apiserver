@@ -28,6 +28,11 @@ import {Firebase} from './firebase';
 import {Nats} from './nats';
 import {generateBotScript} from './internal/bot';
 import {restartTimers} from '@src/timer';
+export enum RunProfile {
+  DEV,
+  TEST,
+  PROD,
+}
 
 const logger = getLogger('server');
 const JWT_EXPIRY_DAYS = 3;
@@ -39,6 +44,7 @@ const requestContext = async ({req}) => {
 };
 
 let app: any = null;
+let runProfile: RunProfile = RunProfile.DEV;
 
 function setPgConversion() {
   const types = require('pg').types;
@@ -81,7 +87,20 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     context: requestContext,
   });
 
-  if (process.env.NODE_ENV !== 'test') {
+  if (process.env.NODE_ENV) {
+    const profile = process.env.NODE_ENV.toLowerCase();
+    if (profile === 'prod') {
+      runProfile = RunProfile.PROD;
+    } else if (profile === 'test') {
+      runProfile = RunProfile.TEST;
+    } else {
+      runProfile = RunProfile.DEV;
+    }
+  }
+
+  logger.info(`Server is running ${RunProfile[runProfile].toString()} profile`);
+
+  if (process.env.NODE_ENV !== 'unit-test') {
     logger.debug('Running in dev/prod mode');
     const options = await getConnectionOptions();
 
@@ -105,7 +124,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
       await createConnection(options);
     }
   } else {
-    logger.debug('Running in TEST mode');
+    logger.debug('Running in UNIT-TEST mode');
     process.env.DB_USED = 'sqllite';
     const options = await getConnectionOptions();
     await createConnection({...options, name: 'default'});
@@ -317,4 +336,8 @@ function initializeNats() {
     throw new Error('Nats url must be specified');
   }
   Nats.init(process.env.NATS_URL);
+}
+
+export function getRunProfile(): RunProfile {
+  return runProfile;
 }

@@ -3,6 +3,8 @@ import {Player} from '@src/entity/player/player';
 import {getLogger} from '@src/utils/log';
 import * as firebase from 'firebase-admin';
 import {ServiceAccount} from 'firebase-admin';
+import {getRunProfile, RunProfile} from '@src/server';
+var fs = require('fs');
 
 var serviceAccountOld = {
   type: 'service_account',
@@ -39,6 +41,19 @@ const logger = getLogger('firebase');
 class FirebaseClass {
   private app?: firebase.app.App;
   public async init() {
+    const runProfile = getRunProfile();
+    let serviceAccountFile: string = '';
+    if (runProfile === RunProfile.DEV) {
+      serviceAccountFile = `${__dirname}/../google-services/dev-poker-club-app.json`;
+    } else {
+      throw new Error(
+        `Run profile is not supported ${RunProfile[runProfile].toString()}`
+      );
+    }
+    logger.info(`Using ${serviceAccountFile} to initialize firebase`);
+    var serviceAccount = JSON.parse(
+      fs.readFileSync(serviceAccountFile, 'utf8')
+    );
     const account = serviceAccount as ServiceAccount;
     this.app = firebase.initializeApp({
       credential: firebase.credential.cert(account),
