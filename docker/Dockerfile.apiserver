@@ -10,6 +10,11 @@ RUN yarn install --production=true && \
   curl -sf https://gobinaries.com/tj/node-prune | sh
 COPY . .
 
+# SOMA: I know this is a hack. I don't know how to fix this issue
+# saving it for another day
+# https://github.com/googleapis/google-api-nodejs-client/issues/1675
+COPY hack/* /build/node_modules/googleapis/build/src/apis/docs
+
 RUN yarn compile && \
   rm -rf /usr/local/share/.cache/yarn && \
   rm -rf /app/node_modules/typescript && \
