@@ -5,6 +5,7 @@ import {getLogger} from '@src/utils/log';
 const logger = getLogger('player');
 import {Cache} from '@src/cache/index';
 import {StatsRepository} from './stats';
+import {Firebase} from '@src/firebase';
 
 class PlayerRepositoryImpl {
   public async createPlayer(
@@ -176,6 +177,10 @@ class PlayerRepositoryImpl {
       });
     }
     logger.info(`Affected rows: ${affectedRows}`);
+  }
+
+  public async sendFcmMessage(player: Player, message: any) {
+    await Firebase.sendPlayerMsg(player, message);
   }
 }
 

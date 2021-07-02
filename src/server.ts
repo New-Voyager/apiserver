@@ -341,3 +341,14 @@ function initializeNats() {
 export function getRunProfile(): RunProfile {
   return runProfile;
 }
+
+export function getRunProfileStr(): string {
+  switch (runProfile) {
+    case RunProfile.DEV:
+      return 'dev';
+    case RunProfile.PROD:
+      return 'prod';
+    case RunProfile.TEST:
+      return 'test';
+  }
+}

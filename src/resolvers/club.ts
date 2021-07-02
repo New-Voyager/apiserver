@@ -375,6 +375,14 @@ export async function updateClubMember(
   return ClubMemberStatus[status];
 }
 
+async function sendClubFcmMessage(clubCode: string, message: any) {
+  const club = await ClubRepository.getClub(clubCode);
+  if (!club) {
+    throw new Error(`Club ${clubCode} is not found`);
+  }
+  await ClubRepository.broadcastMessage(club, message);
+}
+
 const resolvers: any = {
   Query: {
     clubMembers: async (parent, args, ctx, info) => {
@@ -431,6 +439,10 @@ const resolvers: any = {
         args.clubCode,
         args.update
       );
+    },
+
+    sendClubFcmMessage: async (parent, args, ctx, info) => {
+      return sendClubFcmMessage(args.clubCode, args.message);
     },
   },
 };

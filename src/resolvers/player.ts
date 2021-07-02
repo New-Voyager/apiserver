@@ -188,6 +188,9 @@ const resolvers: any = {
       );
       return ret;
     },
+    sendPlayerFcmMessage: async (parent, args, ctx, info) => {
+      await sendPlayerFcmMessage(ctx.req.playerId, args.message);
+    },
   },
   Player: {
     clubs: async (parent, args, ctx, info) => {
@@ -633,4 +636,12 @@ export async function getLiveGameCount(clubCode: string) {
     logger.error(`Could not get unread message count. ${err.toString()}`);
   }
   return count;
+}
+
+async function sendPlayerFcmMessage(playerId: string, message: any) {
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+  await PlayerRepository.sendFcmMessage(player, message);
 }

@@ -118,4 +118,5 @@ type Mutation {
   kickMember(clubCode: String!, playerUuid: String!): ClubMemberStatus
   deleteClub(clubCode: String!): Boolean!
   updateClubMember(clubCode: String!, playerUuid: String!, update: ClubMemberUpdateInput!): ClubMemberStatus
+  sendClubFcmMessage(clubCode: String!, message: Json!): Boolean
 }

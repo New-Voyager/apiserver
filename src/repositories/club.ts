@@ -25,6 +25,7 @@ import {ClubUpdateType} from './types';
 import {Nats} from '@src/nats';
 import {v4 as uuidv4} from 'uuid';
 import {StatsRepository} from './stats';
+import {Firebase} from '@src/firebase';
 
 const logger = getLogger('club-repository');
 
@@ -214,11 +215,29 @@ class ClubRepositoryImpl {
 
     //logger.info('****** STARTING TRANSACTION TO SAVE club and club member');
     await getManager().transaction(async transactionEntityManager => {
-      await transactionEntityManager.getRepository(Club).save(club);
+      const clubRepo = transactionEntityManager.getRepository(Club);
+      await clubRepo.save(club);
       await transactionEntityManager
         .getRepository<ClubMember>(ClubMember)
         .save(clubMember);
       await StatsRepository.newClubStats(club, transactionEntityManager);
+
+      try {
+        // create firebase notification
+        const [groupName, notificationKey] = await Firebase.newClubCreated(
+          club,
+          ownerObj
+        );
+        await clubRepo.update(
+          {
+            id: club.id,
+          },
+          {
+            firebaseNotificationKeyName: groupName,
+            firebaseNotificationKey: notificationKey,
+          }
+        );
+      } catch (err) {}
     });
 
     //logger.info('****** ENDING TRANSACTION  SAVE club and club member');
@@ -879,6 +898,10 @@ class ClubRepositoryImpl {
       status: ClubMemberStatus.PENDING,
     });
     return count;
+  }
+
+  public async broadcastMessage(club: Club, message: any) {
+    await Firebase.sendClubMsg(club, message);
   }
 }
 
