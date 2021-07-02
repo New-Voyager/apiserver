@@ -15,8 +15,8 @@ import {
   PlayerHandStats,
 } from '../src/entity/history/stats';
 import {GameHistory} from '../src/entity/history/game';
-import {HighHandHistory} from '../src/entity/history/hand'
-import {PlayersInGame} from '../src/entity/history/player'
+import {HighHandHistory} from '../src/entity/history/hand';
+import {PlayersInGame} from '../src/entity/history/player';
 import {
   Reward,
   GameReward,

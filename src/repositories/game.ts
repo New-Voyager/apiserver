@@ -62,6 +62,8 @@ import {Player} from '@src/entity/player/player';
 import {Club} from '@src/entity/player/club';
 import {PlayerGameStats} from '@src/entity/history/stats';
 import {HistoryRepository} from './history';
+import {GameHistory} from '@src/entity/history/game';
+import {PlayersInGame} from '@src/entity/history/player';
 const logger = getLogger('game');
 
 class GameRepositoryImpl {
@@ -1865,6 +1867,44 @@ class GameRepositoryImpl {
       playerStacks.push(stackRet);
     }
     return playerStacks;
+  }
+
+  public async getGameHistoryById(
+    gameId: number
+  ): Promise<GameHistory | undefined> {
+    const repository = getRepository(GameHistory);
+
+    // get game by id (testing only)
+    const gameHistory = await repository.findOne({where: {gameId: gameId}});
+    return gameHistory;
+  }
+
+  public async getGameUpdatesById(
+    gameId: number
+  ): Promise<PokerGameUpdates | undefined> {
+    const updatesRepo = getRepository(PokerGameUpdates);
+    const updates = await updatesRepo.findOne({where: {gameID: gameId}});
+    return updates;
+  }
+
+  public async getPlayersInGameById(
+    gameId: number
+  ): Promise<Array<PlayersInGame> | undefined> {
+    const playersInGameRepo = getRepository(PlayersInGame);
+    const playersInGame = await playersInGameRepo.find({
+      where: {gameId: gameId},
+    });
+    return playersInGame;
+  }
+
+  public async getPlayersGameTrackerById(
+    gameId: number
+  ): Promise<Array<PlayerGameTracker> | undefined> {
+    const playerGameTrackerRepo = getRepository(PlayerGameTracker);
+    const playerGameTracker = await playerGameTrackerRepo.find({
+      where: {game: {id: gameId}},
+    });
+    return playerGameTracker;
   }
 }
 

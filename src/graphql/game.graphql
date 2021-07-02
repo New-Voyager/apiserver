@@ -411,6 +411,37 @@ type gameId{
   id: Int!
 }
 
+type GameData{
+  gameId: Int!
+  gameCode: String!
+  clubId: Int!
+  hostId: Int!
+  hostName: String!
+  hostUuid: String!
+  gameType: String!
+  smallBlind: Int!
+  bigBlind: Int!
+  handsDealt: Int!
+  roeGames: String!
+  dealerChoiceGames: String!
+  startedAt: DateTime!
+  endedAt: DateTime
+  endedBy: Int
+  endedByName: String
+}
+
+type PlayerData{
+  buyIn: Int!
+  handStack: String
+  leftAt: DateTime
+  noHandsPlayed: Int!
+  noHandsWon: Int!
+  noOfBuyins: Int!
+  playerId: Int!
+  playerName: String!
+  playerUuid: String!
+  sessionTime: Int!
+}
 
 type Query {
   # Not implemented
@@ -429,7 +460,10 @@ type Query {
   gamePlayers(gameCode: String!): [PlayerInfo!]
   pendingApprovals: [PendingApproval!]
   downloadResult(gameCode: String!): String!
-
+  gameHistoryById(gameCode: String!): GameData!
+  gameDataById(gameCode: String!): GameData!
+  playersInGameById(gameCode: String!): [PlayerData!]
+  playersGameTrackerById(gameCode: String!): [PlayerData!]
   # player stats from live game
   playerStackStat(gameCode: String!): [GameStackStat!]
 

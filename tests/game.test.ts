@@ -5,6 +5,8 @@ import * as handutils from './utils/hand.testutils';
 import * as rewardutils from './utils/reward.testutils';
 import {default as axios} from 'axios';
 import {getLogger} from '../src/utils/log';
+import {GameStatus} from '../src/entity/types';
+import exp from 'constants';
 const logger = getLogger('game');
 
 beforeAll(async done => {
@@ -653,5 +655,97 @@ describe('Tests: Game APIs', () => {
       console.error(JSON.stringify(err));
       expect(true).toBeFalsy();
     }
+  });
+
+  test('get game history', async () => {
+    const [ownerId, clubCode, players] = await createClubWithMembers([
+      {
+        name: 'test_player',
+        devId: 'test123',
+      },
+      {
+        name: 'test_player1',
+        devId: 'test1234',
+      },
+    ]);
+    await saveReward(ownerId, clubCode);
+    const game = await gameutils.configureGame(
+      ownerId,
+      clubCode,
+      holdemGameInput
+    );
+
+    const data4 = await gameutils.startGame(ownerId, game.gameCode);
+    expect(data4).toBe('ACTIVE');
+
+    // Leave game with status !== Playing
+    const data = await gameutils.joinGame(players[0], game.gameCode, 1);
+    expect(data).toBe('WAIT_FOR_BUYIN');
+    const resp3 = await gameutils.leaveGame(players[0], game.gameCode);
+    expect(resp3).toBe(true);
+
+    // Leave Game with status === Playing
+    const data1 = await gameutils.joinGame(players[0], game.gameCode, 1);
+    expect(data1).toBe('WAIT_FOR_BUYIN');
+    const data2 = await gameutils.buyin(players[0], game.gameCode, 100);
+    expect(data2.approved).toBe(true);
+    const resp4 = await gameutils.endGame(ownerId, game.gameCode);
+    expect(resp4).toBe('ENDED');
+    const resp5 = await gameutils.gameHistory(ownerId, game.gameCode);
+    const resp6 = await gameutils.gameData(ownerId, game.gameCode);
+    expect(resp5.gameId).toBe(resp6.gameId);
+    expect(resp5.gameCode).toBe(resp6.gameCode);
+    expect(resp5.clubId).toBe(resp6.clubId);
+    expect(resp5.hostId).toBe(resp6.hostId);
+    expect(resp5.hostName).toBe(resp6.hostName);
+    expect(resp5.hostUuid).toBe(resp6.hostUuid);
+    expect(resp5.smallBlind).toBe(resp6.smallBlind);
+    expect(resp5.bigBlind).toBe(resp6.bigBlind);
+    expect(resp5.handsDealt).toBe(resp6.handsDealt);
+    expect(resp5.roeGames).toBe(resp6.roeGames);
+    expect(resp5.dealerChoiceGames).toBe(resp6.dealerChoiceGames);
+    expect(resp5.startedAt).toBe(resp6.startedAt);
+  });
+
+  test('get player in game table', async () => {
+    const [ownerId, clubCode, players] = await createClubWithMembers([
+      {
+        name: 'test_player',
+        devId: 'test123',
+      },
+      {
+        name: 'test_player1',
+        devId: 'test1234',
+      },
+    ]);
+    await saveReward(ownerId, clubCode);
+    const game = await gameutils.configureGame(
+      ownerId,
+      clubCode,
+      holdemGameInput
+    );
+
+    const data4 = await gameutils.startGame(ownerId, game.gameCode);
+    expect(data4).toBe('ACTIVE');
+
+    // Leave game with status !== Playing
+    const data = await gameutils.joinGame(players[0], game.gameCode, 1);
+    expect(data).toBe('WAIT_FOR_BUYIN');
+    const resp3 = await gameutils.leaveGame(players[0], game.gameCode);
+    expect(resp3).toBe(true);
+
+    // Leave Game with status === Playing
+    const data1 = await gameutils.joinGame(players[0], game.gameCode, 1);
+    expect(data1).toBe('WAIT_FOR_BUYIN');
+    const data2 = await gameutils.buyin(players[0], game.gameCode, 100);
+    expect(data2.approved).toBe(true);
+    const resp4 = await gameutils.endGame(ownerId, game.gameCode);
+    expect(resp4).toBe('ENDED');
+    const resp5 = await gameutils.playersInGameData(ownerId, game.gameCode);
+    const resp6 = await gameutils.playersGameTrackerData(
+      ownerId,
+      game.gameCode
+    );
+    expect(resp5).toStrictEqual(resp6);
   });
 });
