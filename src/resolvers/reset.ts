@@ -60,6 +60,9 @@ export async function resetGames() {
 export async function resetDB() {
   //logger.info('****** STARTING TRANSACTION TO RESET tables');
   await getManager().transaction(async transactionEntityManager => {
+    await deleteAll('game_history', transactionEntityManager);
+    await deleteAll('players_in_game', transactionEntityManager);
+    await deleteAll('high_hand_history', transactionEntityManager);
     await deleteAll('player_notes', transactionEntityManager);
     await deleteAll('club_messages', transactionEntityManager);
     await deleteAll('club_stats', transactionEntityManager);

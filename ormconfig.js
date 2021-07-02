@@ -6,30 +6,30 @@ pgDbNameKey = 'POSTGRES_DB';
 
 configs = {
   default: {
-    "name": "default",
-    "type": "postgres",
-    "host": process.env[pgHostKey],
-    "port": process.env[pgPortKey],
-    "username": process.env[pgUserKey],
-    "password": process.env[pgPasswordKey],
-    "database": process.env[pgDbNameKey],
-    "logging": false,
-    "cache": true,
-    "synchronize": true,
-    "bigNumberStrings": false,
-    "entities": ["build/src/entity/**/*.js"]
+    name: 'default',
+    type: 'postgres',
+    host: process.env[pgHostKey],
+    port: process.env[pgPortKey],
+    username: process.env[pgUserKey],
+    password: process.env[pgPasswordKey],
+    database: process.env[pgDbNameKey],
+    logging: false,
+    cache: true,
+    synchronize: true,
+    bigNumberStrings: false,
+    entities: ['build/src/entity/**/*.js'],
   },
   test: {
-    "name": "default",
-    "type": "sqlite",
-    "database": ":memory:",
-    "dropSchema": true,
-    "synchronize": true,
-    "logging": false,
-    "cache": true,
-    "entities": ["build/src/entity/**/*.js", "../build/src/entity/**/*.js"]
-  }
-}
+    name: 'default',
+    type: 'sqlite',
+    database: ':memory:',
+    dropSchema: true,
+    synchronize: true,
+    logging: false,
+    cache: true,
+    entities: ['build/src/entity/**/*.js', '../build/src/entity/**/*.js'],
+  },
+};
 
 if (process.env.NODE_ENV === 'test') {
   process.env.DB_USED = 'sqllite';

@@ -102,7 +102,7 @@ class RewardRepositoryImpl {
     transactionManager?: EntityManager
   ): Promise<HighHandWinnerResult | null> {
     let rewardTrackingId = 0;
-    let gameTracking: boolean = false;
+    let gameTracking = false;
     try {
       if (gameInput.highHandTracked) {
         gameTracking = true;

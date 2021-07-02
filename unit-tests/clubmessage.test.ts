@@ -112,7 +112,7 @@ describe('Club message APIs', () => {
     expect(resp).not.toBeNull();
     expect(resp).not.toBeUndefined();
     expect(resp).toHaveLength(50);
-   });
+  });
 
   test.skip('get message pagination', async () => {
     const msgCount = 60;

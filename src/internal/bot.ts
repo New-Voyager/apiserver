@@ -26,7 +26,7 @@ const playerIdName = {
   15: 'charlotte',
 };
 
-let cardMap: any = {
+const cardMap: any = {
   1: '2s',
   2: '2h',
   4: '2d',
@@ -83,7 +83,7 @@ let cardMap: any = {
 
 function getCards(cardsInt: Array<number> | number): Array<string> | string {
   console.log(cardsInt.toString());
-  if (typeof cardsInt == 'number') {
+  if (typeof cardsInt === 'number') {
     return cardMap[cardsInt as number];
   } else {
     const ret = Array<string>();
@@ -142,7 +142,7 @@ class Deck {
       noOfCards = 4;
     }
 
-    let cards: Array<number> = [];
+    const cards: Array<number> = [];
     for (let i = 0; i < noOfCards; i++) {
       cards.push(this.cards[0]);
       this.cards.splice(0, 1);
@@ -153,7 +153,7 @@ class Deck {
 }
 
 function handActionSteps(actionSteps: Array<any>): any {
-  let actions = Array<any>();
+  const actions = Array<any>();
   for (const action of actionSteps['actions']) {
     const actionType = action['action'];
     const seatNo = action['seatNo'];
@@ -193,7 +193,7 @@ export async function generateBotScript(req: any, resp: any) {
       resp.status(500).send(JSON.stringify(res));
       return;
     }
-    let handlog = await HandRepository.getHandLog(gameCode, handNum);
+    const handlog = await HandRepository.getHandLog(gameCode, handNum);
     // let rawdata = fs
     //   .readFileSync(`${__dirname}/../bugs/handlog2.json`)
     //   .toString();
@@ -208,12 +208,12 @@ export async function generateBotScript(req: any, resp: any) {
       console.log(JSON.stringify(name));
     }
 
-    let club: any = {
+    const club: any = {
       name: 'Bug Testing',
       description: 'testing',
     };
 
-    let game: any = {
+    const game: any = {
       create: true,
       title: 'bug testing',
       'game-type': handlog['gameType'],
@@ -228,13 +228,13 @@ export async function generateBotScript(req: any, resp: any) {
       'action-time': 30,
     };
 
-    let script: any = {
+    const script: any = {
       club: club,
       game: game,
     };
 
-    let startingSeats: Array<any> = [];
-    let occupiedSeats: Array<number> = [];
+    const startingSeats: Array<any> = [];
+    const occupiedSeats: Array<number> = [];
     for (const seatNo in handlog['players']) {
       const player = handlog['players'][seatNo];
       occupiedSeats.push(parseInt(seatNo));
@@ -250,7 +250,7 @@ export async function generateBotScript(req: any, resp: any) {
     occupiedSeats.sort();
     console.log(occupiedSeats);
 
-    let log = handlog['handLog'];
+    const log = handlog['handLog'];
     const gameType = handlog['gameType'];
 
     // find button pos
@@ -264,7 +264,7 @@ export async function generateBotScript(req: any, resp: any) {
     }
 
     // find index of smallblind
-    let index = occupiedSeats.indexOf(smallBlindPos);
+    const index = occupiedSeats.indexOf(smallBlindPos);
     // find the button pos
     let buttonPos = -1;
     if (index === 0) {
@@ -273,8 +273,8 @@ export async function generateBotScript(req: any, resp: any) {
       buttonPos = occupiedSeats[index - 1];
     }
 
-    let hand: any = {};
-    let setup: any = {};
+    const hand: any = {};
+    const setup: any = {};
     // prepare setup
     setup['button-pos'] = buttonPos;
     const deck = new Deck();
@@ -312,11 +312,11 @@ export async function generateBotScript(req: any, resp: any) {
     hand['turn'] = handActionSteps(log['turnActions']);
     hand['river'] = handActionSteps(log['riverActions']);
 
-    let hands: Array<any> = [];
+    const hands: Array<any> = [];
     hands.push(hand);
 
     script['hands'] = hands;
-    let yamlScript = yaml.stringify(script);
+    const yamlScript = yaml.stringify(script);
 
     //console.log(handlog);
     resp.status(200).send(yamlScript);

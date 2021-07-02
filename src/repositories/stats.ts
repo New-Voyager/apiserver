@@ -83,7 +83,7 @@ T♣  T♦  T♠  T❤  A❤     59
 */
 
 /**
- We maintain separate stats for HOLDEM, PLO and 5 Card PLO 
+ We maintain separate stats for HOLDEM, PLO and 5 Card PLO
 
  */
 
@@ -184,7 +184,7 @@ class StatsRepositoryImpl {
             inTurn: () => `in_turn + ${round.turn ? 1 : 0}`,
             inRiver: () => `in_river + ${round.river ? 1 : 0}`,
             headsupHands: () => `headsup_hands + ${playerStat.headsup ? 1 : 0}`,
-            totalHands: () => `total_hands + 1`,
+            totalHands: () => 'total_hands + 1',
           })
           .where({
             playerId: playerId,
@@ -236,7 +236,7 @@ class StatsRepositoryImpl {
       .createQueryBuilder()
       .update()
       .set({
-        totalHands: () => `total_hands + 1`,
+        totalHands: () => 'total_hands + 1',
       })
       .where({
         clubId: game.clubId,
@@ -248,7 +248,7 @@ class StatsRepositoryImpl {
       .createQueryBuilder()
       .update()
       .set({
-        totalHands: () => `total_hands + 1`,
+        totalHands: () => 'total_hands + 1',
       })
       .where({
         gameType: gameType,
@@ -266,106 +266,106 @@ class StatsRepositoryImpl {
         continue;
       }
 
-      let props: any = {};
+      const props: any = {};
 
       if (rank >= 155 && rank <= 166) {
         /*
           2♣  2♠  2❤  2♦  3♠     166
           2♣  2♠  2❤  2♦  A❤     155
         */
-        props['four2222'] = () => `four_2222 + 1`;
+        props['four2222'] = () => 'four_2222 + 1';
       } else if (rank >= 143 && rank <= 154) {
         /*
         3♣  3♦  3❤  3♠  2❤     154
         3♣  3♦  3❤  3♠  A❤     143
         */
-        props['four3333'] = () => `four_3333 + 1`;
+        props['four3333'] = () => 'four_3333 + 1';
       } else if (rank >= 131 && rank <= 142) {
         /*
           4♣  4♦  4❤  4♠  2❤     142
           4♣  4♦  4❤  4♠  A❤     131
         */
-        props['four4444'] = () => `four_4444 + 1`;
+        props['four4444'] = () => 'four_4444 + 1';
       } else if (rank >= 119 && rank <= 130) {
         /*
           5♣  5♦  5❤  5♠  2❤     130
           5♣  5♦  5❤  5♠  A❤     119
         */
-        props['four5555'] = () => `four_5555 + 1`;
+        props['four5555'] = () => 'four_5555 + 1';
       } else if (rank >= 107 && rank <= 118) {
         /*
           6♣  6♦  6❤  6♠  A❤     107
           6♣  6♦  6❤  6♠  2❤     118
         */
-        props['four6666'] = () => `four_6666 + 1`;
+        props['four6666'] = () => 'four_6666 + 1';
       } else if (rank >= 95 && rank <= 106) {
         /*
           7♣  7♦  7❤  7♠  2❤     106
           7♣  7♦  7❤  7♠  A❤     95
         */
-        props['four7777'] = () => `four_7777 + 1`;
+        props['four7777'] = () => 'four_7777 + 1';
       } else if (rank >= 83 && rank <= 94) {
         /*
           8♣  8♦  8♠  8❤  A❤     83
           8♣  8♦  8♠  8❤  2❤     94
         */
-        props['four8888'] = () => `four_8888 + 1`;
+        props['four8888'] = () => 'four_8888 + 1';
       } else if (rank >= 71 && rank <= 82) {
         /*
           9♣  9♦  9♠  9❤  2♠     82
           9♣  9♦  9♠  9❤  A♠     71
         */
-        props['four9999'] = () => `four_9999 + 1`;
+        props['four9999'] = () => 'four_9999 + 1';
       } else if (rank >= 59 && rank <= 70) {
         /*
           T♣  T♦  T♠  T❤  2❤     70
           T♣  T♦  T♠  T❤  A❤     59
         */
-        props['fourTTTT'] = () => `four_tttt + 1`;
+        props['fourTTTT'] = () => 'four_tttt + 1';
       } else if (rank >= 47 && rank <= 58) {
         /*
           J♣  J♦  J♠  J❤  2❤     58
           J♣  J♦  J♠  J❤  A❤     47
         */
-        props['fourJJJJ'] = () => `four_jjjj + 1`;
+        props['fourJJJJ'] = () => 'four_jjjj + 1';
       } else if (rank >= 35 && rank <= 46) {
         /*
           Q♣  Q♦  Q♠  Q❤  2❤     46
           Q♣  Q♦  Q♠  Q❤  A❤     35
         */
-        props['fourQQQQ'] = () => `four_qqqq + 1`;
+        props['fourQQQQ'] = () => 'four_qqqq + 1';
       } else if (rank >= 23 && rank <= 34) {
         /*
           K♣  K♦  K♠  K❤  2❤     34
           K♣  K♦  K♠  K❤  A❤     23
         */
-        props['fourKKKK'] = () => `four_kkkk + 1`;
+        props['fourKKKK'] = () => 'four_kkkk + 1';
       } else if (rank >= 11 && rank <= 22) {
         /*
           A♣  A❤  A♦  A♠  2❤     22
           A♣  A❤  A♦  A♠  K❤     11
         */
-        props['fourAAAA'] = () => `four_aaaa + 1`;
+        props['fourAAAA'] = () => 'four_aaaa + 1';
       } else if (rank == 10) {
-        props['straight5Flush'] = () => `straight5_flush + 1`;
+        props['straight5Flush'] = () => 'straight5_flush + 1';
       } else if (rank == 9) {
-        props['straight6Flush'] = () => `straight6_flush + 1`;
+        props['straight6Flush'] = () => 'straight6_flush + 1';
       } else if (rank == 8) {
-        props['straight7Flush'] = () => `straight7_flush + 1`;
+        props['straight7Flush'] = () => 'straight7_flush + 1';
       } else if (rank == 7) {
-        props['straight8Flush'] = () => `straight8_flush + 1`;
+        props['straight8Flush'] = () => 'straight8_flush + 1';
       } else if (rank == 6) {
-        props['straight9Flush'] = () => `straight9_flush + 1`;
+        props['straight9Flush'] = () => 'straight9_flush + 1';
       } else if (rank == 5) {
-        props['straightTFlush'] = () => `straightt_flush + 1`;
+        props['straightTFlush'] = () => 'straightt_flush + 1';
       } else if (rank == 4) {
-        props['straightJFlush'] = () => `straightj_flush + 1`;
+        props['straightJFlush'] = () => 'straightj_flush + 1';
       } else if (rank == 3) {
-        props['straightQFlush'] = () => `straightq_flush + 1`;
+        props['straightQFlush'] = () => 'straightq_flush + 1';
       } else if (rank == 2) {
-        props['straightKFlush'] = () => `straightk_flush + 1`;
+        props['straightKFlush'] = () => 'straightk_flush + 1';
       } else if (rank == 1) {
-        props['straightAFlush'] = () => `straighta_flush + 1`;
+        props['straightAFlush'] = () => 'straighta_flush + 1';
       }
 
       await clubStatsRepo
@@ -478,7 +478,7 @@ class StatsRepositoryImpl {
         .createQueryBuilder()
         .update()
         .set({
-          totalGames: () => `total_games + 1`,
+          totalGames: () => 'total_games + 1',
         })
         .where({
           playerId: player.id,
@@ -496,7 +496,7 @@ class StatsRepositoryImpl {
         .createQueryBuilder()
         .update()
         .set({
-          totalGames: () => `total_games + 1`,
+          totalGames: () => 'total_games + 1',
         })
         .where({
           clubId: clubId,

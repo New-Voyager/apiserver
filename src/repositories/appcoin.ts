@@ -4,7 +4,7 @@ import {
   StoreType,
 } from '@src/entity/player/appcoin';
 import {getManager, getRepository} from 'typeorm';
-var crypto = require('crypto');
+const crypto = require('crypto');
 
 class AppCoinRepositoryImpl {
   public async purchaseCoins(

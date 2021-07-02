@@ -42,6 +42,7 @@ import {
   Reward,
   GameRewardTracking,
   GameReward,
+  HighHand,
 } from '@src/entity/player/reward';
 import {ChipsTrackRepository} from './chipstrack';
 import {
@@ -60,7 +61,7 @@ import {HandHistory} from '@src/entity/history/hand';
 import {Player} from '@src/entity/player/player';
 import {Club} from '@src/entity/player/club';
 import {PlayerGameStats} from '@src/entity/history/stats';
-
+import {HistoryRepository} from './history';
 const logger = getLogger('game');
 
 class GameRepositoryImpl {
@@ -114,7 +115,7 @@ class GameRepositoryImpl {
     //   );
     // }
 
-    let useGameServer = true;
+    const useGameServer = true;
 
     const gameServerRepository = getRepository(GameServer);
     let gameServers: Array<GameServer> = new Array<GameServer>();
@@ -184,8 +185,13 @@ class GameRepositoryImpl {
         savedGame = await transactionEntityManager
           .getRepository(PokerGame)
           .save(game);
+        game.id = savedGame.id;
+
         saveTime = new Date().getTime() - saveTime;
         if (!game.isTemplate) {
+          // create an entry in the history table
+          await HistoryRepository.newGameCreated(game);
+
           saveUpdateTime = new Date().getTime();
           // create a entry in PokerGameUpdates
           const gameUpdatesRepo = transactionEntityManager.getRepository(
@@ -1049,6 +1055,17 @@ class GameRepositoryImpl {
   }
 
   public async markGameEnded(gameId: number): Promise<GameStatus> {
+    const repository = getRepository(PokerGame);
+    const game = await repository.findOne({where: {id: gameId}});
+    if (!game) {
+      throw new Error(`Game: ${gameId} is not found`);
+    }
+    const updatesRepo = getRepository(PokerGameUpdates);
+    const updates = await updatesRepo.findOne({where: {gameID: gameId}});
+
+    // update history tables
+    await HistoryRepository.gameEnded(game, updates);
+
     return this.markGameStatus(gameId, GameStatus.ENDED);
   }
 
@@ -1465,7 +1482,7 @@ class GameRepositoryImpl {
 
         // if the current player in seat tried to sit in the same seat, do nothing
         if (playerInSeat != null) {
-          throw new Error(`A player is in the seat`);
+          throw new Error('A player is in the seat');
         }
 
         // get player's old seat no
@@ -1522,7 +1539,7 @@ class GameRepositoryImpl {
     config: any
   ): Promise<void> {
     await getManager().transaction(async transactionEntityManager => {
-      let updates: any = {};
+      const updates: any = {};
       if (config.muckLosingHand !== undefined) {
         updates.muckLosingHand = config.muckLosingHand;
       }

@@ -10,8 +10,9 @@ enum Errors {
 
 export class WaitlistSeatError extends ApolloError {
   constructor(waitingPlayerName: string) {
-    const message = `A player from waiting list is invited to take the open seat`;
-    let extensions: any = {};
+    const message =
+      'A player from waiting list is invited to take the open seat';
+    const extensions: any = {};
     extensions['waitingPlayer'] = waitingPlayerName;
     super(message, Errors[Errors.WAITLIST_SEAT_ERROR], extensions);
   }

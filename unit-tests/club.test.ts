@@ -433,11 +433,7 @@ describe('Club APIs', () => {
     const lastGame = clubGames[19];
     logger.debug(JSON.stringify(firstGame));
     logger.debug(JSON.stringify(lastGame));
-    clubGames = await getClubGames(
-      ownerId,
-      clubCode,
-      false,
-    );
+    clubGames = await getClubGames(ownerId, clubCode, false);
     // // TODO: Complete pagination
     // expect(clubGames).toHaveLength(100);
   });

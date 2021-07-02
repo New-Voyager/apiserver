@@ -11,9 +11,9 @@ const JANUS_HTTP_URL = 'http://139.59.57.29:8088/janus';
 const logger = getLogger('Janus');
 
 export class JanusSession {
-  private _id: string = '';
-  private _handleId: string = '';
-  private _apiSecret: string = '';
+  private _id = '';
+  private _handleId = '';
+  private _apiSecret = '';
 
   public static janusUrl(): string {
     if (process.env.JANUS_URL) {
