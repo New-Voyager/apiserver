@@ -162,7 +162,11 @@ describe('Tests: seat change APIs', () => {
 
     // second player tries to take a seat that is already occupied
     try {
-      const resp5 = await gameutils.confirmSeatChange(player2, game.gameCode, 3);
+      const resp5 = await gameutils.confirmSeatChange(
+        player2,
+        game.gameCode,
+        3
+      );
       expect(true).toBeFalsy();
     } catch (err) {
       //console.error(JSON.stringify(err));

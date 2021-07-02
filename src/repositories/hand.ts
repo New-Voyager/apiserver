@@ -245,7 +245,7 @@ class HandRepositoryImpl {
       const playerIdsInHand = new Array<number>();
       for (const seatNo of Object.keys(result.players)) {
         const player = result.players[seatNo];
-        let balance: any = {};
+        const balance: any = {};
 
         // reduce json key
         // b: before, a: after
@@ -456,7 +456,7 @@ class HandRepositoryImpl {
       order: order,
     };
 
-    let take = pageOptions.count;
+    const take = pageOptions.count;
     if (take) {
       findOptions.take = take;
     }
@@ -485,7 +485,7 @@ class HandRepositoryImpl {
       totalPot: Float!
       playersInHand: [Int!]
       data: Json
-      summary: String    
+      summary: String
     */
     findOptions['select'] = [
       'id',
@@ -578,7 +578,7 @@ class HandRepositoryImpl {
     try {
       const savedHandsRepository = getRepository(SavedHands);
 
-      let bookmarkedHand = await savedHandsRepository.findOne({
+      const bookmarkedHand = await savedHandsRepository.findOne({
         savedBy: {id: player.id},
         id: bookmarkId,
       });

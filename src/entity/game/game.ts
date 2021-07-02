@@ -327,7 +327,7 @@ export class PokerGame {
   // This is not a database column and used for tracking highhand in the cache
   public highHandRank = 0;
 
-  public pendingUpdates: boolean = false;
+  public pendingUpdates = false;
 }
 
 @Entity({name: 'next_hand_updates'})

@@ -608,7 +608,7 @@ class GameAPIs {
           }
         }
         let tableStatus = game.tableStatus;
-        let gameStatus = game.status;
+        const gameStatus = game.status;
         if (activeSeats == 1) {
           // not enough players
           await GameRepository.markTableStatus(

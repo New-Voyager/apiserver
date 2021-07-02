@@ -34,6 +34,12 @@ tests: run-redis
 unit-tests: run-redis
 	yarn unit-tests
 
+.PHONY: tests-local
+tests-local: export NATS_URL=http://localhost:4222
+tests-local: run-redis run-nats
+	./run_system_tests.sh
+
+
 .PHONY: script-tests
 script-tests: run-redis
 	./run_script_tests.sh

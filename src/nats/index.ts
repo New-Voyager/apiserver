@@ -373,7 +373,7 @@ class NatsClass {
     uint32 hand_num = 2;
     repeated HighHandWinner winners = 3;
   }
-  
+
   {
     "boardCards": [],
     "rank": 1,

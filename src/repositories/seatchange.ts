@@ -62,7 +62,7 @@ export class SeatChangeProcess {
     });
     // copy the players to temp table
     for (const player of players) {
-      let playerSeatChange = new PlayerSeatChangeProcess();
+      const playerSeatChange = new PlayerSeatChangeProcess();
       playerSeatChange.gameCode = this.game.gameCode;
       playerSeatChange.playerId = player.playerId;
       playerSeatChange.seatChangeRequestedAt = player.seatChangeRequestedAt;
@@ -307,7 +307,7 @@ export class SeatChangeProcess {
       cancelTimer(this.game.id, player.id, PLAYER_SEATCHANGE_PROMPT);
 
       const playerGameTrackerRepository = tran.getRepository(PlayerGameTracker);
-      let playerInGame = await playerGameTrackerRepository.findOne({
+      const playerInGame = await playerGameTrackerRepository.findOne({
         where: {
           game: {id: this.game.id},
           playerId: player.id,
@@ -315,7 +315,7 @@ export class SeatChangeProcess {
       });
 
       if (seatNo > this.game.maxPlayers) {
-        throw new Error(`Invalid seat no`);
+        throw new Error('Invalid seat no');
       }
 
       if (!playerInGame) {
