@@ -8,7 +8,7 @@ import {
   PokerGameUpdates,
 } from '../src/entity/game/game';
 import {HandHistory} from '../src/entity/history/hand';
-import {PlayerGameTracker} from '../src/entity/game/chipstrack';
+import {PlayerGameTracker} from '../src/entity/game/player_game_tracker';
 import {
   ClubStats,
   PlayerGameStats,

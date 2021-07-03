@@ -1,7 +1,7 @@
 import {TakeBreak} from '@src/repositories/takebreak';
 import {getRepository, Repository} from 'typeorm';
 import {PokerGame} from '@src/entity/game/game';
-import {PlayerGameTracker} from '@src/entity/game/chipstrack';
+import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {Cache} from '@src/cache';
 import {WonAtStatus} from '@src/entity/types';
 import {HandRepository} from '@src/repositories/hand';

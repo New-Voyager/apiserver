@@ -14,7 +14,7 @@ import {getLogger} from '@src/utils/log';
 import {Club} from '@src/entity/player/club';
 import {GameType} from '@src/entity/types';
 import {Cache} from '@src/cache';
-import {PlayerGameTracker} from '@src/entity/game/chipstrack';
+import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 
 const logger = getLogger('Stats');
 

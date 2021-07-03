@@ -6,7 +6,7 @@ import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player/player';
 import {getRepository} from 'typeorm';
-import {PlayerGameTracker} from '@src/entity/game/chipstrack';
+import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import _ from 'lodash';
 const logger = getLogger('hand-resolvers');
 

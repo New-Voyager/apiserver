@@ -2,7 +2,7 @@ import axios from 'axios';
 import {getLogger} from '@src/utils/log';
 import {PokerGame} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
-import {PlayerGameTracker} from '@src/entity/game/chipstrack';
+import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {GameStatus, PlayerStatus, TableStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {NewUpdate} from '@src/repositories/types';
