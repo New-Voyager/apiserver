@@ -4,6 +4,7 @@ WORKDIR /app
 
 RUN mkdir /build
 COPY package.json package-lock.json /build/
+COPY .yarnclean /build/
 WORKDIR /build
 RUN yarn install --production=true && \
   curl -sf https://gobinaries.com/tj/node-prune | sh
@@ -25,9 +26,22 @@ RUN node-prune && \
   rm -rf node_modules/grpc/deps/grpc/third_party/ && \
   rm -rf node_modules/aws-sdk/dist/
 
+# SOMA: I know this is a hack. I don't know how to fix this issue
+# saving it for another day
+# https://github.com/googleapis/google-api-nodejs-client/issues/1675
+RUN rm -rf /build/node_modules/googleapis/build/src/apis/docs
+RUN mkdir /build/node_modules/googleapis/build/src/apis/docs
+RUN cp hack/* /build/node_modules/googleapis/build/src/apis/docs
+
+
 FROM node:14.7.0-alpine3.12
 RUN apk --no-cache add --update yarn curl
 COPY --from=builder /build/ /app/
+
+# SOMA: Hack
+COPY --from=builder /build/src/google-services /app/src/
+RUN mkdir /app/build/src/google-services
+COPY --from=builder /build/src/google-services /app/build/src/google-services
 
 WORKDIR /app
 

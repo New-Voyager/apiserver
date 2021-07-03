@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "poker-club-app---dev",
+  "private_key_id": "117687095520b72a4bc90a3a280c1b886a5749c7",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDf9vdMxNAM/ycY\nwtPJElU2/LILm1CscfOh7hkfkwgFOreGjuPu679REHkxdHyjPjhbqBaVbvq/O6eS\nEaj9oTWciayJiREzNT4qKSS6AkHpG+RnnMxobgXs5hLbI2fKf/81Kesl8gYH/5ju\naNoDMR45GMDxfOuWR1E8FnFbAZDA60V8OxV+mSZU4rqbbAquDlQXQlPp4D+yppof\nxVCiFU2bNuEH5WJS+QeQbFFnd6DHxnuEnhEM37KIfowXGMNvbDoKm3fuTA9WRa/P\nJA+rA0MZHkTdZ2P4ZvJ8DXbKy+3Eqv9VsiRmjCvgNzz0VLUITBDq6+sGvCXoSxsR\ntnsf0PWlAgMBAAECggEAXQ9x95ip+FSHCs9dj+WJugTq+E6riVP6D3VvRALkqMOa\noZM7G7oib00gho+oAG6onVEtPR91mkNv4A5tgSHctHQyWJ23I2eCsqMQ6ydn+rQH\nxpPNDbF1zddVy2+dP3PK9+y4lDZKEkW+5oVz3TKqI8Bo347wFywAEa8jn9R5MOdq\nlM5eqblopZfnMefSfTGUPY7OuiOdwc0yUtWc8jiYcw/sjfD2lnVbMGCIWWfFTbmm\nrj/GAmCqq4DOX+gPyiO1HueygtFPnE/0xLCgNL6E7+6lx65nqIv1v6RLiYSbFhHi\nlV7a9kXJCLmLviJ455HdmY3B8srjlhhFM9QkzAy/2wKBgQD1jwbB7I/CjbxAzrbh\nOzUdLWwpbp6gHmheOz/k2e8SMH74dX/dq9hQ8nal/wazVTsIqxRW9qLaeaGCb3vG\nDfkvQH6Rr/zpaeXOlm0adHjCLb/VaUklNxTLGkgs3BR+8t/PfdpGs82v1z7GQe8r\ncu/8JQvNOxJS5/yo/rY03QjjfwKBgQDpfOIXsgSN4Ta49N9srv1ul/HxXyPJM8WQ\nKDoVnqFGHRPmUSF71xsOrXR1AqgdCOOAufTIG1rT34G5MzUc6MjRaQIbkKX/sr3o\nFmcIVyG6ppFZONzYQM4bOI6KheGdF/sdpmjHBHRFZtjTR5r3ilgR8HjgPPbbLOfR\ncMRRtZWo2wKBgFXDG0AVh+wSJoKX78VgMV+8Yn9h9CLGG/t1RA6Akv/OUjoih4L7\nJrS2yfuVw1hU1yZi4dqxjxUwz9jHaPo2HSaEpu/pADLhWnK5lOddcGOZKNu3RuWp\nhCifSD/qqXnhB4vnT5nL6HWWfoUtuAN7xBdTNPj7vZ2ZCmRXeXmjDRyvAoGAb7Cz\nns4ja5NOUA+jSSQ0S1EYBXSTc832Nc1oa6skTpveRxCMSedOJClJSifpL2pvGcba\nl1aujieesG8Uey3H0pS+01zQa46fVYRR6SV1FwpTATE4Q6JMda0KUq1UjYdJMpfG\nC13QGNrn4bmhIcTl+D7mM642EAZdJk0hPEz2uH0CgYBA7xD08jW6r6vPpowlgIXD\nwzJdFLElwZnU4jFIfeu/Jz/0y0crYPsG60tGWrLqYkrT8SnDInMzWJjvSwfQPAiA\nrk/zmYFrvDDtYEUEbbePVfCTxw+s7pguyKOVYYCUkVN4uej7n35vtSiFvOhI5Tqm\nvleTl5tkK3O5TSt5FIORlQ==\n-----END PRIVATE KEY-----\n",
+  "client_email": "apiserver@poker-club-app---dev.iam.gserviceaccount.com",
+  "client_id": "107698133298429296981",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/apiserver%40poker-club-app---dev.iam.gserviceaccount.com"
+}

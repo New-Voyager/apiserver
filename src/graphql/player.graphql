@@ -153,4 +153,5 @@ type Mutation {
   updateFirebaseToken(token: String!): Boolean
   appCoinPurchase(storeType: StoreType!, receipt: String!): IapReceipt!
   setNotes(playerId: String playerUuid: String, notes: String): Boolean
+  sendPlayerFcmMessage(message: Json!): Boolean
 }

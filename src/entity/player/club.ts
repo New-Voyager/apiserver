@@ -59,6 +59,12 @@ export class Club {
 
   @Column({name: 'next_game_num', type: 'int', default: 0})
   public nextGameNum!: number;
+
+  @Column({name: 'firebase_notification_key_name', nullable: true})
+  public firebaseNotificationKeyName!: string;
+
+  @Column({name: 'firebase_notification_key', nullable: true})
+  public firebaseNotificationKey!: string;
 }
 
 @Entity({name: 'club_member'})

@@ -14,7 +14,7 @@
     "test": "NODE_ENV=test jest --runInBand ./tests",
     "test1": "NODE_ENV=test jest --runInBand ./tests \"--testNamePattern\" \"wait list seating\"",
     "unit-tests": "NODE_ENV=test DB_USED=sqllite npx jest --forceExit --coverage=true --runInBand ./unit-tests",
-    "unit-test-specific": "NODE_ENV=test DB_USED=sqllite jest --forceExit --runInBand ./unit-tests \"--testNamePattern\" \"send host messages\"",
+    "unit-test-specific": "NODE_ENV=unit-test DB_USED=sqllite jest --forceExit --runInBand ./unit-tests \"--testNamePattern\" \"Simple Observer tests\"",
     "test-specific": "NODE_ENV=test jest --runInBand ./tests \"--testNamePattern\" ",
     "test-server-watch": "tsc-watch --noClear --onSuccess './debug.sh' --onFailure 'echo Beep! Compilation Failed'",
     "test-server": "NODE_ENV=test NATS_URL=${NATS_URL:-'nats://nats:4222'} DB_USED=sqllite node build/index.js",
@@ -35,6 +35,7 @@
     "script-tests": "node build/script-tests/testdriver.js ./script-tests/script"
   },
   "dependencies": {
+    "@googleapis/docs": "^0.2.0",
     "@types/jest": "^26.0.0",
     "@types/js-yaml": "^3.12.5",
     "@types/jsonwebtoken": "^8.5.0",
@@ -54,6 +55,7 @@
     "fs": "^0.0.1-security",
     "glob": "^7.1.6",
     "google-play-billing-validator": "^2.1.3",
+    "googleapis": "^80.1.0",
     "graphql": "^14.2.1",
     "gts": "^2.0.2",
     "hashids": "^2.2.1",
