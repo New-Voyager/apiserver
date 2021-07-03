@@ -661,6 +661,18 @@ class StatsRepositoryImpl {
       }
     });
   }
+
+  public async getPlayerRecentPerformance(player: Player): Promise<string> {
+    const playerStatsRepo = getRepository(PlayerHandStats);
+    const playerStat = await playerStatsRepo.findOne({
+      playerId: player.id,
+    });
+    if (!playerStat) {
+      return '[]';
+    } else {
+      return playerStat.recentPerformance;
+    }
+  }
 }
 
 export const StatsRepository = new StatsRepositoryImpl();

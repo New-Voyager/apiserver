@@ -2,6 +2,8 @@ import * as _ from 'lodash';
 import {getLogger} from '@src/utils/log';
 import {StatsRepository} from '@src/repositories/stats';
 import {GameType} from '@src/entity/types';
+import {Cache} from '@src/cache/index';
+
 const logger = getLogger('stats_resolvers');
 
 const resolvers: any = {
@@ -17,6 +19,9 @@ const resolvers: any = {
     },
     playerGameStats: async (parent, args, ctx, info) => {
       return getPlayerGameStats(ctx.req.playerId, args.gameCode);
+    },
+    playerRecentPerformance: async (parent, args, ctx, info) => {
+      return getPlayerRecentPerformance(ctx.req.playerId);
     },
   },
 };
@@ -49,6 +54,17 @@ async function getPlayerGameStats(playerId: string, gameCode: string) {
     stats.headsupHandDetails = JSON.parse(stats.headsupHandDetails);
   } catch (err) {}
   return stats;
+}
+
+async function getPlayerRecentPerformance(playerId: string) {
+  try {
+    const player = await Cache.getPlayer(playerId);
+    const recentPerformance = await StatsRepository.getPlayerRecentPerformance(
+      player
+    );
+    return JSON.parse(recentPerformance);
+  } catch (err) {}
+  return [];
 }
 
 export function getResolvers() {
