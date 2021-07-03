@@ -1065,6 +1065,38 @@ class GameRepositoryImpl {
     const updatesRepo = getRepository(PokerGameUpdates);
     const updates = await updatesRepo.findOne({where: {gameID: gameId}});
 
+    // update player game tracker
+    let playerGameTrackerRepository: Repository<PlayerGameTracker>;
+
+    // update session time
+    playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const players = await playerGameTrackerRepository.find({
+      game: {id: game.id},
+    });
+    for (const playerInGame of players) {
+      if (playerInGame.satAt) {
+        const satAt = new Date(Date.parse(playerInGame.satAt.toString()));
+        // calculate session time
+        let sessionTime: number = playerInGame.sessionTime;
+        if (!sessionTime) {
+          sessionTime = 0;
+        }
+        const currentSessionTime = new Date().getTime() - satAt.getTime();
+        const roundSeconds = Math.round(currentSessionTime / 1000);
+        sessionTime = sessionTime + roundSeconds;
+
+        await playerGameTrackerRepository.update(
+          {
+            id: playerInGame.id,
+          },
+          {
+            sessionTime: sessionTime,
+            satAt: undefined,
+          }
+        );
+      }
+    }
+
     // update history tables
     await HistoryRepository.gameEnded(game, updates);
 
