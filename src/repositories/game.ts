@@ -23,7 +23,7 @@ import {
 } from '@src/entity/types';
 import {GameServer, TrackGameServer} from '@src/entity/game/gameserver';
 import {getLogger} from '@src/utils/log';
-import {PlayerGameTracker} from '@src/entity/game/chipstrack';
+import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
 import {
   newPlayerSat,

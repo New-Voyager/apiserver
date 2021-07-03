@@ -72,10 +72,14 @@ up: create-network
 run-pg:
 	npx yarn run-pg
 
+.PHONY: copy-google-services
+copy-google-services:
+	rm -rf build/src/google-services && cp -r src/google-services/ build/src/
+
 .PHONY: debug
-debug:
+debug: copy-google-services
 	npx yarn watch-debug 
- 
+
 .PHONY: run-server
 run-server:
 	npx yarn run-pg &

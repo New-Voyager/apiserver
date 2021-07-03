@@ -11,7 +11,7 @@ import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {getLogger} from '@src/utils/log';
-import {PlayerGameTracker} from '@src/entity/game/chipstrack';
+import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {Cache} from '@src/cache';
 import {RewardRepository} from './reward';
 import {GameReward} from '@src/entity/player/reward';

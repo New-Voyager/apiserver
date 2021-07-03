@@ -2,7 +2,7 @@ import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {Club, ClubMember} from '@src/entity/player/club';
 import {getRepository, getManager, UpdateResult} from 'typeorm';
 import {getLogger} from '@src/utils/log';
-import {PlayerGameTracker} from '@src/entity/game/chipstrack';
+import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {Cache} from '@src/cache';
 import {HandHistory} from '@src/entity/history/hand';
 

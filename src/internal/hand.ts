@@ -1,7 +1,7 @@
 import {TakeBreak} from '@src/repositories/takebreak';
 import {getRepository, Repository} from 'typeorm';
 import {PokerGame} from '@src/entity/game/game';
-import {PlayerGameTracker} from '@src/entity/game/chipstrack';
+import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {Cache} from '@src/cache';
 import {WonAtStatus} from '@src/entity/types';
 import {HandRepository} from '@src/repositories/hand';
@@ -105,10 +105,7 @@ class HandServerAPIs {
     const result = req.body;
     if (result.playerStats) {
       // It seems that result.playerStats can be undefined in system tests.
-      await processPlayersWithConsecutiveActionTimeouts(
-        gameID,
-        result.playerStats
-      );
+      await processConsecutiveActionTimeouts(gameID, result.playerStats);
     }
     const saveResult = await postHand(gameID, handNum, result);
     if (saveResult.success) {
@@ -126,7 +123,7 @@ export async function postHand(gameID: number, handNum: number, result: any) {
   return res;
 }
 
-async function processPlayersWithConsecutiveActionTimeouts(
+async function processConsecutiveActionTimeouts(
   gameID: number,
   playerStats: any
 ) {

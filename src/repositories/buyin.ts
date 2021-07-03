@@ -23,7 +23,7 @@ import {
   PlayerStatus,
   TableStatus,
 } from '@src/entity/types';
-import {PlayerGameTracker} from '@src/entity/game/chipstrack';
+import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {GameRepository} from './game';
 import {
   pendingProcessDone,
