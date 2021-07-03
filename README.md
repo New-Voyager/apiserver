@@ -23,7 +23,7 @@ make run-pg
 To debug api server, first run the API server in watch debug mode. The node server will run in debug mode with watch enabled, and will listen at port 9235 for the debugger to be attached. 
 
 ``
-make watch-debug
+make debug
 ``
 
 Launch vscode debugger with “Watch debug” configuration.

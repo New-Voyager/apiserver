@@ -6,9 +6,9 @@
   "author": "Voyager LLC",
   "private": true,
   "scripts": {
-    "watch-debug": "NOTIFY_GAME_SERVER=1 BOTRUNNER_URL=http://localhost:8081 TIMER_URL=http://localhost:8082 NATS_URL=${NATS_URL:-'nats://localhost:4222'} NATS_ENABLED=1 POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} POSTGRES_DB=${POSTGRES_DB:-game} NODE_ENV=dev tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
+    "watch-debug": "npm run copy-files && NOTIFY_GAME_SERVER=1 BOTRUNNER_URL=http://localhost:8081 TIMER_URL=http://localhost:8082 NATS_URL=${NATS_URL:-'nats://localhost:4222'} NATS_ENABLED=1 POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} POSTGRES_DB=${POSTGRES_DB:-game} NODE_ENV=dev tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
     "run-docker": "NOTIFY_GAME_SERVER=1 NATS_URL=${NATS_URL:-'nats://nats:4222'} NATS_ENABLED=1 POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} POSTGRES_DB=${POSTGRES_DB:-game} NODE_ENV=dev node --inspect=0.0.0.0:9235 --nolazy ./build/index.js",
-    "debug": "NODE_ENV=dev POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} POSTGRES_DB=${POSTGRES_DB:-game} node --inspect=0.0.0.0:9228 ./build/index.js",
+    "debug": "npm run copy-files && NODE_ENV=dev POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} POSTGRES_DB=${POSTGRES_DB:-game} node --inspect=0.0.0.0:9228 ./build/index.js",
     "debug-windows": "set NODE_ENV=dev && tsc-watch.bat",
     "debug-break": "node --nolazy --inspect-brk=9235 ./build/index.js",
     "test": "NODE_ENV=test jest --runInBand ./tests",
@@ -24,7 +24,7 @@
     "script-tests-old": "node --nolazy -r ts-node/register/transpile-only script-tests/testdriver.ts",
     "check": "gts check",
     "clean": "gts clean",
-    "compile": "tsc",
+    "compile": "tsc && npm run copy-files",
     "fix": "gts fix",
     "prepare": "npm run compile",
     "pretest-disabled": "npm run compile",
@@ -32,7 +32,9 @@
     "run-pg": "docker-compose -f docker-compose-pg.yaml up",
     "run-redis": "docker-compose -f docker-compose-redis.yaml up -d",
     "stop-redis": "docker-compose -f docker-compose-redis.yaml down",
-    "script-tests": "node build/script-tests/testdriver.js ./script-tests/script"
+    "script-tests": "node build/script-tests/testdriver.js ./script-tests/script",
+    "copy-files": "npm run copy-google-svc",
+    "copy-google-svc": "mkdir -p build/src/google-services/ && cp src/google-services/* build/src/google-services/"
   },
   "dependencies": {
     "@googleapis/docs": "^0.2.0",

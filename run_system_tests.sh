@@ -5,7 +5,7 @@ set -eo pipefail
 PORT_NUMBER=9501
 
 echo "Starting test server in background"
-yarn test-server &
+npx yarn test-server &
 TEST_SERVER_PID=$!
 
 echo "Test server PID: ${TEST_SERVER_PID}"
@@ -22,4 +22,4 @@ cleanup() {
 trap cleanup EXIT
 
 echo "Running tests"
-yarn test
+npx yarn test
