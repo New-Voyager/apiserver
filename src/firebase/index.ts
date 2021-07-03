@@ -80,6 +80,7 @@ const DEV_FCM_API_KEY =
 const logger = getLogger('firebase');
 
 class FirebaseClass {
+  private firebaseInitialized: boolean = false;
   private app: firebase.app.App | undefined;
   private serviceAccount: ServiceAccount | undefined;
   private serviceAccountFile: string = '';
@@ -101,9 +102,10 @@ class FirebaseClass {
     if (runProfile === RunProfile.DEV) {
       serviceAccountFile = `${__dirname}/../google-services/dev-poker-club-app.json`;
     } else {
-      throw new Error(
+      logger.error(
         `Run profile is not supported ${RunProfile[runProfile].toString()}`
       );
+      return;
     }
     logger.info(`Using ${serviceAccountFile} to initialize firebase`);
     var serviceAccount = JSON.parse(
@@ -115,10 +117,14 @@ class FirebaseClass {
     });
     this.serviceAccount = serviceAccount;
     this.serviceAccountFile = serviceAccountFile;
+    this.firebaseInitialized = true;
     logger.info('Firebase is initialized');
   }
 
   public async sendMessage(playerToken: string, data: any) {
+    if (!this.firebaseInitialized) {
+      return;
+    }
     if (!this.app) {
       return;
     }
@@ -138,6 +144,9 @@ class FirebaseClass {
     host: Player,
     amount: number
   ) {
+    if (!this.firebaseInitialized) {
+      return;
+    }
     if (host.firebaseToken !== null && host.firebaseToken.length > 0) {
       const message: firebase.messaging.TokenMessage = {
         data: {
@@ -160,6 +169,10 @@ class FirebaseClass {
     host: Player,
     amount: number
   ) {
+    if (!this.firebaseInitialized) {
+      return;
+    }
+
     if (host.firebaseToken !== null && host.firebaseToken.length > 0) {
       const message: firebase.messaging.TokenMessage = {
         data: {
@@ -180,6 +193,10 @@ class FirebaseClass {
     club: Club,
     owner: Player
   ): Promise<[string, string]> {
+    if (!this.firebaseInitialized) {
+      return ['', ''];
+    }
+
     const profileStr = getRunProfileStr();
     const profile = getRunProfile();
     // register a new device group
@@ -221,6 +238,10 @@ class FirebaseClass {
   }
 
   public async sendClubMsg(club: Club, message: any) {
+    if (!this.firebaseInitialized) {
+      return;
+    }
+
     if (!this.app) {
       logger.error('Firebase is not initialized');
       return;
@@ -237,6 +258,9 @@ class FirebaseClass {
   }
 
   public async sendPlayerMsg(player: Player, message: any) {
+    if (!this.firebaseInitialized) {
+      return;
+    }
     if (!this.app) {
       logger.error('Firebase is not initialized');
       return;
