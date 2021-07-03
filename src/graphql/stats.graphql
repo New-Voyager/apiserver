@@ -75,4 +75,5 @@ type Query {
   systemStats: Stats
   playerHandStats: PlayerHandStats!
   playerGameStats(gameCode: String!): PlayerGameStats
+  playerRecentPerformance: [Json!]
 }
