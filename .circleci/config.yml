@@ -33,6 +33,9 @@ jobs:
             equal: [ master, <<pipeline.git.branch>> ]
           steps:
             - run:
+                name: Build Docker images (master only)
+                command: make docker-build
+            - run:
                 name: Publish Docker images (master only)
                 command: make publish
 
