@@ -27,7 +27,15 @@ jobs:
           command: make docker-script-tests
       - run:
           name: Run tests
-          command: make docker-tests      
+          command: make docker-tests
+      - when:
+          condition:
+            equal: [ master, <<pipeline.git.branch>> ]
+          steps:
+            - run:
+                name: Publish Docker images (master only)
+                command: make publish
+
 workflows:
     build-and-test:
       jobs:
