@@ -105,10 +105,7 @@ class HandServerAPIs {
     const result = req.body;
     if (result.playerStats) {
       // It seems that result.playerStats can be undefined in system tests.
-      await processPlayersWithConsecutiveActionTimeouts(
-        gameID,
-        result.playerStats
-      );
+      await processConsecutiveActionTimeouts(gameID, result.playerStats);
     }
     const saveResult = await postHand(gameID, handNum, result);
     if (saveResult.success) {
@@ -126,7 +123,7 @@ export async function postHand(gameID: number, handNum: number, result: any) {
   return res;
 }
 
-async function processPlayersWithConsecutiveActionTimeouts(
+async function processConsecutiveActionTimeouts(
   gameID: number,
   playerStats: any
 ) {
