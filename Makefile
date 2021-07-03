@@ -14,17 +14,17 @@ else
 endif
 
 .PHONY: build
-build:
-	npm install
-	./node_modules/.bin/tsc
+build: install_deps
+	npx yarn compile
 
 .PHONY: install_deps
 install_deps:
-	npx yarn install
+	npm install
 
 .PHONY: clean
 clean:
 	rm -rf build
+	rm -rf node_modules
 
 .PHONY: tests
 tests: run-redis
@@ -32,7 +32,7 @@ tests: run-redis
 
 .PHONY: unit-tests
 unit-tests: run-redis
-	yarn unit-tests
+	npx yarn unit-tests
 
 .PHONY: tests-local
 tests-local: export NATS_URL=http://localhost:4222
@@ -72,30 +72,12 @@ up: create-network
 run-pg:
 	npx yarn run-pg
 
-.PHONY: copy-google-services
-copy-google-services:
-	rm -rf build/src/google-services && cp -r src/google-services/ build/src/
-
 .PHONY: debug
-debug: copy-google-services
-	npx yarn watch-debug 
-
-.PHONY: run-server
-run-server:
-	npx yarn run-pg &
-	npx yarn watch-debug-nats
-	echo "Running server...."
+debug: watch-debug
 
 .PHONY: watch-debug
 watch-debug:
 	npx yarn watch-debug
-
-.PHONY: run-server-nats
-run-server-nats:
-	npx yarn run-pg &
-	npx yarn watch-debug-nats
-	echo "Running server...."
-
 
 .PHONY: publish
 publish: do-publish
