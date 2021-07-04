@@ -17,6 +17,8 @@ import {getHighHandsByGame} from './reward';
 import {Nats} from '@src/nats';
 import {ClubMessageRepository} from '@src/repositories/clubmessage';
 import {HostMessageRepository} from '@src/repositories/hostmessage';
+import {HandRepository} from '@src/repositories/hand';
+import {HistoryRepository} from '@src/repositories/history';
 const logger = getLogger('player');
 
 async function getClubs(playerId: string): Promise<Array<any>> {
@@ -461,7 +463,7 @@ async function getPastGames(playerId: string) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  const pastGames = await GameRepository.getPastGames(playerId);
+  const pastGames = await HistoryRepository.getPastGames(playerId);
   let game: any;
   for (game of pastGames) {
     game.gameTime = Math.floor(game.gameTime);

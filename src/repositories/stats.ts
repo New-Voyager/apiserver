@@ -615,7 +615,7 @@ class StatsRepositoryImpl {
         });
         if (playerStat) {
           // get recent performance data
-          let recentDataJson = playerStat.recentPerformance;
+          const recentDataJson = playerStat.recentPerformance;
           let recentPerformance = new Array<any>();
           try {
             recentPerformance = JSON.parse(recentDataJson);

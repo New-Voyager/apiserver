@@ -11,7 +11,7 @@ import {GoogleAuth} from 'google-auth-library';
 
 //import {default as google} from 'googleapis';
 
-var fs = require('fs');
+const fs = require('fs');
 const {google} = require('googleapis');
 
 const DEV_FCM_API_KEY =
@@ -80,10 +80,10 @@ const DEV_FCM_API_KEY =
 const logger = getLogger('firebase');
 
 class FirebaseClass {
-  private firebaseInitialized: boolean = false;
+  private firebaseInitialized = false;
   private app: firebase.app.App | undefined;
   private serviceAccount: ServiceAccount | undefined;
-  private serviceAccountFile: string = '';
+  private serviceAccountFile = '';
 
   constructor() {}
 
@@ -98,7 +98,7 @@ class FirebaseClass {
 
   public async init() {
     const runProfile = getRunProfile();
-    let serviceAccountFile: string = '';
+    let serviceAccountFile = '';
     if (runProfile === RunProfile.DEV) {
       serviceAccountFile = `${__dirname}/../google-services/dev-poker-club-app.json`;
     } else {
@@ -108,7 +108,7 @@ class FirebaseClass {
       return;
     }
     logger.info(`Using ${serviceAccountFile} to initialize firebase`);
-    var serviceAccount = JSON.parse(
+    const serviceAccount = JSON.parse(
       fs.readFileSync(serviceAccountFile, 'utf8')
     );
     const account = serviceAccount as ServiceAccount;
