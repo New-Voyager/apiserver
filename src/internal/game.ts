@@ -377,21 +377,23 @@ class GameAPIs {
 
         let buttonPassedDealer = false;
         let buttonPos = gameUpdate.buttonPos;
+
         let maxPlayers = game.maxPlayers;
-        while (maxPlayers > 0) {
-          buttonPos++;
-          if (buttonPos > game.maxPlayers) {
-            buttonPassedDealer = true;
-            buttonPos = 1;
+        if (gameUpdate.calculateButtonPos) {
+          while (maxPlayers > 0) {
+            buttonPos++;
+            if (buttonPos > game.maxPlayers) {
+              buttonPassedDealer = true;
+              buttonPos = 1;
+            }
+            if (playerInSeatsInPrevHand[buttonPos] !== 0) {
+              break;
+            }
+            maxPlayers--;
           }
-          if (playerInSeatsInPrevHand[buttonPos] !== 0) {
-            break;
-          }
-          maxPlayers--;
+          gameUpdate.buttonPos = buttonPos;
         }
         gameUpdate.handNum++;
-        gameUpdate.buttonPos = buttonPos;
-
         maxPlayers = game.maxPlayers;
         let sbPos = buttonPos;
         while (maxPlayers > 0) {
@@ -477,6 +479,7 @@ class GameAPIs {
             bbPos: gameUpdate.bbPos,
             handNum: gameUpdate.handNum,
             playersInLastHand: JSON.stringify(playerInSeatsInThisHand),
+            calculateButtonPos: true, // calculate button position for next hand
           })
           .where({
             gameID: game.id,
@@ -663,6 +666,30 @@ class GameAPIs {
     );
 
     resp.status(200).send(JSON.stringify(ret));
+  }
+
+  public async updateButtonPos(gameCode: string, buttonPos: number) {
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Updating button position failed`);
+    }
+
+    const ret = await getManager().transaction(
+      async transactionEntityManager => {
+        const pokerGameUpdates = transactionEntityManager.getRepository(
+          PokerGameUpdates
+        );
+        await pokerGameUpdates.update(
+          {
+            gameID: game.id,
+          },
+          {
+            buttonPos: buttonPos,
+            calculateButtonPos: false,
+          }
+        );
+      }
+    );
   }
 }
 

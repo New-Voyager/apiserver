@@ -4,6 +4,7 @@ import {getLogger} from '@src/utils/log';
 import * as fs from 'fs';
 import {remove, shuffle} from 'lodash';
 import * as yaml from 'yaml';
+import {GameAPI} from './game';
 import {HandServerAPI} from './hand';
 
 const logger = getLogger('handlog');
@@ -176,7 +177,30 @@ function handActionSteps(actionSteps: Array<any>): any {
   };
 }
 
-// returns nats urls
+export async function updateButtonPos(req: any, resp: any) {
+  //resp.status(200).send(JSON.stringify({urls: process.env.NATS_URL}));
+  console.log(`current directory: ${__dirname}`);
+  try {
+    const gameCode = req.params.gameCode;
+    if (!gameCode) {
+      const res = {error: 'Invalid game code'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    const buttonPos = parseInt(req.params.buttonPos, 10);
+    if (!buttonPos) {
+      const res = {error: 'Invalid button position'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+
+    await GameAPI.updateButtonPos(gameCode, buttonPos);
+    resp.status(200).send({status: 'OK'});
+  } catch (e) {
+    resp.status(500).send({errors: e.toString()});
+  }
+}
+
 export async function generateBotScript(req: any, resp: any) {
   //resp.status(200).send(JSON.stringify({urls: process.env.NATS_URL}));
   console.log(`current directory: ${__dirname}`);
