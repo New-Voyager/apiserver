@@ -26,7 +26,7 @@ import {timerCallback} from './repositories/timer';
 import {seed} from './initdb';
 import {Firebase} from './firebase';
 import {Nats} from './nats';
-import {generateBotScript} from './internal/bot';
+import {generateBotScript, updateButtonPos} from './internal/bot';
 import {restartTimers} from '@src/timer';
 export enum RunProfile {
   DEV,
@@ -220,6 +220,11 @@ function addInternalRoutes(app: any) {
 
   //app.get('/bot-script/game-code/:gameCode', generateBotScript);
   app.get('/bot-script/game-code/:gameCode/hand/:handNum', generateBotScript);
+
+  app.post(
+    '/bot-script/game-code/:gameCode/button-pos/:buttonPos',
+    updateButtonPos
+  );
 }
 
 async function readyCheck(req: any, resp: any) {

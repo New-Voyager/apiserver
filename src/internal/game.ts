@@ -377,21 +377,23 @@ class GameAPIs {
 
         let buttonPassedDealer = false;
         let buttonPos = gameUpdate.buttonPos;
+
         let maxPlayers = game.maxPlayers;
-        while (maxPlayers > 0) {
-          buttonPos++;
-          if (buttonPos > game.maxPlayers) {
-            buttonPassedDealer = true;
-            buttonPos = 1;
+        if (gameUpdate.calculateButtonPos) {
+          while (maxPlayers > 0) {
+            buttonPos++;
+            if (buttonPos > game.maxPlayers) {
+              buttonPassedDealer = true;
+              buttonPos = 1;
+            }
+            if (playerInSeatsInPrevHand[buttonPos] !== 0) {
+              break;
+            }
+            maxPlayers--;
           }
-          if (playerInSeatsInPrevHand[buttonPos] !== 0) {
-            break;
-          }
-          maxPlayers--;
+          gameUpdate.buttonPos = buttonPos;
         }
         gameUpdate.handNum++;
-        gameUpdate.buttonPos = buttonPos;
-
         maxPlayers = game.maxPlayers;
         let sbPos = buttonPos;
         while (maxPlayers > 0) {
@@ -477,6 +479,7 @@ class GameAPIs {
             bbPos: gameUpdate.bbPos,
             handNum: gameUpdate.handNum,
             playersInLastHand: JSON.stringify(playerInSeatsInThisHand),
+            calculateButtonPos: true, // calculate button position for next hand
           })
           .where({
             gameID: game.id,
@@ -504,6 +507,19 @@ class GameAPIs {
     resp.status(200).send(JSON.stringify(ret));
   }
 
+  //
+  // WARNING
+  //
+  //
+  // AS THE FUNCTION NAME SUGGESTS, THIS IS A 'GETTER' FUNCTION.
+  // WHEN GAME SERVER CALLS THIS FUNCTION MORE THAN ONCE DUE TO A
+  // CRASH-RESTART, IT IS IMPORTANT THAT THIS FUNCTION RETURNS THE SAME DATA.
+  // WE SHOULD TRY NOT TO HAVE ANY SIDE EFFECTS IN THIS FUNCTION
+  // THAT WILL ALTER THE RETURNED DATA IN THE SUBSEQUENT CALLS.
+  // USE moveToNextHand FUNCTION INSTEAD FOR ANY MUTATIONS. THAT
+  // FUNCTION HAS A GUARD AGAINST EXECUTING MULTIPLE TIMES WHEN
+  // CALLED FROM THE GAME SERVER.
+  //
   public async getNextHandInfo(req: any, resp: any) {
     const gameCode = req.params.gameCode;
     if (!gameCode) {
@@ -650,6 +666,30 @@ class GameAPIs {
     );
 
     resp.status(200).send(JSON.stringify(ret));
+  }
+
+  public async updateButtonPos(gameCode: string, buttonPos: number) {
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Updating button position failed`);
+    }
+
+    const ret = await getManager().transaction(
+      async transactionEntityManager => {
+        const pokerGameUpdates = transactionEntityManager.getRepository(
+          PokerGameUpdates
+        );
+        await pokerGameUpdates.update(
+          {
+            gameID: game.id,
+          },
+          {
+            buttonPos: buttonPos,
+            calculateButtonPos: false,
+          }
+        );
+      }
+    );
   }
 }
 
