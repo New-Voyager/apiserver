@@ -6,7 +6,11 @@ import {PlayersInGame} from '@src/entity/history/player';
 import {HighHand} from '@src/entity/player/reward';
 import {getManager, getRepository, getConnection} from 'typeorm';
 import {fixQuery} from '@src/utils';
-import {GameStatus} from '@src/entity/types';
+import {ClubMemberStatus, ClubStatus, GameStatus} from '@src/entity/types';
+import {Cache} from '@src/cache/index';
+import {getRakeCollected} from '@src/resolvers/chipstrack';
+import {PlayerGameStats} from '@src/entity/history/stats';
+import {completedGame} from '@src/resolvers/game';
 
 class HistoryRepositoryImpl {
   constructor() {}
@@ -27,6 +31,13 @@ class HistoryRepositoryImpl {
     gameHistory.hostUuid = game.hostUuid;
     gameHistory.roeGames = game.roeGames;
     gameHistory.startedAt = game.startedAt;
+    gameHistory.maxPlayers = game.maxPlayers;
+    gameHistory.maxWaitlist = game.maxWaitlist;
+    gameHistory.title = game.title;
+    gameHistory.status = game.status;
+    gameHistory.clubCode = game.clubCode;
+    gameHistory.gameNum = game.gameNum;
+
     await gameHistoryRepo.save(gameHistory);
   }
 
@@ -75,6 +86,9 @@ class HistoryRepositoryImpl {
         playersInGame.playerUuid = player.playerUuid;
         playersInGame.sessionTime = player.sessionTime;
         playersInGame.gameId = game.id;
+        playersInGame.rakePaid = player.rakePaid;
+        playersInGame.status = player.status;
+        playersInGame.stack = player.stack;
 
         await playersInGameRepo.save(playersInGame);
       }
@@ -133,77 +147,109 @@ class HistoryRepositoryImpl {
     gameCode: string,
     playerId: number
   ): Promise<any> {
-    const query = fixQuery(`
-    SELECT pg.id, pg.game_code as "gameCode", pg.game_num as "gameNum",
-    pig.session_time as "sessionTime",
-    gh.small_blind as "smallBlind", gh.big_blind as "bigBlind",
-    pig.no_hands_played as "handsPlayed", 
-    pig.no_hands_won as "handsWon", pgs.in_flop as "flopHands", pgs.in_turn as "turnHands",
-    pig.buy_in as "buyIn", (pig.stack - pig.buy_in) as "profit",
-    pgs.in_preflop as "preflopHands", pgs.in_river as "riverHands", pgs.went_to_showdown as "showdownHands", 
-    gh.game_type as "gameType", 
-    gh.started_at as "startedAt",
-    gh.ended_at as "endedAt", gh.ended_by_name as "endedBy", 
-    gh.started_at as "startedAt", pig.session_time as "sessionTime", 
-    pig.hands_dealt as "handsDealt"
-    FROM
-    game_history gh 
-    LEFT OUTER JOIN players_in_game pig ON 
-    pig.pig_game_id = gh.game_id AND pig.pig_player_id = ?
-    LEFT OUTER JOIN player_game_stats pgs ON 
-    pgs.game_id = pg.id AND pgs.player_id = pig.pig_player_id
-    WHERE
-    gh.game_code = ?
-    `);
-
-    // TODO: we need to do pagination here
-    const result = await getConnection().query(query, [playerId, gameCode]);
-    if (result.length > 0) {
-      return result[0];
+    const gameRepo = getRepository(GameHistory);
+    const game = await gameRepo.findOne({gameCode: gameCode});
+    let completedGame: any;
+    if (game) {
+      const playerRepo = getRepository(PlayersInGame);
+      const player = await playerRepo.findOne({
+        gameId: game.gameId,
+        playerId: playerId,
+      });
+      if (player) {
+        const gameStatsRepo = getRepository(PlayerGameStats);
+        const gameStat = await gameStatsRepo.findOne({
+          gameId: game.gameId,
+          playerId: player.playerId,
+        });
+        if (gameStat) {
+          completedGame = {
+            gameCode: game.gameCode,
+            gameNum: game.gameNum,
+            sessionTime: player.sessionTime,
+            status: game.status,
+            smallBlind: game.smallBlind,
+            bigBlind: game.bigBlind,
+            handsPlayed: player.noHandsPlayed,
+            handsWon: player.noHandsWon,
+            inTurns: gameStat.inTurn,
+            buyIn: player.buyIn,
+            profit: player.stack - player.buyIn,
+            preFlopHands: gameStat.inPreflop,
+            riverHands: gameStat.inRiver,
+            showDownHands: gameStat.wentToShowDown,
+            gameType: game.gameType,
+            startedAt: game.startedAt,
+            startedBy: game.hostName,
+            endedAt: game.endedAt,
+            endedBy: game.endedBy,
+            balance: player.stack,
+            handsDealt: game.handsDealt,
+          };
+        }
+      }
     }
-    return null;
+    return completedGame;
   }
 
   public async getPastGames(playerId: string) {
     // get the list of past games associated with player clubs
-    const query = `
-          SELECT 
-            g.game_code as "gameCode", 
-            g.game_id as gameId, 
-            g.game_type as "gameType", 
-            EXTRACT(EPOCH FROM(g.ended_at-g.started_at)) as "gameTime", 
-            g.started_at as "startedAt", 
-            g.ended_at as "endedAt",
-            pig.session_time as "sessionTime",
-            pig.buy_in as "buyIn",
-            pig.stack as "stack",
-          FROM game_history g JOIN poker_game_updates pgu ON 
-          g.id = pgu.game_id 
-            AND g.game_status = ${GameStatus.ENDED}
-          LEFT OUTER JOIN 
-            players_in_game pig ON
-            pgt.pgt_game_id  = g.id
-        `;
-    const resp = await getConnection().query(query);
-    return resp;
+    const playersRepo = getRepository(PlayersInGame);
+    const players = await playersRepo.find({playerUuid: playerId});
+    const pastGames = new Array<any>();
+    players.forEach(async player => {
+      const gameRepo = getRepository(GameHistory);
+      const game = await gameRepo.findOne({gameId: player.gameId});
+      if (game) {
+        const club = await Cache.getClub(game.clubCode);
+        if (club) {
+          const pastGame = {
+            gameCode: game.gameCode,
+            gameId: game.gameId,
+            title: game.title,
+            gameType: game.gameType,
+            gameTime: game.endedAt.valueOf() - game.startedAt.valueOf(),
+            startedAt: game.startedAt,
+            endedAt: game.endedAt,
+            maxPlayers: game.maxPlayers,
+            maxWaitList: game.maxWaitlist,
+            handsDealt: game.handsDealt,
+            playerStatus: player.status,
+            sessionTime: player.sessionTime,
+            buyIn: player.buyIn,
+            stack: player.stack,
+            clubCode: club.clubCode,
+            clubName: club.name,
+          };
+          pastGames.push(pastGame);
+        }
+      }
+    });
+    return pastGames;
   }
 
   public async getGameResultTable(gameCode: string): Promise<any> {
-    const query = fixQuery(`
-      SELECT 
-        pig.session_time AS "sessionTime",
-        pig.no_hands_played AS "handsPlayed",
-        pig.buy_in AS "buyIn",
-        pig.stack - pig.buy_in AS "profit",
-        pig.player_name AS "playerName",
-        pig.player_uuid AS "playerId"
-      FROM players_in_game pig
-      INNER JOIN game_history gh ON pig.pig_game_id = gh.gameId
-      WHERE gh.game_code = ?
-      AND pig.no_hands_played > 0`);
-
-    const result = await getConnection().query(query, [gameCode]);
-    return result;
+    const gameRepo = getRepository(GameHistory);
+    const games = await gameRepo.find({gameCode: gameCode});
+    const gameResults = new Array<any>();
+    games.forEach(async game => {
+      const playersRepo = getRepository(PlayersInGame);
+      const player = await playersRepo.findOne({gameId: game.gameId});
+      if (player) {
+        const gameResult = {
+          sessionTime: player.sessionTime,
+          sessionTimeStr: player.sessionTime.toString(),
+          handsPlayed: player.noHandsPlayed,
+          buyIn: player.buyIn,
+          rakePaid: player.rakePaid,
+          profit: player.stack - player.buyIn,
+          playerName: player.playerName,
+          playerUuid: player.playerUuid,
+        };
+        gameResults.push(gameResult);
+      }
+    });
+    return gameResults;
   }
 }
 

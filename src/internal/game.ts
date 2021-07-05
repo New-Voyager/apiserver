@@ -671,7 +671,7 @@ class GameAPIs {
   public async updateButtonPos(gameCode: string, buttonPos: number) {
     const game = await Cache.getGame(gameCode);
     if (!game) {
-      throw new Error(`Updating button position failed`);
+      throw new Error('Updating button position failed');
     }
 
     const ret = await getManager().transaction(
