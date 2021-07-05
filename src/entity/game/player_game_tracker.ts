@@ -164,6 +164,12 @@ export class PlayerGameTracker {
   @Column({name: 'muck_losing_hand', default: false})
   public muckLosingHand!: boolean;
 
+  @Column({name: 'missed_blind', default: false})     // this is set to true, if a player misses blind (in break)
+  public missedBlind!: boolean;
+
+  @Column({name: 'posted_blind', default: false})     // this is set to true, player posted blind
+  public postedBlind!: boolean;
+
   // this user is notified to take a seat and the time will expire at this time
   @DbAwareColumn({
     name: 'waitlist_sitting_exp',

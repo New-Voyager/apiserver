@@ -13,6 +13,7 @@ import {getManager, getRepository} from 'typeorm';
 import {NewHandInfo, PlayerInSeat} from '@src/repositories/types';
 import _ from 'lodash';
 import {delay} from '@src/utils';
+import { PlayerGameTracker } from '@src/entity/game/player_game_tracker';
 
 const logger = getLogger('GameAPIs');
 
@@ -359,6 +360,9 @@ class GameAPIs {
           playerInSeatsInPrevHand = occupiedSeats;
         }
 
+        // seat numbers that missed the blinds
+        const missedBlinds = new Array<number>();
+
         // we use the players sitting in the previous hand to determine the button position and small blind position and big blind position
         // Let us use examples to describe different scenarios
         // Prev Hand Players: [D, 1, 2, 3, 4], buttonPos: 1
@@ -367,6 +371,7 @@ class GameAPIs {
         // Prev Hand Players: [D, 1, 0, 3, 4], buttonPos: 1
         // * A new player joins in seat 2
         // the new button positions is seat 3
+        // D: 0 index is a dealer seat (just a filler)
 
         // Small blind
         // Prev Hand Players: [D, 1, 2, 3, 4], buttonPos: 1, sb: 2, bb: 3
@@ -377,7 +382,6 @@ class GameAPIs {
 
         let buttonPassedDealer = false;
         let buttonPos = gameUpdate.buttonPos;
-
         let maxPlayers = game.maxPlayers;
         if (gameUpdate.calculateButtonPos) {
           while (maxPlayers > 0) {
@@ -413,6 +417,15 @@ class GameAPIs {
           if (bbPos > game.maxPlayers) {
             bbPos = 1;
           }
+
+          if (takenSeats[bbPos]) {
+            const takenSeat = takenSeats[bbPos];
+            if (takenSeat.status === PlayerStatus.IN_BREAK) {
+              // this player missed the blind
+              missedBlinds.push(bbPos);
+            }
+          }
+
           if (occupiedSeats[bbPos] !== 0) {
             break;
           }
@@ -465,6 +478,22 @@ class GameAPIs {
           // next hand
           // button position: 3 dead button, 4: sb, 1: bb
           playerInSeatsInThisHand = playerInSeatsInPrevHand;
+        }
+
+        if(missedBlinds.length > 0) {
+          logger.info(`Players missed blinds: ${missedBlinds.toString()}`);
+          const playerGameTrackerRepo = transactionEntityManager.getRepository(PlayerGameTracker);
+          for(const seatNo of missedBlinds) {
+            await playerGameTrackerRepo.update(
+              {
+                missedBlind: true,
+              },
+              {
+                game: {id: game.id},
+                seatNo: seatNo,
+              }
+            );
+          }
         }
 
         // update button pos and gameType
