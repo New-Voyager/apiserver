@@ -13,7 +13,7 @@ import {getManager, getRepository} from 'typeorm';
 import {NewHandInfo, PlayerInSeat} from '@src/repositories/types';
 import _ from 'lodash';
 import {delay} from '@src/utils';
-import { PlayerGameTracker } from '@src/entity/game/player_game_tracker';
+import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 
 const logger = getLogger('GameAPIs');
 
@@ -480,10 +480,12 @@ class GameAPIs {
           playerInSeatsInThisHand = playerInSeatsInPrevHand;
         }
 
-        if(missedBlinds.length > 0) {
+        if (missedBlinds.length > 0) {
           logger.info(`Players missed blinds: ${missedBlinds.toString()}`);
-          const playerGameTrackerRepo = transactionEntityManager.getRepository(PlayerGameTracker);
-          for(const seatNo of missedBlinds) {
+          const playerGameTrackerRepo = transactionEntityManager.getRepository(
+            PlayerGameTracker
+          );
+          for (const seatNo of missedBlinds) {
             await playerGameTrackerRepo.update(
               {
                 missedBlind: true,
@@ -581,6 +583,13 @@ class GameAPIs {
           resp.status(500).send(JSON.stringify(res));
           return;
         }
+
+        const playerGameTrackerRepo = transactionEntityManager.getRepository(
+          PlayerGameTracker
+        );
+
+        const gameUpdate = gameUpdates[0];
+
         const playersInSeats = await GameRepository.getPlayersInSeats(
           game.id,
           transactionEntityManager
@@ -610,6 +619,7 @@ class GameAPIs {
 
         const seats = new Array<PlayerInSeat>();
         for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+          let postedBlind = false;
           const playerSeat = takenSeats[seatNo];
 
           if (!playerSeat) {
@@ -620,6 +630,8 @@ class GameAPIs {
               gameToken: '',
               runItTwicePrompt: false,
               muckLosingHand: false,
+              activeSeat: false,
+              postedBlind: false,
             });
           } else {
             let buyInExpTime = '';
@@ -630,14 +642,45 @@ class GameAPIs {
             if (playerSeat.breakTimeExp) {
               breakTimeExp = playerSeat.breakTimeExp.toISOString();
             }
+            let activeSeat = false;
             if (playerSeat.status == PlayerStatus.PLAYING) {
-              activeSeats++;
+              activeSeat = true;
+              // did this player missed blind?
+              if (gameUpdate.bbPos !== seatNo) {
+                if (playerSeat.missedBlind && playerSeat.postedBlind) {
+                  postedBlind = true;
+
+                  // update the player game tracker that missed blind and posted blind is taken care
+                  try {
+                    await playerGameTrackerRepo.update(
+                      {
+                        game: {id: game.id},
+                        seatNo: seatNo,
+                      },
+                      {
+                        missedBlind: false,
+                        postedBlind: false,
+                      }
+                    );
+                  } catch (err) {
+                    // ignore this exception, not a big deal
+                  }
+                } else {
+                  // this player cannot play
+                  playerSeat.status = PlayerStatus.NEED_TO_POST_BLIND;
+                  activeSeat = false;
+                }
+              }
+              if (activeSeat) {
+                activeSeats++;
+              }
             }
 
             // player is in a seat
             seats.push({
               seatNo: seatNo,
               openSeat: false,
+              activeSeat: activeSeat,
               playerId: playerSeat.playerId,
               playerUuid: playerSeat.playerUuid,
               name: playerSeat.name,
@@ -649,6 +692,7 @@ class GameAPIs {
               gameToken: '',
               runItTwicePrompt: playerSeat.runItTwicePrompt,
               muckLosingHand: playerSeat.muckLosingHand,
+              postedBlind: postedBlind,
             });
           }
         }
@@ -663,7 +707,6 @@ class GameAPIs {
           tableStatus = TableStatus.NOT_ENOUGH_PLAYERS;
         }
 
-        const gameUpdate = gameUpdates[0];
         let announceGameType = false;
         if (game.gameType === GameType.ROE) {
           if (gameUpdate.gameType !== gameUpdate.prevGameType) {

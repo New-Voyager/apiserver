@@ -1250,7 +1250,9 @@ class GameRepositoryImpl {
           buyin_exp_at as "buyInExpTime", break_time_exp_at as "breakExpTime", game_token AS "gameToken",
           break_time_started_at as "breakStartedTime",
           run_it_twice_prompt as "runItTwicePrompt",
-          muck_losing_hand as "muckLosingHand"
+          muck_losing_hand as "muckLosingHand",
+          missed_blind as "missedBlind",
+          posted_blind as "postedBlind"
           FROM 
           player_game_tracker pgt JOIN player p ON pgt.pgt_player_id = p.id
           AND pgt.pgt_game_id = ? AND pgt.seat_no <> 0`);
