@@ -647,28 +647,30 @@ class GameAPIs {
               activeSeat = true;
               // did this player missed blind?
               if (gameUpdate.bbPos !== seatNo) {
-                if (playerSeat.missedBlind && playerSeat.postedBlind) {
-                  postedBlind = true;
+                if (playerSeat.missedBlind) {
+                  if (playerSeat.postedBlind) {
+                    postedBlind = true;
 
-                  // update the player game tracker that missed blind and posted blind is taken care
-                  try {
-                    await playerGameTrackerRepo.update(
-                      {
-                        game: {id: game.id},
-                        seatNo: seatNo,
-                      },
-                      {
-                        missedBlind: false,
-                        postedBlind: false,
-                      }
-                    );
-                  } catch (err) {
-                    // ignore this exception, not a big deal
+                    // update the player game tracker that missed blind and posted blind is taken care
+                    try {
+                      await playerGameTrackerRepo.update(
+                        {
+                          game: {id: game.id},
+                          seatNo: seatNo,
+                        },
+                        {
+                          missedBlind: false,
+                          postedBlind: false,
+                        }
+                      );
+                    } catch (err) {
+                      // ignore this exception, not a big deal
+                    }
+                  } else {
+                    // this player cannot play
+                    playerSeat.status = PlayerStatus.NEED_TO_POST_BLIND;
+                    activeSeat = false;
                   }
-                } else {
-                  // this player cannot play
-                  playerSeat.status = PlayerStatus.NEED_TO_POST_BLIND;
-                  activeSeat = false;
                 }
               }
               if (activeSeat) {
