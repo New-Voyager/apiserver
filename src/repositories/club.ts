@@ -1,15 +1,7 @@
 import {Club, ClubMember} from '@src/entity/player/club';
 import {ClubMemberStatus, ClubStatus} from '@src/entity/types';
 import {Player} from '@src/entity/player/player';
-import {
-  getConnection,
-  getRepository,
-  getManager,
-  Not,
-  LessThan,
-  MoreThan,
-  In,
-} from 'typeorm';
+import {Not, LessThan, MoreThan, In} from 'typeorm';
 import {PokerGame} from '@src/entity/game/game';
 import {
   getClubGamesData,
@@ -26,6 +18,12 @@ import {Nats} from '@src/nats';
 import {v4 as uuidv4} from 'uuid';
 import {StatsRepository} from './stats';
 import {Firebase} from '@src/firebase';
+import {
+  getGameConnection,
+  getUserConnection,
+  getUserManager,
+  getUserRepository,
+} from '.';
 
 const logger = getLogger('club-repository');
 
@@ -58,9 +56,9 @@ class ClubRepositoryImpl {
     clubCode: string,
     updateData: ClubMemberUpdateInput
   ): Promise<ClubMemberStatus> {
-    const clubRepository = getRepository<Club>(Club);
-    const playerRepository = getRepository<Player>(Player);
-    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+    const clubRepository = getUserRepository<Club>(Club);
+    const playerRepository = getUserRepository<Player>(Player);
+    const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
 
     // Check club data
     const club = await clubRepository.findOne({where: {clubCode: clubCode}});
@@ -133,7 +131,7 @@ class ClubRepositoryImpl {
   }
 
   public async getClub(clubCode: string): Promise<Club | undefined> {
-    const clubRepository = getRepository(Club);
+    const clubRepository = getUserRepository(Club);
     const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     return club;
   }
@@ -143,7 +141,7 @@ class ClubRepositoryImpl {
     input: ClubUpdateInput,
     club?: Club
   ): Promise<boolean> {
-    const clubRepository = getRepository(Club);
+    const clubRepository = getUserRepository(Club);
 
     if (!club) {
       club = await clubRepository.findOne({where: {clubCode: clubCode}});
@@ -163,14 +161,14 @@ class ClubRepositoryImpl {
   }
 
   public async getClubCount(): Promise<number> {
-    const clubRepository = getRepository(Club);
+    const clubRepository = getUserRepository(Club);
     return clubRepository.count();
   }
 
   public async createClub(input: ClubCreateInput): Promise<string> {
     // whoever creates this club is the owner of the club
     let clubCode = '';
-    const clubRepository = getRepository(Club);
+    const clubRepository = getUserRepository(Club);
 
     while (true) {
       // generate a club code
@@ -185,7 +183,7 @@ class ClubRepositoryImpl {
     }
 
     // locate the owner
-    const playerRepository = getRepository<Player>(Player);
+    const playerRepository = getUserRepository<Player>(Player);
     const owner = await playerRepository.findOne({
       where: {uuid: input.ownerUuid},
     });
@@ -214,7 +212,7 @@ class ClubRepositoryImpl {
     clubMember.status = ClubMemberStatus.ACTIVE;
 
     //logger.info('****** STARTING TRANSACTION TO SAVE club and club member');
-    await getManager().transaction(async transactionEntityManager => {
+    await getUserManager().transaction(async transactionEntityManager => {
       const clubRepo = transactionEntityManager.getRepository(Club);
       await clubRepo.save(club);
       await transactionEntityManager
@@ -246,7 +244,7 @@ class ClubRepositoryImpl {
   }
 
   public async deleteClub(clubCode: string) {
-    const clubRepository = getRepository(Club);
+    const clubRepository = getUserRepository(Club);
     const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     if (!club) {
       throw new Error(`Club: ${clubCode} does not exist`);
@@ -259,11 +257,11 @@ class ClubRepositoryImpl {
 
   // This is an internal API
   public async deleteClubByName(clubName: string) {
-    const clubRepository = getRepository(Club);
+    const clubRepository = getUserRepository(Club);
     const club = await clubRepository.findOne({where: {name: clubName}});
     if (club) {
       logger.info('****** STARTING TRANSACTION TO delete club');
-      await getManager().transaction(async transactionEntityManager => {
+      await getUserManager().transaction(async transactionEntityManager => {
         await transactionEntityManager
           .createQueryBuilder()
           .delete()
@@ -277,7 +275,7 @@ class ClubRepositoryImpl {
   }
 
   public async isClubOwner(clubCode: string, playerId: string) {
-    const clubRepository = getRepository(Club);
+    const clubRepository = getUserRepository(Club);
     const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     if (!club) {
       throw new Error(`Club: ${clubCode} does not exist`);
@@ -304,7 +302,7 @@ class ClubRepositoryImpl {
     if (clubMember) {
       if (player.bot) {
         clubMember.status = ClubMemberStatus.ACTIVE;
-        const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+        const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
         clubMemberRepository.update(
           {
             id: clubMember.id,
@@ -336,7 +334,7 @@ class ClubRepositoryImpl {
       }
     }
 
-    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+    const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
     await clubMemberRepository.save(clubMember);
     const messageId = uuidv4();
     try {
@@ -376,7 +374,7 @@ class ClubRepositoryImpl {
       }
     }
 
-    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+    const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
     await clubMemberRepository
       .createQueryBuilder()
       .update()
@@ -432,7 +430,7 @@ class ClubRepositoryImpl {
       return clubMember.status;
     }
 
-    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+    const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
     await clubMemberRepository
       .createQueryBuilder()
       .update()
@@ -474,7 +472,7 @@ class ClubRepositoryImpl {
       return clubMember.status;
     }
 
-    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+    const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
     await clubMemberRepository
       .createQueryBuilder()
       .update()
@@ -518,8 +516,8 @@ class ClubRepositoryImpl {
     clubCode: string,
     playerId: string
   ): Promise<[Club, Player, ClubMember | undefined]> {
-    const clubRepository = getRepository<Club>(Club);
-    const playerRepository = getRepository<Player>(Player);
+    const clubRepository = getUserRepository<Club>(Club);
+    const playerRepository = getUserRepository<Player>(Player);
 
     const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     const player = await playerRepository.findOne({where: {uuid: playerId}});
@@ -531,7 +529,7 @@ class ClubRepositoryImpl {
       throw new Error(`Player ${playerId} is not found`);
     }
 
-    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+    const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
     // see whehter the player is already a member
     const clubMember = await clubMemberRepository.findOne({
       where: {
@@ -546,7 +544,7 @@ class ClubRepositoryImpl {
     clubCode: string,
     filter?: getMembersFilterData
   ): Promise<ClubMember[]> {
-    const clubRepository = getRepository<Club>(Club);
+    const clubRepository = getUserRepository<Club>(Club);
     const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     if (!club) {
       throw new Error(`Club ${clubCode} is not found`);
@@ -556,7 +554,7 @@ class ClubRepositoryImpl {
       throw new Error('Unexpected. There is no owner for the club');
     }
 
-    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+    const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       club: {id: club.id},
@@ -605,15 +603,15 @@ class ClubRepositoryImpl {
     clubCode: string,
     playerId: string
   ): Promise<ClubMember | null> {
-    const playerRepository = getRepository<Player>(Player);
-    const clubRepository = getRepository<Club>(Club);
+    const playerRepository = getUserRepository<Player>(Player);
+    const clubRepository = getUserRepository<Club>(Club);
     const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     const player = await playerRepository.findOne({where: {uuid: playerId}});
     if (!club || !player) {
       return null;
     }
 
-    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+    const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
     const clubMember = await clubMemberRepository.findOne({
       where: {
         club: {id: club.id},
@@ -629,7 +627,7 @@ class ClubRepositoryImpl {
   public async getPlayerClubs(
     playerId: string
   ): Promise<Array<getPlayerClubsData>> {
-    const playerRepository = getRepository<Player>(Player);
+    const playerRepository = getUserRepository<Player>(Player);
     const player = await playerRepository.findOne({where: {uuid: playerId}});
     if (!player) {
       throw new Error('Not found');
@@ -644,7 +642,10 @@ class ClubRepositoryImpl {
       FROM club c JOIN my_clubs mc ON c.id = mc.club_id
       JOIN club_member cm ON cm.club_id = c.id AND cm.player_id=?
       JOIN player p ON p.id = c.owner_id`);
-    const result = await getConnection().query(query, [player.id, player.id]);
+    const result = await getUserConnection().query(query, [
+      player.id,
+      player.id,
+    ]);
     return result;
   }
 
@@ -671,7 +672,7 @@ class ClubRepositoryImpl {
       throw new Error('Player is the owner. Owner cannot leave the club');
     }
 
-    const clubMemberRepository = getRepository<ClubMember>(ClubMember);
+    const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
     await clubMemberRepository
       .createQueryBuilder()
       .update()
@@ -691,30 +692,6 @@ class ClubRepositoryImpl {
     if (completedGames) {
       endedAt = 'AND pg.ended_at IS NOT NULL';
     }
-    // const query = fixQuery(`
-    //     SELECT pg.id, pg.game_code as "gameCode", pg.game_num as "gameNum",
-    //     pgt.session_time as "sessionTime", pg.game_status as "status",
-    //     pgt.sat_at as "satAt",
-    //     pg.small_blind as "smallBlind", pg.big_blind as "bigBlind",
-    //     pgt.no_hands_played as "handsPlayed",
-    //     pgt.no_hands_won as "handsWon", in_flop as "flopHands", in_turn as "turnHands",
-    //     in_river as "riverHands", went_to_showdown as "showdownHands",
-    //     big_loss as "bigLoss", big_win as "bigWin", big_loss_hand as "bigLossHand",
-    //     big_win_hand as "bigWinHand", hand_stack,
-    //     cm.player_id, pg.game_type as "gameType",
-    //     pg.started_at as "startedAt", p.name as "startedBy",
-    //     pg.ended_at as "endedAt", pg.ended_by as "endedBy",
-    //     pg.started_at as "startedAt", pgt.session_time as "sessionTime",
-    //     (pgt.stack - pgt.buy_in) as balance
-    //     FROM
-    //     poker_game pg JOIN club c ON pg.club_id  = c.id ${endedAt}
-    //     JOIN player p ON pg.started_by = p.id
-    //     JOIN club_member cm  ON cm.club_id  = c.id AND cm.player_id = ? AND c.club_code = ?
-    //     LEFT OUTER JOIN player_game_tracker pgt ON
-    //     pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = cm.player_id
-    //     LEFT OUTER JOIN player_game_stats pgs ON
-    //     pgs.pgs_game_id = pg.id AND pgs.pgs_player_id = cm.player_id
-    //     ORDER BY pg.id DESC`);
 
     const query = fixQuery(`
         SELECT pg.id, pg.game_code as "gameCode", pg.game_num as "gameNum",
@@ -722,10 +699,7 @@ class ClubRepositoryImpl {
         pgt.sat_at as "satAt",
         pg.small_blind as "smallBlind", pg.big_blind as "bigBlind",
         pgt.no_hands_played as "handsPlayed", 
-        pgt.no_hands_won as "handsWon", in_flop as "flopHands", in_turn as "turnHands",
-        in_river as "riverHands", went_to_showdown as "showdownHands", 
-        big_loss as "bigLoss", big_win as "bigWin", big_loss_hand as "bigLossHand", 
-        big_win_hand as "bigWinHand", hand_stack,
+        pgt.no_hands_won as "handsWon",
         pg.game_type as "gameType", 
         pg.started_at as "startedAt", pg.host_name as "startedBy",
         pg.ended_at as "endedAt", pg.ended_by_name as "endedBy", 
@@ -735,79 +709,16 @@ class ClubRepositoryImpl {
         poker_game pg  
         LEFT OUTER JOIN player_game_tracker pgt ON 
         pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = ?
-        LEFT OUTER JOIN player_game_stats pgs ON 
-        pgs.game_id = pg.id AND pgs.player_id = ?
         WHERE pg.club_code = ? ${endedAt}
         ORDER BY pg.id DESC`);
     logger.info(query);
     // TODO: we need to do pagination here
-    const result = await getConnection().query(query, [
-      playerId,
-      playerId,
-      clubCode,
-    ]);
+    const result = await getGameConnection().query(query, [playerId, clubCode]);
     return result;
   }
 
-  public async getClubGames1(
-    clubCode: string,
-    pageOptions?: PageOptions
-  ): Promise<Array<PokerGame>> {
-    if (!pageOptions) {
-      pageOptions = {
-        count: 20,
-        prev: 0x7fffffff,
-      };
-    }
-
-    let order: any = {
-      id: 'ASC',
-    };
-
-    let pageWhere: any;
-    if (pageOptions.next) {
-      order = {
-        id: 'DESC',
-      };
-      pageWhere = MoreThan(pageOptions.next);
-    } else {
-      if (pageOptions.prev) {
-        order = {
-          id: 'DESC',
-        };
-        pageWhere = LessThan(pageOptions.prev);
-      }
-    }
-    //logger.info(`pageOptions count: ${pageOptions.count}`);
-    let take = pageOptions.count;
-    if (!take || take > 20) {
-      take = 20;
-    }
-    const clubRepository = getRepository(Club);
-    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
-    if (!club) {
-      throw new Error(`Club ${clubCode} is not found`);
-    }
-
-    const findOptions: any = {
-      where: {
-        club: {id: club.id},
-      },
-      order: order,
-      take: take,
-    };
-
-    if (pageWhere) {
-      findOptions['where']['id'] = pageWhere;
-    }
-
-    const gameRespository = getRepository(PokerGame);
-    const games = await gameRespository.find(findOptions);
-    return games;
-  }
-
   public async getClubById(clubCode: string): Promise<Club | undefined> {
-    const repository = getRepository(Club);
+    const repository = getUserRepository(Club);
     // get club by id (testing only)
     const club = await repository.findOne({where: {clubCode: clubCode}});
     if (!club) {
@@ -817,7 +728,7 @@ class ClubRepositoryImpl {
   }
 
   public async getNextGameNum(clubId: number): Promise<number> {
-    const nextGameNum = await getManager().transaction(
+    const nextGameNum = await getUserManager().transaction(
       async transactionEntityManager => {
         await transactionEntityManager
           .getRepository(Club)
@@ -846,7 +757,7 @@ class ClubRepositoryImpl {
   public async searchClub(clubCode: string): Promise<Club | null> {
     clubCode = clubCode.toLowerCase();
     try {
-      const clubs = await getRepository(Club).find({
+      const clubs = await getUserRepository(Club).find({
         where: {clubCode: clubCode},
       });
       if (clubs.length === 1) {
@@ -870,7 +781,7 @@ class ClubRepositoryImpl {
       player p on cm.player_id = p.id where
       p.uuid = 'c2dc2c3d-13da-46cc-8c66-caa0c77459de' and (cm.is_owner or cm.is_manager);
       */
-    const clubMemberRepo = getRepository(ClubMember);
+    const clubMemberRepo = getUserRepository(ClubMember);
     const player = await Cache.getPlayer(playerUuid);
     const resp = await clubMemberRepo.find({
       player: {id: player.id},
@@ -892,7 +803,7 @@ class ClubRepositoryImpl {
   }
 
   public async getPendingMemberCount(club: Club): Promise<number> {
-    const clubMemberRepo = getRepository(ClubMember);
+    const clubMemberRepo = getUserRepository(ClubMember);
     const count = await clubMemberRepo.count({
       club: {id: club.id},
       status: ClubMemberStatus.PENDING,

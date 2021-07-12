@@ -3,20 +3,20 @@ import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {GameHistory} from '@src/entity/history/game';
 import {HighHandHistory} from '@src/entity/history/hand';
 import {PlayersInGame} from '@src/entity/history/player';
-import {HighHand} from '@src/entity/player/reward';
-import {getManager, getRepository, getConnection} from 'typeorm';
 import {fixQuery} from '@src/utils';
 import {ClubMemberStatus, ClubStatus, GameStatus} from '@src/entity/types';
 import {Cache} from '@src/cache/index';
 import {getRakeCollected} from '@src/resolvers/chipstrack';
 import {PlayerGameStats} from '@src/entity/history/stats';
 import {completedGame} from '@src/resolvers/game';
+import {getGameRepository, getHistoryManager, getHistoryRepository} from '.';
+import {HighHand} from '@src/entity/game/reward';
 
 class HistoryRepositoryImpl {
   constructor() {}
 
   public async newGameCreated(game: PokerGame) {
-    const gameHistoryRepo = getRepository(GameHistory);
+    const gameHistoryRepo = getHistoryRepository(GameHistory);
     const gameHistory = new GameHistory();
     gameHistory.gameId = game.id;
     gameHistory.gameCode = game.gameCode;
@@ -53,7 +53,7 @@ class HistoryRepositoryImpl {
     if (updates) {
       values.handsDealt = updates.handNum;
     }
-    await getManager().transaction(async transactionEntityManager => {
+    await getHistoryManager().transaction(async transactionEntityManager => {
       await transactionEntityManager
         .createQueryBuilder()
         .update(GameHistory)
@@ -93,8 +93,8 @@ class HistoryRepositoryImpl {
         await playersInGameRepo.save(playersInGame);
       }
 
-      const highHandHistoryRepo = getRepository(HighHandHistory);
-      const highHandRepo = getRepository(HighHand);
+      const highHandHistoryRepo = getHistoryRepository(HighHandHistory);
+      const highHandRepo = getGameRepository(HighHand);
       const highHands = await highHandRepo.find({
         where: {
           gameId: game.id,
@@ -111,9 +111,9 @@ class HistoryRepositoryImpl {
         highHandHistory.highHand = highHand.highHand;
         highHandHistory.highHandCards = highHand.highHandCards;
         highHandHistory.playerCards = highHand.playerCards;
-        highHandHistory.playerId = highHand.player.id;
+        highHandHistory.playerId = highHand.playerId;
         highHandHistory.rank = highHand.rank;
-        highHandHistory.rewardId = highHand.reward.id;
+        highHandHistory.rewardId = highHand.rewardId;
         highHandHistory.rewardTrackingId = highHand.rewardTracking.id;
         highHandHistory.startHour = highHand.startHour;
         highHandHistory.winner = highHand.winner;
@@ -127,7 +127,7 @@ class HistoryRepositoryImpl {
     hostId: string,
     clubId: number | null
   ): Promise<GameHistory[]> {
-    const gameHistory = await getRepository(GameHistory)
+    const gameHistory = await getHistoryRepository(GameHistory)
       .createQueryBuilder()
       .where('club_id = :clubId OR host_id = :hostId', {
         clubId: clubId,
@@ -138,7 +138,7 @@ class HistoryRepositoryImpl {
   }
 
   public async getPlayersInGame(gameId: number): Promise<PlayersInGame[]> {
-    const playersInGameRepo = await getRepository(PlayersInGame);
+    const playersInGameRepo = await getHistoryRepository(PlayersInGame);
     const playersInGame = playersInGameRepo.find({where: {gameId: gameId}});
     return playersInGame;
   }
@@ -147,17 +147,17 @@ class HistoryRepositoryImpl {
     gameCode: string,
     playerId: number
   ): Promise<any> {
-    const gameRepo = getRepository(GameHistory);
+    const gameRepo = getHistoryRepository(GameHistory);
     const game = await gameRepo.findOne({gameCode: gameCode});
     let completedGame: any;
     if (game) {
-      const playerRepo = getRepository(PlayersInGame);
+      const playerRepo = getHistoryRepository(PlayersInGame);
       const player = await playerRepo.findOne({
         gameId: game.gameId,
         playerId: playerId,
       });
       if (player) {
-        const gameStatsRepo = getRepository(PlayerGameStats);
+        const gameStatsRepo = getHistoryRepository(PlayerGameStats);
         const gameStat = await gameStatsRepo.findOne({
           gameId: game.gameId,
           playerId: player.playerId,
@@ -194,11 +194,11 @@ class HistoryRepositoryImpl {
 
   public async getPastGames(playerId: string) {
     // get the list of past games associated with player clubs
-    const playersRepo = getRepository(PlayersInGame);
+    const playersRepo = getHistoryRepository(PlayersInGame);
     const players = await playersRepo.find({playerUuid: playerId});
     const pastGames = new Array<any>();
     players.forEach(async player => {
-      const gameRepo = getRepository(GameHistory);
+      const gameRepo = getHistoryRepository(GameHistory);
       const game = await gameRepo.findOne({gameId: player.gameId});
       if (game) {
         const club = await Cache.getClub(game.clubCode);
@@ -229,11 +229,11 @@ class HistoryRepositoryImpl {
   }
 
   public async getGameResultTable(gameCode: string): Promise<any> {
-    const gameRepo = getRepository(GameHistory);
+    const gameRepo = getHistoryRepository(GameHistory);
     const games = await gameRepo.find({gameCode: gameCode});
     const gameResults = new Array<any>();
     games.forEach(async game => {
-      const playersRepo = getRepository(PlayersInGame);
+      const playersRepo = getHistoryRepository(PlayersInGame);
       const player = await playersRepo.findOne({gameId: game.gameId});
       if (player) {
         const gameResult = {

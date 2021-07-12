@@ -2,12 +2,12 @@ import {ChatText} from '@src/entity/player/chat';
 import {Club} from '@src/entity/player/club';
 import {Player} from '@src/entity/player/player';
 import {ChatTextType} from '@src/entity/types';
-import {getRepository} from 'typeorm';
 import * as _ from 'lodash';
+import {getUserRepository} from '.';
 
 class ChatTextRepositoryImpl {
   public async addClubChatText(text: string, club: Club): Promise<boolean> {
-    const repo = getRepository(ChatText);
+    const repo = getUserRepository(ChatText);
     // if the text exists don't add it
     const existing = await repo.find({
       text: text,
@@ -32,7 +32,7 @@ class ChatTextRepositoryImpl {
   }
 
   public async removeClubChatText(text: string, club: Club): Promise<boolean> {
-    const repo = getRepository(ChatText);
+    const repo = getUserRepository(ChatText);
     await repo
       .createQueryBuilder()
       .delete()
@@ -49,7 +49,7 @@ class ChatTextRepositoryImpl {
     text: string,
     player: Player
   ): Promise<boolean> {
-    const repo = getRepository(ChatText);
+    const repo = getUserRepository(ChatText);
 
     // if the text exists don't add it
     const existing = await repo.find({
@@ -77,7 +77,7 @@ class ChatTextRepositoryImpl {
     text: string,
     player: Player
   ): Promise<boolean> {
-    const repo = getRepository(ChatText);
+    const repo = getUserRepository(ChatText);
     await repo
       .createQueryBuilder()
       .delete()
@@ -91,7 +91,7 @@ class ChatTextRepositoryImpl {
   }
 
   public async addSystemChatText(text: string): Promise<boolean> {
-    const repo = getRepository(ChatText);
+    const repo = getUserRepository(ChatText);
     // if the text exists don't add it
     const existing = await repo.find({
       text: text,
@@ -114,7 +114,7 @@ class ChatTextRepositoryImpl {
   public async getChatTexts(player: Player, club?: Club): Promise<string[]> {
     // get system texts
     let texts = new Array<string>();
-    const repo = getRepository(ChatText);
+    const repo = getUserRepository(ChatText);
     const systemTexts = await repo.find({type: ChatTextType.SYSTEM});
     texts.push(...systemTexts.map(x => x.text));
 

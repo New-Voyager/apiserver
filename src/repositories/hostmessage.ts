@@ -1,8 +1,8 @@
 import {ClubHostMessages} from '@src/entity/player/clubmessage';
 import {Club, ClubMember} from '@src/entity/player/club';
-import {getConnection, getRepository} from 'typeorm';
 import {HostMessageType} from '../entity/types';
 import {getLogger} from '@src/utils/log';
+import {getUserConnection, getUserRepository} from '.';
 const logger = getLogger('host-message');
 
 class HostMessageRepositoryImpl {
@@ -13,7 +13,7 @@ class HostMessageRepositoryImpl {
     messageType: HostMessageType
   ): Promise<any> {
     try {
-      const hostMessageRepository = getRepository(ClubHostMessages);
+      const hostMessageRepository = getUserRepository(ClubHostMessages);
       const newMessage = new ClubHostMessages();
       newMessage.club = club;
       newMessage.member = clubMember;
@@ -43,7 +43,7 @@ class HostMessageRepositoryImpl {
     playerId: number
   ): Promise<any> {
     try {
-      const hostMessageRepository = getRepository(ClubHostMessages);
+      const hostMessageRepository = getUserRepository(ClubHostMessages);
       const resp = await hostMessageRepository.find({
         order: {
           id: 'DESC',
@@ -84,7 +84,7 @@ class HostMessageRepositoryImpl {
         INNER JOIN club_member cm on cm.id = chm.member
         INNER JOIN player p on cm.player_id = p.id 
         where chm.club = ${club.id} order by chm.member DESC`;
-      const members = await getConnection().query(query);
+      const members = await getUserConnection().query(query);
 
       const summary = new Array<any>();
       for await (const member of members) {
@@ -112,7 +112,7 @@ class HostMessageRepositoryImpl {
     afterId?: number
   ): Promise<any> {
     try {
-      const hostMessageRepository = getRepository(ClubHostMessages);
+      const hostMessageRepository = getUserRepository(ClubHostMessages);
       const resp = await hostMessageRepository.find({
         order: {
           id: 'ASC',
@@ -150,7 +150,7 @@ class HostMessageRepositoryImpl {
     messageType: HostMessageType
   ): Promise<boolean> {
     try {
-      const hostMessageRepository = getRepository(ClubHostMessages);
+      const hostMessageRepository = getUserRepository(ClubHostMessages);
       await hostMessageRepository.update(
         {
           club: {id: club.id},
@@ -170,7 +170,7 @@ class HostMessageRepositoryImpl {
 
   public async hostMessageUnreadCount(club: Club) {
     try {
-      const hostMessageRepository = getRepository(ClubHostMessages);
+      const hostMessageRepository = getUserRepository(ClubHostMessages);
       const hostUnreadCount = await hostMessageRepository.count({
         club: {id: club.id},
         messageType: HostMessageType.TO_HOST,
@@ -185,7 +185,7 @@ class HostMessageRepositoryImpl {
 
   public async memberMessageUnreadCount(club: Club, clubMember: ClubMember) {
     try {
-      const hostMessageRepository = getRepository(ClubHostMessages);
+      const hostMessageRepository = getUserRepository(ClubHostMessages);
       const memberUnreadCount = await hostMessageRepository.count({
         club: {id: club.id},
         member: {id: clubMember.id},

@@ -4,6 +4,7 @@ services:
     image: postgres
     volumes:
       - db-data:/var/lib/postgresql/data
+      - ./docker:/docker-entrypoint-initdb.d
     ports:
       - 5432:5432
     environment:

@@ -1,6 +1,6 @@
 import {ClubMessageInput} from '@src/entity/player/clubmessage';
 import {Club, ClubMember} from '@src/entity/player/club';
-import {getRepository, MoreThan, LessThan, Not, getConnection} from 'typeorm';
+import {MoreThan, LessThan, Not} from 'typeorm';
 import {ClubMessageType} from '@src/entity/types';
 import {Player} from '@src/entity/player/player';
 import {PageOptions} from '@src/types';
@@ -9,6 +9,7 @@ import {v4 as uuidv4} from 'uuid';
 import {Nats} from '@src/nats';
 import {ClubUpdateType} from './types';
 import {Cache} from '@src/cache/index';
+import {getUserConnection, getUserRepository} from '.';
 
 const logger = getLogger('clubmessage');
 
@@ -29,11 +30,11 @@ class ClubMessageRepositoryImpl {
   ) {
     try {
       let invalidPlayer = '';
-      const clubRepository = getRepository(Club);
+      const clubRepository = getUserRepository(Club);
       const club = await clubRepository.findOne({where: {clubCode: clubCode}});
       if (message.playerTags) {
         const playerArray = message.playerTags.split(',');
-        const playerRepository = getRepository<Player>(Player);
+        const playerRepository = getUserRepository<Player>(Player);
         playerArray.forEach(player => {
           const result = playerRepository.findOne({where: {uuid: player}});
           if (!result) {
@@ -88,7 +89,7 @@ class ClubMessageRepositoryImpl {
     sendMessage.giphyLink = message.giphyLink;
     sendMessage.playerTags = message.playerTags;
     sendMessage.player = player;
-    const repository = getRepository(ClubMessageInput);
+    const repository = getUserRepository(ClubMessageInput);
     const response = await repository.save(sendMessage);
 
     const messageId = uuidv4();
@@ -109,7 +110,7 @@ class ClubMessageRepositoryImpl {
     pageOptions?: PageOptions
   ): Promise<Array<ClubMessageInput>> {
     try {
-      const clubRepository = getRepository(Club);
+      const clubRepository = getUserRepository(Club);
       const club = await clubRepository.findOne({where: {clubCode: clubCode}});
       if (!club) {
         throw new Error(`Club ${clubCode} is not found`);
@@ -145,7 +146,7 @@ class ClubMessageRepositoryImpl {
         if (!take || take > 50) {
           take = 50;
         }
-        const clubRepository = getRepository(Club);
+        const clubRepository = getUserRepository(Club);
         const club = await clubRepository.findOne({
           where: {clubCode: clubCode},
         });
@@ -163,7 +164,7 @@ class ClubMessageRepositoryImpl {
         if (pageWhere) {
           findOptions['where']['id'] = pageWhere;
         }
-        const clubMessageRepository = getRepository(ClubMessageInput);
+        const clubMessageRepository = getUserRepository(ClubMessageInput);
         const clubMessages = await clubMessageRepository.find(findOptions);
         return clubMessages;
       }
@@ -190,7 +191,7 @@ class ClubMessageRepositoryImpl {
               "ClubMessageInput"."player_id" != $2 AND 
               "ClubMessageInput"."message_time" > $3`;
 
-    const result = await getConnection().query(query, [
+    const result = await getUserConnection().query(query, [
       club.clubCode,
       player.id,
       date,
@@ -199,7 +200,7 @@ class ClubMessageRepositoryImpl {
   }
 
   public async markMessagesRead(club: Club, player: Player) {
-    const clubMemberRepo = getRepository(ClubMember);
+    const clubMemberRepo = getUserRepository(ClubMember);
     const now = new Date();
     await clubMemberRepo.update(
       {

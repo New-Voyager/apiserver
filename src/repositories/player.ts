@@ -1,4 +1,4 @@
-import {EntityManager, Repository, getRepository, In} from 'typeorm';
+import {EntityManager, Repository, In} from 'typeorm';
 import {v4 as uuidv4} from 'uuid';
 import {Player, PlayerNotes} from '@src/entity/player/player';
 import {getLogger} from '@src/utils/log';
@@ -6,6 +6,7 @@ const logger = getLogger('player');
 import {Cache} from '@src/cache/index';
 import {StatsRepository} from './stats';
 import {Firebase} from '@src/firebase';
+import {getUserRepository} from '.';
 
 class PlayerRepositoryImpl {
   public async createPlayer(
@@ -15,7 +16,7 @@ class PlayerRepositoryImpl {
     deviceId: string,
     isBot: boolean
   ): Promise<string> {
-    const repository = getRepository(Player);
+    const repository = getUserRepository(Player);
     let player: Player | undefined;
     if (email) {
       player = await repository.findOne({where: {email: email}});
@@ -49,7 +50,7 @@ class PlayerRepositoryImpl {
 
   // Updates firebase token for the player
   public async updateFirebaseToken(playerId: string, token: string) {
-    const player = await getRepository(Player).findOne({
+    const player = await getUserRepository(Player).findOne({
       uuid: playerId,
     });
     if (!player) {
@@ -58,7 +59,7 @@ class PlayerRepositoryImpl {
     }
 
     logger.info(`Updated token for player: ${player.name} token: ${token}`);
-    await getRepository(Player).update(
+    await getUserRepository(Player).update(
       {
         uuid: playerId,
       },
@@ -69,14 +70,14 @@ class PlayerRepositoryImpl {
   }
 
   public async getPlayers(): Promise<Array<any>> {
-    const repository = getRepository(Player);
+    const repository = getUserRepository(Player);
     // get all players (testing only)
     const players = await repository.find();
     return players;
   }
 
   public async getPlayerById(playerId: string): Promise<Player | undefined> {
-    const repository = getRepository(Player);
+    const repository = getUserRepository(Player);
     // get player by id (testing only)
     const player = await repository.findOne({where: {uuid: playerId}});
     return player;
@@ -90,7 +91,7 @@ class PlayerRepositoryImpl {
     if (transactionManager) {
       repository = transactionManager.getRepository(Player);
     } else {
-      repository = getRepository(Player);
+      repository = getUserRepository(Player);
     }
 
     // get player by id (testing only)
@@ -99,14 +100,14 @@ class PlayerRepositoryImpl {
   }
 
   public async getPlayerInfo(playerId: string): Promise<Player | undefined> {
-    const repository = getRepository(Player);
+    const repository = getUserRepository(Player);
     // get player by id (testing only)
     const player = await repository.findOne({where: {uuid: playerId}});
     return player;
   }
 
   public async idsToPlayerInfo(ids: Array<number>): Promise<Array<Player>> {
-    const repository = getRepository(Player);
+    const repository = getUserRepository(Player);
     const resp = await repository.find({
       where: {
         id: In(ids),
@@ -131,7 +132,7 @@ class PlayerRepositoryImpl {
     if (!notesPlayer) {
       throw new Error('Could not get notes palyer id');
     }
-    const notesRepo = getRepository(PlayerNotes);
+    const notesRepo = getUserRepository(PlayerNotes);
     const notes = await notesRepo.findOne({
       player: {id: player.id},
       notesToPlayer: {id: notesPlayer.id},
@@ -158,7 +159,7 @@ class PlayerRepositoryImpl {
     if (!notesPlayer) {
       throw new Error('Could not get notes palyer id');
     }
-    const notesRepo = getRepository(PlayerNotes);
+    const notesRepo = getUserRepository(PlayerNotes);
     let affectedRows = await notesRepo.update(
       {
         player: {id: player.id},

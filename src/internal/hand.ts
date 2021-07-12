@@ -5,6 +5,7 @@ import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {Cache} from '@src/cache';
 import {WonAtStatus} from '@src/entity/types';
 import {HandRepository} from '@src/repositories/hand';
+import {getGameRepository} from '@src/repositories';
 
 function validateHandData(handData: any): Array<string> {
   const errors = new Array<string>();
@@ -135,7 +136,7 @@ async function processConsecutiveActionTimeouts(
 
   const maxAllowedTimeouts = 4;
 
-  const gameRespository: Repository<PokerGame> = getRepository(PokerGame);
+  const gameRespository: Repository<PokerGame> = getGameRepository(PokerGame);
   const game: PokerGame | undefined = await gameRespository.findOne({
     id: gameID,
   });
@@ -144,7 +145,7 @@ async function processConsecutiveActionTimeouts(
       `Unable to find game with ID ${gameID} while processing consecutive action timeouts`
     );
   }
-  const playerGameTrackerRepository: Repository<PlayerGameTracker> = getRepository(
+  const playerGameTrackerRepository: Repository<PlayerGameTracker> = getGameRepository(
     PlayerGameTracker
   );
 

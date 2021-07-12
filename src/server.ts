@@ -6,6 +6,7 @@ import {
   ConnectionOptions,
   ConnectionOptionsReader,
   createConnection,
+  createConnections,
   getConnectionOptions,
   getRepository,
 } from 'typeorm';
@@ -102,27 +103,64 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
 
   if (process.env.NODE_ENV !== 'unit-test') {
     logger.debug('Running in dev/prod mode');
-    const options = await getConnectionOptions();
+    const options = await getConnectionOptions('default');
+    const users = options['users'];
+    const livegames = options['livegames'];
+    const history = options['history'];
 
     // override database name if specified in the environment variable
-    if (process.env.DB_NAME) {
-      const optionsObj = options as any;
-      await createConnection({
-        type: optionsObj.type,
-        host: optionsObj.host,
-        port: optionsObj.port,
-        username: optionsObj.username,
-        password: optionsObj.password,
-        database: process.env.DB_NAME,
-        cache: optionsObj.cache,
-        synchronize: optionsObj.synchronize,
-        bigNumberStrings: optionsObj.bigNumberStrings,
-        entities: optionsObj.entities,
-        name: 'default',
-      });
-    } else {
-      await createConnection(options);
+    //if (process.env.DB_NAME) {
+    const liveGameObj = livegames as any;
+    const historyObj = history as any;
+    const userObj = users as any;
+    try {
+      await createConnections([
+        {
+          type: userObj.type,
+          host: userObj.host,
+          port: userObj.port,
+          username: userObj.username,
+          password: userObj.password,
+          database: 'users', //process.env.DB_NAME,
+          cache: userObj.cache,
+          synchronize: userObj.synchronize,
+          bigNumberStrings: userObj.bigNumberStrings,
+          entities: userObj.entities,
+          name: 'users',
+        },
+        {
+          type: liveGameObj.type,
+          host: liveGameObj.host,
+          port: liveGameObj.port,
+          username: liveGameObj.username,
+          password: liveGameObj.password,
+          database: 'livegames', //process.env.DB_NAME,
+          cache: liveGameObj.cache,
+          synchronize: liveGameObj.synchronize,
+          bigNumberStrings: liveGameObj.bigNumberStrings,
+          entities: liveGameObj.entities,
+          name: 'livegames',
+        },
+        {
+          type: historyObj.type,
+          host: historyObj.host,
+          port: historyObj.port,
+          username: historyObj.username,
+          password: historyObj.password,
+          database: 'history',
+          cache: historyObj.cache,
+          synchronize: historyObj.synchronize,
+          bigNumberStrings: historyObj.bigNumberStrings,
+          entities: historyObj.entities,
+          name: 'history',
+        },
+      ]);
+    } catch (err) {
+      logger.error(`Error creating connections: ${err.toString()}`);
     }
+    // } else {
+    //   await createConnection(options);
+    // }
   } else {
     logger.debug('Running in UNIT-TEST mode');
     process.env.DB_USED = 'sqllite';

@@ -9,7 +9,6 @@ import {
 } from '@src/entity/types';
 import {pendingProcessDone, playerStatusChanged} from '@src/gameserver';
 import {getLogger} from '@src/utils/log';
-import {getRepository} from 'typeorm';
 import {BuyIn} from './buyin';
 import {SeatChangeProcess} from './seatchange';
 import {breakTimeoutExpired} from './takebreak';
@@ -26,6 +25,7 @@ import {
   PLAYER_SEATCHANGE_PROMPT,
 } from './types';
 import {WaitListMgmt} from './waitlist';
+import {getGameRepository, getUserRepository} from '.';
 
 const logger = getLogger('timer');
 
@@ -80,8 +80,7 @@ export async function waitlistTimeoutExpired(gameID: number, playerID: number) {
   logger.info(
     `Wait list timer expired. GameID: ${gameID}, PlayerID: ${playerID}. Go to next player`
   );
-  const gameRepository = getRepository(PokerGame);
-  const game = await gameRepository.findOne({id: gameID});
+  const game = await Cache.getGameById(gameID);
   if (!game) {
     throw new Error(`Game: ${gameID} is not found`);
   }
@@ -109,8 +108,7 @@ export async function playerSeatChangeTimeoutExpired(
 ) {
   logger.info(`Seat change timeout expired. GameID: ${gameID}`);
 
-  const gameRepository = getRepository(PokerGame);
-  const game = await gameRepository.findOne({id: gameID});
+  const game = await Cache.getGameById(gameID);
   if (!game) {
     logger.error(`Game: ${gameID} is not found`);
   } else {
@@ -120,13 +118,11 @@ export async function playerSeatChangeTimeoutExpired(
 }
 
 export async function buyInTimeoutExpired(gameID: number, playerID: number) {
-  const gameRepository = getRepository(PokerGame);
-  const game = await gameRepository.findOne({id: gameID});
+  const game = await Cache.getGameById(gameID);
   if (!game) {
     logger.error(`Game: ${gameID} is not found`);
   } else {
-    const playerRepository = getRepository(Player);
-    const player = await playerRepository.findOne({id: playerID});
+    const player = await Cache.getPlayerById(playerID);
     if (!player) {
       logger.error(`Player: ${playerID} is not found`);
     } else {
@@ -147,13 +143,11 @@ export async function buyInApprovalTimeoutExpired(
   logger.info(
     `Buyin approval timeout expired. GameID: ${gameID}, playerID: ${playerID}`
   );
-  const gameRepository = getRepository(PokerGame);
-  const game = await gameRepository.findOne({id: gameID});
+  const game = await Cache.getGameById(gameID);
   if (!game) {
     logger.error(`Game: ${gameID} is not found`);
   } else {
-    const playerRepository = getRepository(Player);
-    const player = await playerRepository.findOne({id: playerID});
+    const player = await Cache.getPlayerById(playerID);
     if (!player) {
       logger.error(`Player: ${playerID} is not found`);
     } else {
@@ -161,7 +155,7 @@ export async function buyInApprovalTimeoutExpired(
         `[${game.gameCode}] Buyin timeout expired. player: ${player.name}`
       );
       // handle buyin approval timeout
-      const nextHandUpdatesRepository = getRepository(NextHandUpdates);
+      const nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
       await nextHandUpdatesRepository
         .createQueryBuilder()
         .delete()
@@ -172,7 +166,7 @@ export async function buyInApprovalTimeoutExpired(
         })
         .execute();
 
-      const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+      const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
       await playerGameTrackerRepository.update(
         {
           game: {id: game.id},
@@ -194,18 +188,16 @@ export async function reloadApprovalTimeoutExpired(
   logger.info(
     `Reload approval timeout expired. GameID: ${gameID}, playerID: ${playerID}`
   );
-  const gameRepository = getRepository(PokerGame);
-  const game = await gameRepository.findOne({id: gameID});
+  const game = await Cache.getGameById(gameID);
   if (!game) {
     logger.error(`Game: ${gameID} is not found`);
   } else {
-    const playerRepository = getRepository(Player);
-    const player = await playerRepository.findOne({id: playerID});
+    const player = await Cache.getPlayerById(playerID);
     if (!player) {
       logger.error(`Player: ${playerID} is not found`);
     } else {
       // handle reload approval timeout
-      const nextHandUpdatesRepository = getRepository(NextHandUpdates);
+      const nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
       await nextHandUpdatesRepository
         .createQueryBuilder()
         .delete()
@@ -216,7 +208,7 @@ export async function reloadApprovalTimeoutExpired(
         })
         .execute();
 
-      const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+      const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
       const playerInGames = await playerGameTrackerRepository
         .createQueryBuilder()
         .where({

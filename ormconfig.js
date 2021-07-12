@@ -2,23 +2,51 @@ pgHostKey = 'POSTGRES_HOST';
 pgPortKey = 'POSTGRES_PORT';
 pgUserKey = 'POSTGRES_USER';
 pgPasswordKey = 'POSTGRES_PASSWORD';
-pgDbNameKey = 'POSTGRES_DB';
+//pgDbNameKey = 'POSTGRES_DB';
 
 configs = {
-  default: {
-    name: 'default',
+  users: {
+    name: 'users',
     type: 'postgres',
     host: process.env[pgHostKey],
     port: process.env[pgPortKey],
     username: process.env[pgUserKey],
     password: process.env[pgPasswordKey],
-    database: process.env[pgDbNameKey],
+    database: 'users', //process.env[pgDbNameKey],
     logging: false,
     cache: true,
     synchronize: true,
     bigNumberStrings: false,
-    entities: ['build/src/entity/**/*.js'],
+    entities: ['build/src/entity/player/**/*.js'],
+  },  
+  livegames: {
+    name: 'livegames',
+    type: 'postgres',
+    host: process.env[pgHostKey],
+    port: process.env[pgPortKey],
+    username: process.env[pgUserKey],
+    password: process.env[pgPasswordKey],
+    database: 'livegames', //process.env[pgDbNameKey],
+    logging: false,
+    cache: true,
+    synchronize: true,
+    bigNumberStrings: false,
+    entities: ['build/src/entity/game/**/*.js'],
   },
+  history: {
+    name: 'history',
+    type: 'postgres',
+    host: process.env[pgHostKey],
+    port: process.env[pgPortKey],
+    username: process.env[pgUserKey],
+    password: process.env[pgPasswordKey],
+    database: 'history',
+    logging: false,
+    cache: true,
+    synchronize: true,
+    bigNumberStrings: false,
+    entities: ['build/src/entity/history/**/*.js'],
+  },  
   test: {
     name: 'default',
     type: 'sqlite',
@@ -35,7 +63,7 @@ if (process.env.NODE_ENV === 'test') {
   process.env.DB_USED = 'sqllite';
   module.exports = configs.test;
 } else {
-  envs = [pgHostKey, pgPortKey, pgUserKey, pgPasswordKey, pgDbNameKey];
+  envs = [pgHostKey, pgPortKey, pgUserKey, pgPasswordKey];
   errs = [];
   for (const v of envs) {
     if (!process.env[v]) {
@@ -45,5 +73,9 @@ if (process.env.NODE_ENV === 'test') {
   if (errs.length > 0) {
     throw new Error(errs.join('\n'));
   }
-  module.exports = configs.default;
+  module.exports = {
+    livegames: configs.livegames,
+    history: configs.history,
+    users: configs.users,
+  }
 }

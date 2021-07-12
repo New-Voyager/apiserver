@@ -12,15 +12,7 @@ import {
   TableStatus,
 } from '@src/entity/types';
 import {getLogger} from '@src/utils/log';
-import {
-  EntityManager,
-  getConnection,
-  getManager,
-  getRepository,
-  IsNull,
-  Not,
-  Repository,
-} from 'typeorm';
+import {EntityManager, IsNull, Not, Repository} from 'typeorm';
 import * as _ from 'lodash';
 import {
   hostSeatChangeProcessEnded,
@@ -39,6 +31,7 @@ import {fixQuery, utcTime} from '@src/utils';
 import {Nats} from '@src/nats';
 import {Cache} from '@src/cache/index';
 import {processPendingUpdates} from './pendingupdates';
+import {getGameConnection, getGameManager, getGameRepository} from '.';
 
 const logger = getLogger('seatchange');
 
@@ -55,7 +48,7 @@ export class SeatChangeProcess {
       return;
     }
 
-    const playerSeatChangeRepo = getRepository(PlayerSeatChangeProcess);
+    const playerSeatChangeRepo = getGameRepository(PlayerSeatChangeProcess);
     // clear old rows if any
     await playerSeatChangeRepo.delete({
       gameCode: this.game.gameCode,
@@ -74,7 +67,7 @@ export class SeatChangeProcess {
       await playerSeatChangeRepo.save(playerSeatChange);
     }
 
-    const gameUpdatesRepo = getRepository(PokerGameUpdates);
+    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
     gameUpdatesRepo.update(
       {
         gameID: this.game.id,
@@ -92,7 +85,7 @@ export class SeatChangeProcess {
       `[${this.game.gameCode}] Seat change process. Prompting next player`
     );
 
-    const playerSeatChangeRepo = getRepository(PlayerSeatChangeProcess);
+    const playerSeatChangeRepo = getGameRepository(PlayerSeatChangeProcess);
 
     // delete the player who has the prompt
     await playerSeatChangeRepo.delete({
@@ -110,12 +103,12 @@ export class SeatChangeProcess {
     });
 
     // make sure seats are opened
-    const playerGameTrackerRepo = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     const count = await playerGameTrackerRepo.count({
       where: {game: {id: this.game.id}, status: PlayerStatus.PLAYING},
     });
 
-    const gameUpdatesRepo = getRepository(PokerGameUpdates);
+    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
     if (
       seatChangeRequestedPlayers.length === 0 ||
       count === this.game.maxPlayers
@@ -196,7 +189,7 @@ export class SeatChangeProcess {
 
   public async timerExpired(playerId: number) {
     // remove the prompted player
-    const playerSeatChangeRepo = getRepository(PlayerSeatChangeProcess);
+    const playerSeatChangeRepo = getGameRepository(PlayerSeatChangeProcess);
     await playerSeatChangeRepo.delete({
       gameCode: this.game.gameCode,
       playerId: playerId,
@@ -209,7 +202,7 @@ export class SeatChangeProcess {
     player: Player,
     cancel: boolean
   ): Promise<Date | null> {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
       where: {
         game: {id: this.game.id},
@@ -246,7 +239,7 @@ export class SeatChangeProcess {
   public async seatChangeRequests(
     player: Player
   ): Promise<PlayerGameTracker[]> {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
       where: {
         game: {id: this.game.id},
@@ -300,7 +293,7 @@ export class SeatChangeProcess {
     player: Player,
     seatNo: number
   ): Promise<boolean> {
-    const playerOldSeat = await getManager().transaction(async tran => {
+    const playerOldSeat = await getGameManager().transaction(async tran => {
       logger.info(
         `[${this.game.gameCode}] Received confirm seat change from player. ${player.id} ${player.name}`
       );
@@ -410,7 +403,7 @@ export class SeatChangeProcess {
         PlayerGameTracker
       );
     } else {
-      playerGameTrackerRepository = getRepository(PlayerGameTracker);
+      playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     }
     const players = await playerGameTrackerRepository.find({
       order: {seatChangeRequestedAt: 'ASC'},
@@ -425,11 +418,11 @@ export class SeatChangeProcess {
 
   public async beginHostSeatChange(host: Player) {
     // first remove entries from the HostSeatChangeProcess table
-    await getRepository(HostSeatChangeProcess).delete({
+    await getGameRepository(HostSeatChangeProcess).delete({
       gameCode: this.game.gameCode,
     });
 
-    await getManager().transaction(async transactionEntityManager => {
+    await getGameManager().transaction(async transactionEntityManager => {
       const playerGameTrackerRepo = transactionEntityManager.getRepository(
         PlayerGameTracker
       );
@@ -486,7 +479,7 @@ export class SeatChangeProcess {
   }
 
   public async swapSeats(seatNo1: number, seatNo2: number): Promise<boolean> {
-    await getManager().transaction(async transactionEntityManager => {
+    await getGameManager().transaction(async transactionEntityManager => {
       const seatChangeProcessRepo = transactionEntityManager.getRepository(
         HostSeatChangeProcess
       );
@@ -574,7 +567,7 @@ export class SeatChangeProcess {
   }
 
   public async hostSeatChangeComplete(host: Player, cancelChanges: boolean) {
-    await getManager().transaction(async transactionEntityManager => {
+    await getGameManager().transaction(async transactionEntityManager => {
       const seatChangeProcessRepo = transactionEntityManager.getRepository(
         HostSeatChangeProcess
       );
@@ -630,7 +623,7 @@ export async function getCurrentSeats(
   if (transactionManager) {
     repository = transactionManager.getRepository(PlayerGameTracker);
   } else {
-    repository = getRepository(PlayerGameTracker);
+    repository = getGameRepository(PlayerGameTracker);
   }
 
   // query using the seat number and send update
@@ -682,7 +675,7 @@ export async function hostSeatChangePlayers(
   if (transactionManager) {
     resp = await transactionManager.query(query, [gameCode]);
   } else {
-    resp = await getConnection().query(query, [gameCode]);
+    resp = await getGameConnection().query(query, [gameCode]);
   }
   return resp;
 }

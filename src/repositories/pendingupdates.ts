@@ -1,10 +1,4 @@
-import {
-  getRepository,
-  getConnection,
-  Not,
-  EntityManager,
-  Repository,
-} from 'typeorm';
+import {Not, EntityManager, Repository} from 'typeorm';
 import {fixQuery} from '@src/utils';
 import {
   ApprovalStatus,
@@ -37,6 +31,7 @@ import {Cache} from '@src/cache';
 import {BuyIn} from './buyin';
 import {reloadApprovalTimeoutExpired} from './timer';
 import {Reload} from './reload';
+import {getGameConnection, getGameRepository} from '.';
 
 const logger = getLogger('pending-updates');
 
@@ -48,7 +43,7 @@ export async function markDealerChoiceNextHand(
   if (entityManager) {
     nextHandUpdatesRepository = entityManager.getRepository(NextHandUpdates);
   } else {
-    nextHandUpdatesRepository = getRepository(NextHandUpdates);
+    nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
   }
   const nextHandUpdate = new NextHandUpdates();
   nextHandUpdate.game = game;
@@ -62,14 +57,14 @@ export async function processPendingUpdates(gameId: number) {
   let newOpenSeat = false;
   let dealerChoiceUpdate: NextHandUpdates | null = null;
 
-  const gameRespository = getRepository(PokerGame);
+  const gameRespository = getGameRepository(PokerGame);
   const game = await gameRespository.findOne({id: gameId});
   if (!game) {
     throw new Error(`Game: ${gameId} is not found`);
   }
 
   await Cache.updateGamePendingUpdates(game?.gameCode, false);
-  const gameUpdatesRepo = getRepository(PokerGameUpdates);
+  const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
   const gameUpdate = await gameUpdatesRepo.findOne({gameID: game.id});
   if (!gameUpdate) {
     return;
@@ -87,7 +82,7 @@ export async function processPendingUpdates(gameId: number) {
   const query = fixQuery(
     'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ? AND new_update = ?'
   );
-  let resp = await getConnection().query(query, [
+  let resp = await getGameConnection().query(query, [
     gameId,
     NextHandUpdate.END_GAME,
   ]);
@@ -96,7 +91,7 @@ export async function processPendingUpdates(gameId: number) {
     await GameRepository.markGameStatus(gameId, GameStatus.ENDED);
 
     // delete hand updates for the game
-    await getConnection().query(
+    await getGameConnection().query(
       fixQuery('DELETE FROM next_hand_updates WHERE game_id=?'),
       [gameId]
     );
@@ -104,7 +99,7 @@ export async function processPendingUpdates(gameId: number) {
   }
 
   // did the host paused the game?
-  resp = await getConnection().query(query, [
+  resp = await getGameConnection().query(query, [
     gameId,
     NextHandUpdate.PAUSE_GAME,
   ]);
@@ -114,7 +109,7 @@ export async function processPendingUpdates(gameId: number) {
     await GameRepository.markGameStatus(gameId, GameStatus.PAUSED);
 
     // delete hand updates for the game
-    await getConnection().query(
+    await getGameConnection().query(
       fixQuery(
         'DELETE FROM next_hand_updates WHERE game_id=? AND new_update = ?'
       ),
@@ -123,7 +118,7 @@ export async function processPendingUpdates(gameId: number) {
     return;
   }
 
-  const pendingUpdatesRepo = getRepository(NextHandUpdates);
+  const pendingUpdatesRepo = getGameRepository(NextHandUpdates);
   const updates = await pendingUpdatesRepo.find({
     where: {
       game: {id: gameId},
@@ -134,7 +129,7 @@ export async function processPendingUpdates(gameId: number) {
   let seatChangeInProgress = false;
   let openedSeat = 0;
   if (updates.length !== 0) {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
 
     for (const update of updates) {
       // walk through each update
@@ -255,7 +250,7 @@ async function kickoutPlayer(
     },
   });
 
-  const gameUpdatesRepo = getRepository(PokerGameUpdates);
+  const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
   await gameUpdatesRepo.update(
     {
       gameID: game.id,
@@ -316,7 +311,7 @@ async function leaveGame(
     },
   });
 
-  const gameUpdatesRepo = getRepository(PokerGameUpdates);
+  const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
   await gameUpdatesRepo.update(
     {
       gameID: game.id,
@@ -418,7 +413,7 @@ async function handleDealersChoice(
   const playersInSeats = await GameRepository.getPlayersInSeats(game.id);
   const takenSeats = _.keyBy(playersInSeats, 'seatNo');
 
-  const gameUpdatesRepo = getRepository(PokerGameUpdates);
+  const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
   const gameUpdates = await gameUpdatesRepo.find({
     gameID: game.id,
   });
