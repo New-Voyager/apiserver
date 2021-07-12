@@ -405,6 +405,9 @@ type Mutation {
 
   # dealer choice game
   dealerChoice(gameCode: String!, gameType: GameType!): Boolean
+
+  # post blind
+  postBlind(gameCode: String!): Boolean
 }
 
 type gameId{

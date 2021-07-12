@@ -600,6 +600,8 @@ class GameRepositoryImpl {
           .addSelect('status')
           .addSelect('buy_in', 'buyIn')
           .addSelect('game_token', 'gameToken')
+          .addSelect('missed_blind', 'missedBlind')
+          .addSelect('posted_blind', 'postedBlind')
           .execute();
 
         let playerInGame: PlayerGameTracker | null = null;
@@ -626,6 +628,11 @@ class GameRepositoryImpl {
           playerInGame.status = PlayerStatus.NOT_PLAYING;
           playerInGame.runItTwicePrompt = game.runItTwiceAllowed;
           playerInGame.muckLosingHand = game.muckLosingHand;
+
+          if (game.status == GameStatus.ACTIVE) {
+            // player must post blind
+            playerInGame.missedBlind = true;
+          }
 
           try {
             await playerGameTrackerRepository.save(playerInGame);
@@ -674,6 +681,7 @@ class GameRepositoryImpl {
               PlayerStatus.PLAYING,
               PlayerStatus.IN_BREAK,
               PlayerStatus.WAIT_FOR_BUYIN,
+              PlayerStatus.NEED_TO_POST_BLIND,
             ]),
           },
         });
@@ -1939,6 +1947,27 @@ class GameRepositoryImpl {
       where: {game: {id: gameId}},
     });
     return playerGameTracker;
+  }
+
+  public async postBlind(game: PokerGame, player: Player): Promise<void> {
+    const playerGameTrackerRepo = getRepository(PlayerGameTracker);
+    const playerGameTracker = await playerGameTrackerRepo.findOne({
+      where: {
+        game: {id: game.id},
+        playerId: player.id,
+      },
+    });
+    if (playerGameTracker) {
+      await playerGameTrackerRepo.update(
+        {
+          game: {id: game.id},
+          playerId: player.id,
+        },
+        {
+          postedBlind: true,
+        }
+      );
+    }
   }
 }
 
