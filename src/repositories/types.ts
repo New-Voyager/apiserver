@@ -74,6 +74,8 @@ export interface PlayerInSeat {
   gameToken: string;
   runItTwicePrompt: boolean;
   muckLosingHand: boolean;
+  activeSeat: boolean;
+  postedBlind: boolean;
 }
 
 export interface NewHandInfo {

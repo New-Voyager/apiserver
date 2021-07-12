@@ -600,6 +600,8 @@ class GameRepositoryImpl {
           .addSelect('status')
           .addSelect('buy_in', 'buyIn')
           .addSelect('game_token', 'gameToken')
+          .addSelect('missed_blind', 'missedBlind')
+          .addSelect('posted_blind', 'postedBlind')
           .execute();
 
         let playerInGame: PlayerGameTracker | null = null;
@@ -626,6 +628,11 @@ class GameRepositoryImpl {
           playerInGame.status = PlayerStatus.NOT_PLAYING;
           playerInGame.runItTwicePrompt = game.runItTwiceAllowed;
           playerInGame.muckLosingHand = game.muckLosingHand;
+
+          if (game.status == GameStatus.ACTIVE) {
+            // player must post blind
+            playerInGame.missedBlind = true;
+          }
 
           try {
             await playerGameTrackerRepository.save(playerInGame);
@@ -674,6 +681,7 @@ class GameRepositoryImpl {
               PlayerStatus.PLAYING,
               PlayerStatus.IN_BREAK,
               PlayerStatus.WAIT_FOR_BUYIN,
+              PlayerStatus.NEED_TO_POST_BLIND,
             ]),
           },
         });
@@ -1250,7 +1258,9 @@ class GameRepositoryImpl {
           buyin_exp_at as "buyInExpTime", break_time_exp_at as "breakExpTime", game_token AS "gameToken",
           break_time_started_at as "breakStartedTime",
           run_it_twice_prompt as "runItTwicePrompt",
-          muck_losing_hand as "muckLosingHand"
+          muck_losing_hand as "muckLosingHand",
+          missed_blind as "missedBlind",
+          posted_blind as "postedBlind"
           FROM 
           player_game_tracker pgt JOIN player p ON pgt.pgt_player_id = p.id
           AND pgt.pgt_game_id = ? AND pgt.seat_no <> 0`);
@@ -1937,6 +1947,27 @@ class GameRepositoryImpl {
       where: {game: {id: gameId}},
     });
     return playerGameTracker;
+  }
+
+  public async postBlind(game: PokerGame, player: Player): Promise<void> {
+    const playerGameTrackerRepo = getRepository(PlayerGameTracker);
+    const playerGameTracker = await playerGameTrackerRepo.findOne({
+      where: {
+        game: {id: game.id},
+        playerId: player.id,
+      },
+    });
+    if (playerGameTracker) {
+      await playerGameTrackerRepo.update(
+        {
+          game: {id: game.id},
+          playerId: player.id,
+        },
+        {
+          postedBlind: true,
+        }
+      );
+    }
   }
 }
 
