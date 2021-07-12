@@ -1562,6 +1562,25 @@ export async function dealerChoice(
   }
 }
 
+export async function postBlind(
+  playerId: string,
+  gameCode: string
+): Promise<boolean> {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    const game = await Cache.getGame(gameCode);
+    const player = await Cache.getPlayer(playerId);
+    await GameRepository.postBlind(game, player);
+    return true;
+  } catch (err) {
+    logger.error(err.message);
+    throw new Error(
+      `Failed to post blind:  ${err.message}. Game code: ${gameCode}`
+    );
+  }
+}
 export async function openSeats(playerId: string, gameCode: string) {
   if (!playerId) {
     throw new Error('Unauthorized');
@@ -2077,6 +2096,9 @@ const resolvers: any = {
     },
     dealerChoice: async (parent, args, ctx, info) => {
       return dealerChoice(ctx.req.playerId, args.gameCode, args.gameType);
+    },
+    postBlind: async (parent, args, ctx, info) => {
+      return postBlind(ctx.req.playerId, args.gameCode);
     },
   },
 };

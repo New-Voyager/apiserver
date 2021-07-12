@@ -286,26 +286,28 @@ async function leaveGame(
   });
   const openedSeat = playerInGame.seatNo;
 
-  // calculate session time
-  const satAt = new Date(Date.parse(playerInGame.satAt.toString()));
-
   let sessionTime = playerInGame.sessionTime;
-  const currentSessionTime = new Date().getTime() - satAt.getTime();
-  const roundSeconds = Math.round(currentSessionTime / 1000);
-  sessionTime = sessionTime + roundSeconds;
 
-  await playerGameTrackerRepository.update(
-    {
-      game: {id: game.id},
-      playerId: update.playerId,
-    },
-    {
-      satAt: undefined,
-      sessionTime: sessionTime,
-      status: PlayerStatus.LEFT,
-      seatNo: 0,
-    }
-  );
+  if (playerInGame.satAt) {
+    // calculate session time
+    const satAt = new Date(Date.parse(playerInGame.satAt.toString()));
+    const currentSessionTime = new Date().getTime() - satAt.getTime();
+    const roundSeconds = Math.round(currentSessionTime / 1000);
+    sessionTime = sessionTime + roundSeconds;
+
+    await playerGameTrackerRepository.update(
+      {
+        game: {id: game.id},
+        playerId: update.playerId,
+      },
+      {
+        satAt: undefined,
+        sessionTime: sessionTime,
+        status: PlayerStatus.LEFT,
+        seatNo: 0,
+      }
+    );
+  }
 
   const count = await playerGameTrackerRepository.count({
     where: {
