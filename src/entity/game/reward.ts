@@ -25,7 +25,7 @@ export class GameRewardTracking {
   @Column({name: 'reward_id', type: 'int'})
   public rewardId!: number;
 
-  @Column({name: 'player_id', type: 'int'})
+  @Column({name: 'player_id', type: 'int', nullable: true})
   public playerId!: number;
 
   @Column({name: 'player_cards', nullable: true})

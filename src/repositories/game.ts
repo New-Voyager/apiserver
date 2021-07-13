@@ -230,22 +230,27 @@ class GameRepositoryImpl {
                 createRewardTrack.rewardId = reward.id;
                 createRewardTrack.day = new Date();
 
-                const rewardTrackRepository = transactionEntityManager.getRepository(
-                  GameRewardTracking
-                );
-                const rewardTrackResponse = await rewardTrackRepository.save(
-                  createRewardTrack
-                );
-                const createGameReward = new GameReward();
-                createGameReward.gameId = game.id;
-                createGameReward.gameCode = game.gameCode;
-                createGameReward.rewardId = rewardId;
-                createGameReward.rewardTrackingId = rewardTrackResponse;
-                rewardTrackingIds.push(rewardTrackResponse.id);
-                const gameRewardRepository = transactionEntityManager.getRepository(
-                  GameReward
-                );
-                await gameRewardRepository.save(createGameReward);
+                try {
+                  const rewardTrackRepository = transactionEntityManager.getRepository(
+                    GameRewardTracking
+                  );
+                  const rewardTrackResponse = await rewardTrackRepository.save(
+                    createRewardTrack
+                  );
+                  const createGameReward = new GameReward();
+                  createGameReward.gameId = game.id;
+                  createGameReward.gameCode = game.gameCode;
+                  createGameReward.rewardId = rewardId;
+                  createGameReward.rewardTrackingId = rewardTrackResponse;
+                  rewardTrackingIds.push(rewardTrackResponse.id);
+                  const gameRewardRepository = transactionEntityManager.getRepository(
+                    GameReward
+                  );
+                  await gameRewardRepository.save(createGameReward);
+                } catch (err) {
+                  logger.error(`Failed to update rewards. ${err.toString()}`);
+                  throw err;
+                }
               } else {
                 rewardTrackingIds.push(rewardTrack.id);
                 const createGameReward = new GameReward();
@@ -1708,9 +1713,7 @@ class GameRepositoryImpl {
         await transactionEntityManager
           .getRepository(PlayerGameTracker)
           .delete({game: {id: game.id}});
-        await transactionEntityManager
-          .getRepository(PlayerGameStats)
-          .delete({gameId: game.id});
+        await getHistoryRepository(PlayerGameStats).delete({gameId: game.id});
         await transactionEntityManager
           .getRepository(NextHandUpdates)
           .delete({game: {id: game.id}});
@@ -1729,8 +1732,7 @@ class GameRepositoryImpl {
           .createQueryBuilder()
           .delete()
           .execute();
-        await transactionEntityManager
-          .getRepository(PlayerGameStats)
+        await getHistoryRepository(PlayerGameStats)
           .createQueryBuilder()
           .delete()
           .execute();

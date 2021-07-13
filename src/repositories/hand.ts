@@ -365,8 +365,8 @@ class HandRepositoryImpl {
           await StatsRepository.saveHandStats(
             game,
             result,
-            handNum,
-            transactionEntityManager
+            handNum
+            //transactionEntityManager
           );
           return saveResult;
         }
