@@ -164,8 +164,36 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
   } else {
     logger.debug('Running in UNIT-TEST mode');
     process.env.DB_USED = 'sqllite';
-    const options = await getConnectionOptions();
-    await createConnection({...options, name: 'default'});
+
+    try {
+      const options = await getConnectionOptions('default');
+      const users = options['users'];
+      const livegames = options['livegames'];
+      const history = options['history'];
+
+      // override database name if specified in the environment variable
+      //if (process.env.DB_NAME) {
+      const liveGameObj = livegames as any;
+      const historyObj = history as any;
+      const userObj = users as any;
+
+      await createConnections([
+        {
+          ...userObj,
+          name: 'users',
+        },
+        {
+          ...liveGameObj,
+          name: 'livegames',
+        },
+        {
+          ...historyObj,
+          name: 'history',
+        },
+      ]);
+    } catch (err) {
+      logger.error(`Error creating connections: ${err.toString()}`);
+    }
   }
 
   initializeNats();

@@ -47,21 +47,57 @@ configs = {
     bigNumberStrings: false,
     entities: ['build/src/entity/history/**/*.js'],
   },  
-  test: {
-    name: 'default',
-    type: 'sqlite',
-    database: ':memory:',
-    dropSchema: true,
-    synchronize: true,
-    logging: false,
-    cache: true,
-    entities: ['build/src/entity/**/*.js', '../build/src/entity/**/*.js'],
-  },
+  // test: {
+  //   name: 'default',
+  //   type: 'sqlite',
+  //   database: ':memory:',
+  //   dropSchema: true,
+  //   synchronize: true,
+  //   logging: false,
+  //   cache: true,
+  //   entities: ['build/src/entity/**/*.js', '../build/src/entity/**/*.js'],
+  // },
 };
 
 if (process.env.NODE_ENV === 'test') {
   process.env.DB_USED = 'sqllite';
-  module.exports = configs.test;
+  configs = {
+    users: {
+      name: 'users',
+      type: 'sqlite',
+      database: ':memory:',
+      dropSchema: true,
+      synchronize: true,
+      logging: false,
+      cache: true,
+      entities: ['build/src/entity/player/**/*.js', '../build/src/entity/player/**/*.js'],
+    },
+    livegames: {
+      name: 'livegames',
+      type: 'sqlite',
+      database: ':memory:',
+      dropSchema: true,
+      synchronize: true,
+      logging: false,
+      cache: true,
+      entities: ['build/src/entity/game/**/*.js', '../build/src/entity/game/**/*.js'],
+    },
+    users: {
+      name: 'history',
+      type: 'sqlite',
+      database: ':memory:',
+      dropSchema: true,
+      synchronize: true,
+      logging: false,
+      cache: true,
+      entities: ['build/src/entity/history/**/*.js', '../build/src/entity/history/**/*.js'],
+    },
+  };
+  module.exports = {
+    livegames: configs.livegames,
+    history: configs.history,
+    users: configs.users,
+  }
 } else {
   envs = [pgHostKey, pgPortKey, pgUserKey, pgPasswordKey];
   errs = [];
