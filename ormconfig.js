@@ -82,7 +82,7 @@ if (process.env.NODE_ENV === 'test') {
       cache: true,
       entities: ['build/src/entity/game/**/*.js', '../build/src/entity/game/**/*.js'],
     },
-    users: {
+    history: {
       name: 'history',
       type: 'sqlite',
       database: ':memory:',

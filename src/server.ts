@@ -101,7 +101,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
 
   logger.info(`Server is running ${RunProfile[runProfile].toString()} profile`);
 
-  if (process.env.NODE_ENV !== 'unit-test') {
+  if (process.env.NODE_ENV !== 'unit-test' && process.env.NODE_ENV !== 'test') {
     logger.debug('Running in dev/prod mode');
     const options = await getConnectionOptions('default');
     const users = options['users'];

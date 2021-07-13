@@ -42,6 +42,21 @@
       }
     },
     {
+      "name": "Test Server debug",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "test-server-watch"],
+      "port": 9235,
+      "outputCapture": "std",
+      "console": "internalConsole",
+      "env": {
+        "NODE_ENV": "test",
+        "DB_USED": "sqllite"
+      }
+    },    
+    {
       "name": "Watch debug windows",
       "type": "node",
       "request": "launch",
@@ -106,7 +121,7 @@
         "--runInBand",
         "./unit-tests",
         "--testNamePattern",
-        "get club games"
+        "Handtest: Save hand data"
       ],
       "env": {
         "NODE_ENV": "test",
