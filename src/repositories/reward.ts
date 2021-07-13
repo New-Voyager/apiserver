@@ -327,7 +327,7 @@ class RewardRepositoryImpl {
     game.id = gameId;
     const highhand = new HighHand();
     if (rewardTracking) {
-      highhand.rewardId = reward.id;
+      highhand.rewardId = rewardTracking.rewardId;
       highhand.rewardTracking = rewardTracking;
     }
     highhand.gameId = game.id;
@@ -399,7 +399,7 @@ class RewardRepositoryImpl {
     }
     try {
       const gameHighHands = await highHandRepo.find({
-        where: {gameId: game.id, reward: {id: rewardId}},
+        where: {gameId: game.id, rewardId: rewardId},
         order: {handTime: 'DESC'},
       });
       for await (const highHand of gameHighHands) {
@@ -466,7 +466,7 @@ class RewardRepositoryImpl {
     }
     const highHands = [] as any;
     const highHandRepo = getGameRepository(HighHand);
-    const rewardRepo = getGameRepository(Reward);
+    const rewardRepo = getUserRepository(Reward);
     const game = await Cache.getGame(gameCode);
     if (!game) {
       logger.error('Invalid gameCode');

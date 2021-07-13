@@ -1236,7 +1236,7 @@ class GameRepositoryImpl {
     }
     //this stores string value
     // const tableStatusValue = TableStatus[status.toString()];
-    await getUserConnection()
+    await getGameConnection()
       .createQueryBuilder()
       .update(PokerGame)
       .set({tableStatus: status})
