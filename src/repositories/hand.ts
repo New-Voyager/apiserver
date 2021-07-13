@@ -549,7 +549,7 @@ class HandRepositoryImpl {
     handHistory: HandHistory
   ): Promise<number> {
     try {
-      const savedHandsRepository = getHistoryRepository(SavedHands);
+      const savedHandsRepository = getUserRepository(SavedHands);
 
       let bookmarkedHand = await savedHandsRepository.findOne({
         gameCode: game.gameCode,

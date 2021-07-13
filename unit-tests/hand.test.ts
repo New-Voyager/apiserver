@@ -91,7 +91,7 @@ afterAll(async done => {
   done();
 });
 
-async function createReward(playerId, clubCode) {
+async function createReward1(playerId, clubCode) {
   const rewardInput = {
     amount: 100.4,
     endHour: 4,
@@ -156,14 +156,14 @@ async function setupGameEnvironment(
 async function defaultHandData(
   file: string,
   gameId: number,
-  rewardId: any,
+  //rewardId: any,
   playerIds: Array<number>
 ) {
   const obj = await fs.readFileSync(`highhand-results/${file}`, 'utf8');
   const data = JSON.parse(obj);
   data.gameId = gameId.toString();
-  data.rewardTrackingIds.splice(0);
-  data.rewardTrackingIds.push(rewardId);
+  //data.rewardTrackingIds.splice(0);
+  //data.rewardTrackingIds.push(rewardId);
   data.players['1'].id = playerIds[0].toString();
 
   data.gameId = gameId.toString();
@@ -193,18 +193,18 @@ describe('Hand server APIs', () => {
         playerUuids,
         playerIds,
       ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-      const rewardId = await createReward(owner, clubCode);
+      //const rewardId = await createReward(owner, clubCode);
       const [gameCode, gameId] = await setupGameEnvironment(
         owner,
         clubCode,
         playerUuids,
         100
       );
-      const rewardTrackId = await getRewardTrack(
-        playerUuids[0],
-        gameCode,
-        rewardId.toString()
-      );
+      // const rewardTrackId = await getRewardTrack(
+      //   playerUuids[0],
+      //   gameCode,
+      //   rewardId.toString()
+      // );
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
         cwd: 'highhand-results',
@@ -215,7 +215,7 @@ describe('Hand server APIs', () => {
         const data = await defaultHandData(
           file,
           gameId,
-          rewardTrackId,
+          //rewardTrackId,
           playerIds
         );
         const resp = await postHand(gameId, data.handNum, data);
@@ -236,18 +236,18 @@ describe('Hand server APIs', () => {
         playerUuids,
         playerIds,
       ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-      const rewardId = await createReward(owner, clubCode);
+      //const rewardId = await createReward(owner, clubCode);
       const [gameCode, gameId] = await setupGameEnvironment(
         owner,
         clubCode,
         playerUuids,
         100
       );
-      const rewardTrackId = await getRewardTrack(
-        playerUuids[0],
-        gameCode,
-        rewardId.toString()
-      );
+      // const rewardTrackId = await getRewardTrack(
+      //   playerUuids[0],
+      //   gameCode,
+      //   rewardId.toString()
+      // );
 
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
@@ -259,7 +259,7 @@ describe('Hand server APIs', () => {
         const data = await defaultHandData(
           file,
           gameId,
-          rewardTrackId,
+          //rewardTrackId,
           playerIds
         );
         const resp = await postHand(gameId, data.handNum, data);
@@ -288,18 +288,18 @@ describe('Hand server APIs', () => {
         playerUuids,
         playerIds,
       ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-      const rewardId = await createReward(owner, clubCode);
+      //const rewardId = await createReward(owner, clubCode);
       const [gameCode, gameId] = await setupGameEnvironment(
         owner,
         clubCode,
         playerUuids,
         100
       );
-      const rewardTrackId = await getRewardTrack(
-        playerUuids[0],
-        gameCode,
-        rewardId.toString()
-      );
+      // const rewardTrackId = await getRewardTrack(
+      //   playerUuids[0],
+      //   gameCode,
+      //   rewardId.toString()
+      // );
 
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
@@ -312,7 +312,7 @@ describe('Hand server APIs', () => {
         const data = await defaultHandData(
           file,
           gameId,
-          rewardTrackId,
+          //rewardTrackId,
           playerIds
         );
         const resp = await postHand(gameId, data.handNum, data);
@@ -341,18 +341,18 @@ describe('Hand server APIs', () => {
         playerUuids,
         playerIds,
       ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-      const rewardId = await createReward(owner, clubCode);
+      //const rewardId = await createReward(owner, clubCode);
       const [gameCode, gameId] = await setupGameEnvironment(
         owner,
         clubCode,
         playerUuids,
         100
       );
-      const rewardTrackId = await getRewardTrack(
-        playerUuids[0],
-        gameCode,
-        rewardId.toString()
-      );
+      // const rewardTrackId = await getRewardTrack(
+      //   playerUuids[0],
+      //   gameCode,
+      //   rewardId.toString()
+      // );
 
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
@@ -365,7 +365,7 @@ describe('Hand server APIs', () => {
         const data = await defaultHandData(
           file,
           gameId,
-          rewardTrackId,
+          //rewardTrackId,
           playerIds
         );
         const resp = await postHand(gameId, data.handNum, data);
@@ -391,18 +391,18 @@ describe('Hand server APIs', () => {
       playerUuids,
       playerIds,
     ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-    const rewardId = await createReward(owner, clubCode);
+    //const rewardId = await createReward(owner, clubCode);
     const [gameCode, gameId] = await setupGameEnvironment(
       owner,
       clubCode,
       playerUuids,
       100
     );
-    const rewardTrackId = await getRewardTrack(
-      playerUuids[0],
-      gameCode,
-      rewardId.toString()
-    );
+    // const rewardTrackId = await getRewardTrack(
+    //   playerUuids[0],
+    //   gameCode,
+    //   rewardId.toString()
+    // );
 
     const files = await glob.sync('**/*.json', {
       onlyFiles: false,
@@ -415,7 +415,7 @@ describe('Hand server APIs', () => {
       const data = await defaultHandData(
         file,
         gameId,
-        rewardTrackId,
+        //rewardTrackId,
         playerIds
       );
       const resp = await postHand(gameId, data.handNum, data);
@@ -456,18 +456,18 @@ describe('Hand server APIs', () => {
         playerUuids,
         playerIds,
       ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-      const rewardId = await createReward(owner, clubCode);
+      //const rewardId = await createReward(owner, clubCode);
       const [gameCode, gameId] = await setupGameEnvironment(
         owner,
         clubCode,
         playerUuids,
         100
       );
-      const rewardTrackId = await getRewardTrack(
-        playerUuids[0],
-        gameCode,
-        rewardId.toString()
-      );
+      // const rewardTrackId = await getRewardTrack(
+      //   playerUuids[0],
+      //   gameCode,
+      //   rewardId.toString()
+      // );
 
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
@@ -480,7 +480,7 @@ describe('Hand server APIs', () => {
         const data = await defaultHandData(
           file,
           gameId,
-          rewardTrackId,
+          //rewardTrackId,
           playerIds
         );
         const resp = await postHand(gameId, data.handNum, data);
@@ -519,18 +519,18 @@ describe('Hand server APIs', () => {
         playerUuids,
         playerIds,
       ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-      const rewardId = await createReward(owner, clubCode);
+      //const rewardId = await createReward(owner, clubCode);
       const [gameCode, gameId] = await setupGameEnvironment(
         owner,
         clubCode,
         playerUuids,
         100
       );
-      const rewardTrackId = await getRewardTrack(
-        playerUuids[0],
-        gameCode,
-        rewardId.toString()
-      );
+      // const rewardTrackId = await getRewardTrack(
+      //   playerUuids[0],
+      //   gameCode,
+      //   rewardId.toString()
+      // );
 
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
@@ -543,7 +543,7 @@ describe('Hand server APIs', () => {
         const data = await defaultHandData(
           file,
           gameId,
-          rewardTrackId,
+          //rewardTrackId,
           playerIds
         );
         const resp = await postHand(gameId, data.handNum, data);
@@ -588,18 +588,18 @@ describe('Hand server APIs', () => {
       playerUuids,
       playerIds,
     ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-    const rewardId = await createReward(owner, clubCode);
+    //const rewardId = await createReward(owner, clubCode);
     const [gameCode, gameId] = await setupGameEnvironment(
       owner,
       clubCode,
       playerUuids,
       100
     );
-    const rewardTrackId = await getRewardTrack(
-      playerUuids[0],
-      gameCode,
-      rewardId.toString()
-    );
+    // const rewardTrackId = await getRewardTrack(
+    //   playerUuids[0],
+    //   gameCode,
+    //   rewardId.toString()
+    // );
 
     const files = await glob.sync('**/*.json', {
       onlyFiles: false,
@@ -612,7 +612,7 @@ describe('Hand server APIs', () => {
       const data = await defaultHandData(
         file,
         gameId,
-        rewardTrackId,
+        //rewardTrackId,
         playerIds
       );
       const resp = await postHand(gameId, data.handNum, data);
@@ -637,18 +637,18 @@ describe('Hand server APIs', () => {
       playerUuids,
       playerIds,
     ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-    const rewardId = await createReward(owner, clubCode);
+    //const rewardId = await createReward(owner, clubCode);
     const [gameCode, gameId] = await setupGameEnvironment(
       owner,
       clubCode,
       playerUuids,
       100
     );
-    const rewardTrackId = await getRewardTrack(
-      playerUuids[0],
-      gameCode,
-      rewardId.toString()
-    );
+    // const rewardTrackId = await getRewardTrack(
+    //   playerUuids[0],
+    //   gameCode,
+    //   rewardId.toString()
+    // );
 
     const files = await glob.sync('**/*.json', {
       onlyFiles: false,
@@ -662,7 +662,7 @@ describe('Hand server APIs', () => {
       const data = await defaultHandData(
         file,
         gameId,
-        rewardTrackId,
+        //rewardTrackId,
         playerIds
       );
       const resp = await postHand(gameId, data.handNum, data);

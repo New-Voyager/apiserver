@@ -5,9 +5,9 @@ import {PlayerRepository} from '@src/repositories/player';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player/player';
-import {getRepository} from 'typeorm';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import _ from 'lodash';
+import {getGameRepository} from '@src/repositories';
 const logger = getLogger('hand-resolvers');
 
 const resolvers: any = {
@@ -302,7 +302,7 @@ export async function shareHand(playerId: string, args: any) {
     );
   }
 
-  const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+  const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
   const gamePlayer = await playerGameTrackerRepository.findOne({
     playerId: player.id,
     game: {id: game.id},
@@ -353,7 +353,7 @@ export async function bookmarkHand(playerId: string, args: any) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
 
-  const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+  const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
   const gamePlayer = await playerGameTrackerRepository.findOne({
     playerId: player.id,
     game: {id: game.id},
