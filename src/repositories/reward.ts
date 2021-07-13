@@ -1,11 +1,7 @@
 import {Club} from '@src/entity/player/club';
-import {EntityManager, getRepository, Not, Repository} from 'typeorm';
+import {EntityManager, Not, Repository} from 'typeorm';
 import {RewardType, ScheduleType} from '@src/entity/types';
-import {
-  GameReward,
-  GameRewardTracking,
-  Reward,
-} from '@src/entity/player/reward';
+import {Reward} from '@src/entity/player/reward';
 export interface RewardInputFormat {
   name: string;
   type: RewardType;
@@ -23,16 +19,21 @@ import {
 } from './types';
 import {Cache} from '@src/cache';
 import _ from 'lodash';
-import {HighHand} from '@src/entity/player/reward';
 import {Player} from '@src/entity/player/player';
 import {PokerGame} from '@src/entity/game/game';
 import {stringCards} from '@src/utils';
+import {getGameRepository, getHistoryRepository, getUserRepository} from '.';
+import {
+  GameReward,
+  GameRewardTracking,
+  HighHand,
+} from '@src/entity/game/reward';
 const logger = getLogger('rewardRepo');
 
 class RewardRepositoryImpl {
   public async createReward(clubCode: string, reward: RewardInputFormat) {
     try {
-      const clubRepository = getRepository(Club);
+      const clubRepository = getUserRepository(Club);
       const club = await clubRepository.findOne({
         where: {clubCode: clubCode},
       });
@@ -52,7 +53,7 @@ class RewardRepositoryImpl {
         createReward.startHour = reward.startHour;
         createReward.type =
           RewardType[(reward.type as unknown) as keyof typeof RewardType];
-        const repository = getRepository(Reward);
+        const repository = getUserRepository(Reward);
         const response = await repository.save(createReward);
         return response.id;
       }
@@ -64,7 +65,7 @@ class RewardRepositoryImpl {
 
   public async getRewards(clubCode: string): Promise<Array<any>> {
     try {
-      const clubRepository = getRepository(Club);
+      const clubRepository = getUserRepository(Club);
       const club = await clubRepository.findOne({
         where: {clubCode: clubCode},
       });
@@ -76,7 +77,7 @@ class RewardRepositoryImpl {
             clubId: club.id,
           },
         };
-        const rewardRepository = getRepository(Reward);
+        const rewardRepository = getUserRepository(Reward);
         const rewards = await rewardRepository.find(findOptions);
         return rewards;
       }
@@ -145,7 +146,7 @@ class RewardRepositoryImpl {
             GameRewardTracking
           );
         } else {
-          rewardTrackRepo = getRepository(GameRewardTracking);
+          rewardTrackRepo = getGameRepository(GameRewardTracking);
         }
 
         existingRewardTracking = await rewardTrackRepo.findOne({
@@ -241,7 +242,7 @@ class RewardRepositoryImpl {
               GameRewardTracking
             );
           } else {
-            rewardTrackRepo = getRepository(GameRewardTracking);
+            rewardTrackRepo = getGameRepository(GameRewardTracking);
           }
           // update high hand information in the reward tracking table
 
@@ -252,7 +253,7 @@ class RewardRepositoryImpl {
             {
               handNum: input.handNum,
               gameId: game.id,
-              player: {id: playerId},
+              playerId: playerId,
               boardCards: JSON.stringify(input.boardCards),
               playerCards: JSON.stringify(highHandPlayer.cards),
               highHand: JSON.stringify(highHandPlayer.hhCards),
@@ -305,7 +306,7 @@ class RewardRepositoryImpl {
     if (transactionManager) {
       logHighHandRepo = transactionManager.getRepository(HighHand);
     } else {
-      logHighHandRepo = getRepository(HighHand);
+      logHighHandRepo = getGameRepository(HighHand);
     }
 
     // reset previous winners
@@ -326,11 +327,11 @@ class RewardRepositoryImpl {
     game.id = gameId;
     const highhand = new HighHand();
     if (rewardTracking) {
-      highhand.reward = reward;
+      highhand.rewardId = rewardTracking.rewardId;
       highhand.rewardTracking = rewardTracking;
     }
     highhand.gameId = game.id;
-    highhand.player = player;
+    highhand.playerId = player.id;
     highhand.highHand = JSON.stringify(highhandCards);
     highhand.handNum = handNum;
     highhand.playerCards = playerCards;
@@ -347,7 +348,7 @@ class RewardRepositoryImpl {
       return;
     }
     const highHands = [] as any;
-    const highHandRepo = getRepository(HighHand);
+    const highHandRepo = getGameRepository(HighHand);
     const game = await Cache.getGame(gameCode);
     try {
       const gameHighHands = await highHandRepo.find({
@@ -355,11 +356,12 @@ class RewardRepositoryImpl {
         order: {handTime: 'DESC'},
       });
       for await (const highHand of gameHighHands) {
+        const player = await Cache.getPlayerById(highHand.playerId);
         highHands.push({
           gameCode: gameCode,
           handNum: highHand.handNum,
-          playerUuid: highHand.player.uuid,
-          playerName: highHand.player.name,
+          playerUuid: player.uuid,
+          playerName: player.name,
           playerCards: highHand.playerCards,
           boardCards: highHand.boardCards,
           highHand: highHand.highHand,
@@ -383,8 +385,8 @@ class RewardRepositoryImpl {
       return;
     }
     const highHands = [] as any;
-    const highHandRepo = getRepository(HighHand);
-    const rewardRepo = getRepository(Reward);
+    const highHandRepo = getGameRepository(HighHand);
+    const rewardRepo = getUserRepository(Reward);
     const game = await Cache.getGame(gameCode);
     if (!game) {
       logger.error('Invalid gameCode');
@@ -397,15 +399,17 @@ class RewardRepositoryImpl {
     }
     try {
       const gameHighHands = await highHandRepo.find({
-        where: {gameId: game.id, reward: {id: rewardId}},
+        where: {gameId: game.id, rewardId: rewardId},
         order: {handTime: 'DESC'},
       });
       for await (const highHand of gameHighHands) {
+        const player = await Cache.getPlayerById(highHand.playerId);
+
         highHands.push({
           gameCode: gameCode,
           handNum: highHand.handNum,
-          playerUuid: highHand.player.uuid,
-          playerName: highHand.player.name,
+          playerUuid: player.uuid,
+          playerName: player.name,
           playerCards: highHand.playerCards,
           boardCards: highHand.boardCards,
           highHand: highHand.highHand,
@@ -428,9 +432,9 @@ class RewardRepositoryImpl {
     game: PokerGame,
     rewardId: number
   ): Promise<number> {
-    const highHandRepo = getRepository(HighHand);
+    const highHandRepo = getGameRepository(HighHand);
     const gameHighHands = await highHandRepo.find({
-      where: {gameId: game.id, reward: {id: rewardId}},
+      where: {gameId: game.id, rewardId: rewardId},
       order: {handTime: 'DESC'},
       take: 1,
     });
@@ -444,7 +448,7 @@ class RewardRepositoryImpl {
     game: PokerGame,
     rewardId: number
   ): Promise<number> {
-    const highHandRepo = getRepository(HighHand);
+    const highHandRepo = getGameRepository(HighHand);
     const gameHighHands = await highHandRepo.find({
       where: {gameId: game.id},
       order: {handTime: 'DESC'},
@@ -461,8 +465,8 @@ class RewardRepositoryImpl {
       return;
     }
     const highHands = [] as any;
-    const highHandRepo = getRepository(HighHand);
-    const rewardRepo = getRepository(Reward);
+    const highHandRepo = getGameRepository(HighHand);
+    const rewardRepo = getUserRepository(Reward);
     const game = await Cache.getGame(gameCode);
     if (!game) {
       logger.error('Invalid gameCode');
@@ -471,13 +475,13 @@ class RewardRepositoryImpl {
 
     if (!rewardId) {
       // get reward associated with the game code
-      const gameRewards = await getRepository(GameReward).find({
+      const gameRewards = await getGameRepository(GameReward).find({
         gameId: game.id,
       });
       if (gameRewards && gameRewards.length >= 1) {
         // get highhand reward id
         if (gameRewards.length === 1) {
-          rewardId = gameRewards[0].rewardId.id;
+          rewardId = gameRewards[0].rewardId;
         }
       }
     }
@@ -490,10 +494,10 @@ class RewardRepositoryImpl {
         logger.error(`Invalid Reward. ${rewardId}`);
         return [];
       }
-      const rewardTrackRepo = getRepository(GameRewardTracking);
+      const rewardTrackRepo = getGameRepository(GameRewardTracking);
       const rewardtrack = await rewardTrackRepo.findOne({
         gameId: game.id,
-        reward: reward,
+        rewardId: reward.id,
       });
       if (!rewardtrack) {
         logger.error('RewardTrackId not found.');
@@ -509,11 +513,13 @@ class RewardRepositoryImpl {
     }
     try {
       for await (const highHand of gameHighHands) {
+        const player = await Cache.getPlayerById(highHand.playerId);
+
         highHands.push({
           gameCode: gameCode,
           handNum: highHand.handNum,
-          playerUuid: highHand.player.uuid,
-          playerName: highHand.player.name,
+          playerUuid: player.uuid,
+          playerName: player.name,
           playerCards: highHand.playerCards,
           boardCards: highHand.boardCards,
           highHand: highHand.highHand,
@@ -536,7 +542,7 @@ class RewardRepositoryImpl {
     if (!gameCode || !rewardId) {
       return;
     }
-    const rewardRepo = getRepository(Reward);
+    const rewardRepo = getUserRepository(Reward);
     const game = await Cache.getGame(gameCode);
     if (!game) {
       logger.error('Invalid gameCode');
@@ -547,10 +553,10 @@ class RewardRepositoryImpl {
       logger.error(`Invalid RewardId. ${rewardId}`);
       throw new Error('Invalid RewardId');
     }
-    const rewardTrackRepo = getRepository(GameRewardTracking);
+    const rewardTrackRepo = getGameRepository(GameRewardTracking);
     const rewardtrack = await rewardTrackRepo.find({
       where: {
-        reward: {id: parseInt(rewardId)},
+        rewardId: parseInt(rewardId),
       },
     });
     if (!rewardtrack) {

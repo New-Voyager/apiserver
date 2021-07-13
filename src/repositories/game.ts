@@ -1,12 +1,5 @@
 import * as crypto from 'crypto';
-import {
-  getRepository,
-  getManager,
-  getConnection,
-  In,
-  Repository,
-  EntityManager,
-} from 'typeorm';
+import {In, Repository, EntityManager, Not} from 'typeorm';
 import {
   NextHandUpdates,
   PokerGame,
@@ -38,12 +31,7 @@ import {
 import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery} from '@src/utils';
 import {WaitListMgmt} from './waitlist';
-import {
-  Reward,
-  GameRewardTracking,
-  GameReward,
-  HighHand,
-} from '@src/entity/player/reward';
+import {Reward} from '@src/entity/player/reward';
 import {ChipsTrackRepository} from './chipstrack';
 import {
   BREAK_TIMEOUT,
@@ -64,6 +52,16 @@ import {PlayerGameStats} from '@src/entity/history/stats';
 import {HistoryRepository} from './history';
 import {GameHistory} from '@src/entity/history/game';
 import {PlayersInGame} from '@src/entity/history/player';
+import {
+  getGameConnection,
+  getGameManager,
+  getGameRepository,
+  getHistoryConnection,
+  getHistoryRepository,
+  getUserConnection,
+  getUserRepository,
+} from '.';
+import {GameReward, GameRewardTracking} from '@src/entity/game/reward';
 const logger = getLogger('game');
 
 class GameRepositoryImpl {
@@ -119,7 +117,7 @@ class GameRepositoryImpl {
 
     const useGameServer = true;
 
-    const gameServerRepository = getRepository(GameServer);
+    const gameServerRepository = getGameRepository(GameServer);
     let gameServers: Array<GameServer> = new Array<GameServer>();
     if (useGameServer) {
       gameServers = await gameServerRepository.find();
@@ -182,7 +180,7 @@ class GameRepositoryImpl {
     try {
       //logger.info('****** STARTING TRANSACTION TO CREATE a private game');
 
-      await getManager().transaction(async transactionEntityManager => {
+      await getGameManager().transaction(async transactionEntityManager => {
         saveTime = new Date().getTime();
         savedGame = await transactionEntityManager
           .getRepository(PokerGame)
@@ -210,9 +208,7 @@ class GameRepositoryImpl {
 
           const rewardTrackingIds = new Array<number>();
           if (input.rewardIds) {
-            const rewardRepository = transactionEntityManager.getRepository(
-              Reward
-            );
+            const rewardRepository = getUserRepository(Reward);
             for await (const rewardId of input.rewardIds) {
               if (rewardId == 0) {
                 continue;
@@ -226,30 +222,35 @@ class GameRepositoryImpl {
                 GameRewardTracking
               );
               const rewardTrack = await rewardTrackRepo.findOne({
-                reward: {id: rewardId},
+                rewardId: rewardId,
                 active: true,
               });
               if (!rewardTrack) {
                 const createRewardTrack = new GameRewardTracking();
-                createRewardTrack.reward = reward;
+                createRewardTrack.rewardId = reward.id;
                 createRewardTrack.day = new Date();
 
-                const rewardTrackRepository = transactionEntityManager.getRepository(
-                  GameRewardTracking
-                );
-                const rewardTrackResponse = await rewardTrackRepository.save(
-                  createRewardTrack
-                );
-                const createGameReward = new GameReward();
-                createGameReward.gameId = game.id;
-                createGameReward.gameCode = game.gameCode;
-                createGameReward.rewardId = rewardId;
-                createGameReward.rewardTrackingId = rewardTrackResponse;
-                rewardTrackingIds.push(rewardTrackResponse.id);
-                const gameRewardRepository = transactionEntityManager.getRepository(
-                  GameReward
-                );
-                await gameRewardRepository.save(createGameReward);
+                try {
+                  const rewardTrackRepository = transactionEntityManager.getRepository(
+                    GameRewardTracking
+                  );
+                  const rewardTrackResponse = await rewardTrackRepository.save(
+                    createRewardTrack
+                  );
+                  const createGameReward = new GameReward();
+                  createGameReward.gameId = game.id;
+                  createGameReward.gameCode = game.gameCode;
+                  createGameReward.rewardId = rewardId;
+                  createGameReward.rewardTrackingId = rewardTrackResponse;
+                  rewardTrackingIds.push(rewardTrackResponse.id);
+                  const gameRewardRepository = transactionEntityManager.getRepository(
+                    GameReward
+                  );
+                  await gameRewardRepository.save(createGameReward);
+                } catch (err) {
+                  logger.error(`Failed to update rewards. ${err.toString()}`);
+                  throw err;
+                }
               } else {
                 rewardTrackingIds.push(rewardTrack.id);
                 const createGameReward = new GameReward();
@@ -347,13 +348,13 @@ class GameRepositoryImpl {
     input: any,
     template = false
   ): Promise<PokerGame> {
-    const playerRepository = getRepository(Player);
+    const playerRepository = getUserRepository(Player);
     const player = await playerRepository.findOne({uuid: playerId});
     if (!player) {
       throw new Error(`Player ${playerId} is not found`);
     }
 
-    const gameServerRepository = getRepository(GameServer);
+    const gameServerRepository = getGameRepository(GameServer);
     const gameServers = await gameServerRepository.find();
     if (gameServers.length === 0) {
       throw new Error('No game server is availabe');
@@ -375,8 +376,8 @@ class GameRepositoryImpl {
 
     let savedGame;
     try {
-      const gameRespository = getRepository(PokerGame);
-      await getManager().transaction(async transactionEntityManager => {
+      const gameRespository = getGameRepository(PokerGame);
+      await getGameManager().transaction(async transactionEntityManager => {
         savedGame = await transactionEntityManager
           .getRepository(PokerGame)
           .save(game);
@@ -404,7 +405,7 @@ class GameRepositoryImpl {
     if (transactionManager) {
       repository = transactionManager.getRepository(PokerGame);
     } else {
-      repository = getRepository(PokerGame);
+      repository = getGameRepository(PokerGame);
     }
 
     // get game by id (testing only)
@@ -413,18 +414,19 @@ class GameRepositoryImpl {
   }
 
   public async getGameCountByClubId(clubId: number): Promise<number> {
-    const repository = getRepository(PokerGame);
+    const repository = getGameRepository(PokerGame);
     const count = await repository.count({where: {clubId: clubId}});
     return count;
   }
 
   public async getGameCountByPlayerId(playerId: number): Promise<number> {
-    const repository = getRepository(PokerGame);
+    const repository = getGameRepository(PokerGame);
     const count = await repository.count({where: {hostId: playerId}});
     return count;
   }
 
   public async getLiveGames(playerId: string) {
+    // TODO: Fix this query
     // get the list of live games associated with player clubs
     const query = `
           WITH my_clubs AS (SELECT DISTINCT c.*, p.id as "player_id" FROM club as c JOIN club_member as cm ON
@@ -461,7 +463,7 @@ class GameRepositoryImpl {
             pgt.pgt_game_id  = g.id`;
 
     // EXTRACT(EPOCH FROM (now()-g.started_at)) as "elapsedTime",  Showing some error
-    const resp = await getConnection().query(query);
+    const resp = await getGameConnection().query(query);
     return resp;
   }
 
@@ -502,13 +504,13 @@ class GameRepositoryImpl {
             pgt.pgt_player_id = c.player_id AND
             pgt.pgt_game_id  = g.id
         `;
-    const resp = await getConnection().query(query);
+    const resp = await getGameConnection().query(query);
     return resp;
   }
 
   public async getNextGameServer(): Promise<number> {
     const query = 'SELECT max(server_num)+1 next_number FROM game_server';
-    const resp = await getConnection().query(query);
+    const resp = await getGameConnection().query(query);
     let nextNumber = 1;
     if (resp[0]['next_number']) {
       nextNumber = resp[0]['next_number'];
@@ -526,7 +528,7 @@ class GameRepositoryImpl {
     }
     const waitlistMgmt = new WaitListMgmt(game);
     let startTime = new Date().getTime();
-    const [playerInGame, newPlayer] = await getManager().transaction(
+    const [playerInGame, newPlayer] = await getGameManager().transaction(
       async transactionEntityManager => {
         // get game updates
         const gameUpdateRepo = transactionEntityManager.getRepository(
@@ -638,11 +640,7 @@ class GameRepositoryImpl {
             await playerGameTrackerRepository.save(playerInGame);
             await StatsRepository.joinedNewGame(player);
             // create a row in stats table
-            await StatsRepository.newGameStatsRow(
-              game,
-              player,
-              transactionEntityManager
-            );
+            await StatsRepository.newGameStatsRow(game, player);
           } catch (err) {
             logger.error(
               `Failed to update player_game_tracker and player_game_stats table ${err.toString()} Game: ${
@@ -730,7 +728,7 @@ class GameRepositoryImpl {
     player: Player,
     game: PokerGame
   ): Promise<PlayerGameTracker> {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
       where: {
         game: {id: game.id},
@@ -753,7 +751,7 @@ class GameRepositoryImpl {
   }
 
   public async tableGameState(game: PokerGame): Promise<PlayerGameTracker[]> {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.find({
       where: {
         game: {id: game.id},
@@ -769,8 +767,8 @@ class GameRepositoryImpl {
   }
 
   public async leaveGame(player: Player, game: PokerGame): Promise<boolean> {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-    const nextHandUpdatesRepository = getRepository(NextHandUpdates);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+    const nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
     const rows = await playerGameTrackerRepository
       .createQueryBuilder()
       .where({
@@ -830,8 +828,8 @@ class GameRepositoryImpl {
   }
 
   public async sitBack(player: Player, game: PokerGame): Promise<boolean> {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-    const nextHandUpdatesRepository = getRepository(NextHandUpdates);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+    const nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
     const rows = await playerGameTrackerRepository
       .createQueryBuilder()
       .where({
@@ -908,7 +906,7 @@ class GameRepositoryImpl {
         PlayerGameTracker
       );
     } else {
-      playerGameTrackerRepository = getRepository(PlayerGameTracker);
+      playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     }
 
     const playingCount = await playerGameTrackerRepository
@@ -921,7 +919,7 @@ class GameRepositoryImpl {
 
     if (playingCount >= 2) {
       try {
-        const gameRepo = getRepository(PokerGame);
+        const gameRepo = getGameRepository(PokerGame);
         const rows = await gameRepo
           .createQueryBuilder()
           .where({id: game.id})
@@ -963,7 +961,7 @@ class GameRepositoryImpl {
   }
 
   public async updateBreakTime(playerId: number, gameId: number) {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const rows = await playerGameTrackerRepository
       .createQueryBuilder()
       .where({
@@ -1003,7 +1001,7 @@ class GameRepositoryImpl {
     gameId: number,
     status: PlayerStatus
   ) {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
 
     const rows = await playerGameTrackerRepository
       .createQueryBuilder()
@@ -1038,7 +1036,7 @@ class GameRepositoryImpl {
   }
 
   public async getGameServer(gameId: number): Promise<GameServer | null> {
-    const trackgameServerRepository = getRepository(TrackGameServer);
+    const trackgameServerRepository = getGameRepository(TrackGameServer);
     const gameServer = await trackgameServerRepository.findOne({
       where: {game: {id: gameId}},
     });
@@ -1065,19 +1063,19 @@ class GameRepositoryImpl {
   }
 
   public async markGameEnded(gameId: number): Promise<GameStatus> {
-    const repository = getRepository(PokerGame);
+    const repository = getGameRepository(PokerGame);
     const game = await repository.findOne({where: {id: gameId}});
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
     }
-    const updatesRepo = getRepository(PokerGameUpdates);
+    const updatesRepo = getGameRepository(PokerGameUpdates);
     const updates = await updatesRepo.findOne({where: {gameID: gameId}});
 
     // update player game tracker
     let playerGameTrackerRepository: Repository<PlayerGameTracker>;
 
     // update session time
-    playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const players = await playerGameTrackerRepository.find({
       game: {id: game.id},
     });
@@ -1120,7 +1118,7 @@ class GameRepositoryImpl {
     const query = fixQuery(
       'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ?'
     );
-    const resp = await getConnection().query(query, [gameId]);
+    const resp = await getGameConnection().query(query, [gameId]);
     if (resp[0]['updates'] > 0) {
       return true;
     }
@@ -1129,11 +1127,11 @@ class GameRepositoryImpl {
 
   public async endGameNextHand(gameId: number) {
     // check to see if the game is already marked to be ended
-    const repository = getRepository(NextHandUpdates);
+    const repository = getGameRepository(NextHandUpdates);
     const query = fixQuery(
       'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ? AND new_update = ?'
     );
-    const resp = await getConnection().query(query, [
+    const resp = await getGameConnection().query(query, [
       gameId,
       NextHandUpdate.END_GAME,
     ]);
@@ -1151,11 +1149,11 @@ class GameRepositoryImpl {
 
   public async pauseGameNextHand(gameId: number) {
     // check to see if the game is already marked to be ended
-    const repository = getRepository(NextHandUpdates);
+    const repository = getGameRepository(NextHandUpdates);
     const query = fixQuery(
       'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ? AND new_update = ?'
     );
-    const resp = await getConnection().query(query, [
+    const resp = await getGameConnection().query(query, [
       gameId,
       NextHandUpdate.PAUSE_GAME,
     ]);
@@ -1176,8 +1174,8 @@ class GameRepositoryImpl {
     status: GameStatus,
     gameNum?: number
   ) {
-    const repository = getRepository(PokerGame);
-    const playersInGame = getRepository(PlayerGameTracker);
+    const repository = getGameRepository(PokerGame);
+    const playersInGame = getGameRepository(PlayerGameTracker);
     const game = await repository.findOne({where: {id: gameId}});
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
@@ -1198,7 +1196,7 @@ class GameRepositoryImpl {
       values.gameNum = gameNum;
     }
 
-    await getConnection()
+    await getGameConnection()
       .createQueryBuilder()
       .update(PokerGame)
       .set(values)
@@ -1231,14 +1229,14 @@ class GameRepositoryImpl {
   }
 
   public async markTableStatus(gameId: number, status: TableStatus) {
-    const repository = getRepository(PokerGame);
+    const repository = getGameRepository(PokerGame);
     const game = await repository.findOne({where: {id: gameId}});
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
     }
     //this stores string value
     // const tableStatusValue = TableStatus[status.toString()];
-    await getConnection()
+    await getGameConnection()
       .createQueryBuilder()
       .update(PokerGame)
       .set({tableStatus: status})
@@ -1253,23 +1251,37 @@ class GameRepositoryImpl {
     gameId: number,
     transactionManager?: EntityManager
   ): Promise<Array<any>> {
-    const query = fixQuery(`SELECT p.id as "playerId", name, uuid as "playerUuid", p.is_bot as "isBot",
-          buy_in as "buyIn", stack, status, seat_no as "seatNo", status,
-          buyin_exp_at as "buyInExpTime", break_time_exp_at as "breakExpTime", game_token AS "gameToken",
-          break_time_started_at as "breakStartedTime",
-          run_it_twice_prompt as "runItTwicePrompt",
-          muck_losing_hand as "muckLosingHand",
-          missed_blind as "missedBlind",
-          posted_blind as "postedBlind"
-          FROM 
-          player_game_tracker pgt JOIN player p ON pgt.pgt_player_id = p.id
-          AND pgt.pgt_game_id = ? AND pgt.seat_no <> 0`);
-    let resp;
+    // const query = fixQuery(`SELECT pgt.player_id as "playerId", pgt.player_name as name, pgt.player_uuid as "playerUuid", p.is_bot as "isBot",
+    //       buy_in as "buyIn", stack, status, seat_no as "seatNo", status,
+    //       buyin_exp_at as "buyInExpTime", break_time_exp_at as "breakExpTime", game_token AS "gameToken",
+    //       break_time_started_at as "breakStartedTime",
+    //       run_it_twice_prompt as "runItTwicePrompt",
+    //       muck_losing_hand as "muckLosingHand",
+    //       missed_blind as "missedBlind",
+    //       posted_blind as "postedBlind"
+    //       FROM
+    //       player_game_tracker pgt
+    //       WHERE
+    //       pgt.pgt_game_id = ? AND pgt.seat_no <> 0`);
+    // let resp;
+    // if (transactionManager) {
+    //   resp = await transactionManager.query(query, [gameId]);
+    // } else {
+    //   resp = await getGameConnection().query(query, [gameId]);
+    // }
+
+    let playerGameTrackerRepo;
     if (transactionManager) {
-      resp = await transactionManager.query(query, [gameId]);
+      playerGameTrackerRepo = transactionManager.getRepository(
+        PlayerGameTracker
+      );
     } else {
-      resp = await getConnection().query(query, [gameId]);
+      playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     }
+    const resp = await playerGameTrackerRepo.find({
+      game: {id: gameId},
+      seatNo: Not(0),
+    });
     return resp;
   }
 
@@ -1277,7 +1289,7 @@ class GameRepositoryImpl {
     game: PokerGame,
     player: Player
   ): Promise<PlayerGameTracker | null> {
-    const repo = getRepository(PlayerGameTracker);
+    const repo = getGameRepository(PlayerGameTracker);
     const resp = await repo.find({
       playerId: player.id,
       game: {id: game.id},
@@ -1286,7 +1298,7 @@ class GameRepositoryImpl {
   }
 
   public async kickOutPlayer(gameCode: string, player: Player) {
-    await getManager().transaction(async transactionEntityManager => {
+    await getGameManager().transaction(async transactionEntityManager => {
       // find game
       const game = await this.getGameByCode(gameCode, transactionEntityManager);
       if (!game) {
@@ -1357,7 +1369,7 @@ class GameRepositoryImpl {
   public async getGameUpdates(
     gameID: number
   ): Promise<PokerGameUpdates | undefined> {
-    return await getRepository(PokerGameUpdates).findOne({gameID: gameID});
+    return await getGameRepository(PokerGameUpdates).findOne({gameID: gameID});
   }
 
   public async getCompletedGame(
@@ -1392,7 +1404,10 @@ class GameRepositoryImpl {
     `);
 
     // TODO: we need to do pagination here
-    const result = await getConnection().query(query, [playerId, gameCode]);
+    const result = await getHistoryConnection().query(query, [
+      playerId,
+      gameCode,
+    ]);
     if (result.length > 0) {
       return result[0];
     }
@@ -1415,7 +1430,7 @@ class GameRepositoryImpl {
       WHERE pg.game_code = ?
       AND pgt.no_hands_played > 0`);
 
-    const result = await getConnection().query(query, [gameCode]);
+    const result = await getHistoryConnection().query(query, [gameCode]);
     return result;
   }
 
@@ -1427,12 +1442,12 @@ class GameRepositoryImpl {
      poker_game pg ON pgt.pgt_game_id = pg.id
     WHERE pg.game_code = ?`);
 
-    const result = await getConnection().query(query, [gameCode]);
+    const result = await getGameConnection().query(query, [gameCode]);
     return result;
   }
 
   public async getAudioToken(player: Player, game: PokerGame): Promise<string> {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const rows = await playerGameTrackerRepository
       .createQueryBuilder()
       .where({
@@ -1484,7 +1499,7 @@ class GameRepositoryImpl {
     logger.info(
       `[${game.gameCode}] Player: ${player.name} is switching to seat: ${seatNo}`
     );
-    const [playerInGame, newPlayer] = await getManager().transaction(
+    const [playerInGame, newPlayer] = await getGameManager().transaction(
       async transactionEntityManager => {
         // get game updates
         const gameUpdateRepo = transactionEntityManager.getRepository(
@@ -1582,7 +1597,7 @@ class GameRepositoryImpl {
     game: PokerGame,
     config: any
   ): Promise<void> {
-    await getManager().transaction(async transactionEntityManager => {
+    await getGameManager().transaction(async transactionEntityManager => {
       const updates: any = {};
       if (config.muckLosingHand !== undefined) {
         updates.muckLosingHand = config.muckLosingHand;
@@ -1660,7 +1675,7 @@ class GameRepositoryImpl {
         PlayerGameTracker
       );
     } else {
-      playerGameTrackerRepository = getRepository(PlayerGameTracker);
+      playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     }
     // TODO: start a buy-in timer
     const buyinTimeExp = new Date();
@@ -1688,7 +1703,7 @@ class GameRepositoryImpl {
     gameCode: string,
     includeGame: boolean
   ) {
-    await getManager().transaction(async transactionEntityManager => {
+    await getGameManager().transaction(async transactionEntityManager => {
       if (gameCode) {
         const gameRepo = transactionEntityManager.getRepository(PokerGame);
         const game = await gameRepo.findOne({gameCode: gameCode});
@@ -1698,9 +1713,7 @@ class GameRepositoryImpl {
         await transactionEntityManager
           .getRepository(PlayerGameTracker)
           .delete({game: {id: game.id}});
-        await transactionEntityManager
-          .getRepository(PlayerGameStats)
-          .delete({gameId: game.id});
+        await getHistoryRepository(PlayerGameStats).delete({gameId: game.id});
         await transactionEntityManager
           .getRepository(NextHandUpdates)
           .delete({game: {id: game.id}});
@@ -1719,8 +1732,7 @@ class GameRepositoryImpl {
           .createQueryBuilder()
           .delete()
           .execute();
-        await transactionEntityManager
-          .getRepository(PlayerGameStats)
+        await getHistoryRepository(PlayerGameStats)
           .createQueryBuilder()
           .delete()
           .execute();
@@ -1759,7 +1771,7 @@ class GameRepositoryImpl {
       `Game: ${game.gameType} dealers choice: ${gameType.toString()}`
     );
     // update game type in the GameUpdates table
-    const gameUpdatesRepo = getRepository(PokerGameUpdates);
+    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
     await gameUpdatesRepo.update(
       {
         gameID: game.id,
@@ -1780,7 +1792,7 @@ class GameRepositoryImpl {
     roomId: number,
     roomPin: string
   ) {
-    const gameUpdatesRepo = getRepository(PokerGameUpdates);
+    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
     await gameUpdatesRepo.update(
       {
         gameID: gameID,
@@ -1795,7 +1807,7 @@ class GameRepositoryImpl {
   }
 
   public async updateAudioConfDisabled(gameID: number) {
-    const gameUpdatesRepo = getRepository(PokerGame);
+    const gameUpdatesRepo = getGameRepository(PokerGame);
     await gameUpdatesRepo.update(
       {id: gameID},
       {
@@ -1805,7 +1817,7 @@ class GameRepositoryImpl {
   }
 
   public async deleteAudioConf(gameID: number) {
-    const gameUpdatesRepo = getRepository(PokerGameUpdates);
+    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
     const gameUpdates = await gameUpdatesRepo.findOne({gameID: gameID});
     if (gameUpdates) {
       if (gameUpdates.janusSessionId && gameUpdates.janusPluginHandle) {
@@ -1820,7 +1832,7 @@ class GameRepositoryImpl {
 
   public async determineGameStatus(gameID: number): Promise<boolean> {
     // if only one player or zero player is active, then mark the game not enough players
-    const playerGameTrackerRepo = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     // get number of players in the seats
     const count = await playerGameTrackerRepo.count({
       where: {
@@ -1838,7 +1850,7 @@ class GameRepositoryImpl {
   }
 
   public async hostingCount(playerUuid: string): Promise<number> {
-    const gameRepo = getRepository(PokerGame);
+    const gameRepo = getGameRepository(PokerGame);
     // get number of players in the seats
     const count = await gameRepo.count({
       where: {
@@ -1850,7 +1862,7 @@ class GameRepositoryImpl {
   }
 
   public async getLiveGameCount(club: Club): Promise<number> {
-    const gameRepo = getRepository(PokerGame);
+    const gameRepo = getGameRepository(PokerGame);
     // get number of players in the seats
     const count = await gameRepo.count({
       where: {
@@ -1862,7 +1874,7 @@ class GameRepositoryImpl {
   }
 
   public async getAllPlayersInGame(gameCode: string): Promise<Array<any>> {
-    const gameTrackerRepo = getRepository(PlayerGameTracker);
+    const gameTrackerRepo = getGameRepository(PlayerGameTracker);
     const game = await Cache.getGame(gameCode);
     if (!game) {
       return [];
@@ -1887,7 +1899,7 @@ class GameRepositoryImpl {
     player: Player,
     game: PokerGame
   ): Promise<Array<any>> {
-    const hhrepo = getRepository(HandHistory);
+    const hhrepo = getHistoryRepository(HandHistory);
     const stacks = await hhrepo
       .createQueryBuilder()
       .where({
@@ -1914,7 +1926,7 @@ class GameRepositoryImpl {
   public async getGameHistoryById(
     gameId: number
   ): Promise<GameHistory | undefined> {
-    const repository = getRepository(GameHistory);
+    const repository = getHistoryRepository(GameHistory);
 
     // get game by id (testing only)
     const gameHistory = await repository.findOne({where: {gameId: gameId}});
@@ -1924,7 +1936,7 @@ class GameRepositoryImpl {
   public async getGameUpdatesById(
     gameId: number
   ): Promise<PokerGameUpdates | undefined> {
-    const updatesRepo = getRepository(PokerGameUpdates);
+    const updatesRepo = getGameRepository(PokerGameUpdates);
     const updates = await updatesRepo.findOne({where: {gameID: gameId}});
     return updates;
   }
@@ -1932,7 +1944,7 @@ class GameRepositoryImpl {
   public async getPlayersInGameById(
     gameId: number
   ): Promise<Array<PlayersInGame> | undefined> {
-    const playersInGameRepo = getRepository(PlayersInGame);
+    const playersInGameRepo = getHistoryRepository(PlayersInGame);
     const playersInGame = await playersInGameRepo.find({
       where: {gameId: gameId},
     });
@@ -1942,7 +1954,7 @@ class GameRepositoryImpl {
   public async getPlayersGameTrackerById(
     gameId: number
   ): Promise<Array<PlayerGameTracker> | undefined> {
-    const playerGameTrackerRepo = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     const playerGameTracker = await playerGameTrackerRepo.find({
       where: {game: {id: gameId}},
     });
@@ -1950,7 +1962,7 @@ class GameRepositoryImpl {
   }
 
   public async postBlind(game: PokerGame, player: Player): Promise<void> {
-    const playerGameTrackerRepo = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     const playerGameTracker = await playerGameTrackerRepo.findOne({
       where: {
         game: {id: game.id},

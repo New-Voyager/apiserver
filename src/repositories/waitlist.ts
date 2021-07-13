@@ -7,19 +7,13 @@ import {waitlistSeating} from '@src/gameserver';
 import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery} from '@src/utils';
 import {getLogger} from '@src/utils/log';
-import {
-  Equal,
-  getConnection,
-  getManager,
-  getRepository,
-  IsNull,
-  Not,
-} from 'typeorm';
+import {Equal, IsNull, Not} from 'typeorm';
 import {WAITLIST_SEATING} from './types';
 import * as crypto from 'crypto';
 import {v4 as uuidv4} from 'uuid';
 import {Nats} from '@src/nats';
 import {WaitlistSeatError} from '@src/errors';
+import {getGameConnection, getGameManager, getGameRepository} from '.';
 
 const logger = getLogger('waitlist');
 
@@ -27,7 +21,7 @@ export async function occupiedSeats(gameId: number): Promise<number> {
   const query = fixQuery(
     'SELECT COUNT(*) as occupied FROM player_game_tracker WHERE pgt_game_id = ? AND (seat_no <> 0)'
   );
-  const resp = await getConnection().query(query, [gameId]);
+  const resp = await getGameConnection().query(query, [gameId]);
   return resp[0]['occupied'];
 }
 
@@ -40,8 +34,8 @@ export class WaitListMgmt {
   }
 
   public async seatPlayer(player: Player, seatNo: number) {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-    const gameUpdateRepo = getRepository(PokerGameUpdates);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+    const gameUpdateRepo = getGameRepository(PokerGameUpdates);
 
     // join game waitlist seating in progress flag
     // if set to true, only the player with WAITLIST_SEATING is allowed to sit
@@ -90,8 +84,8 @@ export class WaitListMgmt {
   }
 
   public async declineWaitlistSeat(player: Player) {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-    const gameUpdateRepo = getRepository(PokerGameUpdates);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+    const gameUpdateRepo = getGameRepository(PokerGameUpdates);
     logger.info(
       `Player [${player.name}: ${player.id}] declined to join the game. ${this.game.gameCode}`
     );
@@ -145,7 +139,7 @@ export class WaitListMgmt {
   }
 
   protected async resetExistingWaitingList() {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     // eslint-disable-next-line no-constant-condition
     const waitingPlayers = await playerGameTrackerRepository.update(
       {
@@ -177,7 +171,7 @@ export class WaitListMgmt {
     }
     await this.resetExistingWaitingList();
 
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
 
     // eslint-disable-next-line no-constant-condition
     // get the first guy from the wait list
@@ -232,7 +226,7 @@ export class WaitListMgmt {
       break;
     }
 
-    const gameUpdatesRepo = getRepository(PokerGameUpdates);
+    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
 
     if (!nextPlayer) {
       const count = await playerGameTrackerRepository.count({
@@ -323,13 +317,13 @@ export class WaitListMgmt {
   public async addToWaitingList(playerUuid: string) {
     logger.info('****** STARTING TRANSACTION TO ADD a player to waitlist');
     const player = await Cache.getPlayer(playerUuid);
-    let playerInGame = await getRepository(PlayerGameTracker).findOne({
+    let playerInGame = await getGameRepository(PlayerGameTracker).findOne({
       where: {
         game: {id: this.game.id},
         playerId: player.id,
       },
     });
-    await getManager().transaction(async transactionEntityManager => {
+    await getGameManager().transaction(async transactionEntityManager => {
       // add this user to waiting list
       // if this user is already playing, then he cannot be in the waiting list
       const playerGameTrackerRepository = transactionEntityManager.getRepository(
@@ -392,7 +386,7 @@ export class WaitListMgmt {
         {playersInWaitList: count}
       );
     });
-    getRepository(PlayerGameTracker)
+    getGameRepository(PlayerGameTracker)
       .createQueryBuilder()
       .update()
       .set({
@@ -408,7 +402,7 @@ export class WaitListMgmt {
   }
 
   public async removeFromWaitingList(playerUuid: string) {
-    await getManager().transaction(async transactionEntityManager => {
+    await getGameManager().transaction(async transactionEntityManager => {
       // remove this user from waiting list
       const playerGameTrackerRepository = transactionEntityManager.getRepository(
         PlayerGameTracker
@@ -462,7 +456,7 @@ export class WaitListMgmt {
   }
 
   public async getWaitingListUsers() {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const waitListPlayers = await playerGameTrackerRepository.find({
       where: {
         game: {id: this.game.id},
@@ -488,7 +482,7 @@ export class WaitListMgmt {
   }
 
   public async applyWaitlistOrder(players: Array<string>) {
-    await getManager().transaction(async transactionEntityManager => {
+    await getGameManager().transaction(async transactionEntityManager => {
       const playerGameTrackerRepository = transactionEntityManager.getRepository(
         PlayerGameTracker
       );

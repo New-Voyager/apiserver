@@ -8,12 +8,13 @@ import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
 import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {PlayerStatus} from '@src/entity/types';
-import {GameReward} from '@src/entity/player/reward';
 import {getManager, getRepository} from 'typeorm';
 import {NewHandInfo, PlayerInSeat} from '@src/repositories/types';
 import _ from 'lodash';
 import {delay} from '@src/utils';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
+import {getGameManager} from '@src/repositories';
+import {GameReward} from '@src/entity/game/reward';
 
 const logger = getLogger('GameAPIs');
 
@@ -145,7 +146,7 @@ class GameAPIs {
         delay(1000);
         retryCount--;
 
-        const ret = await getManager().transaction(
+        const ret = await getGameManager().transaction(
           async transactionEntityManager => {
             const game: PokerGame = await Cache.getGame(
               gameCode,
@@ -276,7 +277,7 @@ class GameAPIs {
       return;
     }
 
-    const ret = await getManager().transaction(
+    const ret = await getGameManager().transaction(
       async transactionEntityManager => {
         const game: PokerGame = await Cache.getGame(
           gameCode,
@@ -560,7 +561,7 @@ class GameAPIs {
     }
     logger.info(`New hand info: ${gameCode}`);
 
-    const ret = await getManager().transaction(
+    const ret = await getGameManager().transaction(
       async transactionEntityManager => {
         const game: PokerGame = await Cache.getGame(
           gameCode,
@@ -745,10 +746,10 @@ class GameAPIs {
   public async updateButtonPos(gameCode: string, buttonPos: number) {
     const game = await Cache.getGame(gameCode);
     if (!game) {
-      throw new Error(`Updating button position failed`);
+      throw new Error('Updating button position failed');
     }
 
-    const ret = await getManager().transaction(
+    const ret = await getGameManager().transaction(
       async transactionEntityManager => {
         const pokerGameUpdates = transactionEntityManager.getRepository(
           PokerGameUpdates

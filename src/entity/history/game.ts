@@ -1,6 +1,6 @@
 import {Entity, Column, Index} from 'typeorm';
 import {DbAwareColumn} from '../dbaware';
-import {GameType} from '../types';
+import {GameStatus, GameType} from '../types';
 
 @Entity({name: 'game_history'})
 export class GameHistory {
@@ -13,6 +13,12 @@ export class GameHistory {
 
   @Column({name: 'club_id', nullable: true})
   public clubId!: number;
+
+  @Column({name: 'club_code', nullable: true})
+  public clubCode!: string;
+
+  @Column({name: 'title'})
+  public title!: string;
 
   @Column({name: 'host_id'})
   public hostId!: number;
@@ -29,11 +35,24 @@ export class GameHistory {
   @Column({name: 'small_blind'})
   public smallBlind!: number;
 
+  @Column({name: 'game_status', nullable: true, default: GameStatus.UNKNOWN})
+  public status!: GameStatus;
+
   @Column({name: 'big_blind'})
   public bigBlind!: number;
 
   @Column({name: 'hands_dealt', default: 0})
   public handsDealt!: number;
+
+  @Column({name: 'max_players', type: 'int'})
+  public maxPlayers!: number;
+
+  @Column({name: 'max_waitlist', type: 'int', default: 20})
+  public maxWaitlist!: number;
+
+  // used for tracking game number for club games
+  @Column({name: 'game_num', type: 'int', default: 0})
+  public gameNum!: number;
 
   @Column({name: 'roe_games', nullable: true, default: ''})
   public roeGames!: string; // comma separated list of round of each games

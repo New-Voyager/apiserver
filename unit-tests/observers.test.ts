@@ -85,7 +85,7 @@ afterAll(async done => {
   done();
 });
 
-async function createReward(playerId, clubCode) {
+async function createReward1(playerId, clubCode) {
   const rewardInput = {
     amount: 100.4,
     endHour: 4,
@@ -141,7 +141,7 @@ describe('Observers APIs', () => {
       playerUuids,
       playerIds,
     ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-    await createReward(owner, clubCode);
+    //await createReward(owner, clubCode);
     await createGameServer(gameServer);
     const game = await configureGame(owner, clubCode, holdemGameInput);
     await startGame(owner, game.gameCode);
@@ -177,7 +177,7 @@ describe('Observers APIs', () => {
       playerUuids,
       playerIds,
     ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-    await createReward(owner, clubCode);
+    //await createReward(owner, clubCode);
     await createGameServer(gameServer);
     const game = await configureGame(owner, clubCode, holdemGameInput);
     await startGame(owner, game.gameCode);

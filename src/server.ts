@@ -3,11 +3,9 @@ import {fileLoader, mergeTypes} from 'merge-graphql-schemas';
 import {create, merge} from 'lodash';
 import {authorize} from '@src/middlewares/authorization';
 import {
-  ConnectionOptions,
-  ConnectionOptionsReader,
   createConnection,
+  createConnections,
   getConnectionOptions,
-  getRepository,
 } from 'typeorm';
 import {GameServerAPI} from './internal/gameserver';
 import {HandServerAPI} from './internal/hand';
@@ -28,6 +26,7 @@ import {Firebase} from './firebase';
 import {Nats} from './nats';
 import {generateBotScript, updateButtonPos} from './internal/bot';
 import {restartTimers} from '@src/timer';
+import {getUserRepository} from './repositories';
 export enum RunProfile {
   DEV,
   TEST,
@@ -100,34 +99,156 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
 
   logger.info(`Server is running ${RunProfile[runProfile].toString()} profile`);
 
-  if (process.env.NODE_ENV !== 'unit-test') {
+  if (process.env.NODE_ENV !== 'unit-test' && process.env.NODE_ENV !== 'test') {
     logger.debug('Running in dev/prod mode');
-    const options = await getConnectionOptions();
+    const options = await getConnectionOptions('default');
+    const users = options['users'];
+    const livegames = options['livegames'];
+    const history = options['history'];
+    const default1 = options['default'];
 
-    // override database name if specified in the environment variable
-    if (process.env.DB_NAME) {
-      const optionsObj = options as any;
-      await createConnection({
-        type: optionsObj.type,
-        host: optionsObj.host,
-        port: optionsObj.port,
-        username: optionsObj.username,
-        password: optionsObj.password,
+    // create databases
+    try {
+      const defaultObj = default1 as any;
+      const conn = await createConnection({
+        type: defaultObj.type,
+        host: defaultObj.host,
+        port: defaultObj.port,
+        username: defaultObj.username,
+        password: defaultObj.password,
         database: process.env.DB_NAME,
-        cache: optionsObj.cache,
-        synchronize: optionsObj.synchronize,
-        bigNumberStrings: optionsObj.bigNumberStrings,
-        entities: optionsObj.entities,
+        cache: defaultObj.cache,
+        synchronize: defaultObj.synchronize,
+        bigNumberStrings: defaultObj.bigNumberStrings,
+        entities: defaultObj.entities,
         name: 'default',
       });
-    } else {
-      await createConnection(options);
+      try {
+        await conn.query('CREATE DATABASE livegames');
+        await conn.query(
+          `GRANT ALL PRIVILEGES ON DATABASE livegames TO "${defaultObj.username}"`
+        );
+      } catch (err) {
+        const message: string = err.toString();
+        if (message.indexOf('already exists') === -1) {
+          throw err;
+        }
+      }
+      try {
+        await conn.query('CREATE DATABASE users');
+        await conn.query(
+          `GRANT ALL PRIVILEGES ON DATABASE users TO "${defaultObj.username}"`
+        );
+      } catch (err) {
+        const message: string = err.toString();
+        if (message.indexOf('already exists') === -1) {
+          throw err;
+        }
+      }
+      try {
+        await conn.query('CREATE DATABASE history');
+        await conn.query(
+          `GRANT ALL PRIVILEGES ON DATABASE history TO "${defaultObj.username}"`
+        );
+      } catch (err) {
+        const message: string = err.toString();
+        if (message.indexOf('already exists') === -1) {
+          throw err;
+        }
+      }
+    } catch (err) {
+      logger.error(
+        `Errors reported when creating the database ${err.toString()}`
+      );
+      throw err;
     }
+
+    // override database name if specified in the environment variable
+    //if (process.env.DB_NAME) {
+    const liveGameObj = livegames as any;
+    const historyObj = history as any;
+    const userObj = users as any;
+    try {
+      await createConnections([
+        {
+          type: userObj.type,
+          host: userObj.host,
+          port: userObj.port,
+          username: userObj.username,
+          password: userObj.password,
+          database: 'users', //process.env.DB_NAME,
+          cache: userObj.cache,
+          synchronize: userObj.synchronize,
+          bigNumberStrings: userObj.bigNumberStrings,
+          entities: userObj.entities,
+          name: 'users',
+        },
+        {
+          type: liveGameObj.type,
+          host: liveGameObj.host,
+          port: liveGameObj.port,
+          username: liveGameObj.username,
+          password: liveGameObj.password,
+          database: 'livegames', //process.env.DB_NAME,
+          cache: liveGameObj.cache,
+          synchronize: liveGameObj.synchronize,
+          bigNumberStrings: liveGameObj.bigNumberStrings,
+          entities: liveGameObj.entities,
+          name: 'livegames',
+        },
+        {
+          type: historyObj.type,
+          host: historyObj.host,
+          port: historyObj.port,
+          username: historyObj.username,
+          password: historyObj.password,
+          database: 'history',
+          cache: historyObj.cache,
+          synchronize: historyObj.synchronize,
+          bigNumberStrings: historyObj.bigNumberStrings,
+          entities: historyObj.entities,
+          name: 'history',
+        },
+      ]);
+    } catch (err) {
+      logger.error(`Error creating connections: ${err.toString()}`);
+    }
+    // } else {
+    //   await createConnection(options);
+    // }
   } else {
     logger.debug('Running in UNIT-TEST mode');
     process.env.DB_USED = 'sqllite';
-    const options = await getConnectionOptions();
-    await createConnection({...options, name: 'default'});
+
+    try {
+      const options = await getConnectionOptions('default');
+      const users = options['users'];
+      const livegames = options['livegames'];
+      const history = options['history'];
+
+      // override database name if specified in the environment variable
+      //if (process.env.DB_NAME) {
+      const liveGameObj = livegames as any;
+      const historyObj = history as any;
+      const userObj = users as any;
+
+      await createConnections([
+        {
+          ...userObj,
+          name: 'users',
+        },
+        {
+          ...liveGameObj,
+          name: 'livegames',
+        },
+        {
+          ...historyObj,
+          name: 'history',
+        },
+      ]);
+    } catch (err) {
+      logger.error(`Error creating connections: ${err.toString()}`);
+    }
   }
 
   initializeNats();
@@ -245,7 +366,7 @@ async function readyCheck(req: any, resp: any) {
  */
 async function login(req: any, resp: any) {
   const payload = req.body;
-  const repository = getRepository(Player);
+  const repository = getUserRepository(Player);
 
   const errors = new Array<string>();
   const name = payload['name'];

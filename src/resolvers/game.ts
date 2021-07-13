@@ -1,5 +1,6 @@
 import {v4 as uuidv4} from 'uuid';
 import {GameRepository} from '@src/repositories/game';
+import {HistoryRepository} from '@src/repositories/history';
 import {
   GameStatus,
   GameType,
@@ -541,7 +542,7 @@ export async function completedGame(playerId: string, gameCode: string) {
 
     const player = await Cache.getPlayer(playerId);
 
-    const resp = await GameRepository.getCompletedGame(gameCode, player.id);
+    const resp = await HistoryRepository.getCompletedGame(gameCode, player.id);
     if (game.endedAt) {
       const runTime = resp.endedAt - resp.startedAt;
       resp.runTime = runTime;
@@ -567,7 +568,7 @@ export async function completedGame(playerId: string, gameCode: string) {
 
 export async function getGameResultTable(gameCode: string) {
   try {
-    const resp = await GameRepository.getGameResultTable(gameCode);
+    const resp = await HistoryRepository.getGameResultTable(gameCode);
 
     for (const r of resp) {
       let sessionTime = r.sessionTime;
@@ -605,7 +606,7 @@ export async function downloadResult(playerId: string, gameCode: string) {
         }
       }
     }
-    const resp = await GameRepository.getGameResultTable(gameCode);
+    const resp = await HistoryRepository.getGameResultTable(gameCode);
     const headers: Array<string> = ['name', 'id', 'hands', 'buyin', 'profit'];
     if (includeTips) {
       headers.push('tips');
@@ -1937,6 +1938,7 @@ const resolvers: any = {
       const playersInSeats = await GameRepository.getPlayersInSeats(game.id);
       for (const player of playersInSeats) {
         player.status = PlayerStatus[player.status];
+        player.name = player.playerName;
       }
 
       const takenSeats = playersInSeats.map(x => x.seatNo);

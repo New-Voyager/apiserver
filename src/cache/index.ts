@@ -4,6 +4,7 @@ import {Player} from '@src/entity/player/player';
 import {EntityManager, getRepository, Repository} from 'typeorm';
 import * as redis from 'redis';
 import {redisHost, redisPort} from '@src/utils';
+import {getGameRepository, getUserRepository} from '@src/repositories';
 
 interface CachedHighHandTracking {
   rewardId: number;
@@ -160,7 +161,7 @@ class GameCache {
       if (transactionManager) {
         repo = transactionManager.getRepository(PokerGame);
       } else {
-        repo = getRepository(PokerGame);
+        repo = getGameRepository(PokerGame);
       }
       const game = await repo.findOne({
         where: {gameCode: gameCode},
@@ -210,7 +211,7 @@ class GameCache {
     if (getResp.success && getResp.data && !update) {
       return JSON.parse(getResp.data) as Club;
     } else {
-      const club = await getRepository(Club).findOne({
+      const club = await getUserRepository(Club).findOne({
         relations: ['owner', 'members'],
         where: {clubCode: clubCode},
       });
@@ -228,7 +229,7 @@ class GameCache {
     if (getResp.success && getResp.data && !update) {
       return JSON.parse(getResp.data) as Player;
     } else {
-      const player = await getRepository(Player).findOne({
+      const player = await getUserRepository(Player).findOne({
         where: {uuid: playerUuid},
       });
       if (!player) {
@@ -245,7 +246,7 @@ class GameCache {
     if (getResp.success && getResp.data && !update) {
       return JSON.parse(getResp.data) as Player;
     } else {
-      const player = await getRepository(Player).findOne({
+      const player = await getUserRepository(Player).findOne({
         where: {id: id},
       });
       if (!player) {
@@ -269,7 +270,7 @@ class GameCache {
     } else {
       const club = await this.getClub(clubCode);
       const player = await this.getPlayer(playerUuid);
-      const clubMember = await getRepository(ClubMember).findOne({
+      const clubMember = await getUserRepository(ClubMember).findOne({
         relations: ['player', 'club'],
         where: {
           club: {id: club.id},
@@ -298,7 +299,7 @@ class GameCache {
   public async getGameById(gameID: number): Promise<PokerGame | undefined> {
     const gameCode = await this.gameCodeFromId(gameID);
     if (!gameCode) {
-      const game = await getRepository(PokerGame).findOne({
+      const game = await getGameRepository(PokerGame).findOne({
         where: {id: gameID},
       });
       if (!game) {

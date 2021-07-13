@@ -1,4 +1,4 @@
-import {EntityManager, getConnection, getManager, getRepository} from 'typeorm';
+import {EntityManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player/player';
@@ -22,6 +22,7 @@ import {buyInRequest, pendingApprovalsForClubData} from '@src/types';
 import {Firebase} from '@src/firebase';
 import {Nats} from '@src/nats';
 import {v4 as uuidv4} from 'uuid';
+import {getGameConnection, getGameManager, getGameRepository} from '.';
 
 const logger = getLogger('reload');
 
@@ -87,7 +88,7 @@ export class Reload {
     let databaseTime = 0;
     let buyInApprovedTime = 0;
 
-    const approved = await getManager().transaction(
+    const approved = await getGameManager().transaction(
       async transactionEntityManager => {
         databaseTime = new Date().getTime();
         let approved: boolean;
@@ -244,7 +245,7 @@ export class Reload {
     cancelTimer(this.game.id, this.player.id, RELOAD_APPROVAL_TIMEOUT);
     cancelTime = new Date().getTime() - cancelTime;
 
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     if (!playerInGame) {
       playerInGame = await playerGameTrackerRepository.findOne({
         game: {id: this.game.id},
@@ -325,7 +326,7 @@ export class Reload {
         this.player.id +
         ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
         GameStatus.ENDED;
-      const resp = await getConnection().query(query);
+      const resp = await getGameConnection().query(query);
 
       const currentBuyin = resp[0]['current_buyin'];
 
@@ -383,88 +384,95 @@ export class Reload {
 
   public async approveDeny(status: ApprovalStatus): Promise<boolean> {
     if (status === ApprovalStatus.APPROVED) {
-      return await getManager().transaction(async transactionEntityManager => {
-        // get amount from the next hand update table
-        const pendingUpdatesRepo = transactionEntityManager.getRepository(
-          NextHandUpdates
-        );
-        const reloadRequest = await pendingUpdatesRepo.findOne({
-          game: {id: this.game.id},
-          playerId: this.player.id,
-          newUpdate: NextHandUpdate.WAIT_RELOAD_APPROVAL,
-        });
-        if (!reloadRequest) {
-          return false;
-        }
-
-        // update player game tracker
-        const playerInGameRepo = transactionEntityManager.getRepository(
-          PlayerGameTracker
-        );
-        const playerInGame = await playerInGameRepo.findOne({
-          game: {id: this.game.id},
-          playerId: this.player.id,
-        });
-        if (!playerInGame) {
-          return false;
-        }
-
-        // remove row from NextHandUpdates table
-        await pendingUpdatesRepo.delete({
-          game: {id: this.game.id},
-          playerId: this.player.id,
-          newUpdate: NextHandUpdate.WAIT_RELOAD_APPROVAL,
-        });
-
-        if (
-          this.game.status == GameStatus.CONFIGURED ||
-          this.game.status == GameStatus.PAUSED ||
-          this.game.tableStatus !== TableStatus.GAME_RUNNING
-        ) {
-          // game is just configured or table is paused
-          this.approvedAndUpdateStack(reloadRequest.buyinAmount, playerInGame);
-        } else {
-          logger.info('Game is running. Update stack in the next hand');
-          await this.addToNextHand(
-            reloadRequest.buyinAmount,
-            NextHandUpdate.RELOAD_APPROVED,
-            transactionEntityManager
+      return await getGameManager().transaction(
+        async transactionEntityManager => {
+          // get amount from the next hand update table
+          const pendingUpdatesRepo = transactionEntityManager.getRepository(
+            NextHandUpdates
           );
+          const reloadRequest = await pendingUpdatesRepo.findOne({
+            game: {id: this.game.id},
+            playerId: this.player.id,
+            newUpdate: NextHandUpdate.WAIT_RELOAD_APPROVAL,
+          });
+          if (!reloadRequest) {
+            return false;
+          }
+
+          // update player game tracker
+          const playerInGameRepo = transactionEntityManager.getRepository(
+            PlayerGameTracker
+          );
+          const playerInGame = await playerInGameRepo.findOne({
+            game: {id: this.game.id},
+            playerId: this.player.id,
+          });
+          if (!playerInGame) {
+            return false;
+          }
+
+          // remove row from NextHandUpdates table
+          await pendingUpdatesRepo.delete({
+            game: {id: this.game.id},
+            playerId: this.player.id,
+            newUpdate: NextHandUpdate.WAIT_RELOAD_APPROVAL,
+          });
+
+          if (
+            this.game.status == GameStatus.CONFIGURED ||
+            this.game.status == GameStatus.PAUSED ||
+            this.game.tableStatus !== TableStatus.GAME_RUNNING
+          ) {
+            // game is just configured or table is paused
+            this.approvedAndUpdateStack(
+              reloadRequest.buyinAmount,
+              playerInGame
+            );
+          } else {
+            logger.info('Game is running. Update stack in the next hand');
+            await this.addToNextHand(
+              reloadRequest.buyinAmount,
+              NextHandUpdate.RELOAD_APPROVED,
+              transactionEntityManager
+            );
+          }
+          return true;
         }
-        return true;
-      });
+      );
     } else {
       // denied
 
-      return await getManager().transaction(async transactionEntityManager => {
-        // get amount from the next hand update table
-        const pendingUpdatesRepo = transactionEntityManager.getRepository(
-          NextHandUpdates
-        );
-        const request = await pendingUpdatesRepo.findOne({
-          game: {id: this.game.id},
-          playerId: this.player.id,
-          newUpdate: NextHandUpdate.WAIT_RELOAD_APPROVAL,
-        });
-        if (!request) {
-          return false;
-        }
+      return await getGameManager().transaction(
+        async transactionEntityManager => {
+          // get amount from the next hand update table
+          const pendingUpdatesRepo = transactionEntityManager.getRepository(
+            NextHandUpdates
+          );
+          const request = await pendingUpdatesRepo.findOne({
+            game: {id: this.game.id},
+            playerId: this.player.id,
+            newUpdate: NextHandUpdate.WAIT_RELOAD_APPROVAL,
+          });
+          if (!request) {
+            return false;
+          }
 
-        // update player game tracker
-        const playerInGameRepo = transactionEntityManager.getRepository(
-          PlayerGameTracker
-        );
-        const playerInGame = await playerInGameRepo.findOne({
-          game: {id: this.game.id},
-          playerId: this.player.id,
-        });
-        if (!playerInGame) {
-          return false;
+          // update player game tracker
+          const playerInGameRepo = transactionEntityManager.getRepository(
+            PlayerGameTracker
+          );
+          const playerInGame = await playerInGameRepo.findOne({
+            game: {id: this.game.id},
+            playerId: this.player.id,
+          });
+          if (!playerInGame) {
+            return false;
+          }
+          cancelTimer(this.game.id, this.player.id, RELOAD_TIMEOUT);
+          await this.denied(playerInGame, transactionEntityManager);
+          return true;
         }
-        cancelTimer(this.game.id, this.player.id, RELOAD_TIMEOUT);
-        await this.denied(playerInGame, transactionEntityManager);
-        return true;
-      });
+      );
     }
   }
 
@@ -479,7 +487,7 @@ export class Reload {
         NextHandUpdates
       );
     } else {
-      nextHandUpdatesRepository = getRepository(NextHandUpdates);
+      nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
     }
     const update = new NextHandUpdates();
     update.game = this.game;
@@ -495,7 +503,7 @@ export class Reload {
     // indicate the user timeout expired
 
     // remove row from NextHandUpdates table
-    const pendingUpdatesRepo = getRepository(NextHandUpdates);
+    const pendingUpdatesRepo = getGameRepository(NextHandUpdates);
     await pendingUpdatesRepo.delete({
       game: {id: this.game.id},
       playerId: this.player.id,

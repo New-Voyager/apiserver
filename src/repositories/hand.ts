@@ -7,20 +7,27 @@ import {
   PlayerStatus,
   WonAtStatus,
 } from '@src/entity/types';
-import {getRepository, LessThan, MoreThan, getManager} from 'typeorm';
+import {LessThan, MoreThan, getManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {Cache} from '@src/cache';
 import {RewardRepository} from './reward';
-import {GameReward} from '@src/entity/player/reward';
 import {SaveHandResult} from './types';
 import {Player} from '@src/entity/player/player';
 import {Club} from '@src/entity/player/club';
 import {StatsRepository} from './stats';
 import {ClubMessageInput} from '@src/entity/player/clubmessage';
 import {Nats} from '@src/nats';
+import {
+  getGameManager,
+  getGameRepository,
+  getHistoryRepository,
+  getUserManager,
+  getUserRepository,
+} from '.';
+import {GameReward} from '@src/entity/game/reward';
 
 const logger = getLogger('hand');
 
@@ -269,7 +276,7 @@ class HandRepositoryImpl {
       result.playerRound = playerRound;
 
       //logger.info('****** STARTING TRANSACTION TO SAVE a hand result');
-      const saveResult = await getManager().transaction(
+      const saveResult = await getGameManager().transaction(
         async transactionEntityManager => {
           /**
            * Assigning player chips values
@@ -302,9 +309,7 @@ class HandRepositoryImpl {
               })
               .execute();
           }
-          await transactionEntityManager
-            .getRepository(HandHistory)
-            .save(handHistory);
+          await getHistoryRepository(HandHistory).save(handHistory);
           // update game rake and last hand number
           await transactionEntityManager
             .getRepository(PokerGameUpdates)
@@ -335,7 +340,7 @@ class HandRepositoryImpl {
           ) {
             // new high hand winners
             // get the game codes associated with the reward tracking id
-            const games = await getRepository(GameReward).find({
+            const games = await getGameRepository(GameReward).find({
               rewardTrackingId: {id: highhandWinners.rewardTrackingId},
             });
             const gameCodes = games.map(e => e.gameCode);
@@ -360,8 +365,8 @@ class HandRepositoryImpl {
           await StatsRepository.saveHandStats(
             game,
             result,
-            handNum,
-            transactionEntityManager
+            handNum
+            //transactionEntityManager
           );
           return saveResult;
         }
@@ -396,7 +401,7 @@ class HandRepositoryImpl {
     gameId: number,
     handNum: number
   ): Promise<HandHistory | undefined> {
-    const handHistoryRepository = getRepository(HandHistory);
+    const handHistoryRepository = getHistoryRepository(HandHistory);
     const handHistory = await handHistoryRepository.findOne({
       where: {gameId: gameId, handNum: handNum},
     });
@@ -406,7 +411,7 @@ class HandRepositoryImpl {
   public async getLastHandHistory(
     gameId: number
   ): Promise<HandHistory | undefined> {
-    const handHistoryRepository = getRepository(HandHistory);
+    const handHistoryRepository = getHistoryRepository(HandHistory);
     const hands = await handHistoryRepository.find({
       where: {gameId: gameId},
       order: {handNum: 'DESC'},
@@ -464,7 +469,7 @@ class HandRepositoryImpl {
     if (pageWhere) {
       findOptions['where']['id'] = pageWhere;
     }
-    const handHistoryRepository = getRepository(HandHistory);
+    const handHistoryRepository = getHistoryRepository(HandHistory);
     /*
       pageId: Int
       handNum: Int!
@@ -544,7 +549,7 @@ class HandRepositoryImpl {
     handHistory: HandHistory
   ): Promise<number> {
     try {
-      const savedHandsRepository = getRepository(SavedHands);
+      const savedHandsRepository = getUserRepository(SavedHands);
 
       let bookmarkedHand = await savedHandsRepository.findOne({
         gameCode: game.gameCode,
@@ -576,7 +581,7 @@ class HandRepositoryImpl {
     bookmarkId: number
   ): Promise<void> {
     try {
-      const savedHandsRepository = getRepository(SavedHands);
+      const savedHandsRepository = getHistoryRepository(SavedHands);
 
       const bookmarkedHand = await savedHandsRepository.findOne({
         savedBy: {id: player.id},
@@ -606,7 +611,7 @@ class HandRepositoryImpl {
     handHistory: HandHistory
   ): Promise<number> {
     try {
-      const id = await getManager().transaction(
+      const id = await getUserManager().transaction(
         async transactionEntityManager => {
           const savedHandsRepository = transactionEntityManager.getRepository(
             SavedHands
@@ -651,7 +656,7 @@ class HandRepositoryImpl {
 
   public async sharedHand(id: number): Promise<any> {
     try {
-      const savedHandsRepository = getRepository(SavedHands);
+      const savedHandsRepository = getUserRepository(SavedHands);
       const sharedHand = await savedHandsRepository.findOne({
         relations: ['sharedBy', 'sharedTo'],
         where: {
@@ -667,7 +672,7 @@ class HandRepositoryImpl {
 
   public async sharedHands(club: Club): Promise<any> {
     try {
-      const savedHandsRepository = getRepository(SavedHands);
+      const savedHandsRepository = getUserRepository(SavedHands);
 
       const sharedHands = await savedHandsRepository.find({
         relations: ['sharedBy', 'sharedTo'],
@@ -685,7 +690,7 @@ class HandRepositoryImpl {
 
   public async bookmarkedHands(player: Player): Promise<any> {
     try {
-      const savedHandsRepository = getRepository(SavedHands);
+      const savedHandsRepository = getUserRepository(SavedHands);
 
       const bookmarkedHands = await savedHandsRepository.find({
         relations: ['savedBy'],
@@ -712,7 +717,7 @@ class HandRepositoryImpl {
     gameCode: string
   ): Promise<any> {
     try {
-      const savedHandsRepository = getRepository(SavedHands);
+      const savedHandsRepository = getUserRepository(SavedHands);
 
       const bookmarkedHands = await savedHandsRepository.find({
         relations: ['savedBy'],
@@ -737,7 +742,7 @@ class HandRepositoryImpl {
 
   public async getHandLog(gameCode: string, handNum: number): Promise<any> {
     const game = await Cache.getGame(gameCode);
-    const handHistoryRepo = getRepository(HandHistory);
+    const handHistoryRepo = getHistoryRepository(HandHistory);
     const hand = await handHistoryRepo.findOne({
       gameId: game.id,
       handNum: handNum,

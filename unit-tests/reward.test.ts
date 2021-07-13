@@ -14,7 +14,7 @@ afterAll(async done => {
   done();
 });
 
-describe('Reward APIs', () => {
+describe.skip('Reward APIs', () => {
   test('reward: create a reward', async () => {
     const ownerId = await createPlayer({
       player: {name: 'player1', deviceId: 'test', page: {count: 20}},

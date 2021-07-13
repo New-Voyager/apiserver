@@ -6,6 +6,7 @@ import {fixQuery} from '@src/utils';
 import {getLogger} from '@src/utils/log';
 import {PokerGame} from '@src/entity/game/game';
 import {publishNewGame} from '@src/gameserver';
+import {getGameConnection, getGameRepository} from '@src/repositories';
 const logger = getLogger('internal::gameserver');
 
 class GameServerAPIs {
@@ -110,11 +111,13 @@ class GameServerAPIs {
 
   public async restartGames(req: any, resp: any) {
     const payload = req.body;
-    const records: Array<GameServer> = await getRepository(GameServer).find({
-      where: {
-        url: payload.url,
-      },
-    });
+    const records: Array<GameServer> = await getGameRepository(GameServer).find(
+      {
+        where: {
+          url: payload.url,
+        },
+      }
+    );
 
     let err = '';
 
@@ -170,7 +173,7 @@ export async function createGameServer(
       url = url.replace('mayas-macbook-pro.local', '127.0.0.1');
     }
 
-    const gameServerRepository = getRepository(GameServer);
+    const gameServerRepository = getGameRepository(GameServer);
     let gameServer = await gameServerRepository.findOne({
       url: url,
     });
@@ -220,7 +223,7 @@ async function restartGameServerGames(
 
 export async function editGameServer(gameServerPayload: any) {
   try {
-    const gameServerRepository = getRepository(GameServer);
+    const gameServerRepository = getGameRepository(GameServer);
     const gameServer = await gameServerRepository.findOne({
       where: {ipAddress: gameServerPayload.ipAddress},
     });
@@ -255,7 +258,7 @@ export async function editGameServer(gameServerPayload: any) {
 }
 
 export async function getAllGameServers() {
-  const gameServerRepository = getRepository(GameServer);
+  const gameServerRepository = getGameRepository(GameServer);
   const gameServers = await gameServerRepository.find();
   return gameServers;
 }
@@ -265,7 +268,7 @@ export async function getParticularGameServer(gameCode: string) {
   if (!game) {
     throw new Error('Game not found');
   }
-  const trackGameServerRepository = getRepository(TrackGameServer);
+  const trackGameServerRepository = getGameRepository(TrackGameServer);
   const trackGameServer = await trackGameServerRepository.findOne({
     where: {
       game: {id: game.id},
@@ -283,13 +286,13 @@ export async function getGamesForGameServer(
       WHERE gs.url = ?
       AND pg.game_status = ?`;
   query = fixQuery(query);
-  const records = await getConnection().query(query, [
+  const records = await getGameConnection().query(query, [
     gameServerUrl,
     GameStatus.ACTIVE,
   ]);
 
   if (records.length > 0) {
-    const games: Array<PokerGame> = await getRepository(PokerGame).find({
+    const games: Array<PokerGame> = await getGameRepository(PokerGame).find({
       where: {
         id: In(records.map(r => r.id)),
       },

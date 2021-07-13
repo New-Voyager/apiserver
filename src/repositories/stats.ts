@@ -1,4 +1,4 @@
-import {EntityManager, Repository, getRepository, getManager} from 'typeorm';
+import {EntityManager, Repository} from 'typeorm';
 import {v4 as uuidv4} from 'uuid';
 import {Player} from '@src/entity/player/player';
 import {
@@ -15,6 +15,7 @@ import {Club} from '@src/entity/player/club';
 import {GameType} from '@src/entity/types';
 import {Cache} from '@src/cache';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
+import {getHistoryConnection, getHistoryManager, getHistoryRepository} from '.';
 
 const logger = getLogger('Stats');
 
@@ -97,7 +98,7 @@ class StatsRepositoryImpl {
     if (transactionManager) {
       repository = transactionManager.getRepository(PlayerGameStats);
     } else {
-      repository = getRepository(PlayerGameStats);
+      repository = getHistoryRepository(PlayerGameStats);
     }
     // player stats record
     const playerStats = new PlayerGameStats();
@@ -116,7 +117,7 @@ class StatsRepositoryImpl {
     if (transactionManager) {
       repository = transactionManager.getRepository(PlayerGameStats);
     } else {
-      repository = getRepository(PlayerGameStats);
+      repository = getHistoryRepository(PlayerGameStats);
     }
 
     const playerStats = handResult.playerStats;
@@ -391,8 +392,8 @@ class StatsRepositoryImpl {
 
   public async rollupStats(game: PokerGame) {
     try {
-      const playerStatsRepo = getRepository(PlayerHandStats);
-      const gameStatsRepo = getRepository(PlayerGameStats);
+      const playerStatsRepo = getHistoryRepository(PlayerHandStats);
+      const gameStatsRepo = getHistoryRepository(PlayerGameStats);
       const rows = await gameStatsRepo.find({
         gameId: game.id,
       });
@@ -473,7 +474,7 @@ class StatsRepositoryImpl {
 
   public async joinedNewGame(player: Player) {
     try {
-      const playerStatsRepo = getRepository(PlayerHandStats);
+      const playerStatsRepo = getHistoryRepository(PlayerHandStats);
       await playerStatsRepo
         .createQueryBuilder()
         .update()
@@ -491,7 +492,7 @@ class StatsRepositoryImpl {
 
   public async newClubGame(gameType: GameType, clubId: number) {
     try {
-      const clubStatsRepo = getRepository(ClubStats);
+      const clubStatsRepo = getHistoryRepository(ClubStats);
       await clubStatsRepo
         .createQueryBuilder()
         .update()
@@ -509,7 +510,7 @@ class StatsRepositoryImpl {
   }
 
   public async newPlayerHandStats(player: Player) {
-    const playerStatsRepo = getRepository(PlayerHandStats);
+    const playerStatsRepo = getHistoryRepository(PlayerHandStats);
     const playerStats = new PlayerHandStats();
     playerStats.playerId = player.id;
     await playerStatsRepo.save(playerStats);
@@ -517,9 +518,14 @@ class StatsRepositoryImpl {
 
   public async newClubStats(
     club: Club,
-    transactionEntityManager: EntityManager
+    transactionEntityManager?: EntityManager
   ) {
-    const clubStatsRepo = transactionEntityManager.getRepository(ClubStats);
+    let clubStatsRepo: Repository<ClubStats>;
+    if (transactionEntityManager) {
+      clubStatsRepo = transactionEntityManager.getRepository(ClubStats);
+    } else {
+      clubStatsRepo = getHistoryRepository(ClubStats);
+    }
     let clubStats = new ClubStats();
     clubStats.gameType = GameType.HOLDEM;
     clubStats.clubId = club.id;
@@ -537,7 +543,7 @@ class StatsRepositoryImpl {
   }
 
   public async newSystemStats() {
-    const systemStatsRepo = getRepository(SystemStats);
+    const systemStatsRepo = getHistoryConnection().getRepository(SystemStats);
     let count = await systemStatsRepo.count({
       gameType: GameType.HOLDEM,
     });
@@ -570,7 +576,7 @@ class StatsRepositoryImpl {
     gameType: GameType,
     clubCode: string
   ): Promise<any> {
-    const clubStatsRepo = getRepository(ClubStats);
+    const clubStatsRepo = getHistoryRepository(ClubStats);
     const club = await Cache.getClub(clubCode);
     const stats = await clubStatsRepo.findOne({
       gameType: gameType,
@@ -580,7 +586,7 @@ class StatsRepositoryImpl {
   }
 
   public async getPlayerHandStats(playerId: string): Promise<any> {
-    const playerHandsRepo = getRepository(PlayerHandStats);
+    const playerHandsRepo = getHistoryRepository(PlayerHandStats);
     const player = await Cache.getPlayer(playerId);
     const playerStatHand = await playerHandsRepo.findOne({
       playerId: player.id,
@@ -592,7 +598,7 @@ class StatsRepositoryImpl {
     playerId: string,
     gameCode: string
   ): Promise<any> {
-    const playerGameRepo = getRepository(PlayerGameStats);
+    const playerGameRepo = getHistoryRepository(PlayerGameStats);
     const player = await Cache.getPlayer(playerId);
     const game = await Cache.getGame(gameCode);
     const playerStatHand = await playerGameRepo.findOne({
@@ -603,7 +609,7 @@ class StatsRepositoryImpl {
   }
 
   public async gameEnded(game: PokerGame, players: Array<PlayerGameTracker>) {
-    await getManager().transaction(async transactionEntityManager => {
+    await getHistoryManager().transaction(async transactionEntityManager => {
       const playerStatsRepo = transactionEntityManager.getRepository(
         PlayerHandStats
       );
@@ -615,7 +621,7 @@ class StatsRepositoryImpl {
         });
         if (playerStat) {
           // get recent performance data
-          let recentDataJson = playerStat.recentPerformance;
+          const recentDataJson = playerStat.recentPerformance;
           let recentPerformance = new Array<any>();
           try {
             recentPerformance = JSON.parse(recentDataJson);
@@ -663,7 +669,7 @@ class StatsRepositoryImpl {
   }
 
   public async getPlayerRecentPerformance(player: Player): Promise<string> {
-    const playerStatsRepo = getRepository(PlayerHandStats);
+    const playerStatsRepo = getHistoryRepository(PlayerHandStats);
     const playerStat = await playerStatsRepo.findOne({
       playerId: player.id,
     });

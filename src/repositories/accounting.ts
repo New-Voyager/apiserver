@@ -5,11 +5,12 @@ import {ClubTransaction, PlayerTransaction} from '@src/types';
 import {Player} from '@src/entity/player/player';
 import {getLogger} from '@src/utils/log';
 import {ClubTokenTransactions} from '@src/entity/player/accounting';
+import {getUserManager, getUserRepository} from '.';
 const logger = getLogger('accounting - repositories');
 
 class AccountingRepositoryImpl {
   public async clubTransactions(club: Club): Promise<Array<ClubTransaction>> {
-    const clubTransactionsRepository = getRepository(ClubTokenTransactions);
+    const clubTransactionsRepository = getUserRepository(ClubTokenTransactions);
     const resp = await clubTransactionsRepository.find({
       relations: ['player'],
       where: {
@@ -48,7 +49,7 @@ class AccountingRepositoryImpl {
     notes: string
   ): Promise<boolean> {
     logger.info('****** STARTING TRANSACTION FOR ADD TOKENS TO PLAYER');
-    await getManager().transaction(async transactionEntityManager => {
+    await getUserManager().transaction(async transactionEntityManager => {
       const updateClubMemberQuery = `update club_member set balance = balance + ${amount} where id = ${clubMember.id}`;
       await transactionEntityManager.query(updateClubMemberQuery);
 
@@ -79,7 +80,7 @@ class AccountingRepositoryImpl {
     notes: string
   ): Promise<boolean> {
     logger.info('****** STARTING TRANSACTION FOR WITHDRAW TOKENS FROM PLAYER');
-    await getManager().transaction(async transactionEntityManager => {
+    await getUserManager().transaction(async transactionEntityManager => {
       const updateClubMemberQuery = `update club_member set balance = balance - ${amount} where id = ${clubMember.id}`;
       await transactionEntityManager.query(updateClubMemberQuery);
 
@@ -108,7 +109,7 @@ class AccountingRepositoryImpl {
     notes: string
   ): Promise<boolean> {
     logger.info('****** STARTING TRANSACTION FOR ADD TOKENS TO CLUB');
-    await getManager().transaction(async transactionEntityManager => {
+    await getUserManager().transaction(async transactionEntityManager => {
       const updateClubQuery = `update club set balance = balance + ${amount} where id = ${club.id}`;
       await transactionEntityManager.query(updateClubQuery);
 
@@ -136,7 +137,7 @@ class AccountingRepositoryImpl {
     notes: string
   ): Promise<boolean> {
     logger.info('****** STARTING TRANSACTION FOR WITHDRAW TOKENS FROM CLUB');
-    await getManager().transaction(async transactionEntityManager => {
+    await getUserManager().transaction(async transactionEntityManager => {
       const updateClubQuery = `update club set balance = balance - ${amount} where id = ${club.id}`;
       await transactionEntityManager.query(updateClubQuery);
 
@@ -163,7 +164,7 @@ class AccountingRepositoryImpl {
     notes: string
   ): Promise<boolean> {
     logger.info('****** STARTING TRANSACTION FOR UPDATE CLUB BALANCE');
-    await getManager().transaction(async transactionEntityManager => {
+    await getUserManager().transaction(async transactionEntityManager => {
       const updateClubQuery = `update club set balance = ${amount} where id = ${club.id}`;
       await transactionEntityManager.query(updateClubQuery);
 
@@ -191,7 +192,7 @@ class AccountingRepositoryImpl {
     notes: string
   ): Promise<boolean> {
     logger.info('****** STARTING TRANSACTION FOR UPDATE PLAYER BALANCE');
-    await getManager().transaction(async transactionEntityManager => {
+    await getUserManager().transaction(async transactionEntityManager => {
       const updateClubMemberQuery = `update club_member set balance = ${amount} where id = ${clubMember.id}`;
       await transactionEntityManager.query(updateClubMemberQuery);
 
@@ -215,7 +216,7 @@ class AccountingRepositoryImpl {
     club: Club,
     player: Player
   ): Promise<Array<PlayerTransaction>> {
-    const clubTransactionsRepository = getRepository(ClubTokenTransactions);
+    const clubTransactionsRepository = getUserRepository(ClubTokenTransactions);
     const resp = await clubTransactionsRepository.find({
       relations: ['player'],
       where: {
@@ -253,7 +254,7 @@ class AccountingRepositoryImpl {
     notes: string
   ): Promise<boolean> {
     logger.info('****** STARTING TRANSACTION FOR SETTLE PLAYER TO PLAYER');
-    await getManager().transaction(async transactionEntityManager => {
+    await getUserManager().transaction(async transactionEntityManager => {
       const updateFromClubMemberQuery = `update club_member set balance = balance - ${amount} where id = ${fromClubMember.id}`;
       const updateToClubMemberQuery = `update club_member set balance = balance + ${amount} where id = ${toClubMember.id}`;
       await transactionEntityManager.query(updateFromClubMemberQuery);

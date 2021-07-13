@@ -3,7 +3,7 @@ import {
   PlayerCoin,
   StoreType,
 } from '@src/entity/player/appcoin';
-import {getManager, getRepository} from 'typeorm';
+import {getUserManager, getUserRepository} from '.';
 const crypto = require('crypto');
 
 class AppCoinRepositoryImpl {
@@ -16,67 +16,71 @@ class AppCoinRepositoryImpl {
     purchaseDate: Date,
     receipt: string
   ): Promise<boolean> {
-    return await getManager().transaction(async transactionEntityManager => {
-      const coinTransactionRepo = transactionEntityManager.getRepository(
-        CoinTransaction
-      );
-      const coinTrans = new CoinTransaction();
-      coinTrans.productId = productId;
-      coinTrans.storeType = storeType;
-      coinTrans.playerUuid = playerUuid;
-      coinTrans.transactionId = transactionId;
-      coinTrans.serverData = receipt;
-      coinTrans.coinsPurchased = coinsPurchased;
-      coinTrans.purchaseDate = purchaseDate;
-      coinTrans.refunded = false;
-      const receiptHash = crypto
-        .createHash('md5')
-        .update(receipt)
-        .digest('hex');
-      if (receiptHash) {
-        const existingTran = await coinTransactionRepo.findOne({
-          receiptHash: receiptHash,
-        });
-        if (existingTran != null) {
-          // entry already found
-          return true;
+    return await getUserManager().transaction(
+      async transactionEntityManager => {
+        const coinTransactionRepo = transactionEntityManager.getRepository(
+          CoinTransaction
+        );
+        const coinTrans = new CoinTransaction();
+        coinTrans.productId = productId;
+        coinTrans.storeType = storeType;
+        coinTrans.playerUuid = playerUuid;
+        coinTrans.transactionId = transactionId;
+        coinTrans.serverData = receipt;
+        coinTrans.coinsPurchased = coinsPurchased;
+        coinTrans.purchaseDate = purchaseDate;
+        coinTrans.refunded = false;
+        const receiptHash = crypto
+          .createHash('md5')
+          .update(receipt)
+          .digest('hex');
+        if (receiptHash) {
+          const existingTran = await coinTransactionRepo.findOne({
+            receiptHash: receiptHash,
+          });
+          if (existingTran != null) {
+            // entry already found
+            return true;
+          }
         }
-      }
-      coinTrans.receiptHash = receiptHash;
+        coinTrans.receiptHash = receiptHash;
 
-      coinTransactionRepo.save(coinTrans);
+        coinTransactionRepo.save(coinTrans);
 
-      const playerCoinRepo = transactionEntityManager.getRepository(PlayerCoin);
-      const existingRow = await playerCoinRepo.findOne({
-        playerUuid: playerUuid,
-      });
-      if (existingRow == null) {
-        const playerCoin = new PlayerCoin();
-        playerCoin.playerUuid = playerUuid;
-        playerCoin.totalCoinsAvailable = coinsPurchased;
-        playerCoin.totalCoinsPurchased = coinsPurchased;
-        await playerCoinRepo.save(playerCoin);
-      } else {
-        await playerCoinRepo
-          .createQueryBuilder()
-          .update()
-          .set({
-            totalCoinsAvailable: () =>
-              `total_coins_available + ${coinsPurchased}`,
-            totalCoinsPurchased: () =>
-              `total_coins_purchased + ${coinsPurchased}`,
-          })
-          .where({
-            playerUuid: playerUuid,
-          })
-          .execute();
+        const playerCoinRepo = transactionEntityManager.getRepository(
+          PlayerCoin
+        );
+        const existingRow = await playerCoinRepo.findOne({
+          playerUuid: playerUuid,
+        });
+        if (existingRow == null) {
+          const playerCoin = new PlayerCoin();
+          playerCoin.playerUuid = playerUuid;
+          playerCoin.totalCoinsAvailable = coinsPurchased;
+          playerCoin.totalCoinsPurchased = coinsPurchased;
+          await playerCoinRepo.save(playerCoin);
+        } else {
+          await playerCoinRepo
+            .createQueryBuilder()
+            .update()
+            .set({
+              totalCoinsAvailable: () =>
+                `total_coins_available + ${coinsPurchased}`,
+              totalCoinsPurchased: () =>
+                `total_coins_purchased + ${coinsPurchased}`,
+            })
+            .where({
+              playerUuid: playerUuid,
+            })
+            .execute();
+        }
+        return false;
       }
-      return false;
-    });
+    );
   }
 
   public async availableCoins(playerUuid: string): Promise<number> {
-    const playerCoinRepo = getRepository(PlayerCoin);
+    const playerCoinRepo = getUserRepository(PlayerCoin);
     const existingRow = await playerCoinRepo.findOne({playerUuid: playerUuid});
     if (existingRow == null) {
       return 0;
@@ -89,7 +93,7 @@ class AppCoinRepositoryImpl {
     playerUuid: string,
     coinsConsumed: number
   ): Promise<number> {
-    const playerCoinRepo = getRepository(PlayerCoin);
+    const playerCoinRepo = getUserRepository(PlayerCoin);
     const existingRow = await playerCoinRepo.findOne({playerUuid: playerUuid});
     if (existingRow == null) {
       return 0;

@@ -1,8 +1,8 @@
-import {getRepository} from 'typeorm';
 import {Club} from '@src/entity/player/club';
 import {Announcement} from '@src/entity/player/announcements';
 import {AnnouncementType} from '@src/entity/types';
 import {AnnouncementData} from '@src/types';
+import {getUserRepository} from '.';
 
 class AnnouncementRepositoryImpl {
   public async addClubAnnouncement(
@@ -10,7 +10,7 @@ class AnnouncementRepositoryImpl {
     text: string,
     expiresAt: string
   ): Promise<boolean> {
-    const announcementRepo = getRepository(Announcement);
+    const announcementRepo = getUserRepository(Announcement);
 
     const newAnnouncement = new Announcement();
     newAnnouncement.club = club;
@@ -26,7 +26,7 @@ class AnnouncementRepositoryImpl {
     text: string,
     expiresAt: string
   ): Promise<boolean> {
-    const announcementRepo = getRepository(Announcement);
+    const announcementRepo = getUserRepository(Announcement);
 
     const newAnnouncement = new Announcement();
     newAnnouncement.text = text;
@@ -38,7 +38,7 @@ class AnnouncementRepositoryImpl {
   }
 
   public async clubAnnouncements(club: Club): Promise<Array<AnnouncementData>> {
-    const announcementRepo = getRepository(Announcement);
+    const announcementRepo = getUserRepository(Announcement);
 
     const resp = await announcementRepo.find({
       club: {id: club.id},
@@ -57,7 +57,7 @@ class AnnouncementRepositoryImpl {
   }
 
   public async systemAnnouncements(): Promise<Array<AnnouncementData>> {
-    const announcementRepo = getRepository(Announcement);
+    const announcementRepo = getUserRepository(Announcement);
 
     const resp = await announcementRepo.find({
       announcementType: AnnouncementType.SYSTEM,

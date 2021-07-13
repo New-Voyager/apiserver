@@ -6,9 +6,10 @@ import {playerStatusChanged} from '@src/gameserver';
 import {startTimer} from '@src/timer';
 import {utcTime} from '@src/utils';
 import {getLogger} from '@src/utils/log';
-import {getRepository, Repository} from 'typeorm';
+import {Repository} from 'typeorm';
 import {BREAK_TIMEOUT, NewUpdate} from './types';
 import {Cache} from '@src/cache/index';
+import {getGameRepository} from '.';
 
 const logger = getLogger('takebreak');
 
@@ -22,8 +23,8 @@ export class TakeBreak {
   }
 
   public async takeBreak(): Promise<boolean> {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
-    const nextHandUpdatesRepository = getRepository(NextHandUpdates);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+    const nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
     const rows = await playerGameTrackerRepository.findOne({
       game: {id: this.game.id},
       playerId: this.player.id,
@@ -87,7 +88,7 @@ export class TakeBreak {
 
   public async processPendingUpdate(update: NextHandUpdates) {
     logger.info(`Player ${this.player.name} is taking a break`);
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const rows = await playerGameTrackerRepository
       .createQueryBuilder()
       .where({
@@ -104,7 +105,7 @@ export class TakeBreak {
 
     await this.startTimer(playerGameTrackerRepository);
 
-    const pendingUpdatesRepo = getRepository(NextHandUpdates);
+    const pendingUpdatesRepo = getGameRepository(NextHandUpdates);
     pendingUpdatesRepo.delete({id: update.id});
 
     // update the clients with new status
@@ -157,7 +158,7 @@ export class TakeBreak {
         this.player.name
       } break time expired. Current time: ${nowUtc.toISOString()}`
     );
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     let rows = await playerGameTrackerRepository.findOne({
       game: {id: this.game.id},
       playerId: this.player.id,

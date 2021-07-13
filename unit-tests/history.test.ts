@@ -82,7 +82,7 @@ afterAll(async done => {
   done();
 });
 
-async function createReward(playerId, clubCode) {
+async function createReward1(playerId, clubCode) {
   const rewardInput = {
     amount: 100,
     endHour: 4,
@@ -176,7 +176,7 @@ describe('History APIs', () => {
     const gameInput = holdemGameInput;
     gameInput.maxPlayers = 3;
     gameInput.minPlayers = 2;
-    await createReward(owner, club);
+    //await createReward(owner, club);
     const game = await configureGame(owner, club, gameInput);
     await startGame(owner, game.gameCode);
 
@@ -245,7 +245,7 @@ describe('History APIs', () => {
     const gameInput = holdemGameInput;
     gameInput.maxPlayers = 3;
     gameInput.minPlayers = 2;
-    await createReward(owner, club);
+    //await createReward(owner, club);
     const game = await configureGame(owner, club, gameInput);
     await startGame(owner, game.gameCode);
 

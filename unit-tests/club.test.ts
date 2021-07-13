@@ -67,7 +67,7 @@ enum ClubMemberStatus {
   KICKEDOUT,
 }
 
-async function createReward(playerId, clubCode) {
+async function createReward1(playerId, clubCode) {
   const rewardInput = {
     amount: 100.4,
     endHour: 4,
@@ -380,9 +380,9 @@ describe('Club APIs', () => {
       status: 'ACTIVE',
     };
     await createGameServer(gameServer);
-    await createReward(ownerId, clubCode);
+    //await createReward(ownerId, clubCode);
     await configureGame(ownerId, clubCode, holdemGameInput);
-    await createReward(ownerId, clubCode);
+    //await createReward(ownerId, clubCode);
     await configureGame(ownerId, clubCode, holdemGameInput);
     const games = await getClubGames(ownerId, clubCode);
     expect(games).toHaveLength(2);

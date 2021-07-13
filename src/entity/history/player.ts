@@ -1,5 +1,6 @@
 import {Entity, Column, Index, PrimaryGeneratedColumn} from 'typeorm';
 import {DbAwareColumn, DbAwareUpdateDateColumn} from '../dbaware';
+import {PlayerStatus} from '../types';
 
 @Entity({name: 'players_in_game'})
 export class PlayersInGame {
@@ -19,6 +20,9 @@ export class PlayersInGame {
   @Column({name: 'player_uuid'})
   public playerUuid!: string;
 
+  @Column({name: 'stack', type: 'decimal'})
+  public stack!: number;
+
   @Column({name: 'buy_in', type: 'decimal'})
   public buyIn!: number;
 
@@ -34,8 +38,14 @@ export class PlayersInGame {
   @Column({name: 'no_hands_won', default: 0})
   public noHandsWon!: number;
 
+  @Column({name: 'rake_paid', type: 'decimal', default: 0})
+  public rakePaid!: number;
+
   @DbAwareColumn({name: 'hand_stack', type: 'text', nullable: true})
   public handStack!: string;
+
+  @Column({name: 'status', nullable: false, type: 'int'})
+  public status!: PlayerStatus;
 
   @DbAwareColumn({
     name: 'left_at',

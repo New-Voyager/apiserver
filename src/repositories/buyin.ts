@@ -1,11 +1,4 @@
-import {
-  EntityManager,
-  getConnection,
-  getManager,
-  getRepository,
-  In,
-  Repository,
-} from 'typeorm';
+import {EntityManager, In} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player/player';
@@ -42,6 +35,13 @@ import {buyInRequest, pendingApprovalsForClubData} from '@src/types';
 import {fixQuery} from '@src/utils';
 import {Firebase} from '@src/firebase';
 import {PlayerRepository} from './player';
+import {
+  getGameConnection,
+  getGameManager,
+  getGameRepository,
+  getUserConnection,
+  getUserRepository,
+} from '.';
 
 const logger = getLogger('buyin');
 
@@ -139,7 +139,7 @@ export class BuyIn {
         this.player.id +
         ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
         GameStatus.ENDED;
-      const resp = await getConnection().query(query);
+      const resp = await getGameConnection().query(query);
 
       const currentBuyin = resp[0]['current_buyin'];
 
@@ -266,7 +266,7 @@ export class BuyIn {
     let buyInApprovedTime = 0;
     const firebaseTime = 0;
 
-    const [status, approved] = await getManager().transaction(
+    const [status, approved] = await getGameManager().transaction(
       async transactionEntityManager => {
         databaseTime = new Date().getTime();
         let playerStatus: PlayerStatus;
@@ -425,7 +425,7 @@ export class BuyIn {
       where pg.host_id = ? AND nhu.new_update in (?, ?)`;
     query = fixQuery(query);
 
-    const resp1 = await getConnection().query(query, [
+    const resp1 = await getGameConnection().query(query, [
       this.player.id,
       NextHandUpdate.WAIT_BUYIN_APPROVAL,
       NextHandUpdate.WAIT_RELOAD_APPROVAL,
@@ -479,7 +479,9 @@ export class BuyIn {
     `;
     clubQuery = fixQuery(clubQuery);
 
-    const clubResp = await getConnection().query(clubQuery, [this.player.id]);
+    const clubResp = await getUserConnection().query(clubQuery, [
+      this.player.id,
+    ]);
     const clubCodes = clubResp.map(row => `'${row.clubCode}'`).join(',');
 
     let query = `
@@ -505,7 +507,7 @@ export class BuyIn {
       where nhu.new_update in (?, ?) and pg.club_code in (${clubCodes})`;
     query = fixQuery(query);
 
-    const resp1 = await getConnection().query(query, [
+    const resp1 = await getGameConnection().query(query, [
       NextHandUpdate.WAIT_BUYIN_APPROVAL,
       NextHandUpdate.WAIT_RELOAD_APPROVAL,
     ]);
@@ -564,7 +566,7 @@ export class BuyIn {
       )
       where g.id = ${this.game.id}`;
 
-    const resp1 = await getConnection().query(query1);
+    const resp1 = await getGameConnection().query(query1);
 
     const result = new Array<pendingApprovalsForClubData>();
     for await (const data of resp1) {
@@ -600,7 +602,7 @@ export class BuyIn {
   ): Promise<boolean> {
     if (type === ApprovalType.BUYIN_REQUEST) {
       if (status === ApprovalStatus.APPROVED) {
-        return await getManager().transaction(
+        return await getGameManager().transaction(
           async transactionEntityManager => {
             // get amount from the next hand update table
             const pendingUpdatesRepo = transactionEntityManager.getRepository(
@@ -648,7 +650,7 @@ export class BuyIn {
         );
       } else {
         // denied
-        return await getManager().transaction(
+        return await getGameManager().transaction(
           async transactionEntityManager => {
             // get amount from the next hand update table
             const pendingUpdatesRepo = transactionEntityManager.getRepository(
@@ -718,7 +720,7 @@ export class BuyIn {
   }
 
   private async calcOutstandingBalance(clubId: number, playerId: number) {
-    const clubMemberRepository = getRepository(ClubMember);
+    const clubMemberRepository = getUserRepository(ClubMember);
     const clubMembers = await clubMemberRepository
       .createQueryBuilder()
       .where({
@@ -739,7 +741,7 @@ export class BuyIn {
       playerId +
       ' AND pgt.pgt_game_id = pg.id AND pg.game_status <>' +
       GameStatus.ENDED;
-    const resp = await getConnection().query(query);
+    const resp = await getGameConnection().query(query);
 
     const currentBuyin = resp[0]['current_buyin'];
 
@@ -754,7 +756,7 @@ export class BuyIn {
     oldStatus: NextHandUpdate,
     newStatus: NextHandUpdate
   ) {
-    const nextHandUpdatesRepository = getRepository(NextHandUpdates);
+    const nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
     await nextHandUpdatesRepository
       .createQueryBuilder()
       .update()
@@ -780,7 +782,7 @@ export class BuyIn {
         NextHandUpdates
       );
     } else {
-      nextHandUpdatesRepository = getRepository(NextHandUpdates);
+      nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
     }
     const update = new NextHandUpdates();
     update.game = this.game;
@@ -793,7 +795,7 @@ export class BuyIn {
   }
 
   public async timerExpired() {
-    const playerGameTrackerRepository = getRepository(PlayerGameTracker);
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
 
     // find the player
     const playerInSeat = await playerGameTrackerRepository.findOne({
@@ -828,7 +830,7 @@ export class BuyIn {
       );
 
       // delete the row in pending updates table
-      const pendingUpdatesRepo = getRepository(NextHandUpdates);
+      const pendingUpdatesRepo = getGameRepository(NextHandUpdates);
       await pendingUpdatesRepo.delete({
         game: {id: this.game.id},
         playerId: this.player.id,
@@ -854,7 +856,7 @@ export class BuyIn {
    * @param game
    */
   public static async startBuyInTimers(game: PokerGame) {
-    await getManager().transaction(async transactionEntityManager => {
+    await getGameManager().transaction(async transactionEntityManager => {
       const playerGameTrackerRepo = transactionEntityManager.getRepository(
         PlayerGameTracker
       );

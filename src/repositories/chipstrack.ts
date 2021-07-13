@@ -1,10 +1,16 @@
 import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {Club, ClubMember} from '@src/entity/player/club';
-import {getRepository, getManager, UpdateResult} from 'typeorm';
+import {UpdateResult} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {Cache} from '@src/cache';
 import {HandHistory} from '@src/entity/history/hand';
+import {
+  getGameManager,
+  getGameRepository,
+  getHistoryRepository,
+  getUserRepository,
+} from '.';
 
 const logger = getLogger('chipstrack');
 
@@ -16,7 +22,7 @@ class ChipsTrackRepositoryImpl {
         return true;
       }
 
-      const gameUpdatesRepo = getRepository(PokerGameUpdates);
+      const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
 
       const gameId = game.id;
       const gameUpdates = await gameUpdatesRepo.findOne({
@@ -27,7 +33,7 @@ class ChipsTrackRepositoryImpl {
       }
 
       //logger.info('****** STARTING TRANSACTION FOR RAKE CALCULATION');
-      await getManager().transaction(async transactionEntityManager => {
+      await getGameManager().transaction(async transactionEntityManager => {
         // update session time
         const playerGameRepo = transactionEntityManager.getRepository(
           PlayerGameTracker
@@ -94,9 +100,10 @@ class ChipsTrackRepositoryImpl {
 
         // walk through the hand history and collect big win hands for each player
         const playerBigWinLoss = {};
-        const hands = await transactionEntityManager
-          .getRepository(HandHistory)
-          .find({where: {gameId: game.id}, order: {handNum: 'ASC'}});
+        const hands = await getHistoryRepository(HandHistory).find({
+          where: {gameId: game.id},
+          order: {handNum: 'ASC'},
+        });
 
         // determine big win/loss hands
         for (const hand of hands) {
@@ -164,8 +171,7 @@ class ChipsTrackRepositoryImpl {
 
         for (const playerChip of playerChips) {
           const profit = playerChip.stack - playerChip.buyIn;
-          const playerGame = transactionEntityManager
-            .getRepository(ClubMember)
+          const playerGame = getUserRepository(ClubMember)
             .createQueryBuilder()
             .update()
             .set({
@@ -195,7 +201,7 @@ class ChipsTrackRepositoryImpl {
   }
 
   public async getClubBalance(clubCode: string): Promise<Club> {
-    const clubRepository = getRepository(Club);
+    const clubRepository = getUserRepository(Club);
     const club = await clubRepository.findOne({
       where: {clubCode: clubCode},
     });
@@ -217,7 +223,7 @@ class ChipsTrackRepositoryImpl {
     if (!clubMember) {
       throw new Error(`Player ${playerId} is not a club member`);
     }
-    const clubMemberRepository = getRepository(ClubMember);
+    const clubMemberRepository = getUserRepository(ClubMember);
     const clubPlayerBalance = await clubMemberRepository.findOne({
       where: {id: clubMember.id},
     });
@@ -238,7 +244,7 @@ class ChipsTrackRepositoryImpl {
     // verify it here
 
     const game = await Cache.getGame(gameCode);
-    const gameUpdatesRepo = getRepository(PokerGameUpdates);
+    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
     const gameUpdates = await gameUpdatesRepo.find({
       where: {gameID: game.id},
     });
