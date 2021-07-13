@@ -94,7 +94,7 @@ afterAll(async done => {
   done();
 });
 
-async function createReward(playerId, clubCode) {
+async function createReward1(playerId, clubCode) {
   const rewardInput = {
     amount: 100,
     endHour: 4,
@@ -157,7 +157,7 @@ describe.skip('Game APIs', () => {
         },
         []
       );
-      await createReward(owner, club);
+      //await createReward(owner, club);
       const startedGame = await configureGame(owner, club, holdemGameInput);
       expect(startedGame).not.toBeNull();
       expect(startedGame.gameType).toEqual('HOLDEM');
@@ -239,7 +239,7 @@ describe.skip('Game APIs', () => {
         },
         []
       );
-      await createReward(owner, club);
+      //await createReward(owner, club);
       const startedGame = await configureGame(owner, club, holdemGameInput);
       const gameData = await Cache.getGame(startedGame.gameCode);
       expect(gameData.id).not.toBe(null);
@@ -271,7 +271,7 @@ describe.skip('Game APIs', () => {
         },
       ]
     );
-    await createReward(owner, club);
+    //await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
 
     // Join a game
@@ -315,7 +315,7 @@ describe.skip('Game APIs', () => {
         },
       ]
     );
-    await createReward(owner, club);
+    //await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
 
     // Join a game
@@ -370,7 +370,7 @@ describe.skip('Game APIs', () => {
         },
       ]
     );
-    await createReward(owner, club);
+    //await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
 
     // Join a game
@@ -425,7 +425,7 @@ describe.skip('Game APIs', () => {
         },
       ]
     );
-    await createReward(owner, club);
+    //await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
 
     // Join a game
@@ -482,7 +482,7 @@ describe.skip('Game APIs', () => {
       clubInput,
       playersInput
     );
-    await createReward(owner, club);
+    //await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
     const player1 = owner;
     const player2 = playerUuids[0];
@@ -538,7 +538,7 @@ describe.skip('Game APIs', () => {
     );
     const player1 = owner;
     const player2 = playerUuids[0];
-    await createReward(owner, club);
+    //await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
     // Join a game
     const data = await joinGame(player1, game.gameCode, 1);
@@ -583,7 +583,7 @@ describe.skip('Game APIs', () => {
     );
     const player1 = owner;
     const player2 = playerUuids[0];
-    await createReward(owner, club);
+    //await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
 
     const data2 = await startGame(player1, game.gameCode);
@@ -622,7 +622,7 @@ describe.skip('Game APIs', () => {
     );
     const player1 = owner;
     const player2 = playerUuids[0];
-    await createReward(owner, club);
+    //await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
 
     // Sit back with player status = IN_BREAK & game status != ACTIVE
@@ -672,7 +672,7 @@ describe.skip('Game APIs', () => {
     );
     const player1 = owner;
     const player2 = playerUuids[0];
-    await createReward(owner, club);
+    //await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
 
     const data3 = await startGame(player1, game.gameCode);
@@ -738,7 +738,7 @@ describe.skip('Game APIs', () => {
     const gameInput = holdemGameInput;
     gameInput.maxPlayers = 3;
     gameInput.minPlayers = 2;
-    await createReward(owner, club);
+    //await createReward(owner, club);
     const game = await configureGame(owner, club, gameInput);
     await startGame(owner, game.gameCode);
 
@@ -818,7 +818,7 @@ describe.skip('Game APIs', () => {
     const gameInput = holdemGameInput;
     gameInput.maxPlayers = 3;
     gameInput.minPlayers = 2;
-    await createReward(owner, club);
+    //await createReward(owner, club);
     const game = await configureGame(owner, club, gameInput);
     await startGame(owner, game.gameCode);
 
@@ -915,7 +915,7 @@ describe.skip('Game APIs', () => {
     const gameInput = holdemGameInput;
     gameInput.maxPlayers = 3;
     gameInput.minPlayers = 2;
-    await createReward(owner, club);
+    //await createReward(owner, club);
     const game = await configureGame(owner, club, gameInput);
     await startGame(owner, game.gameCode);
 
@@ -995,7 +995,7 @@ describe.skip('Game APIs', () => {
       ]
     );
 
-    await createReward(owner, club);
+    //await createReward(owner, club);
     const game = await configureGame(owner, club, holdemGameInput);
     await startGame(owner, game.gameCode);
 
