@@ -134,6 +134,7 @@ export async function sqlliteConnection() {
         PlayerHandStats,
         ClubStats,
         SystemStats,
+        PlayerGameStats,
       ],
       dropSchema: true,
       synchronize: true,

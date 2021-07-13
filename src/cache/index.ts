@@ -161,7 +161,7 @@ class GameCache {
       if (transactionManager) {
         repo = transactionManager.getRepository(PokerGame);
       } else {
-        repo = getUserRepository(PokerGame);
+        repo = getGameRepository(PokerGame);
       }
       const game = await repo.findOne({
         where: {gameCode: gameCode},

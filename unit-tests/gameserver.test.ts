@@ -49,7 +49,7 @@ afterAll(async done => {
   done();
 });
 
-async function createReward(playerId, clubCode) {
+async function createReward1(playerId, clubCode) {
   const rewardInput = {
     amount: 100.4,
     endHour: 4,
@@ -180,7 +180,7 @@ describe('Game server APIs', () => {
       description: 'poker players gather',
       ownerUuid: player,
     });
-    await createReward(player, club);
+    //await createReward(player, club);
     const game = await configureGame(player, club, holdemGameInput);
     const server = await getParticularGameServer(game.gameCode);
     if (!server) {

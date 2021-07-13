@@ -171,8 +171,7 @@ class ChipsTrackRepositoryImpl {
 
         for (const playerChip of playerChips) {
           const profit = playerChip.stack - playerChip.buyIn;
-          const playerGame = transactionEntityManager
-            .getRepository(ClubMember)
+          const playerGame = getUserRepository(ClubMember)
             .createQueryBuilder()
             .update()
             .set({

@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import {In, Repository, EntityManager} from 'typeorm';
+import {In, Repository, EntityManager, Not} from 'typeorm';
 import {
   NextHandUpdates,
   PokerGame,
@@ -208,9 +208,7 @@ class GameRepositoryImpl {
 
           const rewardTrackingIds = new Array<number>();
           if (input.rewardIds) {
-            const rewardRepository = transactionEntityManager.getRepository(
-              Reward
-            );
+            const rewardRepository = getUserRepository(Reward);
             for await (const rewardId of input.rewardIds) {
               if (rewardId == 0) {
                 continue;
@@ -637,11 +635,7 @@ class GameRepositoryImpl {
             await playerGameTrackerRepository.save(playerInGame);
             await StatsRepository.joinedNewGame(player);
             // create a row in stats table
-            await StatsRepository.newGameStatsRow(
-              game,
-              player,
-              transactionEntityManager
-            );
+            await StatsRepository.newGameStatsRow(game, player);
           } catch (err) {
             logger.error(
               `Failed to update player_game_tracker and player_game_stats table ${err.toString()} Game: ${
@@ -1252,24 +1246,37 @@ class GameRepositoryImpl {
     gameId: number,
     transactionManager?: EntityManager
   ): Promise<Array<any>> {
-    const query = fixQuery(`SELECT pgt.player_id as "playerId", pgt.player_name as name, pgt.player_uuid as "playerUuid", p.is_bot as "isBot",
-          buy_in as "buyIn", stack, status, seat_no as "seatNo", status,
-          buyin_exp_at as "buyInExpTime", break_time_exp_at as "breakExpTime", game_token AS "gameToken",
-          break_time_started_at as "breakStartedTime",
-          run_it_twice_prompt as "runItTwicePrompt",
-          muck_losing_hand as "muckLosingHand",
-          missed_blind as "missedBlind",
-          posted_blind as "postedBlind"
-          FROM 
-          player_game_tracker pgt 
-          WHERE
-          pgt.pgt_game_id = ? AND pgt.seat_no <> 0`);
-    let resp;
+    // const query = fixQuery(`SELECT pgt.player_id as "playerId", pgt.player_name as name, pgt.player_uuid as "playerUuid", p.is_bot as "isBot",
+    //       buy_in as "buyIn", stack, status, seat_no as "seatNo", status,
+    //       buyin_exp_at as "buyInExpTime", break_time_exp_at as "breakExpTime", game_token AS "gameToken",
+    //       break_time_started_at as "breakStartedTime",
+    //       run_it_twice_prompt as "runItTwicePrompt",
+    //       muck_losing_hand as "muckLosingHand",
+    //       missed_blind as "missedBlind",
+    //       posted_blind as "postedBlind"
+    //       FROM
+    //       player_game_tracker pgt
+    //       WHERE
+    //       pgt.pgt_game_id = ? AND pgt.seat_no <> 0`);
+    // let resp;
+    // if (transactionManager) {
+    //   resp = await transactionManager.query(query, [gameId]);
+    // } else {
+    //   resp = await getGameConnection().query(query, [gameId]);
+    // }
+
+    let playerGameTrackerRepo;
     if (transactionManager) {
-      resp = await transactionManager.query(query, [gameId]);
+      playerGameTrackerRepo = transactionManager.getRepository(
+        PlayerGameTracker
+      );
     } else {
-      resp = await getGameConnection().query(query, [gameId]);
+      playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     }
+    const resp = await playerGameTrackerRepo.find({
+      game: {id: gameId},
+      seatNo: Not(0),
+    });
     return resp;
   }
 

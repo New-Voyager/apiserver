@@ -518,9 +518,14 @@ class StatsRepositoryImpl {
 
   public async newClubStats(
     club: Club,
-    transactionEntityManager: EntityManager
+    transactionEntityManager?: EntityManager
   ) {
-    const clubStatsRepo = transactionEntityManager.getRepository(ClubStats);
+    let clubStatsRepo: Repository<ClubStats>;
+    if (transactionEntityManager) {
+      clubStatsRepo = transactionEntityManager.getRepository(ClubStats);
+    } else {
+      clubStatsRepo = getHistoryRepository(ClubStats);
+    }
     let clubStats = new ClubStats();
     clubStats.gameType = GameType.HOLDEM;
     clubStats.clubId = club.id;

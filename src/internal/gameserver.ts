@@ -268,7 +268,7 @@ export async function getParticularGameServer(gameCode: string) {
   if (!game) {
     throw new Error('Game not found');
   }
-  const trackGameServerRepository = getRepository(TrackGameServer);
+  const trackGameServerRepository = getGameRepository(TrackGameServer);
   const trackGameServer = await trackGameServerRepository.findOne({
     where: {
       game: {id: game.id},

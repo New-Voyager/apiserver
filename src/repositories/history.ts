@@ -64,9 +64,7 @@ class HistoryRepositoryImpl {
       const playersInGameRepo = transactionEntityManager.getRepository(
         PlayersInGame
       );
-      const playerGameTrackerRepo = transactionEntityManager.getRepository(
-        PlayerGameTracker
-      );
+      const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
       const players = await playerGameTrackerRepo.find({
         where: {
           game: {id: game.id},

@@ -218,7 +218,7 @@ class ClubRepositoryImpl {
       await transactionEntityManager
         .getRepository<ClubMember>(ClubMember)
         .save(clubMember);
-      await StatsRepository.newClubStats(club, transactionEntityManager);
+      await StatsRepository.newClubStats(club);
 
       try {
         // create firebase notification
