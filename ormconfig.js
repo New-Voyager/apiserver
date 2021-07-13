@@ -2,9 +2,23 @@ pgHostKey = 'POSTGRES_HOST';
 pgPortKey = 'POSTGRES_PORT';
 pgUserKey = 'POSTGRES_USER';
 pgPasswordKey = 'POSTGRES_PASSWORD';
-//pgDbNameKey = 'POSTGRES_DB';
+pgDbNameKey = 'POSTGRES_DB';
 
 configs = {
+  default: {
+    name: 'default',
+    type: 'postgres',
+    host: process.env[pgHostKey],
+    port: process.env[pgPortKey],
+    username: process.env[pgUserKey],
+    password: process.env[pgPasswordKey],
+    database: process.env[pgDbNameKey],
+    logging: false,
+    cache: true,
+    synchronize: true,
+    bigNumberStrings: false,
+    entities: [],
+  },  
   users: {
     name: 'users',
     type: 'postgres',
@@ -113,5 +127,6 @@ if (process.env.NODE_ENV === 'test') {
     livegames: configs.livegames,
     history: configs.history,
     users: configs.users,
+    default: configs.default,
   }
 }

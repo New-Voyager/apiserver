@@ -1,5 +1,5 @@
 import {Entity, PrimaryGeneratedColumn, Column, Index} from 'typeorm';
-import {DbAwareCreateDateColumn} from './dbaware';
+import {DbAwareCreateDateColumn} from '../dbaware';
 
 @Entity({name: 'crash_test'})
 export class CrashTest {

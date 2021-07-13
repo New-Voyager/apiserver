@@ -1938,6 +1938,7 @@ const resolvers: any = {
       const playersInSeats = await GameRepository.getPlayersInSeats(game.id);
       for (const player of playersInSeats) {
         player.status = PlayerStatus[player.status];
+        player.name = player.playerName;
       }
 
       const takenSeats = playersInSeats.map(x => x.seatNo);

@@ -1118,7 +1118,7 @@ class GameRepositoryImpl {
     const query = fixQuery(
       'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ?'
     );
-    const resp = await getUserConnection().query(query, [gameId]);
+    const resp = await getGameConnection().query(query, [gameId]);
     if (resp[0]['updates'] > 0) {
       return true;
     }
@@ -1131,7 +1131,7 @@ class GameRepositoryImpl {
     const query = fixQuery(
       'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ? AND new_update = ?'
     );
-    const resp = await getUserConnection().query(query, [
+    const resp = await getGameConnection().query(query, [
       gameId,
       NextHandUpdate.END_GAME,
     ]);
@@ -1153,7 +1153,7 @@ class GameRepositoryImpl {
     const query = fixQuery(
       'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ? AND new_update = ?'
     );
-    const resp = await getUserConnection().query(query, [
+    const resp = await getGameConnection().query(query, [
       gameId,
       NextHandUpdate.PAUSE_GAME,
     ]);

@@ -3,12 +3,9 @@ import {fileLoader, mergeTypes} from 'merge-graphql-schemas';
 import {create, merge} from 'lodash';
 import {authorize} from '@src/middlewares/authorization';
 import {
-  ConnectionOptions,
-  ConnectionOptionsReader,
   createConnection,
   createConnections,
   getConnectionOptions,
-  getRepository,
 } from 'typeorm';
 import {GameServerAPI} from './internal/gameserver';
 import {HandServerAPI} from './internal/hand';
@@ -29,6 +26,7 @@ import {Firebase} from './firebase';
 import {Nats} from './nats';
 import {generateBotScript, updateButtonPos} from './internal/bot';
 import {restartTimers} from '@src/timer';
+import {getUserRepository} from './repositories';
 export enum RunProfile {
   DEV,
   TEST,
@@ -107,6 +105,63 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     const users = options['users'];
     const livegames = options['livegames'];
     const history = options['history'];
+    const default1 = options['default'];
+
+    // create databases
+    try {
+      const defaultObj = default1 as any;
+      const conn = await createConnection({
+        type: defaultObj.type,
+        host: defaultObj.host,
+        port: defaultObj.port,
+        username: defaultObj.username,
+        password: defaultObj.password,
+        database: process.env.DB_NAME,
+        cache: defaultObj.cache,
+        synchronize: defaultObj.synchronize,
+        bigNumberStrings: defaultObj.bigNumberStrings,
+        entities: defaultObj.entities,
+        name: 'default',
+      });
+      try {
+        await conn.query('CREATE DATABASE livegames');
+        await conn.query(
+          `GRANT ALL PRIVILEGES ON DATABASE livegames TO "${defaultObj.username}"`
+        );
+      } catch (err) {
+        const message: string = err.toString();
+        if (message.indexOf('already exists') === -1) {
+          throw err;
+        }
+      }
+      try {
+        await conn.query('CREATE DATABASE users');
+        await conn.query(
+          `GRANT ALL PRIVILEGES ON DATABASE users TO "${defaultObj.username}"`
+        );
+      } catch (err) {
+        const message: string = err.toString();
+        if (message.indexOf('already exists') === -1) {
+          throw err;
+        }
+      }
+      try {
+        await conn.query('CREATE DATABASE history');
+        await conn.query(
+          `GRANT ALL PRIVILEGES ON DATABASE history TO "${defaultObj.username}"`
+        );
+      } catch (err) {
+        const message: string = err.toString();
+        if (message.indexOf('already exists') === -1) {
+          throw err;
+        }
+      }
+    } catch (err) {
+      logger.error(
+        `Errors reported when creating the database ${err.toString()}`
+      );
+      throw err;
+    }
 
     // override database name if specified in the environment variable
     //if (process.env.DB_NAME) {
@@ -311,7 +366,7 @@ async function readyCheck(req: any, resp: any) {
  */
 async function login(req: any, resp: any) {
   const payload = req.body;
-  const repository = getRepository(Player);
+  const repository = getUserRepository(Player);
 
   const errors = new Array<string>();
   const name = payload['name'];
