@@ -1,4 +1,4 @@
-import {getConnection, getRepository, In} from 'typeorm';
+import {In} from 'typeorm';
 import {GameServer, TrackGameServer} from '@src/entity/game/gameserver';
 import {GameServerStatus, GameStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';

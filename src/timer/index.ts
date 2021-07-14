@@ -1,10 +1,10 @@
 import {getLogger} from '@src/utils/log';
-import {getConnection} from 'typeorm';
 import axios from 'axios';
 import {GameStatus} from '@src/entity/types';
 import {fixQuery} from '@src/utils';
 import {BUYIN_TIMEOUT, BREAK_TIMEOUT} from '@src/repositories/types';
 import {notifyGameServer} from '@src/gameserver';
+import {getGameConnection} from '@src/repositories';
 const logger = getLogger('timer');
 
 function getTimerUrl(): string {
@@ -74,7 +74,7 @@ export async function restartTimers(req: any, resp: any) {
     WHERE pg.game_status = ?
     AND (pgt.buyin_exp_at IS NOT NULL OR pgt.break_time_exp_at IS NOT NULL)`);
 
-  const res = await getConnection().query(query, [GameStatus.ACTIVE]);
+  const res = await getGameConnection().query(query, [GameStatus.ACTIVE]);
   for (const data of res) {
     let purpose: string;
     let expireAt: Date;
