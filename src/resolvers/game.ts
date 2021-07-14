@@ -154,6 +154,7 @@ export async function endGame(playerId: string, gameCode: string) {
   }
   try {
     const game = await Cache.getGame(gameCode);
+    const player = await Cache.getPlayer(playerId);
 
     const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
     if (!isAuthorized) {
@@ -170,7 +171,7 @@ export async function endGame(playerId: string, gameCode: string) {
       game.tableStatus === TableStatus.GAME_RUNNING
     ) {
       // the game will be stopped in the next hand
-      GameRepository.endGameNextHand(game.id);
+      GameRepository.endGameNextHand(player, game.id);
     } else {
       await Cache.removeAllObservers(game.gameCode);
       const status = await GameRepository.markGameEnded(game.id);
@@ -558,6 +559,7 @@ export async function completedGame(playerId: string, gameCode: string) {
       resp.endedBy = '';
     }
 
+    resp.status = GameStatus[resp.status];
     resp.gameType = GameType[resp.gameType];
     return resp;
   } catch (err) {
@@ -568,7 +570,13 @@ export async function completedGame(playerId: string, gameCode: string) {
 
 export async function getGameResultTable(gameCode: string) {
   try {
-    const resp = await HistoryRepository.getGameResultTable(gameCode);
+    const game = await Cache.getGame(gameCode);
+    let resp: Array<any> = [];
+    if (!game || game.status === GameStatus.ENDED) {
+      resp = await HistoryRepository.getGameResultTable(gameCode);
+    } else {
+      resp = await GameRepository.getGameResultTable(gameCode);
+    }
 
     for (const r of resp) {
       let sessionTime = r.sessionTime;
@@ -1990,8 +1998,8 @@ const resolvers: any = {
   },
   CompletedGame: {
     stackStat: async (parent, args, ctx, info) => {
-      if (parent.hand_stack) {
-        const stack = JSON.parse(parent.hand_stack);
+      if (parent.handStack) {
+        const stack = JSON.parse(parent.handStack);
         return stack.map(x => {
           return {
             handNum: x.hand,

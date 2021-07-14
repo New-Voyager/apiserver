@@ -1,4 +1,4 @@
-import {Not, EntityManager, Repository} from 'typeorm';
+import {Not, EntityManager, Repository, getRepository} from 'typeorm';
 import {fixQuery} from '@src/utils';
 import {
   ApprovalStatus,
@@ -79,7 +79,7 @@ export async function processPendingUpdates(gameId: number) {
   }
 
   // if there is an end game update, let us end the game first
-  const query = fixQuery(
+  let query = fixQuery(
     'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ? AND new_update = ?'
   );
   let resp = await getGameConnection().query(query, [
@@ -87,8 +87,26 @@ export async function processPendingUpdates(gameId: number) {
     NextHandUpdate.END_GAME,
   ]);
   if (resp[0]['updates'] > 0) {
+    const nextHandRepo = getGameRepository(NextHandUpdates);
+    const update = await nextHandRepo.findOne({
+      game: {id: gameId},
+      newUpdate: NextHandUpdate.END_GAME,
+    });
+    const gameRepo = getGameRepository(PokerGame);
+    const endedAt = new Date();
+    const result = await gameRepo.update(
+      {
+        id: gameId,
+      },
+      {
+        endedAt: endedAt,
+        endedBy: update?.playerId,
+        endedByName: update?.playerName,
+      }
+    );
+
     // game ended
-    await GameRepository.markGameStatus(gameId, GameStatus.ENDED);
+    await GameRepository.markGameEnded(gameId);
 
     // delete hand updates for the game
     await getGameConnection().query(

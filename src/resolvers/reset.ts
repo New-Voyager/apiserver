@@ -45,17 +45,14 @@ const resolvers: any = {
 export async function resetGames() {
   //logger.info('****** STARTING TRANSACTION TO RESET tables');
   await getGameManager().transaction(async transactionEntityManager => {
-    await deleteAll('player_notes', transactionEntityManager);
     await deleteAll('next_hand_updates', transactionEntityManager);
     await deleteAll('player_game_tracker', transactionEntityManager);
-    await deleteAll('player_game_stats', transactionEntityManager);
     await deleteAll('game_gameserver', transactionEntityManager);
     await deleteAll('poker_game_updates', transactionEntityManager);
     await deleteAll('high_hand', transactionEntityManager);
     await deleteAll('game_reward', transactionEntityManager);
     await deleteAll('game_reward_tracking', transactionEntityManager);
     await deleteAll('poker_game', transactionEntityManager);
-    await deleteAll('hand_history', transactionEntityManager);
   });
   await Cache.reset();
   //logger.info('****** ENDING TRANSACTION TO RESET tables');

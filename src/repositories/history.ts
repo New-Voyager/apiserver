@@ -3,12 +3,8 @@ import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {GameHistory} from '@src/entity/history/game';
 import {HighHandHistory} from '@src/entity/history/hand';
 import {PlayersInGame} from '@src/entity/history/player';
-import {fixQuery} from '@src/utils';
-import {ClubMemberStatus, ClubStatus, GameStatus} from '@src/entity/types';
 import {Cache} from '@src/cache/index';
-import {getRakeCollected} from '@src/resolvers/chipstrack';
 import {PlayerGameStats} from '@src/entity/history/stats';
-import {completedGame} from '@src/resolvers/game';
 import {getGameRepository, getHistoryManager, getHistoryRepository} from '.';
 import {HighHand} from '@src/entity/game/reward';
 
@@ -46,6 +42,8 @@ class HistoryRepositoryImpl {
     updates: PokerGameUpdates | undefined
   ) {
     const values: any = {
+      status: game.status,
+      startedAt: game.startedAt,
       endedAt: game.endedAt,
       endedBy: game.endedBy,
       endedByName: game.endedByName,
@@ -170,19 +168,21 @@ class HistoryRepositoryImpl {
             bigBlind: game.bigBlind,
             handsPlayed: player.noHandsPlayed,
             handsWon: player.noHandsWon,
-            inTurns: gameStat.inTurn,
             buyIn: player.buyIn,
             profit: player.stack - player.buyIn,
+            turnHands: gameStat.inTurn,
+            flopHands: gameStat.inFlop,
             preFlopHands: gameStat.inPreflop,
             riverHands: gameStat.inRiver,
-            showDownHands: gameStat.wentToShowDown,
+            showdownHands: gameStat.wentToShowDown,
             gameType: game.gameType,
             startedAt: game.startedAt,
             startedBy: game.hostName,
             endedAt: game.endedAt,
-            endedBy: game.endedBy,
+            endedBy: game.endedByName,
             balance: player.stack,
             handsDealt: game.handsDealt,
+            handStack: player.handStack,
           };
         }
       }
@@ -191,62 +191,75 @@ class HistoryRepositoryImpl {
   }
 
   public async getPastGames(playerId: string) {
+    const player = await Cache.getPlayer(playerId);
     // get the list of past games associated with player clubs
     const playersRepo = getHistoryRepository(PlayersInGame);
-    const players = await playersRepo.find({playerUuid: playerId});
+    const playedGames = await playersRepo.find({
+      where: {
+        playerId: player.id,
+      },
+      take: 20,
+    });
+
     const pastGames = new Array<any>();
-    players.forEach(async player => {
-      const gameRepo = getHistoryRepository(GameHistory);
-      const game = await gameRepo.findOne({gameId: player.gameId});
+
+    const gameRepo = getHistoryRepository(GameHistory);
+    for (const row of playedGames) {
+      const game = await gameRepo.findOne({gameId: row.gameId});
       if (game) {
+        const pastGame: any = {
+          gameCode: game.gameCode,
+          gameId: game.gameId,
+          smallBlind: game.smallBlind,
+          bigBlind: game.bigBlind,
+          title: game.title,
+          gameType: game.gameType,
+          gameTime: game.endedAt.valueOf() - game.startedAt.valueOf(),
+          startedBy: game.hostName,
+          startedAt: game.startedAt,
+          endedBy: game.endedByName,
+          endedAt: game.endedAt,
+          maxPlayers: game.maxPlayers,
+          maxWaitList: game.maxWaitlist,
+          handsDealt: game.handsDealt,
+          playerStatus: row.status,
+          sessionTime: row.sessionTime,
+          buyIn: row.buyIn,
+          stack: row.stack,
+        };
         const club = await Cache.getClub(game.clubCode);
         if (club) {
-          const pastGame = {
-            gameCode: game.gameCode,
-            gameId: game.gameId,
-            title: game.title,
-            gameType: game.gameType,
-            gameTime: game.endedAt.valueOf() - game.startedAt.valueOf(),
-            startedAt: game.startedAt,
-            endedAt: game.endedAt,
-            maxPlayers: game.maxPlayers,
-            maxWaitList: game.maxWaitlist,
-            handsDealt: game.handsDealt,
-            playerStatus: player.status,
-            sessionTime: player.sessionTime,
-            buyIn: player.buyIn,
-            stack: player.stack,
-            clubCode: club.clubCode,
-            clubName: club.name,
-          };
-          pastGames.push(pastGame);
+          pastGame.clubCode = club.clubCode;
+          pastGame.clubName = club.name;
         }
+        pastGames.push(pastGame);
       }
-    });
+    }
     return pastGames;
   }
 
-  public async getGameResultTable(gameCode: string): Promise<any> {
+  public async getGameResultTable(gameCode: string): Promise<Array<any>> {
     const gameRepo = getHistoryRepository(GameHistory);
-    const games = await gameRepo.find({gameCode: gameCode});
+    const game = await gameRepo.findOne({gameCode: gameCode});
+    if (!game) {
+      return [];
+    }
     const gameResults = new Array<any>();
-    games.forEach(async game => {
-      const playersRepo = getHistoryRepository(PlayersInGame);
-      const player = await playersRepo.findOne({gameId: game.gameId});
-      if (player) {
-        const gameResult = {
-          sessionTime: player.sessionTime,
-          sessionTimeStr: player.sessionTime.toString(),
-          handsPlayed: player.noHandsPlayed,
-          buyIn: player.buyIn,
-          rakePaid: player.rakePaid,
-          profit: player.stack - player.buyIn,
-          playerName: player.playerName,
-          playerUuid: player.playerUuid,
-        };
-        gameResults.push(gameResult);
-      }
-    });
+    const playersRepo = getHistoryRepository(PlayersInGame);
+    const players = await playersRepo.find({gameId: game.gameId});
+    for (const player of players) {
+      const gameResult = {
+        sessionTime: player.sessionTime,
+        sessionTimeStr: player.sessionTime.toString(),
+        handsPlayed: player.noHandsPlayed,
+        buyIn: player.buyIn,
+        rakePaid: player.rakePaid,
+        profit: player.stack - player.buyIn,
+        playerName: player.playerName,
+        playerUuid: player.playerUuid,
+      };
+      gameResults.push(gameResult);
+    }
     return gameResults;
   }
 }
