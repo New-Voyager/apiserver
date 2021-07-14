@@ -28,7 +28,7 @@ class HistoryRepositoryImpl {
     gameHistory.roeGames = game.roeGames;
     gameHistory.startedAt = game.startedAt;
     gameHistory.maxPlayers = game.maxPlayers;
-    gameHistory.maxWaitlist = game.maxWaitlist;
+    gameHistory.highHandTracked = game.highHandTracked;
     gameHistory.title = game.title;
     gameHistory.status = game.status;
     gameHistory.clubCode = game.clubCode;
@@ -168,11 +168,12 @@ class HistoryRepositoryImpl {
             bigBlind: game.bigBlind,
             handsPlayed: player.noHandsPlayed,
             handsWon: player.noHandsWon,
+            highHandTracked: game.highHandTracked,
             buyIn: player.buyIn,
             profit: player.stack - player.buyIn,
             turnHands: gameStat.inTurn,
             flopHands: gameStat.inFlop,
-            preFlopHands: gameStat.inPreflop,
+            preflopHands: gameStat.inPreflop,
             riverHands: gameStat.inRiver,
             showdownHands: gameStat.wentToShowDown,
             gameType: game.gameType,
@@ -220,7 +221,7 @@ class HistoryRepositoryImpl {
           endedBy: game.endedByName,
           endedAt: game.endedAt,
           maxPlayers: game.maxPlayers,
-          maxWaitList: game.maxWaitlist,
+          highHandTracked: game.highHandTracked,
           handsDealt: game.handsDealt,
           playerStatus: row.status,
           sessionTime: row.sessionTime,

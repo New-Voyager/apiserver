@@ -47,8 +47,8 @@ export class GameHistory {
   @Column({name: 'max_players', type: 'int'})
   public maxPlayers!: number;
 
-  @Column({name: 'max_waitlist', type: 'int', default: 20})
-  public maxWaitlist!: number;
+  @Column({name: 'hh_tracked', default: false})
+  public highHandTracked!: boolean;
 
   // used for tracking game number for club games
   @Column({name: 'game_num', type: 'int', default: 0})
