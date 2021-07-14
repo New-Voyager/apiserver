@@ -109,8 +109,12 @@ class HistoryRepositoryImpl {
         highHandHistory.playerCards = highHand.playerCards;
         highHandHistory.playerId = highHand.playerId;
         highHandHistory.rank = highHand.rank;
-        highHandHistory.rewardId = highHand.rewardId;
-        highHandHistory.rewardTrackingId = highHand.rewardTracking.id;
+        if (highHand.rewardId) {
+          highHandHistory.rewardId = highHand.rewardId;
+        }
+        if (highHand.rewardTracking) {
+          highHandHistory.rewardTrackingId = highHand.rewardTracking.id;
+        }
         highHandHistory.startHour = highHand.startHour;
         highHandHistory.winner = highHand.winner;
 

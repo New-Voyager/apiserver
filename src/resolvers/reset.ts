@@ -54,6 +54,12 @@ export async function resetGames() {
     await deleteAll('game_reward_tracking', transactionEntityManager);
     await deleteAll('poker_game', transactionEntityManager);
   });
+  await getHistoryManager().transaction(async transactionEntityManager => {
+    await deleteAll('hand_history', transactionEntityManager);
+    await deleteAll('players_in_game', transactionEntityManager);
+    await deleteAll('game_history', transactionEntityManager);
+    await deleteAll('high_hand_history', transactionEntityManager);
+  });
   await Cache.reset();
   //logger.info('****** ENDING TRANSACTION TO RESET tables');
   return true;

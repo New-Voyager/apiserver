@@ -1,6 +1,6 @@
 import {Club} from '@src/entity/player/club';
 import {EntityManager, Not, Repository} from 'typeorm';
-import {RewardType, ScheduleType} from '@src/entity/types';
+import {GameStatus, RewardType, ScheduleType} from '@src/entity/types';
 import {Reward} from '@src/entity/player/reward';
 export interface RewardInputFormat {
   name: string;
@@ -28,6 +28,7 @@ import {
   GameRewardTracking,
   HighHand,
 } from '@src/entity/game/reward';
+import {HighHandHistory} from '@src/entity/history/hand';
 const logger = getLogger('rewardRepo');
 
 class RewardRepositoryImpl {
@@ -348,28 +349,53 @@ class RewardRepositoryImpl {
       return;
     }
     const highHands = [] as any;
-    const highHandRepo = getGameRepository(HighHand);
     const game = await Cache.getGame(gameCode);
+
     try {
-      const gameHighHands = await highHandRepo.find({
-        where: {gameId: game.id},
-        order: {handTime: 'DESC'},
-      });
-      for await (const highHand of gameHighHands) {
-        const player = await Cache.getPlayerById(highHand.playerId);
-        highHands.push({
-          gameCode: gameCode,
-          handNum: highHand.handNum,
-          playerUuid: player.uuid,
-          playerName: player.name,
-          playerCards: highHand.playerCards,
-          boardCards: highHand.boardCards,
-          highHand: highHand.highHand,
-          rank: highHand.rank,
-          handTime: highHand.handTime,
-          highHandCards: highHand.highHandCards,
-          winner: highHand.winner,
+      if (!game || game.status === GameStatus.ENDED) {
+        const highHandRepo = getHistoryRepository(HighHandHistory);
+        const gameHighHands = await highHandRepo.find({
+          where: {gameId: game.id},
+          order: {handTime: 'DESC'},
         });
+        for await (const highHand of gameHighHands) {
+          const player = await Cache.getPlayerById(highHand.playerId);
+          highHands.push({
+            gameCode: gameCode,
+            handNum: highHand.handNum,
+            playerUuid: player.uuid,
+            playerName: player.name,
+            playerCards: highHand.playerCards,
+            boardCards: highHand.boardCards,
+            highHand: highHand.highHand,
+            rank: highHand.rank,
+            handTime: highHand.handTime,
+            highHandCards: highHand.highHandCards,
+            winner: highHand.winner,
+          });
+        }
+      } else {
+        const highHandRepo = getGameRepository(HighHand);
+        const gameHighHands = await highHandRepo.find({
+          where: {gameId: game.id},
+          order: {handTime: 'DESC'},
+        });
+        for await (const highHand of gameHighHands) {
+          const player = await Cache.getPlayerById(highHand.playerId);
+          highHands.push({
+            gameCode: gameCode,
+            handNum: highHand.handNum,
+            playerUuid: player.uuid,
+            playerName: player.name,
+            playerCards: highHand.playerCards,
+            boardCards: highHand.boardCards,
+            highHand: highHand.highHand,
+            rank: highHand.rank,
+            handTime: highHand.handTime,
+            highHandCards: highHand.highHandCards,
+            winner: highHand.winner,
+          });
+        }
       }
       return highHands;
     } catch (err) {

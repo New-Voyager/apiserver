@@ -468,47 +468,6 @@ class GameRepositoryImpl {
     return resp;
   }
 
-  public async getPastGames(playerId: string) {
-    // get the list of past games associated with player clubs
-    const query = `
-          WITH my_clubs AS (SELECT DISTINCT c.*, p.id player_id FROM club c JOIN club_member cm ON
-            c.id  = cm.club_id JOIN player p ON 
-            cm.player_id = p.id AND 
-            p.uuid = '${playerId}' AND
-            c.status = ${ClubStatus.ACTIVE} AND cm.status = ${ClubMemberStatus.ACTIVE})
-          SELECT 
-            c.club_code as "clubCode", 
-            c.name as "clubName", 
-            g.game_code as "gameCode", 
-            g.id as gameId, 
-            g.title as title, 
-            g.game_type as "gameType", 
-            g.buy_in_min as "buyInMin", 
-            g.buy_in_max as "buyInMax", 
-            EXTRACT(EPOCH FROM(g.ended_at-g.started_at)) as "gameTime", 
-            g.started_at as "startedAt", 
-            g.ended_at as "endedAt",
-            g.max_players as "maxPlayers", 
-            g.max_waitlist as "maxWaitList", 
-            pgt.status as "playerStatus",
-            pgt.session_time as "sessionTime",
-            pgt.buy_in as "buyIn",
-            pgt.stack as "stack",
-            pgu.hand_num as "handsDealt"
-          FROM poker_game g JOIN poker_game_updates pgu ON 
-          g.id = pgu.game_id JOIN my_clubs c 
-          ON 
-            g.club_id = c.id 
-            AND g.game_status = ${GameStatus.ENDED}
-          LEFT OUTER JOIN 
-            player_game_tracker pgt ON
-            pgt.pgt_player_id = c.player_id AND
-            pgt.pgt_game_id  = g.id
-        `;
-    const resp = await getGameConnection().query(query);
-    return resp;
-  }
-
   public async getNextGameServer(): Promise<number> {
     const query = 'SELECT max(server_num)+1 next_number FROM game_server';
     const resp = await getGameConnection().query(query);

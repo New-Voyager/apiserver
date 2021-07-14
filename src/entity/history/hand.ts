@@ -81,10 +81,10 @@ export class HighHandHistory {
   @Column({name: 'player_id', nullable: false, type: 'int'})
   public playerId!: number;
 
-  @Column({name: 'reward_id', nullable: false, type: 'int'})
+  @Column({name: 'reward_id', nullable: true, type: 'int'})
   public rewardId!: number;
 
-  @Column({name: 'reward_tracking_id', nullable: false, type: 'int'})
+  @Column({name: 'reward_tracking_id', nullable: true, type: 'int'})
   public rewardTrackingId!: number;
 
   @Column({name: 'hand_num', nullable: false})

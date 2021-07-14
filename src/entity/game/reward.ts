@@ -90,7 +90,7 @@ export class HighHand {
   @Column({name: 'player_id', type: 'int'})
   public playerId!: number;
 
-  @Column({name: 'reward_id', type: 'int'})
+  @Column({name: 'reward_id', type: 'int', nullable: true})
   public rewardId!: number;
 
   @ManyToOne(
