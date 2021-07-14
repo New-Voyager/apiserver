@@ -62,13 +62,18 @@ type PastGame {
   gameCode: String!
   title: String
   gameType: GameType!
+  smallBlind: Float!
+  bigBlind: Float!
   sessionTime: Int!
+  startedBy: String
   startedAt: DateTime!
   endedAt: DateTime!
+  endedBy: String
   gameTime: Int!
   buyIn: Float
   stack: Float
   handsDealt: Int!
+  handsPlayed: Int
   highHands: [HighHand!]
   highHandWinners: [HighHand!]
 }

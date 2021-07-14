@@ -11,6 +11,7 @@ export class PlayersInGame {
   @Column({name: 'game_id'})
   public gameId!: number;
 
+  @Index('game-player-id')
   @Column({name: 'player_id', type: 'int'})
   public playerId!: number;
 

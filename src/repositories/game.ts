@@ -62,6 +62,7 @@ import {
   getUserRepository,
 } from '.';
 import {GameReward, GameRewardTracking} from '@src/entity/game/reward';
+import {ClubRepository} from './club';
 const logger = getLogger('game');
 
 class GameRepositoryImpl {
@@ -426,42 +427,42 @@ class GameRepositoryImpl {
   }
 
   public async getLiveGames(playerId: string) {
-    // TODO: Fix this query
-    // get the list of live games associated with player clubs
+    const player = await Cache.getPlayer(playerId);
+    const clubIds = await ClubRepository.getClubIds(player.id);
+    if (!clubIds || clubIds.length === 0) {
+      return [];
+    }
+    const clubIdsIn = clubIds.join(',');
     const query = `
-          WITH my_clubs AS (SELECT DISTINCT c.*, p.id as "player_id" FROM club as c JOIN club_member as cm ON
-            c.id  = cm.club_id JOIN player as p ON 
-            cm.player_id = p.id AND 
-            p.uuid = '${playerId}' AND
-            c.status = ${ClubStatus.ACTIVE} AND cm.status = ${ClubMemberStatus.ACTIVE})
-          SELECT 
-            c.club_code as "clubCode", 
-            c.name as "clubName", 
-            g.game_code as "gameCode", 
-            g.id as gameId, 
-            g.title as title, 
-            g.game_type as "gameType", 
-            g.buy_in_min as "buyInMin", 
-            g.buy_in_max as "buyInMax",
-            g.small_blind as "smallBlind",
-            g.big_blind as "bigBlind",
-            g.started_at as "startedAt", 
-            g.max_players as "maxPlayers", 
-            g.max_waitlist as "maxWaitList", 
-            pgu.players_in_waitlist as "waitlistCount", 
-            pgu.players_in_seats as "tableCount", 
-            g.game_status as "gameStatus",
-            pgt.status as "playerStatus",
-            pgu.hand_num as "handsDealt"
-          FROM poker_game as g JOIN poker_game_updates as pgu ON 
-          g.id = pgu.game_id JOIN my_clubs as c ON 
-            g.club_id = c.id 
-            AND g.game_status NOT IN (${GameStatus.ENDED})
-          LEFT OUTER JOIN 
-            player_game_tracker as pgt ON
-            pgt.pgt_player_id = c.player_id AND
-            pgt.pgt_game_id  = g.id`;
-
+        SELECT 
+          g.club_code as "clubCode", 
+          g.club_name as "clubName", 
+          g.game_code as "gameCode", 
+          g.id as gameId, 
+          g.title as title, 
+          g.game_type as "gameType", 
+          g.buy_in_min as "buyInMin", 
+          g.buy_in_max as "buyInMax",
+          g.small_blind as "smallBlind",
+          g.big_blind as "bigBlind",
+          g.started_at as "startedAt", 
+          g.max_players as "maxPlayers", 
+          g.max_waitlist as "maxWaitList", 
+          pgu.players_in_waitlist as "waitlistCount", 
+          pgu.players_in_seats as "tableCount", 
+          g.game_status as "gameStatus",
+          pgt.status as "playerStatus",
+          pgu.hand_num as "handsDealt"
+        FROM poker_game as g JOIN poker_game_updates as pgu ON 
+        g.id = pgu.game_id 
+        LEFT OUTER JOIN 
+          player_game_tracker as pgt ON
+          pgt.pgt_player_id = ${player.id} AND
+          pgt.pgt_game_id  = g.id
+        where
+        g.game_status NOT IN (${GameStatus.ENDED}) AND
+        g.club_id IN (${clubIdsIn})`;
+    console.log(query);
     // EXTRACT(EPOCH FROM (now()-g.started_at)) as "elapsedTime",  Showing some error
     const resp = await getGameConnection().query(query);
     return resp;
@@ -800,26 +801,30 @@ class GameRepositoryImpl {
       playerInGame.status = PlayerStatus.NOT_PLAYING;
       playerInGame.seatNo = 0;
 
-      const satAt = new Date(Date.parse(playerInGame.satAt.toString()));
-      // calculate session time
-      let sessionTime = playerInGame.sessionTime;
-      const currentSessionTime = new Date().getTime() - satAt.getTime();
-      const roundSeconds = Math.round(currentSessionTime / 1000);
-      sessionTime = sessionTime + roundSeconds;
-      logger.info(
-        `Session Time: Player: ${player.id} sessionTime: ${sessionTime}`
-      );
+      const setProps: any = {
+        status: PlayerStatus.NOT_PLAYING,
+        seatNo: 0,
+      };
+
+      if (playerInGame.satAt) {
+        const satAt = new Date(Date.parse(playerInGame.satAt.toString()));
+        // calculate session time
+        let sessionTime = playerInGame.sessionTime;
+        const currentSessionTime = new Date().getTime() - satAt.getTime();
+        const roundSeconds = Math.round(currentSessionTime / 1000);
+        sessionTime = sessionTime + roundSeconds;
+        logger.info(
+          `Session Time: Player: ${player.id} sessionTime: ${sessionTime}`
+        );
+        setProps.satAt = undefined;
+        setProps.sessionTime = sessionTime;
+      }
       await playerGameTrackerRepository.update(
         {
           game: {id: game.id},
           playerId: player.id,
         },
-        {
-          status: PlayerStatus.NOT_PLAYING,
-          seatNo: 0,
-          satAt: undefined,
-          sessionTime: sessionTime,
-        }
+        setProps
       );
 
       // playerLeftGame(game, player, seatNo);
@@ -1102,11 +1107,25 @@ class GameRepositoryImpl {
         );
       }
     }
+    // complete books
+    await ChipsTrackRepository.settleClubBalances(game);
 
+    // roll up stats
+    await StatsRepository.rollupStats(game);
+
+    // update player performance
+    await StatsRepository.gameEnded(game, players);
+
+    // destroy Janus game
+    try {
+      //await this.deleteAudioConf(game.id);
+    } catch (err) {}
+
+    const ret = this.markGameStatus(gameId, GameStatus.ENDED);
+    game.status = GameStatus.ENDED;
     // update history tables
     await HistoryRepository.gameEnded(game, updates);
-
-    return this.markGameStatus(gameId, GameStatus.ENDED);
+    return ret;
   }
 
   public async anyPendingUpdates(gameId: number): Promise<boolean> {
@@ -1125,7 +1144,7 @@ class GameRepositoryImpl {
     return false;
   }
 
-  public async endGameNextHand(gameId: number) {
+  public async endGameNextHand(player: Player, gameId: number) {
     // check to see if the game is already marked to be ended
     const repository = getGameRepository(NextHandUpdates);
     const query = fixQuery(
@@ -1140,6 +1159,9 @@ class GameRepositoryImpl {
       const game = new PokerGame();
       game.id = gameId;
       nextHandUpdate.game = game;
+      nextHandUpdate.playerId = player.id;
+      nextHandUpdate.playerName = player.name;
+      nextHandUpdate.playerUuid = player.uuid;
       nextHandUpdate.newUpdate = NextHandUpdate.END_GAME;
       repository.save(nextHandUpdate);
 
@@ -1208,19 +1230,6 @@ class GameRepositoryImpl {
 
     // if game ended
     if (status === GameStatus.ENDED) {
-      // complete books
-      await ChipsTrackRepository.settleClubBalances(game);
-
-      // roll up stats
-      await StatsRepository.rollupStats(game);
-
-      // update player performance
-      await StatsRepository.gameEnded(game, players);
-
-      // destroy Janus game
-      try {
-        //await this.deleteAudioConf(game.id);
-      } catch (err) {}
     }
 
     // update cached game
@@ -1372,48 +1381,6 @@ class GameRepositoryImpl {
     return await getGameRepository(PokerGameUpdates).findOne({gameID: gameID});
   }
 
-  public async getCompletedGame(
-    gameCode: string,
-    playerId: number
-  ): Promise<any> {
-    const query = fixQuery(`
-    SELECT pg.id, pg.game_code as "gameCode", pg.game_num as "gameNum",
-    pgt.session_time as "sessionTime", pg.game_status as "status",
-    pg.small_blind as "smallBlind", pg.big_blind as "bigBlind",
-    pgt.no_hands_played as "handsPlayed", 
-    pgt.no_hands_won as "handsWon", in_flop as "flopHands", in_turn as "turnHands",
-    pgt.buy_in as "buyIn", (pgt.stack - pgt.buy_in) as "profit",
-    in_preflop as "preflopHands", in_river as "riverHands", went_to_showdown as "showdownHands", 
-    big_loss as "bigLoss", big_win as "bigWin", big_loss_hand as "bigLossHand", 
-    big_win_hand as "bigWinHand", hand_stack,
-    pg.game_type as "gameType", 
-    pg.started_at as "startedAt", pg.host_name as "startedBy",
-    pg.ended_at as "endedAt", pg.ended_by_name as "endedBy", 
-    pg.started_at as "startedAt", pgt.session_time as "sessionTime", 
-    pgt.stack as balance,
-    pgu.hand_num as "handsDealt"
-    FROM
-    poker_game pg 
-    JOIN poker_game_updates pgu ON pg.id = pgu.game_id
-    LEFT OUTER JOIN player_game_tracker pgt ON 
-    pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = ?
-    LEFT OUTER JOIN player_game_stats pgs ON 
-    pgs.game_id = pg.id AND pgs.player_id = pgt.pgt_player_id
-    WHERE
-    pg.game_code = ?
-    `);
-
-    // TODO: we need to do pagination here
-    const result = await getHistoryConnection().query(query, [
-      playerId,
-      gameCode,
-    ]);
-    if (result.length > 0) {
-      return result[0];
-    }
-    return null;
-  }
-
   public async getGameResultTable(gameCode: string): Promise<any> {
     const query = fixQuery(`
       SELECT 
@@ -1430,7 +1397,7 @@ class GameRepositoryImpl {
       WHERE pg.game_code = ?
       AND pgt.no_hands_played > 0`);
 
-    const result = await getHistoryConnection().query(query, [gameCode]);
+    const result = await getGameConnection().query(query, [gameCode]);
     return result;
   }
 

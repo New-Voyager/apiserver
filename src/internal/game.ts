@@ -489,11 +489,11 @@ class GameAPIs {
           for (const seatNo of missedBlinds) {
             await playerGameTrackerRepo.update(
               {
-                missedBlind: true,
-              },
-              {
                 game: {id: game.id},
                 seatNo: seatNo,
+              },
+              {
+                missedBlind: true,
               }
             );
           }

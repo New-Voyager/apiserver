@@ -814,6 +814,18 @@ class ClubRepositoryImpl {
   public async broadcastMessage(club: Club, message: any) {
     await Firebase.sendClubMsg(club, message);
   }
+
+  public async getClubIds(playerId: number): Promise<Array<number>> {
+    const clubMemberRepo = getUserRepository(ClubMember);
+    const resp = await clubMemberRepo
+      .createQueryBuilder()
+      .select('club_id', 'clubId')
+      .where({
+        player: {id: playerId},
+      })
+      .execute();
+    return resp.map(x => x.clubId);
+  }
 }
 
 export const ClubRepository = new ClubRepositoryImpl();
