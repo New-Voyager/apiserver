@@ -28,6 +28,7 @@ import {
   getUserRepository,
 } from '.';
 import {GameReward} from '@src/entity/game/reward';
+import {HistoryRepository} from './history';
 
 const logger = getLogger('hand');
 
@@ -742,9 +743,21 @@ class HandRepositoryImpl {
 
   public async getHandLog(gameCode: string, handNum: number): Promise<any> {
     const game = await Cache.getGame(gameCode);
+    let gameId: number;
+    if (game) {
+      gameId = game.id;
+    } else {
+      const historyGame = await HistoryRepository.getCompletedGameByCode(
+        gameCode
+      );
+      if (!historyGame) {
+        throw new Error(`Game with code ${gameCode} is not found`);
+      }
+      gameId = historyGame.gameId;
+    }
     const handHistoryRepo = getHistoryRepository(HandHistory);
     const hand = await handHistoryRepo.findOne({
-      gameId: game.id,
+      gameId: gameId,
       handNum: handNum,
     });
     if (!hand) {

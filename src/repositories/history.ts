@@ -267,6 +267,16 @@ class HistoryRepositoryImpl {
     }
     return gameResults;
   }
+
+  public async getCompletedGameByCode(
+    gameCode: string
+  ): Promise<GameHistory | undefined> {
+    const gameHistoryRepo = getHistoryRepository(GameHistory);
+    const game = await gameHistoryRepo.findOne({
+      gameCode: gameCode,
+    });
+    return game;
+  }
 }
 
 export const HistoryRepository = new HistoryRepositoryImpl();

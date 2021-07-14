@@ -2,4 +2,5 @@
 
 type Mutation {
   deleteGame(gameCode: String, includeGame: Boolean): Boolean
+  debugHandLog(gameCode: String!, handNum: Int!): Boolean
 }

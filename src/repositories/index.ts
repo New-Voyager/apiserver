@@ -29,6 +29,13 @@ export function getGameRepository<Entity>(
   return getRepository(entityClass, 'livegames');
 }
 
+export function getDebugRepository<Entity>(
+  entityClass: ObjectType<Entity> | EntitySchema<Entity> | string,
+  connectionName?: string
+): Repository<Entity> {
+  return getRepository(entityClass, 'debug');
+}
+
 export function getUserManager() {
   return getManager('users');
 }

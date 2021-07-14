@@ -4,6 +4,38 @@ pgUserKey = 'POSTGRES_USER';
 pgPasswordKey = 'POSTGRES_PASSWORD';
 pgDbNameKey = 'POSTGRES_DB';
 
+pgDebugHostKey = 'POSTGRES_DEBUG_HOST';
+pgDebugPortKey = 'POSTGRES_DEBUG_PORT';
+pgDebugUserKey = 'POSTGRES_DEBUG_USER';
+pgDebugPasswordKey = 'POSTGRES_DEBUG_PASSWORD';
+pgDebugDbNameKey = 'POSTGRES_DEBUG_DB';
+
+let debugHost = 'voyager-poker-postgresql-nyc3-01-do-user-7667119-0.b.db.ondigitalocean.com';
+let debugPort = 25060;
+let debugDB = 'defaultdb';
+let debugUser = 'doadmin';
+let debugPassword = 'v7wvhf4wo704h4q4';
+
+if (process.env[pgDebugHostKey]) {
+  debugHost = process.env[pgDebugHostKey];
+}
+
+if (process.env[pgDebugPortKey]) {
+  debugPort = process.env[pgDebugPortKey];
+}
+
+if (process.env[pgDebugUserKey]) {
+  debugUser = process.env[pgDebugUserKey];
+}
+
+if (process.env[pgDebugPasswordKey]) {
+  debugPassword = process.env[pgDebugPasswordKey];
+}
+
+if (process.env[pgDebugDbNameKey]) {
+  debugDB = process.env[pgDebugDbNameKey];
+}
+
 configs = {
   default: {
     name: 'default',
@@ -60,7 +92,27 @@ configs = {
     synchronize: true,
     bigNumberStrings: false,
     entities: ['build/src/entity/history/**/*.js'],
-  },  
+  },
+  debug: {
+    name: 'debug',
+    type: 'postgres',
+    host: debugHost,
+    port: debugPort,
+    username: debugUser,
+    password: debugPassword,
+    database: debugDB,
+    logging: false,
+    cache: true,
+    synchronize: true,
+    bigNumberStrings: false,
+    "ssl": true,
+    "extra": {
+      "ssl": {
+        "rejectUnauthorized": false
+      } 
+    },   
+    entities: ['build/src/entity/debug/**/*.js'],
+  },
   // test: {
   //   name: 'default',
   //   type: 'sqlite',
@@ -128,5 +180,6 @@ if (process.env.NODE_ENV === 'test') {
     history: configs.history,
     users: configs.users,
     default: configs.default,
+    debug: configs.debug,
   }
 }

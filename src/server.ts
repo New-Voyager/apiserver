@@ -76,9 +76,9 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     extensions: ['.js'],
   });
   let resolvers = {};
-  resolversFiles.forEach(element => {
-    resolvers = merge(resolvers, element.getResolvers());
-  });
+  for (const resolverFile of resolversFiles) {
+    resolvers = merge(resolvers, resolverFile.getResolvers());
+  }
 
   const server = new ApolloServer({
     typeDefs: typeDefs1,
@@ -168,6 +168,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     const liveGameObj = livegames as any;
     const historyObj = history as any;
     const userObj = users as any;
+    const debugObj = options['debug'] as any;
     try {
       await createConnections([
         {
@@ -208,6 +209,10 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
           bigNumberStrings: historyObj.bigNumberStrings,
           entities: historyObj.entities,
           name: 'history',
+        },
+        {
+          ...debugObj,
+          name: 'debug',
         },
       ]);
     } catch (err) {
