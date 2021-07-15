@@ -193,6 +193,9 @@ const resolvers: any = {
     sendPlayerFcmMessage: async (parent, args, ctx, info) => {
       await sendPlayerFcmMessage(ctx.req.playerId, args.message);
     },
+    changeDisplayName: async (parent, args, ctx, info) => {
+      await changeDisplayName(ctx.req.playerId, args.name);
+    },
   },
   Player: {
     clubs: async (parent, args, ctx, info) => {
@@ -646,4 +649,17 @@ async function sendPlayerFcmMessage(playerId: string, message: any) {
     throw new Error(`Player ${playerId} is not found`);
   }
   await PlayerRepository.sendFcmMessage(player, message);
+}
+
+export async function changeDisplayName(
+  playerId: string,
+  name: string
+): Promise<void> {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  return await PlayerRepository.changeDisplayName(
+    playerId,
+    name
+  );
 }
