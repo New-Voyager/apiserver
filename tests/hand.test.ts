@@ -271,7 +271,7 @@ describe('Hand Tests', () => {
     // }
   });
 
-  test('Get latest hand history', async () => {
+  test.skip('Get latest hand history', async () => {
     // try {
     const [
       owner,
@@ -651,7 +651,7 @@ describe('Hand Tests', () => {
     }
   });
 
-  test('Handtest: Bookmark hands', async () => {
+  test.skip('Handtest: Bookmark hands', async () => {
     const [
       owner,
       clubCode,

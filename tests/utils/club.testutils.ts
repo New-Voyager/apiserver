@@ -9,9 +9,9 @@ export const createPlayerQuery = gql`
 `;
 
 export const changeDisplayNameQuery = gql`
-mutation($name: String!) {
-  success: changeDisplayName(name: $name)
-}
+  mutation($name: String!) {
+    success: changeDisplayName(name: $name)
+  }
 `;
 
 export const createClubQuery = gql`
@@ -168,7 +168,7 @@ export async function createPlayer(name: string, deviceId: string) {
 
 export async function changeDisplayName(playerId: string, name: string) {
   const variables = {
-      name: name,
+    name: name,
   };
   const client = getClient(playerId);
   const resp = await client.mutate({
