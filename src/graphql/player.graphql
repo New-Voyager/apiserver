@@ -147,7 +147,6 @@ type Query {
   liveAudioToken(gameCode: String!): String!
   idsToPlayersInfo(ids: [Int!]): [PlayerInfo]
   availableAppCoins: Int!
-  availableProducts: [String!]
   notes(playerId: String playerUuid: String): String
 }
 

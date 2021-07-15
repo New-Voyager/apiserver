@@ -1,0 +1,8 @@
+type IapProduct {
+  productId: String!
+  coins: Int!
+}
+
+type Query {
+  availableIapProducts: [IapProduct!]
+}
