@@ -1,0 +1,563 @@
+{
+	"gameId": "2",
+	"handNum": 1,
+	"gameType": "HOLDEM",
+	"noCards": 2,
+	"handLog": {
+		"preflopActions": {
+			"potStart": 0,
+			"pots": [],
+			"actions": [{
+				"seatNo": 2,
+				"action": "SB",
+				"amount": 1,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 999
+			}, {
+				"seatNo": 3,
+				"action": "BB",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 998
+			}, {
+				"seatNo": 4,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 998
+			}, {
+				"seatNo": 5,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 998
+			}, {
+				"seatNo": 6,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 998
+			}, {
+				"seatNo": 7,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 998
+			}, {
+				"seatNo": 8,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 998
+			}, {
+				"seatNo": 9,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 998
+			}, {
+				"seatNo": 1,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 998
+			}, {
+				"seatNo": 2,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 998
+			}, {
+				"seatNo": 3,
+				"action": "BET",
+				"amount": 4,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 996
+			}, {
+				"seatNo": 4,
+				"action": "CALL",
+				"amount": 4,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 996
+			}, {
+				"seatNo": 5,
+				"action": "CALL",
+				"amount": 4,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 996
+			}, {
+				"seatNo": 6,
+				"action": "CALL",
+				"amount": 4,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 996
+			}, {
+				"seatNo": 7,
+				"action": "CALL",
+				"amount": 4,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 996
+			}, {
+				"seatNo": 8,
+				"action": "CALL",
+				"amount": 4,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 996
+			}, {
+				"seatNo": 9,
+				"action": "CALL",
+				"amount": 4,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 996
+			}, {
+				"seatNo": 1,
+				"action": "CALL",
+				"amount": 4,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 996
+			}, {
+				"seatNo": 2,
+				"action": "CALL",
+				"amount": 4,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 996
+			}]
+		},
+		"flopActions": {
+			"potStart": 36,
+			"pots": [36],
+			"actions": [{
+				"seatNo": 2,
+				"action": "CHECK",
+				"amount": 0,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 996
+			}, {
+				"seatNo": 3,
+				"action": "BET",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 994
+			}, {
+				"seatNo": 4,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 994
+			}, {
+				"seatNo": 5,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 994
+			}, {
+				"seatNo": 6,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 994
+			}, {
+				"seatNo": 7,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 994
+			}, {
+				"seatNo": 8,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 994
+			}, {
+				"seatNo": 9,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 994
+			}, {
+				"seatNo": 1,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 994
+			}, {
+				"seatNo": 2,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 994
+			}]
+		},
+		"turnActions": {
+			"potStart": 54,
+			"pots": [54],
+			"actions": [{
+				"seatNo": 2,
+				"action": "CHECK",
+				"amount": 0,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 994
+			}, {
+				"seatNo": 3,
+				"action": "BET",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 992
+			}, {
+				"seatNo": 4,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 992
+			}, {
+				"seatNo": 5,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 992
+			}, {
+				"seatNo": 6,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 992
+			}, {
+				"seatNo": 7,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 992
+			}, {
+				"seatNo": 8,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 992
+			}, {
+				"seatNo": 9,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 992
+			}, {
+				"seatNo": 1,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 992
+			}, {
+				"seatNo": 2,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 992
+			}]
+		},
+		"riverActions": {
+			"potStart": 72,
+			"pots": [72],
+			"actions": [{
+				"seatNo": 2,
+				"action": "CHECK",
+				"amount": 0,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 992
+			}, {
+				"seatNo": 3,
+				"action": "BET",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 990
+			}, {
+				"seatNo": 4,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 990
+			}, {
+				"seatNo": 5,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 990
+			}, {
+				"seatNo": 6,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 990
+			}, {
+				"seatNo": 7,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 990
+			}, {
+				"seatNo": 8,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 990
+			}, {
+				"seatNo": 9,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 990
+			}, {
+				"seatNo": 1,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 990
+			}, {
+				"seatNo": 2,
+				"action": "CALL",
+				"amount": 2,
+				"timedOut": false,
+				"actionTime": 0,
+				"stack": 990
+			}]
+		},
+		"potWinners": {
+			"0": {
+				"potNo": 0,
+				"amount": 90,
+				"hiWinners": [{
+					"seatNo": 5,
+					"loCard": false,
+					"amount": 86,
+					"winningCards": [40, 34, 84, 130, 36],
+					"winningCardsStr": "[ 4♣  4❤  7♦  T❤  4♦ ]",
+					"rankStr": "Three of a Kind",
+					"rank": 2310,
+					"playerCards": [36],
+					"boardCards": [40, 34, 84, 130]
+				}],
+				"lowWinners": [],
+				"pauseTime": 0
+			}
+		},
+		"wonAt": "SHOW_DOWN",
+		"showDown": null,
+		"handStartedAt": 1626344315,
+		"handEndedAt": 1626344331,
+		"runItTwice": false,
+		"runItTwiceResult": null
+	},
+	"rewardTrackingIds": [2],
+	"boardCards": [40, 34, 4, 84, 130],
+	"boardCards2": [],
+	"flop": [40, 34, 4],
+	"turn": 84,
+	"river": 130,
+	"players": {
+		"1": {
+			"id": "17",
+			"cards": [161, 104],
+			"bestCards": [40, 34, 130, 161, 104],
+			"rank": 5635,
+			"playedUntil": "SHOW_DOWN",
+			"balance": {
+				"before": 1000,
+				"after": 990
+			},
+			"hhCards": [161, 104, 40, 34, 130],
+			"hhRank": 5635,
+			"received": 0,
+			"rakePaid": 0,
+			"name": "yong"
+		},
+		"2": {
+			"id": "18",
+			"cards": [18, 82],
+			"bestCards": [40, 34, 84, 130, 82],
+			"rank": 3187,
+			"playedUntil": "SHOW_DOWN",
+			"balance": {
+				"before": 1000,
+				"after": 990
+			},
+			"hhCards": [18, 82, 40, 34, 84],
+			"hhRank": 3192,
+			"received": 0,
+			"rakePaid": 0,
+			"name": "brian"
+		},
+		"3": {
+			"id": "19",
+			"cards": [17, 20],
+			"bestCards": [40, 34, 130, 17, 20],
+			"rank": 3297,
+			"playedUntil": "SHOW_DOWN",
+			"balance": {
+				"before": 1000,
+				"after": 990
+			},
+			"hhCards": [17, 20, 40, 34, 130],
+			"hhRank": 3297,
+			"received": 0,
+			"rakePaid": 0,
+			"name": "tom"
+		},
+		"4": {
+			"id": "20",
+			"cards": [152, 194],
+			"bestCards": [40, 34, 130, 152, 194],
+			"rank": 5545,
+			"playedUntil": "SHOW_DOWN",
+			"balance": {
+				"before": 1000,
+				"after": 990
+			},
+			"hhCards": [152, 194, 40, 34, 130],
+			"hhRank": 5545,
+			"received": 0,
+			"rakePaid": 0,
+			"name": "jim"
+		},
+		"5": {
+			"id": "21",
+			"cards": [56, 36],
+			"bestCards": [40, 34, 84, 130, 36],
+			"rank": 2310,
+			"playedUntil": "SHOW_DOWN",
+			"balance": {
+				"before": 1000,
+				"after": 1076
+			},
+			"hhCards": [56, 36, 40, 34, 130],
+			"hhRank": 2312,
+			"received": 86,
+			"rakePaid": 4,
+			"name": "rob"
+		},
+		"6": {
+			"id": "26",
+			"cards": [148, 193],
+			"bestCards": [40, 34, 130, 148, 193],
+			"rank": 5545,
+			"playedUntil": "SHOW_DOWN",
+			"balance": {
+				"before": 1000,
+				"after": 990
+			},
+			"hhCards": [148, 193, 40, 34, 130],
+			"hhRank": 5545,
+			"received": 0,
+			"rakePaid": 0,
+			"name": "rich"
+		},
+		"7": {
+			"id": "27",
+			"cards": [24, 145],
+			"bestCards": [40, 34, 84, 130, 145],
+			"rank": 5664,
+			"playedUntil": "SHOW_DOWN",
+			"balance": {
+				"before": 1000,
+				"after": 990
+			},
+			"hhCards": [24, 145, 40, 34, 130],
+			"hhRank": 5667,
+			"received": 0,
+			"rakePaid": 0,
+			"name": "josh"
+		},
+		"8": {
+			"id": "28",
+			"cards": [180, 98],
+			"bestCards": [40, 34, 130, 180, 98],
+			"rank": 5599,
+			"playedUntil": "SHOW_DOWN",
+			"balance": {
+				"before": 1000,
+				"after": 990
+			},
+			"hhCards": [180, 98, 40, 34, 130],
+			"hhRank": 5599,
+			"received": 0,
+			"rakePaid": 0,
+			"name": "chris"
+		},
+		"9": {
+			"id": "23",
+			"cards": [8, 66],
+			"bestCards": [40, 34, 4, 130, 8],
+			"rank": 3308,
+			"playedUntil": "SHOW_DOWN",
+			"balance": {
+				"before": 1000,
+				"after": 990
+			},
+			"hhCards": [8, 66, 40, 34, 4],
+			"hhRank": 3312,
+			"received": 0,
+			"rakePaid": 0,
+			"name": "michael"
+		}
+	},
+	"rakeCollected": 4,
+	"highHand": null,
+	"handStats": {
+		"endedAtPreflop": false,
+		"endedAtFlop": false,
+		"endedAtTurn": false,
+		"endedAtRiver": false,
+		"endedAtShowdown": true
+	},
+	"runItTwice": false,
+	"smallBlind": 1,
+	"bigBlind": 2,
+	"ante": 0,
+	"maxPlayers": 9,
+	"gameCode": "cgwxtgfax"
+}
