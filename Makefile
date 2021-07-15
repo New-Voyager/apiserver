@@ -7,6 +7,9 @@ POSTGRES_VERSION := 12.5
 
 DOCKER_BUILDKIT ?= 1
 
+NATS_VERSION := 2.1.7-alpine3.11
+REDIS_VERSION := 6.0.9
+
 ifeq ($(OS), Windows_NT)
 	BUILD_NO := $(file < build_number.txt)
 else
@@ -68,9 +71,9 @@ docker-build-test:
 up: create-network
 	docker-compose up
 
-.PHONY: run-pg
-run-pg:
-	npx yarn run-pg
+# .PHONY: run-pg
+# run-pg:
+# 	npx yarn run-pg
 
 .PHONY: debug
 debug: watch-debug
@@ -161,3 +164,21 @@ docker-tests: create-network run-redis run-nats
 		-e REDIS_PORT=6379 \
 		-e REDIS_DB=0 \
 		api-server-test sh -c "sh ./run_system_tests.sh"
+
+.PHONY: stop-pg
+stop-pg: 
+	docker rm -f apiserver_mydb_1 || true
+
+.PHONY: run-pg
+run-pg: 
+	docker rm -f apiserver_mydb_1 || true
+	docker-compose -f docker-compose-pg.yaml up --detach 
+
+.PHONY: run-all
+run-all: run-pg run-nats run-redis
+	echo 'All services are running'
+
+.PHONY: stop-all
+stop-all: stop-pg stop-nats stop-redis
+	echo 'All services are stopped'
+
