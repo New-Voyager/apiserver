@@ -10,7 +10,8 @@ pgDebugUserKey = 'POSTGRES_DEBUG_USER';
 pgDebugPasswordKey = 'POSTGRES_DEBUG_PASSWORD';
 pgDebugDbNameKey = 'POSTGRES_DEBUG_DB';
 
-let debugHost = 'voyager-poker-postgresql-nyc3-01-do-user-7667119-0.b.db.ondigitalocean.com';
+let debugHost =
+  'voyager-poker-postgresql-nyc3-01-do-user-7667119-0.b.db.ondigitalocean.com';
 let debugPort = 25060;
 let debugDB = 'defaultdb';
 let debugUser = 'doadmin';
@@ -50,7 +51,7 @@ configs = {
     synchronize: true,
     bigNumberStrings: false,
     entities: [],
-  },  
+  },
   users: {
     name: 'users',
     type: 'postgres',
@@ -64,7 +65,7 @@ configs = {
     synchronize: true,
     bigNumberStrings: false,
     entities: ['build/src/entity/player/**/*.js'],
-  },  
+  },
   livegames: {
     name: 'livegames',
     type: 'postgres',
@@ -105,12 +106,12 @@ configs = {
     cache: true,
     synchronize: true,
     bigNumberStrings: false,
-    "ssl": true,
-    "extra": {
-      "ssl": {
-        "rejectUnauthorized": false
-      } 
-    },   
+    ssl: true,
+    extra: {
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    },
     entities: ['build/src/entity/debug/**/*.js'],
   },
   // test: {
@@ -136,7 +137,10 @@ if (process.env.NODE_ENV === 'test') {
       synchronize: true,
       logging: false,
       cache: true,
-      entities: ['build/src/entity/player/**/*.js', '../build/src/entity/player/**/*.js'],
+      entities: [
+        'build/src/entity/player/**/*.js',
+        '../build/src/entity/player/**/*.js',
+      ],
     },
     livegames: {
       name: 'livegames',
@@ -146,7 +150,10 @@ if (process.env.NODE_ENV === 'test') {
       synchronize: true,
       logging: false,
       cache: true,
-      entities: ['build/src/entity/game/**/*.js', '../build/src/entity/game/**/*.js'],
+      entities: [
+        'build/src/entity/game/**/*.js',
+        '../build/src/entity/game/**/*.js',
+      ],
     },
     history: {
       name: 'history',
@@ -156,14 +163,17 @@ if (process.env.NODE_ENV === 'test') {
       synchronize: true,
       logging: false,
       cache: true,
-      entities: ['build/src/entity/history/**/*.js', '../build/src/entity/history/**/*.js'],
+      entities: [
+        'build/src/entity/history/**/*.js',
+        '../build/src/entity/history/**/*.js',
+      ],
     },
   };
   module.exports = {
     livegames: configs.livegames,
     history: configs.history,
     users: configs.users,
-  }
+  };
 } else {
   envs = [pgHostKey, pgPortKey, pgUserKey, pgPasswordKey];
   errs = [];
@@ -181,5 +191,5 @@ if (process.env.NODE_ENV === 'test') {
     users: configs.users,
     default: configs.default,
     debug: configs.debug,
-  }
+  };
 }

@@ -654,12 +654,9 @@ async function sendPlayerFcmMessage(playerId: string, message: any) {
 export async function changeDisplayName(
   playerId: string,
   name: string
-): Promise<void> {
+): Promise<boolean> {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  return await PlayerRepository.changeDisplayName(
-    playerId,
-    name
-  );
+  return await PlayerRepository.changeDisplayName(playerId, name);
 }
