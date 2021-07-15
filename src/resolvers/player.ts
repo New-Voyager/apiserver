@@ -194,7 +194,7 @@ const resolvers: any = {
       await sendPlayerFcmMessage(ctx.req.playerId, args.message);
     },
     changeDisplayName: async (parent, args, ctx, info) => {
-      await changeDisplayName(ctx.req.playerId, args.name);
+      return changeDisplayName(ctx.req.playerId, args.name);
     },
   },
   Player: {

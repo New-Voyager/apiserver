@@ -7,6 +7,13 @@ export const createPlayerQuery = gql`
     playerId: createPlayer(player: $input)
   }
 `;
+
+export const changeDisplayNameQuery = gql`
+mutation($name: String!) {
+  success: changeDisplayName(name: $name)
+}
+`;
+
 export const createClubQuery = gql`
   mutation($input: ClubCreateInput!) {
     clubCode: createClub(club: $input)
@@ -157,6 +164,18 @@ export async function createPlayer(name: string, deviceId: string) {
     mutation: createPlayerQuery,
   });
   return resp.data.playerId;
+}
+
+export async function changeDisplayName(playerId: string, name: string) {
+  const variables = {
+      name: name,
+  };
+  const client = getClient(playerId);
+  const resp = await client.mutate({
+    variables: variables,
+    mutation: changeDisplayNameQuery,
+  });
+  return resp.data;
 }
 
 export async function getClubById(clubCode: string): Promise<number> {

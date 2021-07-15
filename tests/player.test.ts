@@ -82,4 +82,16 @@ describe('Player APIs', () => {
     expect(club2.name).not.toBeNull();
     expect(club2.clubCode).toEqual(club2Code);
   });
+
+  test('change display name', async () => {
+    const [clubCode1, owner1] = await clubutils.createClub('owner1', 'test1');
+    const [clubCode2, owner2] = await clubutils.createClub('owner2', 'test2');
+    const player1 = await clubutils.createPlayer('player1', 'ABCDEnew');
+    await clubutils.playerJoinsClub(clubCode1, player1);
+    await clubutils.playerJoinsClub(clubCode2, player1);
+    const player1Clubs = await clubutils.getMyClubs(player1);
+    expect(player1Clubs).toHaveLength(2);
+
+    await clubutils.changeDisplayName(player1, 'sanjay');
+  });
 });
