@@ -159,4 +159,5 @@ type Mutation {
   appCoinPurchase(storeType: StoreType!, receipt: String!): IapReceipt!
   setNotes(playerId: String playerUuid: String, notes: String): Boolean
   sendPlayerFcmMessage(message: Json!): Boolean
+  changeDisplayName(name: String!): Boolean
 }
