@@ -220,8 +220,8 @@ class PlayerRepositoryImpl {
           HostMessageType.TO_HOST
         );
         let host: Player;
-        if(data.club.owner){
-          host = (data.club.owner) as Player
+        if (data.club.owner) {
+          host = data.club.owner as Player;
           await Firebase.playerRenamed(host, player.name, name);
         }
       }

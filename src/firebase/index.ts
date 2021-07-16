@@ -286,7 +286,7 @@ class FirebaseClass {
       await this.app.messaging().sendToDevice(host.firebaseToken, {
         data: {
           message: `Player '${oldName}' changed name to '${newName}'`,
-          type: 'PLAYER_RENAMED'
+          type: 'PLAYER_RENAMED',
         },
       });
     } catch (err) {
