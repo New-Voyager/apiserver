@@ -219,9 +219,13 @@ class PlayerRepositoryImpl {
           `Player ${player.name} changed name to ${name}`,
           HostMessageType.TO_HOST
         );
+        let host: Player;
+        if(data.club.owner){
+          host = (data.club.owner) as Player
+          await Firebase.playerRenamed(host, player.name, name);
+        }
       }
     }
-    await Firebase.playerRenamed(player, player.name, name);
     await Cache.getPlayer(playerId, true);
     return true;
   }
