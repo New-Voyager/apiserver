@@ -1947,6 +1947,8 @@ const resolvers: any = {
       for (const player of playersInSeats) {
         player.status = PlayerStatus[player.status];
         player.name = player.playerName;
+        player.buyInExpTime = player.buyInExpAt;
+        player.breakExpTime = player.breakTimeExpAt;
       }
 
       const takenSeats = playersInSeats.map(x => x.seatNo);

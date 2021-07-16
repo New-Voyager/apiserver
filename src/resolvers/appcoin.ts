@@ -115,9 +115,6 @@ const resolvers: any = {
       );
       return availableCoins;
     },
-    availableProducts: async (parent, args, ctx, info) => {
-      return Object.keys(productCoinMap);
-    },
   },
   Mutation: {
     appCoinPurchase: async (parent, args, ctx, info) => {

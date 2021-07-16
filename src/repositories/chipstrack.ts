@@ -181,7 +181,6 @@ class ChipsTrackRepositoryImpl {
               rakePaid: () => `rake_paid + ${playerChip.rakePaid}`,
               totalGames: () => 'total_games + 1',
               totalHands: () => `total_hands + ${playerChip.noHandsPlayed}`,
-              notes: '',
             })
             .where({
               player: {id: playerChip.playerId},
