@@ -15,6 +15,7 @@ async function sendTestMessage(playerId: string) {
 const resolvers: any = {
   Query: {
     hello: async (parent, args, ctx, info) => {
+      await Firebase.getAvailableProducts();
       return 'World';
     },
   },
