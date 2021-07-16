@@ -222,6 +222,26 @@ class FirebaseClass {
     }
   }
 
+  public async playerRenamed(host: Player, oldName: string, newName: string) {
+    if (!this.firebaseInitialized) {
+      return;
+    }
+    if (!this.app) {
+      logger.error('Firebase is not initialized');
+      return;
+    }
+    try {
+      await this.app.messaging().sendToDevice(host.firebaseToken, {
+        data: {
+          message: `Player '${oldName}' changed name to '${newName}'`,
+          type: 'PLAYER_RENAMED',
+        },
+      });
+    } catch (err) {
+      logger.error(`Sending to device group failed. ${err.toString()}`);
+    }
+  }
+
   public async getAvailableProducts() {
     try {
       let fetch = false;
