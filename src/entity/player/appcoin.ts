@@ -50,7 +50,7 @@ export class CoinTransaction {
   @Column({name: 'receipt_hash', nullable: true})
   public receiptHash!: string;
 
-  @Column({name: 'coins_purchased]', type: 'int'})
+  @Column({name: 'coins_purchased', type: 'int'})
   public coinsPurchased!: number;
 
   @DbAwareColumn({name: 'purchase_date', type: 'timestamp'})

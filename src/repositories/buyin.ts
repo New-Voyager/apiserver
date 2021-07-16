@@ -417,10 +417,8 @@ export class BuyIn {
       nhu.buyin_amount as "amount", 
       nhu.new_update as "update" 
       from next_hand_updates nhu
-	 join     
-	 player p on p.id = nhu.player_id
-	 join
-	 poker_game pg on pg.id = nhu.game_id 
+   join poker_game pg 
+    on pg.id = nhu.game_id 
    and pg.ended_at is null
       where pg.host_id = ? AND nhu.new_update in (?, ?)`;
     query = fixQuery(query);
