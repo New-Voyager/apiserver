@@ -216,11 +216,12 @@ class PlayerRepositoryImpl {
         await HostMessageRepository.sendHostMessage(
           data.club,
           data,
-          `${player.name} changed their name to ${name}`,
+          `Player ${player.name} changed name to ${name}`,
           HostMessageType.TO_HOST
         );
       }
     }
+    await Firebase.playerRenamed(player, player.name, name);
     await Cache.getPlayer(playerId, true);
     return true;
   }
