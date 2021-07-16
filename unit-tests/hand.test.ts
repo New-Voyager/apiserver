@@ -279,7 +279,7 @@ describe('Hand server APIs', () => {
     }
   });
 
-  test('Handtest: Get latest hand history', async () => {
+  test.skip('Handtest: Get latest hand history', async () => {
     try {
       const [
         owner,
@@ -580,7 +580,7 @@ describe('Hand server APIs', () => {
     }
   });
 
-  test('Handtest: Bookmark hands', async () => {
+  test.skip('Handtest: Bookmark hands', async () => {
     const [
       owner,
       clubCode,

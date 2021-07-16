@@ -120,7 +120,7 @@ describe('Hand Server', () => {
     done();
   });
 
-  test('Get logged data by game', async () => {
+  test.skip('Get logged data by game', async () => {
     const ownerInput = {
       name: 'player_name',
       deviceId: 'abc123',

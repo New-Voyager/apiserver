@@ -7,6 +7,9 @@ import {Cache} from '@src/cache/index';
 import {StatsRepository} from './stats';
 import {Firebase} from '@src/firebase';
 import {getUserRepository} from '.';
+import {Club, ClubMember} from '@src/entity/player/club';
+import {HostMessageRepository} from '@src/repositories/hostmessage';
+import {HostMessageType} from '../entity/types';
 
 class PlayerRepositoryImpl {
   public async createPlayer(
@@ -182,6 +185,44 @@ class PlayerRepositoryImpl {
 
   public async sendFcmMessage(player: Player, message: any) {
     await Firebase.sendPlayerMsg(player, message);
+  }
+
+  public async changeDisplayName(playerId: string, name: string) {
+    const player = await Cache.getPlayer(playerId);
+    if (!player) {
+      throw new Error('Could not get player data');
+    }
+    const playerRepo = getUserRepository(Player);
+    const affectedRows = await playerRepo.update(
+      {
+        id: player.id,
+      },
+      {
+        name: name,
+      }
+    );
+    logger.info(`Affected rows: ${affectedRows}`);
+    if (affectedRows.affected != 0) {
+      // member -> host message
+      const clubMemberRepo = getUserRepository(ClubMember);
+      const playerClubs = await clubMemberRepo.find({
+        relations: ['club', 'player'],
+        where: {
+          player: {id: player.id},
+        },
+      });
+      logger.info(`player Clubs: ${playerClubs}`);
+      for await (const data of playerClubs) {
+        await HostMessageRepository.sendHostMessage(
+          data.club,
+          data,
+          `${player.name} changed their name to ${name}`,
+          HostMessageType.TO_HOST
+        );
+      }
+    }
+    await Cache.getPlayer(playerId, true);
+    return true;
   }
 }
 

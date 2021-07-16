@@ -8,8 +8,10 @@ import {
   getPlayerById,
   leaveClub,
   getPlayerClubs,
+  changeDisplayName,
 } from '@src/resolvers/player';
 import {createClub, joinClub} from '@src/resolvers/club';
+import {messagesFromMember} from '@src/resolvers/clubmessage';
 
 const logger = getLogger('Player unit-test');
 
@@ -242,6 +244,51 @@ describe('Player APIs', () => {
       const resp2 = await getPlayerClubs(player2, {playerId: player2});
       expect(resp1).toHaveLength(2);
       expect(resp2).toHaveLength(1);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+  });
+
+  test('change display name', async () => {
+    try {
+      const owner = await createPlayer({
+        player: {
+          name: 'player_name',
+          deviceId: 'abc',
+        },
+      });
+      expect(owner).not.toBeNull();
+      const player1 = await createPlayer({
+        player: {
+          name: 'player_name1',
+          deviceId: 'abc123',
+        },
+      });
+      expect(player1).not.toBeNull();
+      const club1 = await createClub(owner, {
+        name: 'club_name',
+        description: 'poker players gather',
+        ownerUuid: owner,
+      });
+      expect(club1).not.toBeNull();
+      const club2 = await createClub(owner, {
+        name: 'club_name2',
+        description: 'poker players gather',
+        ownerUuid: owner,
+      });
+      expect(club2).not.toBeNull();
+      await joinClub(player1, club1);
+      await joinClub(player1, club2);
+      const resp1 = await getPlayerClubs(player1, {playerId: player1});
+      expect(resp1).toHaveLength(2);
+
+      const resp2 = await changeDisplayName(player1, 'sanjay');
+      expect(resp2).toBe(true);
+      const resp3 = await messagesFromMember(owner, club1, player1);
+      expect(resp3).toHaveLength(1);
+      const resp4 = await messagesFromMember(owner, club1, player1);
+      expect(resp4).toHaveLength(1);
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();

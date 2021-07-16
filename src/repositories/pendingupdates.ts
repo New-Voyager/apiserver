@@ -79,7 +79,7 @@ export async function processPendingUpdates(gameId: number) {
   }
 
   // if there is an end game update, let us end the game first
-  let query = fixQuery(
+  const query = fixQuery(
     'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ? AND new_update = ?'
   );
   let resp = await getGameConnection().query(query, [
