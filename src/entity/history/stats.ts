@@ -303,7 +303,7 @@ export class SystemStats {
   public four2222!: number;
 }
 
-@Entity({name: 'Club_member_stat'})
+@Entity({name: 'club_member_stat'})
 export class ClubMemberStat {
   @PrimaryGeneratedColumn()
   public id!: number;

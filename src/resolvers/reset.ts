@@ -101,7 +101,7 @@ export async function resetDB() {
       await deleteAll('high_hand_history', transactionEntityManager);
       await deleteAll('player_game_stats', transactionEntityManager);
       await deleteAll('player_hand_stats', transactionEntityManager);
-      await deleteAll('Club_member_stat', transactionEntityManager);
+      await deleteAll('club_member_stat', transactionEntityManager);
       await deleteAll('hand_history', transactionEntityManager);
     });
   } catch (err) {
