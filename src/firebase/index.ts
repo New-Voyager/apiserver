@@ -249,8 +249,8 @@ class FirebaseClass {
         fetch = true;
       } else {
         const now = new Date();
-        let diff = now.getTime() - this.productsFetchTime.getTime();
-        var diffInMins = diff / (60 * 1000);
+        const diff = now.getTime() - this.productsFetchTime.getTime();
+        const diffInMins = diff / (60 * 1000);
         if (diffInMins > FETCH_INTERVAL) {
           logger.info('Fetch iap products');
           fetch = true;
@@ -262,10 +262,10 @@ class FirebaseClass {
 
       if (fetch) {
         this.iapProducts = new Array<IapProduct>();
-        let query = await this.app?.firestore().collection('products');
-        let docs = await query?.listDocuments();
+        const query = await this.app?.firestore().collection('products');
+        const docs = await query?.listDocuments();
         if (!docs) {
-          throw new Error(`Could not get products`);
+          throw new Error('Could not get products');
         }
         for (const doc of docs) {
           const d = await doc.get();

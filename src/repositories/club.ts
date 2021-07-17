@@ -20,10 +20,12 @@ import {StatsRepository} from './stats';
 import {Firebase} from '@src/firebase';
 import {
   getGameConnection,
+  getHistoryRepository,
   getUserConnection,
   getUserManager,
   getUserRepository,
 } from '.';
+import {ClubMemberStat} from '@src/entity/history/stats';
 
 const logger = getLogger('club-repository');
 
@@ -322,6 +324,19 @@ class ClubRepositoryImpl {
     clubMember.player = await Cache.getPlayer(playerId);
     clubMember.joinedDate = new Date();
     clubMember.status = ClubMemberStatus.PENDING;
+
+    const clubMemberStatRepository = getHistoryRepository(ClubMemberStat);
+    let clubMemberStat = await clubMemberStatRepository.findOne({
+      clubId: club.id,
+      playerId: clubMember.player.id,
+    });
+    if (!clubMemberStat) {
+      clubMemberStat = new ClubMemberStat();
+      clubMemberStat.clubId = club.id;
+      clubMemberStat.playerId = clubMember.player.id;
+      await clubMemberStatRepository.save(clubMemberStat);
+    }
+
     if (player.bot) {
       // bots are allowed to buy as much as they wantt
       clubMember.status = ClubMemberStatus.ACTIVE;
