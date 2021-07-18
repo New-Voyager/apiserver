@@ -240,6 +240,66 @@ export async function joinGame(
   }
 }
 
+export async function takeSeat(
+  playerUuid: string,
+  gameCode: string,
+  seatNo: number
+) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  let playerName = playerUuid;
+  const startTime = new Date().getTime();
+  try {
+    const player = await Cache.getPlayer(playerUuid);
+    playerName = player.name;
+
+    logger.info(`Player ${playerName} is joining game ${gameCode}`);
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.clubCode) {
+      const clubMember = await Cache.isClubMember(playerUuid, game.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.clubName}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode}`
+        );
+      }
+    }
+
+    const status = await GameRepository.joinGame(player, game, seatNo);
+    logger.info(
+      `Player: ${player.name} isBot: ${player.bot} joined game: ${game.gameCode}`
+    );
+
+    const playerInSeat = await GameRepository.getSeatInfo(game.id, seatNo);
+    playerInSeat.status = PlayerStatus[playerInSeat.status];
+    playerInSeat.name = playerInSeat.playerName;
+    playerInSeat.buyInExpTime = playerInSeat.buyInExpAt;
+    playerInSeat.breakExpTime = playerInSeat.breakTimeExpAt;
+    return playerInSeat;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    console.log(err);
+    if (err instanceof ApolloError) {
+      throw err;
+    } else {
+      throw new Error(
+        `Player: ${playerName} Failed to join the game. ${JSON.stringify(err)}`
+      );
+    }
+  } finally {
+    const timeTaken = new Date().getTime() - startTime;
+    logger.info(`joinGame took ${timeTaken} ms`);
+  }
+}
+
 export async function startGame(
   playerUuid: string,
   gameCode: string
@@ -2023,6 +2083,9 @@ const resolvers: any = {
     },
     joinGame: async (parent, args, ctx, info) => {
       return joinGame(ctx.req.playerId, args.gameCode, args.seatNo);
+    },
+    takeSeat: async (parent, args, ctx, info) => {
+      return takeSeat(ctx.req.playerId, args.gameCode, args.seatNo);
     },
     endGame: async (parent, args, ctx, info) => {
       return endGame(ctx.req.playerId, args.gameCode);

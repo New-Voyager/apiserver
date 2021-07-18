@@ -1,4 +1,5 @@
 import {HandHistory} from '@src/entity/history/hand';
+import {DevRepository} from '@src/repositories/dev';
 import {HandRepository} from '@src/repositories/hand';
 import {getLogger} from '@src/utils/log';
 import * as fs from 'fs';
@@ -201,6 +202,124 @@ export async function updateButtonPos(req: any, resp: any) {
   }
 }
 
+function convertHandLogToYaml(handlog: any): string {
+  for (const seatNo in handlog['players']) {
+    const name = playerIdName[seatNo];
+    console.log(JSON.stringify(name));
+  }
+
+  const club: any = {
+    name: 'Bug Testing',
+    description: 'testing',
+  };
+
+  const game: any = {
+    create: true,
+    title: 'bug testing',
+    'game-type': handlog['gameType'],
+    'small-blind': 1.0,
+    'big-blind': 2.0,
+    'min-players': 2,
+    'max-players': 9,
+    'game-length': 60,
+    'buy-in-approval': false,
+    'buy-in-min': 30,
+    'buy-in-max': 3000,
+    'action-time': 30,
+  };
+
+  const script: any = {
+    club: club,
+    game: game,
+  };
+
+  const startingSeats: Array<any> = [];
+  const occupiedSeats: Array<number> = [];
+  for (const seatNo in handlog['players']) {
+    const player = handlog['players'][seatNo];
+    occupiedSeats.push(parseInt(seatNo));
+    startingSeats.push({
+      seat: parseInt(seatNo),
+      player: playerIdName[seatNo],
+      'buy-in': player['balance']['before'],
+    });
+  }
+  script['starting-seats'] = startingSeats;
+
+  // sort the seat number
+  occupiedSeats.sort();
+  console.log(occupiedSeats);
+
+  const log = handlog['handLog'];
+  const gameType = handlog['gameType'];
+
+  // find button pos
+  const preflop = log['preflopActions'];
+  let smallBlindPos = 1;
+  for (const action of preflop['actions']) {
+    if (action['action'] === 'SB') {
+      smallBlindPos = action['seatNo'];
+      break;
+    }
+  }
+
+  // find index of smallblind
+  const index = occupiedSeats.indexOf(smallBlindPos);
+  // find the button pos
+  let buttonPos = -1;
+  if (index === 0) {
+    buttonPos = occupiedSeats[occupiedSeats.length - 1];
+  } else {
+    buttonPos = occupiedSeats[index - 1];
+  }
+
+  const hand: any = {};
+  const setup: any = {};
+  // prepare setup
+  setup['button-pos'] = buttonPos;
+  const deck = new Deck();
+  const flop = getCards(handlog['flop']);
+  deck.remove(handlog['flop']);
+  setup['flop'] = flop;
+  const str = getCards(handlog['turn']) as string;
+  setup['turn'] = str; //getCards(handlog['turn']) as string;
+  deck.remove(handlog['turn']);
+  setup['river'] = getCards(handlog['river']) as string;
+  deck.remove(handlog['river']);
+
+  const seatCards = Array<any>();
+  // get cards for each player
+  for (const seatNo of occupiedSeats) {
+    const player = handlog['players'][seatNo];
+    if (player['cards']) {
+      seatCards.push({
+        seat: seatNo,
+        cards: getCards(player['cards']),
+      });
+    } else {
+      seatCards.push({
+        seat: seatNo,
+        cards: getCards(deck.popCards(gameType)),
+      });
+    }
+  }
+  setup['seat-cards'] = seatCards;
+
+  hand['setup'] = setup;
+
+  hand['preflop'] = handActionSteps(log['preflopActions']);
+  hand['flop'] = handActionSteps(log['flopActions']);
+  hand['turn'] = handActionSteps(log['turnActions']);
+  hand['river'] = handActionSteps(log['riverActions']);
+
+  const hands: Array<any> = [];
+  hands.push(hand);
+
+  script['hands'] = hands;
+  const yamlScript = yaml.stringify(script);
+  return yamlScript;
+}
+
 export async function generateBotScript(req: any, resp: any) {
   //resp.status(200).send(JSON.stringify({urls: process.env.NATS_URL}));
   console.log(`current directory: ${__dirname}`);
@@ -226,122 +345,40 @@ export async function generateBotScript(req: any, resp: any) {
       resp.status(404).send(JSON.stringify({error: 'Cannot find the hand'}));
       return;
     }
+    const yamlScript = convertHandLogToYaml(handlog);
+    //console.log(handlog);
+    resp.status(200).send(yamlScript);
+  } catch (e) {
+    resp.status(500).send({errors: e.toString()});
+  }
+}
 
-    for (const seatNo in handlog['players']) {
-      const name = playerIdName[seatNo];
-      console.log(JSON.stringify(name));
+export async function generateBotScriptDebugHand(req: any, resp: any) {
+  //resp.status(200).send(JSON.stringify({urls: process.env.NATS_URL}));
+  console.log(`current directory: ${__dirname}`);
+  try {
+    const gameCode = req.params.gameCode;
+    if (!gameCode) {
+      const res = {error: 'Invalid game code'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
     }
-
-    const club: any = {
-      name: 'Bug Testing',
-      description: 'testing',
-    };
-
-    const game: any = {
-      create: true,
-      title: 'bug testing',
-      'game-type': handlog['gameType'],
-      'small-blind': 1.0,
-      'big-blind': 2.0,
-      'min-players': 2,
-      'max-players': 9,
-      'game-length': 60,
-      'buy-in-approval': false,
-      'buy-in-min': 30,
-      'buy-in-max': 3000,
-      'action-time': 30,
-    };
-
-    const script: any = {
-      club: club,
-      game: game,
-    };
-
-    const startingSeats: Array<any> = [];
-    const occupiedSeats: Array<number> = [];
-    for (const seatNo in handlog['players']) {
-      const player = handlog['players'][seatNo];
-      occupiedSeats.push(parseInt(seatNo));
-      startingSeats.push({
-        seat: parseInt(seatNo),
-        player: playerIdName[seatNo],
-        'buy-in': player['balance']['before'],
-      });
+    const handNum = parseInt(req.params.handNum, 10);
+    if (!handNum) {
+      const res = {error: 'Invalid hand number'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
     }
-    script['starting-seats'] = startingSeats;
-
-    // sort the seat number
-    occupiedSeats.sort();
-    console.log(occupiedSeats);
-
-    const log = handlog['handLog'];
-    const gameType = handlog['gameType'];
-
-    // find button pos
-    const preflop = log['preflopActions'];
-    let smallBlindPos = 1;
-    for (const action of preflop['actions']) {
-      if (action['action'] === 'SB') {
-        smallBlindPos = action['seatNo'];
-        break;
-      }
+    const handlog = await DevRepository.getHandLog(gameCode, handNum);
+    // let rawdata = fs
+    //   .readFileSync(`${__dirname}/../bugs/handlog2.json`)
+    //   .toString();
+    // let handlog = JSON.parse(rawdata);
+    if (handlog == null) {
+      resp.status(404).send(JSON.stringify({error: 'Cannot find the hand'}));
+      return;
     }
-
-    // find index of smallblind
-    const index = occupiedSeats.indexOf(smallBlindPos);
-    // find the button pos
-    let buttonPos = -1;
-    if (index === 0) {
-      buttonPos = occupiedSeats[occupiedSeats.length - 1];
-    } else {
-      buttonPos = occupiedSeats[index - 1];
-    }
-
-    const hand: any = {};
-    const setup: any = {};
-    // prepare setup
-    setup['button-pos'] = buttonPos;
-    const deck = new Deck();
-    const flop = getCards(handlog['flop']);
-    deck.remove(handlog['flop']);
-    setup['flop'] = flop;
-    const str = getCards(handlog['turn']) as string;
-    setup['turn'] = str; //getCards(handlog['turn']) as string;
-    deck.remove(handlog['turn']);
-    setup['river'] = getCards(handlog['river']) as string;
-    deck.remove(handlog['river']);
-
-    const seatCards = Array<any>();
-    // get cards for each player
-    for (const seatNo of occupiedSeats) {
-      const player = handlog['players'][seatNo];
-      if (player['cards']) {
-        seatCards.push({
-          seat: seatNo,
-          cards: getCards(player['cards']),
-        });
-      } else {
-        seatCards.push({
-          seat: seatNo,
-          cards: getCards(deck.popCards(gameType)),
-        });
-      }
-    }
-    setup['seat-cards'] = seatCards;
-
-    hand['setup'] = setup;
-
-    hand['preflop'] = handActionSteps(log['preflopActions']);
-    hand['flop'] = handActionSteps(log['flopActions']);
-    hand['turn'] = handActionSteps(log['turnActions']);
-    hand['river'] = handActionSteps(log['riverActions']);
-
-    const hands: Array<any> = [];
-    hands.push(hand);
-
-    script['hands'] = hands;
-    const yamlScript = yaml.stringify(script);
-
+    const yamlScript = convertHandLogToYaml(handlog);
     //console.log(handlog);
     resp.status(200).send(yamlScript);
   } catch (e) {

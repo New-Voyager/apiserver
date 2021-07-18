@@ -9,6 +9,21 @@ import {getDebugRepository} from '.';
 class DevRepositoryImpl {
   constructor() {}
 
+  public async getHandLog(gameCode: string, handNum: number): Promise<any> {
+    const debugHandRepo = getDebugRepository(DebugHands);
+    const hand = await debugHandRepo.findOne({
+      gameCode: gameCode,
+      handNum: handNum,
+    });
+    if (!hand) {
+      throw new Error(
+        `Hand is not found. Game: ${gameCode} HandNum: ${handNum}`
+      );
+    }
+
+    return JSON.parse(hand.data);
+  }
+
   public async debugHandLog(player: Player, gameCode: string, handNum: number) {
     const debugHand = new DebugHands();
     debugHand.sharedById = player.id;

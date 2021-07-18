@@ -236,7 +236,6 @@ input GameUpdateInput {
   dealerChoiceGames: [GameType!]
 }
 
-
 type PlayerGameState {
   playerUuid: String
   buyIn: Float
@@ -295,7 +294,6 @@ type PendingApproval {
   bigBlind: Float
 }
 
-
 type GameStackStat {
   handNum: Int
   before: Float
@@ -353,6 +351,8 @@ input GameConfigChangeInput {
   runItTwicePrompt: Boolean
 }
 
+
+
 type Mutation {
   # Not implemented
   configureGameFromTemplate(clubCode: String!, templateId: Int!): GameInfo!
@@ -370,6 +370,7 @@ type Mutation {
   configureGame(clubCode: String!, game: GameCreateInput!): GameInfo!
   configureFriendsGame(game: GameCreateInput!): GameInfo!
   joinGame(gameCode: String!, seatNo: Int!): PlayerGameStatus!
+  takeSeat(gameCode: String!, seatNo: Int!): SeatInfo!
   buyIn(gameCode: String!, amount: Float!): BuyInStatus!
   reload(gameCode: String!, amount: Float!): BuyInStatus!
   approveRequest(
