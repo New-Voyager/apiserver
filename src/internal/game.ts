@@ -688,7 +688,7 @@ class GameAPIs {
               activeSeat: activeSeat,
               playerId: playerSeat.playerId,
               playerUuid: playerSeat.playerUuid,
-              name: playerSeat.name,
+              name: playerSeat.playerName,
               stack: playerSeat.stack,
               buyIn: playerSeat.buyIn,
               status: playerSeat.status,
