@@ -1253,6 +1253,26 @@ class GameRepositoryImpl {
     return resp;
   }
 
+  public async getSeatInfo(
+    gameId: number,
+    seatNo: number,
+    transactionManager?: EntityManager
+  ): Promise<any> {
+    let playerGameTrackerRepo;
+    if (transactionManager) {
+      playerGameTrackerRepo = transactionManager.getRepository(
+        PlayerGameTracker
+      );
+    } else {
+      playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
+    }
+    const resp = await playerGameTrackerRepo.findOne({
+      game: {id: gameId},
+      seatNo: seatNo,
+    });
+    return resp;
+  }
+
   public async getGamePlayerState(
     game: PokerGame,
     player: Player

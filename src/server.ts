@@ -24,7 +24,11 @@ import {timerCallback} from './repositories/timer';
 import {seed} from './initdb';
 import {Firebase} from './firebase';
 import {Nats} from './nats';
-import {generateBotScript, updateButtonPos} from './internal/bot';
+import {
+  generateBotScript,
+  generateBotScriptDebugHand,
+  updateButtonPos,
+} from './internal/bot';
 import {restartTimers} from '@src/timer';
 import {getUserRepository} from './repositories';
 export enum RunProfile {
@@ -346,6 +350,10 @@ function addInternalRoutes(app: any) {
 
   //app.get('/bot-script/game-code/:gameCode', generateBotScript);
   app.get('/bot-script/game-code/:gameCode/hand/:handNum', generateBotScript);
+  app.get(
+    '/bot-script/debug/game-code/:gameCode/hand/:handNum',
+    generateBotScriptDebugHand
+  );
 
   app.post(
     '/bot-script/game-code/:gameCode/button-pos/:buttonPos',
