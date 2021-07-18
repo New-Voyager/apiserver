@@ -313,7 +313,7 @@ export async function beginHostSeatChange(
     }
     const host = await Cache.getPlayer(playerUuid);
     const seatChange = new SeatChangeProcess(game);
-    seatChange.beginHostSeatChange(host);
+    await seatChange.beginHostSeatChange(host);
     return true;
   } catch (err) {
     logger.error(JSON.stringify(err));
@@ -349,7 +349,7 @@ export async function swapSeats(
       );
     }
     const seatChange = new SeatChangeProcess(game);
-    seatChange.swapSeats(seatNo1, seatNo2);
+    await seatChange.swapSeats(seatNo1, seatNo2);
     return true;
   } catch (err) {
     logger.error(JSON.stringify(err));

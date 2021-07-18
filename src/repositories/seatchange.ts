@@ -417,11 +417,6 @@ export class SeatChangeProcess {
   }
 
   public async beginHostSeatChange(host: Player) {
-    // first remove entries from the HostSeatChangeProcess table
-    await getGameRepository(HostSeatChangeProcess).delete({
-      gameCode: this.game.gameCode,
-    });
-
     await getGameManager().transaction(async transactionEntityManager => {
       const playerGameTrackerRepo = transactionEntityManager.getRepository(
         PlayerGameTracker
@@ -431,6 +426,10 @@ export class SeatChangeProcess {
       );
       const gameRepo = transactionEntityManager.getRepository(PokerGame);
 
+      // first remove entries from the HostSeatChangeProcess table
+      await seatChangeProcessRepo.delete({
+        gameCode: this.game.gameCode,
+      });
       await gameRepo.update(
         {
           id: this.game.id,
