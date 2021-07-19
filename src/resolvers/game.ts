@@ -1577,7 +1577,7 @@ export async function denyBuyIn(
   }
 }
 
-export async function updateGameConfig(
+export async function updatePlayerGameConfig(
   playerId: string,
   gameCode: string,
   config: any
@@ -1599,7 +1599,7 @@ export async function updateGameConfig(
       throw new Error('Player is not found');
     }
 
-    await GameRepository.updateGamePlayerConfig(player, game, config);
+    await GameRepository.updatePlayerGameConfig(player, game, config);
     return true;
   } catch (err) {
     logger.error(err.message);
@@ -2161,8 +2161,8 @@ const resolvers: any = {
     switchSeat: async (parent, args, ctx, info) => {
       return switchSeat(ctx.req.playerId, args.gameCode, args.seatNo);
     },
-    updateGameConfig: async (parent, args, ctx, info) => {
-      return await updateGameConfig(
+    updatePlayerGameConfig: async (parent, args, ctx, info) => {
+      return await updatePlayerGameConfig(
         ctx.req.playerId,
         args.gameCode,
         args.config
