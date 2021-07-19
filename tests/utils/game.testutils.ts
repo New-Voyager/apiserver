@@ -414,6 +414,21 @@ export const endGameQuery = gql`
   }
 `;
 
+export const leaderboardQuery = gql`
+  query($clubCode: String!) {
+    status: clubLeaderBoard(clubCode: $clubCode) {
+      playerName
+      playerId
+      playerUuid
+      gamesPlayed
+      handsPlayed
+      buyin
+      profit
+      rakePaid
+    }
+  }
+`;
+
 export async function configureFriendsGame(
   playerId: string,
   gameInput: GameInput
@@ -841,4 +856,19 @@ export async function playersGameTrackerData(
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
   return resp.data.playerGameTrackerData;
+}
+
+export async function leaderboardData(
+  playerId: string,
+  clubCode: string
+): Promise<any> {
+  const resp = await getClient(playerId).query({
+    variables: {
+      clubCode: clubCode,
+    },
+    query: leaderboardQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
 }

@@ -383,7 +383,7 @@ async function sendClubFcmMessage(clubCode: string, message: any) {
   await ClubRepository.broadcastMessage(club, message);
 }
 
-async function clubLeaderBoard(playerId: string, clubCode: string) {
+export async function clubLeaderBoard(playerId: string, clubCode: string) {
   const player = await Cache.getPlayer(playerId);
   if (!player) {
     throw new Error('Player not found');

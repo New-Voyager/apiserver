@@ -376,7 +376,7 @@ class ClubRepositoryImpl {
       cms.total_buyins as buyin, 
       cms.total_winnings as profit, 
       cms.rake_paid as rakePaid 
-      FROM club_member_stat 
+      FROM club_member_stat cms 
       INNER JOIN player p on p.id = cms.player_id 
       where club_id = ${clubId} ORDER BY cms.total_winnings DESC`);
     logger.info(sql);
