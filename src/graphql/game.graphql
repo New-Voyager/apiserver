@@ -394,7 +394,7 @@ type Mutation {
   switchSeat(gameCode: String!, seatNo: Int!): PlayerGameStatus!
 
   # player changes in live game
-  updateGameConfig(gameCode: String!, config: GameConfigChangeInput!): Boolean
+  updatePlayerGameConfig(gameCode: String!, config: GameConfigChangeInput!): Boolean
 
   # seat change APIs
   requestSeatChange(gameCode: String!, cancel: Boolean): DateTime!

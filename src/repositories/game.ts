@@ -1543,7 +1543,7 @@ class GameRepositoryImpl {
     return playerInGame.status;
   }
 
-  public async updateGamePlayerConfig(
+  public async updatePlayerGameConfig(
     player: Player,
     game: PokerGame,
     config: any
