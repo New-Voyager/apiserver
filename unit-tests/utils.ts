@@ -4,7 +4,7 @@ import {
   getConnectionOptions,
 } from 'typeorm';
 import {Player, PlayerNotes} from '../src/entity/player/player';
-import {Club, ClubMember} from '../src/entity/player/club';
+import {Club, ClubMember, ClubMemberStat} from '../src/entity/player/club';
 import {SavedHands} from '../src/entity/player/player';
 import {
   PokerGame,
@@ -18,7 +18,6 @@ import {
   PlayerGameStats,
   PlayerHandStats,
   SystemStats,
-  ClubMemberStat,
 } from '../src/entity/history/stats';
 import {GameHistory} from '../src/entity/history/game';
 import {HighHandHistory} from '../src/entity/history/hand';
@@ -103,6 +102,7 @@ export async function sqlliteConnection() {
           Announcement,
           ClubTokenTransactions,
           PlayerNotes,
+          ClubMemberStat,
         ],
         dropSchema: true,
         synchronize: true,
@@ -141,7 +141,6 @@ export async function sqlliteConnection() {
           ClubStats,
           SystemStats,
           PlayerGameStats,
-          ClubMemberStat,
         ],
         dropSchema: true,
         synchronize: true,

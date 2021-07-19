@@ -11,7 +11,7 @@ import {
   getHistoryRepository,
   getUserRepository,
 } from '.';
-import {ClubMemberStat} from '@src/entity/history/stats';
+import {ClubMemberStat} from '@src/entity/player/club';
 
 const logger = getLogger('chipstrack');
 
@@ -191,7 +191,7 @@ class ChipsTrackRepositoryImpl {
             .execute();
 
           chipUpdates.push(playerGame);
-          const clubPlayerStats = getHistoryRepository(ClubMemberStat)
+          const clubPlayerStats = getUserRepository(ClubMemberStat)
             .createQueryBuilder()
             .update()
             .set({

@@ -25,7 +25,7 @@ import {
   getUserManager,
   getUserRepository,
 } from '.';
-import {ClubMemberStat} from '@src/entity/history/stats';
+import {ClubMemberStat} from '@src/entity/player/club';
 
 const logger = getLogger('club-repository');
 
@@ -325,7 +325,7 @@ class ClubRepositoryImpl {
     clubMember.joinedDate = new Date();
     clubMember.status = ClubMemberStatus.PENDING;
 
-    const clubMemberStatRepository = getHistoryRepository(ClubMemberStat);
+    const clubMemberStatRepository = getUserRepository(ClubMemberStat);
     let clubMemberStat = await clubMemberStatRepository.findOne({
       clubId: club.id,
       playerId: clubMember.player.id,
@@ -364,6 +364,24 @@ class ClubRepositoryImpl {
       logger.error(`Failed to send NATS message. Error: ${err.toString()}`);
     }
     return clubMember.status;
+  }
+
+  public async clubLeaderBoard(clubId: number) {
+    const clubMemberStatStatsRepo = getUserRepository(ClubMemberStat);
+    const sql = fixQuery(`SELECT cms.player_id as playerId, 
+      p.name as playerName,
+      p.uuid as playerUuid,
+      cms.total_games as gamesPlayed, 
+      cms.total_hands as handsPlayed, 
+      cms.total_buyins as buyin, 
+      cms.total_winnings as profit, 
+      cms.rake_paid as rakePaid 
+      FROM club_member_stat 
+      INNER JOIN player p on p.id = cms.player_id 
+      where club_id = ${clubId} ORDER BY cms.total_winnings DESC`);
+    logger.info(sql);
+    const statsResp = await getUserConnection().query(sql, []);
+    return statsResp;
   }
 
   public async approveMember(
