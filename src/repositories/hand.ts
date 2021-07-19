@@ -582,7 +582,7 @@ class HandRepositoryImpl {
     bookmarkId: number
   ): Promise<void> {
     try {
-      const savedHandsRepository = getHistoryRepository(SavedHands);
+      const savedHandsRepository = getUserRepository(SavedHands);
 
       const bookmarkedHand = await savedHandsRepository.findOne({
         savedBy: {id: player.id},
