@@ -164,6 +164,65 @@ export class ClubMember {
   })
   public creditLimit!: number;
 
+  // TODO: remove commented code on success
+  // @Column({
+  //   name: 'total_buyins',
+  //   type: 'decimal',
+  //   precision: 12,
+  //   scale: 2,
+  //   default: 0,
+  // })
+  // public totalBuyins!: number;
+
+  // @Column({
+  //   name: 'total_winnings',
+  //   type: 'decimal',
+  //   precision: 12,
+  //   scale: 2,
+  //   default: 0,
+  // })
+  // public totalWinnings!: number;
+
+  @Column({
+    name: 'balance',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    default: 0,
+  })
+  public balance!: number;
+
+  // TODO: remove commented code on success
+  // @Column({name: 'total_games', type: 'int', nullable: true, default: 0})
+  // public totalGames!: number;
+
+  // @Column({name: 'total_hands', type: 'int', nullable: true, default: 0})
+  // public totalHands!: number;
+
+  // @Column({name: 'won_hands', type: 'int', nullable: true, default: 0})
+  // public wonHands!: number;
+
+  // @Column({
+  //   name: 'rake_paid',
+  //   type: 'decimal',
+  //   precision: 12,
+  //   scale: 2,
+  //   default: 0,
+  // })
+  // public rakePaid!: number;
+}
+
+@Entity({name: 'club_member_stat'})
+export class ClubMemberStat {
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @Column({name: 'club_id', type: 'int'})
+  public clubId!: number;
+
+  @Column({name: 'player_id', type: 'int'})
+  public playerId!: number;
+
   @Column({
     name: 'total_buyins',
     type: 'decimal',
@@ -181,15 +240,6 @@ export class ClubMember {
     default: 0,
   })
   public totalWinnings!: number;
-
-  @Column({
-    name: 'balance',
-    type: 'decimal',
-    precision: 12,
-    scale: 2,
-    default: 0,
-  })
-  public balance!: number;
 
   @Column({name: 'total_games', type: 'int', nullable: true, default: 0})
   public totalGames!: number;
@@ -209,7 +259,6 @@ export class ClubMember {
   })
   public rakePaid!: number;
 }
-
 /*
 @Entity({name: 'club_chips_transaction'})
 export class ClubChipsTransaction {

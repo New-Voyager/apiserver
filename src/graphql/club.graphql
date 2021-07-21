@@ -99,6 +99,17 @@ input MemberFilterInput {
   playerId: String
 }
 
+type ClubMemberStat {
+  playerName: String!
+  playerId: Int!
+  playerUuid: String!
+  gamesPlayed: Int!
+  handsPlayed: Int!
+  buyin: Float!
+  profit: Float!
+  rakePaid: Float! 
+}
+
 type Query {
   clubMembers(clubCode: String!, filter: MemberFilterInput): [ClubMember!]
   clubById(clubCode: String!): clubId!
@@ -107,6 +118,7 @@ type Query {
   # the caller can paginate with pageId
   # clubGames(clubCode: "", prev: 20, from: 10000001)
   clubGames(clubCode: String!, page: PageInput, completedGames: Boolean): [ClubGameInfo!]
+  clubLeaderBoard(clubCode: String!): [ClubMemberStat]
 }
 
 type Mutation {

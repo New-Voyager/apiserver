@@ -748,4 +748,44 @@ describe('Tests: Game APIs', () => {
     );
     expect(resp5).toStrictEqual(resp6);
   });
+
+  test('get club leader board', async () => {
+    const [ownerId, clubCode, players] = await createClubWithMembers([
+      {
+        name: 'test_player',
+        devId: 'test123',
+      },
+      {
+        name: 'test_player1',
+        devId: 'test1234',
+      },
+    ]);
+    await saveReward(ownerId, clubCode);
+    const game = await gameutils.configureGame(
+      ownerId,
+      clubCode,
+      holdemGameInput
+    );
+
+    const data4 = await gameutils.startGame(ownerId, game.gameCode);
+    expect(data4).toBe('ACTIVE');
+
+    // Leave game with status !== Playing
+    const data = await gameutils.joinGame(players[0], game.gameCode, 1);
+    expect(data).toBe('WAIT_FOR_BUYIN');
+    const resp3 = await gameutils.leaveGame(players[0], game.gameCode);
+    expect(resp3).toBe(true);
+
+    // Leave Game with status === Playing
+    const data1 = await gameutils.joinGame(players[0], game.gameCode, 1);
+    expect(data1).toBe('WAIT_FOR_BUYIN');
+    const data2 = await gameutils.buyin(players[0], game.gameCode, 100);
+    expect(data2.approved).toBe(true);
+    const resp4 = await gameutils.endGame(ownerId, game.gameCode);
+    expect(resp4).toBe('ENDED');
+
+    const resp5 = await gameutils.leaderboardData(ownerId, clubCode);
+    console.log(resp5);
+    expect(resp5).toHaveLength(2);
+  });
 });

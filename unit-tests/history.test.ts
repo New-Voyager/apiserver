@@ -14,7 +14,7 @@ import {
 import {gameHistory, playersInGame} from '../src/resolvers/history';
 import {Cache} from '@src/cache/index';
 import {saveReward} from '../src/resolvers/reward';
-import {approveMember} from '../src/resolvers/club';
+import {approveMember, clubLeaderBoard} from '../src/resolvers/club';
 import exp from 'constants';
 
 const logger = getLogger('game unit-test');
@@ -199,6 +199,71 @@ describe('History APIs', () => {
       expect(data.gameCode).toBe(game.gameCode);
       expect(data.gameId).toBe(game.id);
     });
+  });
+
+  test('history test: get club leaderboard', async () => {
+    await createGameServer(gameServer1);
+
+    // create players
+    const ownerInput = {
+      name: 'player_name',
+      deviceId: 'abc123',
+    };
+    const clubInput = {
+      name: 'club_name',
+      description: 'poker players gather',
+    };
+    const playersInput = [
+      {
+        name: 'player_name1',
+        deviceId: 'abc1234',
+      },
+      {
+        name: 'player_3',
+        deviceId: 'abc123456',
+      },
+      {
+        name: 'john',
+        deviceId: 'abc1235',
+      },
+      {
+        name: 'bob',
+        deviceId: 'abc1236',
+      },
+    ];
+    const [owner, club, playerUuids] = await createClubWithMembers(
+      ownerInput,
+      clubInput,
+      playersInput
+    );
+    const player1 = owner;
+    const player2 = playerUuids[0];
+    const player3 = playerUuids[1];
+    const john = playerUuids[2];
+    const bob = playerUuids[3];
+
+    // start a game
+    const gameInput = holdemGameInput;
+    gameInput.maxPlayers = 3;
+    gameInput.minPlayers = 2;
+    //await createReward(owner, club);
+    const game = await configureGame(owner, club, gameInput);
+    await startGame(owner, game.gameCode);
+
+    // Join a game
+    await joinGame(player1, game.gameCode, 1);
+    await joinGame(player2, game.gameCode, 2);
+    await joinGame(player3, game.gameCode, 3);
+
+    // buyin
+    await buyIn(player1, game.gameCode, 100);
+    await buyIn(player2, game.gameCode, 100);
+    await buyIn(player3, game.gameCode, 100);
+
+    await endGame(owner, game.gameCode);
+
+    const resp = await clubLeaderBoard(owner, club);
+    expect(resp).toHaveLength(4);
   });
 
   test('history test: get players in game', async () => {

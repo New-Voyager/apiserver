@@ -383,6 +383,19 @@ async function sendClubFcmMessage(clubCode: string, message: any) {
   await ClubRepository.broadcastMessage(club, message);
 }
 
+export async function clubLeaderBoard(playerId: string, clubCode: string) {
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error('Player not found');
+  }
+  const club = await Cache.getClub(clubCode);
+  if (!club) {
+    throw new Error('Club not found');
+  }
+  const stats = await ClubRepository.clubLeaderBoard(club.id);
+  return stats;
+}
+
 const resolvers: any = {
   Query: {
     clubMembers: async (parent, args, ctx, info) => {
@@ -400,6 +413,10 @@ const resolvers: any = {
 
     clubById: async (parent, args, ctx, info) => {
       return getClubById(ctx.req.playerId, args.clubCode);
+    },
+
+    clubLeaderBoard: async (parent, args, ctx, info) => {
+      return clubLeaderBoard(ctx.req.playerId, args.clubCode);
     },
   },
   Mutation: {

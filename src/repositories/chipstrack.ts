@@ -11,6 +11,7 @@ import {
   getHistoryRepository,
   getUserRepository,
 } from '.';
+import {ClubMemberStat} from '@src/entity/player/club';
 
 const logger = getLogger('chipstrack');
 
@@ -176,6 +177,24 @@ class ChipsTrackRepositoryImpl {
             .update()
             .set({
               balance: () => `balance + ${profit}`,
+              // TODO: remove commented code on success
+              // totalBuyins: () => `total_buyins + ${playerChip.buyIn}`,
+              // totalWinnings: () => `total_winnings + ${playerChip.stack}`,
+              // rakePaid: () => `rake_paid + ${playerChip.rakePaid}`,
+              // totalGames: () => 'total_games + 1',
+              // totalHands: () => `total_hands + ${playerChip.noHandsPlayed}`,
+            })
+            .where({
+              player: {id: playerChip.playerId},
+              club: {id: game.clubId},
+            })
+            .execute();
+
+          chipUpdates.push(playerGame);
+          const clubPlayerStats = getUserRepository(ClubMemberStat)
+            .createQueryBuilder()
+            .update()
+            .set({
               totalBuyins: () => `total_buyins + ${playerChip.buyIn}`,
               totalWinnings: () => `total_winnings + ${playerChip.stack}`,
               rakePaid: () => `rake_paid + ${playerChip.rakePaid}`,
@@ -183,11 +202,11 @@ class ChipsTrackRepositoryImpl {
               totalHands: () => `total_hands + ${playerChip.noHandsPlayed}`,
             })
             .where({
-              player: {id: playerChip.playerId},
-              club: {id: game.clubId},
+              playerId: playerChip.playerId,
+              clubId: game.clubId,
             })
             .execute();
-          chipUpdates.push(playerGame);
+          chipUpdates.push(clubPlayerStats);
         }
         await Promise.all(chipUpdates);
       });
