@@ -492,8 +492,10 @@ async function getAudioToken(
     throw new Error(`Game ${gameCode} does not exist`);
   }
   // get audio token for the player
-  const token = GameRepository.getAudioToken(playerInfo, gameExists);
-  logger.info(`Player: ${playerId} is using agora token for game ${gameCode}`);
+  const token = await GameRepository.getAudioToken(playerInfo, gameExists);
+  logger.info(
+    `Player: ${playerId} is using agora token ${token} for game ${gameCode}`
+  );
   return token;
 }
 
