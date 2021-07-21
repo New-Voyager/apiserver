@@ -602,6 +602,20 @@ class GameRepositoryImpl {
           }
 
           try {
+            if (game.useAgora) {
+              playerInGame.audioToken = await this.getAudioToken(
+                player,
+                game,
+                transactionEntityManager
+              );
+            }
+          } catch (err) {
+            logger.error(
+              `Failed to get agora token ${err.toString()} Game: ${game.id}`
+            );
+          }
+
+          try {
             await playerGameTrackerRepository.save(playerInGame);
             await StatsRepository.joinedNewGame(player);
             // create a row in stats table
@@ -1397,8 +1411,17 @@ class GameRepositoryImpl {
     return result;
   }
 
-  public async getAudioToken(player: Player, game: PokerGame): Promise<string> {
-    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+  public async getAudioToken(
+    player: Player,
+    game: PokerGame,
+    transactionEntityManager?: EntityManager
+  ): Promise<string> {
+    let playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+    if (transactionEntityManager) {
+      playerGameTrackerRepository = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
+    }
     const rows = await playerGameTrackerRepository
       .createQueryBuilder()
       .where({
@@ -1406,14 +1429,16 @@ class GameRepositoryImpl {
         playerId: player.id,
       })
       .select('audio_token')
-      .select('status')
+      .addSelect('status')
       .execute();
     if (!rows && rows.length === 0) {
       throw new Error('Player is not found in the game');
     }
-
-    const playerInGame = rows[0];
-    let token = playerInGame.audio_token;
+    let token;
+    if (rows && rows.length >= 1) {
+      const playerInGame = rows[0];
+      token = playerInGame.audio_token;
+    }
 
     // TODO: agora will be used only for the player who are in the seats
     // if the player is not playing, then the player cannot join
@@ -1424,16 +1449,18 @@ class GameRepositoryImpl {
     if (!token) {
       token = await getAgoraToken(game.gameCode, player.id);
 
-      // update the record
-      await playerGameTrackerRepository.update(
-        {
-          game: {id: game.id},
-          playerId: player.id,
-        },
-        {
-          audioToken: token,
-        }
-      );
+      if (rows && rows.length == 1) {
+        // update the record
+        await playerGameTrackerRepository.update(
+          {
+            game: {id: game.id},
+            playerId: player.id,
+          },
+          {
+            audioToken: token,
+          }
+        );
+      }
     }
 
     return token;

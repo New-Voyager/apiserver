@@ -36,6 +36,7 @@ import {Player} from '@src/entity/player/player';
 import {Nats} from '@src/nats';
 import {Reload} from '@src/repositories/reload';
 import {PlayersInGame} from '@src/entity/history/player';
+import {getAgoraAppId} from '@src/3rdparty/agora';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -279,6 +280,11 @@ export async function takeSeat(
     );
 
     const playerInSeat = await GameRepository.getSeatInfo(game.id, seatNo);
+
+    if (game.useAgora) {
+      playerInSeat.agoraToken = playerInSeat.audioToken;
+    }
+
     playerInSeat.status = PlayerStatus[playerInSeat.status];
     playerInSeat.name = playerInSeat.playerName;
     playerInSeat.buyInExpTime = playerInSeat.buyInExpAt;
@@ -917,6 +923,8 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.tableStatus = TableStatus[game.tableStatus];
     ret.status = GameStatus[game.status];
     ret.gameID = game.id;
+    ret.agoraAppId = getAgoraAppId();
+    ret.useAgora = game.useAgora;
 
     const updates = await GameRepository.getGameUpdates(game.id);
     if (updates) {
@@ -933,6 +941,11 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
       ret.playerGameStatus = PlayerStatus[playerState.status];
       ret.playerMuckLosingHandConfig = playerState.muckLosingHand;
       ret.playerRunItTwiceConfig = playerState.runItTwicePrompt;
+
+      if (game.useAgora) {
+        ret.agoraToken = playerState.audioToken;
+      }
+
       ret.sessionTime = 0;
       logger.info(
         `Session time: ${playerState.sessionTime} satAt: ${playerState.satAt}`

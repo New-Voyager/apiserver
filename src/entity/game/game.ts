@@ -327,6 +327,10 @@ export class PokerGame {
   @Column({name: 'audio_conf_enabled', default: false})
   public audioConfEnabled!: boolean;
 
+  // flag to indicate whether agroa conference should be used or not
+  @Column({name: 'use_agora', default: false})
+  public useAgora!: boolean;
+
   // This is not a database column and used for tracking highhand in the cache
   public highHandRank = 0;
 

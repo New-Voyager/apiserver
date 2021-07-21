@@ -1,9 +1,8 @@
 import {RtcTokenBuilder, RtcRole} from 'agora-access-token';
 
-// we may need to insert this via environment variable
-const AGORA_APP_ID = 'd980328a1f1f4c32a7a3f44ed8a6ae83'; // created using soma.voyager account
-
-const AGORA_APP_CERT = 'e55f38310d204e6aad4db6c570ca8d52';
+// we need to inject these via environment variables
+const AGORA_APP_ID = 'e25000bdccc24765a9464555c65d430b'; // created using soma.voyager account (Dev project)
+const AGORA_APP_CERT = '9dceeb98b8b548bc87116a9827047e32';
 
 export async function getAgoraToken(channelName: string, uid: number) {
   const expireTime = new Date().getTime() / 1000 + 600;
@@ -13,7 +12,11 @@ export async function getAgoraToken(channelName: string, uid: number) {
     channelName,
     uid,
     RtcRole.PUBLISHER,
-    expireTime
+    0
   );
   return token;
+}
+
+export function getAgoraAppId() {
+  return AGORA_APP_ID;
 }

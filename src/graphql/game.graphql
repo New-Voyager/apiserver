@@ -103,6 +103,7 @@ input GameCreateInput {
   audioConfEnabled: Boolean
   allowRabbitHunt: Boolean
   showHandRank: Boolean
+  useAgora: Boolean
 }
 
 type SeatInfo {
@@ -118,6 +119,7 @@ type SeatInfo {
   breakStartedTime: DateTime
   breakExpTime: DateTime
   gameToken: String
+  agoraToken: String
   isBot: Boolean
 }
 
@@ -216,6 +218,11 @@ type GameInfo {
   janusSecret: String
   janusRoomId: Int
   janusRoomPin: String
+
+  # agora token
+  useAgora: Boolean
+  agoraToken: String
+  agoraAppId: String
 }
 
 type PlayerRole {
