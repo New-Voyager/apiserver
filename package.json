@@ -69,6 +69,8 @@
     "module-alias": "^2.2.2",
     "nats": "^1.4.12",
     "node-apple-receipt-verify": "^1.9.3",
+    "nodemailer": "^6.6.3",
+    "nodemailer-smtp-transport": "^2.7.4",
     "pg": "^8.2.1",
     "redis": "^3.0.2",
     "reflect-metadata": "^0.1.13",
