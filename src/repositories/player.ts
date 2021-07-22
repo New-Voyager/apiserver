@@ -10,6 +10,9 @@ import {getUserRepository} from '.';
 import {Club, ClubMember} from '@src/entity/player/club';
 import {HostMessageRepository} from '@src/repositories/hostmessage';
 import {HostMessageType} from '../entity/types';
+import {UserRegistrationPayload} from '@src/types';
+import {sendRecoveryCode} from '@src/email';
+import {getRecoveryCode} from '@src/utils/uniqueid';
 
 class PlayerRepositoryImpl {
   public async createPlayer(
@@ -39,8 +42,6 @@ class PlayerRepositoryImpl {
       }
     }
     player.name = name;
-    player.email = email;
-    player.password = password;
     player.isActive = true;
     player.deviceId = deviceId;
     player.bot = isBot;
@@ -228,6 +229,124 @@ class PlayerRepositoryImpl {
     }
     await Cache.getPlayer(playerId, true);
     return true;
+  }
+
+  public async getPlayerUsingDeviceId(
+    deviceId: string
+  ): Promise<Player | null> {
+    const repository = getUserRepository(Player);
+    let player = await repository.findOne({
+      deviceId: deviceId,
+    });
+    if (!player) {
+      return null;
+    }
+    return player;
+  }
+
+  public async registerUser(
+    register: UserRegistrationPayload
+  ): Promise<Player> {
+    const repository = getUserRepository(Player);
+    let player = await repository.findOne({
+      deviceId: register.deviceId,
+    });
+    if (player) {
+      throw new Error('Player with device id already exists');
+    }
+
+    if (register.recoveryEmail && register.recoveryEmail.length > 0) {
+      // make sure the recovery email address is not reused
+      player = await repository.findOne({
+        recoveryEmail: register.recoveryEmail,
+      });
+      if (player) {
+        throw new Error(
+          'Another device is registered with this recovery email address'
+        );
+      }
+    }
+
+    player = new Player();
+    player.name = register.name;
+    if (register.displayName && register.displayName.length > 0) {
+      player.displayName = register.displayName;
+    }
+    if (register.recoveryEmail && register.recoveryEmail.length > 0) {
+      player.recoveryEmail = register.recoveryEmail;
+    }
+    player.deviceId = register.deviceId;
+    player.deviceSecret = uuidv4();
+    player.uuid = uuidv4();
+    player.isActive = true;
+    player.encryptionKey = uuidv4();
+    register.bot = false;
+    if (register.bot) {
+      player.bot = true;
+    }
+
+    await repository.save(player);
+    await StatsRepository.newPlayerHandStats(player);
+    return player;
+  }
+
+  public async sendRecoveryCode(email: string): Promise<boolean> {
+    const repository = getUserRepository(Player);
+    let player = await repository.findOne({
+      recoveryEmail: email,
+    });
+    if (!player) {
+      throw new Error(`${email} is not a registered email`);
+    }
+
+    const code = getRecoveryCode(email);
+    try {
+      await repository.update(
+        {
+          id: player.id,
+        },
+        {
+          recoveryCode: code,
+        }
+      );
+    } catch (err) {
+      throw new Error('Failed to generate recovery code. Retry again');
+    }
+
+    try {
+      sendRecoveryCode(email, null, code);
+      return true;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  public async loginUsingRecoveryCode(
+    deviceId: string,
+    email: string,
+    code: string
+  ): Promise<Player> {
+    const repository = getUserRepository(Player);
+    let player = await repository.findOne({
+      recoveryEmail: email,
+    });
+    if (!player) {
+      throw new Error(`${email} is not a registered email`);
+    }
+
+    try {
+      if (player.recoveryCode !== code) {
+        throw new Error('Recovery code does not match');
+      }
+      // generate new device secret
+      player.deviceSecret = uuidv4();
+      player.isActive = true;
+      player.deviceSecret = uuidv4();
+      await repository.save(player);
+      return player;
+    } catch (err) {
+      throw err;
+    }
   }
 }
 

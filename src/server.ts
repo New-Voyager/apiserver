@@ -31,6 +31,8 @@ import {
 } from './internal/bot';
 import {restartTimers} from '@src/timer';
 import {getUserRepository} from './repositories';
+import {UserRegistrationPayload} from './types';
+import {PlayerRepository} from './repositories/player';
 export enum RunProfile {
   DEV,
   TEST,
@@ -221,10 +223,8 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
       ]);
     } catch (err) {
       logger.error(`Error creating connections: ${err.toString()}`);
+      throw err;
     }
-    // } else {
-    //   await createConnection(options);
-    // }
   } else {
     logger.debug('Running in UNIT-TEST mode');
     process.env.DB_USED = 'sqllite';
@@ -279,7 +279,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
       port: GQL_PORT,
     },
     async () => {
-      logger.error(`🚀 Server ready at http://0.0.0.0:${GQL_PORT}/graphql}`);
+      logger.info(`🚀 Server ready at http://0.0.0.0:${GQL_PORT}/graphql}`);
     }
   );
   setPgConversion();
@@ -346,6 +346,11 @@ function addInternalRoutes(app: any) {
   );
 
   app.post('/auth/login', login);
+  app.post('/auth/new-login', newlogin);
+  app.post('/auth/signup', signup);
+  app.post('/auth/recovery-code', getRecoveryCode);
+  app.post('/auth/login-recovery-code', loginUsingRecoveryCode);
+
   app.get('/nats-urls', natsUrls);
 
   //app.get('/bot-script/game-code/:gameCode', generateBotScript);
@@ -454,6 +459,293 @@ async function login(req: any, resp: any) {
   } catch (err) {
     logger.error(err.toString());
     resp.status(500).send({errors: ['JWT cannot be generated']});
+  }
+}
+
+/**
+ * Signup API
+ * @param req
+ * {
+ *  "device-id": <uuid assigned in the device>,
+ *  "screen-name": "player screen name",
+ *  "display-name": "player name",
+ *  "recovery-email": "recovery email address"
+ * }
+ *
+ * A player is registered to the system using signup api
+ * @param resp
+ * {
+ *   "device-secret": "device secret created for the user"
+ * }
+ */
+async function signup(req: any, resp: any) {
+  const payload = req.body;
+
+  const name = payload['screen-name'];
+  const deviceId = payload['device-id'];
+  const recoveryEmail = payload['recovery-email'];
+  const displayName = payload['display-name'];
+  const bot = payload['bot'];
+
+  const errors = new Array<string>();
+  if (!name) {
+    errors.push('screen-name field is required');
+  }
+
+  if (!deviceId) {
+    errors.push('device-id field is required');
+  }
+
+  if (errors.length >= 1) {
+    resp.status(400).send(JSON.stringify({errors: errors}));
+    return;
+  }
+
+  const regPayload: UserRegistrationPayload = {
+    name: name,
+    deviceId: deviceId,
+    recoveryEmail: recoveryEmail,
+    displayName: displayName,
+    bot: bot,
+  };
+
+  let player: Player;
+  try {
+    player = await PlayerRepository.registerUser(regPayload);
+  } catch (err) {
+    logger.error(err.toString());
+    resp.status(500).send({errors: [err.toString()]});
+    return;
+  }
+
+  try {
+    const expiryTime = new Date();
+    expiryTime.setDate(expiryTime.getDate() + JWT_EXPIRY_DAYS);
+    const jwtClaims = {
+      user: player.name,
+      uuid: player.uuid,
+      id: player.id,
+    };
+    const jwt = generateAccessToken(jwtClaims);
+    const response = {
+      'device-secret': player.deviceSecret,
+      jwt: jwt,
+      name: player.name,
+      uuid: player.uuid,
+      id: player.id,
+    };
+    resp.status(200).send(JSON.stringify(response));
+  } catch (err) {
+    logger.error(err.toString());
+    resp.status(500).send({errors: ['JWT cannot be generated']});
+  }
+}
+
+/**
+ * Login API
+ * @param req
+ * {
+ *  "device-id": <uuid assigned in the device>,
+ *  "device-secret": device secret assigned to the device,
+ * }
+ *
+ * Logs in as the user and returns a JWT
+ * @param resp
+ * {
+ *   "jwt": "jwt for auth header"
+ * }
+ */
+async function newlogin(req: any, resp: any) {
+  const payload = req.body;
+
+  const deviceId = payload['device-id'];
+  const deviceSecret = payload['device-secret'];
+
+  const errors = new Array<string>();
+  if (!deviceId) {
+    errors.push('device-id field is required');
+  }
+
+  if (!deviceSecret) {
+    errors.push('device-secret field is required');
+  }
+
+  if (errors.length >= 1) {
+    resp.status(400).send(JSON.stringify({errors: errors}));
+    return;
+  }
+
+  let player: Player | null;
+  try {
+    player = await PlayerRepository.getPlayerUsingDeviceId(deviceId);
+    if (!player) {
+      resp
+        .status(403)
+        .send({errors: [`Player with device id ${deviceId} does not exist`]});
+      return;
+    }
+
+    if (player.deviceSecret !== deviceSecret) {
+      resp.status(403).send({
+        errors: [`Login failed for ${deviceId}. Incorrect device secret.`],
+      });
+      return;
+    }
+  } catch (err) {
+    logger.error(err.toString());
+    resp.status(500).send({errors: ['Unexpected error']});
+    return;
+  }
+
+  try {
+    const expiryTime = new Date();
+    expiryTime.setDate(expiryTime.getDate() + JWT_EXPIRY_DAYS);
+    const jwtClaims = {
+      user: player.name,
+      uuid: player.uuid,
+      id: player.id,
+    };
+    const jwt = generateAccessToken(jwtClaims);
+    const response = {
+      jwt: jwt,
+      name: player.name,
+      uuid: player.uuid,
+      id: player.id,
+    };
+    resp.status(200).send(JSON.stringify(response));
+  } catch (err) {
+    logger.error(err.toString());
+    resp.status(500).send({errors: ['JWT cannot be generated']});
+  }
+}
+
+/**
+ * Logs in using recovery email address
+ *
+ * @param req
+ * {
+ *  "recovery-email": recovery email address,
+ *  "code": generated code,
+ *  "device-id": device id
+ * }
+ *
+ * @param resp
+ * {
+ *   "device-secret": device secret,
+ *   "jwt": jwt for the user
+ * }
+ */
+async function loginUsingRecoveryCode(req: any, resp: any) {
+  const payload = req.body;
+
+  const recoveryEmail = payload['recovery-email'];
+  const code = payload['code'];
+  const deviceId = payload['device-id'];
+
+  if (!recoveryEmail) {
+    resp.status(403).send({
+      status: 'FAIL',
+      error: 'Recovery email address is required',
+    });
+    return;
+  }
+  if (!code) {
+    resp.status(403).send({
+      status: 'FAIL',
+      error: 'code is required',
+    });
+    return;
+  }
+  if (!deviceId) {
+    resp.status(403).send({
+      status: 'FAIL',
+      error: 'New device id is required',
+    });
+    return;
+  }
+
+  let player: Player | null;
+  try {
+    player = await PlayerRepository.loginUsingRecoveryCode(
+      deviceId,
+      recoveryEmail,
+      code
+    );
+    if (!player) {
+      resp.status(403).send({
+        status: 'FAIL',
+        error: 'Recovery email address is not found',
+      });
+      return;
+    }
+  } catch (err) {
+    logger.error(err.toString());
+    resp.status(400).send({error: err.message});
+    return;
+  }
+
+  try {
+    const expiryTime = new Date();
+    expiryTime.setDate(expiryTime.getDate() + JWT_EXPIRY_DAYS);
+    const jwtClaims = {
+      user: player.name,
+      uuid: player.uuid,
+      id: player.id,
+    };
+    const jwt = generateAccessToken(jwtClaims);
+    const response = {
+      'device-secret': player.deviceSecret,
+      name: player.name,
+      uuid: player.uuid,
+      id: player.id,
+      jwt: jwt,
+    };
+    resp.status(200).send(JSON.stringify(response));
+  } catch (err) {
+    logger.error(err.toString());
+    resp.status(500).send({errors: ['JWT cannot be generated']});
+  }
+}
+
+/**
+ * Get recovery code API
+ * @param req
+ * {
+ *  "recovery-email": recovery email address,
+ * }
+ *
+ * Sends a code to recovery email address
+ * @param resp
+ * {
+ *   "status": "OK"
+ * }
+ */
+async function getRecoveryCode(req: any, resp: any) {
+  const payload = req.body;
+
+  const recoveryEmail = payload['recovery-email'];
+  if (!recoveryEmail) {
+    resp.status(403).send({
+      status: 'FAIL',
+      error: 'Recovery email address is not found',
+    });
+    return;
+  }
+
+  try {
+    const ret = await PlayerRepository.sendRecoveryCode(recoveryEmail);
+    if (!ret) {
+      resp.status(403).send({
+        status: 'FAIL',
+        error: 'Recovery email address is not found',
+      });
+      return;
+    }
+    resp.status(200).send({status: 'OK'});
+  } catch (err) {
+    logger.error(err.toString());
+    resp.status(500).send({status: 'FAIL', error: err.message});
+    return;
   }
 }
 

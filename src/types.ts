@@ -110,3 +110,16 @@ export interface SeatUpdate {
   stack?: number;
   status?: PlayerStatus;
 }
+
+export interface UserRegistrationPayload {
+  name: string;
+  deviceId: string;
+  recoveryEmail?: string;
+  displayName?: string;
+  bot?: boolean;
+}
+
+export interface LoginPayload {
+  deviceId: string;
+  deviceSecret: string;
+}
