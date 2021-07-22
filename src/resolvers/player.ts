@@ -234,7 +234,8 @@ export async function getAllPlayers() {
     return {
       playerId: x.uuid,
       name: x.name,
-      email: x.email,
+      displayName: x.displayName,
+      recoveryEmail: x.recoveryEmail,
       lastActiveTime: x.updatedAt,
     };
   });
@@ -252,7 +253,8 @@ export async function getPlayerById(playerId: string) {
     uuid: player.uuid,
     id: player.id,
     name: player.name,
-    email: player.email,
+    displayName: player.displayName,
+    recoveryEmail: player.recoveryEmail,
     lastActiveTime: player.updatedAt,
   };
 }
@@ -290,7 +292,8 @@ export async function getPlayerInfo(playerId: string, getPrivs: boolean) {
     uuid: player.uuid,
     id: player.id,
     name: player.name,
-    email: player.email,
+    displayName: player.displayName,
+    recoveryEmail: player.recoveryEmail,
     lastActiveTime: player.updatedAt,
     channel: Nats.getPlayerChannel(player),
     privileges: privileges,
@@ -307,7 +310,8 @@ export async function idsToPlayerInfo(playerId: string, ids: Array<number>) {
       uuid: x.uuid,
       id: x.id,
       name: x.name,
-      email: x.email,
+      displayName: x.displayName,
+      recoveryEmail: x.recoveryEmail,
       lastActiveTime: x.updatedAt,
     };
   });

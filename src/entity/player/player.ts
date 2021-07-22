@@ -25,15 +25,20 @@ export class Player {
   @Column()
   public name!: string;
 
-  @Column({unique: true, nullable: true})
-  public email!: string;
+  @Index()
+  @Column({name: 'recovery_email', nullable: true})
+  public recoveryEmail!: string | undefined;
 
-  @Column({nullable: true})
-  public password!: string;
+  @Column({name: 'display_name', nullable: true})
+  public displayName!: string | undefined;
 
   @Index()
   @Column({name: 'device_id', unique: true, nullable: true})
   public deviceId!: string;
+
+  @Index()
+  @Column({name: 'device_secret', nullable: true})
+  public deviceSecret!: string;
 
   @Index()
   @Column({name: 'firebase_token', nullable: true})
@@ -65,6 +70,9 @@ export class Player {
 
   @Column({name: 'is_bot', nullable: true, default: false})
   public bot!: boolean;
+
+  @Column({name: 'recovery_code', nullable: true})
+  public recoveryCode!: string;
 }
 
 @Entity({name: 'player_notes'})

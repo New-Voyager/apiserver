@@ -1,6 +1,7 @@
 import Hashids from 'hashids/cjs';
 import {ClubRepository} from '@src/repositories/club';
 import {GameRepository} from '@src/repositories/game';
+import {shuffle} from 'lodash';
 
 export async function getClubCode(name: string): Promise<string> {
   const hashIds = new Hashids(name, 6, 'ABCDEFGHIJKLMNOPQRSTWXYZ');
@@ -37,4 +38,23 @@ export async function getGameCodeForPlayer(playerId: number): Promise<string> {
   const now = new Date().getTime();
   const gameCode = hashIds.encode(playerId, gameCount, now);
   return 'pg' + gameCode;
+}
+
+export function getRecoveryCode(email: string): string {
+  const hashIds = new Hashids(email, 6, '01234567890');
+  const generatedCode = hashIds.encode().substr(0, 6);
+  const arr = Array.from(generatedCode);
+  shuffleArray(arr);
+  const code = arr.join('');
+  return code;
+}
+
+/* Randomize array in-place using Durstenfeld shuffle algorithm */
+function shuffleArray(array) {
+  for (var i = array.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var temp = array[i];
+    array[i] = array[j];
+    array[j] = temp;
+  }
 }
