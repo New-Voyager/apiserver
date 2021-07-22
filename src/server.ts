@@ -582,11 +582,9 @@ async function newlogin(req: any, resp: any) {
     }
 
     if (player.deviceSecret !== deviceSecret) {
-      resp
-        .status(403)
-        .send({
-          errors: [`Login failed for ${deviceId}. Incorrect device secret.`],
-        });
+      resp.status(403).send({
+        errors: [`Login failed for ${deviceId}. Incorrect device secret.`],
+      });
       return;
     }
   } catch (err) {
