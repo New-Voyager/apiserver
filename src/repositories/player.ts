@@ -25,7 +25,7 @@ class PlayerRepositoryImpl {
     const repository = getUserRepository(Player);
     let player: Player | undefined;
     if (email) {
-      player = await repository.findOne({where: {email: email}});
+      player = await repository.findOne({where: {recoveryEmail: email}});
     } else {
       player = await repository.findOne({where: {deviceId: deviceId}});
     }
@@ -44,6 +44,7 @@ class PlayerRepositoryImpl {
     player.name = name;
     player.isActive = true;
     player.deviceId = deviceId;
+    player.deviceSecret = password;
     player.bot = isBot;
     player.encryptionKey = uuidv4();
 
