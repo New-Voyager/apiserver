@@ -223,6 +223,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
       ]);
     } catch (err) {
       logger.error(`Error creating connections: ${err.toString()}`);
+      throw err;
     }
   } else {
     logger.debug('Running in UNIT-TEST mode');
@@ -480,7 +481,7 @@ async function login(req: any, resp: any) {
 async function signup(req: any, resp: any) {
   const payload = req.body;
 
-  const name = payload['name'];
+  const name = payload['screen-name'];
   const deviceId = payload['device-id'];
   const recoveryEmail = payload['recovery-email'];
   const displayName = payload['display-name'];
@@ -488,7 +489,7 @@ async function signup(req: any, resp: any) {
 
   const errors = new Array<string>();
   if (!name) {
-    errors.push('name field is required');
+    errors.push('screen-name field is required');
   }
 
   if (!deviceId) {
@@ -529,6 +530,9 @@ async function signup(req: any, resp: any) {
     const response = {
       'device-secret': player.deviceSecret,
       jwt: jwt,
+      name: player.name,
+      uuid: player.uuid,
+      id: player.id,
     };
     resp.status(200).send(JSON.stringify(response));
   } catch (err) {
@@ -604,6 +608,9 @@ async function newlogin(req: any, resp: any) {
     const jwt = generateAccessToken(jwtClaims);
     const response = {
       jwt: jwt,
+      name: player.name,
+      uuid: player.uuid,
+      id: player.id,
     };
     resp.status(200).send(JSON.stringify(response));
   } catch (err) {
@@ -642,6 +649,20 @@ async function loginUsingRecoveryCode(req: any, resp: any) {
     });
     return;
   }
+  if (!code) {
+    resp.status(403).send({
+      status: 'FAIL',
+      error: 'code is required',
+    });
+    return;
+  }
+  if (!deviceId) {
+    resp.status(403).send({
+      status: 'FAIL',
+      error: 'New device id is required',
+    });
+    return;
+  }
 
   let player: Player | null;
   try {
@@ -659,7 +680,7 @@ async function loginUsingRecoveryCode(req: any, resp: any) {
     }
   } catch (err) {
     logger.error(err.toString());
-    resp.status(500).send({errors: ['Unexpected error']});
+    resp.status(400).send({error: err.message});
     return;
   }
 
@@ -674,6 +695,9 @@ async function loginUsingRecoveryCode(req: any, resp: any) {
     const jwt = generateAccessToken(jwtClaims);
     const response = {
       'device-secret': player.deviceSecret,
+      name: player.name,
+      uuid: player.uuid,
+      id: player.id,
       jwt: jwt,
     };
     resp.status(200).send(JSON.stringify(response));
@@ -720,7 +744,7 @@ async function getRecoveryCode(req: any, resp: any) {
     resp.status(200).send({status: 'OK'});
   } catch (err) {
     logger.error(err.toString());
-    resp.status(500).send({errors: ['Unexpected error']});
+    resp.status(500).send({status: 'FAIL', error: err.message});
     return;
   }
 }

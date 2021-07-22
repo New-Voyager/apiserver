@@ -27,10 +27,10 @@ export class Player {
 
   @Index()
   @Column({name: 'recovery_email', nullable: true})
-  public recoveryEmail!: string | undefined;
+  public recoveryEmail!: string;
 
   @Column({name: 'display_name', nullable: true})
-  public displayName!: string | undefined;
+  public displayName!: string;
 
   @Index()
   @Column({name: 'device_id', unique: true, nullable: true})

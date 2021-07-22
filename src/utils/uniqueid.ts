@@ -41,11 +41,13 @@ export async function getGameCodeForPlayer(playerId: number): Promise<string> {
 }
 
 export function getRecoveryCode(email: string): string {
-  const hashIds = new Hashids(email, 6, '01234567890');
-  const generatedCode = hashIds.encode().substr(0, 6);
-  const arr = Array.from(generatedCode);
-  shuffleArray(arr);
-  const code = arr.join('');
+  const codeChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  const generatedCode = new Array<string>();
+  for (let i = 0; i < 6; i++) {
+    const charidx = Math.floor(Math.random() * codeChars.length);
+    generatedCode.push(codeChars[charidx]);
+  }
+  const code = generatedCode.join('');
   return code;
 }
 

@@ -1,5 +1,6 @@
 import {ChatTextRepository} from './repositories/chat';
 import {StatsRepository} from './repositories/stats';
+import {getLogger} from './utils/log';
 
 const systemChatText = [
   'Donkey call',
@@ -14,11 +15,18 @@ const systemChatText = [
   'I got lucky',
 ];
 
+const logger = getLogger('seed');
+
 // initialize database with some default data
 export async function seed() {
-  for (const text of systemChatText) {
-    await ChatTextRepository.addSystemChatText(text);
-  }
+  try {
+    for (const text of systemChatText) {
+      await ChatTextRepository.addSystemChatText(text);
+    }
 
-  await StatsRepository.newSystemStats();
+    await StatsRepository.newSystemStats();
+  } catch (err) {
+    logger.error(`Error when seeding database. ${err.toString()}`);
+    throw err;
+  }
 }

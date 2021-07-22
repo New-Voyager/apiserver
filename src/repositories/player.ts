@@ -260,7 +260,7 @@ class PlayerRepositoryImpl {
       player = await repository.findOne({
         recoveryEmail: register.recoveryEmail,
       });
-      if (!player) {
+      if (player) {
         throw new Error(
           'Another device is registered with this recovery email address'
         );
@@ -269,8 +269,12 @@ class PlayerRepositoryImpl {
 
     player = new Player();
     player.name = register.name;
-    player.displayName = register.displayName;
-    player.recoveryEmail = register.recoveryEmail;
+    if (register.displayName && register.displayName.length > 0) {
+      player.displayName = register.displayName;
+    }
+    if (register.recoveryEmail && register.recoveryEmail.length > 0) {
+      player.recoveryEmail = register.recoveryEmail;
+    }
     player.deviceId = register.deviceId;
     player.deviceSecret = uuidv4();
     player.uuid = uuidv4();
