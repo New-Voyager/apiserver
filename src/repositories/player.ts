@@ -251,9 +251,11 @@ class PlayerRepositoryImpl {
     let player = await repository.findOne({
       deviceId: register.deviceId,
     });
-    if (player) {
-      throw new Error('Player with device id already exists');
-    }
+
+    // NOTE: we will allow the user re-register using the same device id
+    // if (player) {
+    //   throw new Error('Player with device id already exists');
+    // }
 
     if (register.recoveryEmail && register.recoveryEmail.length > 0) {
       // make sure the recovery email address is not reused
@@ -267,7 +269,9 @@ class PlayerRepositoryImpl {
       }
     }
 
-    player = new Player();
+    if (!player) {
+      player = new Player();
+    }
     player.name = register.name;
     if (register.displayName && register.displayName.length > 0) {
       player.displayName = register.displayName;
