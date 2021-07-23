@@ -177,7 +177,7 @@ const resolvers: any = {
     },
     updatePlayer: async (parent, args, ctx, info) => {
       return updatePlayer(ctx.req.playerId, args);
-    },    
+    },
     leaveClub: async (parent, args, ctx, info) => {
       return leaveClub(ctx.req.playerId, args);
     },
@@ -416,7 +416,7 @@ export async function updatePlayer(playerId: string, args: any) {
       playerId,
       playerInput.name,
       playerInput.email,
-      playerInput.displayName,
+      playerInput.displayName
     );
   } catch (err) {
     logger.error(err);

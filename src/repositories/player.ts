@@ -61,7 +61,7 @@ class PlayerRepositoryImpl {
     playerId: string,
     name: string,
     email: string,
-    displayName: string,
+    displayName: string
   ): Promise<boolean> {
     const repository = getUserRepository(Player);
     let player: Player | undefined;
@@ -69,7 +69,7 @@ class PlayerRepositoryImpl {
     if (!player) {
       throw new Error(`Player is not found`);
     }
-    const props: any = {}
+    const props: any = {};
     if (name) {
       props['name'] = name;
     }
