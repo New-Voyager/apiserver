@@ -175,6 +175,9 @@ const resolvers: any = {
     createPlayer: async (parent, args, ctx, info) => {
       return createPlayer(args);
     },
+    updatePlayer: async (parent, args, ctx, info) => {
+      return updatePlayer(ctx.req.playerId, args);
+    },    
     leaveClub: async (parent, args, ctx, info) => {
       return leaveClub(ctx.req.playerId, args);
     },
@@ -235,7 +238,7 @@ export async function getAllPlayers() {
       playerId: x.uuid,
       name: x.name,
       displayName: x.displayName,
-      recoveryEmail: x.recoveryEmail,
+      email: x.email,
       lastActiveTime: x.updatedAt,
     };
   });
@@ -254,7 +257,7 @@ export async function getPlayerById(playerId: string) {
     id: player.id,
     name: player.name,
     displayName: player.displayName,
-    recoveryEmail: player.recoveryEmail,
+    email: player.email,
     lastActiveTime: player.updatedAt,
   };
 }
@@ -293,7 +296,7 @@ export async function getPlayerInfo(playerId: string, getPrivs: boolean) {
     id: player.id,
     name: player.name,
     displayName: player.displayName,
-    recoveryEmail: player.recoveryEmail,
+    email: player.email,
     lastActiveTime: player.updatedAt,
     channel: Nats.getPlayerChannel(player),
     privileges: privileges,
@@ -311,7 +314,7 @@ export async function idsToPlayerInfo(playerId: string, ids: Array<number>) {
       id: x.id,
       name: x.name,
       displayName: x.displayName,
-      recoveryEmail: x.recoveryEmail,
+      email: x.email,
       lastActiveTime: x.updatedAt,
     };
   });
@@ -398,6 +401,26 @@ export async function createPlayer(args: any) {
     function isEmpty(value: any) {
       return value === undefined || value === '';
     }
+  }
+}
+
+export async function updatePlayer(playerId: string, args: any) {
+  try {
+    const playerInput = args.input;
+    if (playerInput.name) {
+      if (playerInput.name.length === 0) {
+        throw new Error('name field cannot be empty');
+      }
+    }
+    return PlayerRepository.updatePlayer(
+      playerId,
+      playerInput.name,
+      playerInput.email,
+      playerInput.displayName,
+    );
+  } catch (err) {
+    logger.error(err);
+    throw new Error('Failed to update player');
   }
 }
 

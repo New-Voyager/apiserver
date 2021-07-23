@@ -469,7 +469,7 @@ async function login(req: any, resp: any) {
  *  "device-id": <uuid assigned in the device>,
  *  "screen-name": "player screen name",
  *  "display-name": "player name",
- *  "recovery-email": "recovery email address"
+ *  "email": "recovery email address"
  * }
  *
  * A player is registered to the system using signup api
@@ -483,7 +483,7 @@ async function signup(req: any, resp: any) {
 
   const name = payload['screen-name'];
   const deviceId = payload['device-id'];
-  const recoveryEmail = payload['recovery-email'];
+  const email = payload['email'];
   const displayName = payload['display-name'];
   const bot = payload['bot'];
 
@@ -504,7 +504,7 @@ async function signup(req: any, resp: any) {
   const regPayload: UserRegistrationPayload = {
     name: name,
     deviceId: deviceId,
-    recoveryEmail: recoveryEmail,
+    email: email,
     displayName: displayName,
     bot: bot,
   };
@@ -624,7 +624,7 @@ async function newlogin(req: any, resp: any) {
  *
  * @param req
  * {
- *  "recovery-email": recovery email address,
+ *  "email": recovery email address,
  *  "code": generated code,
  *  "device-id": device id
  * }
@@ -638,14 +638,14 @@ async function newlogin(req: any, resp: any) {
 async function loginUsingRecoveryCode(req: any, resp: any) {
   const payload = req.body;
 
-  const recoveryEmail = payload['recovery-email'];
+  const email = payload['email'];
   const code = payload['code'];
   const deviceId = payload['device-id'];
 
-  if (!recoveryEmail) {
+  if (!email) {
     resp.status(403).send({
       status: 'FAIL',
-      error: 'Recovery email address is required',
+      error: 'Email address is required',
     });
     return;
   }
@@ -668,7 +668,7 @@ async function loginUsingRecoveryCode(req: any, resp: any) {
   try {
     player = await PlayerRepository.loginUsingRecoveryCode(
       deviceId,
-      recoveryEmail,
+      email,
       code
     );
     if (!player) {
@@ -711,7 +711,7 @@ async function loginUsingRecoveryCode(req: any, resp: any) {
  * Get recovery code API
  * @param req
  * {
- *  "recovery-email": recovery email address,
+ *  "email": recovery email address,
  * }
  *
  * Sends a code to recovery email address
@@ -723,21 +723,21 @@ async function loginUsingRecoveryCode(req: any, resp: any) {
 async function getRecoveryCode(req: any, resp: any) {
   const payload = req.body;
 
-  const recoveryEmail = payload['recovery-email'];
-  if (!recoveryEmail) {
+  const email = payload['email'];
+  if (!email) {
     resp.status(403).send({
       status: 'FAIL',
-      error: 'Recovery email address is not found',
+      error: 'Email address is not found',
     });
     return;
   }
 
   try {
-    const ret = await PlayerRepository.sendRecoveryCode(recoveryEmail);
+    const ret = await PlayerRepository.sendRecoveryCode(email);
     if (!ret) {
       resp.status(403).send({
         status: 'FAIL',
-        error: 'Recovery email address is not found',
+        error: 'Email address is not found',
       });
       return;
     }

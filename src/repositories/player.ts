@@ -25,7 +25,10 @@ class PlayerRepositoryImpl {
     const repository = getUserRepository(Player);
     let player: Player | undefined;
     if (email) {
-      player = await repository.findOne({where: {recoveryEmail: email}});
+      player = await repository.findOne({where: {email: email}});
+      if (player) {
+        throw new Error(`Another device is registered with this email address`);
+      }
     } else {
       player = await repository.findOne({where: {deviceId: deviceId}});
     }
@@ -46,11 +49,41 @@ class PlayerRepositoryImpl {
     player.deviceId = deviceId;
     player.deviceSecret = password;
     player.bot = isBot;
+    player.email = email;
     player.encryptionKey = uuidv4();
 
     await repository.save(player);
     await StatsRepository.newPlayerHandStats(player);
     return player.uuid;
+  }
+
+  public async updatePlayer(
+    playerId: string,
+    name: string,
+    email: string,
+    displayName: string,
+  ): Promise<boolean> {
+    const repository = getUserRepository(Player);
+    let player: Player | undefined;
+    player = await repository.findOne({where: {uuid: playerId}});
+    if (!player) {
+      throw new Error(`Player is not found`);
+    }
+    const props: any = {}
+    if (name) {
+      props['name'] = name;
+    }
+
+    if (displayName) {
+      props['displayName'] = displayName;
+    }
+
+    if (email) {
+      props['email'] = email;
+    }
+
+    await repository.update({id: player.id}, props);
+    return true;
   }
 
   // Updates firebase token for the player
@@ -258,10 +291,10 @@ class PlayerRepositoryImpl {
     //   throw new Error('Player with device id already exists');
     // }
 
-    if (register.recoveryEmail && register.recoveryEmail.length > 0) {
+    if (register.email && register.email.length > 0) {
       // make sure the recovery email address is not reused
       player = await repository.findOne({
-        recoveryEmail: register.recoveryEmail,
+        email: register.email,
       });
       if (player) {
         throw new Error(
@@ -277,8 +310,8 @@ class PlayerRepositoryImpl {
     if (register.displayName && register.displayName.length > 0) {
       player.displayName = register.displayName;
     }
-    if (register.recoveryEmail && register.recoveryEmail.length > 0) {
-      player.recoveryEmail = register.recoveryEmail;
+    if (register.email && register.email.length > 0) {
+      player.email = register.email;
     }
     player.deviceId = register.deviceId;
     player.deviceSecret = uuidv4();
@@ -298,7 +331,7 @@ class PlayerRepositoryImpl {
   public async sendRecoveryCode(email: string): Promise<boolean> {
     const repository = getUserRepository(Player);
     let player = await repository.findOne({
-      recoveryEmail: email,
+      email: email,
     });
     if (!player) {
       throw new Error(`${email} is not a registered email`);
@@ -333,7 +366,7 @@ class PlayerRepositoryImpl {
   ): Promise<Player> {
     const repository = getUserRepository(Player);
     let player = await repository.findOne({
-      recoveryEmail: email,
+      email: email,
     });
     if (!player) {
       throw new Error(`${email} is not a registered email`);

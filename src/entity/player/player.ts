@@ -26,8 +26,8 @@ export class Player {
   public name!: string;
 
   @Index()
-  @Column({name: 'recovery_email', nullable: true})
-  public recoveryEmail!: string;
+  @Column({name: 'email', nullable: true})
+  public email!: string;
 
   @Column({name: 'display_name', nullable: true})
   public displayName!: string;

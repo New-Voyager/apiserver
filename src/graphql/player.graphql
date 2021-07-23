@@ -6,6 +6,12 @@ input PlayerCreateInput {
   isBot: Boolean
 }
 
+input PlayerUpdateInput {
+  name: String
+  email: String
+  displayName: String
+}
+
 type Player {
   name: String!
   playerId: String!
@@ -159,4 +165,5 @@ type Mutation {
   setNotes(playerId: String playerUuid: String, notes: String): Boolean
   sendPlayerFcmMessage(message: Json!): Boolean
   changeDisplayName(name: String!): Boolean
+  updatePlayer(input: PlayerUpdateInput!): Boolean
 }

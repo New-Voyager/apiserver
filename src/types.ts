@@ -114,7 +114,7 @@ export interface SeatUpdate {
 export interface UserRegistrationPayload {
   name: string;
   deviceId: string;
-  recoveryEmail?: string;
+  email?: string;
   displayName?: string;
   bot?: boolean;
 }
