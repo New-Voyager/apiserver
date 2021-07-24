@@ -229,7 +229,7 @@ export class BuyIn {
     // get game server of this game
     const gameServer = await GameRepository.getGameServer(this.game.id);
     if (gameServer) {
-      playerBuyIn(this.game, this.player, playerInGame);
+      await playerBuyIn(this.game, this.player, playerInGame);
     }
     gameServerTime = new Date().getTime() - gameServerTime;
 
