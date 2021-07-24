@@ -176,6 +176,7 @@ export class WaitListMgmt {
     // eslint-disable-next-line no-constant-condition
     // get the first guy from the wait list
     const waitingPlayers = await playerGameTrackerRepository.find({
+      relations: ['game'],
       where: {
         game: {id: gameId},
         waitingFrom: Not(IsNull()),
