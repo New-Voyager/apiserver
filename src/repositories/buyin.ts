@@ -316,6 +316,9 @@ export class BuyIn {
             playerInGame,
             transactionEntityManager
           );
+          if (this.player.bot) {
+            approved = true;
+          }
           await playerGameTrackerRepository.update(
             {
               game: {id: this.game.id},
