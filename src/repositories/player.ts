@@ -314,14 +314,16 @@ class PlayerRepositoryImpl {
       player.email = register.email;
     }
     player.deviceId = register.deviceId;
-    player.deviceSecret = uuidv4();
-    player.uuid = uuidv4();
     player.isActive = true;
     player.encryptionKey = uuidv4();
     if (register.bot) {
       player.bot = true;
+      player.uuid = register.deviceId;
+      player.deviceSecret = register.deviceId;
     } else {
       player.bot = false;
+      player.uuid = uuidv4();
+      player.deviceSecret = uuidv4();
     }
 
     await repository.save(player);
