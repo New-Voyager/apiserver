@@ -318,9 +318,10 @@ class PlayerRepositoryImpl {
     player.uuid = uuidv4();
     player.isActive = true;
     player.encryptionKey = uuidv4();
-    register.bot = false;
     if (register.bot) {
       player.bot = true;
+    } else {
+      player.bot = false;
     }
 
     await repository.save(player);
