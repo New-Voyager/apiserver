@@ -162,6 +162,10 @@ class HistoryRepositoryImpl {
           gameId: game.gameId,
           playerId: player.playerId,
         });
+        let balance: number | null = null;
+        if (player.stack && player.buyIn) {
+          balance = player.stack - player.buyIn;
+        }
         if (gameStat) {
           completedGame = {
             gameCode: game.gameCode,
@@ -185,7 +189,8 @@ class HistoryRepositoryImpl {
             startedBy: game.hostName,
             endedAt: game.endedAt,
             endedBy: game.endedByName,
-            balance: player.stack,
+            stack: player.stack,
+            balance: balance,
             handsDealt: game.handsDealt,
             handStack: player.handStack,
           };
@@ -212,6 +217,19 @@ class HistoryRepositoryImpl {
     for (const row of playedGames) {
       const game = await gameRepo.findOne({gameId: row.gameId});
       if (game) {
+        let balance: number | null = null;
+        if (row.buyIn && row.stack) {
+          balance = row.stack - row.buyIn;
+        }
+        let sessionTime: number | null = row.sessionTime;
+        if (sessionTime) {
+          sessionTime = Math.ceil(sessionTime / 60);
+        }
+
+        let gameTime = Math.ceil(
+          (game.endedAt.valueOf() - game.startedAt.valueOf()) / (60 * 1000)
+        );
+
         const pastGame: any = {
           gameCode: game.gameCode,
           gameId: game.gameId,
@@ -219,7 +237,8 @@ class HistoryRepositoryImpl {
           bigBlind: game.bigBlind,
           title: game.title,
           gameType: game.gameType,
-          gameTime: game.endedAt.valueOf() - game.startedAt.valueOf(),
+          gameTime: gameTime,
+          runTime: gameTime,
           startedBy: game.hostName,
           startedAt: game.startedAt,
           endedBy: game.endedByName,
@@ -227,15 +246,19 @@ class HistoryRepositoryImpl {
           maxPlayers: game.maxPlayers,
           highHandTracked: game.highHandTracked,
           handsDealt: game.handsDealt,
+          handsPlayed: row.noHandsPlayed,
           playerStatus: row.status,
-          sessionTime: row.sessionTime,
+          sessionTime: sessionTime,
           buyIn: row.buyIn,
           stack: row.stack,
+          balance: balance,
         };
-        const club = await Cache.getClub(game.clubCode);
-        if (club) {
-          pastGame.clubCode = club.clubCode;
-          pastGame.clubName = club.name;
+        if (game.clubCode !== null && game.clubCode.length > 0) {
+          const club = await Cache.getClub(game.clubCode);
+          if (club) {
+            pastGame.clubCode = club.clubCode;
+            pastGame.clubName = club.name;
+          }
         }
         pastGames.push(pastGame);
       }

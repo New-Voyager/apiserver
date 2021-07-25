@@ -12,38 +12,43 @@ export async function getClubCode(name: string): Promise<string> {
   return 'c' + clubCode.toLowerCase();
 }
 
-export async function getGameCodeForClub(
-  clubCode: string,
-  clubId: number
-): Promise<string> {
-  const hashIds = new Hashids(clubCode, 6, 'ABCDEFGHIJKLMNOPQRSTWXYZ');
-  // let us get the count of total clubs
-  const gameCount = await GameRepository.getGameCountByClubId(clubId);
-  const currentSec = new Date().getSeconds();
-  const gameCode = hashIds.encode(clubId, gameCount, currentSec);
-  //  return 'test';
+export async function getGameCodeForClub(): Promise<string> {
+  const gameCode = getCode(6, {includeAlpha: true, includeNumbers: false});
   return 'cg' + gameCode.toLowerCase();
 }
 
 // This method is used for players hosting games (not club games)
-export async function getGameCodeForPlayer(playerId: number): Promise<string> {
-  const currentSec = new Date().getSeconds();
-  const hashIds = new Hashids(
-    currentSec.toString(),
-    6,
-    'ABCDEFGHIJKLMNOPQRSTWXYZ'
-  );
-  // let us get the count of total clubs
-  const gameCount = await GameRepository.getGameCountByPlayerId(playerId);
-  const now = new Date().getTime();
-  const gameCode = hashIds.encode(playerId, gameCount, now);
-  return 'pg' + gameCode;
+export async function getGameCodeForPlayer(): Promise<string> {
+  const gameCode = getCode(6, {includeAlpha: true, includeNumbers: false});
+  return 'pg' + gameCode.toLowerCase();
 }
 
 export function getRecoveryCode(email: string): string {
   const codeChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
   const generatedCode = new Array<string>();
   for (let i = 0; i < 6; i++) {
+    const charidx = Math.floor(Math.random() * codeChars.length);
+    generatedCode.push(codeChars[charidx]);
+  }
+  const code = generatedCode.join('');
+  return code;
+}
+
+export function getCode(
+  length: number,
+  {includeAlpha = true, includeNumbers = true}
+): string {
+  let codeCharsInput = '';
+  if (includeAlpha) {
+    codeCharsInput = codeCharsInput + 'ABCDEFGHIJKLMNOPQRSTWXYZ';
+  }
+  if (includeNumbers) {
+    codeCharsInput = codeCharsInput + '0123456789';
+  }
+
+  const codeChars = codeCharsInput.split('');
+  const generatedCode = new Array<string>();
+  for (let i = 0; i < length; i++) {
     const charidx = Math.floor(Math.random() * codeChars.length);
     generatedCode.push(codeChars[charidx]);
   }

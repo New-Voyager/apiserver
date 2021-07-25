@@ -18,10 +18,10 @@ const logger = getLogger('chipstrack');
 class ChipsTrackRepositoryImpl {
   public async settleClubBalances(game: PokerGame): Promise<boolean> {
     try {
-      if (!game.clubCode) {
-        // we don't track balances of individual host games
-        return true;
-      }
+      // if (!game.clubCode) {
+      //   // we don't track balances of individual host games
+      //   return true;
+      // }
 
       const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
 
@@ -75,29 +75,6 @@ class ChipsTrackRepositoryImpl {
         if (updates.length > 0) {
           await Promise.all(updates);
         }
-
-        /*
-        const clubChipsTransaction = new ClubChipsTransaction();
-        clubChipsTransaction.club = game.club;
-        clubChipsTransaction.amount = gameUpdates.rake;
-        clubChipsTransaction.balance = game.club.balance + gameUpdates.rake;
-        clubChipsTransaction.description = `rake collected from game #${game.gameCode}`;
-        await transactionEntityManager
-          .getRepository(ClubChipsTransaction)
-          .save(clubChipsTransaction);
-        const clubId = game.club.id;
-        await transactionEntityManager
-          .getRepository(Club)
-          .createQueryBuilder()
-          .update()
-          .set({
-            balance: () => `balance + ${gameUpdates.rake}`,
-          })
-          .where({
-            id: clubId,
-          })
-          .execute();
-          */
 
         // walk through the hand history and collect big win hands for each player
         const playerBigWinLoss = {};
@@ -163,50 +140,52 @@ class ChipsTrackRepositoryImpl {
           //logger.info(JSON.stringify(result));
         }
 
-        // update club member balance
-        const playerChips = await transactionEntityManager
-          .getRepository(PlayerGameTracker)
-          .find({
-            where: {game: {id: gameId}},
-          });
+        if (game.clubCode) {
+          // update club member balance
+          const playerChips = await transactionEntityManager
+            .getRepository(PlayerGameTracker)
+            .find({
+              where: {game: {id: gameId}},
+            });
 
-        for (const playerChip of playerChips) {
-          const profit = playerChip.stack - playerChip.buyIn;
-          const playerGame = getUserRepository(ClubMember)
-            .createQueryBuilder()
-            .update()
-            .set({
-              balance: () => `balance + ${profit}`,
-              // TODO: remove commented code on success
-              // totalBuyins: () => `total_buyins + ${playerChip.buyIn}`,
-              // totalWinnings: () => `total_winnings + ${playerChip.stack}`,
-              // rakePaid: () => `rake_paid + ${playerChip.rakePaid}`,
-              // totalGames: () => 'total_games + 1',
-              // totalHands: () => `total_hands + ${playerChip.noHandsPlayed}`,
-            })
-            .where({
-              player: {id: playerChip.playerId},
-              club: {id: game.clubId},
-            })
-            .execute();
+          for (const playerChip of playerChips) {
+            const profit = playerChip.stack - playerChip.buyIn;
+            const playerGame = getUserRepository(ClubMember)
+              .createQueryBuilder()
+              .update()
+              .set({
+                balance: () => `balance + ${profit}`,
+                // TODO: remove commented code on success
+                // totalBuyins: () => `total_buyins + ${playerChip.buyIn}`,
+                // totalWinnings: () => `total_winnings + ${playerChip.stack}`,
+                // rakePaid: () => `rake_paid + ${playerChip.rakePaid}`,
+                // totalGames: () => 'total_games + 1',
+                // totalHands: () => `total_hands + ${playerChip.noHandsPlayed}`,
+              })
+              .where({
+                player: {id: playerChip.playerId},
+                club: {id: game.clubId},
+              })
+              .execute();
 
-          chipUpdates.push(playerGame);
-          const clubPlayerStats = getUserRepository(ClubMemberStat)
-            .createQueryBuilder()
-            .update()
-            .set({
-              totalBuyins: () => `total_buyins + ${playerChip.buyIn}`,
-              totalWinnings: () => `total_winnings + ${playerChip.stack}`,
-              rakePaid: () => `rake_paid + ${playerChip.rakePaid}`,
-              totalGames: () => 'total_games + 1',
-              totalHands: () => `total_hands + ${playerChip.noHandsPlayed}`,
-            })
-            .where({
-              playerId: playerChip.playerId,
-              clubId: game.clubId,
-            })
-            .execute();
-          chipUpdates.push(clubPlayerStats);
+            chipUpdates.push(playerGame);
+            const clubPlayerStats = getUserRepository(ClubMemberStat)
+              .createQueryBuilder()
+              .update()
+              .set({
+                totalBuyins: () => `total_buyins + ${playerChip.buyIn}`,
+                totalWinnings: () => `total_winnings + ${playerChip.stack}`,
+                rakePaid: () => `rake_paid + ${playerChip.rakePaid}`,
+                totalGames: () => 'total_games + 1',
+                totalHands: () => `total_hands + ${playerChip.noHandsPlayed}`,
+              })
+              .where({
+                playerId: playerChip.playerId,
+                clubId: game.clubId,
+              })
+              .execute();
+            chipUpdates.push(clubPlayerStats);
+          }
         }
         await Promise.all(chipUpdates);
       });

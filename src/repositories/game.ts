@@ -75,47 +75,11 @@ class GameRepositoryImpl {
   }
 
   public async createPrivateGame(
-    club: Club,
+    club: Club | null,
     player: Player,
     input: any,
     template = false
   ): Promise<PokerGame> {
-    // // first check whether this user can create a game in this club
-    // const clubMemberRepository = getRepository<ClubMember>(ClubMember);
-
-    // const clubRepository = getRepository(Club);
-    // const club = await clubRepository.findOne({clubCode: clubCode});
-    // if (!club) {
-    //   throw new Error(`Club ${clubCode} is not found`);
-    // }
-
-    // const playerRepository = getRepository(Player);
-    // const player = await playerRepository.findOne({uuid: playerId});
-    // if (!player) {
-    //   throw new Error(`Player ${playerId} is not found`);
-    // }
-
-    // const clubMember = await clubMemberRepository.findOne({
-    //   where: {
-    //     club: {id: club.id},
-    //     player: {id: player.id},
-    //   },
-    // });
-    // if (!clubMember) {
-    //   throw new Error(`The player ${playerId} is not in the club`);
-    // }
-    // if (!(clubMember.isOwner || clubMember.isManager)) {
-    //   throw new Error(
-    //     `The player ${playerId} is not a owner or a manager of the club`
-    //   );
-    // }
-
-    // if (clubMember.isManager && clubMember.status !== ClubMemberStatus.ACTIVE) {
-    //   throw new Error(
-    //     `The player ${playerId} is not an approved manager to create a game`
-    //   );
-    // }
-
     const useGameServer = true;
 
     const gameServerRepository = getGameRepository(GameServer);
@@ -169,9 +133,9 @@ class GameRepositoryImpl {
       game.clubId = club.id;
       game.clubCode = club.clubCode;
       game.clubName = club.name;
-      game.gameCode = await getGameCodeForClub(club.clubCode, club.id);
+      game.gameCode = await getGameCodeForClub();
     } else {
-      game.gameCode = await getGameCodeForClub(player.id.toString(), 1);
+      game.gameCode = await getGameCodeForPlayer();
     }
     let savedGame;
     // use current time as the game id for now
@@ -349,59 +313,59 @@ class GameRepositoryImpl {
     return savedGame;
   }
 
-  public async createPrivateGameForPlayer(
-    playerId: string,
-    input: any,
-    template = false
-  ): Promise<PokerGame> {
-    const playerRepository = getUserRepository(Player);
-    const player = await playerRepository.findOne({uuid: playerId});
-    if (!player) {
-      throw new Error(`Player ${playerId} is not found`);
-    }
+  // public async createPrivateGameForPlayer(
+  //   playerId: string,
+  //   input: any,
+  //   template = false
+  // ): Promise<PokerGame> {
+  //   const playerRepository = getUserRepository(Player);
+  //   const player = await playerRepository.findOne({uuid: playerId});
+  //   if (!player) {
+  //     throw new Error(`Player ${playerId} is not found`);
+  //   }
 
-    const gameServerRepository = getGameRepository(GameServer);
-    const gameServers = await gameServerRepository.find();
-    if (gameServers.length === 0) {
-      throw new Error('No game server is availabe');
-    }
+  //   const gameServerRepository = getGameRepository(GameServer);
+  //   const gameServers = await gameServerRepository.find();
+  //   if (gameServers.length === 0) {
+  //     throw new Error('No game server is availabe');
+  //   }
 
-    // create the game
-    const game: PokerGame = {...input} as PokerGame;
-    const gameTypeStr: string = input['gameType'];
-    const gameType: GameType = GameType[gameTypeStr];
-    game.gameType = gameType;
-    game.isTemplate = template;
-    game.status = GameStatus.CONFIGURED;
-    game.hostId = player.id;
-    game.hostUuid = player.uuid;
-    game.hostName = player.name;
-    game.gameCode = await getGameCodeForPlayer(player.id);
-    game.privateGame = true;
-    game.startedAt = new Date();
+  //   // create the game
+  //   const game: PokerGame = {...input} as PokerGame;
+  //   const gameTypeStr: string = input['gameType'];
+  //   const gameType: GameType = GameType[gameTypeStr];
+  //   game.gameType = gameType;
+  //   game.isTemplate = template;
+  //   game.status = GameStatus.CONFIGURED;
+  //   game.hostId = player.id;
+  //   game.hostUuid = player.uuid;
+  //   game.hostName = player.name;
+  //   game.gameCode = await getGameCodeForPlayer();
+  //   game.privateGame = true;
+  //   game.startedAt = new Date();
 
-    let savedGame;
-    try {
-      const gameRespository = getGameRepository(PokerGame);
-      await getGameManager().transaction(async transactionEntityManager => {
-        savedGame = await transactionEntityManager
-          .getRepository(PokerGame)
-          .save(game);
+  //   let savedGame;
+  //   try {
+  //     const gameRespository = getGameRepository(PokerGame);
+  //     await getGameManager().transaction(async transactionEntityManager => {
+  //       savedGame = await transactionEntityManager
+  //         .getRepository(PokerGame)
+  //         .save(game);
 
-        const pick = savedGame.id % gameServers.length;
-        const trackServer = new TrackGameServer();
-        trackServer.game = savedGame;
-        trackServer.gameServer = gameServers[pick];
-        await transactionEntityManager
-          .getRepository(TrackGameServer)
-          .save(trackServer);
-      });
-    } catch (err) {
-      logger.error("Couldn't create game and retry again");
-      throw new Error("Couldn't create the game, please retry again");
-    }
-    return savedGame;
-  }
+  //       const pick = savedGame.id % gameServers.length;
+  //       const trackServer = new TrackGameServer();
+  //       trackServer.game = savedGame;
+  //       trackServer.gameServer = gameServers[pick];
+  //       await transactionEntityManager
+  //         .getRepository(TrackGameServer)
+  //         .save(trackServer);
+  //     });
+  //   } catch (err) {
+  //     logger.error("Couldn't create game and retry again");
+  //     throw new Error("Couldn't create the game, please retry again");
+  //   }
+  //   return savedGame;
+  // }
 
   public async getGameByCode(
     gameCode: string,
@@ -432,6 +396,17 @@ class GameRepositoryImpl {
   }
 
   public async getLiveGames(playerId: string) {
+    let clubGames = await this.getClubGames(playerId);
+    let playerGames = await this.getPlayerGames(playerId);
+
+    let liveGames = new Array<any>();
+    liveGames.push(...clubGames);
+    liveGames.push(...playerGames);
+
+    return liveGames;
+  }
+
+  public async getClubGames(playerId: string) {
     const player = await Cache.getPlayer(playerId);
     const clubIds = await ClubRepository.getClubIds(player.id);
     if (!clubIds || clubIds.length === 0) {
@@ -467,6 +442,43 @@ class GameRepositoryImpl {
         where
         g.game_status NOT IN (${GameStatus.ENDED}) AND
         g.club_id IN (${clubIdsIn})`;
+    console.log(query);
+    // EXTRACT(EPOCH FROM (now()-g.started_at)) as "elapsedTime",  Showing some error
+    const resp = await getGameConnection().query(query);
+    return resp;
+  }
+
+  public async getPlayerGames(playerId: string) {
+    const player = await Cache.getPlayer(playerId);
+    const query = `
+        SELECT 
+          g.club_code as "clubCode", 
+          g.club_name as "clubName", 
+          g.game_code as "gameCode", 
+          g.id as gameId, 
+          g.title as title, 
+          g.game_type as "gameType", 
+          g.buy_in_min as "buyInMin", 
+          g.buy_in_max as "buyInMax",
+          g.small_blind as "smallBlind",
+          g.big_blind as "bigBlind",
+          g.started_at as "startedAt", 
+          g.max_players as "maxPlayers", 
+          g.max_waitlist as "maxWaitList", 
+          pgu.players_in_waitlist as "waitlistCount", 
+          pgu.players_in_seats as "tableCount", 
+          g.game_status as "gameStatus",
+          pgt.status as "playerStatus",
+          pgu.hand_num as "handsDealt"
+        FROM poker_game as g JOIN poker_game_updates as pgu ON 
+        g.id = pgu.game_id 
+        LEFT OUTER JOIN 
+          player_game_tracker as pgt ON
+          pgt.pgt_player_id = ${player.id} AND
+          pgt.pgt_game_id  = g.id
+        where
+        g.game_status NOT IN (${GameStatus.ENDED}) AND
+        g.host_id = ${player.id}`;
     console.log(query);
     // EXTRACT(EPOCH FROM (now()-g.started_at)) as "elapsedTime",  Showing some error
     const resp = await getGameConnection().query(query);
@@ -1085,14 +1097,16 @@ class GameRepositoryImpl {
         );
       }
     }
+    const updatedGame = await Cache.getGame(game.gameCode, true);
+
     // complete books
-    await ChipsTrackRepository.settleClubBalances(game);
+    await ChipsTrackRepository.settleClubBalances(updatedGame);
 
     // roll up stats
-    await StatsRepository.rollupStats(game);
+    await StatsRepository.rollupStats(updatedGame);
 
     // update player performance
-    await StatsRepository.gameEnded(game, players);
+    await StatsRepository.gameEnded(updatedGame, players);
 
     // destroy Janus game
     try {

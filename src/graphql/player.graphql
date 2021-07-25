@@ -75,9 +75,10 @@ type PastGame {
   startedAt: DateTime!
   endedAt: DateTime!
   endedBy: String
-  gameTime: Int!
+  runTime: Int!
   buyIn: Float
   stack: Float
+  balance: Float
   handsDealt: Int!
   handsPlayed: Int
   highHands: [HighHand!]

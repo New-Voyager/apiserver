@@ -78,16 +78,19 @@ export async function getClubGames(
       let runTime = game.endedAt - game.startedAt;
       const roundedRunTime = Math.ceil(runTime / (60 * 1000));
       runTime = roundedRunTime * (60 * 1000);
-      game.runTime = runTime;
+      game.runTime = roundedRunTime;
       game.runTimeStr = humanizeDuration(runTime, {round: true});
     }
 
-    if (game.sessionTime && game.satAt) {
-      let sessionTime =
-        game.sessionTime + Math.round((now - game.satAt.getTime()) / 1000);
+    if (game.sessionTime) {
+      let sessionTime = game.sessionTime;
+      if (game.satAt) {
+        sessionTime =
+          sessionTime + Math.round((now - game.satAt.getTime()) / 1000);
+      }
       const roundedTime = Math.ceil(sessionTime / 60);
-      sessionTime = roundedTime * 60;
-
+      sessionTime = roundedTime;
+      game.sessionTime = sessionTime;
       game.sessionTimeStr = humanizeDuration(sessionTime * 1000, {
         round: true,
       });
