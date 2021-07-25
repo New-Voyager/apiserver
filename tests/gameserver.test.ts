@@ -211,7 +211,7 @@ describe('Game server APIs', () => {
     }
   });
 
-  test('get specific game server without club', async () => {
+  test.skip('get specific game server without club', async () => {
     logger.debug('Getting game server');
     const gameServer1 = {
       ipAddress: '10.1.1.3',
