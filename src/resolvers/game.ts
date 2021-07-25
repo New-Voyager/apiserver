@@ -132,10 +132,9 @@ export async function configureGameByPlayer(playerId: string, game: any) {
     throw new Error(errors.join('\n'));
   }
   try {
-    const gameInfo = await GameRepository.createPrivateGameForPlayer(
-      playerId,
-      game
-    );
+    const player = await Cache.getPlayer(playerId);
+
+    const gameInfo = await GameRepository.createPrivateGame(null, player, game);
     const ret: any = gameInfo as any;
     ret.gameType = GameType[gameInfo.gameType];
     return ret;
@@ -612,11 +611,12 @@ export async function completedGame(playerId: string, gameCode: string) {
     const resp = await HistoryRepository.getCompletedGame(gameCode, player.id);
     if (game.endedAt) {
       const runTime = resp.endedAt - resp.startedAt;
-      resp.runTime = runTime;
+      resp.runTime = Math.ceil(runTime / (60 * 1000));
       resp.runTimeStr = humanizeDuration(runTime, {round: true});
     }
 
     if (resp.sessionTime) {
+      resp.sessionTime = Math.ceil(resp.sessionTime / (60 * 1000));
       resp.sessionTimeStr = humanizeDuration(resp.sessionTime * 1000, {
         round: true,
       });

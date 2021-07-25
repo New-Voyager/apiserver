@@ -151,7 +151,7 @@ describe('Tests: Game APIs', () => {
     expect(startedGame.muckLosingHand).toEqual(true);
   });
 
-  test('start a new game by player', async () => {
+  test.skip('start a new game by player', async () => {
     const playerUuid = await clubutils.createPlayer('player1', 'abc123');
     await createGameServer('1.2.0.6');
     const resp = await getClient(playerUuid).mutate({

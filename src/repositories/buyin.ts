@@ -299,17 +299,15 @@ export class BuyIn {
             `Buyin must be between ${this.game.buyInMin} and ${this.game.buyInMax}`
           );
         }
+        const prevStatus = await playerGameTrackerRepository.findOne({
+          game: {id: this.game.id},
+          playerId: this.player.id,
+        });
 
+        if (!prevStatus) {
+          throw new Error(`Player ${this.player.name} is not in the game`);
+        }
         if (this.game.clubCode) {
-          const prevStatus = await playerGameTrackerRepository.findOne({
-            game: {id: this.game.id},
-            playerId: this.player.id,
-          });
-
-          if (!prevStatus) {
-            throw new Error(`Player ${this.player.name} is not in the game`);
-          }
-
           // club game
           [playerStatus, approved] = await this.clubMemberBuyInApproval(
             amount,
@@ -376,8 +374,43 @@ export class BuyIn {
           }
         } else {
           // individual game
-          throw new Error('Individual game is not implemented yet');
+          if (this.player.id === this.game.hostId || this.player.bot) {
+            // approved
+            approved = true;
+          } else {
+            approved = false;
+          }
+
+          playerStatus = PlayerStatus.WAIT_FOR_BUYIN_APPROVAL;
+          if (approved) {
+            const updatedPlayerInGame = await this.approveBuyInRequest(
+              amount,
+              playerInGame,
+              transactionEntityManager
+            );
+            let stack = updatedPlayerInGame.stack;
+            let newUpdate: NewUpdate = NewUpdate.UNKNOWN_PLAYER_UPDATE;
+            newUpdate = NewUpdate.NEW_BUYIN;
+            // get current stack
+            const updated = await playerGameTrackerRepository.findOne({
+              game: {id: this.game.id},
+              playerId: this.player.id,
+            });
+            if (!updated) {
+              throw new Error('Unable to get the updated row');
+            }
+            stack = updated?.stack;
+            playerStatusChanged(
+              this.game,
+              this.player,
+              prevStatus.status,
+              newUpdate,
+              stack,
+              playerInGame.seatNo
+            );
+          }
         }
+
         if (approved) {
           logger.info(
             `************ [${this.game.gameCode}]: Player ${this.player.name} bot: ${this.player.bot} buyin is approved`
@@ -483,6 +516,9 @@ export class BuyIn {
     const clubResp = await getUserConnection().query(clubQuery, [
       this.player.id,
     ]);
+    if (clubResp.length === 0) {
+      return [];
+    }
     const clubCodes = clubResp.map(row => `'${row.clubCode}'`).join(',');
 
     let query = `
