@@ -375,7 +375,7 @@ describe('Hand server APIs', () => {
       clubCode: clubCode,
       gameCode: gameCode,
     });
-    expect(handHistory).toHaveLength(lastHand);
+    expect(handHistory).toHaveLength(2);
   });
 
   test('Handtest: Get all hand history pagination', async () => {
