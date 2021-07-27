@@ -31,6 +31,8 @@ import {
 
 import {Announcement} from '../src/entity/player/announcements';
 import {ClubTokenTransactions} from '../src/entity/player/accounting';
+import {CoinPurchaseTransaction, PlayerCoin, CoinConsumeTransaction} from '../src/entity/player/appcoin';
+
 import {
   ClubMessageInput,
   ClubHostMessages,
@@ -41,47 +43,6 @@ import {HostSeatChangeProcess} from '../src/entity/game/seatchange';
 export async function initializeSqlLite() {
   process.env.DB_USED = 'sqllite';
   await sqlliteConnection();
-}
-
-export async function sqlliteConnection1() {
-  const connection = await createConnection({
-    name: 'default',
-    type: 'sqlite',
-    database: ':memory:',
-    entities: [
-      Player,
-      Club,
-      ClubMember,
-      PokerGame,
-      HandHistory,
-      NextHandUpdates,
-      PlayerGameTracker,
-      ClubMessageInput,
-      GameServer,
-      TrackGameServer,
-      PokerGameUpdates,
-      GameReward,
-      GameRewardTracking,
-      Reward,
-      HighHand,
-      SavedHands,
-      ClubHostMessages,
-      Announcement,
-      ClubTokenTransactions,
-      HostSeatChangeProcess,
-      PlayerGameStats,
-      PlayerNotes,
-      PlayerHandStats,
-      ClubStats,
-      GameHistory,
-      HighHandHistory,
-      PlayersInGame,
-    ],
-    dropSchema: true,
-    synchronize: true,
-    logging: false,
-  });
-  return connection;
 }
 
 export async function sqlliteConnection() {
@@ -103,6 +64,9 @@ export async function sqlliteConnection() {
           ClubTokenTransactions,
           PlayerNotes,
           ClubMemberStat,
+          CoinPurchaseTransaction,
+          CoinConsumeTransaction,
+          PlayerCoin,
         ],
         dropSchema: true,
         synchronize: true,

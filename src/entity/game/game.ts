@@ -92,6 +92,25 @@ export class PokerGameUpdates {
   // janus room pin
   @Column({name: 'janus_room_pin', default: ''})
   public janusRoomPin!: string;
+
+  @Column({name: 'coins_used', default: 0, type: 'int'})
+  public coinsUsed!: number;
+
+  @DbAwareColumn({
+    name: 'next_coin_consume_time',
+    type: 'timestamp',
+    nullable: true,
+  })
+  public nextCoinConsumeTime!: Date;
+
+  @Column({name: 'appcoin_host_notified', default: false})
+  public appCoinHostNotified!: boolean;
+
+  @Column({name: 'appcoin_per_block', default: 0, type: 'int'}) // per consumption block
+  public appcoinPerBlock!: number;
+
+  @Column({name: 'appcoin_consume_block', default: 0, type: 'int'}) // game time (in seconds) to allow game runtime
+  public appcoinConsumeBlock!: number;
 }
 
 @Entity({name: 'poker_game'})
@@ -335,6 +354,8 @@ export class PokerGame {
   public highHandRank = 0;
 
   public pendingUpdates = false;
+
+  public nextCoinConsumeTime: Date | null = null;
 }
 
 @Entity({name: 'next_hand_updates'})

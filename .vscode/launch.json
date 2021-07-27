@@ -121,7 +121,7 @@
         "--runInBand",
         "./unit-tests",
         "--testNamePattern",
-        "Handtest: Save hand data"
+        "host buys coins after warning"
       ],
       "env": {
         "NODE_ENV": "test",

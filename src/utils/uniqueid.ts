@@ -1,14 +1,5 @@
-import Hashids from 'hashids/cjs';
-import {ClubRepository} from '@src/repositories/club';
-import {GameRepository} from '@src/repositories/game';
-import {shuffle} from 'lodash';
-
 export async function getClubCode(name: string): Promise<string> {
-  const hashIds = new Hashids(name, 6, 'ABCDEFGHIJKLMNOPQRSTWXYZ');
-  // let us get the count of total clubs
-  const clubCount = await ClubRepository.getClubCount();
-  const currentSeconds = new Date().getSeconds();
-  const clubCode = hashIds.encode(clubCount, currentSeconds);
+  const clubCode = getCode(5, {includeAlpha: true, includeNumbers: false});
   return 'c' + clubCode.toLowerCase();
 }
 

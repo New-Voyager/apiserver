@@ -63,6 +63,7 @@ import {
 } from '.';
 import {GameReward, GameRewardTracking} from '@src/entity/game/reward';
 import {ClubRepository} from './club';
+import {getAppSettings} from '@src/firebase';
 const logger = getLogger('game');
 
 class GameRepositoryImpl {
@@ -169,6 +170,11 @@ class GameRepositoryImpl {
           );
           const gameUpdates = new PokerGameUpdates();
           gameUpdates.gameID = savedGame.id;
+          const appSettings = getAppSettings();
+          gameUpdates.appcoinPerBlock = appSettings.gameCoinsPerBlock;
+          if (game.useAgora) {
+            gameUpdates.appcoinPerBlock += appSettings.agoraCoinsPerBlock;
+          }
           await gameUpdatesRepo.save(gameUpdates);
           saveUpdateTime = new Date().getTime() - saveUpdateTime;
           let pick = 0;
@@ -312,60 +318,6 @@ class GameRepositoryImpl {
     }
     return savedGame;
   }
-
-  // public async createPrivateGameForPlayer(
-  //   playerId: string,
-  //   input: any,
-  //   template = false
-  // ): Promise<PokerGame> {
-  //   const playerRepository = getUserRepository(Player);
-  //   const player = await playerRepository.findOne({uuid: playerId});
-  //   if (!player) {
-  //     throw new Error(`Player ${playerId} is not found`);
-  //   }
-
-  //   const gameServerRepository = getGameRepository(GameServer);
-  //   const gameServers = await gameServerRepository.find();
-  //   if (gameServers.length === 0) {
-  //     throw new Error('No game server is availabe');
-  //   }
-
-  //   // create the game
-  //   const game: PokerGame = {...input} as PokerGame;
-  //   const gameTypeStr: string = input['gameType'];
-  //   const gameType: GameType = GameType[gameTypeStr];
-  //   game.gameType = gameType;
-  //   game.isTemplate = template;
-  //   game.status = GameStatus.CONFIGURED;
-  //   game.hostId = player.id;
-  //   game.hostUuid = player.uuid;
-  //   game.hostName = player.name;
-  //   game.gameCode = await getGameCodeForPlayer();
-  //   game.privateGame = true;
-  //   game.startedAt = new Date();
-
-  //   let savedGame;
-  //   try {
-  //     const gameRespository = getGameRepository(PokerGame);
-  //     await getGameManager().transaction(async transactionEntityManager => {
-  //       savedGame = await transactionEntityManager
-  //         .getRepository(PokerGame)
-  //         .save(game);
-
-  //       const pick = savedGame.id % gameServers.length;
-  //       const trackServer = new TrackGameServer();
-  //       trackServer.game = savedGame;
-  //       trackServer.gameServer = gameServers[pick];
-  //       await transactionEntityManager
-  //         .getRepository(TrackGameServer)
-  //         .save(trackServer);
-  //     });
-  //   } catch (err) {
-  //     logger.error("Couldn't create game and retry again");
-  //     throw new Error("Couldn't create the game, please retry again");
-  //   }
-  //   return savedGame;
-  // }
 
   public async getGameByCode(
     gameCode: string,
@@ -895,6 +847,9 @@ class GameRepositoryImpl {
     game: PokerGame,
     transactionEntityManager?: EntityManager
   ): Promise<void> {
+    if (game.status !== GameStatus.ACTIVE) {
+      return;
+    }
     let playerGameTrackerRepository: Repository<PlayerGameTracker>;
     if (transactionEntityManager) {
       playerGameTrackerRepository = transactionEntityManager.getRepository(
@@ -927,8 +882,36 @@ class GameRepositoryImpl {
           // if game is active, there are more players in playing status, resume the game again
           if (
             row.status === GameStatus.ACTIVE &&
-            row.tableStatus === TableStatus.NOT_ENOUGH_PLAYERS
+            row.tableStatus === TableStatus.GAME_RUNNING
           ) {
+            // update next consume time
+            const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
+            const gameUpdateRow = await gameUpdatesRepo.findOne({
+              gameID: game.id,
+            });
+            if (!gameUpdateRow?.nextCoinConsumeTime) {
+              const freeTime = getAppSettings().freeTime;
+              const now = new Date();
+              const nextConsumeTime = new Date(now.getTime() + freeTime * 1000);
+              await gameUpdatesRepo.update(
+                {
+                  gameID: game.id,
+                },
+                {
+                  nextCoinConsumeTime: nextConsumeTime,
+                }
+              );
+              await Cache.updateGameCoinConsumeTime(
+                game.gameCode,
+                nextConsumeTime
+              );
+              logger.info(
+                `[${
+                  game.gameCode
+                }] Next coin consume time: ${nextConsumeTime.toISOString()}`
+              );
+            }
+
             // update game status
             await gameRepo.update(
               {
@@ -940,7 +923,6 @@ class GameRepositoryImpl {
             );
             // refresh the cache
             const gameUpdate = await Cache.getGame(game.gameCode, true);
-
             // resume the game
             await pendingProcessDone(
               gameUpdate.id,
@@ -1190,7 +1172,7 @@ class GameRepositoryImpl {
   ) {
     const repository = getGameRepository(PokerGame);
     const playersInGame = getGameRepository(PlayerGameTracker);
-    const game = await repository.findOne({where: {id: gameId}});
+    let game = await repository.findOne({where: {id: gameId}});
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
     }
@@ -1217,15 +1199,52 @@ class GameRepositoryImpl {
       .where('id = :id', {id: gameId})
       .execute();
 
-    // update the game server with new status
-    await changeGameStatus(game, status, game.tableStatus);
-
     // if game ended
     if (status === GameStatus.ENDED) {
+      // update cached game
+      game = await Cache.getGame(game.gameCode, true /** update */);
+      return status;
+    } else {
+      if (status === GameStatus.ACTIVE) {
+        const playerGameTrackerRepository = getGameManager().getRepository(
+          PlayerGameTracker
+        );
+        const playingCount = await playerGameTrackerRepository
+          .createQueryBuilder()
+          .where({
+            game: {id: game.id},
+            status: PlayerStatus.PLAYING,
+          })
+          .getCount();
+
+        if (playingCount <= 1) {
+          await getGameConnection()
+            .createQueryBuilder()
+            .update(PokerGame)
+            .set({
+              tableStatus: TableStatus.NOT_ENOUGH_PLAYERS,
+            })
+            .where('id = :id', {id: gameId})
+            .execute();
+        } else {
+          await getGameConnection()
+            .createQueryBuilder()
+            .update(PokerGame)
+            .set({
+              tableStatus: TableStatus.GAME_RUNNING,
+            })
+            .where('id = :id', {id: gameId})
+            .execute();
+        }
+        // update the game server with new status
+        await changeGameStatus(game, status, game.tableStatus);
+
+        game = await Cache.getGame(game.gameCode, true /** update */);
+
+        await this.restartGameIfNeeded(game);
+      }
     }
 
-    // update cached game
-    await Cache.getGame(game.gameCode, true /** update */);
     return status;
   }
 
@@ -1252,25 +1271,6 @@ class GameRepositoryImpl {
     gameId: number,
     transactionManager?: EntityManager
   ): Promise<Array<any>> {
-    // const query = fixQuery(`SELECT pgt.player_id as "playerId", pgt.player_name as name, pgt.player_uuid as "playerUuid", p.is_bot as "isBot",
-    //       buy_in as "buyIn", stack, status, seat_no as "seatNo", status,
-    //       buyin_exp_at as "buyInExpTime", break_time_exp_at as "breakExpTime", game_token AS "gameToken",
-    //       break_time_started_at as "breakStartedTime",
-    //       run_it_twice_prompt as "runItTwicePrompt",
-    //       muck_losing_hand as "muckLosingHand",
-    //       missed_blind as "missedBlind",
-    //       posted_blind as "postedBlind"
-    //       FROM
-    //       player_game_tracker pgt
-    //       WHERE
-    //       pgt.pgt_game_id = ? AND pgt.seat_no <> 0`);
-    // let resp;
-    // if (transactionManager) {
-    //   resp = await transactionManager.query(query, [gameId]);
-    // } else {
-    //   resp = await getGameConnection().query(query, [gameId]);
-    // }
-
     let playerGameTrackerRepo;
     if (transactionManager) {
       playerGameTrackerRepo = transactionManager.getRepository(
