@@ -241,6 +241,9 @@ export class PokerGame {
   @Column({name: 'show_hand_rank', default: false})
   public showHandRank!: boolean;
 
+  @Column({name: 'app_coins_needed', default: false})
+  public appCoinsNeeded!: boolean;
+
   @Column({
     name: 'rake_percentage',
     type: 'decimal',
