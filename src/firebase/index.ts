@@ -297,6 +297,7 @@ export interface AppSettings {
   agoraEnabled: boolean;
   janusEnabled: boolean;
   consumeTime: number;
+  notifyHostTimeWindow: number; // notify host before time expires
   gameCoinsPerBlock: number;
   agoraCoinsPerBlock: number;
 }
@@ -304,6 +305,7 @@ export interface AppSettings {
 // get from firebase and update periodically
 let settings: AppSettings = {
   freeTime: 15 * 60, // seconds
+  notifyHostTimeWindow: 5 * 60, // seconds
   agoraEnabled: true,
   janusEnabled: true,
   consumeTime: 15 * 60, // every 15 minutes
@@ -313,6 +315,18 @@ let settings: AppSettings = {
 
 export function getAppSettings(): AppSettings {
   return settings;
+}
+
+export function resetAppSettings() {
+  settings = {
+    freeTime: 15 * 60, // seconds
+    agoraEnabled: true,
+    janusEnabled: true,
+    consumeTime: 15 * 60, // every 15 minutes
+    gameCoinsPerBlock: 3, // 3 coins per 15 minutes
+    agoraCoinsPerBlock: 3, // 3 coins per 15 minutes
+    notifyHostTimeWindow: 10 * 60,
+  };
 }
 
 const Firebase = new FirebaseClass();

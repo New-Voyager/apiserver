@@ -1,4 +1,5 @@
 import {HandHistory} from '@src/entity/history/hand';
+import {getAppSettings, resetAppSettings} from '@src/firebase';
 import {DevRepository} from '@src/repositories/dev';
 import {HandRepository} from '@src/repositories/hand';
 import {getLogger} from '@src/utils/log';
@@ -351,6 +352,38 @@ export async function generateBotScript(req: any, resp: any) {
   } catch (e) {
     resp.status(500).send({errors: e.toString()});
   }
+}
+
+export async function setServerSettings(req: any, resp: any) {
+  const payload = req.body;
+  const gameBlockTime = payload['game-block-time'];
+  const notifyHostTimeWindow = payload['notify-host-time-window'];
+  const gameCoinsPerBlock = payload['game-coins-per-block'];
+  const freeTime = payload['free-time'];
+
+  const appSettings = getAppSettings();
+  if (gameBlockTime) {
+    appSettings.consumeTime = gameBlockTime;
+  }
+
+  if (notifyHostTimeWindow) {
+    appSettings.notifyHostTimeWindow = notifyHostTimeWindow;
+  }
+
+  if (gameCoinsPerBlock) {
+    appSettings.gameCoinsPerBlock = gameCoinsPerBlock;
+  }
+
+  if (freeTime) {
+    appSettings.freeTime = freeTime;
+  }
+  resp.status(200).send({status: 'OK'});
+}
+
+export async function resetServerSettings(req: any, resp: any) {
+  logger.info('Reset server settings');
+  resetAppSettings();
+  resp.status(200).send({status: 'OK'});
 }
 
 export async function generateBotScriptDebugHand(req: any, resp: any) {
