@@ -219,7 +219,7 @@ describe('Hand Tests', () => {
     }
   });
 
-  test('Get specific hand history', async () => {
+  test.skip('Get specific hand history', async () => {
     // try {
     const [
       owner,
