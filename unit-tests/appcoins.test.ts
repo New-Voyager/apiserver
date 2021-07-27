@@ -88,6 +88,7 @@ const holdemGameInput = {
   actionTime: 30,
   muckLosingHand: true,
   rewardIds: [] as any,
+  appCoinsNeeded: true,
 };
 
 beforeAll(async done => {
@@ -182,7 +183,7 @@ async function defaultHandData(
   return data;
 }
 
-describe.skip('Appcoin tests', () => {
+describe('Appcoin tests', () => {
   beforeEach(async done => {
     await resetDB();
     done();

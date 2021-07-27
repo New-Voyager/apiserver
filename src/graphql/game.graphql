@@ -104,6 +104,7 @@ input GameCreateInput {
   allowRabbitHunt: Boolean
   showHandRank: Boolean
   useAgora: Boolean
+  appCoinsNeeded: Boolean
 }
 
 type SeatInfo {
