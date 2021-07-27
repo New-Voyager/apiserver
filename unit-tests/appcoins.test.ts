@@ -182,7 +182,7 @@ async function defaultHandData(
   return data;
 }
 
-describe('Appcoin tests', () => {
+describe.skip('Appcoin tests', () => {
   beforeEach(async done => {
     await resetDB();
     done();

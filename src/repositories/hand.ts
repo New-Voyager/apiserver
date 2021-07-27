@@ -387,18 +387,22 @@ class HandRepositoryImpl {
       }
 
       try {
-        const continueGame = await AppCoinRepository.canGameContinue(
-          game.gameCode
-        );
-        if (!continueGame) {
-          // end the game in the update
-          logger.info(`[${game.gameCode}] will end due insufficient coins`);
+        if (game.appCoinsNeeded) {
+          const continueGame = await AppCoinRepository.canGameContinue(
+            game.gameCode
+          );
+          if (!continueGame) {
+            // end the game in the update
+            logger.info(
+              `[${game.gameCode}] will end due to insufficient coins`
+            );
 
-          // set pending updates true
-          await Cache.updateGamePendingUpdates(game.gameCode, true);
-          const player = await Cache.getPlayer(game.hostUuid);
+            // set pending updates true
+            await Cache.updateGamePendingUpdates(game.gameCode, true);
+            const player = await Cache.getPlayer(game.hostUuid);
 
-          GameRepository.endGameNextHand(player, game.id);
+            GameRepository.endGameNextHand(player, game.id);
+          }
         }
       } catch (err) {}
       //logger.info(`Result: ${JSON.stringify(saveResult)}`);
