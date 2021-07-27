@@ -17,7 +17,7 @@
     "unit-test-specific": "NODE_ENV=unit-test DB_USED=sqllite jest --forceExit --runInBand ./unit-tests \"--testNamePattern\" \"app coin consumption\"",
     "test-specific": "NODE_ENV=test jest --runInBand ./tests \"--testNamePattern\" \"get specific game server without club\"",
     "test-server-watch": "NODE_ENV=test NATS_URL=${NATS_URL:-'nats://localhost:4222'} DB_USED=sqllite tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
-    "test-server": "NODE_ENV=test NATS_URL=${NATS_URL:-'nats://localhost:4222'} DB_USED=sqllite node build/index.js",
+    "test-server": "NODE_ENV=test NATS_URL=${NATS_URL:-'nats://nats:4222'} DB_USED=sqllite node build/index.js",
     "run-server": "node build/index.js",
     "test-server-windows": "test-server.bat",
     "test-windows": "set NODE_ENV=test && jest --runInBand ./tests",
