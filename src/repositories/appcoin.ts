@@ -107,9 +107,11 @@ class AppCoinRepositoryImpl {
     if (playerCoins == null) {
       playerCoins = new PlayerCoin();
       playerCoins.playerUuid = playerUuid;
+      playerCoins.totalCoinsAvailable = 0;
+      playerCoins.totalCoinsPurchased = 0;
     }
-    playerCoins.totalCoinsAvailable = amount;
-    playerCoins.totalCoinsPurchased = amount;
+    playerCoins.totalCoinsAvailable += amount;
+    playerCoins.totalCoinsPurchased += amount;
     playerCoinRepo.save(playerCoins);
     return;
   }

@@ -307,7 +307,7 @@ describe('Appcoin tests', () => {
       pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
       expect(pendingUpdates).toBeFalsy();
       await sleep(10000);
-      AppCoinRepository.buyCoins(owner, 10);
+      await AppCoinRepository.buyCoins(owner, 10);
       resp = await postHand(gameId, data.handNum, data);
       pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
       expect(pendingUpdates).toBeFalsy();
