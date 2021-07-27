@@ -111,6 +111,23 @@ class GameCache {
     }
   }
 
+  /**
+   * Update the cache with next coin consume time.
+   * @param gameCode
+   * @param nextCoinConsumeTime
+   */
+  public async updateGameCoinConsumeTime(
+    gameCode: string,
+    coinConsumeTime: Date
+  ) {
+    const getResp = await this.getCache(`gameCache-${gameCode}`);
+    if (getResp.success && getResp.data) {
+      const game: PokerGame = JSON.parse(getResp.data) as PokerGame;
+      game.nextCoinConsumeTime = coinConsumeTime;
+      await this.setCache(`gameCache-${gameCode}`, JSON.stringify(game));
+    }
+  }
+
   public async observeGame(gameCode: string, player: Player): Promise<boolean> {
     const setResp = await this.setCache(
       `observersCache-${gameCode}-${player.uuid}`,
@@ -155,7 +172,16 @@ class GameCache {
   ): Promise<PokerGame> {
     const getResp = await this.getCache(`gameCache-${gameCode}`);
     if (getResp.success && getResp.data && !update) {
-      return JSON.parse(getResp.data) as PokerGame;
+      let ret = JSON.parse(getResp.data) as PokerGame;
+      let oldConsumeTime = ret.nextCoinConsumeTime;
+      if (!oldConsumeTime) {
+        ret.nextCoinConsumeTime = null;
+      } else {
+        ret.nextCoinConsumeTime = new Date(
+          Date.parse(oldConsumeTime.toString())
+        );
+      }
+      return ret;
     } else {
       let repo: Repository<PokerGame>;
       if (transactionManager) {
@@ -175,6 +201,14 @@ class GameCache {
         const oldGame = JSON.parse(getResp.data) as PokerGame;
         game.highHandRank = oldGame.highHandRank;
         game.pendingUpdates = oldGame.pendingUpdates;
+        let oldConsumeTime = oldGame.nextCoinConsumeTime;
+        if (!oldConsumeTime) {
+          game.nextCoinConsumeTime = null;
+        } else {
+          game.nextCoinConsumeTime = new Date(
+            Date.parse(oldConsumeTime.toString())
+          );
+        }
       }
 
       await this.setCache(`gameCache-${gameCode}`, JSON.stringify(game));

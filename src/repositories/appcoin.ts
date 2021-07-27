@@ -1,10 +1,21 @@
 import {
-  CoinTransaction,
+  CoinConsumeTransaction,
+  CoinPurchaseTransaction,
   PlayerCoin,
   StoreType,
 } from '@src/entity/player/appcoin';
-import {getUserManager, getUserRepository} from '.';
+import {Cache} from '@src/cache';
+import {getGameRepository, getUserManager, getUserRepository} from '.';
+import {trimEnd} from 'lodash';
+import {PokerGameUpdates} from '@src/entity/game/game';
+import {loggers} from 'winston';
+import {getLogger} from '@src/utils/log';
+import {Player} from '@src/entity/player/player';
+import {getAppSettings} from '@src/firebase';
 const crypto = require('crypto');
+
+const COIN_PURCHASE_NOTIFICATION_TIME = 10;
+const logger = getLogger('appcoins');
 
 class AppCoinRepositoryImpl {
   public async purchaseCoins(
@@ -19,9 +30,9 @@ class AppCoinRepositoryImpl {
     return await getUserManager().transaction(
       async transactionEntityManager => {
         const coinTransactionRepo = transactionEntityManager.getRepository(
-          CoinTransaction
+          CoinPurchaseTransaction
         );
-        const coinTrans = new CoinTransaction();
+        const coinTrans = new CoinPurchaseTransaction();
         coinTrans.productId = productId;
         coinTrans.storeType = storeType;
         coinTrans.playerUuid = playerUuid;
@@ -89,6 +100,22 @@ class AppCoinRepositoryImpl {
     }
   }
 
+  // this is a unit-test method
+  public async buyCoins(playerUuid: string, amount: number): Promise<void> {
+    const playerCoinRepo = getUserRepository(PlayerCoin);
+    let playerCoins = await playerCoinRepo.findOne({playerUuid: playerUuid});
+    if (playerCoins == null) {
+      playerCoins = new PlayerCoin();
+      playerCoins.playerUuid = playerUuid;
+      playerCoins.totalCoinsAvailable = 0;
+      playerCoins.totalCoinsPurchased = 0;
+    }
+    playerCoins.totalCoinsAvailable += amount;
+    playerCoins.totalCoinsPurchased += amount;
+    playerCoinRepo.save(playerCoins);
+    return;
+  }
+
   public async consumeCoins(
     playerUuid: string,
     coinsConsumed: number
@@ -114,6 +141,155 @@ class AppCoinRepositoryImpl {
         .execute();
       return totalCoinsAvailable;
     }
+  }
+
+  public async canGameContinue(gameCode: string) {
+    // first get the game from cache
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      return false;
+    }
+
+    // we may support public games in the future
+    if (!game.nextCoinConsumeTime) {
+      return false;
+    }
+
+    const now = new Date();
+    const diff = game.nextCoinConsumeTime.getTime() - now.getTime();
+    const diffInSecs = Math.ceil(diff / 1000);
+
+    if (diffInSecs > COIN_PURCHASE_NOTIFICATION_TIME) {
+      return true;
+    }
+    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
+    const gameUpdates = await gameUpdatesRepo.findOne({
+      gameID: game.id,
+    });
+    if (!gameUpdates) {
+      return false;
+    }
+    if (diffInSecs > 0 && diffInSecs <= COIN_PURCHASE_NOTIFICATION_TIME) {
+      if (gameUpdates.appCoinHostNotified) {
+        // we already notified the host
+        return true;
+      }
+    }
+
+    // get app coins from the host or club owner
+    let appCoinPlayerId;
+    let appCoinPlayerUuid;
+
+    if (game.clubCode) {
+      const club = await Cache.getClub(game.clubCode);
+      if (!club || !club.owner) {
+        logger.error(`Club [${game.clubCode}] is not found`);
+        return false;
+      }
+      const owner: Player | undefined = await Promise.resolve(club.owner);
+      if (!owner) {
+        logger.error(`Club [${game.clubCode}]. Owner is not found`);
+        return false;
+      }
+      appCoinPlayerId = owner.id;
+      appCoinPlayerUuid = owner.uuid;
+    } else {
+      appCoinPlayerId = game.hostId;
+      appCoinPlayerUuid = game.hostUuid;
+    }
+
+    const ret = await getUserManager().transaction(async tranManager => {
+      // get player coins
+      const coinRepo = tranManager.getRepository(PlayerCoin);
+      const appCoin = await coinRepo.findOne({
+        playerUuid: appCoinPlayerUuid,
+      });
+      let totalCoinsAvailable = 0;
+      if (appCoin) {
+        // no app coins available for the user
+        totalCoinsAvailable = appCoin.totalCoinsAvailable;
+      }
+
+      if (diffInSecs > 0 && diffInSecs <= COIN_PURCHASE_NOTIFICATION_TIME) {
+        if (totalCoinsAvailable < gameUpdates.appcoinPerBlock) {
+          // notify the host and extend the game for another 5 minutes
+          const nextCoinConsumeTime = new Date(
+            now.getTime() + COIN_PURCHASE_NOTIFICATION_TIME * 1000
+          );
+          await gameUpdatesRepo.update(
+            {
+              gameID: game.id,
+            },
+            {
+              nextCoinConsumeTime: nextCoinConsumeTime,
+              appCoinHostNotified: true,
+            }
+          );
+          logger.info(
+            `[${game.gameCode}] Host is notified to make coin purchase`
+          );
+          return true;
+        }
+      }
+
+      if (diffInSecs > 0) {
+        return true;
+      }
+
+      // do we have enough coins ??
+      // not enough coins, return false. pending updates: true, end the game
+      if (totalCoinsAvailable < gameUpdates.appcoinPerBlock) {
+        // notify the host that the game is ended due to low app coins
+        return false;
+      }
+      const appSettings = getAppSettings();
+      // consume app coins
+      const nextCoinConsumeTime = new Date(
+        now.getTime() + appSettings.consumeTime * 1000
+      );
+      await gameUpdatesRepo
+        .createQueryBuilder()
+        .update()
+        .set({
+          coinsUsed: () => `coins_used + ${gameUpdates.appcoinPerBlock}`,
+          nextCoinConsumeTime: nextCoinConsumeTime,
+        })
+        .where({
+          gameID: game.id,
+        })
+        .execute();
+      await Cache.updateGameCoinConsumeTime(game.gameCode, nextCoinConsumeTime);
+      // subtract from user account
+      await coinRepo
+        .createQueryBuilder()
+        .update()
+        .set({
+          totalCoinsAvailable: () =>
+            `total_coins_available - ${gameUpdates.appcoinPerBlock}`,
+        })
+        .where({
+          playerUuid: appCoinPlayerUuid,
+        })
+        .execute();
+
+      // add an entry in transaction record
+      const consumeCoinsRepo = tranManager.getRepository(
+        CoinConsumeTransaction
+      );
+      const consumeCoins = new CoinConsumeTransaction();
+      consumeCoins.playerId = appCoinPlayerId;
+      consumeCoins.playerUuid = appCoinPlayerUuid;
+      consumeCoins.gameCode = game.gameCode;
+      consumeCoins.coinsSpent = gameUpdates.appcoinPerBlock;
+      consumeCoins.purchaseDate = new Date();
+      await consumeCoinsRepo.save(consumeCoins);
+      logger.info(
+        `[${game.gameCode}] subtracted ${consumeCoins.coinsSpent} from player: ${appCoinPlayerUuid}`
+      );
+      return true;
+    });
+
+    return ret;
   }
 }
 

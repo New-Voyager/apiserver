@@ -21,13 +21,13 @@ export enum StoreType {
   STRIPE_PAYMENT,
 }
 
-@Entity({name: 'coin_transactions'})
-export class CoinTransaction {
+@Entity({name: 'coin_purchase_transactions'})
+export class CoinPurchaseTransaction {
   @PrimaryGeneratedColumn()
   public id!: number;
 
   // player who made the purchase
-  @Index('coin-tran-uuid-idx')
+  @Index('coin-tran-player-uuid-idx')
   @Column({name: 'player_uuid'})
   public playerUuid!: string;
 
@@ -46,7 +46,7 @@ export class CoinTransaction {
   @Column({name: 'refunded'})
   public refunded!: boolean;
 
-  @Index('coin-tran-receipt-hash')
+  @Index('coin-tran-receipt-hash-idx')
   @Column({name: 'receipt_hash', nullable: true})
   public receiptHash!: string;
 
@@ -87,4 +87,32 @@ export class PlayerCoin {
     onUpdate: 'CURRENT_TIMESTAMP',
   })
   public updatedAt!: Date;
+}
+
+@Entity({name: 'coin_consume_transactions'})
+export class CoinConsumeTransaction {
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  // player who made the purchase
+  @Index('coin-consume-player-id-idx')
+  @Column({name: 'player_id', type: 'int'})
+  public playerId!: number;
+
+  // player who made the purchase
+  @Index('coin-consume-player-uuid-idx')
+  @Column({name: 'player_uuid'})
+  public playerUuid!: string;
+
+  @Column({name: 'game_code', nullable: true})
+  public gameCode!: string;
+
+  @Column({name: 'product_sku', nullable: true})
+  public productSku!: string;
+
+  @Column({name: 'coins_spent', nullable: false, type: 'int'})
+  public coinsSpent!: number;
+
+  @DbAwareColumn({name: 'consumed_time', type: 'timestamp'})
+  public purchaseDate!: Date;
 }

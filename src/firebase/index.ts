@@ -292,5 +292,28 @@ class FirebaseClass {
   }
 }
 
+export interface AppSettings {
+  freeTime: number;
+  agoraEnabled: boolean;
+  janusEnabled: boolean;
+  consumeTime: number;
+  gameCoinsPerBlock: number;
+  agoraCoinsPerBlock: number;
+}
+
+// get from firebase and update periodically
+let settings: AppSettings = {
+  freeTime: 15 * 60, // seconds
+  agoraEnabled: true,
+  janusEnabled: true,
+  consumeTime: 15 * 60, // every 15 minutes
+  gameCoinsPerBlock: 3, // 3 coins per 15 minutes
+  agoraCoinsPerBlock: 3, // 3 coins per 15 minutes
+};
+
+export function getAppSettings(): AppSettings {
+  return settings;
+}
+
 const Firebase = new FirebaseClass();
 export {Firebase};

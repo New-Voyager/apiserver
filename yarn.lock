@@ -4010,11 +4010,6 @@
   "resolved" "https://registry.npmjs.org/hash-stream-validation/-/hash-stream-validation-0.2.4.tgz"
   "version" "0.2.4"
 
-"hashids@^2.2.1":
-  "integrity" "sha512-+hQeKWwpSDiWFeu/3jKUvwboE4Z035gR6FnpscbHPOEEjCbgv2px9/Mlb3O0nOTRyZOw4MMFRYfVL3zctOV6OQ=="
-  "resolved" "https://registry.npmjs.org/hashids/-/hashids-2.2.1.tgz"
-  "version" "2.2.1"
-
 "highlight.js@^10.0.0":
   "integrity" "sha512-8mlRcn5vk/r4+QcqerapwBYTe+iPL5ih6xrNylxrnBdHQiijDETfXX7VIxC3UiCRiINBJfANBAsPzAvRQj8RpQ=="
   "resolved" "https://registry.npmjs.org/highlight.js/-/highlight.js-10.6.0.tgz"
