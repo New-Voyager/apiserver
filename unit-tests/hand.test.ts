@@ -333,54 +333,49 @@ describe('Hand server APIs', () => {
   });
 
   test('Handtest: Get all hand history', async () => {
-    try {
-      const [
-        owner,
-        clubCode,
-        clubId,
-        playerUuids,
-        playerIds,
-      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-      //const rewardId = await createReward(owner, clubCode);
-      const [gameCode, gameId] = await setupGameEnvironment(
-        owner,
-        clubCode,
-        playerUuids,
-        100
+    const [
+      owner,
+      clubCode,
+      clubId,
+      playerUuids,
+      playerIds,
+    ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+    //const rewardId = await createReward(owner, clubCode);
+    const [gameCode, gameId] = await setupGameEnvironment(
+      owner,
+      clubCode,
+      playerUuids,
+      100
+    );
+    // const rewardTrackId = await getRewardTrack(
+    //   playerUuids[0],
+    //   gameCode,
+    //   rewardId.toString()
+    // );
+
+    const files = await glob.sync('**/*.json', {
+      onlyFiles: false,
+      cwd: 'highhand-results',
+      deep: 5,
+    });
+
+    let lastHand = 0;
+    for await (const file of files) {
+      const data = await defaultHandData(
+        file,
+        gameId,
+        //rewardTrackId,
+        playerIds
       );
-      // const rewardTrackId = await getRewardTrack(
-      //   playerUuids[0],
-      //   gameCode,
-      //   rewardId.toString()
-      // );
-
-      const files = await glob.sync('**/*.json', {
-        onlyFiles: false,
-        cwd: 'highhand-results',
-        deep: 5,
-      });
-
-      let lastHand = 0;
-      for await (const file of files) {
-        const data = await defaultHandData(
-          file,
-          gameId,
-          //rewardTrackId,
-          playerIds
-        );
-        const resp = await postHand(gameId, data.handNum, data);
-        expect(resp).not.toBe(null);
-        lastHand += 1;
-      }
-      const handHistory = await getAllHandHistory(playerUuids[0], {
-        clubCode: clubCode,
-        gameCode: gameCode,
-      });
-      expect(handHistory).toHaveLength(lastHand);
-    } catch (err) {
-      logger.error(JSON.stringify(err));
-      expect(true).toBeFalsy();
+      const resp = await postHand(gameId, data.handNum, data);
+      expect(resp).not.toBe(null);
+      lastHand += 1;
     }
+    const handHistory = await getAllHandHistory(playerUuids[0], {
+      clubCode: clubCode,
+      gameCode: gameCode,
+    });
+    expect(handHistory).toHaveLength(lastHand);
   });
 
   test('Handtest: Get all hand history pagination', async () => {

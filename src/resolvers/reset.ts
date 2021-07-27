@@ -67,6 +67,15 @@ export async function resetGames() {
 
 export async function resetDB() {
   try {
+    await getHistoryManager().transaction(async transactionEntityManager => {
+      await deleteAll('club_stats', transactionEntityManager);
+      await deleteAll('game_history', transactionEntityManager);
+      await deleteAll('players_in_game', transactionEntityManager);
+      await deleteAll('high_hand_history', transactionEntityManager);
+      await deleteAll('player_game_stats', transactionEntityManager);
+      await deleteAll('player_hand_stats', transactionEntityManager);
+      await deleteAll('hand_history', transactionEntityManager);
+    });
     //logger.info('****** STARTING TRANSACTION TO RESET tables');
     await getUserManager().transaction(async transactionEntityManager => {
       await deleteAll('player_notes', transactionEntityManager);
@@ -80,6 +89,9 @@ export async function resetDB() {
       await deleteAll('Club', transactionEntityManager);
       await deleteAll('Player', transactionEntityManager);
       await deleteAll('club_member_stat', transactionEntityManager);
+      await deleteAll('coin_purchase_transactions', transactionEntityManager);
+      await deleteAll('player_coins', transactionEntityManager);
+      await deleteAll('coin_consume_transactions', transactionEntityManager);
     });
     await getGameManager().transaction(async transactionEntityManager => {
       await deleteAll('host_seat_change_process', transactionEntityManager);
@@ -94,15 +106,6 @@ export async function resetDB() {
       if (!isGameServerEnabled()) {
         await deleteAll('game_server', transactionEntityManager);
       }
-    });
-    await getHistoryManager().transaction(async transactionEntityManager => {
-      await deleteAll('club_stats', transactionEntityManager);
-      await deleteAll('game_history', transactionEntityManager);
-      await deleteAll('players_in_game', transactionEntityManager);
-      await deleteAll('high_hand_history', transactionEntityManager);
-      await deleteAll('player_game_stats', transactionEntityManager);
-      await deleteAll('player_hand_stats', transactionEntityManager);
-      await deleteAll('hand_history', transactionEntityManager);
     });
   } catch (err) {
     logger.error(`Failed to reset database. ${err.toString()}`);
