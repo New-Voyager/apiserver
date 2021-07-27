@@ -1203,6 +1203,8 @@ class GameRepositoryImpl {
     if (status === GameStatus.ENDED) {
       // update cached game
       game = await Cache.getGame(game.gameCode, true /** update */);
+      // update the game server with new status
+      await changeGameStatus(game, status, TableStatus.WAITING_TO_BE_STARTED);
       return status;
     } else {
       if (status === GameStatus.ACTIVE) {
