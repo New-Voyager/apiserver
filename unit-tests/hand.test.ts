@@ -174,7 +174,7 @@ async function defaultHandData(
   return data;
 }
 
-describe('Hand server APIs', () => {
+describe.skip('Hand server APIs', () => {
   beforeEach(async done => {
     await resetDB();
     done();
