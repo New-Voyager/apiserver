@@ -348,12 +348,19 @@ class GameRepositoryImpl {
   }
 
   public async getLiveGames(playerId: string) {
-    let clubGames = await this.getClubGames(playerId);
-    let playerGames = await this.getPlayerGames(playerId);
+    const clubGames = await this.getClubGames(playerId);
+    const playerGames = await this.getPlayerGames(playerId);
 
-    let liveGames = new Array<any>();
+    const liveGames = new Array<any>();
     liveGames.push(...clubGames);
-    liveGames.push(...playerGames);
+
+    const existingGames = clubGames.map(x => x.gameCode);
+    for (const playerGame of playerGames) {
+      const i = existingGames.find(playerGame.gameCode);
+      if (i === -1) {
+        liveGames.push(playerGame);
+      }
+    }
 
     return liveGames;
   }

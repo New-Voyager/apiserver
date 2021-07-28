@@ -235,6 +235,7 @@ export class BuyIn {
 
     await GameRepository.restartGameIfNeeded(
       this.game,
+      false,
       transactionEntityManager
     );
   }
