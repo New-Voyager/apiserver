@@ -353,7 +353,14 @@ class GameRepositoryImpl {
 
     let liveGames = new Array<any>();
     liveGames.push(...clubGames);
-    liveGames.push(...playerGames);
+
+    const existingGames = clubGames.map(x => x.gameCode);
+    for (const playerGame of playerGames) {
+      const i = existingGames.indexOf(playerGame.gameCode);
+      if (i === -1) {
+        liveGames.push(playerGame);
+      }
+    }
 
     return liveGames;
   }
@@ -661,6 +668,11 @@ class GameRepositoryImpl {
       // continue to run wait list seating
       waitlistMgmt.runWaitList();
     }
+
+    if (playerInGame.status === PlayerStatus.PLAYING) {
+      await GameRepository.restartGameIfNeeded(game, true);
+    }
+
     timeTaken = new Date().getTime() - startTime;
     logger.info(`joingame server notification time taken: ${timeTaken}`);
     startTime = new Date().getTime();
@@ -839,12 +851,13 @@ class GameRepositoryImpl {
     if (nextHandUpdate) {
       await nextHandUpdatesRepository.delete({id: nextHandUpdate.id});
     }
-    await this.restartGameIfNeeded(game);
+    await this.restartGameIfNeeded(game, true);
     return true;
   }
 
   public async restartGameIfNeeded(
     game: PokerGame,
+    processPendingUpdates: boolean,
     transactionEntityManager?: EntityManager
   ): Promise<void> {
     if (game.status !== GameStatus.ACTIVE) {
@@ -879,10 +892,28 @@ class GameRepositoryImpl {
         if (rows) {
           const row = rows[0];
 
+          let tableStatus = row.tableStatus;
+          if (row.tableStatus === TableStatus.NOT_ENOUGH_PLAYERS) {
+            if (game.gameStarted) {
+              await getGameConnection()
+                .createQueryBuilder()
+                .update(PokerGame)
+                .set({
+                  tableStatus: TableStatus.GAME_RUNNING,
+                })
+                .where('id = :id', {id: game.id})
+                .execute();
+
+              tableStatus = TableStatus.GAME_RUNNING;
+
+              game = await Cache.getGame(game.gameCode, true);
+            }
+          }
+
           // if game is active, there are more players in playing status, resume the game again
           if (
             row.status === GameStatus.ACTIVE &&
-            row.tableStatus === TableStatus.GAME_RUNNING
+            tableStatus === TableStatus.GAME_RUNNING
           ) {
             // update next consume time
             const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
@@ -923,12 +954,15 @@ class GameRepositoryImpl {
             );
             // refresh the cache
             const gameUpdate = await Cache.getGame(game.gameCode, true);
-            // resume the game
-            await pendingProcessDone(
-              gameUpdate.id,
-              gameUpdate.status,
-              gameUpdate.tableStatus
-            );
+
+            if (processPendingUpdates) {
+              // resume the game
+              await pendingProcessDone(
+                gameUpdate.id,
+                gameUpdate.status,
+                gameUpdate.tableStatus
+              );
+            }
           }
         }
       } catch (err) {
@@ -1237,13 +1271,22 @@ class GameRepositoryImpl {
             })
             .where('id = :id', {id: gameId})
             .execute();
+
+          await getGameConnection()
+            .createQueryBuilder()
+            .update(PokerGame)
+            .set({
+              gameStarted: true,
+            })
+            .where('id = :id', {id: gameId})
+            .execute();
         }
         // update the game server with new status
         await changeGameStatus(game, status, game.tableStatus);
 
         game = await Cache.getGame(game.gameCode, true /** update */);
 
-        await this.restartGameIfNeeded(game);
+        await this.restartGameIfNeeded(game, false);
       }
     }
 
@@ -1848,7 +1891,7 @@ class GameRepositoryImpl {
     // get number of players in the seats
     const count = await gameRepo.count({
       where: {
-        host: {uuid: playerUuid},
+        hostUuid: playerUuid,
         status: In([GameStatus.ACTIVE, GameStatus.CONFIGURED]),
       },
     });
