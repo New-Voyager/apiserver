@@ -594,7 +594,6 @@ class GameRepositoryImpl {
           }
         }
 
-        // we need 5 bytes to scramble 5 cards
         if (playerInGame.stack > 0) {
           playerInGame.status = PlayerStatus.PLAYING;
         } else {
@@ -839,12 +838,13 @@ class GameRepositoryImpl {
     if (nextHandUpdate) {
       await nextHandUpdatesRepository.delete({id: nextHandUpdate.id});
     }
-    await this.restartGameIfNeeded(game);
+    await this.restartGameIfNeeded(game, true);
     return true;
   }
 
   public async restartGameIfNeeded(
     game: PokerGame,
+    processPendingUpdates: boolean,
     transactionEntityManager?: EntityManager
   ): Promise<void> {
     if (game.status !== GameStatus.ACTIVE) {
@@ -923,12 +923,15 @@ class GameRepositoryImpl {
             );
             // refresh the cache
             const gameUpdate = await Cache.getGame(game.gameCode, true);
-            // resume the game
-            await pendingProcessDone(
-              gameUpdate.id,
-              gameUpdate.status,
-              gameUpdate.tableStatus
-            );
+
+            if (processPendingUpdates) {
+              // resume the game
+              await pendingProcessDone(
+                gameUpdate.id,
+                gameUpdate.status,
+                gameUpdate.tableStatus
+              );
+            }
           }
         }
       } catch (err) {
@@ -1243,7 +1246,7 @@ class GameRepositoryImpl {
 
         game = await Cache.getGame(game.gameCode, true /** update */);
 
-        await this.restartGameIfNeeded(game);
+        await this.restartGameIfNeeded(game, false);
       }
     }
 
