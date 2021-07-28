@@ -175,7 +175,7 @@ run-pg:
 	docker-compose -f docker-compose-pg.yaml up --detach 
 
 .PHONY: run-all
-run-all: run-pg run-nats run-redis
+run-all: create-network run-pg run-nats run-redis
 	echo 'All services are running'
 
 .PHONY: stop-all
