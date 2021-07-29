@@ -892,19 +892,19 @@ class GameRepositoryImpl {
         if (rows) {
           const row = rows[0];
 
-          let tableStatus = row.tableStatus;
-          if (row.tableStatus === TableStatus.NOT_ENOUGH_PLAYERS) {
+          const prevTableStatus = row.tableStatus;
+          let newTableStatus = prevTableStatus;
+          if (prevTableStatus === TableStatus.NOT_ENOUGH_PLAYERS) {
             if (game.gameStarted) {
+              newTableStatus = TableStatus.GAME_RUNNING;
               await getGameConnection()
                 .createQueryBuilder()
                 .update(PokerGame)
                 .set({
-                  tableStatus: TableStatus.GAME_RUNNING,
+                  tableStatus: newTableStatus,
                 })
                 .where('id = :id', {id: game.id})
                 .execute();
-
-              tableStatus = TableStatus.GAME_RUNNING;
 
               game = await Cache.getGame(game.gameCode, true);
             }
@@ -913,7 +913,7 @@ class GameRepositoryImpl {
           // if game is active, there are more players in playing status, resume the game again
           if (
             row.status === GameStatus.ACTIVE &&
-            tableStatus === TableStatus.GAME_RUNNING
+            newTableStatus === TableStatus.GAME_RUNNING
           ) {
             // update next consume time
             const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
@@ -949,13 +949,12 @@ class GameRepositoryImpl {
                 id: game.id,
               },
               {
-                tableStatus: TableStatus.GAME_RUNNING,
+                tableStatus: newTableStatus,
               }
             );
-            // refresh the cache
-            const gameUpdate = await Cache.getGame(game.gameCode, true);
-
-            if (processPendingUpdates) {
+            if (processPendingUpdates && newTableStatus !== prevTableStatus) {
+              // refresh the cache
+              const gameUpdate = await Cache.getGame(game.gameCode, true);
               // resume the game
               await pendingProcessDone(
                 gameUpdate.id,
