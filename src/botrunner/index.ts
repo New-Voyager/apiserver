@@ -3,6 +3,10 @@ import axios from 'axios';
 const logger = getLogger('botrunner');
 
 export function getBotRunnerUrl(): string {
+  if (process.env.DEBUG_WITH_STACK && process.env.DEBUG_WITH_STACK === '1') {
+    return 'http://localhost:8081';
+  }
+
   if (process.env.BOTRUNNER_URL) {
     return process.env.BOTRUNNER_URL;
   } else {
