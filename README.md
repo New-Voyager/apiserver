@@ -68,3 +68,14 @@ You can also run the linter manually.
 ``
 make lint
 ``
+## Running API server in debugger
+Get your local ip address (e.g. 10.0.1.101). Update API_SERVER_URL in the Makefile.
+API_SERVER_URL = http://10.0.1.101:9501
+
+Run the apiserver in the vscode debugger or in the console (npm run watch-debug).
+Run the game backend stack using docker.
+``
+make stack-up
+``
+
+Open the browser and try http://localhost:9501/graphql. You should see the GraphQL playground.
