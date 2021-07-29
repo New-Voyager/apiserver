@@ -581,7 +581,7 @@ async function getPrivileges(playerId: string) {
     return ret;
   } catch (err) {
     logger.error(`Exception caught when getting privileges ${err.toString()}`);
-    throw new Error('Failed to get privilegts');
+    throw new Error('Failed to get privileges');
   }
 }
 

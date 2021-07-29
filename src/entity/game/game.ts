@@ -196,6 +196,9 @@ export class PokerGame {
   @Column({name: 'table_status', nullable: true, default: TableStatus.UNKNOWN})
   public tableStatus!: TableStatus;
 
+  @Column({name: 'game_started', default: false})
+  public gameStarted!: boolean;
+
   @Column({name: 'game_length', type: 'int'})
   public gameLength!: number;
 
