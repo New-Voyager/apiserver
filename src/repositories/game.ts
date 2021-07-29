@@ -1271,6 +1271,7 @@ class GameRepositoryImpl {
             })
             .where('id = :id', {id: gameId})
             .execute();
+          game.tableStatus = TableStatus.GAME_RUNNING;
 
           await getGameConnection()
             .createQueryBuilder()
@@ -1284,9 +1285,12 @@ class GameRepositoryImpl {
         // update the game server with new status
         await changeGameStatus(game, status, game.tableStatus);
 
-        game = await Cache.getGame(game.gameCode, true /** update */);
+        const updatedGame = await Cache.getGame(
+          game.gameCode,
+          true /** update */
+        );
 
-        await this.restartGameIfNeeded(game, false);
+        await this.restartGameIfNeeded(updatedGame, false);
       }
     }
 

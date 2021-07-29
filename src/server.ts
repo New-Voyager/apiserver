@@ -27,6 +27,8 @@ import {Nats} from './nats';
 import {
   generateBotScript,
   generateBotScriptDebugHand,
+  resetServerSettings,
+  setServerSettings,
   updateButtonPos,
 } from './internal/bot';
 import {restartTimers} from '@src/timer';
@@ -364,6 +366,8 @@ function addInternalRoutes(app: any) {
     '/bot-script/game-code/:gameCode/button-pos/:buttonPos',
     updateButtonPos
   );
+  app.post('/bot-script/server-settings', setServerSettings);
+  app.post('/bot-script/reset-server-settings', resetServerSettings);
 }
 
 async function readyCheck(req: any, resp: any) {

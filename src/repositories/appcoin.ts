@@ -150,6 +150,7 @@ class AppCoinRepositoryImpl {
       return false;
     }
 
+    const settings = getAppSettings();
     // we may support public games in the future
     if (!game.nextCoinConsumeTime) {
       return false;
@@ -159,7 +160,8 @@ class AppCoinRepositoryImpl {
     const diff = game.nextCoinConsumeTime.getTime() - now.getTime();
     const diffInSecs = Math.ceil(diff / 1000);
 
-    if (diffInSecs > COIN_PURCHASE_NOTIFICATION_TIME) {
+    if (diffInSecs > 0 && diffInSecs > settings.notifyHostTimeWindow) {
+      //logger.info(`[${game.gameCode}] app coin consumption time has not reached. Time remaining: ${diffInSecs} seconds`);
       return true;
     }
     const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
@@ -169,8 +171,11 @@ class AppCoinRepositoryImpl {
     if (!gameUpdates) {
       return false;
     }
-    if (diffInSecs > 0 && diffInSecs <= COIN_PURCHASE_NOTIFICATION_TIME) {
+    if (diffInSecs > 0 && diffInSecs <= settings.notifyHostTimeWindow) {
       if (gameUpdates.appCoinHostNotified) {
+        logger.info(
+          `[${game.gameCode}] app coin consumption time has not reached. We notified the host. Time remaining: ${diffInSecs} seconds`
+        );
         // we already notified the host
         return true;
       }
@@ -210,11 +215,11 @@ class AppCoinRepositoryImpl {
         totalCoinsAvailable = appCoin.totalCoinsAvailable;
       }
 
-      if (diffInSecs > 0 && diffInSecs <= COIN_PURCHASE_NOTIFICATION_TIME) {
+      if (diffInSecs > 0 && diffInSecs <= settings.notifyHostTimeWindow) {
         if (totalCoinsAvailable < gameUpdates.appcoinPerBlock) {
-          // notify the host and extend the game for another 5 minutes
+          // notify the host and extend the game bit longer
           const nextCoinConsumeTime = new Date(
-            now.getTime() + COIN_PURCHASE_NOTIFICATION_TIME * 1000
+            now.getTime() + settings.notifyHostTimeWindow * 1000
           );
           await gameUpdatesRepo.update(
             {
@@ -240,6 +245,9 @@ class AppCoinRepositoryImpl {
       // not enough coins, return false. pending updates: true, end the game
       if (totalCoinsAvailable < gameUpdates.appcoinPerBlock) {
         // notify the host that the game is ended due to low app coins
+        logger.info(
+          `[${game.gameCode}] app coin consumption time has reached. Not enough coins`
+        );
         return false;
       }
       const appSettings = getAppSettings();
@@ -284,7 +292,9 @@ class AppCoinRepositoryImpl {
       consumeCoins.purchaseDate = new Date();
       await consumeCoinsRepo.save(consumeCoins);
       logger.info(
-        `[${game.gameCode}] subtracted ${consumeCoins.coinsSpent} from player: ${appCoinPlayerUuid}`
+        `[${game.gameCode}] subtracted ${
+          consumeCoins.coinsSpent
+        } from player: ${appCoinPlayerUuid} Next coin consumption time: ${nextCoinConsumeTime.toISOString()}`
       );
       return true;
     });
