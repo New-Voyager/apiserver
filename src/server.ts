@@ -762,7 +762,11 @@ function generateAccessToken(payload) {
 
 // returns nats urls
 async function natsUrls(req: any, resp: any) {
-  resp.status(200).send(JSON.stringify({urls: process.env.NATS_URL}));
+  let natsUrl = process.env.NATS_URL;
+  if (process.env.DEBUG_NATS_URL) {
+    natsUrl = process.env.DEBUG_NATS_URL;
+  }
+  resp.status(200).send(JSON.stringify({urls: natsUrl}));
 }
 
 function initializeNats() {
