@@ -233,11 +233,11 @@ export class BuyIn {
     }
     gameServerTime = new Date().getTime() - gameServerTime;
 
-    // await GameRepository.restartGameIfNeeded(
-    //   this.game,
-    //   true,
-    //   transactionEntityManager
-    // );
+    await GameRepository.restartGameIfNeeded(
+      this.game,
+      true,
+      transactionEntityManager
+    );
   }
 
   public async buyInDenied(
