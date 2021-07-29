@@ -33,6 +33,13 @@ class GameServerAPIs {
         errors.push('url field is missing');
       }
 
+      if (
+        process.env.DEBUG_WITH_STACK &&
+        process.env.DEBUG_WITH_STACK === '1'
+      ) {
+        registerPayload.url = `http://localhost:8080`;
+      }
+
       if (!registerPayload.status) {
         errors.push('status is missing');
       } else {
