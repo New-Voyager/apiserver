@@ -10,6 +10,21 @@ DOCKER_BUILDKIT ?= 1
 NATS_VERSION := 2.1.7-alpine3.11
 REDIS_VERSION := 6.0.9
 
+GCR_REGISTRY := gcr.io/voyager-01-285603
+DO_REGISTRY := registry.digitalocean.com/voyager
+REGISTRY := $(DO_REGISTRY)
+
+API_SERVER_IMAGE := $(REGISTRY)/api-server:0.5.23
+GAME_SERVER_IMAGE := $(REGISTRY)/game-server:0.5.15
+BOTRUNNER_IMAGE := $(REGISTRY)/botrunner:0.5.17
+TIMER_IMAGE := $(REGISTRY)/timer:0.5.1
+
+NATS_SERVER_IMAGE := $(REGISTRY)/nats:2.1.7-alpine3.11
+REDIS_IMAGE := $(REGISTRY)/redis:6.0.9
+POSTGRES_IMAGE := $(REGISTRY)/postgres:12.5
+
+API_SERVER_URL = http://192.168.0.104:9501
+
 ifeq ($(OS), Windows_NT)
 	BUILD_NO := $(file < build_number.txt)
 else
@@ -182,3 +197,45 @@ run-all: create-network run-pg run-nats run-redis
 stop-all: stop-pg stop-nats stop-redis
 	echo 'All services are stopped'
 
+.PHONY: stack-up
+stack-up: create-network do-login
+	cd docker && \
+		> .env && \
+		echo "API_SERVER_URL=${API_SERVER_URL}" >> .env && \
+		echo "API_SERVER_IMAGE=$(API_SERVER_IMAGE)" >> .env && \
+		echo "GAME_SERVER_IMAGE=$(GAME_SERVER_IMAGE)" >> .env && \
+		echo "NATS_SERVER_IMAGE=$(NATS_SERVER_IMAGE)" >> .env && \
+		echo "REDIS_IMAGE=$(REDIS_IMAGE)" >> .env && \
+		echo "POSTGRES_IMAGE=$(POSTGRES_IMAGE)" >> .env && \
+		echo "BOTRUNNER_IMAGE=$(BOTRUNNER_IMAGE)" >> .env && \
+		echo "TIMER_IMAGE=$(TIMER_IMAGE)" >> .env && \
+		echo "PROJECT_ROOT=$(PWD)" >> .env && \
+		docker-compose up -d
+
+.PHONY: stack-logs
+stack-logs:
+	cd docker && docker-compose logs -f
+
+.PHONY: stack-down
+stack-down:
+	cd docker && docker-compose down
+
+#
+# Usage:
+#
+# BOTRUNNER_SCRIPT=botrunner_scripts/river-action-3-bots.yaml make botrunner
+# BOTRUNNER_SCRIPT=botrunner_scripts/river-action-2-bots-1-human.yaml make botrunner
+#
+.PHONY: botrunner
+botrunner:
+	@DOCKER_NET=$(DEFAULT_DOCKER_NET) \
+		BOTRUNNER_IMAGE=$(BOTRUNNER_IMAGE) \
+		BOTRUNNER_SCRIPT=$(BOTRUNNER_SCRIPT) \
+		./botrunner.sh
+
+.PHONY: simple-game reset-db
+simple-game:
+	BOTRUNNER_SCRIPT=botrunner_scripts/river-action-3-bots.yaml make botrunner
+
+reset-db:
+	curl -X POST -v  -H 'Content-Type: application/json' -d '{"query":"mutation {resetDB}"}' http://localhost:9501/graphql

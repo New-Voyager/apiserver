@@ -429,6 +429,7 @@ class NatsClass {
   }
 
   public getPlayerHandChannel(gameCode: string, playerId: number) {
+    //"hand.cgweebfa.player.694"
     return `hand.${gameCode}.player.${playerId}`;
   }
 }

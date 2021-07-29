@@ -1,0 +1,5 @@
+# This script is used to join a game created by human.
+club:
+game:
+starting-seats: []
+auto-play: true
