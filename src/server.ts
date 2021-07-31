@@ -262,7 +262,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     }
   }
 
-  initializeNats();
+  await initializeNats();
   initializeGameServer();
   await Firebase.init();
 
@@ -769,12 +769,12 @@ async function natsUrls(req: any, resp: any) {
   resp.status(200).send(JSON.stringify({urls: natsUrl}));
 }
 
-function initializeNats() {
+async function initializeNats() {
   // throw new Error('Function not implemented.');
   if (!process.env.NATS_URL) {
     throw new Error('Nats url must be specified');
   }
-  Nats.init(process.env.NATS_URL);
+  await Nats.init(process.env.NATS_URL);
 }
 
 export function getRunProfile(): RunProfile {
