@@ -9,10 +9,14 @@ import {v4 as uuidv4} from 'uuid';
 const logger = getLogger('nats');
 
 class NatsClass {
-  private client: nats.Client | null = null;
+  private client: nats.NatsConnection | null = null;
+  private stringCodec: nats.Codec<string> = nats.StringCodec();
 
-  public init(natsUrls: string) {
-    this.client = nats.connect(natsUrls);
+  public async init(natsUrls: string) {
+    const connOpts = {
+      servers: natsUrls.split(','),
+    };
+    this.client = await nats.connect(connOpts);
     logger.info('Nats is initialized');
   }
 
@@ -52,7 +56,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getPlayerChannel(player);
-    this.client.publish(subject, messageStr);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
   /*
@@ -86,7 +90,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getClubChannel(clubCode);
-    this.client.publish(subject, messageStr);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
   public sendDealersChoiceMessage(
@@ -115,9 +119,9 @@ class NatsClass {
         },
       ],
     };
-    const channel = this.getPlayerHandChannel(game.gameCode, playerId);
+    const subject = this.getPlayerHandChannel(game.gameCode, playerId);
     const messageStr = JSON.stringify(message);
-    this.client.publish(channel, messageStr);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
   public sendSeatChangePrompt(
@@ -159,7 +163,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(gameCode);
-    this.client.publish(subject, messageStr);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
   public sendPlayerSeatMove(
@@ -189,7 +193,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(gameCode);
-    this.client.publish(subject, messageStr);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
   public sendPlayerSeatChangeDeclined(
@@ -215,7 +219,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(gameCode);
-    this.client.publish(subject, messageStr);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
   public sendPlayerSeatChangeStart(gameCode: string) {
@@ -233,7 +237,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(gameCode);
-    this.client.publish(subject, messageStr);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
   public sendPlayerSeatChangeDone(gameCode: string) {
@@ -251,7 +255,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(gameCode);
-    this.client.publish(subject, messageStr);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
   public sendReloadApproved(
@@ -283,7 +287,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(gameCode);
-    this.client.publish(subject, messageStr);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
   public sendReloadApprovalRequest(
@@ -310,7 +314,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getPlayerChannel(host);
-    this.client.publish(subject, messageStr);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
   public sendReloadWaitTime(
@@ -334,7 +338,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getPlayerChannel(requestingPlayer);
-    this.client.publish(subject, messageStr);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
   public sendReloadTimeout(
@@ -355,7 +359,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getPlayerChannel(requestingPlayer);
-    this.client.publish(subject, messageStr);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
   /*
@@ -410,7 +414,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
-    this.client.publish(subject, messageStr);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
   public getPlayerChannel(player: Player) {
