@@ -297,6 +297,9 @@ class PlayerRepositoryImpl {
         email: register.email,
       });
       if (player) {
+        if (player.deviceId === register.deviceId) {
+          return player;
+        }
         throw new Error(
           'Another device is registered with this recovery email address'
         );
