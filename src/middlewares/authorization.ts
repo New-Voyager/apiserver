@@ -1,6 +1,6 @@
 import * as jwt from 'jsonwebtoken';
-import {getJwtSecret} from '@src/index';
 import {getLogger} from '@src/utils/log';
+import {getJwtSecret} from '@src/auth';
 
 const logger = getLogger('chipstrack');
 

@@ -90,6 +90,29 @@ class AppCoinRepositoryImpl {
     );
   }
 
+  public async newUser(player: Player) {
+    // new player, give free coins
+    const freeCoins = getAppSettings().newUserFreeCoins;
+    const playerCoinRepo = getUserRepository(PlayerCoin);
+    const existingRow = await playerCoinRepo.findOne({playerUuid: player.uuid});
+    if (existingRow == null) {
+      const playerCoins = new PlayerCoin();
+      playerCoins.playerUuid = player.uuid;
+      playerCoins.totalCoinsAvailable = freeCoins;
+      playerCoins.totalCoinsPurchased = 0;
+      await playerCoinRepo.save(playerCoins);
+    } else {
+      await playerCoinRepo.update(
+        {
+          playerUuid: player.uuid,
+        },
+        {
+          totalCoinsAvailable: existingRow.totalCoinsAvailable + freeCoins,
+        }
+      );
+    }
+  }
+
   public async availableCoins(playerUuid: string): Promise<number> {
     const playerCoinRepo = getUserRepository(PlayerCoin);
     const existingRow = await playerCoinRepo.findOne({playerUuid: playerUuid});

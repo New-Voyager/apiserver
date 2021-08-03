@@ -13,6 +13,7 @@ import {HostMessageType} from '../entity/types';
 import {UserRegistrationPayload} from '@src/types';
 import {sendRecoveryCode} from '@src/email';
 import {getRecoveryCode} from '@src/utils/uniqueid';
+import {AppCoinRepository} from './appcoin';
 
 class PlayerRepositoryImpl {
   public async createPlayer(
@@ -303,8 +304,10 @@ class PlayerRepositoryImpl {
       }
     }
 
+    let newUser = false;
     if (!player) {
       player = new Player();
+      newUser = true;
     }
     player.name = register.name;
     if (register.displayName && register.displayName.length > 0) {
@@ -321,6 +324,7 @@ class PlayerRepositoryImpl {
       player.uuid = register.deviceId;
       player.deviceSecret = register.deviceId;
     } else {
+      newUser = true;
       player.bot = false;
       player.uuid = uuidv4();
       player.deviceSecret = uuidv4();
@@ -328,6 +332,9 @@ class PlayerRepositoryImpl {
 
     await repository.save(player);
     await StatsRepository.newPlayerHandStats(player);
+    if (newUser) {
+      await AppCoinRepository.newUser(player);
+    }
     return player;
   }
 
