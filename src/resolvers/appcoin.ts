@@ -22,17 +22,6 @@ const googleVerifier = new Verifier(options);
 const logger = getLogger('appcoin - resolvers');
 
 /*
- This map should come from another discovery service or json document from cloud store
- */
-const productCoinMap = {
-  chips: 10,
-  '10chips': 10,
-  '20chips': 20,
-  '50chips': 50,
-  '100chips': 100,
-};
-
-/*
 Google receipt
 const purchaseData = {
   "orderId": "GPA.3376-3692-0959-48601",
@@ -137,10 +126,18 @@ const resolvers: any = {
         }
 
         // updated app coins
-        let coinsPurchased = productCoinMap[purchase.productId];
-        if (!coinsPurchased) {
+        let coinsPurchased = args.coinsPurchased;
+        const availableProducts = await Firebase.getAvailableProducts();
+        for (const product of availableProducts) {
+          if (product.productId === purchase.productId) {
+            coinsPurchased = product.coins;
+          }
+        }
+
+        if (coinsPurchased === null) {
           coinsPurchased = 0;
         }
+
         const duplicate = await AppCoinRepository.purchaseCoins(
           ctx.req.playerId,
           storeType,

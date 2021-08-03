@@ -293,6 +293,7 @@ class FirebaseClass {
 }
 
 export interface AppSettings {
+  newUserFreeCoins: number;
   freeTime: number;
   agoraEnabled: boolean;
   janusEnabled: boolean;
@@ -304,6 +305,7 @@ export interface AppSettings {
 
 // get from firebase and update periodically
 let settings: AppSettings = {
+  newUserFreeCoins: 20,
   freeTime: 15 * 60, // seconds
   notifyHostTimeWindow: 5 * 60, // seconds
   agoraEnabled: true,
@@ -319,6 +321,7 @@ export function getAppSettings(): AppSettings {
 
 export function resetAppSettings() {
   settings = {
+    newUserFreeCoins: 20,
     freeTime: 15 * 60, // seconds
     agoraEnabled: true,
     janusEnabled: true,
