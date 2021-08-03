@@ -1,0 +1,10 @@
+type IapAsset {
+  name: String!
+  size: String!
+  type: String!
+  url : String!
+}
+
+type Query {
+  availableAssets: [IapAsset!]
+}

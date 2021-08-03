@@ -25,6 +25,13 @@ export interface IapProduct {
   coins: number;
 }
 
+export interface IapAsset {
+  name: string;
+  size: string;
+  type :string;
+  url:string;
+}
+
 class FirebaseClass {
   private firebaseInitialized = false;
   private app: firebase.app.App | undefined;
@@ -32,6 +39,8 @@ class FirebaseClass {
   private serviceAccountFile = '';
   private productsFetchTime: Date | undefined = undefined;
   private iapProducts = new Array<IapProduct>();
+  private iapAssets = new Array<IapAsset>();
+  
 
   constructor() {}
 
@@ -242,6 +251,40 @@ class FirebaseClass {
     }
   }
 
+  public async getAssets() {
+    try {
+        this.iapAssets = new Array<IapAsset>();
+        const query = await this.app?.firestore().collection('assets');
+        const docs = await query?.listDocuments();
+        if (!docs) {
+          throw new Error('Could not get assets');
+        }
+        for (const doc of docs) {
+          const d = await doc.get();
+          const name = d.get('name');
+          const size = d.get('size');
+          const type = d.get('type');
+          const url = d.get('url');
+          const active = d.get('isactive');
+          if (active) {
+            this.iapAssets.push({
+              name:name,
+              size:size,
+              type:type,
+              url:url
+            });
+          }
+          logger.info(`Name: ${name} Size: ${size} active: ${active} type: ${type} url: ${url}`);
+        }
+      return this.iapAssets;
+    } catch (err) {
+      logger.error(
+        `Could not get assets from the firestore. ${err.toString()}`
+      );
+      throw new Error('Could not fetch assets');
+    }
+  }
+
   public async getAvailableProducts() {
     try {
       let fetch = false;
@@ -291,6 +334,8 @@ class FirebaseClass {
     }
   }
 }
+
+
 
 export interface AppSettings {
   freeTime: number;
