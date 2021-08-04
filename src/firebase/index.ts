@@ -251,22 +251,24 @@ class FirebaseClass {
     }
   }
 
-  public async getAssets() {
+  public async getBackGroundAssets() {
     try {
         this.iapAssets = new Array<IapAsset>();
-        const query = await this.app?.firestore().collection('assets');
-        const docs = await query?.listDocuments();
+        const query = await this.app?.firestore().collection('assets');//.where("isactive","==",true);
+        const docs=await query?.listDocuments();
+        
         if (!docs) {
+
           throw new Error('Could not get assets');
         }
         for (const doc of docs) {
           const d = await doc.get();
           const name = d.get('name');
-          const size = d.get('size');
+          const size =d.get('size');
           const type = d.get('type');
           const url = d.get('url');
           const active = d.get('isactive');
-          if (active) {
+          if (active && type=="background") {
             this.iapAssets.push({
               name:name,
               size:size,

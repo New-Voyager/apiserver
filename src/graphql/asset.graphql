@@ -1,4 +1,4 @@
-type IapAsset {
+type AssetResource {
   name: String!
   size: String!
   type: String!
@@ -6,5 +6,5 @@ type IapAsset {
 }
 
 type Query {
-  availableAssets: [IapAsset!]
+  getBackgroundAssets: [AssetResource!]
 }
