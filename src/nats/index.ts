@@ -5,7 +5,7 @@ import {HighHandWinner} from '@src/repositories/types';
 import {getLogger} from '@src/utils/log';
 import * as nats from 'nats';
 import {v4 as uuidv4} from 'uuid';
-
+import {Cache} from '@src/cache';
 const logger = getLogger('nats');
 
 class NatsClass {
@@ -360,6 +360,24 @@ class NatsClass {
     const messageStr = JSON.stringify(message);
     const subject = this.getPlayerChannel(requestingPlayer);
     this.client.publish(subject, this.stringCodec.encode(messageStr));
+  }
+
+  public async notifyAppCoinShort(game: PokerGame) {
+    if (this.client === null) {
+      return;
+    }
+    const player = await Cache.getPlayer(game.hostUuid);
+    if (player) {
+      const messageId = `APPCOIN:${uuidv4()}`;
+      const message: any = {
+        type: 'APPCOIN_NEEDED',
+        gameCode: game.gameCode,
+        requestId: messageId,
+      };
+      const messageStr = JSON.stringify(message);
+      const subject = this.getPlayerChannel(player);
+      this.client.publish(subject, this.stringCodec.encode(messageStr));
+    }
   }
 
   /*

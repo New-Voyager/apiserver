@@ -915,33 +915,7 @@ class GameRepositoryImpl {
             row.status === GameStatus.ACTIVE &&
             newTableStatus === TableStatus.GAME_RUNNING
           ) {
-            // update next consume time
-            const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-            const gameUpdateRow = await gameUpdatesRepo.findOne({
-              gameID: game.id,
-            });
-            if (!gameUpdateRow?.nextCoinConsumeTime) {
-              const freeTime = getAppSettings().freeTime;
-              const now = new Date();
-              const nextConsumeTime = new Date(now.getTime() + freeTime * 1000);
-              await gameUpdatesRepo.update(
-                {
-                  gameID: game.id,
-                },
-                {
-                  nextCoinConsumeTime: nextConsumeTime,
-                }
-              );
-              await Cache.updateGameCoinConsumeTime(
-                game.gameCode,
-                nextConsumeTime
-              );
-              logger.info(
-                `[${
-                  game.gameCode
-                }] Next coin consume time: ${nextConsumeTime.toISOString()}`
-              );
-            }
+            await this.updateAppcoinNextConsumeTime(game);
 
             // update game status
             await gameRepo.update(
@@ -967,6 +941,50 @@ class GameRepositoryImpl {
       } catch (err) {
         logger.error(`Error handling buyin approval. ${err.toString()}`);
       }
+    }
+  }
+
+  public async updateAppcoinNextConsumeTime(game: PokerGame) {
+    if (!game.appCoinsNeeded) {
+      return;
+    }
+
+    try {
+      // update next consume time
+      const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
+      const gameUpdateRow = await gameUpdatesRepo.findOne({
+        gameID: game.id,
+      });
+      if (!gameUpdateRow) {
+        return;
+      }
+      if (!gameUpdateRow.nextCoinConsumeTime) {
+        const freeTime = getAppSettings().freeTime;
+        const now = new Date();
+        const nextConsumeTime = new Date(now.getTime() + freeTime * 1000);
+        await gameUpdatesRepo.update(
+          {
+            gameID: game.id,
+          },
+          {
+            nextCoinConsumeTime: nextConsumeTime,
+          }
+        );
+        gameUpdateRow.nextCoinConsumeTime = nextConsumeTime;
+      }
+      await Cache.updateGameCoinConsumeTime(
+        game.gameCode,
+        gameUpdateRow.nextCoinConsumeTime
+      );
+      logger.info(
+        `[${
+          game.gameCode
+        }] Next coin consume time: ${gameUpdateRow.nextCoinConsumeTime.toISOString()}`
+      );
+    } catch (err) {
+      logger.error(
+        `Failed to update appcoins next consumption time. Error: ${err.toString()}`
+      );
     }
   }
 
