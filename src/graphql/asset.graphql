@@ -1,0 +1,14 @@
+type AssetResource {
+  name: String!
+  size: Int
+  type: String!
+  link : String!
+  previewLink: String
+  soundLink: String
+  updated: DateTime
+}
+
+type Query {
+  backgroundAssets: [AssetResource!]
+  tableAssets: [AssetResource!]
+}

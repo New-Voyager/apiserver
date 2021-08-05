@@ -121,7 +121,7 @@
         "--runInBand",
         "./unit-tests",
         "--testNamePattern",
-        "host buys coins after warning"
+        "host does not buy coins"
       ],
       "env": {
         "NODE_ENV": "test",

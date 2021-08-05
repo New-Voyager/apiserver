@@ -5,7 +5,6 @@ import * as firebase from 'firebase-admin';
 import {ServiceAccount} from 'firebase-admin';
 import {getRunProfile, getRunProfileStr, RunProfile} from '@src/server';
 import {Club} from '@src/entity/player/club';
-import {JWT} from 'google-auth-library';
 import {default as axios} from 'axios';
 import {GoogleAuth} from 'google-auth-library';
 
@@ -25,6 +24,17 @@ export interface IapProduct {
   coins: number;
 }
 
+export interface Asset {
+  type: string;
+  name: string;
+  size: string;
+  link: string;
+  active: boolean;
+  soundLink: string;
+  previewLink: string;
+  updatedDate: Date;
+}
+
 class FirebaseClass {
   private firebaseInitialized = false;
   private app: firebase.app.App | undefined;
@@ -32,6 +42,7 @@ class FirebaseClass {
   private serviceAccountFile = '';
   private productsFetchTime: Date | undefined = undefined;
   private iapProducts = new Array<IapProduct>();
+  private assets = new Array<Asset>();
 
   constructor() {}
 
@@ -242,7 +253,7 @@ class FirebaseClass {
     }
   }
 
-  public async getAvailableProducts() {
+  public async fetchFromFirebase() {
     try {
       let fetch = false;
       if (!this.productsFetchTime) {
@@ -261,33 +272,139 @@ class FirebaseClass {
       }
 
       if (fetch) {
-        this.iapProducts = new Array<IapProduct>();
-        const query = await this.app?.firestore().collection('products');
-        const docs = await query?.listDocuments();
-        if (!docs) {
-          throw new Error('Could not get products');
-        }
-        for (const doc of docs) {
-          const d = await doc.get();
-          const id = d.get('id');
-          const coins = d.get('coins');
-          const active = d.get('active');
-          if (active) {
-            this.iapProducts.push({
-              productId: id,
-              coins: coins,
-            });
-          }
-          logger.info(`Coin: ${id} coin: ${coins} active: ${active}`);
-        }
+        await this.fetchAssets();
+        await this.fetchIapProducts();
         this.productsFetchTime = new Date();
       }
+    } catch (err) {
+      logger.error(
+        `Cannot fetch data from the firebase database. Error: ${err.toString()}`
+      );
+    }
+  }
+
+  public async fetchAssets() {
+    // get all the assets and cache it
+    try {
+      const assets = new Array<Asset>();
+      const query = await this.app?.firestore().collection('assets'); //.where("isactive","==",true);
+      const docs = await query?.listDocuments();
+
+      if (!docs) {
+        throw new Error('Could not get assets');
+      }
+      for (const doc of docs) {
+        const d = await doc.get();
+        const name = d.get('name');
+        const size = d.get('size');
+        const type = d.get('type');
+        const link = d.get('link');
+        const active = d.get('is_active');
+        const soundLink = d.get('sound_link');
+        const previewLink = d.get('preview_link');
+        const updatedDate = d.get('updated_date');
+
+        assets.push({
+          link: link,
+          name: name,
+          soundLink: soundLink,
+          type: type,
+          active: active,
+          previewLink: previewLink,
+          size: size,
+          updatedDate: updatedDate,
+        });
+
+        logger.info(
+          `Name: ${name} Size: ${size} active: ${active} type: ${type} url: ${link}`
+        );
+      }
+      this.assets = assets;
+      return this.assets;
+    } catch (err) {
+      logger.error(
+        `Could not get assets from the firestore. ${err.toString()}`
+      );
+      throw new Error('Could not fetch assets');
+    }
+  }
+
+  public async fetchIapProducts() {
+    try {
+      const iapProducts = new Array<IapProduct>();
+      const query = await this.app?.firestore().collection('products');
+      const docs = await query?.listDocuments();
+      if (!docs) {
+        throw new Error('Could not get products');
+      }
+      for (const doc of docs) {
+        const d = await doc.get();
+        const id = d.get('id');
+        const coins = d.get('coins');
+        const active = d.get('active');
+        if (active) {
+          iapProducts.push({
+            productId: id,
+            coins: coins,
+          });
+        }
+        logger.info(`Coin: ${id} coin: ${coins} active: ${active}`);
+      }
+      this.iapProducts = iapProducts;
+      return this.iapProducts;
+    } catch (err) {
+      logger.error(
+        `Could not get products from the firestore. ${err.toString()}`
+      );
+    }
+    return this.iapProducts;
+  }
+
+  public async getAvailableProducts(): Promise<Array<IapProduct>> {
+    try {
+      await this.fetchFromFirebase();
       return this.iapProducts;
     } catch (err) {
       logger.error(
         `Could not get products from the firestore. ${err.toString()}`
       );
       throw new Error('Could not fetch products');
+    }
+  }
+
+  public async getGameBackgroundAssets(): Promise<Array<Asset>> {
+    try {
+      await this.fetchFromFirebase();
+      const ret = new Array<Asset>();
+      for (const asset of this.assets) {
+        if (asset.active && asset.type === 'game-background') {
+          ret.push(asset);
+        }
+      }
+      return ret;
+    } catch (err) {
+      logger.error(
+        `Could not get assets from the firestore. ${err.toString()}`
+      );
+      throw new Error('Could not fetch assets');
+    }
+  }
+
+  public async getTableAssets(): Promise<Array<Asset>> {
+    try {
+      await this.fetchFromFirebase();
+      const ret = new Array<Asset>();
+      for (const asset of this.assets) {
+        if (asset.active && asset.type === 'table') {
+          ret.push(asset);
+        }
+      }
+      return ret;
+    } catch (err) {
+      logger.error(
+        `Could not get assets from the firestore. ${err.toString()}`
+      );
+      throw new Error('Could not fetch assets');
     }
   }
 }
