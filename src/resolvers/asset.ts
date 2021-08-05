@@ -1,12 +1,15 @@
 import {Firebase} from '@src/firebase';
 const resolvers: any = {
   Query: {
-    getBackgroundAssets: async (parent, args, ctx, info) => {
-      var list =await Firebase.getBackGroundAssets();
+    backgroundAssets: async (parent, args, ctx, info) => {
+      var list = await Firebase.getGameBackgroundAssets();
+      return list;
+    },
+    tableAssets: async (parent, args, ctx, info) => {
+      var list = await Firebase.getTableAssets();
       return list;
     },
   },
-  
 };
 
 export function getResolvers() {
