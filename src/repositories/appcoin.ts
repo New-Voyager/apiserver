@@ -12,6 +12,8 @@ import {loggers} from 'winston';
 import {getLogger} from '@src/utils/log';
 import {Player} from '@src/entity/player/player';
 import {getAppSettings} from '@src/firebase';
+import {Nats} from '@src/nats';
+import {GameRepository} from './game';
 const crypto = require('crypto');
 
 const COIN_PURCHASE_NOTIFICATION_TIME = 10;
@@ -169,21 +171,24 @@ class AppCoinRepositoryImpl {
   public async canGameContinue(gameCode: string) {
     // first get the game from cache
     const game = await Cache.getGame(gameCode);
-    if (!game) {
+    if (game === null || game === undefined) {
       return false;
     }
 
     const settings = getAppSettings();
     // we may support public games in the future
     if (!game.nextCoinConsumeTime) {
-      return false;
+      if (game.appCoinsNeeded) {
+        await GameRepository.updateAppcoinNextConsumeTime(game);
+      }
+      return true;
     }
 
     const now = new Date();
     const diff = game.nextCoinConsumeTime.getTime() - now.getTime();
     const diffInSecs = Math.ceil(diff / 1000);
 
-    if (diffInSecs > 0 && diffInSecs > settings.notifyHostTimeWindow) {
+    if (diffInSecs > 0 && diffInSecs < settings.notifyHostTimeWindow) {
       //logger.info(`[${game.gameCode}] app coin consumption time has not reached. Time remaining: ${diffInSecs} seconds`);
       return true;
     }
@@ -238,8 +243,12 @@ class AppCoinRepositoryImpl {
         totalCoinsAvailable = appCoin.totalCoinsAvailable;
       }
 
-      if (diffInSecs > 0 && diffInSecs <= settings.notifyHostTimeWindow) {
+      if (
+        diffInSecs <= settings.notifyHostTimeWindow &&
+        !gameUpdates.appCoinHostNotified
+      ) {
         if (totalCoinsAvailable < gameUpdates.appcoinPerBlock) {
+          await Nats.notifyAppCoinShort(game);
           // notify the host and extend the game bit longer
           const nextCoinConsumeTime = new Date(
             now.getTime() + settings.notifyHostTimeWindow * 1000

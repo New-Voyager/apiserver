@@ -23,6 +23,7 @@ import {seed} from './initdb';
 import {Firebase} from './firebase';
 import {Nats} from './nats';
 import {
+  buyBotCoins,
   generateBotScript,
   generateBotScriptDebugHand,
   resetServerSettings,
@@ -372,6 +373,7 @@ function addInternalRoutes(app: any) {
   );
   app.post('/bot-script/server-settings', setServerSettings);
   app.post('/bot-script/reset-server-settings', resetServerSettings);
+  app.post('/bot-script/buy-bot-coins', buyBotCoins);
 }
 
 async function readyCheck(req: any, resp: any) {
