@@ -162,7 +162,7 @@ type Mutation {
   authenticatePlayer(name: String!, uuid: String!, deviceId: String!): Boolean
   leaveClub(clubCode: String!): ClubMemberStatus
   updateFirebaseToken(token: String!): Boolean
-  appCoinPurchase(storeType: StoreType!, receipt: String!): IapReceipt!
+  appCoinPurchase(storeType: StoreType!, coinsPurchased: Int, receipt: String!): IapReceipt!
   setNotes(playerId: String playerUuid: String, notes: String): Boolean
   sendPlayerFcmMessage(message: Json!): Boolean
   changeDisplayName(name: String!): Boolean

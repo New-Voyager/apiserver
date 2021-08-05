@@ -1,5 +1,6 @@
 import {HandHistory} from '@src/entity/history/hand';
 import {getAppSettings, resetAppSettings} from '@src/firebase';
+import {AppCoinRepository} from '@src/repositories/appcoin';
 import {DevRepository} from '@src/repositories/dev';
 import {HandRepository} from '@src/repositories/hand';
 import {getLogger} from '@src/utils/log';
@@ -360,6 +361,7 @@ export async function setServerSettings(req: any, resp: any) {
   const notifyHostTimeWindow = payload['notify-host-time-window'];
   const gameCoinsPerBlock = payload['game-coins-per-block'];
   const freeTime = payload['free-time'];
+  const newUserFreeCoins = payload['new-user-free-coins'];
 
   const appSettings = getAppSettings();
   if (gameBlockTime) {
@@ -377,6 +379,11 @@ export async function setServerSettings(req: any, resp: any) {
   if (freeTime) {
     appSettings.freeTime = freeTime;
   }
+
+  if (newUserFreeCoins !== undefined && newUserFreeCoins !== null) {
+    appSettings.newUserFreeCoins = newUserFreeCoins;
+  }
+
   resp.status(200).send({status: 'OK'});
 }
 
@@ -414,6 +421,21 @@ export async function generateBotScriptDebugHand(req: any, resp: any) {
     const yamlScript = convertHandLogToYaml(handlog);
     //console.log(handlog);
     resp.status(200).send(yamlScript);
+  } catch (e) {
+    resp.status(500).send({errors: e.toString()});
+  }
+}
+
+export async function buyBotCoins(req: any, resp: any) {
+  //resp.status(200).send(JSON.stringify({urls: process.env.NATS_URL}));
+  console.log(`current directory: ${__dirname}`);
+  try {
+    const payload = req.body;
+    const playerUuid = payload['player-uuid'];
+    const appCoins = payload['coins'];
+    // buy coins
+    await AppCoinRepository.buyCoins(playerUuid, appCoins);
+    resp.status(200).send({status: 'OK'});
   } catch (e) {
     resp.status(500).send({errors: e.toString()});
   }
