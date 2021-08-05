@@ -23,7 +23,7 @@ NATS_SERVER_IMAGE := $(REGISTRY)/nats:2.1.7-alpine3.11
 REDIS_IMAGE := $(REGISTRY)/redis:6.0.9
 POSTGRES_IMAGE := $(REGISTRY)/postgres:12.5
 
-API_SERVER_URL = http://192.168.1.52:9501
+API_SERVER_URL = http://192.168.1.104:9501
 
 ifeq ($(OS), Windows_NT)
 	BUILD_NO := $(file < build_number.txt)

@@ -5,11 +5,8 @@ import * as firebase from 'firebase-admin';
 import {ServiceAccount} from 'firebase-admin';
 import {getRunProfile, getRunProfileStr, RunProfile} from '@src/server';
 import {Club} from '@src/entity/player/club';
-import {JWT} from 'google-auth-library';
 import {default as axios} from 'axios';
 import {GoogleAuth} from 'google-auth-library';
-import {link} from 'fs';
-import {assertTryStatement} from '@babel/types';
 
 //import {default as google} from 'googleapis';
 
