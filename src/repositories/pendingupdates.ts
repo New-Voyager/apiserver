@@ -5,6 +5,7 @@ import {
   GameStatus,
   NextHandUpdate,
   PlayerStatus,
+  SeatStatus,
 } from '@src/entity/types';
 import {GameRepository} from './game';
 import {getLogger} from '@src/utils/log';
@@ -23,7 +24,7 @@ import {
 import {startTimer} from '@src/timer';
 import {occupiedSeats, WaitListMgmt} from './waitlist';
 import {SeatChangeProcess} from './seatchange';
-import {BUYIN_TIMEOUT, DEALER_CHOICE_TIMEOUT} from './types';
+import {BUYIN_TIMEOUT, DEALER_CHOICE_TIMEOUT, NewUpdate} from './types';
 import _ from 'lodash';
 import {Nats} from '@src/nats';
 import {TakeBreak} from './takebreak';
@@ -31,7 +32,8 @@ import {Cache} from '@src/cache';
 import {BuyIn} from './buyin';
 import {reloadApprovalTimeoutExpired} from './timer';
 import {Reload} from './reload';
-import {getGameConnection, getGameRepository} from '.';
+import {getGameConnection, getGameManager, getGameRepository} from '.';
+import {Player} from '@src/entity/player/player';
 
 const logger = getLogger('pending-updates');
 
@@ -145,13 +147,22 @@ export async function processPendingUpdates(gameId: number) {
 
   let endPendingProcess = true;
   let seatChangeInProgress = false;
-  let openedSeat = 0;
+  let openedSeat: number | undefined = 0;
   if (updates.length !== 0) {
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
 
     for (const update of updates) {
       // walk through each update
-      if (update.newUpdate === NextHandUpdate.KICKOUT) {
+      if (update.newUpdate === NextHandUpdate.SWITCH_SEAT) {
+        // switch player
+        await switchSeat(
+          playerGameTrackerRepository,
+          game,
+          update,
+          pendingUpdatesRepo
+        );
+        newOpenSeat = true;
+      } else if (update.newUpdate === NextHandUpdate.KICKOUT) {
         // kick out a player
         await kickoutPlayer(
           playerGameTrackerRepository,
@@ -190,7 +201,7 @@ export async function processPendingUpdates(gameId: number) {
     let seatChangeAllowed = game.seatChangeAllowed;
     const seats = await occupiedSeats(game.id);
     seatChangeAllowed = true; // debugging
-    if (seatChangeAllowed) {
+    if (seatChangeAllowed && openedSeat) {
       if (newOpenSeat && seats <= game.maxPlayers - 1) {
         logger.info(`[${game.gameCode}] Seat Change is in Progress`);
         // open seat
@@ -230,7 +241,7 @@ export async function processPendingUpdates(gameId: number) {
 }
 
 async function kickoutPlayer(
-  playerGameTrackerRepository: any,
+  playerGameTrackerRepository: Repository<PlayerGameTracker>,
   game: PokerGame,
   update: NextHandUpdates,
   pendingUpdatesRepo
@@ -241,6 +252,9 @@ async function kickoutPlayer(
       playerId: update.playerId,
     },
   });
+  if (!playerInGame) {
+    return;
+  }
   // calculate session time
   let sessionTime = playerInGame.sessionTime;
   const currentSessionTime =
@@ -261,20 +275,8 @@ async function kickoutPlayer(
     }
   );
 
-  const count = await playerGameTrackerRepository.count({
-    where: {
-      game: {id: game.id},
-      status: PlayerStatus.PLAYING,
-    },
-  });
-
-  const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-  await gameUpdatesRepo.update(
-    {
-      gameID: game.id,
-    },
-    {playersInSeats: count}
-  );
+  // do updates that are necessary
+  await GameRepository.seatOpened(game, playerInGame.seatNo);
 
   if (playerInGame) {
     // notify game server, player is kicked out
@@ -285,8 +287,8 @@ async function kickoutPlayer(
   pendingUpdatesRepo.delete({id: update.id});
 }
 
-async function leaveGame(
-  playerGameTrackerRepository: any,
+async function switchSeat(
+  playerGameTrackerRepository: Repository<PlayerGameTracker>,
   game: PokerGame,
   update: NextHandUpdates,
   pendingUpdatesRepo
@@ -297,6 +299,66 @@ async function leaveGame(
       playerId: update.playerId,
     },
   });
+  if (!playerInGame) {
+    return;
+  }
+
+  try {
+    // old seat no
+    const oldSeatNo = playerInGame.seatNo;
+    const newSeatNo = update.newSeat;
+    const player = await Cache.getPlayer(playerInGame.playerUuid);
+
+    await getGameManager().transaction(async transactionEntityManager => {
+      const playerGameTrackerRepository = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
+      await playerGameTrackerRepository.update(
+        {
+          game: {id: game.id},
+          playerId: update.playerId,
+        },
+        {
+          seatNo: newSeatNo,
+        }
+      );
+      playerInGame.seatNo = newSeatNo;
+
+      // do updates that are necessary
+      await GameRepository.seatOccupied(
+        game,
+        newSeatNo,
+        transactionEntityManager
+      );
+      await GameRepository.seatOpened(
+        game,
+        oldSeatNo,
+        transactionEntityManager
+      );
+      await Nats.notifyPlayerSwitchSeat(game, player, playerInGame, oldSeatNo);
+    });
+  } finally {
+    // delete this update
+    pendingUpdatesRepo.delete({id: update.id});
+  }
+}
+
+async function leaveGame(
+  playerGameTrackerRepository: Repository<PlayerGameTracker>,
+  game: PokerGame,
+  update: NextHandUpdates,
+  pendingUpdatesRepo
+) {
+  const playerInGame = await playerGameTrackerRepository.findOne({
+    where: {
+      game: {id: game.id},
+      playerId: update.playerId,
+    },
+  });
+  if (!playerInGame) {
+    return;
+  }
+
   const openedSeat = playerInGame.seatNo;
 
   let sessionTime = playerInGame.sessionTime;
@@ -322,20 +384,8 @@ async function leaveGame(
     );
   }
 
-  const count = await playerGameTrackerRepository.count({
-    where: {
-      game: {id: game.id},
-      seatNo: Not(0),
-    },
-  });
-
-  const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-  await gameUpdatesRepo.update(
-    {
-      gameID: game.id,
-    },
-    {playersInSeats: count}
-  );
+  // do updates that are necessary
+  await GameRepository.seatOpened(game, openedSeat);
 
   if (playerInGame) {
     // notify game server, player is kicked out
@@ -484,4 +534,55 @@ async function handleDealersChoice(
 
   // delete this update
   await pendingUpdatesRepo.delete({id: update.id});
+}
+
+export async function switchSeatNextHand(
+  game: PokerGame,
+  player: Player,
+  seatNo: number,
+  transactionEntityManager?: EntityManager
+) {
+  let nextHandUpdatesRepository;
+  const update = new NextHandUpdates();
+  update.game = game;
+  update.playerId = player.id;
+  update.playerUuid = player.uuid;
+  update.playerName = player.name;
+  update.newUpdate = NextHandUpdate.SWITCH_SEAT;
+  update.newSeat = seatNo;
+  if (transactionEntityManager) {
+    nextHandUpdatesRepository = transactionEntityManager.getRepository(
+      NextHandUpdates
+    );
+    await nextHandUpdatesRepository.save(update);
+    const gameUpdateProps: any = {};
+    gameUpdateProps[`seat${seatNo}`] = SeatStatus.RESERVED;
+    const gameUpdatesRepo = transactionEntityManager.getRepository(
+      PokerGameUpdates
+    );
+    await gameUpdatesRepo.update(
+      {
+        gameID: game.id,
+      },
+      gameUpdateProps
+    );
+  } else {
+    await getGameManager().transaction(async transactionEntityManager => {
+      nextHandUpdatesRepository = transactionEntityManager.getRepository(
+        NextHandUpdates
+      );
+      await nextHandUpdatesRepository.save(update);
+      const gameUpdatesRepo = transactionEntityManager.getRepository(
+        PokerGameUpdates
+      );
+      const gameUpdateProps: any = {};
+      gameUpdateProps[`seat${seatNo}`] = SeatStatus.RESERVED;
+      await gameUpdatesRepo.update(
+        {
+          gameID: game.id,
+        },
+        gameUpdateProps
+      );
+    });
+  }
 }

@@ -10,6 +10,7 @@ import {Repository} from 'typeorm';
 import {BREAK_TIMEOUT, NewUpdate} from './types';
 import {Cache} from '@src/cache/index';
 import {getGameRepository} from '.';
+import {GameRepository} from './game';
 
 const logger = getLogger('takebreak');
 
@@ -178,6 +179,10 @@ export class TakeBreak {
         seatNo: 0,
       }
     );
+
+    // do updates that are necessary
+    await GameRepository.seatOpened(this.game, seatNo);
+
     rows = await playerGameTrackerRepository.findOne({
       game: {id: this.game.id},
       playerId: this.player.id,

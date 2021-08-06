@@ -1,5 +1,6 @@
 import {Entity, Column, Index, PrimaryGeneratedColumn} from 'typeorm';
 import {DbAwareColumn} from '../dbaware';
+import {SeatStatus} from '../types';
 
 @Entity({name: 'host_seat_change_process'})
 export class HostSeatChangeProcess {

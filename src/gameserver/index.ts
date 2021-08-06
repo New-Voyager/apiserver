@@ -237,39 +237,6 @@ export async function playerStatusChanged(
   }
 }
 
-export async function playerSwitchSeat(
-  game: PokerGame,
-  player: Player,
-  playerGameInfo: PlayerGameTracker,
-  oldSeatNo: number
-) {
-  if (!notifyGameServer) {
-    return;
-  }
-
-  const gameServerUrl = await getGameServerUrl(game.id);
-
-  const message = {
-    type: 'PlayerUpdate',
-    gameId: game.id,
-    playerId: player.id,
-    playerUuid: player.uuid,
-    name: player.name,
-    oldSeatNo: oldSeatNo,
-    seatNo: playerGameInfo.seatNo,
-    stack: playerGameInfo.stack,
-    status: playerGameInfo.status,
-    buyIn: playerGameInfo.buyIn,
-    newUpdate: NewUpdate.SWITCH_SEAT,
-  };
-  const newGameUrl = `${gameServerUrl}/player-update`;
-  const resp = await axios.post(newGameUrl, message);
-  if (resp.status !== 200) {
-    logger.error(`Failed to update plater status: ${newGameUrl}`);
-    throw new Error(`Failed to update plater status: ${newGameUrl}`);
-  }
-}
-
 export async function playerLeftGame(
   game: PokerGame,
   player: Player,

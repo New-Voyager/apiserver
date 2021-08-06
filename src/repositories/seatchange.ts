@@ -6,6 +6,7 @@ import {
 } from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {
+  GameStatus,
   NextHandUpdate,
   PlayerStatus,
   SeatChangeProcessType,
@@ -21,7 +22,6 @@ import {
 } from '@src/gameserver';
 import {cancelTimer, startTimer} from '@src/timer';
 import {PLAYER_SEATCHANGE_PROMPT} from './types';
-import {GameRepository} from './game';
 import {
   HostSeatChangeProcess,
   PlayerSeatChangeProcess,
@@ -30,7 +30,7 @@ import {SeatMove, SeatUpdate} from '@src/types';
 import {fixQuery, utcTime} from '@src/utils';
 import {Nats} from '@src/nats';
 import {Cache} from '@src/cache/index';
-import {processPendingUpdates} from './pendingupdates';
+import {processPendingUpdates, switchSeatNextHand} from './pendingupdates';
 import {getGameConnection, getGameManager, getGameRepository} from '.';
 
 const logger = getLogger('seatchange');
@@ -611,6 +611,123 @@ export class SeatChangeProcess {
       // notify the players seat change process has ended
       await hostSeatChangeProcessEnded(this.game, currentSeatStatus, host.id);
     });
+  }
+
+  public async switchSeat(
+    player: Player,
+    seatNo: number
+  ): Promise<PlayerStatus> {
+    if (seatNo > this.game.maxPlayers) {
+      throw new Error('Invalid seat number');
+    }
+    logger.info(
+      `[${this.game.gameCode}] Player: ${player.name} is switching to seat: ${seatNo}`
+    );
+    const [playerInGame, newPlayer] = await getGameManager().transaction(
+      async transactionEntityManager => {
+        // get game updates
+        const gameUpdateRepo = transactionEntityManager.getRepository(
+          PokerGameUpdates
+        );
+        const gameUpdate = await gameUpdateRepo.findOne({
+          where: {
+            gameID: this.game.id,
+          },
+        });
+        if (!gameUpdate) {
+          logger.error(
+            `Game status is not found for game: ${this.game.gameCode}`
+          );
+          throw new Error(
+            `Game status is not found for game: ${this.game.gameCode}`
+          );
+        }
+        if (
+          gameUpdate.waitlistSeatingInprogress ||
+          gameUpdate.seatChangeInProgress
+        ) {
+          throw new Error(
+            `Seat change is in progress for game: ${this.game.gameCode}`
+          );
+        }
+
+        const playerGameTrackerRepository = transactionEntityManager.getRepository(
+          PlayerGameTracker
+        );
+
+        // make sure the seat is available
+        let playerInSeat = await playerGameTrackerRepository.findOne({
+          where: {
+            game: {id: this.game.id},
+            seatNo: seatNo,
+          },
+        });
+
+        // if there is a player in the seat, return an error
+
+        // if the current player in seat tried to sit in the same seat, do nothing
+        if (playerInSeat != null) {
+          throw new Error('A player is in the seat');
+        }
+
+        // is game running
+        if (
+          this.game.status === GameStatus.ACTIVE &&
+          this.game.tableStatus === TableStatus.GAME_RUNNING
+        ) {
+          // switch seat in the next hand
+          await switchSeatNextHand(this.game, player, seatNo);
+          await Nats.notifyPlayerSeatReserve(this.game, player, seatNo);
+          return [playerInSeat, true];
+        }
+
+        // get player's old seat no
+        playerInSeat = await playerGameTrackerRepository.findOne({
+          where: {
+            game: {id: this.game.id},
+            playerId: player.id,
+          },
+        });
+        let oldSeatNo = playerInSeat?.seatNo;
+        if (!oldSeatNo) {
+          oldSeatNo = 0;
+        }
+
+        await playerGameTrackerRepository.update(
+          {
+            game: {id: this.game.id},
+            playerId: player.id,
+          },
+          {
+            seatNo: seatNo,
+          }
+        );
+        playerInSeat = await playerGameTrackerRepository.findOne({
+          where: {
+            game: {id: this.game.id},
+            seatNo: seatNo,
+          },
+        });
+
+        if (!playerInSeat) {
+          throw new Error('Switching seat failed');
+        }
+
+        // send an update message
+        Nats.notifyPlayerSwitchSeat(this.game, player, playerInSeat, oldSeatNo);
+
+        logger.info(
+          `[${this.game.gameCode}] Player: ${player.name} switched to seat: ${seatNo}`
+        );
+
+        return [playerInSeat, true];
+      }
+    );
+
+    if (!playerInGame) {
+      return PlayerStatus.PLAYER_UNKNOWN_STATUS;
+    }
+    return playerInGame.status;
   }
 }
 

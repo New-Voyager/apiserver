@@ -292,6 +292,14 @@ export const gameInfoQuery = gql`
           seatNo
           playerId
         }
+
+        seats {
+          seatNo
+          seatStatus
+          playerId
+          playerUuid
+          name
+        }
       }
     }
   }
@@ -426,6 +434,14 @@ export const leaderboardQuery = gql`
       profit
       rakePaid
     }
+  }
+`;
+
+
+
+export const switchSeatQuery = gql`
+  mutation($gameCode: String!, $seatNo: Int!) {
+    switchSeat(gameCode: $gameCode, seatNo: $seatNo)
   }
 `;
 
@@ -867,6 +883,24 @@ export async function leaderboardData(
       clubCode: clubCode,
     },
     query: leaderboardQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+
+export async function switchSeat(
+  playerId: string,
+  gameCode: string,
+  seatNo: number
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+      seatNo: seatNo,
+    },
+    mutation: switchSeatQuery,
   });
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();

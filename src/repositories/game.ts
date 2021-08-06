@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import {In, Repository, EntityManager, Not} from 'typeorm';
+import {In, Repository, EntityManager, Not, getRepository} from 'typeorm';
 import {
   NextHandUpdates,
   PokerGame,
@@ -13,6 +13,7 @@ import {
   PlayerStatus,
   TableStatus,
   NextHandUpdate,
+  SeatStatus,
 } from '@src/entity/types';
 import {GameServer, TrackGameServer} from '@src/entity/game/gameserver';
 import {getLogger} from '@src/utils/log';
@@ -23,7 +24,6 @@ import {
   publishNewGame,
   changeGameStatus,
   playerKickedOut,
-  playerSwitchSeat,
   playerConfigUpdate,
   pendingProcessDone,
   playerStatusChanged,
@@ -454,6 +454,80 @@ class GameRepositoryImpl {
     return nextNumber;
   }
 
+  public async seatOccupied(
+    game: PokerGame,
+    seatNo: number,
+    transManager?: EntityManager
+  ) {
+    let gameUpdatesRepo: Repository<PokerGameUpdates>;
+    let playerGameTrackerRepo: Repository<PlayerGameTracker>;
+    if (transManager) {
+      gameUpdatesRepo = transManager.getRepository(PokerGameUpdates);
+      playerGameTrackerRepo = transManager.getRepository(PlayerGameTracker);
+    } else {
+      gameUpdatesRepo = getGameRepository(PokerGameUpdates);
+      playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
+    }
+    // get number of players in the seats
+    const count = await playerGameTrackerRepo.count({
+      where: {
+        game: {id: game.id},
+        status: In([
+          PlayerStatus.PLAYING,
+          PlayerStatus.IN_BREAK,
+          PlayerStatus.WAIT_FOR_BUYIN,
+          PlayerStatus.NEED_TO_POST_BLIND,
+        ]),
+      },
+    });
+
+    const gameUpdateProps: any = {playersInSeats: count};
+    gameUpdateProps[`seat${seatNo}`] = SeatStatus.OCCUPIED;
+    await gameUpdatesRepo.update(
+      {
+        gameID: game.id,
+      },
+      gameUpdateProps
+    );
+  }
+
+  public async seatOpened(
+    game: PokerGame,
+    seatNo: number,
+    transManager?: EntityManager
+  ) {
+    let gameUpdatesRepo: Repository<PokerGameUpdates>;
+    let playerGameTrackerRepo: Repository<PlayerGameTracker>;
+    if (transManager) {
+      gameUpdatesRepo = transManager.getRepository(PokerGameUpdates);
+      playerGameTrackerRepo = transManager.getRepository(PlayerGameTracker);
+    } else {
+      gameUpdatesRepo = getGameRepository(PokerGameUpdates);
+      playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
+    }
+    // get number of players in the seats
+    const count = await playerGameTrackerRepo.count({
+      where: {
+        game: {id: game.id},
+        status: In([
+          PlayerStatus.PLAYING,
+          PlayerStatus.IN_BREAK,
+          PlayerStatus.WAIT_FOR_BUYIN,
+          PlayerStatus.NEED_TO_POST_BLIND,
+        ]),
+      },
+    });
+
+    const gameUpdateProps: any = {playersInSeats: count};
+    gameUpdateProps[`seat${seatNo}`] = SeatStatus.OPEN;
+    await gameUpdatesRepo.update(
+      {
+        gameID: game.id,
+      },
+      gameUpdateProps
+    );
+  }
+
   public async joinGame(
     player: Player,
     game: PokerGame,
@@ -620,30 +694,7 @@ class GameRepositoryImpl {
             waitlistNum: 0,
           }
         );
-
-        // get number of players in the seats
-        const count = await playerGameTrackerRepository.count({
-          where: {
-            game: {id: game.id},
-            status: In([
-              PlayerStatus.PLAYING,
-              PlayerStatus.IN_BREAK,
-              PlayerStatus.WAIT_FOR_BUYIN,
-              PlayerStatus.NEED_TO_POST_BLIND,
-            ]),
-          },
-        });
-
-        const gameUpdatesRepo = transactionEntityManager.getRepository(
-          PokerGameUpdates
-        );
-        await gameUpdatesRepo.update(
-          {
-            gameID: game.id,
-          },
-          {playersInSeats: count}
-        );
-
+        await this.seatOccupied(game, seatNo, transactionEntityManager);
         if (playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN) {
           await this.startBuyinTimer(
             game,
@@ -733,6 +784,7 @@ class GameRepositoryImpl {
       .select('status')
       .addSelect('session_time', 'sessionTime')
       .addSelect('sat_at', 'satAt')
+      .addSelect('seat_no', 'seatNo')
       .execute();
     if (!rows && rows.length === 0) {
       throw new Error('Player is not found in the game');
@@ -753,8 +805,8 @@ class GameRepositoryImpl {
       await nextHandUpdatesRepository.save(update);
     } else {
       playerInGame.status = PlayerStatus.NOT_PLAYING;
+      const seatNo = playerInGame.seatNo;
       playerInGame.seatNo = 0;
-
       const setProps: any = {
         status: PlayerStatus.NOT_PLAYING,
         seatNo: 0,
@@ -780,6 +832,8 @@ class GameRepositoryImpl {
         },
         setProps
       );
+
+      await GameRepository.seatOpened(game, seatNo);
 
       // playerLeftGame(game, player, seatNo);
     }
@@ -1546,110 +1600,6 @@ class GameRepositoryImpl {
     return token;
   }
 
-  public async switchSeat(
-    player: Player,
-    game: PokerGame,
-    seatNo: number
-  ): Promise<PlayerStatus> {
-    if (seatNo > game.maxPlayers) {
-      throw new Error('Invalid seat number');
-    }
-    logger.info(
-      `[${game.gameCode}] Player: ${player.name} is switching to seat: ${seatNo}`
-    );
-    const [playerInGame, newPlayer] = await getGameManager().transaction(
-      async transactionEntityManager => {
-        // get game updates
-        const gameUpdateRepo = transactionEntityManager.getRepository(
-          PokerGameUpdates
-        );
-        const gameUpdate = await gameUpdateRepo.findOne({
-          where: {
-            gameID: game.id,
-          },
-        });
-        if (!gameUpdate) {
-          logger.error(`Game status is not found for game: ${game.gameCode}`);
-          throw new Error(
-            `Game status is not found for game: ${game.gameCode}`
-          );
-        }
-        if (
-          gameUpdate.waitlistSeatingInprogress ||
-          gameUpdate.seatChangeInProgress
-        ) {
-          throw new Error(
-            `Seat change is in progress for game: ${game.gameCode}`
-          );
-        }
-
-        const playerGameTrackerRepository = transactionEntityManager.getRepository(
-          PlayerGameTracker
-        );
-
-        // make sure the seat is available
-        let playerInSeat = await playerGameTrackerRepository.findOne({
-          where: {
-            game: {id: game.id},
-            seatNo: seatNo,
-          },
-        });
-
-        // if there is a player in the seat, return an error
-
-        // if the current player in seat tried to sit in the same seat, do nothing
-        if (playerInSeat != null) {
-          throw new Error('A player is in the seat');
-        }
-
-        // get player's old seat no
-        playerInSeat = await playerGameTrackerRepository.findOne({
-          where: {
-            game: {id: game.id},
-            playerId: player.id,
-          },
-        });
-        let oldSeatNo = playerInSeat?.seatNo;
-        if (!oldSeatNo) {
-          oldSeatNo = 0;
-        }
-
-        await playerGameTrackerRepository.update(
-          {
-            game: {id: game.id},
-            playerId: player.id,
-          },
-          {
-            seatNo: seatNo,
-          }
-        );
-        playerInSeat = await playerGameTrackerRepository.findOne({
-          where: {
-            game: {id: game.id},
-            seatNo: seatNo,
-          },
-        });
-
-        if (!playerInSeat) {
-          throw new Error('Switching seat failed');
-        }
-
-        // send an update message
-        playerSwitchSeat(game, player, playerInSeat, oldSeatNo);
-        logger.info(
-          `[${game.gameCode}] Player: ${player.name} switched to seat: ${seatNo}`
-        );
-
-        return [playerInSeat, true];
-      }
-    );
-
-    if (!playerInGame) {
-      return PlayerStatus.PLAYER_UNKNOWN_STATUS;
-    }
-    return playerInGame.status;
-  }
-
   public async updatePlayerGameConfig(
     player: Player,
     game: PokerGame,
@@ -2038,6 +1988,28 @@ class GameRepositoryImpl {
         }
       );
     }
+  }
+
+  public async getSeatStatus(gameID: number): Promise<Array<SeatStatus>> {
+    const game = await Cache.getGameById(gameID);
+    if (!game) {
+      return [];
+    }
+
+    const pokerGameUpdatesRepo = getGameRepository(PokerGameUpdates);
+    const pokerGameUpdates = await pokerGameUpdatesRepo.findOne({
+      gameID: gameID,
+    });
+
+    const seatStatuses = new Array<SeatStatus>();
+    seatStatuses.push(SeatStatus.UNKNOWN);
+    if (pokerGameUpdates) {
+      const pokerGameUpdatesAny = pokerGameUpdates as any;
+      for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+        seatStatuses.push(pokerGameUpdatesAny[`seat${seatNo}`] as SeatStatus);
+      }
+    }
+    return seatStatuses;
   }
 }
 

@@ -723,7 +723,7 @@ export class BuyIn {
             });
 
             // mark the player not playing
-            playerInGameRepo.update(
+            await playerInGameRepo.update(
               {
                 game: {id: this.game.id},
                 playerId: this.player.id,
@@ -866,6 +866,7 @@ export class BuyIn {
           buyInExpAt: undefined,
         }
       );
+      GameRepository.seatOpened(this.game, playerInSeat.seatNo);
 
       // delete the row in pending updates table
       const pendingUpdatesRepo = getGameRepository(NextHandUpdates);
