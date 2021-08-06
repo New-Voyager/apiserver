@@ -277,6 +277,7 @@ class NatsClass {
 
     const message: any = {
       type: 'STACK_RELOADED',
+      subType: 'APPROVED',
       gameCode: gameCode,
       playerName: name,
       playerId: playerId,
