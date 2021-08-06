@@ -33,6 +33,7 @@ enum TableStatus {
 }
 
 enum PlayerGameStatus {
+  PLAYER_UNKNOWN_STATUS
   NOT_PLAYING
   PLAYING
   IN_QUEUE
@@ -64,6 +65,13 @@ enum NextHandUpdate {
   RELOAD_CHIPS,
   BACK_FROM_BREAK,
   LEAVE
+}
+
+enum SeatStatus {
+  UNKNOWN,
+  OPEN,
+  OCCUPIED,
+  RESERVED,
 }
 
 input GameCreateInput {
@@ -109,13 +117,13 @@ input GameCreateInput {
 
 type SeatInfo {
   seatNo: Int!
-  playerUuid: String!
+  playerUuid: String
   playerId: Int
-  name: String!
+  name: String
   buyIn: Float
   stack: Float
   status: PlayerGameStatus
-  openSeat: Boolean
+  seatStatus: SeatStatus
   buyInExpTime: DateTime
   breakStartedTime: DateTime
   breakExpTime: DateTime
@@ -126,6 +134,7 @@ type SeatInfo {
 
 type TableSeats {
   playersInSeats: [SeatInfo!]
+  seats: [SeatInfo!]
   availableSeats: [Int!]
 }
 

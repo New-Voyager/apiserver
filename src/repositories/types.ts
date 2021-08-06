@@ -27,6 +27,7 @@ export enum NewUpdate {
   WAIT_FOR_BUYIN_APPROVAL,
   BUYIN_DENIED,
   NEWUPDATE_NOT_PLAYING,
+  RESERVE_SEAT,
 }
 
 export interface HighHandWinnerResult {

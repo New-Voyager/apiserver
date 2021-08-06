@@ -17,6 +17,7 @@ import {
   TableStatus,
   NextHandUpdate,
   SeatChangeProcessType,
+  SeatStatus,
 } from '../types';
 
 @Entity({name: 'poker_game_updates'})
@@ -111,6 +112,36 @@ export class PokerGameUpdates {
 
   @Column({name: 'appcoin_consume_block', default: 0, type: 'int'}) // game time (in seconds) to allow game runtime
   public appcoinConsumeBlock!: number;
+
+  @Column({name: 'seat1', type: 'int', default: SeatStatus.OPEN})
+  public seat1!: number;
+
+  @Column({name: 'seat2', type: 'int', default: SeatStatus.OPEN})
+  public seat2!: number;
+
+  @Column({name: 'seat3', type: 'int', default: SeatStatus.OPEN})
+  public seat3!: number;
+
+  @Column({name: 'seat4', type: 'int', default: SeatStatus.OPEN})
+  public seat4!: number;
+
+  @Column({name: 'seat5', type: 'int', default: SeatStatus.OPEN})
+  public seat5!: number;
+
+  @Column({name: 'seat6', type: 'int', default: SeatStatus.OPEN})
+  public seat6!: number;
+
+  @Column({name: 'seat7', type: 'int', default: SeatStatus.OPEN})
+  public seat7!: number;
+
+  @Column({name: 'seat8', type: 'int', default: SeatStatus.OPEN})
+  public seat8!: number;
+
+  @Column({name: 'seat9', type: 'int', default: SeatStatus.OPEN})
+  public seat9!: number;
+
+  @Column({name: 'seat10', type: 'int', default: SeatStatus.OPEN})
+  public seat10!: number;
 }
 
 @Entity({name: 'poker_game'})

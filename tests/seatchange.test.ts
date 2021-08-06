@@ -5,6 +5,7 @@ import * as handutils from './utils/hand.testutils';
 import * as rewardutils from './utils/reward.testutils';
 import {default as axios} from 'axios';
 import {getLogger} from '../src/utils/log';
+import { SeatStatus } from '../src/entity/types';
 const logger = getLogger('game');
 
 beforeAll(async done => {
@@ -192,4 +193,77 @@ describe('Tests: seat change APIs', () => {
     expect(resp6).toHaveLength(1);
     expect(resp6[0].playerUuid).toBe(player2);
   });
+
+  test('switch seat basic test', async () => {
+    // Create club and owner
+    const [ownerId, clubCode, players] = await createClubWithMembers([
+      {
+        name: 'player1',
+        devId: 'test321',
+      },
+    ]);
+    const player1 = ownerId;
+    const player2 = players[0];
+
+    // create gameserver and game
+    const gameInput = holdemGameInput;
+    gameInput.maxPlayers = 4;
+    gameInput.minPlayers = 2;
+    gameInput.buyInApproval = false;
+    const game = await gameutils.configureGame(ownerId, clubCode, gameInput);
+
+    // join a game
+    await gameutils.joinGame(player1, game.gameCode, 1);
+    await gameutils.joinGame(player2, game.gameCode, 2);
+
+    // buyin
+    await gameutils.buyin(player1, game.gameCode, 100);
+    await gameutils.buyin(player2, game.gameCode, 100);
+
+    await gameutils.startGame(ownerId, game.gameCode);
+
+    // get game info and verify seat positions
+    let gameInfo = await gameutils.gameInfo(player1, game.gameCode);
+    expect(gameInfo.gameCode).toEqual(game.gameCode);
+    let seats = gameInfo.seatInfo.seats;
+    expect(seats.length).toEqual(4);
+    expect(seats[0].seatNo).toEqual(1);
+    expect(seats[0].seatStatus).toEqual(SeatStatus[SeatStatus.OCCUPIED]);
+    expect(seats[1].seatNo).toEqual(2);
+    expect(seats[1].seatStatus).toEqual(SeatStatus[SeatStatus.OCCUPIED]);
+    expect(seats[2].seatNo).toEqual(3);
+    expect(seats[2].seatStatus).toEqual(SeatStatus[SeatStatus.OPEN]);
+    expect(seats[3].seatNo).toEqual(4);
+    expect(seats[3].seatStatus).toEqual(SeatStatus[SeatStatus.OPEN]);
+
+    // switch seat and verify seat positions
+    await gameutils.switchSeat(player1, game.gameCode, 3);
+    gameInfo = await gameutils.gameInfo(player1, game.gameCode);
+    expect(gameInfo.gameCode).toEqual(game.gameCode);
+    seats = gameInfo.seatInfo.seats;
+    expect(seats[2].seatNo).toEqual(3);
+    expect(seats[2].seatStatus).toEqual(SeatStatus[SeatStatus.RESERVED]);
+
+    // process pending updates
+    try {
+      const gameId = await gameutils.getGameById(game.gameCode);
+      await axios.post(
+        `${GAMESERVER_API}/process-pending-updates/gameId/${gameId}`
+      );
+    } catch (err) {
+      console.error(JSON.stringify(err));
+      expect(true).toBeFalsy();
+    }
+
+    // get game info and verify seat positions
+    gameInfo = await gameutils.gameInfo(player1, game.gameCode);
+    expect(gameInfo.gameCode).toEqual(game.gameCode);
+    seats = gameInfo.seatInfo.seats;
+    expect(seats[0].seatNo).toEqual(1);
+    expect(seats[0].seatStatus).toEqual(SeatStatus[SeatStatus.OPEN]);
+
+    expect(seats[2].seatNo).toEqual(3);
+    expect(seats[2].seatStatus).toEqual(SeatStatus[SeatStatus.OCCUPIED]);
+  });
+
 });

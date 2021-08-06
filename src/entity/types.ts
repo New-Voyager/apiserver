@@ -192,3 +192,10 @@ export enum TransactionSubType {
   ADJUSTMENT,
   TRANSACTION,
 }
+
+export enum SeatStatus {
+  UNKNOWN,
+  OPEN,
+  OCCUPIED,
+  RESERVED,
+}

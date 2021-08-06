@@ -1,11 +1,12 @@
 import {PokerGame} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {GameType} from '@src/entity/types';
-import {HighHandWinner} from '@src/repositories/types';
+import {HighHandWinner, NewUpdate} from '@src/repositories/types';
 import {getLogger} from '@src/utils/log';
 import * as nats from 'nats';
 import {v4 as uuidv4} from 'uuid';
 import {Cache} from '@src/cache';
+import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 const logger = getLogger('nats');
 
 class NatsClass {
@@ -378,6 +379,67 @@ class NatsClass {
       const subject = this.getPlayerChannel(player);
       this.client.publish(subject, this.stringCodec.encode(messageStr));
     }
+  }
+
+  public async notifyPlayerSwitchSeat(
+    game: PokerGame,
+    player: Player,
+    playerGameInfo: PlayerGameTracker,
+    oldSeatNo: number,
+    messageId?: string
+  ) {
+    if (this.client === null) {
+      return;
+    }
+
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message = {
+      type: 'TABLE_UPDATE',
+      subType: NewUpdate[NewUpdate.SWITCH_SEAT],
+      gameId: game.id,
+      playerId: player.id,
+      playerUuid: player.uuid,
+      name: player.name,
+      oldSeatNo: oldSeatNo,
+      seatNo: playerGameInfo.seatNo,
+      stack: playerGameInfo.stack,
+      status: playerGameInfo.status,
+      buyIn: playerGameInfo.buyIn,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getGameChannel(game.gameCode);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
+  }
+
+  public async notifyPlayerSeatReserve(
+    game: PokerGame,
+    player: Player,
+    seatNo: number,
+    messageId?: string
+  ) {
+    if (this.client === null) {
+      return;
+    }
+
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message = {
+      type: 'TABLE_UPDATE',
+      subType: NewUpdate.RESERVE_SEAT[NewUpdate.RESERVE_SEAT],
+      gameId: game.id,
+      playerId: player.id,
+      playerUuid: player.uuid,
+      name: player.name,
+      seatNo: seatNo,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getGameChannel(game.gameCode);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
   /*

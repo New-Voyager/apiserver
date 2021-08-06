@@ -9,6 +9,7 @@ import {
   BuyInApprovalStatus,
   ApprovalType,
   ApprovalStatus,
+  SeatStatus,
 } from '@src/entity/types';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
@@ -37,6 +38,7 @@ import {Nats} from '@src/nats';
 import {Reload} from '@src/repositories/reload';
 import {PlayersInGame} from '@src/entity/history/player';
 import {getAgoraAppId} from '@src/3rdparty/agora';
+import {SeatChangeProcess} from '@src/repositories/seatchange';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -1508,7 +1510,8 @@ export async function switchSeat(
     }
 
     const player = await Cache.getPlayer(playerUuid);
-    const status = await GameRepository.switchSeat(player, game, seatNo);
+    const process = new SeatChangeProcess(game);
+    const status = await process.switchSeat(player, seatNo);
     logger.info(
       `Player: ${player.name} isBot: ${player.bot} switched seat game: ${game.gameCode}`
     );
@@ -2016,6 +2019,7 @@ const resolvers: any = {
   GameInfo: {
     seatInfo: async (parent, args, ctx, info) => {
       const game = await Cache.getGame(parent.gameCode);
+      const seatStatuses = await GameRepository.getSeatStatus(game.id);
       const playersInSeats = await GameRepository.getPlayersInSeats(game.id);
       for (const player of playersInSeats) {
         player.status = PlayerStatus[player.status];
@@ -2024,16 +2028,73 @@ const resolvers: any = {
         player.breakExpTime = player.breakTimeExpAt;
       }
 
+      const seats = new Array<any>();
       const takenSeats = playersInSeats.map(x => x.seatNo);
       const availableSeats: Array<number> = [];
+
+      /*
+          type SeatInfo {
+            seatNo: Int!
+            playerUuid: String
+            playerId: Int
+            name: String
+            buyIn: Float
+            stack: Float
+            status: PlayerGameStatus
+            seatStatus: SeatStatus
+            buyInExpTime: DateTime
+            breakStartedTime: DateTime
+            breakExpTime: DateTime
+            gameToken: String
+            agoraToken: String
+            isBot: Boolean
+          }
+      */
       for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
-        if (takenSeats.indexOf(seatNo) === -1) {
-          availableSeats.push(seatNo);
+        let seatStatus = SeatStatus.UNKNOWN;
+        if (seatStatuses.length >= game.maxPlayers) {
+          seatStatus = seatStatuses[seatNo];
+        }
+
+        const occupiedSeat = takenSeats.indexOf(seatNo);
+        if (occupiedSeat === -1) {
+          // is seat reserved ??
+          if (seatStatus === SeatStatus.RESERVED) {
+            seats.push({
+              seatNo: seatNo,
+              seatStatus: SeatStatus[SeatStatus.RESERVED],
+            });
+          } else {
+            seats.push({
+              seatNo: seatNo,
+              seatStatus: SeatStatus[SeatStatus.OPEN],
+            });
+            availableSeats.push(seatNo);
+          }
+        } else {
+          // seat is occupied
+          let player: any;
+          for (const p of playersInSeats) {
+            if (p.seatNo == seatNo) {
+              player = p;
+              break;
+            }
+          }
+          if (player) {
+            let seat = _.assign({}, player);
+            seat.seatStatus = SeatStatus[SeatStatus.OCCUPIED];
+            seat.status = PlayerStatus[player.status];
+            seat.name = player.playerName;
+            seat.buyInExpTime = player.buyInExpAt;
+            seat.breakExpTime = player.breakTimeExpAt;
+            seats.push(seat);
+          }
         }
       }
       return {
         playersInSeats: playersInSeats,
         availableSeats: availableSeats,
+        seats: seats,
       };
     },
     gameToken: async (parent, args, ctx, info) => {
