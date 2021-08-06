@@ -142,7 +142,6 @@ export class PokerGameUpdates {
 
   @Column({name: 'seat10', type: 'int', default: SeatStatus.OPEN})
   public seat10!: number;
-  ß;
 }
 
 @Entity({name: 'poker_game'})
