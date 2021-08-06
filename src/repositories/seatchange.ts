@@ -676,7 +676,7 @@ export class SeatChangeProcess {
           this.game.tableStatus === TableStatus.GAME_RUNNING
         ) {
           // switch seat in the next hand
-          await switchSeatNextHand(this.game, player, seatNo);
+          await switchSeatNextHand(this.game, player, seatNo, transactionEntityManager);
           await Nats.notifyPlayerSeatReserve(this.game, player, seatNo);
           return [playerInSeat, true];
         }
