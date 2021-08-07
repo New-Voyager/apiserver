@@ -136,7 +136,14 @@ export async function changeGameStatus(
     tableStatus: tableStatus,
   };
   const newGameUrl = `${gameServerUrl}/game-update-status`;
-  const resp = await axios.post(newGameUrl, message);
+  let resp: any;
+  try {
+    resp = await axios.post(newGameUrl, message);
+  } catch (err) {
+    const msg = `Error while posting game status change to ${newGameUrl}: ${err.message}`;
+    logger.error(msg);
+    throw new Error(msg);
+  }
   if (resp.status !== 200) {
     logger.error(`Failed to update game status: ${newGameUrl}`);
     throw new Error(`Failed to update game status: ${newGameUrl}`);
