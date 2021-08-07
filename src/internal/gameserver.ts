@@ -118,10 +118,16 @@ class GameServerAPIs {
 
   public async restartGames(req: any, resp: any) {
     const payload = req.body;
+    let url: string;
+    if (process.env.DEBUG_WITH_STACK && process.env.DEBUG_WITH_STACK === '1') {
+      url = `http://localhost:8080`;
+    } else {
+      url = payload.url;
+    }
     const records: Array<GameServer> = await getGameRepository(GameServer).find(
       {
         where: {
-          url: payload.url,
+          url: url,
         },
       }
     );
@@ -129,7 +135,7 @@ class GameServerAPIs {
     let err = '';
 
     if (records.length > 1) {
-      err = `Found ${records.length} game servers with URL [${payload.url}]. Expected 0 or 1.`;
+      err = `Found ${records.length} game servers with URL [${url}]. Expected 0 or 1.`;
     }
 
     if (err) {
