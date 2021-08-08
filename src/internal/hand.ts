@@ -103,16 +103,20 @@ class HandServerAPIs {
       resp.status(500).send(JSON.stringify(res));
       return;
     }
-    const result = req.body;
-    if (result.playerStats) {
-      // It seems that result.playerStats can be undefined in system tests.
-      await processConsecutiveActionTimeouts(gameID, result.playerStats);
-    }
-    const saveResult = await postHand(gameID, handNum, result);
-    if (saveResult.success) {
-      resp.status(200).send(saveResult);
-    } else {
-      resp.status(500).send(saveResult);
+    try {
+      const result = req.body;
+      if (result.playerStats) {
+        // It seems that result.playerStats can be undefined in system tests.
+        await processConsecutiveActionTimeouts(gameID, result.playerStats);
+      }
+      const saveResult = await postHand(gameID, handNum, result);
+      if (saveResult.success) {
+        resp.status(200).send(saveResult);
+      } else {
+        resp.status(500).send(saveResult);
+      }
+    } catch (err) {
+      resp.status(500).send({error: err.message});
     }
   }
 }

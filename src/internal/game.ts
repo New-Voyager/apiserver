@@ -41,8 +41,13 @@ class GameAPIs {
       resp.status(500).send(JSON.stringify(res));
       return;
     }
-    await GameRepository.markPlayerGameState(playerID, gameID, gameStatus);
-    resp.status(200).send({status: 'OK'});
+    try {
+      await GameRepository.markPlayerGameState(playerID, gameID, gameStatus);
+      resp.status(200).send({status: 'OK'});
+    } catch (err) {
+      logger.error(err.message);
+      resp.status(500).send({error: err.message});
+    }
   }
 
   public async updateGameStatus(req: any, resp: any) {
@@ -98,8 +103,13 @@ class GameAPIs {
       resp.status(500).send(JSON.stringify(res));
       return;
     }
-    const pendingUpdates = await GameRepository.anyPendingUpdates(gameID);
-    resp.status(200).send({pendingUpdates: pendingUpdates});
+    try {
+      const pendingUpdates = await GameRepository.anyPendingUpdates(gameID);
+      resp.status(200).send({pendingUpdates: pendingUpdates});
+    } catch (err) {
+      logger.error(err.message);
+      resp.status(500).send(JSON.stringify({error: err.message}));
+    }
   }
 
   public async processPendingUpdates(req: any, resp: any) {
@@ -110,8 +120,18 @@ class GameAPIs {
       return;
     }
     const gameID = parseInt(gameIDStr);
-    await processPendingUpdates(gameID);
-    resp.status(200).send({status: 'OK'});
+    if (!gameID) {
+      const res = {error: `Invalid game id ${gameIDStr}`};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    try {
+      await processPendingUpdates(gameID);
+      resp.status(200).send({status: 'OK'});
+    } catch (err) {
+      logger.error(err.message);
+      resp.status(500).send(JSON.stringify({error: err.message}));
+    }
   }
 
   public async getGame(req: any, resp: any) {
@@ -279,266 +299,270 @@ class GameAPIs {
       return;
     }
 
-    const ret = await getGameManager().transaction(
-      async transactionEntityManager => {
-        const game: PokerGame = await Cache.getGame(
-          gameCode,
-          false,
-          transactionEntityManager
-        );
-        if (!game) {
-          const res = {error: `Game code: ${gameCode} not found`};
-          resp.status(500).send(JSON.stringify(res));
-        }
-
-        const gameUpdatesRepo = transactionEntityManager.getRepository(
-          PokerGameUpdates
-        );
-        const gameUpdates = await gameUpdatesRepo.find({
-          gameID: game.id,
-        });
-        if (gameUpdates.length === 0) {
-          const res = {error: 'GameUpdates not found'};
-          resp.status(500).send(JSON.stringify(res));
-          return;
-        }
-        const gameUpdate = gameUpdates[0];
-        if (gameUpdate.handNum > gameServerHandNum) {
-          // API server has already moved to the next hand and is ahead of the game server.
-          // Perhaps game server crashed after already having called this endpoint and is recovering now.
-          // Don't do anything in that case.
-          return {
-            gameCode: gameCode,
-            handNum: gameUpdate.handNum,
-          };
-        }
-
-        let playerInSeatsInPrevHand: Array<number> = [];
-        if (gameUpdate.playersInLastHand != null) {
-          playerInSeatsInPrevHand = JSON.parse(gameUpdate.playersInLastHand);
-        }
-
-        const playersInSeats = await GameRepository.getPlayersInSeats(
-          game.id,
-          transactionEntityManager
-        );
-        const takenSeats = _.keyBy(playersInSeats, 'seatNo');
-
-        for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
-          const playerSeat = takenSeats[seatNo];
-          if (
-            playerSeat &&
-            playerSeat['stack'] === 0 &&
-            playerSeat['status'] == PlayerStatus.PLAYING
-          ) {
-            playerSeat['status'] = PlayerStatus.WAIT_FOR_BUYIN;
+    try {
+      const ret = await getGameManager().transaction(
+        async transactionEntityManager => {
+          const game: PokerGame = await Cache.getGame(
+            gameCode,
+            false,
+            transactionEntityManager
+          );
+          if (!game) {
+            const res = {error: `Game code: ${gameCode} not found`};
+            resp.status(500).send(JSON.stringify(res));
           }
-        }
 
-        const occupiedSeats = new Array<number>();
-        // dealer
-        occupiedSeats.push(0);
-        for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
-          const playerSeat = takenSeats[seatNo];
+          const gameUpdatesRepo = transactionEntityManager.getRepository(
+            PokerGameUpdates
+          );
+          const gameUpdates = await gameUpdatesRepo.find({
+            gameID: game.id,
+          });
+          if (gameUpdates.length === 0) {
+            const res = {error: 'GameUpdates not found'};
+            resp.status(500).send(JSON.stringify(res));
+            return;
+          }
+          const gameUpdate = gameUpdates[0];
+          if (gameUpdate.handNum > gameServerHandNum) {
+            // API server has already moved to the next hand and is ahead of the game server.
+            // Perhaps game server crashed after already having called this endpoint and is recovering now.
+            // Don't do anything in that case.
+            return {
+              gameCode: gameCode,
+              handNum: gameUpdate.handNum,
+            };
+          }
 
-          if (!playerSeat) {
-            occupiedSeats.push(0);
-          } else {
-            if (playerSeat.status == PlayerStatus.PLAYING) {
-              occupiedSeats.push(playerSeat.playerId);
-            } else {
+          let playerInSeatsInPrevHand: Array<number> = [];
+          if (gameUpdate.playersInLastHand != null) {
+            playerInSeatsInPrevHand = JSON.parse(gameUpdate.playersInLastHand);
+          }
+
+          const playersInSeats = await GameRepository.getPlayersInSeats(
+            game.id,
+            transactionEntityManager
+          );
+          const takenSeats = _.keyBy(playersInSeats, 'seatNo');
+
+          for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+            const playerSeat = takenSeats[seatNo];
+            if (
+              playerSeat &&
+              playerSeat['stack'] === 0 &&
+              playerSeat['status'] == PlayerStatus.PLAYING
+            ) {
+              playerSeat['status'] = PlayerStatus.WAIT_FOR_BUYIN;
+            }
+          }
+
+          const occupiedSeats = new Array<number>();
+          // dealer
+          occupiedSeats.push(0);
+          for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+            const playerSeat = takenSeats[seatNo];
+
+            if (!playerSeat) {
               occupiedSeats.push(0);
-            }
-          }
-        }
-
-        logger.info(
-          `Previous hand: [${playerInSeatsInPrevHand.toString()}] Current hand: [${occupiedSeats.toString()}]`
-        );
-
-        const prevGameType = gameUpdate.gameType;
-
-        // if this is the first hand, then use the currently occupied seats to determine button position
-        if (playerInSeatsInPrevHand.length == 0) {
-          playerInSeatsInPrevHand = occupiedSeats;
-        }
-
-        // seat numbers that missed the blinds
-        const missedBlinds = new Array<number>();
-
-        // we use the players sitting in the previous hand to determine the button position and small blind position and big blind position
-        // Let us use examples to describe different scenarios
-        // Prev Hand Players: [D, 1, 2, 3, 4], buttonPos: 1
-        // * Seat 2 leaves in this hand
-        // The new button position 2, and it is dead button
-        // Prev Hand Players: [D, 1, 0, 3, 4], buttonPos: 1
-        // * A new player joins in seat 2
-        // the new button positions is seat 3
-        // D: 0 index is a dealer seat (just a filler)
-
-        // Small blind
-        // Prev Hand Players: [D, 1, 2, 3, 4], buttonPos: 1, sb: 2, bb: 3
-        // * Seat 3 leaves in this hand
-        // The new button position is 2, 3: dead small, 4: bb
-        // next hand
-        // button position: 3 dead button, 4: sb, 1: bb
-
-        let buttonPassedDealer = false;
-        let buttonPos = gameUpdate.buttonPos;
-        let maxPlayers = game.maxPlayers;
-        if (gameUpdate.calculateButtonPos) {
-          while (maxPlayers > 0) {
-            buttonPos++;
-            if (buttonPos > game.maxPlayers) {
-              buttonPassedDealer = true;
-              buttonPos = 1;
-            }
-            if (playerInSeatsInPrevHand[buttonPos] !== 0) {
-              break;
-            }
-            maxPlayers--;
-          }
-          gameUpdate.buttonPos = buttonPos;
-        }
-        gameUpdate.handNum++;
-        maxPlayers = game.maxPlayers;
-        let sbPos = buttonPos;
-        while (maxPlayers > 0) {
-          sbPos++;
-          if (sbPos > game.maxPlayers) {
-            sbPos = 1;
-          }
-          if (playerInSeatsInPrevHand[sbPos] !== 0) {
-            break;
-          }
-          maxPlayers--;
-        }
-        let bbPos = sbPos;
-        maxPlayers = game.maxPlayers;
-        while (maxPlayers > 0) {
-          bbPos++;
-          if (bbPos > game.maxPlayers) {
-            bbPos = 1;
-          }
-
-          if (takenSeats[bbPos]) {
-            const takenSeat = takenSeats[bbPos];
-            if (takenSeat.status === PlayerStatus.IN_BREAK) {
-              // this player missed the blind
-              missedBlinds.push(bbPos);
-            }
-          }
-
-          if (occupiedSeats[bbPos] !== 0) {
-            break;
-          }
-          maxPlayers--;
-        }
-        gameUpdate.sbPos = sbPos;
-        gameUpdate.bbPos = bbPos;
-        logger.info(
-          `Hand number: ${gameUpdate.handNum} buttonPos: ${buttonPos} sbPos: ${sbPos} bbPos: ${bbPos}`
-        );
-
-        // determine new game type (ROE)
-        if (game.gameType === GameType.ROE) {
-          if (gameUpdate.handNum !== 1) {
-            if (buttonPassedDealer) {
-              // button passed dealer
-              const roeGames = game.roeGames.split(',');
-              const gameTypeStr = GameType[gameUpdate.gameType];
-              let index = roeGames.indexOf(gameTypeStr.toString());
-              index++;
-              if (index >= roeGames.length) {
-                index = 0;
+            } else {
+              if (playerSeat.status == PlayerStatus.PLAYING) {
+                occupiedSeats.push(playerSeat.playerId);
+              } else {
+                occupiedSeats.push(0);
               }
-              gameUpdate.gameType = GameType[roeGames[index]];
             }
-          } else {
-            const roeGames = game.roeGames.split(',');
-            gameUpdate.gameType = GameType[roeGames[0]];
           }
-        } else if (game.gameType === GameType.DEALER_CHOICE) {
-          if (gameUpdate.handNum === 1) {
-            const dealerChoiceGames = game.dealerChoiceGames.split(',');
-            gameUpdate.gameType = GameType[dealerChoiceGames[0]];
+
+          logger.info(
+            `Previous hand: [${playerInSeatsInPrevHand.toString()}] Current hand: [${occupiedSeats.toString()}]`
+          );
+
+          const prevGameType = gameUpdate.gameType;
+
+          // if this is the first hand, then use the currently occupied seats to determine button position
+          if (playerInSeatsInPrevHand.length == 0) {
+            playerInSeatsInPrevHand = occupiedSeats;
           }
-        } else {
-          gameUpdate.gameType = game.gameType;
-        }
 
-        let playerInSeatsInThisHand = occupiedSeats;
-        if (
-          playerInSeatsInPrevHand[sbPos] !== 0 && // there was a player in the previous hand
-          occupiedSeats[sbPos] === 0 // the player is not playing this hand or left the game
-        ) {
-          // we have a dead small now
-          // so the next button will move to the dead small seat (not to the current big blind seat)
+          // seat numbers that missed the blinds
+          const missedBlinds = new Array<number>();
 
+          // we use the players sitting in the previous hand to determine the button position and small blind position and big blind position
+          // Let us use examples to describe different scenarios
+          // Prev Hand Players: [D, 1, 2, 3, 4], buttonPos: 1
+          // * Seat 2 leaves in this hand
+          // The new button position 2, and it is dead button
+          // Prev Hand Players: [D, 1, 0, 3, 4], buttonPos: 1
+          // * A new player joins in seat 2
+          // the new button positions is seat 3
+          // D: 0 index is a dealer seat (just a filler)
+
+          // Small blind
           // Prev Hand Players: [D, 1, 2, 3, 4], buttonPos: 1, sb: 2, bb: 3
           // * Seat 3 leaves in this hand
           // The new button position is 2, 3: dead small, 4: bb
           // next hand
           // button position: 3 dead button, 4: sb, 1: bb
-          playerInSeatsInThisHand = playerInSeatsInPrevHand;
-        }
 
-        if (missedBlinds.length > 0) {
-          logger.info(`Players missed blinds: ${missedBlinds.toString()}`);
-          const playerGameTrackerRepo = transactionEntityManager.getRepository(
-            PlayerGameTracker
-          );
-          for (const seatNo of missedBlinds) {
-            await playerGameTrackerRepo.update(
-              {
-                game: {id: game.id},
-                seatNo: seatNo,
-              },
-              {
-                missedBlind: true,
+          let buttonPassedDealer = false;
+          let buttonPos = gameUpdate.buttonPos;
+          let maxPlayers = game.maxPlayers;
+          if (gameUpdate.calculateButtonPos) {
+            while (maxPlayers > 0) {
+              buttonPos++;
+              if (buttonPos > game.maxPlayers) {
+                buttonPassedDealer = true;
+                buttonPos = 1;
               }
+              if (playerInSeatsInPrevHand[buttonPos] !== 0) {
+                break;
+              }
+              maxPlayers--;
+            }
+            gameUpdate.buttonPos = buttonPos;
+          }
+          gameUpdate.handNum++;
+          maxPlayers = game.maxPlayers;
+          let sbPos = buttonPos;
+          while (maxPlayers > 0) {
+            sbPos++;
+            if (sbPos > game.maxPlayers) {
+              sbPos = 1;
+            }
+            if (playerInSeatsInPrevHand[sbPos] !== 0) {
+              break;
+            }
+            maxPlayers--;
+          }
+          let bbPos = sbPos;
+          maxPlayers = game.maxPlayers;
+          while (maxPlayers > 0) {
+            bbPos++;
+            if (bbPos > game.maxPlayers) {
+              bbPos = 1;
+            }
+
+            if (takenSeats[bbPos]) {
+              const takenSeat = takenSeats[bbPos];
+              if (takenSeat.status === PlayerStatus.IN_BREAK) {
+                // this player missed the blind
+                missedBlinds.push(bbPos);
+              }
+            }
+
+            if (occupiedSeats[bbPos] !== 0) {
+              break;
+            }
+            maxPlayers--;
+          }
+          gameUpdate.sbPos = sbPos;
+          gameUpdate.bbPos = bbPos;
+          logger.info(
+            `Hand number: ${gameUpdate.handNum} buttonPos: ${buttonPos} sbPos: ${sbPos} bbPos: ${bbPos}`
+          );
+
+          // determine new game type (ROE)
+          if (game.gameType === GameType.ROE) {
+            if (gameUpdate.handNum !== 1) {
+              if (buttonPassedDealer) {
+                // button passed dealer
+                const roeGames = game.roeGames.split(',');
+                const gameTypeStr = GameType[gameUpdate.gameType];
+                let index = roeGames.indexOf(gameTypeStr.toString());
+                index++;
+                if (index >= roeGames.length) {
+                  index = 0;
+                }
+                gameUpdate.gameType = GameType[roeGames[index]];
+              }
+            } else {
+              const roeGames = game.roeGames.split(',');
+              gameUpdate.gameType = GameType[roeGames[0]];
+            }
+          } else if (game.gameType === GameType.DEALER_CHOICE) {
+            if (gameUpdate.handNum === 1) {
+              const dealerChoiceGames = game.dealerChoiceGames.split(',');
+              gameUpdate.gameType = GameType[dealerChoiceGames[0]];
+            }
+          } else {
+            gameUpdate.gameType = game.gameType;
+          }
+
+          let playerInSeatsInThisHand = occupiedSeats;
+          if (
+            playerInSeatsInPrevHand[sbPos] !== 0 && // there was a player in the previous hand
+            occupiedSeats[sbPos] === 0 // the player is not playing this hand or left the game
+          ) {
+            // we have a dead small now
+            // so the next button will move to the dead small seat (not to the current big blind seat)
+
+            // Prev Hand Players: [D, 1, 2, 3, 4], buttonPos: 1, sb: 2, bb: 3
+            // * Seat 3 leaves in this hand
+            // The new button position is 2, 3: dead small, 4: bb
+            // next hand
+            // button position: 3 dead button, 4: sb, 1: bb
+            playerInSeatsInThisHand = playerInSeatsInPrevHand;
+          }
+
+          if (missedBlinds.length > 0) {
+            logger.info(`Players missed blinds: ${missedBlinds.toString()}`);
+            const playerGameTrackerRepo = transactionEntityManager.getRepository(
+              PlayerGameTracker
+            );
+            for (const seatNo of missedBlinds) {
+              await playerGameTrackerRepo.update(
+                {
+                  game: {id: game.id},
+                  seatNo: seatNo,
+                },
+                {
+                  missedBlind: true,
+                }
+              );
+            }
+          }
+
+          // update button pos and gameType
+          await gameUpdatesRepo
+            .createQueryBuilder()
+            .update()
+            .set({
+              gameType: gameUpdate.gameType,
+              prevGameType: prevGameType,
+              buttonPos: gameUpdate.buttonPos,
+              sbPos: gameUpdate.sbPos,
+              bbPos: gameUpdate.bbPos,
+              handNum: gameUpdate.handNum,
+              playersInLastHand: JSON.stringify(playerInSeatsInThisHand),
+              calculateButtonPos: true, // calculate button position for next hand
+            })
+            .where({
+              gameID: game.id,
+            })
+            .execute();
+
+          if (game.gameType === GameType.DEALER_CHOICE) {
+            // if the game is dealer's choice, then prompt the user for next hand
+            await markDealerChoiceNextHand(game, transactionEntityManager);
+          }
+
+          if (prevGameType !== gameUpdate.gameType) {
+            // announce the new game type
+            logger.info(
+              `Game type is changed. New game type: ${gameUpdate.gameType}`
             );
           }
-        }
-
-        // update button pos and gameType
-        await gameUpdatesRepo
-          .createQueryBuilder()
-          .update()
-          .set({
-            gameType: gameUpdate.gameType,
-            prevGameType: prevGameType,
-            buttonPos: gameUpdate.buttonPos,
-            sbPos: gameUpdate.sbPos,
-            bbPos: gameUpdate.bbPos,
+          return {
+            gameCode: gameCode,
             handNum: gameUpdate.handNum,
-            playersInLastHand: JSON.stringify(playerInSeatsInThisHand),
-            calculateButtonPos: true, // calculate button position for next hand
-          })
-          .where({
-            gameID: game.id,
-          })
-          .execute();
-
-        if (game.gameType === GameType.DEALER_CHOICE) {
-          // if the game is dealer's choice, then prompt the user for next hand
-          await markDealerChoiceNextHand(game, transactionEntityManager);
+          };
         }
+      );
 
-        if (prevGameType !== gameUpdate.gameType) {
-          // announce the new game type
-          logger.info(
-            `Game type is changed. New game type: ${gameUpdate.gameType}`
-          );
-        }
-        return {
-          gameCode: gameCode,
-          handNum: gameUpdate.handNum,
-        };
-      }
-    );
-
-    resp.status(200).send(JSON.stringify(ret));
+      resp.status(200).send(JSON.stringify(ret));
+    } catch (err) {
+      resp.status(500).send({error: err.message});
+    }
   }
 
   //
@@ -563,186 +587,189 @@ class GameAPIs {
     }
     logger.info(`New hand info: ${gameCode}`);
 
-    const ret = await getGameManager().transaction(
-      async transactionEntityManager => {
-        const game: PokerGame = await Cache.getGame(
-          gameCode,
-          false,
-          transactionEntityManager
-        );
-        if (!game) {
-          const res = {error: `Game code: ${gameCode} not found`};
-          resp.status(500).send(JSON.stringify(res));
-        }
-
-        const gameUpdatesRepo = transactionEntityManager.getRepository(
-          PokerGameUpdates
-        );
-        const gameUpdates = await gameUpdatesRepo.find({
-          gameID: game.id,
-        });
-        if (gameUpdates.length === 0) {
-          const res = {error: 'GameUpdates not found'};
-          resp.status(500).send(JSON.stringify(res));
-          return;
-        }
-
-        const playerGameTrackerRepo = transactionEntityManager.getRepository(
-          PlayerGameTracker
-        );
-
-        const gameUpdate = gameUpdates[0];
-
-        const playersInSeats = await GameRepository.getPlayersInSeats(
-          game.id,
-          transactionEntityManager
-        );
-        const takenSeats = _.keyBy(playersInSeats, 'seatNo');
-        let activeSeats = 0;
-        for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
-          const playerSeat = takenSeats[seatNo];
-          if (
-            playerSeat &&
-            playerSeat['stack'] === 0 &&
-            playerSeat['status'] == PlayerStatus.PLAYING
-          ) {
-            const player = await Cache.getPlayerById(playerSeat['playerId']);
-            // if player balance is 0, we need to mark this player to add buyin
-            await GameRepository.startBuyinTimer(
-              game,
-              playerSeat.playerId,
-              playerSeat.playerName,
-              {
-                status: PlayerStatus.WAIT_FOR_BUYIN,
-              }
-            );
-            playerSeat['status'] = PlayerStatus.WAIT_FOR_BUYIN;
+    try {
+      const ret = await getGameManager().transaction(
+        async transactionEntityManager => {
+          const game: PokerGame = await Cache.getGame(
+            gameCode,
+            false,
+            transactionEntityManager
+          );
+          if (!game) {
+            const res = {error: `Game code: ${gameCode} not found`};
+            resp.status(500).send(JSON.stringify(res));
           }
-        }
 
-        const seats = new Array<PlayerInSeat>();
-        for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
-          let postedBlind = false;
-          const playerSeat = takenSeats[seatNo];
+          const gameUpdatesRepo = transactionEntityManager.getRepository(
+            PokerGameUpdates
+          );
+          const gameUpdates = await gameUpdatesRepo.find({
+            gameID: game.id,
+          });
+          if (gameUpdates.length === 0) {
+            const res = {error: 'GameUpdates not found'};
+            resp.status(500).send(JSON.stringify(res));
+            return;
+          }
 
-          if (!playerSeat) {
-            seats.push({
-              seatNo: seatNo,
-              openSeat: true,
-              status: PlayerStatus.NOT_PLAYING,
-              gameToken: '',
-              runItTwicePrompt: false,
-              muckLosingHand: false,
-              activeSeat: false,
-              postedBlind: false,
-            });
-          } else {
-            let buyInExpTime = '';
-            let breakTimeExp = '';
-            if (playerSeat.buyInExpTime) {
-              buyInExpTime = playerSeat.buyInExpTime.toISOString();
+          const playerGameTrackerRepo = transactionEntityManager.getRepository(
+            PlayerGameTracker
+          );
+
+          const gameUpdate = gameUpdates[0];
+
+          const playersInSeats = await GameRepository.getPlayersInSeats(
+            game.id,
+            transactionEntityManager
+          );
+          const takenSeats = _.keyBy(playersInSeats, 'seatNo');
+          let activeSeats = 0;
+          for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+            const playerSeat = takenSeats[seatNo];
+            if (
+              playerSeat &&
+              playerSeat['stack'] === 0 &&
+              playerSeat['status'] == PlayerStatus.PLAYING
+            ) {
+              const player = await Cache.getPlayerById(playerSeat['playerId']);
+              // if player balance is 0, we need to mark this player to add buyin
+              await GameRepository.startBuyinTimer(
+                game,
+                playerSeat.playerId,
+                playerSeat.playerName,
+                {
+                  status: PlayerStatus.WAIT_FOR_BUYIN,
+                }
+              );
+              playerSeat['status'] = PlayerStatus.WAIT_FOR_BUYIN;
             }
-            if (playerSeat.breakTimeExp) {
-              breakTimeExp = playerSeat.breakTimeExp.toISOString();
-            }
-            let activeSeat = false;
-            if (playerSeat.status == PlayerStatus.PLAYING) {
-              activeSeat = true;
-              // did this player missed blind?
-              if (gameUpdate.bbPos !== seatNo) {
-                if (playerSeat.missedBlind) {
-                  if (playerSeat.postedBlind) {
-                    postedBlind = true;
+          }
 
-                    // update the player game tracker that missed blind and posted blind is taken care
-                    try {
-                      await playerGameTrackerRepo.update(
-                        {
-                          game: {id: game.id},
-                          seatNo: seatNo,
-                        },
-                        {
-                          missedBlind: false,
-                          postedBlind: false,
-                        }
-                      );
-                    } catch (err) {
-                      // ignore this exception, not a big deal
+          const seats = new Array<PlayerInSeat>();
+          for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+            let postedBlind = false;
+            const playerSeat = takenSeats[seatNo];
+
+            if (!playerSeat) {
+              seats.push({
+                seatNo: seatNo,
+                openSeat: true,
+                status: PlayerStatus.NOT_PLAYING,
+                gameToken: '',
+                runItTwicePrompt: false,
+                muckLosingHand: false,
+                activeSeat: false,
+                postedBlind: false,
+              });
+            } else {
+              let buyInExpTime = '';
+              let breakTimeExp = '';
+              if (playerSeat.buyInExpTime) {
+                buyInExpTime = playerSeat.buyInExpTime.toISOString();
+              }
+              if (playerSeat.breakTimeExp) {
+                breakTimeExp = playerSeat.breakTimeExp.toISOString();
+              }
+              let activeSeat = false;
+              if (playerSeat.status == PlayerStatus.PLAYING) {
+                activeSeat = true;
+                // did this player missed blind?
+                if (gameUpdate.bbPos !== seatNo) {
+                  if (playerSeat.missedBlind) {
+                    if (playerSeat.postedBlind) {
+                      postedBlind = true;
+
+                      // update the player game tracker that missed blind and posted blind is taken care
+                      try {
+                        await playerGameTrackerRepo.update(
+                          {
+                            game: {id: game.id},
+                            seatNo: seatNo,
+                          },
+                          {
+                            missedBlind: false,
+                            postedBlind: false,
+                          }
+                        );
+                      } catch (err) {
+                        // ignore this exception, not a big deal
+                      }
+                    } else {
+                      // this player cannot play
+                      playerSeat.status = PlayerStatus.NEED_TO_POST_BLIND;
+                      activeSeat = false;
                     }
-                  } else {
-                    // this player cannot play
-                    playerSeat.status = PlayerStatus.NEED_TO_POST_BLIND;
-                    activeSeat = false;
                   }
                 }
+                if (activeSeat) {
+                  activeSeats++;
+                }
               }
-              if (activeSeat) {
-                activeSeats++;
-              }
+
+              // player is in a seat
+              seats.push({
+                seatNo: seatNo,
+                openSeat: false,
+                activeSeat: activeSeat,
+                playerId: playerSeat.playerId,
+                playerUuid: playerSeat.playerUuid,
+                name: playerSeat.playerName,
+                stack: playerSeat.stack,
+                buyIn: playerSeat.buyIn,
+                status: playerSeat.status,
+                buyInTimeExpAt: buyInExpTime,
+                breakTimeExpAt: breakTimeExp,
+                gameToken: '',
+                runItTwicePrompt: playerSeat.runItTwicePrompt,
+                muckLosingHand: playerSeat.muckLosingHand,
+                postedBlind: postedBlind,
+              });
             }
-
-            // player is in a seat
-            seats.push({
-              seatNo: seatNo,
-              openSeat: false,
-              activeSeat: activeSeat,
-              playerId: playerSeat.playerId,
-              playerUuid: playerSeat.playerUuid,
-              name: playerSeat.playerName,
-              stack: playerSeat.stack,
-              buyIn: playerSeat.buyIn,
-              status: playerSeat.status,
-              buyInTimeExpAt: buyInExpTime,
-              breakTimeExpAt: breakTimeExp,
-              gameToken: '',
-              runItTwicePrompt: playerSeat.runItTwicePrompt,
-              muckLosingHand: playerSeat.muckLosingHand,
-              postedBlind: postedBlind,
-            });
           }
-        }
-        let tableStatus = game.tableStatus;
-        const gameStatus = game.status;
-        if (activeSeats == 1) {
-          // not enough players
-          await GameRepository.markTableStatus(
-            game.id,
-            TableStatus.NOT_ENOUGH_PLAYERS
-          );
-          tableStatus = TableStatus.NOT_ENOUGH_PLAYERS;
-        }
+          let tableStatus = game.tableStatus;
+          const gameStatus = game.status;
+          if (activeSeats == 1) {
+            // not enough players
+            await GameRepository.markTableStatus(
+              game.id,
+              TableStatus.NOT_ENOUGH_PLAYERS
+            );
+            tableStatus = TableStatus.NOT_ENOUGH_PLAYERS;
+          }
 
-        let announceGameType = false;
-        if (game.gameType === GameType.ROE) {
-          if (gameUpdate.gameType !== gameUpdate.prevGameType) {
+          let announceGameType = false;
+          if (game.gameType === GameType.ROE) {
+            if (gameUpdate.gameType !== gameUpdate.prevGameType) {
+              announceGameType = true;
+            }
+          }
+          if (game.gameType === GameType.DEALER_CHOICE) {
             announceGameType = true;
           }
+
+          const nextHandInfo: NewHandInfo = {
+            gameCode: gameCode,
+            gameType: gameUpdate.gameType,
+            announceGameType: announceGameType,
+            playersInSeats: seats,
+            smallBlind: game.smallBlind,
+            bigBlind: game.bigBlind,
+            maxPlayers: game.maxPlayers,
+            buttonPos: gameUpdate.buttonPos,
+            handNum: gameUpdate.handNum,
+            gameStatus: gameStatus,
+            tableStatus: tableStatus,
+            sbPos: gameUpdate.sbPos,
+            bbPos: gameUpdate.bbPos,
+          };
+
+          return nextHandInfo;
         }
-        if (game.gameType === GameType.DEALER_CHOICE) {
-          announceGameType = true;
-        }
-
-        const nextHandInfo: NewHandInfo = {
-          gameCode: gameCode,
-          gameType: gameUpdate.gameType,
-          announceGameType: announceGameType,
-          playersInSeats: seats,
-          smallBlind: game.smallBlind,
-          bigBlind: game.bigBlind,
-          maxPlayers: game.maxPlayers,
-          buttonPos: gameUpdate.buttonPos,
-          handNum: gameUpdate.handNum,
-          gameStatus: gameStatus,
-          tableStatus: tableStatus,
-          sbPos: gameUpdate.sbPos,
-          bbPos: gameUpdate.bbPos,
-        };
-
-        return nextHandInfo;
-      }
-    );
-
-    resp.status(200).send(JSON.stringify(ret));
+      );
+      resp.status(200).send(JSON.stringify(ret));
+    } catch (err) {
+      resp.status(500).send({error: err.message});
+    }
   }
 
   public async updateButtonPos(gameCode: string, buttonPos: number) {

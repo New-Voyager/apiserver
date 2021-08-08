@@ -112,8 +112,13 @@ class GameServerAPIs {
       resp.status(500).send(JSON.stringify(errors));
       return;
     }
-    const response = await getParticularGameServer(gameCode);
-    resp.status(200).send(JSON.stringify({server: response}));
+    try {
+      const response = await getParticularGameServer(gameCode);
+      resp.status(200).send(JSON.stringify({server: response}));
+    } catch (err) {
+      logger.error(err.message);
+      resp.status(500).send(JSON.stringify({error: err.message}));
+    }
   }
 
   public async restartGames(req: any, resp: any) {
@@ -156,12 +161,13 @@ class GameServerAPIs {
       await restartGameServerGames(gameServer);
     } catch (err) {
       logger.error(
-        `Error while restarting game server games. Error: ${err} Message: ${err.message}`
+        `Unable to restart all games in game server ${gameServer.id} (url: ${gameServer.url})`
       );
       const response = {
         error: err.message,
       };
       resp.status(500).send(JSON.stringify(response));
+      return;
     }
     resp.status(200).send(JSON.stringify({status: 'OK'}));
   }
@@ -227,10 +233,18 @@ async function restartGameServerGames(
   const games: Array<PokerGame> = await getGamesForGameServer(gameServer.url);
   for (const game of games) {
     logger.info(
-      `Restarting game ${game.gameCode} in game server ID: ${gameServer.id} url: ${gameServer.url}`
+      `Restarting game ${game.title} (id: ${game.id}, code: ${game.gameCode}) in game server ID: ${gameServer.id} url: ${gameServer.url}`
     );
-    // TODO: Retry
-    await publishNewGame(game, gameServer);
+    try {
+      await publishNewGame(game, gameServer);
+      logger.info(
+        `Successfully restarted game ${game.title} (id: ${game.id}, code: ${game.gameCode})`
+      );
+    } catch (err) {
+      logger.error(
+        `Error while restarting game ${game.title} (id: ${game.id}, code: ${game.gameCode}): ${err.message}`
+      );
+    }
   }
 }
 
