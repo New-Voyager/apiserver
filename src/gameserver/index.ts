@@ -41,17 +41,21 @@ export async function publishNewGame(game: any, gameServer: any) {
     gameCode: game.gameCode,
   };
 
-  const newGameUrl = `${gameServerUrl}/new-game`;
+  const url = `${gameServerUrl}/new-game`;
   logger.info(
     `Game server: ${gameServer.url} is requested host ${game.gameCode}`
   );
-  const resp = await axios.post(newGameUrl, message);
-  if (resp.status !== 200) {
-    logger.error(`Failed to create a new game at: ${newGameUrl}`);
-    throw new Error(`Failed to create a new game at: ${newGameUrl}`);
+  try {
+    const resp = await axios.post(url, message);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+    return resp.data.tableStatus;
+  } catch (err) {
+    const msg = `Error while posting new game to ${url}: ${err.message}`;
+    logger.error(msg);
+    throw new Error(msg);
   }
-
-  return resp.data.tableStatus;
 }
 
 export async function newPlayerSat(
@@ -80,11 +84,16 @@ export async function newPlayerSat(
     newUpdate: NewUpdate.NEW_PLAYER,
   };
 
-  const newGameUrl = `${gameServerUrl}/player-update`;
-  const resp = await axios.post(newGameUrl, message);
-  if (resp.status !== 200) {
-    logger.error(`Failed to update plater status: ${newGameUrl}`);
-    throw new Error(`Failed to update plater status: ${newGameUrl}`);
+  const url = `${gameServerUrl}/player-update`;
+  try {
+    const resp = await axios.post(url, message);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+  } catch (err) {
+    const msg = `Error while posting player update to ${url}: ${err.message}`;
+    logger.error(msg);
+    throw new Error(msg);
   }
 }
 
@@ -111,11 +120,16 @@ export async function playerBuyIn(
     buyIn: playerGameInfo.buyIn,
     newUpdate: NewUpdate.NEW_BUYIN,
   };
-  const newGameUrl = `${gameServerUrl}/player-update`;
-  const resp = await axios.post(newGameUrl, message);
-  if (resp.status !== 200) {
-    logger.error(`Failed to update plater status: ${newGameUrl}`);
-    throw new Error(`Failed to update plater status: ${newGameUrl}`);
+  const url = `${gameServerUrl}/player-update`;
+  try {
+    const resp = await axios.post(url, message);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+  } catch (err) {
+    const msg = `Error while posting player update to ${url}: ${err.message}`;
+    logger.error(msg);
+    throw new Error(msg);
   }
 }
 
@@ -135,18 +149,16 @@ export async function changeGameStatus(
     gameStatus: status,
     tableStatus: tableStatus,
   };
-  const newGameUrl = `${gameServerUrl}/game-update-status`;
-  let resp: any;
+  const url = `${gameServerUrl}/game-update-status`;
   try {
-    resp = await axios.post(newGameUrl, message);
+    const resp = await axios.post(url, message);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
   } catch (err) {
-    const msg = `Error while posting game status change to ${newGameUrl}: ${err.message}`;
+    const msg = `Error while posting game status change to ${url}: ${err.message}`;
     logger.error(msg);
     throw new Error(msg);
-  }
-  if (resp.status !== 200) {
-    logger.error(`Failed to update game status: ${newGameUrl}`);
-    throw new Error(`Failed to update game status: ${newGameUrl}`);
   }
 }
 
@@ -181,11 +193,16 @@ export async function playerKickedOut(
     newUpdate: NewUpdate.LEFT_THE_GAME,
   };
 
-  const newGameUrl = `${gameServerUrl}/player-update`;
-  const resp = await axios.post(newGameUrl, message);
-  if (resp.status !== 200) {
-    logger.error(`Failed to update player status: ${newGameUrl}`);
-    throw new Error(`Failed to update player status: ${newGameUrl}`);
+  const url = `${gameServerUrl}/player-update`;
+  try {
+    const resp = await axios.post(url, message);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+  } catch (err) {
+    const msg = `Error while posting player update to ${url}: ${err.message}`;
+    logger.error(msg);
+    throw new Error(msg);
   }
 }
 
@@ -198,12 +215,12 @@ export async function pendingProcessDone(
     return;
   }
   const gameServerUrl = await getGameServerUrl(gameId);
-  const newGameUrl = `${gameServerUrl}/pending-updates?game-id=${gameId}&done=1&status=${gameStatus}&table-status=${tableStatus}`;
+  const url = `${gameServerUrl}/pending-updates?game-id=${gameId}&done=1&status=${gameStatus}&table-status=${tableStatus}`;
   try {
-    const resp = await axios.post(newGameUrl);
+    const resp = await axios.post(url);
     if (resp.status !== 200) {
-      logger.error(`Failed to update pending updates: ${newGameUrl}`);
-      throw new Error(`Failed to update pending updates: ${newGameUrl}`);
+      logger.error(`Failed to update pending updates: ${url}`);
+      throw new Error(`Failed to update pending updates: ${url}`);
     }
   } catch (err) {
     logger.error(`Failed to update pending updates for game: ${gameId}.`);
@@ -236,11 +253,16 @@ export async function playerStatusChanged(
     newUpdate: newStatus,
   };
 
-  const newGameUrl = `${gameServerUrl}/player-update`;
-  const resp = await axios.post(newGameUrl, message);
-  if (resp.status !== 200) {
-    logger.error(`Failed to update player status: ${newGameUrl}`);
-    throw new Error(`Failed to update player status: ${newGameUrl}`);
+  const url = `${gameServerUrl}/player-update`;
+  try {
+    const resp = await axios.post(url, message);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+  } catch (err) {
+    const msg = `Error while posting player update to ${url}: ${err.message}`;
+    logger.error(msg);
+    throw new Error(msg);
   }
 }
 
@@ -266,11 +288,16 @@ export async function playerLeftGame(
     newUpdate: NewUpdate.LEFT_THE_GAME,
   };
 
-  const newGameUrl = `${gameServerUrl}/player-update`;
-  const resp = await axios.post(newGameUrl, message);
-  if (resp.status !== 200) {
-    logger.error(`Failed to update player status: ${newGameUrl}`);
-    throw new Error(`Failed to update player status: ${newGameUrl}`);
+  const url = `${gameServerUrl}/player-update`;
+  try {
+    const resp = await axios.post(url, message);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+  } catch (err) {
+    const msg = `Error while posting player update to ${url}: ${err.message}`;
+    logger.error(msg);
+    throw new Error(msg);
   }
 }
 
@@ -279,13 +306,18 @@ export async function getCurrentHandLog(gameId: number): Promise<any> {
     return;
   }
   const gameServerUrl = await getGameServerUrl(gameId);
-  const newGameUrl = `${gameServerUrl}/current-hand-log?game-id=${gameId}`;
-  const resp = await axios.get(newGameUrl);
-  if (resp.status !== 200) {
-    logger.error(`Failed to update pending updates: ${newGameUrl}`);
-    throw new Error(`Failed to update pending updates: ${newGameUrl}`);
+  const url = `${gameServerUrl}/current-hand-log?game-id=${gameId}`;
+  try {
+    const resp = await axios.get(url);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+    return resp.data;
+  } catch (err) {
+    const msg = `Failed to get current hand log from ${url}: ${err.message}`;
+    logger.error(msg);
+    throw new Error(msg);
   }
-  return resp.data;
 }
 
 export async function openSeat(
@@ -304,11 +336,16 @@ export async function openSeat(
     seatNo: seatNo,
   };
 
-  const newGameUrl = `${gameServerUrl}/table-update`;
-  const resp = await axios.post(newGameUrl, message);
-  if (resp.status !== 200) {
-    logger.error(`Failed to update table status: ${newGameUrl}`);
-    throw new Error(`Failed to update table status: ${newGameUrl}`);
+  const url = `${gameServerUrl}/table-update`;
+  try {
+    const resp = await axios.post(url, message);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+  } catch (err) {
+    const msg = `Error while posting table update to ${url}: ${err.message}`;
+    logger.error(msg);
+    throw new Error(msg);
   }
 }
 
@@ -331,11 +368,16 @@ export async function waitlistSeating(
     waitlistRemainingTime: timeRemaining,
   };
 
-  const newGameUrl = `${gameServerUrl}/table-update`;
-  const resp = await axios.post(newGameUrl, message);
-  if (resp.status !== 200) {
-    logger.error(`Failed to update table status: ${newGameUrl}`);
-    throw new Error(`Failed to update table status: ${newGameUrl}`);
+  const url = `${gameServerUrl}/table-update`;
+  try {
+    const resp = await axios.post(url, message);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+  } catch (err) {
+    const msg = `Error while posting table update to ${url}: ${err.message}`;
+    logger.error(msg);
+    throw new Error(msg);
   }
 }
 
@@ -360,11 +402,16 @@ export async function initiateSeatChangeProcess(
     seatChangeSeatNos: seatChangeSeatNos,
   };
 
-  const newGameUrl = `${gameServerUrl}/table-update`;
-  const resp = await axios.post(newGameUrl, message);
-  if (resp.status !== 200) {
-    logger.error(`Failed to update table status: ${newGameUrl}`);
-    throw new Error(`Failed to update table status: ${newGameUrl}`);
+  const url = `${gameServerUrl}/table-update`;
+  try {
+    const resp = await axios.post(url, message);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+  } catch (err) {
+    const msg = `Error while posting table update to ${url}: ${err.message}`;
+    logger.error(msg);
+    throw new Error(msg);
   }
 }
 
@@ -384,11 +431,16 @@ export async function hostSeatChangeProcessStarted(
     seatChangeHostId: seatChangeHostId,
   };
 
-  const newGameUrl = `${gameServerUrl}/table-update`;
-  const resp = await axios.post(newGameUrl, message);
-  if (resp.status !== 200) {
-    logger.error(`Failed to update table status: ${newGameUrl}`);
-    throw new Error(`Failed to update table status: ${newGameUrl}`);
+  const url = `${gameServerUrl}/table-update`;
+  try {
+    const resp = await axios.post(url, message);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+  } catch (err) {
+    const msg = `Error while posting table update to ${url}: ${err.message}`;
+    logger.error(msg);
+    throw new Error(msg);
   }
 }
 
@@ -410,11 +462,16 @@ export async function hostSeatChangeProcessEnded(
     seatChangeHostId: seatChangeHostId,
   };
 
-  const newGameUrl = `${gameServerUrl}/table-update`;
-  const resp = await axios.post(newGameUrl, message);
-  if (resp.status !== 200) {
-    logger.error(`Failed to update table status: ${newGameUrl}`);
-    throw new Error(`Failed to update table status: ${newGameUrl}`);
+  const url = `${gameServerUrl}/table-update`;
+  try {
+    const resp = await axios.post(url, message);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+  } catch (err) {
+    const msg = `Error while posting table update to ${url}: ${err.message}`;
+    logger.error(msg);
+    throw new Error(msg);
   }
 }
 
@@ -434,11 +491,16 @@ export async function hostSeatChangeSeatMove(
     seatMoves: updates,
   };
 
-  const newGameUrl = `${gameServerUrl}/table-update`;
-  const resp = await axios.post(newGameUrl, message);
-  if (resp.status !== 200) {
-    logger.error(`Failed to update table status: ${newGameUrl}`);
-    throw new Error(`Failed to update table status: ${newGameUrl}`);
+  const url = `${gameServerUrl}/table-update`;
+  try {
+    const resp = await axios.post(url, message);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+  } catch (err) {
+    const msg = `Error while posting table update to ${url}: ${err.message}`;
+    logger.error(msg);
+    throw new Error(msg);
   }
 }
 
@@ -449,10 +511,16 @@ export async function playerConfigUpdate(game: PokerGame, update: any) {
 
   const gameServerUrl = await getGameServerUrl(game.id);
 
-  const newGameUrl = `${gameServerUrl}/player-config-update`;
-  const resp = await axios.post(newGameUrl, update);
-  if (resp.status !== 200) {
-    logger.error(`Failed to update player config status: ${newGameUrl}`);
-    throw new Error(`Failed to update player config status: ${newGameUrl}`);
+  const url = `${gameServerUrl}/player-config-update`;
+
+  try {
+    const resp = await axios.post(url, update);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+  } catch (err) {
+    const msg = `Error while posting player config status to ${url}: ${err.message}`;
+    logger.error(msg);
+    throw new Error(msg);
   }
 }
