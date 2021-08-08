@@ -93,7 +93,6 @@ export async function newPlayerSat(
   } catch (err) {
     const msg = `Error while posting player update to ${url}: ${err.message}`;
     logger.error(msg);
-    throw new Error(msg);
   }
 }
 
@@ -129,7 +128,6 @@ export async function playerBuyIn(
   } catch (err) {
     const msg = `Error while posting player update to ${url}: ${err.message}`;
     logger.error(msg);
-    throw new Error(msg);
   }
 }
 
@@ -202,7 +200,6 @@ export async function playerKickedOut(
   } catch (err) {
     const msg = `Error while posting player update to ${url}: ${err.message}`;
     logger.error(msg);
-    throw new Error(msg);
   }
 }
 
@@ -262,7 +259,6 @@ export async function playerStatusChanged(
   } catch (err) {
     const msg = `Error while posting player update to ${url}: ${err.message}`;
     logger.error(msg);
-    throw new Error(msg);
   }
 }
 
@@ -297,7 +293,6 @@ export async function playerLeftGame(
   } catch (err) {
     const msg = `Error while posting player update to ${url}: ${err.message}`;
     logger.error(msg);
-    throw new Error(msg);
   }
 }
 
