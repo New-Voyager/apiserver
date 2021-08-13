@@ -89,7 +89,7 @@ export async function restartTimers(req: any, resp: any) {
     let remaining = 5;
     while (remaining > 0) {
       try {
-        console.log(
+        logger.info(
           `Restarting timer (game id: ${data['game_id']}, player id: ${data['player_id']}, purpose: ${purpose}, expire at: ${expireAt})`
         );
         await startTimer(data['game_id'], data['player_id'], purpose, expireAt);
@@ -97,15 +97,12 @@ export async function restartTimers(req: any, resp: any) {
       } catch (err) {
         remaining--;
         if (remaining === 0) {
-          console.log(
-            `Failed to restart timer (game id: ${data['game_id']}, player id: ${data['player_id']}, purpose: ${purpose}, expire at: ${expireAt})`
+          logger.error(
+            `Failed to restart timer (game id: ${data['game_id']}, player id: ${data['player_id']}, purpose: ${purpose}, expire at: ${expireAt}): ${err.message}`
           );
-          resp
-            .status(500)
-            .send(JSON.stringify({status: 'ERROR', error: err.toString()}));
-          return;
+        } else {
+          await sleep(100);
         }
-        await sleep(1000);
       }
     }
   }

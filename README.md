@@ -77,7 +77,3 @@ make stack-up
 ``
 
 Open the browser and try http://localhost:9501/graphql. You should see the GraphQL playground.
-
-## Visualization of the codebase
-
-![Visualization of the codebase](./diagram.svg)

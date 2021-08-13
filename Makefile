@@ -98,11 +98,15 @@ watch-debug:
 	npx yarn watch-debug
 
 .PHONY: publish
-publish: do-publish
+publish: gcp-publish do-publish
 
 .PHONY: do-login
 do-login:
 	docker login --username 69bf6de23225d8abd358d7c5c2dac07d64a7f6c0bd97d5a5a974847269f99455 --password 69bf6de23225d8abd358d7c5c2dac07d64a7f6c0bd97d5a5a974847269f99455 registry.digitalocean.com
+
+.PHONY: gcp-login
+gcp-login:
+	@cat gcp_dev_image_push.json | docker login -u _json_key --password-stdin https://gcr.io
 
 .PHONY: do-publish
 do-publish: export REGISTRY=${DO_REGISTRY}
@@ -114,11 +118,11 @@ do-publish-all: do-login publish-all
 
 .PHONY: gcp-publish
 gcp-publish: export REGISTRY=${GCP_REGISTRY}
-gcp-publish: publish-apiserver
+gcp-publish: gcp-login publish-apiserver
 
 .PHONY: gcp-publish-all
 gcp-publish-all: export REGISTRY=${GCP_REGISTRY}
-gcp-publish-all: publish-all
+gcp-publish-all: gcp-login publish-all
 
 .PHONY: publish-all
 publish-all: publish-apiserver publish-3rdparty

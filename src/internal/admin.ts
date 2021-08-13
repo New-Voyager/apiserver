@@ -1,4 +1,7 @@
 import {ClubRepository} from '@src/repositories/club';
+import {getLogger} from '@src/utils/log';
+
+const logger = getLogger('GameAPIs');
 
 /**
  * These APIs are only available for testdriver.
@@ -10,8 +13,13 @@ class AdminAPIs {
       const res = {error: 'Invalid club name'};
       resp.status(500).send(JSON.stringify(res));
     }
-    await ClubRepository.deleteClubByName(clubName);
-    resp.status(200).send({status: 'OK'});
+    try {
+      await ClubRepository.deleteClubByName(clubName);
+      resp.status(200).send({status: 'OK'});
+    } catch (err) {
+      logger.error(err.message);
+      resp.status(500).send({error: err.message});
+    }
   }
 }
 
