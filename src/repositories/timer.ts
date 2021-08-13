@@ -55,24 +55,27 @@ export async function timerCallback(req: any, resp: any) {
     `Timer callback for game: ${gameID} player: ${playerID} purpose: ${purpose}`
   );
 
-  if (purpose === WAITLIST_SEATING) {
-    await waitlistTimeoutExpired(gameID, playerID);
-    // } else if (purpose === SEATCHANGE_PROGRSS) {
-    //   await seatChangeTimeoutExpired(gameID);
-  } else if (purpose === BUYIN_TIMEOUT) {
-    await buyInTimeoutExpired(gameID, playerID);
-  } else if (purpose === BUYIN_APPROVAL_TIMEOUT) {
-    await buyInApprovalTimeoutExpired(gameID, playerID);
-  } else if (purpose === RELOAD_APPROVAL_TIMEOUT) {
-    await reloadApprovalTimeoutExpired(gameID, playerID);
-  } else if (purpose === DEALER_CHOICE_TIMEOUT) {
-    await dealerChoiceTimeout(gameID, playerID);
-  } else if (purpose === BREAK_TIMEOUT) {
-    await breakTimeoutExpired(gameID, playerID);
-  } else if (purpose === PLAYER_SEATCHANGE_PROMPT) {
-    await playerSeatChangeTimeoutExpired(gameID, playerID);
+  try {
+    if (purpose === WAITLIST_SEATING) {
+      await waitlistTimeoutExpired(gameID, playerID);
+      // } else if (purpose === SEATCHANGE_PROGRSS) {
+      //   await seatChangeTimeoutExpired(gameID);
+    } else if (purpose === BUYIN_TIMEOUT) {
+      await buyInTimeoutExpired(gameID, playerID);
+    } else if (purpose === BUYIN_APPROVAL_TIMEOUT) {
+      await buyInApprovalTimeoutExpired(gameID, playerID);
+    } else if (purpose === RELOAD_APPROVAL_TIMEOUT) {
+      await reloadApprovalTimeoutExpired(gameID, playerID);
+    } else if (purpose === DEALER_CHOICE_TIMEOUT) {
+      await dealerChoiceTimeout(gameID, playerID);
+    } else if (purpose === BREAK_TIMEOUT) {
+      await breakTimeoutExpired(gameID, playerID);
+    } else if (purpose === PLAYER_SEATCHANGE_PROMPT) {
+      await playerSeatChangeTimeoutExpired(gameID, playerID);
+    }
+  } catch (err) {
+    logger.error(`Error in timer callback: ${err.message}`);
   }
-
   resp.status(200).send({status: 'OK'});
 }
 

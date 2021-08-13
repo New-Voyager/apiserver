@@ -35,8 +35,6 @@ export function getJwtSecret(): string {
  */
 export async function login(req: any, resp: any) {
   const payload = req.body;
-  const repository = getUserRepository(Player);
-
   const errors = new Array<string>();
   const name = payload['name'];
   const uuid = payload['uuid'];
@@ -44,72 +42,81 @@ export async function login(req: any, resp: any) {
   const email = payload['email'];
   const password = payload['password'];
 
-  let player;
-  if (email && password) {
-    // use email and password to login
-  } else {
-    if (name) {
-      // in test mode only
-      logger.info(`[test] Player ${name} tries to login using name`);
-      player = await repository.findOne({where: {name: name}});
-      if (!player) {
-        logger.error(`[test] Player ${name} does not exist`);
-        throw new Error(`${name} user is not found`);
-      }
-    } else {
-      if (!uuid || !deviceId) {
-        errors.push('uuid and deviceId should be specified to login');
-      }
-    }
-  }
-
-  if (errors.length) {
-    resp.status(500).send(JSON.stringify({errors: errors}));
-    return;
-  }
-
-  if (!player) {
-    if (email) {
-      player = await repository.findOne({where: {email: email}});
-    } else {
-      player = await repository.findOne({where: {uuid: uuid}});
-    }
-  }
-
-  if (!player) {
-    resp.status(401).send(JSON.stringify({errors: ['Player is not found']}));
-    return;
-  }
-
-  if (!name) {
-    if (email) {
-      if (password !== player.password) {
-        resp.status(401).send(JSON.stringify({errors: ['Invalid password']}));
-        return;
-      }
-    } else {
-      if (deviceId !== player.deviceId) {
-        resp.status(401).send(JSON.stringify({errors: ['Invalid device id']}));
-        return;
-      }
-    }
-  }
-
-  const expiryTime = new Date();
-  expiryTime.setDate(expiryTime.getDate() + JWT_EXPIRY_DAYS);
-  const jwtClaims = {
-    user: player.name,
-    uuid: player.uuid,
-    id: player.id,
-    // iat: new Date(),
-    // exp: expiryTime,
-  };
   try {
-    const jwt = generateAccessToken(jwtClaims);
-    resp.status(200).send(JSON.stringify({jwt: jwt}));
+    const repository = getUserRepository(Player);
+    let player;
+    if (email && password) {
+      // use email and password to login
+    } else {
+      if (name) {
+        // in test mode only
+        logger.info(`[test] Player ${name} tries to login using name`);
+        player = await repository.findOne({where: {name: name}});
+        if (!player) {
+          logger.error(`[test] Player ${name} does not exist`);
+          throw new Error(`${name} user is not found`);
+        }
+      } else {
+        if (!uuid || !deviceId) {
+          errors.push('uuid and deviceId should be specified to login');
+        }
+      }
+    }
+
+    if (errors.length) {
+      resp.status(500).send(JSON.stringify({errors: errors}));
+      return;
+    }
+
+    if (!player) {
+      if (email) {
+        player = await repository.findOne({where: {email: email}});
+      } else {
+        player = await repository.findOne({where: {uuid: uuid}});
+      }
+    }
+
+    if (!player) {
+      resp.status(401).send(JSON.stringify({errors: ['Player is not found']}));
+      return;
+    }
+
+    if (!name) {
+      if (email) {
+        if (password !== player.password) {
+          resp.status(401).send(JSON.stringify({errors: ['Invalid password']}));
+          return;
+        }
+      } else {
+        if (deviceId !== player.deviceId) {
+          resp
+            .status(401)
+            .send(JSON.stringify({errors: ['Invalid device id']}));
+          return;
+        }
+      }
+    }
+
+    const expiryTime = new Date();
+    expiryTime.setDate(expiryTime.getDate() + JWT_EXPIRY_DAYS);
+    const jwtClaims = {
+      user: player.name,
+      uuid: player.uuid,
+      id: player.id,
+      // iat: new Date(),
+      // exp: expiryTime,
+    };
+    try {
+      const jwt = generateAccessToken(jwtClaims);
+      resp.status(200).send(JSON.stringify({jwt: jwt}));
+      return;
+    } catch (err) {
+      logger.error(err.toString());
+      resp.status(500).send({errors: ['JWT cannot be generated']});
+      return;
+    }
   } catch (err) {
-    logger.error(err.toString());
-    resp.status(500).send({errors: ['JWT cannot be generated']});
+    resp.status(500).send({error: err.message});
   }
 }
 
