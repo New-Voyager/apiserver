@@ -144,6 +144,7 @@ class HandServerAPIs {
         return;
       } else {
         resp.status(500).send(saveResult);
+      }
     } catch (err) {
       resp.status(500).send({error: err.message});
     }
