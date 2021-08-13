@@ -431,7 +431,7 @@ let settings: AppSettings = {
   consumeTime: 15 * 60, // every 15 minutes
   gameCoinsPerBlock: 3, // 3 coins per 15 minutes
   agoraCoinsPerBlock: 3, // 3 coins per 15 minutes
-  compressHandData: true,
+  compressHandData: false,
 };
 
 export function getAppSettings(): AppSettings {
@@ -448,7 +448,7 @@ export function resetAppSettings() {
     gameCoinsPerBlock: 3, // 3 coins per 15 minutes
     agoraCoinsPerBlock: 3, // 3 coins per 15 minutes
     notifyHostTimeWindow: 10 * 60,
-    compressHandData: true,
+    compressHandData: false,
   };
 }
 
