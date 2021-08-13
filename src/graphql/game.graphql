@@ -351,6 +351,9 @@ type CompletedGame {
   profit: Float
   highHandTracked: Boolean
   stackStat: [GameStackStat!]
+  isHost: Boolean
+  isOwner: Boolean
+  isManager: Boolean
 }
 
 type GameResultTableRow {

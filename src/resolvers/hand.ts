@@ -59,14 +59,15 @@ export function getResolvers() {
 async function generateHandHistoryData(
   handHistory: HandHistory,
   requestingPlayer: Player,
+  isAdmin: boolean,
   includeData?: boolean
 ) {
   const handTime = Math.round(
     (handHistory.timeEnded.getTime() - handHistory.timeStarted.getTime()) / 1000
   );
   let playersInHand = new Array<number>();
-  let authorized = false;
-  if (handHistory.players != null) {
+  let authorized = isAdmin;
+  if (!isAdmin && handHistory.players != null) {
     if (handHistory.players !== '') {
       playersInHand = _.map(JSON.parse(handHistory.players), x => parseInt(x));
     }
@@ -155,6 +156,10 @@ export async function getSpecificHandHistory(playerId: string, args: any) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
   const player = await Cache.getPlayer(playerId);
+  let authorized = false;
+  if (game.hostUuid === player.uuid) {
+    authorized = true;
+  }
 
   if (game.clubCode) {
     const clubMember = await Cache.getClubMember(playerId, game.clubCode);
@@ -171,6 +176,12 @@ export async function getSpecificHandHistory(playerId: string, args: any) {
       logger.error(`The user ${playerId} is not Active in ${args.clubCode}`);
       throw new Error('Unauthorized');
     }
+
+    if (!authorized) {
+      if (clubMember.isOwner || clubMember.isManager) {
+        authorized = true;
+      }
+    }
   }
 
   const handHistory = await HandRepository.getSpecificHandHistory(
@@ -180,7 +191,7 @@ export async function getSpecificHandHistory(playerId: string, args: any) {
   if (!handHistory) {
     throw new Error('No hand found');
   }
-  return await generateHandHistoryData(handHistory, player, true);
+  return await generateHandHistoryData(handHistory, player, authorized, true);
 }
 
 export async function getAllHandHistory(playerId: string, args: any) {
@@ -193,6 +204,7 @@ export async function getAllHandHistory(playerId: string, args: any) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
   const player = await Cache.getPlayer(playerId);
+  let authorized = false;
   if (game.clubCode) {
     // make sure this player is a club member
     const clubMember = await Cache.getClubMember(playerId, game.clubCode);
@@ -209,6 +221,12 @@ export async function getAllHandHistory(playerId: string, args: any) {
       logger.error(`The user ${playerId} is not Active in ${args.clubCode}`);
       throw new Error('Unauthorized');
     }
+
+    if (game.hostUuid === player.uuid) {
+      authorized = true;
+    } else if (clubMember.isManager || clubMember.isOwner) {
+      authorized = true;
+    }
   }
 
   const handHistory = await HandRepository.getAllHandHistory(
@@ -217,7 +235,7 @@ export async function getAllHandHistory(playerId: string, args: any) {
   );
   const hands = new Array<any>();
   for (const hand of handHistory) {
-    hands.push(await generateHandHistoryData(hand, player));
+    hands.push(await generateHandHistoryData(hand, player, authorized));
   }
   return hands;
 }
@@ -235,6 +253,7 @@ export async function getMyWinningHands(playerId: string, args: any) {
   if (!game) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
+  let authorized = false;
   if (game.clubCode) {
     const clubMember = await Cache.getClubMember(playerId, game.clubCode);
     if (!clubMember) {
@@ -250,6 +269,11 @@ export async function getMyWinningHands(playerId: string, args: any) {
       logger.error(`The user ${playerId} is not Active in ${args.clubCode}`);
       throw new Error('Unauthorized');
     }
+    if (game.hostUuid === player.uuid) {
+      authorized = true;
+    } else if (clubMember.isManager || clubMember.isOwner) {
+      authorized = true;
+    }
   }
 
   const handHistory = await HandRepository.getMyWinningHands(
@@ -259,7 +283,7 @@ export async function getMyWinningHands(playerId: string, args: any) {
   );
   const hands = new Array<any>();
   for (const hand of handHistory) {
-    hands.push(await generateHandHistoryData(hand, player));
+    hands.push(await generateHandHistoryData(hand, player, authorized));
   }
 
   return hands;
