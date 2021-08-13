@@ -11,7 +11,7 @@ import {
 import {createGameServer} from '../src/internal/gameserver';
 import {buyIn, configureGame, joinGame, startGame} from '../src/resolvers/game';
 import {saveReward} from '../src/resolvers/reward';
-import {postHand} from '../src/internal/hand';
+import {saveHand} from '../src/internal/hand';
 import * as fs from 'fs';
 import * as glob from 'glob';
 import _ from 'lodash';
@@ -28,6 +28,7 @@ import {
 } from '../src/resolvers/hand';
 import {getRewardTrack} from '../src/resolvers/reward';
 import {getAppSettings} from '../src/firebase/index'
+import { defaultHandData } from '../tests/utils/hand.testutils';
 const logger = getLogger('Hand server unit-test');
 
 // default player, game and club inputs
@@ -155,27 +156,6 @@ async function setupGameEnvironment(
   return [game.gameCode, game.id];
 }
 
-async function defaultHandData(
-  file: string,
-  gameId: number,
-  //rewardId: any,
-  playerIds: Array<number>
-) {
-  const obj = await fs.readFileSync(`highhand-results/${file}`, 'utf8');
-  const data = JSON.parse(obj);
-  data.gameId = gameId.toString();
-  //data.rewardTrackingIds.splice(0);
-  //data.rewardTrackingIds.push(rewardId);
-  data.players['1'].id = playerIds[0].toString();
-
-  data.gameId = gameId.toString();
-  data.players['2'].id = playerIds[1].toString();
-
-  data.gameId = gameId.toString();
-  data.players['3'].id = playerIds[2].toString();
-  return data;
-}
-
 describe.skip('Hand server APIs', () => {
   beforeEach(async done => {
     await resetDB();
@@ -209,7 +189,7 @@ describe.skip('Hand server APIs', () => {
       // );
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
-        cwd: 'highhand-results',
+        cwd: 'hand-results/app-coin',
         deep: 5,
       });
 
@@ -220,7 +200,7 @@ describe.skip('Hand server APIs', () => {
           //rewardTrackId,
           playerIds
         );
-        const resp = await postHand(gameId, data.handNum, data);
+        const resp = await saveHand(gameId, data.handNum, data);
         expect(resp).not.toBe(null);
       }
     } catch (err) {
@@ -264,7 +244,7 @@ describe.skip('Hand server APIs', () => {
           //rewardTrackId,
           playerIds
         );
-        const resp = await postHand(gameId, data.handNum, data);
+        const resp = await saveHand(gameId, data.handNum, data);
         expect(resp).not.toBe(null);
       }
       const handHistory = await getSpecificHandHistory(playerUuids[0], {
@@ -317,7 +297,7 @@ describe.skip('Hand server APIs', () => {
           //rewardTrackId,
           playerIds
         );
-        const resp = await postHand(gameId, data.handNum, data);
+        const resp = await saveHand(gameId, data.handNum, data);
         expect(resp).not.toBe(null);
         lastHand += 1;
       }
@@ -369,7 +349,7 @@ describe.skip('Hand server APIs', () => {
         //rewardTrackId,
         playerIds
       );
-      const resp = await postHand(gameId, data.handNum, data);
+      const resp = await saveHand(gameId, data.handNum, data);
       expect(resp).not.toBe(null);
       lastHand += 1;
     }
@@ -415,7 +395,7 @@ describe.skip('Hand server APIs', () => {
         //rewardTrackId,
         playerIds
       );
-      const resp = await postHand(gameId, data.handNum, data);
+      const resp = await saveHand(gameId, data.handNum, data);
       expect(resp).not.toBe(null);
       lastHand += 1;
     }
@@ -480,7 +460,7 @@ describe.skip('Hand server APIs', () => {
           //rewardTrackId,
           playerIds
         );
-        const resp = await postHand(gameId, data.handNum, data);
+        const resp = await saveHand(gameId, data.handNum, data);
         expect(resp).toBe(true);
         for await (const hiWinner of data.handLog.potWinners[0].hiWinners) {
           if (data.players[hiWinner.seatNo].id === playerIds[1])
@@ -543,7 +523,7 @@ describe.skip('Hand server APIs', () => {
           //rewardTrackId,
           playerIds
         );
-        const resp = await postHand(gameId, data.handNum, data);
+        const resp = await saveHand(gameId, data.handNum, data);
         expect(resp).toBe(true);
         for await (const hiWinner of data.handLog.potWinners[0].hiWinners) {
           if (data.players[hiWinner.seatNo].id == playerIds[1])
@@ -612,7 +592,7 @@ describe.skip('Hand server APIs', () => {
         //rewardTrackId,
         playerIds
       );
-      const resp = await postHand(gameId, data.handNum, data);
+      const resp = await saveHand(gameId, data.handNum, data);
       expect(resp).not.toBe(null);
       await bookmarkHand(playerUuids[0], {
         gameCode: gameCode,
@@ -662,7 +642,7 @@ describe.skip('Hand server APIs', () => {
         //rewardTrackId,
         playerIds
       );
-      const resp = await postHand(gameId, data.handNum, data);
+      const resp = await saveHand(gameId, data.handNum, data);
       expect(resp).not.toBe(null);
       id = await shareHand(playerUuids[0], {
         clubCode: clubCode,
