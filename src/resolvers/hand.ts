@@ -7,6 +7,8 @@ import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player/player';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import _ from 'lodash';
+import * as lz from 'lzutf8';
+
 import {getGameRepository} from '@src/repositories';
 const logger = getLogger('hand-resolvers');
 
@@ -97,7 +99,13 @@ async function generateHandHistoryData(
     if (!authorized) {
       ret.data = null;
     } else {
-      ret.data = JSON.parse(handHistory.data);
+      let data: string;
+      if (handHistory.compressed) {
+        data = lz.decompress(handHistory.data);
+      } else {
+        data = handHistory.data.toString();
+      }
+      ret.data = data;
     }
   }
   return ret;

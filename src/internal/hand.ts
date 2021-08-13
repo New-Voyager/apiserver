@@ -91,6 +91,34 @@ function validateHandData(handData: any): Array<string> {
  */
 class HandServerAPIs {
   public async postHand(req: any, resp: any) {
+    resp.status(200).send({status: 'OK'});
+    return;
+    // const gameID = parseInt(req.params.gameId, 10);
+    // if (!gameID) {
+    //   const res = {error: 'Invalid game id'};
+    //   resp.status(500).send(JSON.stringify(res));
+    //   return;
+    // }
+    // const handNum = parseInt(req.params.handNum, 10);
+    // if (!handNum) {
+    //   const res = {error: 'Invalid hand number'};
+    //   resp.status(500).send(JSON.stringify(res));
+    //   return;
+    // }
+    // const result = req.body;
+    // if (result.playerStats) {
+    //   // It seems that result.playerStats can be undefined in system tests.
+    //   await processConsecutiveActionTimeouts(gameID, result.playerStats);
+    // }
+    // const saveResult = await postHand(gameID, handNum, result);
+    // if (saveResult.success) {
+    //   resp.status(200).send(saveResult);
+    // } else {
+    //   resp.status(500).send(saveResult);
+    // }
+  }
+
+  public async saveHand(req: any, resp: any) {
     const gameID = parseInt(req.params.gameId, 10);
     if (!gameID) {
       const res = {error: 'Invalid game id'};
@@ -104,13 +132,15 @@ class HandServerAPIs {
       return;
     }
     const result = req.body;
+    console.log(JSON.stringify(result));
     if (result.playerStats) {
       // It seems that result.playerStats can be undefined in system tests.
       await processConsecutiveActionTimeouts(gameID, result.playerStats);
     }
-    const saveResult = await postHand(gameID, handNum, result);
+    const saveResult = await saveHand(gameID, handNum, result);
     if (saveResult.success) {
       resp.status(200).send(saveResult);
+      return;
     } else {
       resp.status(500).send(saveResult);
     }
@@ -120,7 +150,13 @@ class HandServerAPIs {
 export const HandServerAPI = new HandServerAPIs();
 
 export async function postHand(gameID: number, handNum: number, result: any) {
-  const res = await HandRepository.saveHandNew(gameID, handNum, result);
+  //const res = await HandRepository.saveHandNew(gameID, handNum, result);
+  //return res;
+  return {};
+}
+
+export async function saveHand(gameID: number, handNum: number, result: any) {
+  const res = await HandRepository.saveHand(gameID, handNum, result);
   return res;
 }
 

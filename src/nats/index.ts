@@ -494,6 +494,7 @@ class NatsClass {
       requestId: messageId,
     };
     const messageStr = JSON.stringify(message);
+    console.log(messageStr);
     const subject = this.getGameChannel(game.gameCode);
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }

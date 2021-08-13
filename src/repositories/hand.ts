@@ -7,7 +7,7 @@ import {
   PlayerStatus,
   WonAtStatus,
 } from '@src/entity/types';
-import {LessThan, MoreThan, getManager} from 'typeorm';
+import {LessThan, MoreThan, getManager, EntityManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {getLogger} from '@src/utils/log';
@@ -31,7 +31,8 @@ import {GameReward} from '@src/entity/game/reward';
 import {HistoryRepository} from './history';
 import {AppCoinRepository} from './appcoin';
 import {GameRepository} from './game';
-
+import * as lz from 'lzutf8';
+import {getAppSettings} from '@src/firebase';
 const logger = getLogger('hand');
 
 const MAX_STARRED_HAND = 25;
@@ -105,319 +106,319 @@ class HandRepositoryImpl {
     return summary;
   }
 
-  public async saveHandNew(
-    gameID: number,
-    handNum: number,
-    result: any
-  ): Promise<SaveHandResult> {
-    let game: PokerGame;
-    let gameCode = '';
-    try {
-      const gameFromCache = await Cache.getGameById(gameID);
-      if (!gameFromCache) {
-        throw new Error(`Game ${gameID} is not found`);
-      }
-      gameCode = gameFromCache.gameCode;
-      game = gameFromCache;
-      const playersInHand = result.players;
+  // public async saveHandNew(
+  //   gameID: number,
+  //   handNum: number,
+  //   result: any
+  // ): Promise<SaveHandResult> {
+  //   let game: PokerGame;
+  //   let gameCode = '';
+  //   try {
+  //     const gameFromCache = await Cache.getGameById(gameID);
+  //     if (!gameFromCache) {
+  //       throw new Error(`Game ${gameID} is not found`);
+  //     }
+  //     gameCode = gameFromCache.gameCode;
+  //     game = gameFromCache;
+  //     const playersInHand = result.players;
 
-      if (handNum === 1) {
-        if (game.clubId) {
-          try {
-            let gameType: GameType = GameType.UNKNOWN;
-            switch (game.gameType) {
-              case GameType.HOLDEM:
-                gameType = GameType.HOLDEM;
-                break;
-              case GameType.PLO:
-              case GameType.PLO_HILO:
-                gameType = GameType.PLO;
-                break;
-              case GameType.FIVE_CARD_PLO:
-              case GameType.FIVE_CARD_PLO_HILO:
-                gameType = GameType.FIVE_CARD_PLO;
-                break;
-            }
+  //     if (handNum === 1) {
+  //       if (game.clubId) {
+  //         try {
+  //           let gameType: GameType = GameType.UNKNOWN;
+  //           switch (game.gameType) {
+  //             case GameType.HOLDEM:
+  //               gameType = GameType.HOLDEM;
+  //               break;
+  //             case GameType.PLO:
+  //             case GameType.PLO_HILO:
+  //               gameType = GameType.PLO;
+  //               break;
+  //             case GameType.FIVE_CARD_PLO:
+  //             case GameType.FIVE_CARD_PLO_HILO:
+  //               gameType = GameType.FIVE_CARD_PLO;
+  //               break;
+  //           }
 
-            if (gameType !== GameType.UNKNOWN) {
-              await StatsRepository.newClubGame(gameType, game.clubId);
-            }
-          } catch (err) {}
-        }
-      }
+  //           if (gameType !== GameType.UNKNOWN) {
+  //             await StatsRepository.newClubGame(gameType, game.clubId);
+  //           }
+  //         } catch (err) {}
+  //       }
+  //     }
 
-      /**
-       * Assigning hand history values
-       */
-      const handHistory = new HandHistory();
-      const handLog = result.handLog;
-      const wonAt: string = handLog.wonAt;
-      const potWinners = handLog.potWinners[0];
+  //     /**
+  //      * Assigning hand history values
+  //      */
+  //     const handHistory = new HandHistory();
+  //     const handLog = result.handLog;
+  //     const wonAt: string = handLog.wonAt;
+  //     const potWinners = handLog.potWinners[0];
 
-      handHistory.gameId = gameID;
-      handHistory.handNum = handNum;
-      handHistory.gameType = GameType[result.gameType as keyof typeof GameType];
-      handHistory.wonAt = WonAtStatus[wonAt];
-      // get it from main pot
-      handHistory.totalPot = potWinners.hiWinners[0].amount;
-      if (wonAt === 'SHOW_DOWN') {
-        handHistory.showDown = true;
-        handHistory.winningCards = JSON.stringify(
-          potWinners.hiWinners[0].winningCards
-        );
-        handHistory.winningRank = potWinners.hiWinners[0].rank;
-        if (potWinners.loWinners) {
-          handHistory.loWinningCards = JSON.stringify(
-            potWinners.loWinners[0].winningCards
-          );
-          handHistory.loWinningRank = potWinners.loWinners[0].rank;
-        }
-      } else {
-        handHistory.showDown = false;
-      }
-      handHistory.timeStarted = handLog.handStartedAt;
-      handHistory.timeEnded = handLog.handEndedAt;
+  //     handHistory.gameId = gameID;
+  //     handHistory.handNum = handNum;
+  //     handHistory.gameType = GameType[result.gameType as keyof typeof GameType];
+  //     handHistory.wonAt = WonAtStatus[wonAt];
+  //     // get it from main pot
+  //     handHistory.totalPot = potWinners.hiWinners[0].amount;
+  //     if (wonAt === 'SHOW_DOWN') {
+  //       handHistory.showDown = true;
+  //       handHistory.winningCards = JSON.stringify(
+  //         potWinners.hiWinners[0].winningCards
+  //       );
+  //       handHistory.winningRank = potWinners.hiWinners[0].rank;
+  //       if (potWinners.loWinners) {
+  //         handHistory.loWinningCards = JSON.stringify(
+  //           potWinners.loWinners[0].winningCards
+  //         );
+  //         handHistory.loWinningRank = potWinners.loWinners[0].rank;
+  //       }
+  //     } else {
+  //       handHistory.showDown = false;
+  //     }
+  //     handHistory.timeStarted = handLog.handStartedAt;
+  //     handHistory.timeEnded = handLog.handEndedAt;
 
-      if (typeof handLog.handStartedAt === 'string') {
-        handLog.handStartedAt = parseInt(handLog.handStartedAt);
-      }
+  //     if (typeof handLog.handStartedAt === 'string') {
+  //       handLog.handStartedAt = parseInt(handLog.handStartedAt);
+  //     }
 
-      if (typeof handLog.handEndedAt === 'string') {
-        handLog.handEndedAt = parseInt(handLog.handEndedAt);
-      }
+  //     if (typeof handLog.handEndedAt === 'string') {
+  //       handLog.handEndedAt = parseInt(handLog.handEndedAt);
+  //     }
 
-      handHistory.timeStarted = new Date(handLog.handStartedAt * 1000);
-      handHistory.timeEnded = new Date(handLog.handEndedAt * 1000);
-      const winners = {};
-      /**
-       * Assigning hand winners values
-       */
-      for await (const hiWinner of potWinners.hiWinners) {
-        const playerId = parseInt(playersInHand[hiWinner.seatNo].id);
-        winners[playerId] = true;
-      }
-      if (potWinners.loWinners) {
-        for await (const loWinner of potWinners.loWinners) {
-          const playerId = parseInt(playersInHand[loWinner.seatNo].id);
-          winners[playerId] = true;
-          winners[playerId] = true;
-        }
-      }
+  //     handHistory.timeStarted = new Date(handLog.handStartedAt * 1000);
+  //     handHistory.timeEnded = new Date(handLog.handEndedAt * 1000);
+  //     const winners = {};
+  //     /**
+  //      * Assigning hand winners values
+  //      */
+  //     for await (const hiWinner of potWinners.hiWinners) {
+  //       const playerId = parseInt(playersInHand[hiWinner.seatNo].id);
+  //       winners[playerId] = true;
+  //     }
+  //     if (potWinners.loWinners) {
+  //       for await (const loWinner of potWinners.loWinners) {
+  //         const playerId = parseInt(playersInHand[loWinner.seatNo].id);
+  //         winners[playerId] = true;
+  //         winners[playerId] = true;
+  //       }
+  //     }
 
-      // store the player name
-      for (const seatNo of Object.keys(result.players)) {
-        const player = result.players[seatNo];
-        const playerId = player.id;
-        const cachedPlayer = await Cache.getPlayerById(player.id);
-        player.name = cachedPlayer.name;
-      }
+  //     // store the player name
+  //     for (const seatNo of Object.keys(result.players)) {
+  //       const player = result.players[seatNo];
+  //       const playerId = player.id;
+  //       const cachedPlayer = await Cache.getPlayerById(player.id);
+  //       player.name = cachedPlayer.name;
+  //     }
 
-      // we want to track player stats until what stage he played
-      const playerRound = {};
-      for (const seatNo of Object.keys(result.players)) {
-        const player = result.players[seatNo];
-        const playerId = player.id;
-        playerRound[playerId] = {
-          preflop: 0,
-          flop: 0,
-          turn: 0,
-          river: 0,
-          showdown: 0,
-        };
-        switch (player.playedUntil) {
-          case 'PREFLOP':
-            playerRound[playerId].preflop = 1;
-            break;
-          case 'FLOP':
-            playerRound[playerId].flop = 1;
-            break;
-          case 'TURN':
-            playerRound[playerId].turn = 1;
-            break;
-          case 'RIVER':
-            playerRound[playerId].river = 1;
-            break;
-          case 'SHOW_DOWN':
-            playerRound[playerId].showdown = 1;
-            break;
-        }
-      }
+  //     // we want to track player stats until what stage he played
+  //     const playerRound = {};
+  //     for (const seatNo of Object.keys(result.players)) {
+  //       const player = result.players[seatNo];
+  //       const playerId = player.id;
+  //       playerRound[playerId] = {
+  //         preflop: 0,
+  //         flop: 0,
+  //         turn: 0,
+  //         river: 0,
+  //         showdown: 0,
+  //       };
+  //       switch (player.playedUntil) {
+  //         case 'PREFLOP':
+  //           playerRound[playerId].preflop = 1;
+  //           break;
+  //         case 'FLOP':
+  //           playerRound[playerId].flop = 1;
+  //           break;
+  //         case 'TURN':
+  //           playerRound[playerId].turn = 1;
+  //           break;
+  //         case 'RIVER':
+  //           playerRound[playerId].river = 1;
+  //           break;
+  //         case 'SHOW_DOWN':
+  //           playerRound[playerId].showdown = 1;
+  //           break;
+  //       }
+  //     }
 
-      // get the total rake collected from the hand and track each player paid the rake
-      let handRake = 0.0;
-      if (result.rakeCollected) {
-        handRake = result.rakeCollected;
-        handHistory.rake = handRake;
-      }
+  //     // get the total rake collected from the hand and track each player paid the rake
+  //     let handRake = 0.0;
+  //     if (result.rakeCollected) {
+  //       handRake = result.rakeCollected;
+  //       handHistory.rake = handRake;
+  //     }
 
-      // extract player before/after balance
-      const playerBalance = {};
-      const playerIdsInHand = new Array<number>();
-      for (const seatNo of Object.keys(result.players)) {
-        const player = result.players[seatNo];
-        const balance: any = {};
+  //     // extract player before/after balance
+  //     const playerBalance = {};
+  //     const playerIdsInHand = new Array<number>();
+  //     for (const seatNo of Object.keys(result.players)) {
+  //       const player = result.players[seatNo];
+  //       const balance: any = {};
 
-        // reduce json key
-        // b: before, a: after
-        balance['b'] = player.balance.before;
-        balance['a'] = player.balance.after;
-        playerBalance[player.id] = balance;
+  //       // reduce json key
+  //       // b: before, a: after
+  //       balance['b'] = player.balance.before;
+  //       balance['a'] = player.balance.after;
+  //       playerBalance[player.id] = balance;
 
-        playerIdsInHand.push(player.id);
-      }
-      result.gameCode = game.gameCode;
-      const playerStats = result.playerStats;
-      // don't store player stats
-      delete result.playerStats;
-      handHistory.playersStack = JSON.stringify(playerBalance);
-      handHistory.data = JSON.stringify(result);
-      const summary = await this.getSummary(result);
-      handHistory.summary = JSON.stringify(summary);
-      handHistory.players = JSON.stringify(playerIdsInHand);
+  //       playerIdsInHand.push(player.id);
+  //     }
+  //     result.gameCode = game.gameCode;
+  //     const playerStats = result.playerStats;
+  //     // don't store player stats
+  //     delete result.playerStats;
+  //     handHistory.playersStack = JSON.stringify(playerBalance);
+  //     handHistory.data = JSON.stringify(result);
+  //     const summary = await this.getSummary(result);
+  //     handHistory.summary = JSON.stringify(summary);
+  //     handHistory.players = JSON.stringify(playerIdsInHand);
 
-      result.playerStats = playerStats;
-      result.playerRound = playerRound;
+  //     result.playerStats = playerStats;
+  //     result.playerRound = playerRound;
 
-      //logger.info('****** STARTING TRANSACTION TO SAVE a hand result');
-      const saveResult = await getGameManager().transaction(
-        async transactionEntityManager => {
-          /**
-           * Assigning player chips values
-           */
-          for await (const seatNo of Object.keys(result.players)) {
-            const player = result.players[seatNo];
-            const playerId = parseInt(player.id);
-            const round = playerRound[playerId];
-            let wonHand = 0;
-            if (winners[playerId]) {
-              wonHand = 1;
-            }
-            let rakePaidByPlayer = 0.0;
-            if (player.rakePaid) {
-              rakePaidByPlayer = player.rakePaid;
-            }
-            await transactionEntityManager
-              .getRepository(PlayerGameTracker)
-              .createQueryBuilder()
-              .update()
-              .set({
-                stack: player.balance.after,
-                noHandsWon: () => `no_hands_won + ${wonHand}`,
-                noHandsPlayed: () => 'no_hands_played + 1',
-                rakePaid: () => `rake_paid + ${rakePaidByPlayer}`,
-              })
-              .where({
-                game: {id: gameID},
-                playerId: playerId,
-              })
-              .execute();
-          }
-          await getHistoryRepository(HandHistory).save(handHistory);
-          // update game rake and last hand number
-          await transactionEntityManager
-            .getRepository(PokerGameUpdates)
-            .createQueryBuilder()
-            .update()
-            .set({
-              rake: () => `rake + ${handRake}`,
-            })
-            .where({
-              gameID: gameID,
-            })
-            .execute();
-          const saveResult: SaveHandResult = {
-            gameCode: game.gameCode,
-            handNum: result.handNum,
-            success: true,
-          };
-          const highhandWinners = await RewardRepository.handleHighHand(
-            game,
-            result,
-            handHistory.timeEnded,
-            transactionEntityManager
-          );
+  //     //logger.info('****** STARTING TRANSACTION TO SAVE a hand result');
+  //     const saveResult = await getGameManager().transaction(
+  //       async transactionEntityManager => {
+  //         /**
+  //          * Assigning player chips values
+  //          */
+  //         for await (const seatNo of Object.keys(result.players)) {
+  //           const player = result.players[seatNo];
+  //           const playerId = parseInt(player.id);
+  //           const round = playerRound[playerId];
+  //           let wonHand = 0;
+  //           if (winners[playerId]) {
+  //             wonHand = 1;
+  //           }
+  //           let rakePaidByPlayer = 0.0;
+  //           if (player.rakePaid) {
+  //             rakePaidByPlayer = player.rakePaid;
+  //           }
+  //           await transactionEntityManager
+  //             .getRepository(PlayerGameTracker)
+  //             .createQueryBuilder()
+  //             .update()
+  //             .set({
+  //               stack: player.balance.after,
+  //               noHandsWon: () => `no_hands_won + ${wonHand}`,
+  //               noHandsPlayed: () => 'no_hands_played + 1',
+  //               rakePaid: () => `rake_paid + ${rakePaidByPlayer}`,
+  //             })
+  //             .where({
+  //               game: {id: gameID},
+  //               playerId: playerId,
+  //             })
+  //             .execute();
+  //         }
+  //         await getHistoryRepository(HandHistory).save(handHistory);
+  //         // update game rake and last hand number
+  //         await transactionEntityManager
+  //           .getRepository(PokerGameUpdates)
+  //           .createQueryBuilder()
+  //           .update()
+  //           .set({
+  //             rake: () => `rake + ${handRake}`,
+  //           })
+  //           .where({
+  //             gameID: gameID,
+  //           })
+  //           .execute();
+  //         const saveResult: SaveHandResult = {
+  //           gameCode: game.gameCode,
+  //           handNum: result.handNum,
+  //           success: true,
+  //         };
+  //         const highhandWinners = await RewardRepository.handleHighHand(
+  //           game,
+  //           result,
+  //           handHistory.timeEnded,
+  //           transactionEntityManager
+  //         );
 
-          if (
-            highhandWinners !== null &&
-            highhandWinners.rewardTrackingId !== 0
-          ) {
-            // new high hand winners
-            // get the game codes associated with the reward tracking id
-            const games = await getGameRepository(GameReward).find({
-              rewardTrackingId: {id: highhandWinners.rewardTrackingId},
-            });
-            const gameCodes = games.map(e => e.gameCode);
-            saveResult.highHand = {
-              gameCode: game.gameCode,
-              handNum: handNum,
-              rewardTrackingId: highhandWinners.rewardTrackingId,
-              associatedGames: gameCodes,
-              winners: highhandWinners.winners,
-            };
-          }
+  //         if (
+  //           highhandWinners !== null &&
+  //           highhandWinners.rewardTrackingId !== 0
+  //         ) {
+  //           // new high hand winners
+  //           // get the game codes associated with the reward tracking id
+  //           const games = await getGameRepository(GameReward).find({
+  //             rewardTrackingId: {id: highhandWinners.rewardTrackingId},
+  //           });
+  //           const gameCodes = games.map(e => e.gameCode);
+  //           saveResult.highHand = {
+  //             gameCode: game.gameCode,
+  //             handNum: handNum,
+  //             rewardTrackingId: highhandWinners.rewardTrackingId,
+  //             associatedGames: gameCodes,
+  //             winners: highhandWinners.winners,
+  //           };
+  //         }
 
-          if (highhandWinners !== null) {
-            Nats.sendHighHandWinners(
-              game,
-              result.boardCards,
-              handNum,
-              highhandWinners.winners
-            );
-          }
+  //         if (highhandWinners !== null) {
+  //           Nats.sendHighHandWinners(
+  //             game,
+  //             result.boardCards,
+  //             handNum,
+  //             highhandWinners.winners
+  //           );
+  //         }
 
-          await StatsRepository.saveHandStats(
-            game,
-            result,
-            handNum
-            //transactionEntityManager
-          );
-          return saveResult;
-        }
-      );
+  //         await StatsRepository.saveHandStats(
+  //           game,
+  //           result,
+  //           handNum
+  //           //transactionEntityManager
+  //         );
+  //         return saveResult;
+  //       }
+  //     );
 
-      for (const seatNo of Object.keys(result.players)) {
-        const player = result.players[seatNo];
-        if (player.balance.after == 0) {
-          logger.info(
-            `Game [${game.gameCode}]: A player balance stack went to 0`
-          );
-          await Cache.updateGamePendingUpdates(game.gameCode, true);
-          break;
-        }
-      }
+  //     for (const seatNo of Object.keys(result.players)) {
+  //       const player = result.players[seatNo];
+  //       if (player.balance.after == 0) {
+  //         logger.info(
+  //           `Game [${game.gameCode}]: A player balance stack went to 0`
+  //         );
+  //         await Cache.updateGamePendingUpdates(game.gameCode, true);
+  //         break;
+  //       }
+  //     }
 
-      try {
-        if (game.appCoinsNeeded) {
-          const continueGame = await AppCoinRepository.canGameContinue(
-            game.gameCode
-          );
-          if (!continueGame) {
-            // end the game in the update
-            logger.info(
-              `[${game.gameCode}] will end due to insufficient coins`
-            );
+  //     try {
+  //       if (game.appCoinsNeeded) {
+  //         const continueGame = await AppCoinRepository.canGameContinue(
+  //           game.gameCode
+  //         );
+  //         if (!continueGame) {
+  //           // end the game in the update
+  //           logger.info(
+  //             `[${game.gameCode}] will end due to insufficient coins`
+  //           );
 
-            // set pending updates true
-            await Cache.updateGamePendingUpdates(game.gameCode, true);
-            const player = await Cache.getPlayer(game.hostUuid);
+  //           // set pending updates true
+  //           await Cache.updateGamePendingUpdates(game.gameCode, true);
+  //           const player = await Cache.getPlayer(game.hostUuid);
 
-            GameRepository.endGameNextHand(player, game.id);
-          }
-        }
-      } catch (err) {}
-      //logger.info(`Result: ${JSON.stringify(saveResult)}`);
-      //logger.info('****** ENDING TRANSACTION TO SAVE a hand result');
-      return saveResult;
-    } catch (err) {
-      logger.error(`Error when trying to save hand log: ${err.toString()}`);
-      return {
-        gameCode: gameCode,
-        handNum: handNum,
-        success: false,
-        error: err.message,
-      };
-    }
-  }
+  //           GameRepository.endGameNextHand(player, game.id);
+  //         }
+  //       }
+  //     } catch (err) {}
+  //     //logger.info(`Result: ${JSON.stringify(saveResult)}`);
+  //     //logger.info('****** ENDING TRANSACTION TO SAVE a hand result');
+  //     return saveResult;
+  //   } catch (err) {
+  //     logger.error(`Error when trying to save hand log: ${err.toString()}`);
+  //     return {
+  //       gameCode: gameCode,
+  //       handNum: handNum,
+  //       success: false,
+  //       error: err.message,
+  //     };
+  //   }
+  // }
 
   public async getSpecificHandHistory(
     gameId: number,
@@ -585,7 +586,13 @@ class HandRepositoryImpl {
         bookmarkedHand.gameType = game.gameType;
         bookmarkedHand.handNum = handHistory.handNum;
         bookmarkedHand.savedBy = player;
-        bookmarkedHand.data = handHistory.data;
+        let data: string;
+        if (handHistory.compressed) {
+          data = lz.decompress(handHistory.data);
+        } else {
+          data = handHistory.data.toString();
+        }
+        bookmarkedHand.data = data;
       }
 
       const resp = await savedHandsRepository.save(bookmarkedHand);
@@ -653,7 +660,13 @@ class HandRepositoryImpl {
             sharedHand.handNum = handHistory.handNum;
             sharedHand.sharedBy = player;
             sharedHand.sharedTo = club;
-            sharedHand.data = handHistory.data;
+            let data: string;
+            if (handHistory.compressed) {
+              data = lz.decompress(handHistory.data);
+            } else {
+              data = handHistory.data.toString();
+            }
+            sharedHand.data = data;
           }
 
           const resp = await savedHandsRepository.save(sharedHand);
@@ -784,7 +797,421 @@ class HandRepositoryImpl {
     if (!hand) {
       return null;
     }
-    return JSON.parse(hand.data);
+
+    // try to decompress
+    let data = '{}';
+    try {
+      if (hand.compressed) {
+        data = lz.decompress(hand.data);
+      }
+    } catch (err) {
+      return null;
+    }
+
+    return JSON.parse(data);
+  }
+
+  public async saveHand(
+    gameID: number,
+    handNum: number,
+    result: any
+  ): Promise<SaveHandResult> {
+    let game: PokerGame;
+    let gameCode = '';
+    try {
+      //console.log(JSON.stringify(result));
+      const gameFromCache = await Cache.getGameById(gameID);
+      if (!gameFromCache) {
+        throw new Error(`Game ${gameID} is not found`);
+      }
+      gameCode = gameFromCache.gameCode;
+      game = gameFromCache;
+      const playersInHand = result.result.playerInfo;
+      let gameType = GameType[result.gameType as keyof typeof GameType];
+      if (handNum === 1) {
+        if (game.clubId) {
+          try {
+            let statGameType = GameType.UNKNOWN;
+            switch (gameType) {
+              case GameType.HOLDEM:
+                statGameType = GameType.HOLDEM;
+                break;
+              case GameType.PLO:
+              case GameType.PLO_HILO:
+                statGameType = GameType.PLO;
+                break;
+              case GameType.FIVE_CARD_PLO:
+              case GameType.FIVE_CARD_PLO_HILO:
+                statGameType = GameType.FIVE_CARD_PLO;
+                break;
+            }
+
+            if (gameType !== GameType.UNKNOWN) {
+              await StatsRepository.newClubGame(gameType, game.clubId);
+            }
+          } catch (err) {}
+        }
+      }
+
+      /**
+       * Assigning hand history values
+       */
+      const handHistory = new HandHistory();
+      const handLog = result.handLog;
+      const wonAt: string = handLog.wonAt;
+      const handResult = result.result;
+      const mainPotWinners = handResult.potWinners[0];
+
+      handHistory.gameId = gameID;
+      handHistory.handNum = handNum;
+      handHistory.gameType = gameType;
+      handHistory.wonAt = WonAtStatus[wonAt];
+      // get it from main pot
+      handHistory.totalPot = mainPotWinners.amount;
+      if (wonAt === 'SHOW_DOWN') {
+        handHistory.showDown = true;
+      } else {
+        handHistory.showDown = false;
+      }
+      handHistory.timeStarted = handLog.handStartedAt;
+      handHistory.timeEnded = handLog.handEndedAt;
+
+      if (typeof handLog.handStartedAt === 'string') {
+        handLog.handStartedAt = parseInt(handLog.handStartedAt);
+      }
+
+      if (typeof handLog.handEndedAt === 'string') {
+        handLog.handEndedAt = parseInt(handLog.handEndedAt);
+      }
+
+      handHistory.timeStarted = new Date(handLog.handStartedAt * 1000);
+      handHistory.timeEnded = new Date(handLog.handEndedAt * 1000);
+      const winners = {};
+
+      // get all the winners of the hand
+      for (const pot of handResult.potWinners) {
+        for (const boardWinners of pot.boardWinners) {
+          for (const seatNo of Object.keys(boardWinners.hiWinners)) {
+            const hiWinner = boardWinners.hiWinners[seatNo];
+            const playerId = parseInt(playersInHand[hiWinner.seatNo].id);
+            winners[playerId] = true;
+          }
+          if (boardWinners.lowWinners) {
+            for (const seatNo of Object.keys(boardWinners.lowWinners)) {
+              const lowWinner = boardWinners.lowWinners[seatNo];
+              const playerId = parseInt(playersInHand[lowWinner.seatNo].id);
+              winners[playerId] = true;
+            }
+          }
+        }
+      }
+
+      // store the player name
+      for (const seatNo of Object.keys(playersInHand)) {
+        const player = playersInHand[seatNo];
+        const playerId = player.id;
+        const cachedPlayer = await Cache.getPlayerById(player.id);
+        player.name = cachedPlayer.name;
+      }
+
+      // we want to track player stats until what stage he played
+      const playerRound = {};
+      for (const seatNo of Object.keys(playersInHand)) {
+        const player = playersInHand[seatNo];
+        const playerId = player.id;
+        playerRound[playerId] = {
+          preflop: 0,
+          flop: 0,
+          turn: 0,
+          river: 0,
+          showdown: 0,
+        };
+        switch (player.playedUntil) {
+          case 'PREFLOP':
+            playerRound[playerId].preflop = 1;
+            break;
+          case 'FLOP':
+            playerRound[playerId].flop = 1;
+            break;
+          case 'TURN':
+            playerRound[playerId].turn = 1;
+            break;
+          case 'RIVER':
+            playerRound[playerId].river = 1;
+            break;
+          case 'SHOW_DOWN':
+            playerRound[playerId].showdown = 1;
+            break;
+        }
+      }
+
+      // get the total rake collected from the hand and track each player paid the rake
+      let handRake = 0.0;
+      if (handResult.tipsCollected) {
+        handRake = handResult.tipsCollected;
+        handHistory.rake = handRake;
+      }
+
+      // extract player before/after balance
+      const playerBalance = {};
+      const playerIdsInHand = new Array<number>();
+      for (const seatNo of Object.keys(playersInHand)) {
+        const player = playersInHand[seatNo];
+        const balance: any = {};
+
+        // reduce json key
+        // b: before, a: after
+        balance['b'] = player.balance.before;
+        balance['a'] = player.balance.after;
+        playerBalance[player.id] = balance;
+
+        playerIdsInHand.push(player.id);
+      }
+      result.gameCode = game.gameCode;
+      const playerStats = handResult.playerStats;
+      // don't store player stats
+      delete result.playerStats;
+      handHistory.playersStack = JSON.stringify(playerBalance);
+      const data = JSON.stringify(result);
+      const appSettings = getAppSettings();
+      if (appSettings.compressHandData) {
+        const compressedData = lz.compress(data);
+        handHistory.data = Buffer.from(compressedData);
+        handHistory.compressed = true;
+      } else {
+        handHistory.data = Buffer.from(data);
+        handHistory.compressed = false;
+      }
+      const summary = await this.getSummary2(
+        result.noCards,
+        playersInHand,
+        handResult
+      );
+      handHistory.summary = JSON.stringify(summary);
+      handHistory.players = JSON.stringify(playerIdsInHand);
+
+      result.playerStats = playerStats;
+      result.playerRound = playerRound;
+
+      // //logger.info('****** STARTING TRANSACTION TO SAVE a hand result');
+      let saveResult: any = {};
+      saveResult = await getGameManager().transaction(
+        async transactionEntityManager => {
+          /**
+           * Assigning player chips values
+           */
+          for await (const seatNo of Object.keys(playersInHand)) {
+            const player = playersInHand[seatNo];
+            const playerId = parseInt(player.id);
+            const round = playerRound[playerId];
+            let wonHand = 0;
+            if (winners[playerId]) {
+              wonHand = 1;
+            }
+            let rakePaidByPlayer = 0.0;
+            if (player.rakePaid) {
+              rakePaidByPlayer = player.rakePaid;
+            }
+            await transactionEntityManager
+              .getRepository(PlayerGameTracker)
+              .createQueryBuilder()
+              .update()
+              .set({
+                stack: player.balance.after,
+                noHandsWon: () => `no_hands_won + ${wonHand}`,
+                noHandsPlayed: () => 'no_hands_played + 1',
+                rakePaid: () => `rake_paid + ${rakePaidByPlayer}`,
+              })
+              .where({
+                game: {id: gameID},
+                playerId: playerId,
+              })
+              .execute();
+          }
+          await getHistoryRepository(HandHistory).save(handHistory);
+          // update game rake and last hand number
+          await transactionEntityManager
+            .getRepository(PokerGameUpdates)
+            .createQueryBuilder()
+            .update()
+            .set({
+              rake: () => `rake + ${handRake}`,
+            })
+            .where({
+              gameID: gameID,
+            })
+            .execute();
+          const saveResult: SaveHandResult = {
+            gameCode: game.gameCode,
+            handNum: result.handNum,
+            success: true,
+          };
+          await this.handleHighHand(
+            game,
+            result,
+            handHistory.timeEnded,
+            saveResult,
+            transactionEntityManager
+          );
+          await StatsRepository.saveHandStats(game, result, handNum);
+          return saveResult;
+        }
+      );
+
+      for (const seatNo of Object.keys(playersInHand)) {
+        const player = playersInHand[seatNo];
+        if (player.balance.after == 0) {
+          logger.info(
+            `Game [${game.gameCode}]: A player balance stack went to 0`
+          );
+          await Cache.updateGamePendingUpdates(game.gameCode, true);
+          break;
+        }
+      }
+
+      try {
+        if (game.appCoinsNeeded) {
+          const continueGame = await AppCoinRepository.canGameContinue(
+            game.gameCode
+          );
+          if (!continueGame) {
+            // end the game in the update
+            logger.info(
+              `[${game.gameCode}] will end due to insufficient coins`
+            );
+
+            // set pending updates true
+            await Cache.updateGamePendingUpdates(game.gameCode, true);
+            const player = await Cache.getPlayer(game.hostUuid);
+
+            GameRepository.endGameNextHand(player, game.id);
+          }
+        }
+      } catch (err) {}
+      //logger.info(`Result: ${JSON.stringify(saveResult)}`);
+      //logger.info('****** ENDING TRANSACTION TO SAVE a hand result');
+      return saveResult;
+    } catch (err) {
+      logger.error(`Error when trying to save hand log: ${err.toString()}`);
+      return {
+        gameCode: gameCode,
+        handNum: handNum,
+        success: false,
+        error: err.message,
+      };
+    }
+  }
+
+  private async handleHighHand(
+    game: PokerGame,
+    result: any,
+    timeEnded: Date,
+    saveResult: any,
+    transactionEntityManager: EntityManager
+  ) {
+    const highhandWinners = await RewardRepository.handleHighHand(
+      game,
+      result,
+      timeEnded,
+      transactionEntityManager
+    );
+
+    if (highhandWinners !== null && highhandWinners.rewardTrackingId !== 0) {
+      // new high hand winners
+      // get the game codes associated with the reward tracking id
+      const games = await getGameRepository(GameReward).find({
+        rewardTrackingId: {id: highhandWinners.rewardTrackingId},
+      });
+      const gameCodes = games.map(e => e.gameCode);
+      saveResult.highHand = {
+        gameCode: game.gameCode,
+        handNum: result.handNum,
+        rewardTrackingId: highhandWinners.rewardTrackingId,
+        associatedGames: gameCodes,
+        winners: highhandWinners.winners,
+      };
+    }
+
+    if (highhandWinners !== null) {
+      Nats.sendHighHandWinners(
+        game,
+        result.boardCards,
+        result.handNum,
+        highhandWinners.winners
+      );
+    }
+  }
+  private async getSummary2(
+    noCards: number,
+    playersInHand: any,
+    handResult: any
+  ): Promise<any> {
+    // returns hand summary information
+    const summary: any = {};
+    summary.boardCards = new Array<any>();
+
+    if (handResult.boards) {
+      for (const board of handResult.boards) {
+        summary.boardCards.push(board.cards);
+      }
+    }
+    summary.noCards = noCards;
+    const isShowDown = handResult.wonAt === 'SHOW_DOWN';
+    //const log = result.handLog;
+    const hiWinners = {};
+    const lowWinners = {};
+    for (const pot of handResult.potWinners) {
+      // we only do main pot here
+      for (const board of pot.boardWinners) {
+        let playerRank: any = {};
+        for (const boardPlayerRank of handResult.boards) {
+          if (boardPlayerRank.boardNo == board.boardNo) {
+            playerRank = boardPlayerRank.playerRank;
+            break;
+          }
+        }
+        for (const seatNo of Object.keys(playersInHand)) {
+          const player = playersInHand[seatNo];
+          const hiWinner = board.hiWinners[seatNo];
+          const lowWinner = board.lowWinners[seatNo];
+          if (hiWinner) {
+            if (!hiWinners[player.id]) {
+              const cachedPlayer = await Cache.getPlayerById(player.id);
+              hiWinners[player.id] = {};
+              hiWinners[player.id].playerId = player.id;
+              hiWinners[player.id].playerName = cachedPlayer.name;
+              hiWinners[player.id].amount = 0;
+              hiWinners[player.id].cards = player.cards;
+              if (isShowDown) {
+                hiWinners[player.id].rankStr = board.hiRankText;
+              }
+            }
+            hiWinners[player.id].amount += hiWinner.amount;
+          }
+          if (lowWinner) {
+            if (!lowWinner[player.id]) {
+              const cachedPlayer = await Cache.getPlayerById(player.id);
+              lowWinner[player.id] = {};
+              lowWinner[player.id].playerId = player.id;
+              lowWinner[player.id].playerName = cachedPlayer.name;
+              lowWinner[player.id].amount = 0;
+              lowWinner[player.id].cards = player.cards;
+              if (isShowDown) {
+                lowWinner[player.id].rankStr = board.hiRankText;
+              }
+            }
+            lowWinner[player.id].amount += hiWinner.amount;
+          }
+        }
+      }
+      break;
+    }
+    summary.hiWinners = Object.values(hiWinners);
+    summary.lowWinners = Object.values(lowWinners);
+    if (summary.lowWinners && summary.lowWinners.length === 0) {
+      delete summary.lowWinners;
+    }
+    return summary;
   }
 }
 

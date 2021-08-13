@@ -27,6 +27,7 @@ import {
   bookmarkedHands,
 } from '../src/resolvers/hand';
 import {getRewardTrack} from '../src/resolvers/reward';
+import {getAppSettings} from '../src/firebase/index'
 const logger = getLogger('Hand server unit-test');
 
 // default player, game and club inputs
@@ -83,6 +84,7 @@ const holdemGameInput = {
 };
 
 beforeAll(async done => {
+  getAppSettings().compressHandData = false;
   await initializeSqlLite();
   done();
 });

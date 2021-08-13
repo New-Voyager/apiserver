@@ -387,6 +387,9 @@ export class PokerGame {
   @Column({name: 'use_agora', default: false})
   public useAgora!: boolean;
 
+  @Column({name: 'data_moved', default: false})
+  public dataMoved!: boolean;
+
   // This is not a database column and used for tracking highhand in the cache
   public highHandRank = 0;
 
