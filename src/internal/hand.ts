@@ -134,9 +134,12 @@ class HandServerAPIs {
     try {
       const result = req.body;
       console.log(JSON.stringify(result));
-      if (result.playerStats) {
+      if (result.result && result.result.playerStats) {
         // It seems that result.playerStats can be undefined in system tests.
-        await processConsecutiveActionTimeouts(gameID, result.playerStats);
+        await processConsecutiveActionTimeouts(
+          gameID,
+          result.result.playerStats
+        );
       }
       const saveResult = await saveHand(gameID, handNum, result);
       if (saveResult.success) {
