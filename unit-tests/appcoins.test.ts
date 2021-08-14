@@ -14,7 +14,7 @@ import {
 import {createGameServer} from '../src/internal/gameserver';
 import {buyIn, configureGame, joinGame, startGame} from '../src/resolvers/game';
 import {saveReward} from '../src/resolvers/reward';
-import {postHand} from '../src/internal/hand';
+import {saveHand} from '../src/internal/hand';
 import * as fs from 'fs';
 import * as glob from 'glob';
 import _ from 'lodash';
@@ -173,13 +173,24 @@ async function defaultHandData(
   data.gameId = gameId.toString();
   //data.rewardTrackingIds.splice(0);
   //data.rewardTrackingIds.push(rewardId);
-  data.players['1'].id = playerIds[0].toString();
+  const players = data.result.playerInfo;
+  const replacedIds: any = {};
+  replacedIds[players['1'].id] = playerIds[0];
+  players['1'].id = playerIds[0].toString();
 
   data.gameId = gameId.toString();
-  data.players['2'].id = playerIds[1].toString();
+  replacedIds[players['5'].id] = playerIds[1];
+  players['5'].id = playerIds[1].toString();
 
   data.gameId = gameId.toString();
-  data.players['3'].id = playerIds[2].toString();
+  replacedIds[players['8'].id] = playerIds[2];
+  players['8'].id = playerIds[2].toString();
+  
+  for (const oldId of Object.keys(replacedIds)) {
+    const newId = replacedIds[oldId];
+    data.result.playerStats[newId] = data.result.playerStats[oldId];
+    delete data.result.playerStats[oldId];
+  }
   return data;
 }
 
@@ -233,20 +244,20 @@ describe('Appcoin tests', () => {
       playerIds
     );
     // we are going to post multiple hands
-    let resp = await postHand(gameId, data.handNum, data);
+    let resp = await saveHand(gameId, data.handNum, data);
     let pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
     expect(pendingUpdates).toBeFalsy();
     await sleep(10000);
-    resp = await postHand(gameId, data.handNum, data);
+    resp = await saveHand(gameId, data.handNum, data);
     pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
     expect(pendingUpdates).toBeFalsy();        
     await sleep(10000);
-    resp = await postHand(gameId, data.handNum, data);
+    resp = await saveHand(gameId, data.handNum, data);
     pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
     expect(pendingUpdates).toBeFalsy();        
     await sleep(10000);
 
-    resp = await postHand(gameId, data.handNum, data);
+    resp = await saveHand(gameId, data.handNum, data);
     pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
     expect(pendingUpdates).toBeTruthy();
     // game should have ended here
@@ -300,16 +311,16 @@ describe('Appcoin tests', () => {
         playerIds
       );
       // we are going to post multiple hands
-      let resp = await postHand(gameId, data.handNum, data);
+      let resp = await saveHand(gameId, data.handNum, data);
       let pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
       expect(pendingUpdates).toBeFalsy();
       await sleep(10000);
-      resp = await postHand(gameId, data.handNum, data);
+      resp = await saveHand(gameId, data.handNum, data);
       pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
       expect(pendingUpdates).toBeFalsy();
       await sleep(10000);
       await AppCoinRepository.buyCoins(owner, 10);
-      resp = await postHand(gameId, data.handNum, data);
+      resp = await saveHand(gameId, data.handNum, data);
       pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
       expect(pendingUpdates).toBeFalsy();
       // get game status

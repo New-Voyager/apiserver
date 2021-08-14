@@ -7,6 +7,8 @@ import {Cache} from '@src/cache/index';
 import {PlayerGameStats} from '@src/entity/history/stats';
 import {getGameRepository, getHistoryManager, getHistoryRepository} from '.';
 import {HighHand} from '@src/entity/game/reward';
+import {ClubMember} from '@src/entity/player/club';
+import {ClubRepository} from './club';
 
 class HistoryRepositoryImpl {
   constructor() {}
@@ -151,11 +153,44 @@ class HistoryRepositoryImpl {
     const game = await gameRepo.findOne({gameCode: gameCode});
     let completedGame: any;
     if (game) {
+      const cachedPlayer = await Cache.getPlayerById(playerId);
       const playerRepo = getHistoryRepository(PlayersInGame);
       const player = await playerRepo.findOne({
         gameId: game.gameId,
         playerId: playerId,
       });
+
+      let gameData: any = {
+        gameCode: game.gameCode,
+        gameNum: game.gameNum,
+        status: game.status,
+        smallBlind: game.smallBlind,
+        bigBlind: game.bigBlind,
+        highHandTracked: game.highHandTracked,
+        gameType: game.gameType,
+        startedAt: game.startedAt,
+        startedBy: game.hostName,
+        endedAt: game.endedAt,
+        endedBy: game.endedByName,
+        handsDealt: game.handsDealt,
+      };
+      gameData.isHost = false;
+      if (cachedPlayer) {
+        if (game.hostUuid === cachedPlayer.uuid) {
+          gameData.isHost = true;
+        }
+        if (game.clubCode) {
+          const clubMember = await ClubRepository.isClubMember(
+            game.clubCode,
+            cachedPlayer.uuid
+          );
+          if (clubMember) {
+            gameData.isOwner = clubMember.isOwner;
+            gameData.isManager = clubMember.isManager;
+          }
+        }
+      }
+
       if (player) {
         const gameStatsRepo = getHistoryRepository(PlayerGameStats);
         const gameStat = await gameStatsRepo.findOne({
@@ -194,7 +229,12 @@ class HistoryRepositoryImpl {
             handsDealt: game.handsDealt,
             handStack: player.handStack,
           };
+          completedGame = Object.assign(completedGame, gameData);
         }
+      }
+
+      if (!completedGame) {
+        completedGame = gameData;
       }
     }
     return completedGame;

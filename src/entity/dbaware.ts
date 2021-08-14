@@ -12,6 +12,7 @@ const mysqlSqliteTypeMapping: {[key: string]: ColumnType} = {
   timestamptz: 'datetime',
   mediumblob: 'blob',
   json: 'text',
+  bytea: 'text',
 };
 
 export function setAppropriateColumnType(mySqlType: ColumnType): ColumnType {
@@ -25,6 +26,10 @@ export function setAppropriateColumnType(mySqlType: ColumnType): ColumnType {
 export function DbAwareColumn(columnOptions: ColumnOptions) {
   if (columnOptions.type) {
     columnOptions.type = setAppropriateColumnType(columnOptions.type);
+  }
+
+  if (columnOptions.type === 'bytea') {
+    columnOptions.type = 'text';
   }
 
   if (columnOptions.array) {

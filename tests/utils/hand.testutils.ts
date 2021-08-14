@@ -1,5 +1,6 @@
 import {getClient} from './utils';
 import {gql} from 'apollo-boost';
+import * as fs from 'fs';
 
 export const getSpecificHandHistoryQuery = gql`
   query($gameCode: String!, $handNum: String!) {
@@ -383,4 +384,38 @@ export async function getsharedHand(
     query: sharedHand,
   });
   return resp.data.data;
+}
+
+
+
+export async function defaultHandData(
+  file: string,
+  gameId: number,
+  //rewardId: any,
+  playerIds: Array<number>
+) {
+  const obj = await fs.readFileSync(file, 'utf8');
+  const data = JSON.parse(obj);
+  data.gameId = gameId.toString();
+  //data.rewardTrackingIds.splice(0);
+  //data.rewardTrackingIds.push(rewardId);
+  const players = data.result.playerInfo;
+  const replacedIds: any = {};
+  replacedIds[players['1'].id] = playerIds[0];
+  players['1'].id = playerIds[0].toString();
+
+  data.gameId = gameId.toString();
+  replacedIds[players['5'].id] = playerIds[1];
+  players['5'].id = playerIds[1].toString();
+
+  data.gameId = gameId.toString();
+  replacedIds[players['8'].id] = playerIds[2];
+  players['8'].id = playerIds[2].toString();
+  
+  for (const oldId of Object.keys(replacedIds)) {
+    const newId = replacedIds[oldId];
+    data.result.playerStats[newId] = data.result.playerStats[oldId];
+    delete data.result.playerStats[oldId];
+  }
+  return data;
 }

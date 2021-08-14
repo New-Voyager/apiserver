@@ -12,6 +12,7 @@ import * as glob from 'glob';
 import _ from 'lodash';
 import {getRepository} from 'typeorm';
 import {response} from 'express';
+import { defaultHandData } from './utils/hand.testutils';
 
 const holdemGameInput = {
   gameType: 'HOLDEM',
@@ -142,26 +143,6 @@ async function setupGameEnvironment(
   return [game.gameCode, gameId];
 }
 
-async function defaultHandData(
-  file: string,
-  gameId: number,
-  // rewardId: any,
-  playerIds: Array<number>
-) {
-  const obj = await fs.readFileSync(`highhand-results/${file}`, 'utf8');
-  const data = JSON.parse(obj);
-  data.gameId = gameId.toString();
-  // data.rewardTrackingIds.splice(0);
-  // data.rewardTrackingIds.push(rewardId);
-  data.players['1'].id = playerIds[0].toString();
-
-  data.gameId = gameId.toString();
-  data.players['2'].id = playerIds[1].toString();
-
-  data.gameId = gameId.toString();
-  data.players['3'].id = playerIds[2].toString();
-  return data;
-}
 
 describe('Hand Tests', () => {
   beforeEach(async done => {
@@ -194,15 +175,17 @@ describe('Hand Tests', () => {
       //   gameCode,
       //   rewardId.toString()
       // );
+      const directory = 'hand-results/app-coin';
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
-        cwd: 'highhand-results',
+        cwd: 'hand-results/app-coin',
         deep: 5,
       });
 
       for await (const file of files) {
+        const filename = directory + "/" + file;
         const data = await defaultHandData(
-          file,
+          filename,
           gameId,
           //rewardTrackId,
           playerIds
@@ -240,15 +223,17 @@ describe('Hand Tests', () => {
     //   gameCode,
     //   rewardId.toString()
     // );
+    const directory = 'hand-results/app-coin';
     const files = await glob.sync('**/*.json', {
       onlyFiles: false,
-      cwd: 'highhand-results',
+      cwd: 'hand-results/app-coin',
       deep: 5,
     });
 
     for await (const file of files) {
+      const filename = directory + "/" + file;
       const data = await defaultHandData(
-        file,
+        filename,
         gameId,
         //rewardTrackId,
         playerIds
@@ -293,16 +278,19 @@ describe('Hand Tests', () => {
     //   rewardId.toString()
     // );
 
+    let lastHand = 0;
+
+    const directory = 'hand-results/app-coin';
     const files = await glob.sync('**/*.json', {
       onlyFiles: false,
-      cwd: 'highhand-results',
+      cwd: 'hand-results/app-coin',
       deep: 5,
     });
 
-    let lastHand = 0;
     for await (const file of files) {
+      const filename = directory + "/" + file;
       const data = await defaultHandData(
-        file,
+        filename,
         gameId,
         //rewardTrackId,
         playerIds
@@ -344,17 +332,18 @@ describe('Hand Tests', () => {
       //   gameCode,
       //   rewardId.toString()
       // );
-
+      let lastHand = 0;
+      const directory = 'hand-results/app-coin';
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
-        cwd: 'highhand-results',
+        cwd: 'hand-results/app-coin',
         deep: 5,
       });
-
-      let lastHand = 0;
+  
       for await (const file of files) {
+        const filename = directory + "/" + file;
         const data = await defaultHandData(
-          file,
+          filename,
           gameId,
           //rewardTrackId,
           playerIds
@@ -377,7 +366,7 @@ describe('Hand Tests', () => {
     }
   });
 
-  test('Get all hand history pagination', async () => {
+  test.skip('Get all hand history pagination', async () => {
     try {
       const [
         owner,
@@ -399,16 +388,18 @@ describe('Hand Tests', () => {
       //   rewardId.toString()
       // );
 
+      let lastHand = 0;
+      const directory = 'hand-results/app-coin';
       const files = await glob.sync('**/*.json', {
         onlyFiles: false,
-        cwd: 'highhand-results',
+        cwd: 'hand-results/app-coin',
         deep: 5,
       });
-
-      let lastHand = 0;
+  
       for await (const file of files) {
+        const filename = directory + "/" + file;
         const data = await defaultHandData(
-          file,
+          filename,
           gameId,
           //rewardTrackId,
           playerIds
@@ -465,21 +456,26 @@ describe('Hand Tests', () => {
       //   rewardId.toString()
       // );
 
-      const files = await glob.sync('**/*.json', {
-        onlyFiles: false,
-        cwd: 'highhand-results',
-        deep: 5,
-      });
+    let noOfWinningPlayer2 = 0;
 
-      let noOfWinningPlayer2 = 0;
-      for await (const file of files) {
-        const data = await defaultHandData(
-          file,
-          gameId,
-          //rewardTrackId,
-          playerIds
-        );
-        const resp = await axios.post(
+
+    const directory = 'hand-results/app-coin';
+    const files = await glob.sync('**/*.json', {
+      onlyFiles: false,
+      cwd: 'hand-results/app-coin',
+      deep: 5,
+    });
+
+    for await (const file of files) {
+      const filename = directory + "/" + file;
+      const data = await defaultHandData(
+        filename,
+        gameId,
+        //rewardTrackId,
+        playerIds
+      );
+      
+      const resp = await axios.post(
           `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
           data
         );
@@ -603,18 +599,20 @@ describe('Hand Tests', () => {
       //   gameCode,
       //   rewardId.toString()
       // );
-
-      const files = await glob.sync('**/*.json', {
-        onlyFiles: false,
-        cwd: 'highhand-results',
-        deep: 5,
-      });
-
       let lastHand = 0;
       let id = 0;
+
+      const directory = 'hand-results/app-coin';
+      const files = await glob.sync('**/*.json', {
+        onlyFiles: false,
+        cwd: 'hand-results/app-coin',
+        deep: 5,
+      });
+  
       for await (const file of files) {
+        const filename = directory + "/" + file;
         const data = await defaultHandData(
-          file,
+          filename,
           gameId,
           //rewardTrackId,
           playerIds

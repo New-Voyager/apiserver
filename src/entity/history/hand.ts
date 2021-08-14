@@ -46,8 +46,8 @@ export class HandHistory {
   @DbAwareColumn({name: 'time_ended', type: 'timestamp'})
   public timeEnded!: Date;
 
-  @DbAwareColumn({name: 'data', type: 'text'})
-  public data!: string;
+  @DbAwareColumn({name: 'data', type: 'bytea', nullable: true})
+  public data!: Buffer;
 
   @Column({name: 'total_pot', type: 'float', default: 0, nullable: true})
   public totalPot!: number;
@@ -67,6 +67,9 @@ export class HandHistory {
 
   @Column({name: 'hand_time', type: 'int', default: 0, nullable: true})
   public handTime!: number;
+
+  @Column({name: 'compressed', default: false})
+  public compressed!: boolean;
 }
 
 @Entity({name: 'high_hand_history'})

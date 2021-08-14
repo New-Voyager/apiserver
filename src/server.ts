@@ -305,6 +305,11 @@ function addInternalRoutes(app: any) {
     '/internal/post-hand/gameId/:gameId/handNum/:handNum',
     HandServerAPI.postHand
   );
+  app.post(
+    '/internal/save-hand/gameId/:gameId/handNum/:handNum',
+    HandServerAPI.saveHand
+  );
+
   app.post('/internal/start-game', GameAPI.startGame);
   app.post('/internal/delete-club-by-name/:clubName', AdminAPI.deleteClub);
   app.post('/internal/update-player-game-state', GameAPI.updatePlayerGameState);
