@@ -2028,12 +2028,15 @@ const resolvers: any = {
     seatInfo: async (parent, args, ctx, info) => {
       const game = await Cache.getGame(parent.gameCode);
       const seatStatuses = await GameRepository.getSeatStatus(game.id);
-      const playersInSeats = await GameRepository.getPlayersInSeats(game.id);
-      for (const player of playersInSeats) {
-        player.status = PlayerStatus[player.status];
-        player.name = player.playerName;
-        player.buyInExpTime = player.buyInExpAt;
-        player.breakExpTime = player.breakTimeExpAt;
+      const players = await GameRepository.getPlayersInSeats(game.id);
+      const playersInSeats = new Array<any>();
+      for (const player of players) {
+        const playerInSeat = player as any;
+        playerInSeat.status = PlayerStatus[player.status];
+        playerInSeat.name = player.playerName;
+        playerInSeat.buyInExpTime = player.buyInExpAt;
+        playerInSeat.breakExpTime = player.breakTimeExpAt;
+        playersInSeats.push(playerInSeat);
       }
 
       const seats = new Array<any>();

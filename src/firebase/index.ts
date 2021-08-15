@@ -76,7 +76,7 @@ class FirebaseClass {
     });
     this.serviceAccount = serviceAccount;
     this.serviceAccountFile = serviceAccountFile;
-    this.firebaseInitialized = true;
+    this.firebaseInitialized = false;
     logger.info('Firebase is initialized');
   }
 

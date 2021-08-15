@@ -1408,7 +1408,7 @@ class GameRepositoryImpl {
   public async getPlayersInSeats(
     gameId: number,
     transactionManager?: EntityManager
-  ): Promise<Array<any>> {
+  ): Promise<Array<PlayerGameTracker>> {
     let playerGameTrackerRepo;
     if (transactionManager) {
       playerGameTrackerRepo = transactionManager.getRepository(

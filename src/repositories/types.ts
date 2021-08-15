@@ -64,6 +64,7 @@ export interface SaveHandResult {
 export interface PlayerInSeat {
   seatNo: number;
   openSeat: boolean;
+  inhand: boolean;
   playerId?: number;
   playerUuid?: string;
   name?: string;

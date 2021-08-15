@@ -385,6 +385,19 @@ export class NextHandProcess {
           }
         }
         const seats = new Array<PlayerInSeat>();
+
+        // push dealer seat
+        seats.push({
+          seatNo: 0,
+          openSeat: false,
+          inhand: false,
+          activeSeat: false,
+          status: PlayerStatus.NOT_PLAYING,
+          gameToken: '',
+          runItTwicePrompt: false,
+          muckLosingHand: false,
+          postedBlind: false,
+        });
         for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
           let postedBlind = false;
           const playerSeat = takenSeats[seatNo];
@@ -393,6 +406,7 @@ export class NextHandProcess {
             seats.push({
               seatNo: seatNo,
               openSeat: true,
+              inhand: false,
               status: PlayerStatus.NOT_PLAYING,
               gameToken: '',
               runItTwicePrompt: false,
@@ -401,17 +415,18 @@ export class NextHandProcess {
               postedBlind: false,
             });
           } else {
+            let inhand = false;
             let buyInExpTime = '';
             let breakTimeExp = '';
-            if (playerSeat.buyInExpTime) {
-              buyInExpTime = playerSeat.buyInExpTime.toISOString();
+            if (playerSeat.buyInExpAt) {
+              buyInExpTime = playerSeat.buyInExpAt.toISOString();
             }
-            if (playerSeat.breakTimeExp) {
-              breakTimeExp = playerSeat.breakTimeExp.toISOString();
+            if (playerSeat.breakTimeExpAt) {
+              breakTimeExp = playerSeat.breakTimeExpAt.toISOString();
             }
-            let activeSeat = false;
+            let activeSeat = true;
             if (playerSeat.status == PlayerStatus.PLAYING) {
-              activeSeat = true;
+              inhand = true;
               // did this player missed blind?
               if (gameUpdate.bbPos !== seatNo) {
                 if (playerSeat.missedBlind) {
@@ -436,13 +451,13 @@ export class NextHandProcess {
                   } else {
                     // this player cannot play
                     playerSeat.status = PlayerStatus.NEED_TO_POST_BLIND;
-                    activeSeat = false;
+                    inhand = false;
                   }
                 }
               }
               // don't allow the players who don't have min balance
               if (playerSeat.stack < minBetAmount) {
-                activeSeat = false;
+                inhand = false;
               }
 
               if (activeSeat) {
@@ -454,6 +469,7 @@ export class NextHandProcess {
             seats.push({
               seatNo: seatNo,
               openSeat: false,
+              inhand: inhand,
               activeSeat: activeSeat,
               playerId: playerSeat.playerId,
               playerUuid: playerSeat.playerUuid,
