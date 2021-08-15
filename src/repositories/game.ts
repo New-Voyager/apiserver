@@ -175,6 +175,24 @@ class GameRepositoryImpl {
           if (game.useAgora) {
             gameUpdates.appcoinPerBlock += appSettings.agoraCoinsPerBlock;
           }
+
+          // setup bomb pot settings
+          if (input.bombPotEnabled) {
+            gameUpdates.bombPotEnabled = input.bombPotEnabled;
+            gameUpdates.bombPotBet = input.bombPotBet; // x BB value
+            gameUpdates.doubleBoardBombPot = input.doubleBoardBombPot;
+            if (input.bombBotInterval) {
+              gameUpdates.bombPotInterval = input.bombBotInterval * 60;
+            } else if (input.bombPotIntervalInSecs) {
+              gameUpdates.bombPotInterval = input.bombPotIntervalInSecs;
+            }
+            // set current time as last bomb pot time
+            gameUpdates.lastBombPotTime = new Date();
+
+            // first hand is bomb pot hand
+            gameUpdates.bombPotNextHandNum = 1;
+          }
+
           await gameUpdatesRepo.save(gameUpdates);
           saveUpdateTime = new Date().getTime() - saveUpdateTime;
           let pick = 0;

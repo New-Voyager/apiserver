@@ -93,6 +93,9 @@ export interface NewHandInfo {
   tableStatus: TableStatus;
   sbPos?: number;
   bbPos?: number;
+  bombPot: boolean;
+  doubleBoardBombPot: boolean;
+  bombPotBet: number;
 }
 
 export const WAITLIST_SEATING = 'WAITLIST_SEATING';

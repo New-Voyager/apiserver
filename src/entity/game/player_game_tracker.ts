@@ -164,6 +164,9 @@ export class PlayerGameTracker {
   @Column({name: 'muck_losing_hand', default: false})
   public muckLosingHand!: boolean;
 
+  @Column({name: 'bomb_pot_enabled', default: true})
+  public bombPotEnabled!: boolean;
+
   @Column({name: 'missed_blind', default: false}) // this is set to true, if a player misses blind (in break)
   public missedBlind!: boolean;
 
