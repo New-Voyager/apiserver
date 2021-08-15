@@ -39,6 +39,15 @@ import {
 } from '../src/entity/player/clubmessage';
 import {GameServer, TrackGameServer} from '../src/entity/game/gameserver';
 import {HostSeatChangeProcess} from '../src/entity/game/seatchange';
+import {buyIn, configureGame, joinGame, startGame} from '../src/resolvers/game';
+import {createPlayer, getPlayerById} from '../src/resolvers/player';
+import {
+  approveMember,
+  createClub,
+  getClubById,
+  joinClub,
+} from '../src/resolvers/club';
+import {createGameServer} from '../src/internal/gameserver';
 
 export async function initializeSqlLite() {
   process.env.DB_USED = 'sqllite';
@@ -122,4 +131,52 @@ export async function sleep(ms: number) {
   return new Promise(resolve => {
     setTimeout(resolve, ms);
   });
+}
+
+export async function setupGameEnvironment(
+  owner: string,
+  club: string,
+  players: Array<string>,
+  buyin: number,
+  gameInput: any,
+): Promise<[string, number]> {
+  const gameServer = {
+    ipAddress: '10.1.1.1',
+    currentMemory: 100,
+    status: 'ACTIVE',
+    url: 'htto://localhost:8080',
+  };
+  await createGameServer(gameServer);
+  const game = await configureGame(owner, club, gameInput);
+  let i = 1;
+  for await (const player of players) {
+    await joinGame(player, game.gameCode, i);
+    await buyIn(player, game.gameCode, buyin);
+    i++;
+  }
+  await startGame(owner, game.gameCode);
+  return [game.gameCode, game.id];
+}
+
+
+export async function createClubWithMembers(
+  ownerInput: any,
+  clubInput: any,
+  players: Array<any>
+): Promise<[string, string, number, Array<string>, Array<number>]> {
+  const ownerUuid = await createPlayer({player: ownerInput});
+  clubInput.ownerUuid = ownerUuid;
+  const clubCode = await createClub(ownerUuid, clubInput);
+  const clubId = await getClubById(ownerUuid, clubCode);
+  const playerUuids = new Array<string>();
+  const playerIds = new Array<number>();
+  for (const playerInput of players) {
+    const playerUuid = await createPlayer({player: playerInput});
+    const playerId = (await getPlayerById(playerUuid)).id;
+    await joinClub(playerUuid, clubCode);
+    await approveMember(ownerUuid, clubCode, playerUuid);
+    playerUuids.push(playerUuid);
+    playerIds.push(playerId);
+  }
+  return [ownerUuid, clubCode, clubId, playerUuids, playerIds];
 }

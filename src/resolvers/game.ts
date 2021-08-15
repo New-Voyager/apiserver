@@ -877,7 +877,7 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
   }
 }
 
-async function getGameInfo(playerUuid: string, gameCode: string) {
+export async function getGameInfo(playerUuid: string, gameCode: string) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }

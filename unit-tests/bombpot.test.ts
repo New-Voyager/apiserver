@@ -1,4 +1,4 @@
-import {initializeSqlLite} from './utils';
+import {createClubWithMembers, initializeSqlLite, sleep, setupGameEnvironment} from './utils';
 import {createGameServer} from '../src/internal/gameserver';
 import {getLogger} from '../src/utils/log';
 import {resetDB} from '../src/resolvers/reset';
@@ -12,13 +12,39 @@ import {
 import {Cache} from '../src/cache/index';
 import {saveReward} from '../src/resolvers/reward';
 import {approveMember} from '../src/resolvers/club';
-import {sleep} from './utils';
+import {getGameInfo} from '../src/resolvers/game';
+import { PlayerStatus } from '../src/entity/types';
 
 // Create a game with double board bomb pot
 // setup to run a bomb pot every 10 seconds
 // move to next hand
 // get next hand and verify bomb pot flag is set in the NextHandimport {initializeSqlLite} from './utils';
 
+// default player, game and club inputs
+const ownerInput = {
+  name: 'player_name',
+  deviceId: 'abc123',
+};
+
+const clubInput = {
+  name: 'club_name',
+  description: 'poker players gather',
+};
+
+const playersInput = [
+  {
+    name: 'player_name1',
+    deviceId: 'abc1234',
+  },
+  {
+    name: 'player_3',
+    deviceId: 'abc123456',
+  },
+  {
+    name: 'john',
+    deviceId: 'abc1235',
+  },
+];
 const logger = getLogger('game unit-test');
 const holdemGameInput = {
   gameType: 'HOLDEM',
@@ -89,39 +115,6 @@ afterAll(async done => {
   done();
 });
 
-async function createReward1(playerId, clubCode) {
-  const rewardInput = {
-    amount: 100,
-    endHour: 4,
-    minRank: 1,
-    name: 'brady',
-    startHour: 4,
-    type: 'HIGH_HAND',
-    schedule: 'HOURLY',
-  };
-  const resp = await saveReward(playerId, clubCode, rewardInput);
-  holdemGameInput.rewardIds.splice(0);
-  holdemGameInput.rewardIds.push(resp);
-}
-
-async function createClubWithMembers(
-  ownerInput: any,
-  clubInput: any,
-  players: Array<any>
-): Promise<[string, string, Array<string>]> {
-  const ownerUuid = await createPlayer({player: ownerInput});
-  clubInput.ownerUuid = ownerUuid;
-  const clubCode = await createClub(ownerUuid, clubInput);
-  const playerUuids = new Array<string>();
-  for (const playerInput of players) {
-    const playerUuid = await createPlayer({player: playerInput});
-    await joinClub(playerUuid, clubCode);
-    await approveMember(ownerUuid, clubCode, playerUuid);
-    playerUuids.push(playerUuid);
-  }
-  return [ownerUuid, clubCode, playerUuids];
-}
-
 describe('Game APIs', () => {
   beforeEach(async done => {
     await resetDB();
@@ -177,22 +170,24 @@ describe('Game APIs', () => {
 
   test('gametest: Bomb Pot game running', async () => {
     await createGameServer(gameServer1);
-    const [owner, club] = await createClubWithMembers(
-      {
-        name: 'player_name',
-        deviceId: 'abc123',
-      },
-      {
-        name: 'club_name',
-        description: 'poker players gather',
-      },
-      []
+    const [
+      owner,
+      clubCode,
+      clubId,
+      playerUuids,
+      playerIds,
+    ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+    //const rewardId = await createReward(owner, clubCode);
+    const [gameCode, gameId] = await setupGameEnvironment(
+      owner,
+      clubCode,
+      playerUuids,
+      100,
+      holdemGameInput,
     );
-    const startedGame = await configureGame(owner, club, holdemGameInput);
-    const player = await Cache.getPlayer(owner);
-    const game = await Cache.getGame(startedGame.gameCode);
-    await GameRepository.startGame(player, game);
     
+    const game = await Cache.getGame(gameCode);
+
     // get next hand information
     let nextHandProcess = new NextHandProcess(game.gameCode, 0);
     await nextHandProcess.moveToNextHand();
