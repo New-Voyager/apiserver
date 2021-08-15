@@ -302,7 +302,7 @@ class GameAPIs {
 
     try {
       const nextHandProcess = new NextHandProcess(gameCode, gameServerHandNum);
-      const ret = nextHandProcess.moveToNextHand();
+      const ret = await nextHandProcess.moveToNextHand();
       resp.status(200).send(JSON.stringify(ret));
     } catch (err) {
       resp.status(500).send({error: err.message});
@@ -333,7 +333,7 @@ class GameAPIs {
 
     try {
       const nextHandProcess = new NextHandProcess(gameCode, -1);
-      const ret = nextHandProcess.getNextHandInfo();
+      const ret = await nextHandProcess.getNextHandInfo();
       resp.status(200).send(JSON.stringify(ret));
     } catch (err) {
       resp.status(500).send({error: err.message});
