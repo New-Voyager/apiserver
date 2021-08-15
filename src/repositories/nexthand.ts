@@ -505,7 +505,7 @@ export class NextHandProcess {
           tableStatus: tableStatus,
           sbPos: gameUpdate.sbPos,
           bbPos: gameUpdate.bbPos,
-          bombPot: bombPotNextHand,
+          bombPot: bombPotThisHand,
           doubleBoardBombPot: gameUpdate.doubleBoardBombPot,
           bombPotBet: gameUpdate.bombPotBet,
         };
