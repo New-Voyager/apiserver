@@ -113,6 +113,11 @@ input GameCreateInput {
   showHandRank: Boolean
   useAgora: Boolean
   appCoinsNeeded: Boolean
+  bombPotEnabled: Boolean
+  bombPotBet: Int
+  doubleBoardBombPot: Boolean
+  bombPotInterval: Int        
+  bombPotIntervalInSecs: Int  # for tests
 }
 
 type SeatInfo {
@@ -188,6 +193,13 @@ type GameInfo {
   allowRabbitHunt: Boolean
   showHandRank: Boolean
 
+  # bomb pot (comes from PokerGameUpdates)
+  bombPotEnabled: Boolean
+  bombPotBet: Int
+  doubleBoardBombPot: Boolean
+  bombPotInterval: Int        
+  bombPotIntervalInSecs: Int 
+
   roeGames: [GameType!]
   dealerChoiceGames: [GameType!]
   runningTime: Int
@@ -212,7 +224,7 @@ type GameInfo {
   # updates
   handNum: Int
   rakeCollected: Float
-
+    
   # player role
   isHost: Boolean
   isOwner: Boolean

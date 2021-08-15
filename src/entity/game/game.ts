@@ -104,6 +104,29 @@ export class PokerGameUpdates {
   })
   public nextCoinConsumeTime!: Date;
 
+  // bomb pot settings
+  @Column({name: 'bomb_pot_on', default: false})
+  public bombPotEnabled!: boolean;
+
+  @Column({type: 'int', name: 'bomb_pot_bet', default: 5}) // x BB
+  public bombPotBet!: number;
+
+  @Column({name: 'double_board_bomb_pot', default: false})
+  public doubleBoardBombPot!: boolean;
+
+  @Column({type: 'int', name: 'bomb_pot_interval_in_secs', default: 30 * 60})
+  public bombPotInterval!: number;
+
+  @DbAwareColumn({
+    name: 'last_bomb_pot_time',
+    type: 'timestamp',
+    nullable: true,
+  })
+  public lastBombPotTime!: Date;
+
+  @Column({type: 'int', name: 'bomb_pot_next_hand_num', default: 0}) // next bomb pot hand number
+  public bombPotNextHandNum!: number;
+
   @Column({name: 'appcoin_host_notified', default: false})
   public appCoinHostNotified!: boolean;
 

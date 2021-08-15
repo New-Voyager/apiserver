@@ -877,7 +877,7 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
   }
 }
 
-async function getGameInfo(playerUuid: string, gameCode: string) {
+export async function getGameInfo(playerUuid: string, gameCode: string) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }
@@ -934,6 +934,14 @@ async function getGameInfo(playerUuid: string, gameCode: string) {
       ret.handNum = updates.handNum;
       ret.janusRoomId = updates.janusRoomId;
       ret.janusRoomPin = updates.janusRoomPin;
+
+      ret.bombPotEnabled = updates.bombPotEnabled;
+      if (ret.bombPotEnabled) {
+        ret.bombPotBet = updates.bombPotBet;
+        ret.doubleBoardBombPot = updates.doubleBoardBombPot;
+        ret.bombPotInterval = Math.floor(updates.bombPotInterval / 60);
+        ret.bombPotIntervalInSecs = updates.bombPotInterval;
+      }
     }
     const now = new Date().getTime();
     // get player's game state
