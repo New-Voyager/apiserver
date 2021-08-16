@@ -181,13 +181,16 @@ class GameAPIs {
               game.id,
               transactionEntityManager
             );
-            for (const player of playersInSeats) {
+            const players = new Array<any>();
+            for (const playerInSeat of playersInSeats) {
+              const player = playerInSeat as any;
               player.status = PlayerStatus[player.status];
               player.buyInExpTime = player.buyInExpAt;
               player.breakExpTime = player.breakTimeExpAt;
+              players.push(player);
             }
 
-            const takenSeats = playersInSeats.map(x => x.seatNo);
+            const takenSeats = players.map(x => x.seatNo);
             const availableSeats: Array<number> = [];
             for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
               if (takenSeats.indexOf(seatNo) === -1) {

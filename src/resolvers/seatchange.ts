@@ -258,10 +258,13 @@ export async function seatPositions(
       return playersInSeats;
     } else {
       // get seat positions from table
-      const players = await GameRepository.getPlayersInSeats(game.id);
-      for (const player of players) {
+      const playersInTable = await GameRepository.getPlayersInSeats(game.id);
+      const players = new Array<any>();
+      for (const playerInSeat of playersInTable) {
+        const player = playerInSeat as any;
         player.openSeat = false;
         player.status = PlayerStatus[player.status];
+        player.push(player);
       }
       const playersMap = _.keyBy(players, 'seatNo');
       const playersInSeats: Array<any> = [];
