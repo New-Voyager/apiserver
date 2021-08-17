@@ -98,7 +98,7 @@ watch-debug:
 	npx yarn watch-debug
 
 .PHONY: publish
-publish: gcp-publish do-publish
+publish: gcp-publish
 
 .PHONY: do-login
 do-login:
