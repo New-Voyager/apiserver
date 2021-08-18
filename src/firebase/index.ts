@@ -25,6 +25,7 @@ export interface IapProduct {
 }
 
 export interface Asset {
+  id: string;
   type: string;
   name: string;
   size: number;
@@ -295,7 +296,11 @@ class FirebaseClass {
       }
       for (const doc of docs) {
         const d = await doc.get();
+        let id = d.get('id');
         const name = d.get('name');
+        if (!id) {
+          id = name;
+        }
         let size: number = d.get('size');
         const type = d.get('type');
         const link = d.get('link');
@@ -315,6 +320,7 @@ class FirebaseClass {
         }
 
         assets.push({
+          id: id,
           link: link,
           name: name,
           soundLink: soundLink,
