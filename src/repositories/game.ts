@@ -419,7 +419,7 @@ class GameRepositoryImpl {
         where
         g.game_status NOT IN (${GameStatus.ENDED}) AND
         g.club_id IN (${clubIdsIn})`;
-    console.log(query);
+    //console.log(query);
     // EXTRACT(EPOCH FROM (now()-g.started_at)) as "elapsedTime",  Showing some error
     const resp = await getGameConnection().query(query);
     return resp;
@@ -456,7 +456,7 @@ class GameRepositoryImpl {
         where
         g.game_status NOT IN (${GameStatus.ENDED}) AND
         g.host_id = ${player.id}`;
-    console.log(query);
+    //console.log(query);
     // EXTRACT(EPOCH FROM (now()-g.started_at)) as "elapsedTime",  Showing some error
     const resp = await getGameConnection().query(query);
     return resp;

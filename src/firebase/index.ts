@@ -27,7 +27,7 @@ export interface IapProduct {
 export interface Asset {
   type: string;
   name: string;
-  size: string;
+  size: number;
   link: string;
   active: boolean;
   soundLink: string;
@@ -76,7 +76,7 @@ class FirebaseClass {
     });
     this.serviceAccount = serviceAccount;
     this.serviceAccountFile = serviceAccountFile;
-    this.firebaseInitialized = false;
+    this.firebaseInitialized = true;
     logger.info('Firebase is initialized');
   }
 
@@ -296,13 +296,23 @@ class FirebaseClass {
       for (const doc of docs) {
         const d = await doc.get();
         const name = d.get('name');
-        const size = d.get('size');
+        let size: number = d.get('size');
         const type = d.get('type');
         const link = d.get('link');
-        const active = d.get('is_active');
+        let active: boolean = d.get('is_active');
         const soundLink = d.get('sound_link');
-        const previewLink = d.get('preview_link');
-        const updatedDate = d.get('updated_date');
+        let previewLink = d.get('preview_link');
+        let updatedDate = d.get('updated_date');
+
+        if (!size) {
+          size = 0;
+        }
+        if (active === undefined) {
+          active = true;
+        }
+        if (!previewLink) {
+          previewLink = link;
+        }
 
         assets.push({
           link: link,
@@ -378,6 +388,24 @@ class FirebaseClass {
       const ret = new Array<Asset>();
       for (const asset of this.assets) {
         if (asset.active && asset.type === 'game-background') {
+          ret.push(asset);
+        }
+      }
+      return ret;
+    } catch (err) {
+      logger.error(
+        `Could not get assets from the firestore. ${err.toString()}`
+      );
+      throw new Error('Could not fetch assets');
+    }
+  }
+
+  public async getAllAssets(): Promise<Array<Asset>> {
+    try {
+      await this.fetchFromFirebase();
+      const ret = new Array<Asset>();
+      for (const asset of this.assets) {
+        if (asset.active) {
           ret.push(asset);
         }
       }

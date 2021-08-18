@@ -364,6 +364,7 @@ function addInternalRoutes(app: any) {
   app.post('/auth/login-recovery-code', loginUsingRecoveryCode);
 
   app.get('/nats-urls', natsUrls);
+  app.get('/assets', getAssets);
 
   //app.get('/bot-script/game-code/:gameCode', generateBotScript);
   app.get('/bot-script/game-code/:gameCode/hand/:handNum', generateBotScript);
@@ -392,6 +393,12 @@ async function natsUrls(req: any, resp: any) {
     natsUrl = process.env.DEBUG_NATS_URL;
   }
   resp.status(200).send(JSON.stringify({urls: natsUrl}));
+}
+
+// returns all assets from the firebase
+async function getAssets(req: any, resp: any) {
+  const assets = await Firebase.getAllAssets();
+  resp.status(200).send(JSON.stringify({assets: assets}));
 }
 
 async function initializeNats() {
