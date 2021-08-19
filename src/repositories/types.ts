@@ -99,6 +99,17 @@ export interface NewHandInfo {
   bombPotBet: number;
 }
 
+export enum ReedeemError{
+  PROMOTION_EXPIRED,
+  PROMOTION_INVALID,
+  PROMOTION_ALREADY_USED
+}
+export interface RedeemPromotionResult {
+  success: boolean
+  availableCoins: number
+  error?: string,
+}
+
 export const WAITLIST_SEATING = 'WAITLIST_SEATING';
 export const SEATCHANGE_PROGRSS = 'SEATCHANGE_INPROGRESS';
 export const PLAYER_SEATCHANGE_PROMPT = 'PLAYER_SEATCHANGE_PROMPT';

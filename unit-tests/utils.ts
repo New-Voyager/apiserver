@@ -23,6 +23,7 @@ import {GameHistory} from '../src/entity/history/game';
 import {HighHandHistory} from '../src/entity/history/hand';
 import {PlayersInGame} from '../src/entity/history/player';
 import {Reward} from '../src/entity/player/reward';
+import { Promotion } from '../src/entity/player/promotion';
 import {
   GameReward,
   GameRewardTracking,
@@ -76,6 +77,7 @@ export async function sqlliteConnection() {
           CoinPurchaseTransaction,
           CoinConsumeTransaction,
           PlayerCoin,
+          Promotion
         ],
         dropSchema: true,
         synchronize: true,
