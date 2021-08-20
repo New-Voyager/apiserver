@@ -164,7 +164,7 @@ export async function processPendingUpdates(gameId: number) {
         newOpenSeat = true;
       } else if (update.newUpdate === NextHandUpdate.KICKOUT) {
         // kick out a player
-        await kickoutPlayer(
+        openedSeat = await kickoutPlayer(
           playerGameTrackerRepository,
           game,
           update,
@@ -245,7 +245,7 @@ async function kickoutPlayer(
   game: PokerGame,
   update: NextHandUpdates,
   pendingUpdatesRepo
-) {
+): Promise<number> {
   const playerInGame = await playerGameTrackerRepository.findOne({
     where: {
       game: {id: game.id},
@@ -253,7 +253,7 @@ async function kickoutPlayer(
     },
   });
   if (!playerInGame) {
-    return;
+    return 0;
   }
   // calculate session time
   let sessionTime = playerInGame.sessionTime;
@@ -285,6 +285,7 @@ async function kickoutPlayer(
   }
   // delete this update
   pendingUpdatesRepo.delete({id: update.id});
+  return playerInGame.seatNo;
 }
 
 async function switchSeat(
@@ -348,7 +349,7 @@ async function leaveGame(
   game: PokerGame,
   update: NextHandUpdates,
   pendingUpdatesRepo
-) {
+): Promise<number> {
   const playerInGame = await playerGameTrackerRepository.findOne({
     where: {
       game: {id: game.id},
@@ -356,7 +357,7 @@ async function leaveGame(
     },
   });
   if (!playerInGame) {
-    return;
+    return 0;
   }
 
   const openedSeat = playerInGame.seatNo;
