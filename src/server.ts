@@ -41,6 +41,7 @@ import {
   newlogin,
   signup,
 } from './auth';
+import {DevRepository} from './repositories/dev';
 export enum RunProfile {
   DEV,
   TEST,
@@ -380,6 +381,10 @@ function addInternalRoutes(app: any) {
   app.post('/bot-script/server-settings', setServerSettings);
   app.post('/bot-script/reset-server-settings', resetServerSettings);
   app.post('/bot-script/buy-bot-coins', buyBotCoins);
+
+  // admin apis
+  app.get('/admin/feature-requests', DevRepository.featureRequests);
+  app.get('/admin/bug-reports', DevRepository.bugReports);
 }
 
 async function readyCheck(req: any, resp: any) {

@@ -5,6 +5,8 @@ import {Cache} from '@src/cache/index';
 import {HistoryRepository} from './history';
 import {GameType} from '@src/entity/types';
 import {getDebugRepository} from '.';
+import {BugReport} from '@src/entity/debug/bug';
+import {FeatureRequest} from '@src/entity/debug/feature';
 
 class DevRepositoryImpl {
   constructor() {}
@@ -53,6 +55,36 @@ class DevRepositoryImpl {
     const debugHandRepo = getDebugRepository(DebugHands);
     await debugHandRepo.save(debugHand);
     return true;
+  }
+
+  public async reportBug(player: Player, bug: string) {
+    const bugReport = new BugReport();
+    bugReport.reportedPlayerUuid = player.uuid;
+    bugReport.bug = bug;
+    const repo = getDebugRepository(BugReport);
+    await repo.save(bugReport);
+    return true;
+  }
+
+  public async requestFeature(player: Player, feature: string) {
+    const featureRequest = new FeatureRequest();
+    featureRequest.requestedPlayerUuid = player.uuid;
+    featureRequest.feature = feature;
+    const repo = getDebugRepository(FeatureRequest);
+    await repo.save(featureRequest);
+    return true;
+  }
+
+  public async featureRequests(req: any, resp: any) {
+    const repo = getDebugRepository(FeatureRequest);
+    const featureRequests = await repo.find();
+    resp.status(200).send({requests: featureRequests});
+  }
+
+  public async bugReports(req: any, resp: any) {
+    const repo = getDebugRepository(BugReport);
+    const bugReports = await repo.find();
+    resp.status(200).send({requests: bugReports});
   }
 }
 
