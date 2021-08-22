@@ -192,6 +192,22 @@ async function processConsecutiveActionTimeouts(
     PlayerGameTracker
   );
 
+  const playersInGameArr: Array<PlayerGameTracker> = await playerGameTrackerRepository.find(
+    {
+      game: {id: gameID},
+    }
+  );
+  if (!playersInGameArr) {
+    throw new Error(
+      `Unable to find player tracker records with game ID ${gameID} while processing consecutive action timeouts`
+    );
+  }
+
+  const playersInGame = Object.assign(
+    {},
+    ...playersInGameArr.map(p => ({[p.playerId]: p}))
+  );
+
   for (const playerIdStr of Object.keys(playerStats)) {
     const currentHandTimeouts =
       playerStats[playerIdStr].consecutiveActionTimeouts;
@@ -199,12 +215,7 @@ async function processConsecutiveActionTimeouts(
       playerStats[playerIdStr].isConsecutiveActionTimeoutsReset;
 
     const playerID = parseInt(playerIdStr);
-    const playerInGame:
-      | PlayerGameTracker
-      | undefined = await playerGameTrackerRepository.findOne({
-      game: {id: gameID},
-      playerId: playerID,
-    });
+    const playerInGame: PlayerGameTracker | undefined = playersInGame[playerID];
     if (!playerInGame) {
       throw new Error(
         `Unable to find player tracker with game ID ${gameID} and player ID ${playerID} while processing consecutive action timeouts`
