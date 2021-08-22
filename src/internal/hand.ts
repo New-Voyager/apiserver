@@ -6,6 +6,8 @@ import {Cache} from '@src/cache';
 import {WonAtStatus} from '@src/entity/types';
 import {HandRepository} from '@src/repositories/hand';
 import {getGameRepository} from '@src/repositories';
+import {getLogger} from '@src/utils/log';
+const logger = getLogger('internal::hand');
 
 function validateHandData(handData: any): Array<string> {
   const errors = new Array<string>();
@@ -134,11 +136,14 @@ class HandServerAPIs {
     try {
       const result = req.body;
       console.log(JSON.stringify(result));
-      if (result.result && result.result.playerStats) {
-        // It seems that result.playerStats can be undefined in system tests.
+      if (result.result?.timeoutStats) {
         await processConsecutiveActionTimeouts(
           gameID,
-          result.result.playerStats
+          result.result.timeoutStats
+        );
+      } else {
+        logger.warn(
+          `No timeoutStats present in hand result of game ${gameID} hand ${handNum}. Consecutive timeout counts will not be processed.`
         );
       }
       const saveResult = await saveHand(gameID, handNum, result);
@@ -169,7 +174,7 @@ export async function saveHand(gameID: number, handNum: number, result: any) {
 
 async function processConsecutiveActionTimeouts(
   gameID: number,
-  playerStats: any
+  timeoutStats: any
 ) {
   // TODO: Make this function idempotent.
   // Add hand number to the player_action_tracker table and check it
@@ -208,11 +213,11 @@ async function processConsecutiveActionTimeouts(
     ...playersInGameArr.map(p => ({[p.playerId]: p}))
   );
 
-  for (const playerIdStr of Object.keys(playerStats)) {
+  for (const playerIdStr of Object.keys(timeoutStats)) {
     const currentHandTimeouts =
-      playerStats[playerIdStr].consecutiveActionTimeouts;
+      timeoutStats[playerIdStr].consecutiveActionTimeouts;
     const didTheTimeoutsResetInCurrentHand =
-      playerStats[playerIdStr].isConsecutiveActionTimeoutsReset;
+      timeoutStats[playerIdStr].isConsecutiveActionTimeoutsReset;
 
     const playerID = parseInt(playerIdStr);
     const playerInGame: PlayerGameTracker | undefined = playersInGame[playerID];
