@@ -130,6 +130,10 @@ class StatsRepositoryImpl {
       const playerId = parseInt(key);
       const playerStat = playerStats[key];
       const round = handResult.playerRound[playerId];
+      if (!round) {
+        // This seems to be the case when the player is put in break.
+        continue;
+      }
       let headsupRecord;
       if (playerStat.headsup) {
         // treat headsup special, get the existing record and add the count
