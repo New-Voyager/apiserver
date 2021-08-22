@@ -19,6 +19,7 @@ import {ClubMessageRepository} from '@src/repositories/clubmessage';
 import {HostMessageRepository} from '@src/repositories/hostmessage';
 import {HandRepository} from '@src/repositories/hand';
 import {HistoryRepository} from '@src/repositories/history';
+import {PromotionRepository} from '@src/repositories/promotion';
 const logger = getLogger('player');
 
 async function getClubs(playerId: string): Promise<Array<any>> {
@@ -198,6 +199,9 @@ const resolvers: any = {
     },
     changeDisplayName: async (parent, args, ctx, info) => {
       return changeDisplayName(ctx.req.playerId, args.name);
+    },
+    redeemPromotionCode: async (parent, args, ctx, info) => {
+      return redeemPromotionCode(ctx.req.playerId, args.code);
     },
   },
   Player: {
@@ -688,4 +692,14 @@ export async function changeDisplayName(
     throw new Error('Unauthorized');
   }
   return await PlayerRepository.changeDisplayName(playerId, name);
+}
+
+export async function redeemPromotionCode(
+  playerId: string,
+  code: string
+): Promise<any> {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  return await PromotionRepository.redeemPromotionCode(playerId, code);
 }

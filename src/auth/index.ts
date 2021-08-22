@@ -192,6 +192,7 @@ export async function signup(req: any, resp: any) {
       uuid: player.uuid,
       id: player.id,
     };
+    resp.contentType('application/json');
     resp.status(200).send(JSON.stringify(response));
   } catch (err) {
     logger.error(err.toString());
@@ -270,6 +271,7 @@ export async function newlogin(req: any, resp: any) {
       uuid: player.uuid,
       id: player.id,
     };
+    resp.contentType('application/json');
     resp.status(200).send(JSON.stringify(response));
   } catch (err) {
     logger.error(err.toString());

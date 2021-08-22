@@ -92,6 +92,8 @@ export async function resetDB() {
       await deleteAll('coin_purchase_transactions', transactionEntityManager);
       await deleteAll('player_coins', transactionEntityManager);
       await deleteAll('coin_consume_transactions', transactionEntityManager);
+      await deleteAll('promotion_consumed', transactionEntityManager);
+      await deleteAll('promotion', transactionEntityManager);
     });
     await getGameManager().transaction(async transactionEntityManager => {
       await deleteAll('host_seat_change_process', transactionEntityManager);
