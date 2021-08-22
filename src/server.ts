@@ -42,6 +42,7 @@ import {
   signup,
 } from './auth';
 import {DevRepository} from './repositories/dev';
+import {createPromotion, deleteAll, getAllPromotion} from './admin';
 export enum RunProfile {
   DEV,
   TEST,
@@ -363,6 +364,10 @@ function addInternalRoutes(app: any) {
   app.post('/auth/signup', signup);
   app.post('/auth/recovery-code', getRecoveryCode);
   app.post('/auth/login-recovery-code', loginUsingRecoveryCode);
+
+  app.post('/admin/promotion', createPromotion);
+  app.get('/admin/promotion', getAllPromotion);
+  app.get('/admin/delete', deleteAll);
 
   app.get('/nats-urls', natsUrls);
   app.get('/assets', getAssets);
