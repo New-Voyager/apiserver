@@ -218,7 +218,7 @@ export async function breakTimeoutExpired(gameID: number, playerID: number) {
     await takeBreak.timerExpired();
   } catch (err) {
     logger.error(
-      `Could not handle break time out. Game: ${gameID} or Player: ${playerID}`
+      `Could not handle break time out. Game: ${gameID} or Player: ${playerID}. Error: ${err.message}`
     );
   }
 }
