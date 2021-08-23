@@ -124,6 +124,39 @@ export class PokerGameUpdates {
   })
   public lastBombPotTime!: Date;
 
+  @Column({name: 'break_allowed', default: false})
+  public breakAllowed!: boolean;
+
+  @Column({name: 'break_length', default: 1})
+  public breakLength!: number;
+
+  @Column({name: 'seat_change_allowed', default: true})
+  public seatChangeAllowed!: boolean;
+
+  @Column({name: 'waitlist_allowed', default: true})
+  public waitlistAllowed!: boolean;
+
+  @Column({name: 'max_waitlist', type: 'int', default: 20})
+  public maxWaitlist!: number;
+
+  @Column({name: 'seatchange_timeout', type: 'int', default: 30})
+  public seatChangeTimeout!: number;
+
+  @Column({name: 'buy_in_approval', default: false})
+  public buyInApproval!: boolean;
+
+  @Column({name: 'buyin_timeout', type: 'int', default: 60})
+  public buyInTimeout!: number;
+
+  @Column({name: 'waitlist_sitting_timeout', type: 'int', default: 180})
+  public waitlistSittingTimeout!: number;
+
+  @Column({name: 'run_it_twice_allowed', default: false})
+  public runItTwiceAllowed!: boolean;
+
+  @Column({name: 'allow_rabbit_hunt', default: true})
+  public allowRabbitHunt!: boolean;
+
   @Column({type: 'int', name: 'bomb_pot_next_hand_num', default: 0}) // next bomb pot hand number
   public bombPotNextHandNum!: number;
 
@@ -256,44 +289,11 @@ export class PokerGame {
   @Column({name: 'game_length', type: 'int'})
   public gameLength!: number;
 
-  @Column({name: 'buy_in_approval', default: false})
-  public buyInApproval!: boolean;
-
   @Column({name: 'sit_in_approval', default: false})
   public sitInApproval!: boolean;
 
-  @Column({name: 'break_length', default: 1})
-  public breakLength!: number;
-
-  @Column({name: 'seat_change_allowed', default: true})
-  public seatChangeAllowed!: boolean;
-
-  @Column({name: 'waitlist_allowed', default: true})
-  public waitlistAllowed!: boolean;
-
   @Column({name: 'auto_kick_after_break', default: true})
   public autoKickAfterBreak!: boolean;
-
-  @Column({name: 'waitlist_supported', default: true})
-  public waitlistSupported!: boolean;
-
-  @Column({name: 'max_waitlist', type: 'int', default: 20})
-  public maxWaitlist!: number;
-
-  @Column({name: 'seatchange_timeout', type: 'int', default: 30})
-  public seatChangeTimeout!: number;
-
-  @Column({name: 'buyin_timeout', type: 'int', default: 60})
-  public buyInTimeout!: number;
-
-  @Column({name: 'waitlist_sitting_timeout', type: 'int', default: 180})
-  public waitlistSittingTimeout!: number;
-
-  @Column({name: 'run_it_twice_allowed', default: false})
-  public runItTwiceAllowed!: boolean;
-
-  @Column({name: 'allow_rabbit_hunt', default: true})
-  public allowRabbitHunt!: boolean;
 
   @Column({name: 'show_hand_rank', default: false})
   public showHandRank!: boolean;

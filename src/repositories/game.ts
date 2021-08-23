@@ -120,7 +120,6 @@ class GameRepositoryImpl {
       input['roeGames'] = roeGames;
     }
     const game: PokerGame = {...input} as PokerGame;
-    logger.info(`\n\nCreating new game.. ${game.buyInApproval}\n\n`);
     game.gameType = gameType;
     game.isTemplate = template;
     game.status = GameStatus.CONFIGURED;
@@ -192,6 +191,29 @@ class GameRepositoryImpl {
             // first hand is bomb pot hand
             gameUpdates.bombPotNextHandNum = 1;
           }
+
+          /*
+            public breakAllowed!: boolean;
+            public breakLength!: number;
+            public seatChangeAllowed!: boolean;
+            public waitlistAllowed!: boolean;
+            public maxWaitlist!: number;
+            public seatChangeTimeout!: number;
+            public buyInTimeout!: number;
+            public waitlistSittingTimeout!: number;
+            public runItTwiceAllowed!: boolean;
+            public allowRabbitHunt!: boolean;
+          */
+          gameUpdates.breakAllowed = input.breakAllowed;
+          gameUpdates.breakLength = input.breakLength;
+          gameUpdates.seatChangeAllowed = input.seatChangeAllowed;
+          gameUpdates.waitlistAllowed = input.waitlistAllowed;
+          gameUpdates.waitlistSittingTimeout = input.waitlistSittingTimeout;
+          gameUpdates.maxWaitlist = input.maxWaitList;
+          gameUpdates.seatChangeTimeout = input.seatChangeTimeout;
+          gameUpdates.breakAllowed = input.breakAllowed;
+          gameUpdates.breakLength = input.breakLength;
+          gameUpdates.buyInTimeout = input.buyInTimeout;
 
           await gameUpdatesRepo.save(gameUpdates);
           saveUpdateTime = new Date().getTime() - saveUpdateTime;
@@ -563,15 +585,7 @@ class GameRepositoryImpl {
           PokerGameUpdates
         );
 
-        const gameUpdates = await gameUpdateRepo
-          .createQueryBuilder()
-          .where({
-            gameID: game.id,
-          })
-          .select('seat_change_inprogress', 'seatChangeInProgress')
-          .addSelect('waitlist_seating_inprogress', 'waitlistSeatingInprogress')
-          .execute();
-
+        const gameUpdates = await gameUpdateRepo.find({gameID: game.id});
         if (gameUpdates.length == 0) {
           logger.error(`Game status is not found for game: ${game.gameCode}`);
           throw new Error(
@@ -656,7 +670,7 @@ class GameRepositoryImpl {
           const randomBytes = Buffer.from(crypto.randomBytes(5));
           playerInGame.gameToken = randomBytes.toString('hex');
           playerInGame.status = PlayerStatus.NOT_PLAYING;
-          playerInGame.runItTwicePrompt = game.runItTwiceAllowed;
+          playerInGame.runItTwicePrompt = gameUpdate.runItTwiceAllowed;
           playerInGame.muckLosingHand = game.muckLosingHand;
 
           if (game.status == GameStatus.ACTIVE) {
@@ -1704,8 +1718,13 @@ class GameRepositoryImpl {
       playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     }
     // TODO: start a buy-in timer
+    const gameUpdateRepo = getGameRepository(PokerGameUpdates);
+    const gameUpdate = await gameUpdateRepo.findOne({gameID: game.id});
+    let timeout = 60;
+    if (gameUpdate) {
+      timeout = gameUpdate.buyInTimeout;
+    }
     const buyinTimeExp = new Date();
-    const timeout = game.buyInTimeout;
     buyinTimeExp.setSeconds(buyinTimeExp.getSeconds() + timeout);
     const exp = utcTime(buyinTimeExp);
     let setProps: any = {};

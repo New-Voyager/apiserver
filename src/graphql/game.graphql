@@ -88,7 +88,8 @@ input GameCreateInput {
   buyInApproval: Boolean
   breakLength: Int # in minutes (default 15 mins)
   autoKickAfterBreak: Boolean
-  waitlistSupported: Boolean
+  breakAllowed: Boolean
+  waitlistAllowed: Boolean
   sitInApproval: Boolean
   highHandTracked: Boolean
   maxWaitList: Int
@@ -102,8 +103,9 @@ input GameCreateInput {
   waitlistSittingTimeout: Int
   rewardIds: [Int]
   pauseAfterShowdown: Int   # default 2 seconds
-  buyInTimeout: Int        # default 60 seconds
+  buyInTimeout: Int         # default 60 seconds
   seatChangeAllowed: Boolean
+  seatChangeTimeout: Int    # default 10 seconds
   botGame: Boolean
   runItTwiceAllowed: Boolean
   roeGames: [GameType!]
@@ -164,9 +166,10 @@ type GameInfo {
   maxPlayers: Int
   gameLength: Int
   buyInApproval: Boolean
+  breakAllowed: Boolean
+  waitlistAllowed: Boolean
   breakLength: Int
   autoKickAfterBreak: Boolean
-  waitlistSupported: Boolean
   sitInApproval: Boolean
   highHandTracked: Boolean
   maxWaitList: Int
