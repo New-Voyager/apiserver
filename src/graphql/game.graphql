@@ -86,9 +86,9 @@ input GameCreateInput {
   maxPlayers: Int! # 2-9
   gameLength: Int! # in minutes
   buyInApproval: Boolean
+  breakAllowed: Boolean
   breakLength: Int # in minutes (default 15 mins)
   autoKickAfterBreak: Boolean
-  breakAllowed: Boolean
   waitlistAllowed: Boolean
   sitInApproval: Boolean
   highHandTracked: Boolean
