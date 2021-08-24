@@ -128,6 +128,20 @@ class GameCache {
     }
   }
 
+  /**
+   * Update the cache with last ip check time
+   * @param gameCode
+   * @param lastIpCheckTime
+   */
+  public async updateGameIpCheckTime(gameCode: string, lastIpCheckTime: Date) {
+    const getResp = await this.getCache(`gameCache-${gameCode}`);
+    if (getResp.success && getResp.data) {
+      const game: PokerGame = JSON.parse(getResp.data) as PokerGame;
+      game.lastIpCheckTime = lastIpCheckTime;
+      await this.setCache(`gameCache-${gameCode}`, JSON.stringify(game));
+    }
+  }
+
   public async observeGame(gameCode: string, player: Player): Promise<boolean> {
     const setResp = await this.setCache(
       `observersCache-${gameCode}-${player.uuid}`,
@@ -181,6 +195,11 @@ class GameCache {
           Date.parse(oldConsumeTime.toString())
         );
       }
+      if (ret.lastIpCheckTime) {
+        ret.lastIpCheckTime = new Date(
+          Date.parse(ret.lastIpCheckTime.toString())
+        );
+      }
       return ret;
     } else {
       let repo: Repository<PokerGame>;
@@ -207,6 +226,11 @@ class GameCache {
         } else {
           game.nextCoinConsumeTime = new Date(
             Date.parse(oldConsumeTime.toString())
+          );
+        }
+        if (oldGame.lastIpCheckTime) {
+          game.lastIpCheckTime = new Date(
+            Date.parse(oldGame.lastIpCheckTime.toString())
           );
         }
       }

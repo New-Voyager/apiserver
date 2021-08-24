@@ -183,4 +183,10 @@ export class PlayerGameTracker {
 
   @Column({name: 'consecutive_action_timeouts', type: 'int', default: 0})
   public consecutiveActionTimeouts!: number;
+
+  @Column({name: 'player_location', nullable: true})
+  public playerLocation!: string;
+
+  @Column({name: 'player_ip', nullable: true})
+  public playerIp!: string;
 }

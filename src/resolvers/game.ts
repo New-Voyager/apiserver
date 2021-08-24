@@ -39,6 +39,7 @@ import {Reload} from '@src/repositories/reload';
 import {PlayersInGame} from '@src/entity/history/player';
 import {getAgoraAppId} from '@src/3rdparty/agora';
 import {SeatChangeProcess} from '@src/repositories/seatchange';
+import {analyticsreporting_v4} from 'googleapis';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -189,7 +190,9 @@ export async function endGame(playerId: string, gameCode: string) {
 export async function joinGame(
   playerUuid: string,
   gameCode: string,
-  seatNo: number
+  seatNo: number,
+  location: any,
+  ip: string
 ) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
@@ -219,7 +222,13 @@ export async function joinGame(
       }
     }
 
-    const status = await GameRepository.joinGame(player, game, seatNo);
+    const status = await GameRepository.joinGame(
+      player,
+      game,
+      seatNo,
+      ip,
+      location
+    );
     logger.info(
       `Player: ${player.name} isBot: ${player.bot} joined game: ${game.gameCode}`
     );
@@ -242,10 +251,18 @@ export async function joinGame(
   }
 }
 
+export async function updateLocation(
+  playerUuid: string,
+  gameCode: string,
+  ip: string,
+  location: any
+) {}
 export async function takeSeat(
   playerUuid: string,
   gameCode: string,
-  seatNo: number
+  seatNo: number,
+  ip: string,
+  location: any
 ) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
@@ -275,7 +292,13 @@ export async function takeSeat(
       }
     }
 
-    const status = await GameRepository.joinGame(player, game, seatNo);
+    const status = await GameRepository.joinGame(
+      player,
+      game,
+      seatNo,
+      ip,
+      location
+    );
     logger.info(
       `Player: ${player.name} isBot: ${player.bot} joined game: ${game.gameCode}`
     );
@@ -942,6 +965,9 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
         ret.bombPotInterval = Math.floor(updates.bombPotInterval / 60);
         ret.bombPotIntervalInSecs = updates.bombPotInterval;
       }
+
+      ret.ipCheck = updates.ipCheck;
+      ret.gpsCheck = updates.gpsCheck;
     }
     const now = new Date().getTime();
     // get player's game state
@@ -1125,7 +1151,12 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
   }
 }
 
-export async function sitBack(playerUuid: string, gameCode: string) {
+export async function sitBack(
+  playerUuid: string,
+  gameCode: string,
+  ip: string,
+  location: any
+) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }
@@ -1148,7 +1179,7 @@ export async function sitBack(playerUuid: string, gameCode: string) {
       }
     }
     const player = await Cache.getPlayer(playerUuid);
-    const status = await GameRepository.sitBack(player, game);
+    const status = await GameRepository.sitBack(player, game, ip, location);
     return status;
   } catch (err) {
     logger.error(err);
@@ -2167,10 +2198,25 @@ const resolvers: any = {
       return configureGameByPlayer(ctx.req.playerId, args.game);
     },
     joinGame: async (parent, args, ctx, info) => {
-      return joinGame(ctx.req.playerId, args.gameCode, args.seatNo);
+      return joinGame(
+        ctx.req.playerId,
+        args.gameCode,
+        args.seatNo,
+        '',
+        args.location
+      );
     },
     takeSeat: async (parent, args, ctx, info) => {
-      return takeSeat(ctx.req.playerId, args.gameCode, args.seatNo);
+      return takeSeat(
+        ctx.req.playerId,
+        args.gameCode,
+        args.seatNo,
+        '',
+        args.location
+      );
+    },
+    updateLocation: async (parent, args, ctx, info) => {
+      return updateLocation(ctx.req.playerId, args.gameCode, '', args.location);
     },
     endGame: async (parent, args, ctx, info) => {
       return endGame(ctx.req.playerId, args.gameCode);
@@ -2219,7 +2265,7 @@ const resolvers: any = {
       return takeBreak(ctx.req.playerId, args.gameCode);
     },
     sitBack: async (parent, args, ctx, info) => {
-      return sitBack(ctx.req.playerId, args.gameCode);
+      return sitBack(ctx.req.playerId, args.gameCode, '', args.location);
     },
     leaveGame: async (parent, args, ctx, info) => {
       return leaveGame(ctx.req.playerId, args.gameCode);
