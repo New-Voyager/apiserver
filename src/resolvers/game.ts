@@ -317,7 +317,7 @@ export async function takeSeat(
 
     const playerInSeat = await GameRepository.getSeatInfo(game.id, seatNo);
 
-    if (game.useAgora) {
+    if (!playerInSeat.audioToken) {
       playerInSeat.agoraToken = playerInSeat.audioToken;
     }
 
@@ -961,10 +961,11 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.status = GameStatus[game.status];
     ret.gameID = game.id;
     ret.agoraAppId = getAgoraAppId();
-    ret.useAgora = game.useAgora;
 
     const updates = await GameRepository.getGameUpdates(game.id);
     if (updates) {
+      ret.useAgora = updates.useAgora;
+      ret.audioConfEnabled = updates.audioConfEnabled;
       ret.rakeCollected = updates.rake;
       ret.handNum = updates.handNum;
       ret.janusRoomId = updates.janusRoomId;
@@ -990,7 +991,7 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
       ret.playerMuckLosingHandConfig = playerState.muckLosingHand;
       ret.playerRunItTwiceConfig = playerState.runItTwicePrompt;
 
-      if (game.useAgora) {
+      if (!playerState.audioToken) {
         ret.agoraToken = playerState.audioToken;
       }
 

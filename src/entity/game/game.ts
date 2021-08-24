@@ -160,6 +160,14 @@ export class PokerGameUpdates {
   @Column({type: 'int', name: 'bomb_pot_next_hand_num', default: 0}) // next bomb pot hand number
   public bombPotNextHandNum!: number;
 
+  // used for tracking game number for club games
+  @Column({name: 'audio_conf_enabled', default: false})
+  public audioConfEnabled!: boolean;
+
+  // flag to indicate whether agroa conference should be used or not
+  @Column({name: 'use_agora', default: false})
+  public useAgora!: boolean;
+
   @Column({name: 'appcoin_host_notified', default: false})
   public appCoinHostNotified!: boolean;
 
@@ -417,14 +425,6 @@ export class PokerGame {
   // used for tracking game number for club games
   @Column({name: 'hh_tracked', default: false})
   public highHandTracked!: boolean;
-
-  // used for tracking game number for club games
-  @Column({name: 'audio_conf_enabled', default: false})
-  public audioConfEnabled!: boolean;
-
-  // flag to indicate whether agroa conference should be used or not
-  @Column({name: 'use_agora', default: false})
-  public useAgora!: boolean;
 
   @Column({name: 'data_moved', default: false})
   public dataMoved!: boolean;

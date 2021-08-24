@@ -184,7 +184,7 @@ class GameRepositoryImpl {
           gameUpdates.gameID = savedGame.id;
           const appSettings = getAppSettings();
           gameUpdates.appcoinPerBlock = appSettings.gameCoinsPerBlock;
-          if (game.useAgora) {
+          if (gameUpdates.useAgora) {
             gameUpdates.appcoinPerBlock += appSettings.agoraCoinsPerBlock;
           }
 
@@ -707,7 +707,7 @@ class GameRepositoryImpl {
           }
 
           try {
-            if (game.useAgora) {
+            if (gameUpdate.useAgora) {
               playerInGame.audioToken = await this.getAudioToken(
                 player,
                 game,
@@ -1911,9 +1911,9 @@ class GameRepositoryImpl {
   }
 
   public async updateAudioConfDisabled(gameID: number) {
-    const gameUpdatesRepo = getGameRepository(PokerGame);
+    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
     await gameUpdatesRepo.update(
-      {id: gameID},
+      {gameID: gameID},
       {
         audioConfEnabled: false,
       }

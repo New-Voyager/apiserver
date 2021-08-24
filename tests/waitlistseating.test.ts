@@ -32,7 +32,7 @@ const holdemGameInput = {
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,
-  waitlistSupported: true,
+  waitlistAllowed: true,
   maxWaitList: 10,
   sitInApproval: true,
   rakePercentage: 5.0,
