@@ -136,6 +136,22 @@ export class PokerGameUpdates {
   @Column({name: 'appcoin_consume_block', default: 0, type: 'int'}) // game time (in seconds) to allow game runtime
   public appcoinConsumeBlock!: number;
 
+  @Column({name: 'ip_check', default: false})
+  public ipCheck!: boolean;
+
+  @Column({name: 'gps_check', default: false})
+  public gpsCheck!: boolean;
+
+  @Column({name: 'gps_allowed_distance', default: 30})
+  public gpsAllowedDistance!: number;
+
+  @DbAwareColumn({
+    name: 'last_ip_gps_check_time',
+    type: 'timestamp',
+    nullable: true,
+  })
+  public lastIpGpsCheckTime!: Date;
+
   @Column({name: 'seat1', type: 'int', default: SeatStatus.OPEN})
   public seat1!: number;
 
@@ -419,6 +435,8 @@ export class PokerGame {
   public pendingUpdates = false;
 
   public nextCoinConsumeTime: Date | null = null;
+
+  public lastIpCheckTime: Date | null = null;
 }
 
 @Entity({name: 'next_hand_updates'})

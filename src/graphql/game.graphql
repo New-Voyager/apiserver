@@ -118,6 +118,8 @@ input GameCreateInput {
   doubleBoardBombPot: Boolean
   bombPotInterval: Int        
   bombPotIntervalInSecs: Int  # for tests
+  ipCheck: Boolean
+  gpsCheck: Boolean
 }
 
 type SeatInfo {
@@ -199,6 +201,9 @@ type GameInfo {
   doubleBoardBombPot: Boolean
   bombPotInterval: Int        
   bombPotIntervalInSecs: Int 
+
+  ipCheck: Boolean
+  gpsCheck: Boolean
 
   roeGames: [GameType!]
   dealerChoiceGames: [GameType!]
@@ -383,7 +388,10 @@ input GameConfigChangeInput {
   runItTwicePrompt: Boolean
 }
 
-
+input LocationInput {
+  lat: Float!
+  long: Float!
+}
 
 type Mutation {
   # Not implemented
@@ -401,8 +409,8 @@ type Mutation {
   # implemented
   configureGame(clubCode: String!, game: GameCreateInput!): GameInfo!
   configureFriendsGame(game: GameCreateInput!): GameInfo!
-  joinGame(gameCode: String!, seatNo: Int!): PlayerGameStatus!
-  takeSeat(gameCode: String!, seatNo: Int!): SeatInfo!
+  joinGame(gameCode: String!, seatNo: Int!, location: LocationInput): PlayerGameStatus!
+  takeSeat(gameCode: String!, seatNo: Int!, location: LocationInput): SeatInfo!
   buyIn(gameCode: String!, amount: Float!): BuyInStatus!
   reload(gameCode: String!, amount: Float!): BuyInStatus!
   approveRequest(
@@ -413,7 +421,7 @@ type Mutation {
   ): Boolean!
   startGame(gameCode: String!): GameStatus!
   takeBreak(gameCode: String!): Boolean!
-  sitBack(gameCode: String!): Boolean!
+  sitBack(gameCode: String!, location: LocationInput): Boolean!
   leaveGame(gameCode: String!): Boolean!
   pauseGame(gameCode: String!): GameStatus!
   endGame(gameCode: String!): GameStatus!

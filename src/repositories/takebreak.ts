@@ -87,7 +87,7 @@ export class TakeBreak {
     return true;
   }
 
-  public async processPendingUpdate(update: NextHandUpdates) {
+  public async processPendingUpdate(update: NextHandUpdates | null) {
     logger.info(`Player ${this.player.name} is taking a break`);
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const rows = await playerGameTrackerRepository
@@ -105,9 +105,10 @@ export class TakeBreak {
     const playerInGame = rows[0];
 
     await this.startTimer(playerGameTrackerRepository);
-
-    const pendingUpdatesRepo = getGameRepository(NextHandUpdates);
-    pendingUpdatesRepo.delete({id: update.id});
+    if (update) {
+      const pendingUpdatesRepo = getGameRepository(NextHandUpdates);
+      pendingUpdatesRepo.delete({id: update.id});
+    }
 
     // update the clients with new status
     await playerStatusChanged(
