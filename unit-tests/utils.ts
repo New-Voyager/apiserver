@@ -156,7 +156,7 @@ export async function setupGameEnvironment(
       const playerInfo = playersInfo[player];
       if (playerInfo && playerInfo.location) {
         await joinGame(player, game.gameCode, i, 
-            {ip: playerInfo.ip, location: playerInfo.location});
+            {ip: playerInfo.ipAddress, location: playerInfo.location});
         joined = true;
       }
     }

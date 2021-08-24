@@ -34,6 +34,7 @@ import {reloadApprovalTimeoutExpired} from './timer';
 import {Reload} from './reload';
 import {getGameConnection, getGameManager, getGameRepository} from '.';
 import {Player} from '@src/entity/player/player';
+import {LocationCheck} from './locationcheck';
 
 const logger = getLogger('pending-updates');
 
@@ -222,6 +223,12 @@ export async function processPendingUpdates(gameId: number) {
   }
 
   if (endPendingProcess) {
+    if (gameUpdate.gpsCheck || gameUpdate.ipCheck) {
+      logger.info(`Game: [${game.gameCode}] Running location check...`);
+      const locationCheck = new LocationCheck(game, gameUpdate);
+      await locationCheck.check();
+    }
+
     // start buy in timers for the player's whose stack is 0 and playing
     await BuyIn.startBuyInTimers(game);
 

@@ -34,6 +34,7 @@ const playersInput = [
   {
     name: 'player_name1',
     deviceId: 'abc1234',
+    ipAddress: '24.102.20.2',
     location: {
       lat: 42.3601,
       long: 71.0589,
@@ -42,6 +43,7 @@ const playersInput = [
   {
     name: 'player_3',
     deviceId: 'abc123456',
+    ipAddress: '24.102.20.3',
     location: {
       lat: 40.7128,
       long: 74.0060,
@@ -50,6 +52,7 @@ const playersInput = [
   {
     name: 'john',
     deviceId: 'abc1235',
+    ipAddress: '24.102.20.4',
     location: {
       lat: 34.0522,
       long: 118.2437,
@@ -57,6 +60,7 @@ const playersInput = [
   },
   {
     name: 'brain',
+    ipAddress: '24.102.20.5',
     deviceId: 'brain',
     location: {
       lat: 32.7767,
@@ -93,8 +97,8 @@ const holdemGameInput = {
   waitlistSittingTimeout: 5,
   rewardIds: [] as any,
 
-  ipCheck: false,
-  gpsCheck: true,
+  ipCheck: true,
+  gpsCheck: false,
 };
 
 const gameServer1 = {
@@ -143,45 +147,12 @@ describe('Game APIs', () => {
     done();
   });
 
-  /*
-    {
-    name: 'arya',
-    deviceId: 'arya',
-    location: {
-      lat: 42.3601,
-      long: 71.0592,
-    }
-  },*/
-  test('gpstest: Join game players are apart', async () => {
-    await createGameServer(gameServer1);
-    const playersInClub: Array<any> = new Array<any>();
-    playersInClub.push(...playersInput);
-    const [
-      owner,
-      clubCode,
-      clubId,
-      playerUuids,
-      playerIds,
-    ] = await createClubWithMembers(ownerInput, clubInput, playersInClub);
 
-    const playersInfo = _.keyBy(playersInput, 'deviceId')
-    //const rewardId = await createReward(owner, clubCode);
-    const [gameCode, gameId] = await setupGameEnvironment(
-      owner,
-      clubCode,
-      playerUuids,
-      100,
-      holdemGameInput,
-      playersInfo,
-    );
-    
-    const game = await Cache.getGame(gameCode);
-  });
-
-  test('gpstest: Join game one player is in proximity', async () => {
+  test('iptest: Join game one player is in proximity', async () => {
     let proximityPlayer = {
       name: 'arya',
       deviceId: 'arya',
+      ipAddress: '24.102.20.3',
       location: {
         lat: 42.3601,
         long: 71.0592,
@@ -205,7 +176,7 @@ describe('Game APIs', () => {
     const [gameCode, gameId] = await setupGameEnvironment(
       owner,
       clubCode,
-      playerUuids,
+      _.map(playersInfo, (e) => e.deviceId),
       100,
       holdemGameInput,
       playersInfo,
@@ -214,7 +185,7 @@ describe('Game APIs', () => {
     const game = await Cache.getGame(gameCode);
     try {
       await joinGame(proximityPlayer.deviceId, game.gameCode, 5, 
-        {ip: '', location: proximityPlayer.location});
+        {ip: '24.102.20.3', location: proximityPlayer.location});
       expect(true).toBe(false);
     } catch (e) {
       expect(e).not.toBeNull();
@@ -225,6 +196,7 @@ describe('Game APIs', () => {
     proximityPlayer = {
       name: 'arya',
       deviceId: 'arya',
+      ipAddress: '24.102.20.8',
       location: {
         lat: 42.3601,
         long: 71.0600,
@@ -233,18 +205,18 @@ describe('Game APIs', () => {
 
     try {
       await joinGame(proximityPlayer.deviceId, game.gameCode, 5, 
-        {ip: '', location: proximityPlayer.location});
+        {ip: '24.102.20.8', location: proximityPlayer.location});
       expect(true).toBe(true);
     } catch (e) {
       expect(true).toBe(false);
-      //expect(e.message).toBe("UNKNOWN ERROR");
     }
   });  
 
-  test('gpstest: break/sitback proximity', async () => {
+  test('iptest: break/sitback proximity', async () => {
     let proximityPlayer = {
       name: 'arya',
       deviceId: 'arya',
+      ipAddress: '24.102.20.8',
       location: {
         lat: 42.3601,
         long: 74.0592,
@@ -267,7 +239,7 @@ describe('Game APIs', () => {
     const [gameCode, gameId] = await setupGameEnvironment(
       owner,
       clubCode,
-      playerUuids,
+      _.map(playersInfo, (e) => e.deviceId),
       100,
       holdemGameInput,
       playersInfo,
@@ -289,7 +261,7 @@ describe('Game APIs', () => {
     try {
       // sit back in the seat proximity to another player
       await sitBack('arya', gameCode, {
-        ip: '',
+        ip: '24.102.20.3',
         location: {
           lat: 42.3601,
           long: 71.0592,
@@ -303,7 +275,7 @@ describe('Game APIs', () => {
     // sit somewhere bit far
     try {
       await sitBack('arya', gameCode, {
-        ip: '',
+        ip: '24.102.20.20',
         location: {
           lat: 42.3601,
           long: 71.0600,
@@ -315,10 +287,11 @@ describe('Game APIs', () => {
     }
   });
 
-  test('gpstest: update location', async () => {
+  test('iptest: update location', async () => {
     let proximityPlayer = {
       name: 'arya',
       deviceId: 'arya',
+      ipAddress: '24.102.20.8',
       location: {
         lat: 42.3601,
         long: 74.0592,
@@ -350,7 +323,7 @@ describe('Game APIs', () => {
     const playersInSeatsBefore = await GameRepository.getPlayersInSeats(gameId);
     const seat5PlayerBefore = _.filter(playersInSeatsBefore, (e) => e.seatNo == 5)[0];
     expect(seat5PlayerBefore.status).toEqual(PlayerStatus.PLAYING);
-    await updateLocation('arya', '', {
+    await updateLocation('arya', '24.102.20.3', {
       lat: 42.3601,
       long: 71.0592
     });

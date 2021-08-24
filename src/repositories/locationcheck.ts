@@ -48,9 +48,9 @@ export class LocationCheck {
       `Game: [${this.game.gameCode}] ${proxmityPlayersMap.length} players are in proxmity`
     );
     const removePlayers = new Array<string>();
-    if (proxmityPlayersMap.length > 0) {
+    if (Object.keys(proxmityPlayersMap).length > 0) {
       const now = new Date();
-      for (const playerUuid of proxmityPlayersMap) {
+      for (const playerUuid of Object.keys(proxmityPlayersMap)) {
         const playersInProxmity = proxmityPlayersMap[
           playerUuid
         ] as Array<PlayerGameTracker>;
@@ -76,7 +76,11 @@ export class LocationCheck {
             playersInProxmity,
             p => p.playerUuid !== longestPlayer?.playerUuid
           ).map(e => e.playerUuid);
-          removePlayers.push(...otherPlayers);
+          for (const removePlayer of otherPlayers) {
+            if (removePlayers.indexOf(removePlayer) === -1) {
+              removePlayers.push(...otherPlayers);
+            }
+          }
         }
       }
     }
@@ -125,7 +129,7 @@ export class LocationCheck {
           const diff = Math.ceil(
             (now.getTime() - playerInSeat.locationUpdatedAt.getTime()) / 1000
           );
-          if (diff > appSettings.ipGpsCheckInterval) {
+          if (diff > 2 * appSettings.ipGpsCheckInterval) {
             // stale location
             continue;
           }
@@ -146,6 +150,10 @@ export class LocationCheck {
       if (player.location) {
         // split the location first
         for (const player2 of playersInSeats) {
+          if (player2.playerUuid === player.uuid) {
+            // same player
+            continue;
+          }
           const playerInSeat = await Cache.getPlayer(player2.playerUuid);
           if (playerInSeat.location) {
             const distance = getDistanceInMeters(
