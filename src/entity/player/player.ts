@@ -11,7 +11,7 @@ import {
   DbAwareCreateDateColumn,
   DbAwareUpdateDateColumn,
 } from '../dbaware';
-import {GameType} from '../types';
+import {GameType, PlayerLocation} from '../types';
 import {Club} from './club';
 
 @Entity()
@@ -73,6 +73,13 @@ export class Player {
 
   @Column({name: 'recovery_code', nullable: true})
   public recoveryCode!: string;
+
+  // player current ip address and gps location (caching)
+  public ipAddress!: string;
+
+  public location!: PlayerLocation;
+
+  public locationUpdatedAt!: Date | null;
 }
 
 @Entity({name: 'player_notes'})

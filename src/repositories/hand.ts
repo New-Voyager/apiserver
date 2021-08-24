@@ -1058,6 +1058,7 @@ class HandRepositoryImpl {
         }
       );
 
+      let pendingUpdates = false;
       for (const seatNo of Object.keys(playersInHand)) {
         const player = playersInHand[seatNo];
         if (player.balance.after == 0) {
@@ -1065,6 +1066,7 @@ class HandRepositoryImpl {
             `Game [${game.gameCode}]: A player balance stack went to 0`
           );
           await Cache.updateGamePendingUpdates(game.gameCode, true);
+          pendingUpdates = true;
           break;
         }
       }
@@ -1083,11 +1085,25 @@ class HandRepositoryImpl {
             // set pending updates true
             await Cache.updateGamePendingUpdates(game.gameCode, true);
             const player = await Cache.getPlayer(game.hostUuid);
-
             GameRepository.endGameNextHand(player, game.id);
+            pendingUpdates = true;
           }
         }
       } catch (err) {}
+
+      if (!pendingUpdates) {
+        if (game.lastIpCheckTime) {
+          const now = new Date();
+          const diff = Math.ceil(
+            (now.getTime() - game.lastIpCheckTime.getTime()) / 1000
+          );
+          if (diff > getAppSettings().ipGpsCheckInterval) {
+            logger.info('Game: [${game.gameCode}] time to check IP/GPS');
+            await Cache.updateGamePendingUpdates(game.gameCode, true);
+          }
+        }
+      }
+
       //logger.info(`Result: ${JSON.stringify(saveResult)}`);
       //logger.info('****** ENDING TRANSACTION TO SAVE a hand result');
       return saveResult;
@@ -1200,7 +1216,7 @@ class HandRepositoryImpl {
                 lowWinner[player.id].rankStr = board.hiRankText;
               }
             }
-            lowWinner[player.id].amount += hiWinner.amount;
+            lowWinner[player.id].amount += lowWinner.amount;
           }
         }
       }

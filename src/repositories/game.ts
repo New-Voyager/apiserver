@@ -1,5 +1,12 @@
 import * as crypto from 'crypto';
-import {In, Repository, EntityManager, Not, getRepository} from 'typeorm';
+import {
+  In,
+  Repository,
+  EntityManager,
+  Not,
+  getRepository,
+  IsNull,
+} from 'typeorm';
 import {
   NextHandUpdates,
   PokerGame,
@@ -29,7 +36,7 @@ import {
   playerStatusChanged,
 } from '@src/gameserver';
 import {startTimer, cancelTimer} from '@src/timer';
-import {fixQuery} from '@src/utils';
+import {fixQuery, getDistanceInMeters} from '@src/utils';
 import {WaitListMgmt} from './waitlist';
 import {Reward} from '@src/entity/player/reward';
 import {ChipsTrackRepository} from './chipstrack';
@@ -64,6 +71,12 @@ import {
 import {GameReward, GameRewardTracking} from '@src/entity/game/reward';
 import {ClubRepository} from './club';
 import {getAppSettings} from '@src/firebase';
+import {
+  IpAddressMissingError,
+  LocationPromixityError,
+  SameIpAddressError,
+} from '@src/errors';
+import {LocationCheck} from './locationcheck';
 const logger = getLogger('game');
 
 class GameRepositoryImpl {
@@ -192,7 +205,7 @@ class GameRepositoryImpl {
             gameUpdates.bombPotNextHandNum = 1;
           }
 
-          /*
+          /*            
             public breakAllowed!: boolean;
             public breakLength!: number;
             public seatChangeAllowed!: boolean;
@@ -214,6 +227,8 @@ class GameRepositoryImpl {
           gameUpdates.breakAllowed = input.breakAllowed;
           gameUpdates.breakLength = input.breakLength;
           gameUpdates.buyInTimeout = input.buyInTimeout;
+          gameUpdates.ipCheck = input.ipCheck;
+          gameUpdates.gpsCheck = input.gpsCheck;
 
           await gameUpdatesRepo.save(gameUpdates);
           saveUpdateTime = new Date().getTime() - saveUpdateTime;
@@ -571,7 +586,9 @@ class GameRepositoryImpl {
   public async joinGame(
     player: Player,
     game: PokerGame,
-    seatNo: number
+    seatNo: number,
+    ip: string,
+    location: any
   ): Promise<PlayerStatus> {
     if (seatNo > game.maxPlayers) {
       throw new Error('Invalid seat number');
@@ -585,19 +602,22 @@ class GameRepositoryImpl {
           PokerGameUpdates
         );
 
-        const gameUpdates = await gameUpdateRepo.find({gameID: game.id});
-        if (gameUpdates.length == 0) {
+        const gameUpdate = await gameUpdateRepo.findOne({gameID: game.id});
+        if (!gameUpdate) {
           logger.error(`Game status is not found for game: ${game.gameCode}`);
           throw new Error(
             `Game status is not found for game: ${game.gameCode}`
           );
         }
-        const gameUpdate = gameUpdates[0];
-
         if (gameUpdate.seatChangeInProgress) {
           throw new Error(
             `Seat change is in progress for game: ${game.gameCode}`
           );
+        }
+
+        if (gameUpdate.gpsCheck || gameUpdate.ipCheck) {
+          const locationCheck = new LocationCheck(game, gameUpdate);
+          await locationCheck.checkForOnePlayer(player, ip, location);
         }
 
         const playerGameTrackerRepository = transactionEntityManager.getRepository(
@@ -655,6 +675,10 @@ class GameRepositoryImpl {
 
         if (playerInGame) {
           playerInGame.seatNo = seatNo;
+          playerInGame.playerIp = ip;
+          if (location) {
+            playerInGame.playerLocation = `${location.lat},${location.long}`;
+          }
         } else {
           playerInGame = new PlayerGameTracker();
           playerInGame.playerId = player.id;
@@ -672,6 +696,10 @@ class GameRepositoryImpl {
           playerInGame.status = PlayerStatus.NOT_PLAYING;
           playerInGame.runItTwicePrompt = gameUpdate.runItTwiceAllowed;
           playerInGame.muckLosingHand = game.muckLosingHand;
+          playerInGame.playerIp = ip;
+          if (location) {
+            playerInGame.playerLocation = `${location.lat},${location.long}`;
+          }
 
           if (game.status == GameStatus.ACTIVE) {
             // player must post blind
@@ -872,7 +900,12 @@ class GameRepositoryImpl {
     return true;
   }
 
-  public async sitBack(player: Player, game: PokerGame): Promise<boolean> {
+  public async sitBack(
+    player: Player,
+    game: PokerGame,
+    ip: string,
+    location: any
+  ): Promise<boolean> {
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
     const rows = await playerGameTrackerRepository
@@ -893,6 +926,17 @@ class GameRepositoryImpl {
     if (!playerInGame) {
       logger.error(`Game: ${game.gameCode} not available`);
       throw new Error(`Game: ${game.gameCode} not available`);
+    }
+    const gameUpdateRepo = getGameRepository(PokerGameUpdates);
+    const gameUpdate = await gameUpdateRepo.findOne({gameID: game.id});
+    if (!gameUpdate) {
+      throw new Error(
+        `Game: ${game.gameCode} is not found in PokerGameUpdates`
+      );
+    }
+    if (gameUpdate.gpsCheck || gameUpdate.ipCheck) {
+      const locationCheck = new LocationCheck(game, gameUpdate);
+      await locationCheck.checkForOnePlayer(player, ip, location);
     }
 
     cancelTimer(game.id, player.id, BREAK_TIMEOUT);
@@ -1384,6 +1428,21 @@ class GameRepositoryImpl {
             })
             .where('id = :id', {id: gameId})
             .execute();
+
+          // game started
+
+          // update last ip gps check time
+          const lastIpCheckTime = new Date();
+          await getGameRepository(PokerGameUpdates).update(
+            {
+              gameID: game.id,
+            },
+            {
+              lastIpGpsCheckTime: lastIpCheckTime,
+            }
+          );
+
+          await Cache.updateGameIpCheckTime(game.gameCode, lastIpCheckTime);
         }
         // update the game server with new status
         await changeGameStatus(game, status, game.tableStatus);

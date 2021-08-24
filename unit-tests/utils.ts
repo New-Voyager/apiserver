@@ -139,6 +139,7 @@ export async function setupGameEnvironment(
   players: Array<string>,
   buyin: number,
   gameInput: any,
+  playersInfo?: any
 ): Promise<[string, number]> {
   const gameServer = {
     ipAddress: '10.1.1.1',
@@ -150,7 +151,19 @@ export async function setupGameEnvironment(
   const game = await configureGame(owner, club, gameInput);
   let i = 1;
   for await (const player of players) {
-    await joinGame(player, game.gameCode, i);
+    let joined = false;
+    if (playersInfo) {
+      const playerInfo = playersInfo[player];
+      if (playerInfo && playerInfo.location) {
+        await joinGame(player, game.gameCode, i, 
+            {ip: playerInfo.ipAddress, location: playerInfo.location});
+        joined = true;
+      }
+    }
+
+    if (!joined) {
+      await joinGame(player, game.gameCode, i);
+    }
     await buyIn(player, game.gameCode, buyin);
     i++;
   }
