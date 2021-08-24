@@ -1200,7 +1200,7 @@ class HandRepositoryImpl {
                 lowWinner[player.id].rankStr = board.hiRankText;
               }
             }
-            lowWinner[player.id].amount += hiWinner.amount;
+            lowWinner[player.id].amount += lowWinner.amount;
           }
         }
       }
