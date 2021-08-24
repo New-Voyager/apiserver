@@ -199,3 +199,8 @@ export enum SeatStatus {
   OCCUPIED,
   RESERVED,
 }
+
+export interface PlayerLocation {
+  lat: number;
+  long: number;
+}

@@ -5,6 +5,7 @@ import {EntityManager, getRepository, Repository} from 'typeorm';
 import * as redis from 'redis';
 import {redisHost, redisPort} from '@src/utils';
 import {getGameRepository, getUserRepository} from '@src/repositories';
+import {PlayerLocation} from '@src/entity/types';
 
 interface CachedHighHandTracking {
   rewardId: number;
@@ -285,7 +286,8 @@ class GameCache {
   public async getPlayer(playerUuid: string, update = false): Promise<Player> {
     const getResp = await this.getCache(`playerCache-${playerUuid}`);
     if (getResp.success && getResp.data && !update) {
-      return JSON.parse(getResp.data) as Player;
+      const player = JSON.parse(getResp.data) as Player;
+      return player;
     } else {
       const player = await getUserRepository(Player).findOne({
         where: {uuid: playerUuid},
@@ -293,9 +295,46 @@ class GameCache {
       if (!player) {
         throw new Error(`Cannot find player: ${playerUuid}`);
       }
+
+      // update player location/ip
+      if (getResp.success && getResp.data) {
+        let ret = JSON.parse(getResp.data) as Player;
+        player.ipAddress = ret.ipAddress;
+        player.location = ret.location;
+        if (!ret.locationUpdatedAt) {
+          ret.locationUpdatedAt = null;
+        } else {
+          ret.locationUpdatedAt = new Date(
+            Date.parse(ret.locationUpdatedAt.toString())
+          );
+        }
+        player.locationUpdatedAt = ret.locationUpdatedAt;
+      }
       await this.setCache(`playerCache-${playerUuid}`, JSON.stringify(player));
       await this.setCache(`playerIdCache-${player.id}`, JSON.stringify(player));
       return player;
+    }
+  }
+
+  /**
+   * Update the cache with next coin consume time.
+   * @param gameCode
+   * @param playerLocation
+   * @param ipAddress
+   */
+  public async updatePlayerLocation(
+    playerUuid: string,
+    playerLocation: PlayerLocation,
+    ipAddr: string
+  ) {
+    const getResp = await this.getCache(`playerCache-${playerUuid}`);
+    if (getResp.success && getResp.data) {
+      const player = JSON.parse(getResp.data) as Player;
+      player.location = playerLocation;
+      player.ipAddress = ipAddr;
+      player.locationUpdatedAt = new Date();
+      await this.setCache(`playerCache-${playerUuid}`, JSON.stringify(player));
+      await this.setCache(`playerIdCache-${player.id}`, JSON.stringify(player));
     }
   }
 

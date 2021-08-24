@@ -251,12 +251,6 @@ export async function joinGame(
   }
 }
 
-export async function updateLocation(
-  playerUuid: string,
-  gameCode: string,
-  ip: string,
-  location: any
-) {}
 export async function takeSeat(
   playerUuid: string,
   gameCode: string,
@@ -2214,9 +2208,6 @@ const resolvers: any = {
         '',
         args.location
       );
-    },
-    updateLocation: async (parent, args, ctx, info) => {
-      return updateLocation(ctx.req.playerId, args.gameCode, '', args.location);
     },
     endGame: async (parent, args, ctx, info) => {
       return endGame(ctx.req.playerId, args.gameCode);

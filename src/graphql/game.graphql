@@ -432,7 +432,6 @@ type Mutation {
   applyWaitlistOrder(gameCode: String!, playerUuid: [String!]): Boolean!
   declineWaitlistSeat(gameCode: String!): Boolean
   switchSeat(gameCode: String!, seatNo: Int!): PlayerGameStatus!
-  updateLocation(gameCode: String!, location: LocationInput!): Boolean!
 
   # player changes in live game
   updatePlayerGameConfig(gameCode: String!, config: GameConfigChangeInput!): Boolean

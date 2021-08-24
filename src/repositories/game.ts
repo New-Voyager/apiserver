@@ -76,6 +76,7 @@ import {
   LocationPromixityError,
   SameIpAddressError,
 } from '@src/errors';
+import {LocationCheck} from './locationcheck';
 const logger = getLogger('game');
 
 class GameRepositoryImpl {
@@ -594,7 +595,8 @@ class GameRepositoryImpl {
         }
 
         if (gameUpdate.gpsCheck || gameUpdate.ipCheck) {
-          await this.checkIpLocation(player, game, gameUpdate, ip, location);
+          const locationCheck = new LocationCheck(game, gameUpdate);
+          await locationCheck.checkForOnePlayer(player, ip, location);
         }
 
         const playerGameTrackerRepository = transactionEntityManager.getRepository(
@@ -912,7 +914,8 @@ class GameRepositoryImpl {
       );
     }
     if (gameUpdate.gpsCheck || gameUpdate.ipCheck) {
-      await this.checkIpLocation(player, game, gameUpdate, ip, location);
+      const locationCheck = new LocationCheck(game, gameUpdate);
+      await locationCheck.checkForOnePlayer(player, ip, location);
     }
 
     cancelTimer(game.id, player.id, BREAK_TIMEOUT);
@@ -1273,69 +1276,6 @@ class GameRepositoryImpl {
       return true;
     }
     return false;
-  }
-
-  protected async checkIpLocation(
-    player: Player,
-    game: PokerGame,
-    gameUpdate: PokerGameUpdates,
-    ip: string,
-    location: any
-  ) {
-    // get active players in the game
-    const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
-    const playersInSeats = await playerGameTrackerRepo.find({
-      game: {id: game.id},
-      seatNo: Not(IsNull()),
-    });
-
-    // check whether this player can sit in this game
-    if (gameUpdate.ipCheck) {
-      if (ip === null || ip.length === 0) {
-        throw new IpAddressMissingError(player.name);
-      }
-
-      if (ip) {
-        for (const playerInSeat of playersInSeats) {
-          if (!playerInSeat.playerIp) {
-            continue;
-          }
-
-          if (playerInSeat.playerIp === ip) {
-            logger.error(
-              `Game: [${game.gameCode}] Player ${playerInSeat.playerName} has the same ip as player: ${player.name}. Ipaddres: ${ip}`
-            );
-            throw new SameIpAddressError(playerInSeat.playerName, player.name);
-          }
-        }
-      }
-    }
-
-    if (gameUpdate.gpsCheck) {
-      if (location) {
-        // split the location first
-        for (const playerInSeat of playersInSeats) {
-          if (playerInSeat.playerLocation) {
-            // split the string
-            const toks = playerInSeat.playerLocation.split(',');
-            const lat: number = parseInt(toks[0]);
-            const long: number = parseInt(toks[1]);
-            const distance = getDistanceInMeters(
-              location.lat,
-              location.long,
-              lat,
-              long
-            );
-            if (distance <= gameUpdate.gpsAllowedDistance) {
-              throw new LocationPromixityError(
-                playerInSeat.playerName,
-                player.name
-              );
-            }
-          }
-        }
-      }
-    }
   }
 
   public async endGameNextHand(player: Player, gameId: number) {
