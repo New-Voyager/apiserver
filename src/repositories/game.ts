@@ -206,6 +206,7 @@ class GameRepositoryImpl {
           }
 
           /*            
+            public buyInApproval!: boolean;
             public breakAllowed!: boolean;
             public breakLength!: number;
             public seatChangeAllowed!: boolean;
@@ -217,6 +218,7 @@ class GameRepositoryImpl {
             public runItTwiceAllowed!: boolean;
             public allowRabbitHunt!: boolean;
           */
+          gameUpdates.buyInApproval = input.buyInApproval;
           gameUpdates.breakAllowed = input.breakAllowed;
           gameUpdates.breakLength = input.breakLength;
           gameUpdates.seatChangeAllowed = input.seatChangeAllowed;
