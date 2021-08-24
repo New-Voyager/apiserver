@@ -191,8 +191,10 @@ export async function joinGame(
   playerUuid: string,
   gameCode: string,
   seatNo: number,
-  location: any,
-  ip: string
+  locationCheck?: {
+    location: any;
+    ip: string;
+  }
 ) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
@@ -200,7 +202,7 @@ export async function joinGame(
   let playerName = playerUuid;
   const startTime = new Date().getTime();
   try {
-    const player = await Cache.getPlayer(playerUuid);
+    let player: Player | null = await Cache.getPlayer(playerUuid);
     playerName = player.name;
 
     logger.info(`Player ${playerName} is joining game ${gameCode}`);
@@ -221,7 +223,16 @@ export async function joinGame(
         );
       }
     }
-
+    let ip = '';
+    let location: any = null;
+    if (locationCheck != null) {
+      ip = locationCheck.ip;
+      location = locationCheck.location;
+    }
+    player = await Cache.updatePlayerLocation(player.uuid, location, ip);
+    if (!player) {
+      throw new Error(`Player ${playerUuid} is not found`);
+    }
     const status = await GameRepository.joinGame(
       player,
       game,
@@ -255,8 +266,10 @@ export async function takeSeat(
   playerUuid: string,
   gameCode: string,
   seatNo: number,
-  ip: string,
-  location: any
+  locationCheck?: {
+    ip: string;
+    location: any;
+  }
 ) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
@@ -285,7 +298,12 @@ export async function takeSeat(
         );
       }
     }
-
+    let ip = '';
+    let location: any = null;
+    if (locationCheck != null) {
+      ip = locationCheck.ip;
+      location = locationCheck.location;
+    }
     const status = await GameRepository.joinGame(
       player,
       game,
@@ -1148,8 +1166,10 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
 export async function sitBack(
   playerUuid: string,
   gameCode: string,
-  ip: string,
-  location: any
+  locationCheck?: {
+    ip: string;
+    location: any;
+  }
 ) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
@@ -1173,6 +1193,12 @@ export async function sitBack(
       }
     }
     const player = await Cache.getPlayer(playerUuid);
+    let ip = '';
+    let location: any = null;
+    if (locationCheck != null) {
+      ip = locationCheck.ip;
+      location = locationCheck.location;
+    }
     const status = await GameRepository.sitBack(player, game, ip, location);
     return status;
   } catch (err) {
@@ -2192,22 +2218,16 @@ const resolvers: any = {
       return configureGameByPlayer(ctx.req.playerId, args.game);
     },
     joinGame: async (parent, args, ctx, info) => {
-      return joinGame(
-        ctx.req.playerId,
-        args.gameCode,
-        args.seatNo,
-        '',
-        args.location
-      );
+      return joinGame(ctx.req.playerId, args.gameCode, args.seatNo, {
+        ip: '',
+        location: args.location,
+      });
     },
     takeSeat: async (parent, args, ctx, info) => {
-      return takeSeat(
-        ctx.req.playerId,
-        args.gameCode,
-        args.seatNo,
-        '',
-        args.location
-      );
+      return takeSeat(ctx.req.playerId, args.gameCode, args.seatNo, {
+        ip: '',
+        location: args.location,
+      });
     },
     endGame: async (parent, args, ctx, info) => {
       return endGame(ctx.req.playerId, args.gameCode);
@@ -2256,7 +2276,10 @@ const resolvers: any = {
       return takeBreak(ctx.req.playerId, args.gameCode);
     },
     sitBack: async (parent, args, ctx, info) => {
-      return sitBack(ctx.req.playerId, args.gameCode, '', args.location);
+      return sitBack(ctx.req.playerId, args.gameCode, {
+        ip: '',
+        location: args.location,
+      });
     },
     leaveGame: async (parent, args, ctx, info) => {
       return leaveGame(ctx.req.playerId, args.gameCode);

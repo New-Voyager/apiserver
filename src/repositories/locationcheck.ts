@@ -223,6 +223,9 @@ export class LocationCheck {
         // split the location first
         for (const player2 of playersInSeats) {
           const playerInSeat = await Cache.getPlayer(player2.playerUuid);
+          if (player2.playerUuid === player.uuid) {
+            continue;
+          }
           if (playerInSeat.location) {
             const distance = getDistanceInMeters(
               location.lat,

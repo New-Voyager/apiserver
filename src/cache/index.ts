@@ -326,7 +326,7 @@ class GameCache {
     playerUuid: string,
     playerLocation: PlayerLocation,
     ipAddr: string
-  ) {
+  ): Promise<Player | null> {
     const getResp = await this.getCache(`playerCache-${playerUuid}`);
     if (getResp.success && getResp.data) {
       const player = JSON.parse(getResp.data) as Player;
@@ -335,7 +335,9 @@ class GameCache {
       player.locationUpdatedAt = new Date();
       await this.setCache(`playerCache-${playerUuid}`, JSON.stringify(player));
       await this.setCache(`playerIdCache-${player.id}`, JSON.stringify(player));
+      return player;
     }
+    return null;
   }
 
   public async getPlayerById(id: number, update = false): Promise<Player> {
