@@ -86,6 +86,7 @@ export async function configureGame(
         await session.attachAudio();
         await session.createRoom(ret.janusRoomId, ret.janusRoomPin);
         await GameRepository.updateJanus(
+          gameInfo.gameCode,
           gameInfo.id,
           session.getId(),
           session.getHandleId(),
@@ -962,7 +963,7 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.gameID = game.id;
     ret.agoraAppId = getAgoraAppId();
 
-    const updates = await GameRepository.getGameUpdates(game.id);
+    const updates = await Cache.getGameUpdates(game.gameCode);
     const settings = await Cache.getGameSettings(game.gameCode);
     if (updates && settings) {
       ret.useAgora = settings.useAgora;
@@ -1858,7 +1859,7 @@ export async function gameDataById(playerId: string, gameCode: string) {
       }
     }
 
-    const updates = await GameRepository.getGameUpdatesById(game.id);
+    const updates = await Cache.getGameUpdates(gameCode);
     if (!updates) {
       logger.error(
         `Updates not found for the game ${gameCode} in club ${game.clubName}`

@@ -186,6 +186,7 @@ class GameRepositoryImpl {
             PokerGameSettings
           );
           const gameUpdates = new PokerGameUpdates();
+          gameUpdates.gameCode = savedGame.gameCode;
           gameUpdates.gameID = savedGame.id;
           const appSettings = getAppSettings();
           gameUpdates.appcoinPerBlock = appSettings.gameCoinsPerBlock;
@@ -376,6 +377,7 @@ class GameRepositoryImpl {
       });
 
       await Cache.getGameSettings(game.gameCode, true);
+      await Cache.getGameUpdates(game.gameCode, true);
       //logger.info('****** ENDING TRANSACTION TO CREATE a private game');
       logger.info(
         `createPrivateGame saveTime: ${saveTime}, saveUpdateTime: ${saveUpdateTime}, publishNewTime: ${publishNewTime}`
@@ -596,6 +598,7 @@ class GameRepositoryImpl {
       },
       gameUpdateProps
     );
+    await Cache.getGameUpdates(game.gameCode, true);
   }
 
   public async joinGame(
@@ -1124,10 +1127,7 @@ class GameRepositoryImpl {
         );
         gameUpdateRow.nextCoinConsumeTime = nextConsumeTime;
       }
-      await Cache.updateGameCoinConsumeTime(
-        game.gameCode,
-        gameUpdateRow.nextCoinConsumeTime
-      );
+      await Cache.getGameUpdates(game.gameCode, true);
       logger.info(
         `[${
           game.gameCode
@@ -1456,7 +1456,7 @@ class GameRepositoryImpl {
             }
           );
 
-          await Cache.updateGameIpCheckTime(game.gameCode, lastIpCheckTime);
+          await Cache.getGameUpdates(game.gameCode, true);
         }
         // update the game server with new status
         await changeGameStatus(game, status, game.tableStatus);
@@ -1593,6 +1593,8 @@ class GameRepositoryImpl {
           },
           {playersInSeats: count}
         );
+        await Cache.getGameUpdates(game.gameCode, true);
+
         // notify game server, player is kicked out
         playerKickedOut(game, player, playerInGame.seatNo);
       } else {
@@ -1610,12 +1612,6 @@ class GameRepositoryImpl {
         await nextHandUpdatesRepository.save(update);
       }
     });
-  }
-
-  public async getGameUpdates(
-    gameID: number
-  ): Promise<PokerGameUpdates | undefined> {
-    return await getGameRepository(PokerGameUpdates).findOne({gameID: gameID});
   }
 
   public async getGameSettings(
@@ -1908,12 +1904,14 @@ class GameRepositoryImpl {
         gameType: gameType,
       }
     );
+    await Cache.getGameUpdates(game.gameCode, true);
 
     // pending updates done
     await pendingProcessDone(game.id, game.status, game.tableStatus);
   }
 
   public async updateJanus(
+    gameCode: string,
     gameID: number,
     sessionId: string,
     handleId: string,
@@ -1932,6 +1930,7 @@ class GameRepositoryImpl {
         janusRoomPin: roomPin,
       }
     );
+    await Cache.getGameUpdates(gameCode, true);
   }
 
   public async updateAudioConfDisabled(gameCode: string) {
@@ -2060,14 +2059,6 @@ class GameRepositoryImpl {
     // get game by id (testing only)
     const gameHistory = await repository.findOne({where: {gameId: gameId}});
     return gameHistory;
-  }
-
-  public async getGameUpdatesById(
-    gameId: number
-  ): Promise<PokerGameUpdates | undefined> {
-    const updatesRepo = getGameRepository(PokerGameUpdates);
-    const updates = await updatesRepo.findOne({where: {gameID: gameId}});
-    return updates;
   }
 
   public async getPlayersInGameById(

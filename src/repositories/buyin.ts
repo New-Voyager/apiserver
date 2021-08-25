@@ -220,6 +220,7 @@ export class BuyIn {
         gameID: this.game.id,
       })
       .execute();
+    await Cache.getGameUpdates(this.game.gameCode, true);
     databaseTime = new Date().getTime() - databaseTime;
 
     cancelTime = new Date().getTime();

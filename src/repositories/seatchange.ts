@@ -77,6 +77,8 @@ export class SeatChangeProcess {
         seatChangeInProgress: true,
       }
     );
+    await Cache.getGameUpdates(this.game.gameCode, true);
+
     this.promptPlayer(openedSeat);
   }
 
@@ -378,6 +380,7 @@ export class SeatChangeProcess {
           seatChangeOpenSeat: playerInGame.seatNo,
         }
       );
+      await Cache.getGameUpdates(this.game.gameCode, true);
 
       // send a message in NATS (the UI will do an animation)
       Nats.sendPlayerSeatMove(

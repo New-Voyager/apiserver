@@ -51,7 +51,7 @@ class AppCoinRepositoryImpl {
           const existingTran = await coinTransactionRepo.findOne({
             receiptHash: receiptHash,
           });
-          if (existingTran != null) {
+          if (existingTran !== null) {
             // entry already found
             return true;
           }
@@ -175,9 +175,14 @@ class AppCoinRepositoryImpl {
       return false;
     }
 
+    const gameUpdates = await Cache.getGameUpdates(gameCode);
+    if (gameUpdates === null || gameUpdates === undefined) {
+      return false;
+    }
+
     const settings = getAppSettings();
     // we may support public games in the future
-    if (!game.nextCoinConsumeTime) {
+    if (!gameUpdates.nextCoinConsumeTime) {
       if (game.appCoinsNeeded) {
         await GameRepository.updateAppcoinNextConsumeTime(game);
       }
@@ -185,7 +190,7 @@ class AppCoinRepositoryImpl {
     }
 
     const now = new Date();
-    const diff = game.nextCoinConsumeTime.getTime() - now.getTime();
+    const diff = gameUpdates.nextCoinConsumeTime.getTime() - now.getTime();
     const diffInSecs = Math.ceil(diff / 1000);
 
     if (diffInSecs > 0 && diffInSecs < settings.notifyHostTimeWindow) {
@@ -193,12 +198,6 @@ class AppCoinRepositoryImpl {
       return true;
     }
     const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-    const gameUpdates = await gameUpdatesRepo.findOne({
-      gameID: game.id,
-    });
-    if (!gameUpdates) {
-      return false;
-    }
     if (diffInSecs > 0 && diffInSecs <= settings.notifyHostTimeWindow) {
       if (gameUpdates.appCoinHostNotified) {
         logger.info(
@@ -262,6 +261,7 @@ class AppCoinRepositoryImpl {
               appCoinHostNotified: true,
             }
           );
+          await Cache.getGameUpdates(game.gameCode, true);
           logger.info(
             `[${game.gameCode}] Host is notified to make coin purchase`
           );
@@ -298,7 +298,7 @@ class AppCoinRepositoryImpl {
           gameID: game.id,
         })
         .execute();
-      await Cache.updateGameCoinConsumeTime(game.gameCode, nextCoinConsumeTime);
+      await Cache.getGameUpdates(game.gameCode, true);
       // subtract from user account
       await coinRepo
         .createQueryBuilder()

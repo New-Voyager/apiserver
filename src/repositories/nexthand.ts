@@ -275,6 +275,7 @@ export class NextHandProcess {
             gameID: game.id,
           })
           .execute();
+        await Cache.getGameUpdates(game.gameCode, true);
 
         if (game.gameType === GameType.DEALER_CHOICE) {
           // if the game is dealer's choice, then prompt the user for next hand

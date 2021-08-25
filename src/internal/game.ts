@@ -175,16 +175,7 @@ class GameAPIs {
             if (!game) {
               throw new Error(`Game ${gameCode} is not found`);
             }
-
-            const gameUpdateRepo = getGameRepository(PokerGameUpdates);
-            const gameUpdate = await gameUpdateRepo.findOne({gameID: game.id});
-            if (!gameUpdate) {
-              throw new Error(
-                `Game ${gameCode} is not found in PokerGameUpdates`
-              );
-            }
             const gameSettings = await Cache.getGameSettings(game.gameCode);
-
             const playersInSeats = await GameRepository.getPlayersInSeats(
               game.id,
               transactionEntityManager
@@ -371,6 +362,7 @@ class GameAPIs {
             calculateButtonPos: false,
           }
         );
+        await Cache.getGameUpdates(game.gameCode, true);
       }
     );
   }

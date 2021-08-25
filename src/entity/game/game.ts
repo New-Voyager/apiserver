@@ -25,6 +25,10 @@ export class PokerGameUpdates {
   @Column({primary: true, name: 'game_id'})
   public gameID!: number;
 
+  @Index()
+  @Column({unique: true, name: 'game_code'})
+  public gameCode!: string;
+
   @Column({name: 'players_in_seats', type: 'int', default: 0})
   public playersInSeats!: number;
 
@@ -444,9 +448,9 @@ export class PokerGame {
 
   public pendingUpdates = false;
 
-  public nextCoinConsumeTime: Date | null = null;
+  // public nextCoinConsumeTime: Date | null = null;
 
-  public lastIpCheckTime: Date | null = null;
+  // public lastIpCheckTime: Date | null = null;
 }
 
 @Entity({name: 'next_hand_updates'})
