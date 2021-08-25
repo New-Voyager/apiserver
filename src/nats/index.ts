@@ -443,6 +443,39 @@ class NatsClass {
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
+  public async newPlayerSat(
+    game: PokerGame,
+    player: any,
+    playerGameInfo: PlayerGameTracker,
+    seatNo: number,
+    messageId?: string
+  ) {
+    if (this.client === null) {
+      return;
+    }
+
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message = {
+      type: 'PLAYER_UPDATE',
+      gameId: game.id,
+      playerId: player.id,
+      playerUuid: player.uuid,
+      name: player.name,
+      seatNo: seatNo,
+      stack: playerGameInfo.stack,
+      status: PlayerStatus[playerGameInfo.status],
+      buyIn: playerGameInfo.buyIn,
+      gameToken: playerGameInfo.gameToken,
+      newUpdate: NewUpdate[NewUpdate.NEW_PLAYER],
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getGameChannel(game.gameCode);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
+  }
+
   public async playerStatusChanged(
     game: PokerGame,
     player: any,
@@ -450,7 +483,7 @@ class NatsClass {
     newStatus: NewUpdate,
     stack: number,
     seatNo: number,
-    messageId?: string,
+    messageId?: string
   ) {
     if (this.client === null) {
       return;

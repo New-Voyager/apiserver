@@ -42,7 +42,7 @@ import {
   getUserConnection,
   getUserRepository,
 } from '.';
-import { Nats } from '@src/nats';
+import {Nats} from '@src/nats';
 
 const logger = getLogger('buyin');
 

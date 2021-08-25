@@ -77,6 +77,7 @@ import {
   SameIpAddressError,
 } from '@src/errors';
 import {LocationCheck} from './locationcheck';
+import {Nats} from '@src/nats';
 const logger = getLogger('game');
 
 class GameRepositoryImpl {
@@ -776,7 +777,8 @@ class GameRepositoryImpl {
     if (newPlayer) {
       await Cache.removeGameObserver(game.gameCode, player);
       // send a message to gameserver
-      newPlayerSat(game, player, seatNo, playerInGame);
+      //newPlayerSat(game, player, seatNo, playerInGame);
+      Nats.newPlayerSat(game, player, playerInGame, seatNo);
 
       // continue to run wait list seating
       waitlistMgmt.runWaitList();
