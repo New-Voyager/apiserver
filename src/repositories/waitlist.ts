@@ -254,11 +254,7 @@ export class WaitListMgmt {
       // notify all the users waiting list process is complete
       return;
     }
-
-    const gameSettingsRepo = getGameRepository(PokerGameSettings);
-    const gameSettings = await gameSettingsRepo.findOne({
-      gameCode: this.game.gameCode,
-    });
+    const gameSettings = await Cache.getGameSettings(this.game.gameCode);
     if (!gameSettings) {
       throw new Error(
         `Game code: ${this.game.gameCode} is not found in PokerGameSettings`

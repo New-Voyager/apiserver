@@ -106,16 +106,7 @@ export class BuyIn {
       throw new Error(`The player ${this.player.uuid} is not in the club`);
     }
 
-    const gameSettingsRepo = getGameRepository(PokerGameSettings);
-    const gameSettings = await gameSettingsRepo.findOne({
-      gameCode: this.game.gameCode,
-    });
-    if (!gameSettings) {
-      throw new Error(
-        `Game ${this.game.gameCode} is not found in PokerGameSettings`
-      );
-    }
-    // clubMember.autoBuyinApproval = false;
+    const gameSettings = await Cache.getGameSettings(this.game.gameCode);
 
     let playerStatus: PlayerStatus = PlayerStatus.WAIT_FOR_BUYIN;
     let updatedPlayerInGame: PlayerGameTracker;

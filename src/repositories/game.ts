@@ -374,6 +374,8 @@ class GameRepositoryImpl {
           }
         }
       });
+
+      await Cache.getGameSettings(game.gameCode, true);
       //logger.info('****** ENDING TRANSACTION TO CREATE a private game');
       logger.info(
         `createPrivateGame saveTime: ${saveTime}, saveUpdateTime: ${saveUpdateTime}, publishNewTime: ${publishNewTime}`
@@ -627,12 +629,7 @@ class GameRepositoryImpl {
             `Seat change is in progress for game: ${game.gameCode}`
           );
         }
-        const gameSettingsRepo = transactionEntityManager.getRepository(
-          PokerGameSettings
-        );
-        const gameSettings = await gameSettingsRepo.findOne({
-          gameCode: game.gameCode,
-        });
+        const gameSettings = await Cache.getGameSettings(game.gameCode);
         if (!gameSettings) {
           logger.error(`Game settings is not found for game: ${game.gameCode}`);
           throw new Error(
@@ -953,10 +950,7 @@ class GameRepositoryImpl {
       logger.error(`Game: ${game.gameCode} not available`);
       throw new Error(`Game: ${game.gameCode} not available`);
     }
-    const gameSettingsRepo = getGameRepository(PokerGameSettings);
-    const gameSettings = await gameSettingsRepo.findOne({
-      gameCode: game.gameCode,
-    });
+    const gameSettings = await Cache.getGameSettings(game.gameCode);
     if (!gameSettings) {
       throw new Error(
         `Game: ${game.gameCode} is not found in PokerGameSettings`
@@ -1948,6 +1942,7 @@ class GameRepositoryImpl {
         audioConfEnabled: false,
       }
     );
+    await Cache.getGameSettings(gameCode, true);
   }
 
   public async deleteAudioConf(gameID: number) {

@@ -963,7 +963,7 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.agoraAppId = getAgoraAppId();
 
     const updates = await GameRepository.getGameUpdates(game.id);
-    const settings = await GameRepository.getGameSettings(game.gameCode);
+    const settings = await Cache.getGameSettings(game.gameCode);
     if (updates && settings) {
       ret.useAgora = settings.useAgora;
       ret.audioConfEnabled = settings.audioConfEnabled;

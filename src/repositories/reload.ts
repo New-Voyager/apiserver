@@ -93,12 +93,7 @@ export class Reload {
       async transactionEntityManager => {
         databaseTime = new Date().getTime();
         let approved: boolean;
-        const gameSettingsRepo = transactionEntityManager.getRepository(
-          PokerGameSettings
-        );
-        const gameSettings = await gameSettingsRepo.findOne({
-          gameCode: this.game.gameCode,
-        });
+        const gameSettings = await Cache.getGameSettings(this.game.gameCode);
         if (!gameSettings) {
           throw new Error(
             `Game code: ${this.game.gameCode} is not found in PokerGameSettings`
@@ -321,10 +316,7 @@ export class Reload {
       throw new Error(`The player ${this.player.uuid} is not in the club`);
     }
 
-    const gameSettingsRepo = getGameRepository(PokerGameSettings);
-    const gameSettings = await gameSettingsRepo.findOne({
-      gameCode: this.game.gameCode,
-    });
+    const gameSettings = await Cache.getGameSettings(this.game.gameCode);
     if (!gameSettings) {
       throw new Error(
         `Game code: ${this.game.gameCode} is not found in PokerGameSettings`

@@ -36,12 +36,7 @@ export class NextHandProcess {
           throw new Error(`Game code: ${this.gameCode} not found`);
         }
 
-        const gameSettingsRepo = transactionEntityManager.getRepository(
-          PokerGameSettings
-        );
-        const gameSettings = await gameSettingsRepo.findOne({
-          gameCode: this.gameCode,
-        });
+        const gameSettings = await Cache.getGameSettings(game.gameCode);
         if (!gameSettings) {
           throw new Error(
             `Game ${this.gameCode} is not found in PokerGameSettings`
@@ -326,12 +321,7 @@ export class NextHandProcess {
           throw new Error(`Game code: ${this.gameCode} not found`);
         }
 
-        const gameSettingsRepo = transactionEntityManager.getRepository(
-          PokerGameSettings
-        );
-        const gameSettings = await gameSettingsRepo.findOne({
-          gameCode: this.gameCode,
-        });
+        const gameSettings = await Cache.getGameSettings(game.gameCode);
         if (!gameSettings) {
           throw new Error(
             `Game ${this.gameCode} is not found in PokerGameSettings`

@@ -183,16 +183,7 @@ class GameAPIs {
                 `Game ${gameCode} is not found in PokerGameUpdates`
               );
             }
-
-            const gameSettingsRepo = getGameRepository(PokerGameSettings);
-            const gameSettings = await gameSettingsRepo.findOne({
-              gameCode: game.gameCode,
-            });
-            if (!gameSettings) {
-              throw new Error(
-                `Game ${gameCode} is not found in PokerGameSettings`
-              );
-            }
+            const gameSettings = await Cache.getGameSettings(game.gameCode);
 
             const playersInSeats = await GameRepository.getPlayersInSeats(
               game.id,

@@ -74,10 +74,7 @@ export async function processPendingUpdates(gameId: number) {
     return;
   }
 
-  const gameSettingsRepo = getGameRepository(PokerGameSettings);
-  const gameSettings = await gameSettingsRepo.findOne({
-    gameCode: game.gameCode,
-  });
+  const gameSettings = await Cache.getGameSettings(game.gameCode);
   if (!gameSettings) {
     return;
   }

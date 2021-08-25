@@ -1,5 +1,5 @@
 import {Club, ClubMember} from '@src/entity/player/club';
-import {PokerGame} from '@src/entity/game/game';
+import {PokerGame, PokerGameSettings} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {EntityManager, getRepository, Repository} from 'typeorm';
 import * as redis from 'redis';
@@ -221,7 +221,7 @@ class GameCache {
         const oldGame = JSON.parse(getResp.data) as PokerGame;
         game.highHandRank = oldGame.highHandRank;
         game.pendingUpdates = oldGame.pendingUpdates;
-        let oldConsumeTime = oldGame.nextCoinConsumeTime;
+        const oldConsumeTime = oldGame.nextCoinConsumeTime;
         if (!oldConsumeTime) {
           game.nextCoinConsumeTime = null;
         } else {
@@ -239,6 +239,37 @@ class GameCache {
       await this.setCache(`gameCache-${gameCode}`, JSON.stringify(game));
       await this.setCache(`gameIdCache-${game.id}`, JSON.stringify(game));
       return game;
+    }
+  }
+
+  public async getGameSettings(
+    gameCode: string,
+    update = false,
+    transactionManager?: EntityManager
+  ): Promise<PokerGameSettings> {
+    const getResp = await this.getCache(`gameCache-${gameCode}`);
+    if (getResp.success && getResp.data && !update) {
+      const ret = JSON.parse(getResp.data) as PokerGameSettings;
+      return ret;
+    } else {
+      let repo: Repository<PokerGameSettings>;
+      if (transactionManager) {
+        repo = transactionManager.getRepository(PokerGameSettings);
+      } else {
+        repo = getGameRepository(PokerGameSettings);
+      }
+      const gameSettings = await repo.findOne({
+        where: {gameCode: gameCode},
+      });
+      if (!gameSettings) {
+        throw new Error(`Cannot find with game code: ${gameCode}`);
+      }
+
+      await this.setCache(
+        `gameSettingsCache-${gameCode}`,
+        JSON.stringify(gameSettings)
+      );
+      return gameSettings;
     }
   }
 
