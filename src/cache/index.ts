@@ -247,7 +247,7 @@ class GameCache {
     update = false,
     transactionManager?: EntityManager
   ): Promise<PokerGameSettings> {
-    const getResp = await this.getCache(`gameCache-${gameCode}`);
+    const getResp = await this.getCache(`gameSettingsCache-${gameCode}`);
     if (getResp.success && getResp.data && !update) {
       const ret = JSON.parse(getResp.data) as PokerGameSettings;
       return ret;
