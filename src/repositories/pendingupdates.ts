@@ -199,7 +199,7 @@ export async function processPendingUpdates(gameId: number) {
       }
     }
 
-    let seatChangeAllowed = game.seatChangeAllowed;
+    let seatChangeAllowed = gameUpdate.seatChangeAllowed;
     const seats = await occupiedSeats(game.id);
     seatChangeAllowed = true; // debugging
     if (seatChangeAllowed && openedSeat) {
@@ -217,7 +217,7 @@ export async function processPendingUpdates(gameId: number) {
     }
   }
 
-  if (!seatChangeInProgress && game.waitlistAllowed) {
+  if (!seatChangeInProgress && gameUpdate.waitlistAllowed) {
     const waitlistMgmt = new WaitListMgmt(game);
     await waitlistMgmt.runWaitList();
   }

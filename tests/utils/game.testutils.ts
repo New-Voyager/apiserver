@@ -25,7 +25,7 @@ export const configureGameQuery = gql`
       breakLength
       autoKickAfterBreak
       waitForBigBlind
-      waitlistSupported
+      waitlistAllowed
       maxWaitList
       sitInApproval
       actionTime
@@ -57,7 +57,7 @@ export const configureFriendsGameQuery = gql`
       breakLength
       autoKickAfterBreak
       waitForBigBlind
-      waitlistSupported
+      waitlistAllowed
       maxWaitList
       sitInApproval
       actionTime
@@ -189,7 +189,7 @@ export interface GameInput {
   breakLength?: number;
   autoKickAfterBreak?: boolean;
   waitForBigBlind?: boolean;
-  waitlistSupported?: boolean;
+  waitlistAllowed?: boolean;
   maxWaitList?: number;
   sitInApproval?: boolean;
   actionTime?: number;

@@ -104,6 +104,13 @@ export class BuyIn {
       throw new Error(`The player ${this.player.uuid} is not in the club`);
     }
 
+    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
+    const gameUpdate = await gameUpdatesRepo.findOne({gameID: this.game.id});
+    if (!gameUpdate) {
+      throw new Error(
+        `Game ${this.game.gameCode} is not found in PokerGameUpdates`
+      );
+    }
     // clubMember.autoBuyinApproval = false;
 
     let playerStatus: PlayerStatus = PlayerStatus.WAIT_FOR_BUYIN;
@@ -119,7 +126,7 @@ export class BuyIn {
       clubMember.isOwner ||
       clubMember.isManager ||
       clubMember.autoBuyinApproval ||
-      !this.game.buyInApproval ||
+      !gameUpdate.buyInApproval ||
       isHost
     ) {
       // logger.info(`***** [${this.game.gameCode}] Player: ${this.player.name} buyin approved.
@@ -152,7 +159,7 @@ export class BuyIn {
             Auto approval: ${clubMember.autoBuyinApproval} 
             isHost: {isHost}`);
       logger.info(
-        `Game.buyInApproval: ${this.game.buyInApproval} creditLimit: ${clubMember.creditLimit} outstandingBalance: ${outstandingBalance}`
+        `Game.buyInApproval: ${gameUpdate.buyInApproval} creditLimit: ${clubMember.creditLimit} outstandingBalance: ${outstandingBalance}`
       );
 
       let availableCredit = 0.0;

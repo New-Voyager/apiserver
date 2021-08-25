@@ -92,6 +92,18 @@ export class Reload {
       async transactionEntityManager => {
         databaseTime = new Date().getTime();
         let approved: boolean;
+        const gameUpdatesRepo = transactionEntityManager.getRepository(
+          PokerGameUpdates
+        );
+        const gameUpdate = await gameUpdatesRepo.findOne({
+          gameID: this.game.id,
+        });
+        if (!gameUpdate) {
+          throw new Error(
+            `Game code: ${this.game.gameCode} is not found in PokerGameUpdates`
+          );
+        }
+
         // player must be already in a seat or waiting list
         // if credit limit is set, make sure his buyin amount is within the credit limit
         // if auto approval is set, add the buyin
@@ -142,7 +154,7 @@ export class Reload {
           databaseTime = new Date().getTime() - databaseTime;
           if (!approved) {
             const reloadTimeExp = new Date();
-            const timeout = this.game.buyInTimeout;
+            const timeout = gameUpdate.buyInTimeout;
             reloadTimeExp.setSeconds(reloadTimeExp.getSeconds() + timeout);
 
             // start reload expiry timeout
@@ -308,6 +320,14 @@ export class Reload {
       throw new Error(`The player ${this.player.uuid} is not in the club`);
     }
 
+    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
+    const gameUpdate = await gameUpdatesRepo.findOne({gameID: this.game.id});
+    if (!gameUpdate) {
+      throw new Error(
+        `Game ${this.game.gameCode} is not found in PokerGameUpdates`
+      );
+    }
+
     let isHost = false;
     if (this.game.hostUuid === this.player.uuid) {
       isHost = true;
@@ -316,7 +336,7 @@ export class Reload {
       clubMember.isOwner ||
       clubMember.isManager ||
       clubMember.autoBuyinApproval ||
-      !this.game.buyInApproval ||
+      !gameUpdate.buyInApproval ||
       isHost
     ) {
       approved = true;
@@ -339,7 +359,7 @@ export class Reload {
             Auto approval: ${clubMember.autoBuyinApproval} 
             isHost: {isHost}`);
       logger.info(
-        `Game.buyInApproval: ${this.game.buyInApproval} creditLimit: ${clubMember.creditLimit} outstandingBalance: ${outstandingBalance}`
+        `Game.buyInApproval: ${gameUpdate.buyInApproval} creditLimit: ${clubMember.creditLimit} outstandingBalance: ${outstandingBalance}`
       );
 
       let availableCredit = 0.0;

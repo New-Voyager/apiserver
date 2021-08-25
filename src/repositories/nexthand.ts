@@ -506,7 +506,10 @@ export class NextHandProcess {
         if (game.gameType === GameType.DEALER_CHOICE) {
           announceGameType = true;
         }
-
+        let doubleBoard = false;
+        if (bombPotThisHand) {
+          doubleBoard = gameUpdate.doubleBoardBombPot;
+        }
         const nextHandInfo: NewHandInfo = {
           gameCode: this.gameCode,
           gameType: gameUpdate.gameType,
@@ -522,7 +525,7 @@ export class NextHandProcess {
           sbPos: gameUpdate.sbPos,
           bbPos: gameUpdate.bbPos,
           bombPot: bombPotThisHand,
-          doubleBoardBombPot: gameUpdate.doubleBoardBombPot,
+          doubleBoardBombPot: doubleBoard,
           bombPotBet: gameUpdate.bombPotBet,
         };
         return nextHandInfo;

@@ -133,7 +133,6 @@ class GameRepositoryImpl {
       input['roeGames'] = roeGames;
     }
     const game: PokerGame = {...input} as PokerGame;
-    logger.info(`\n\nCreating new game.. ${game.buyInApproval}\n\n`);
     game.gameType = gameType;
     game.isTemplate = template;
     game.status = GameStatus.CONFIGURED;
@@ -185,7 +184,7 @@ class GameRepositoryImpl {
           gameUpdates.gameID = savedGame.id;
           const appSettings = getAppSettings();
           gameUpdates.appcoinPerBlock = appSettings.gameCoinsPerBlock;
-          if (game.useAgora) {
+          if (gameUpdates.useAgora) {
             gameUpdates.appcoinPerBlock += appSettings.agoraCoinsPerBlock;
           }
 
@@ -206,6 +205,30 @@ class GameRepositoryImpl {
             gameUpdates.bombPotNextHandNum = 1;
           }
 
+          /*            
+            public buyInApproval!: boolean;
+            public breakAllowed!: boolean;
+            public breakLength!: number;
+            public seatChangeAllowed!: boolean;
+            public waitlistAllowed!: boolean;
+            public maxWaitlist!: number;
+            public seatChangeTimeout!: number;
+            public buyInTimeout!: number;
+            public waitlistSittingTimeout!: number;
+            public runItTwiceAllowed!: boolean;
+            public allowRabbitHunt!: boolean;
+          */
+          gameUpdates.buyInApproval = input.buyInApproval;
+          gameUpdates.breakAllowed = input.breakAllowed;
+          gameUpdates.breakLength = input.breakLength;
+          gameUpdates.seatChangeAllowed = input.seatChangeAllowed;
+          gameUpdates.waitlistAllowed = input.waitlistAllowed;
+          gameUpdates.waitlistSittingTimeout = input.waitlistSittingTimeout;
+          gameUpdates.maxWaitlist = input.maxWaitList;
+          gameUpdates.seatChangeTimeout = input.seatChangeTimeout;
+          gameUpdates.breakAllowed = input.breakAllowed;
+          gameUpdates.breakLength = input.breakLength;
+          gameUpdates.buyInTimeout = input.buyInTimeout;
           gameUpdates.ipCheck = input.ipCheck;
           gameUpdates.gpsCheck = input.gpsCheck;
 
@@ -420,7 +443,7 @@ class GameRepositoryImpl {
           g.big_blind as "bigBlind",
           g.started_at as "startedAt", 
           g.max_players as "maxPlayers", 
-          g.max_waitlist as "maxWaitList", 
+          pgu.max_waitlist as "maxWaitList", 
           pgu.players_in_waitlist as "waitlistCount", 
           pgu.players_in_seats as "tableCount", 
           g.game_status as "gameStatus",
@@ -457,7 +480,7 @@ class GameRepositoryImpl {
           g.big_blind as "bigBlind",
           g.started_at as "startedAt", 
           g.max_players as "maxPlayers", 
-          g.max_waitlist as "maxWaitList", 
+          pgu.max_waitlist as "maxWaitList", 
           pgu.players_in_waitlist as "waitlistCount", 
           pgu.players_in_seats as "tableCount", 
           g.game_status as "gameStatus",
@@ -673,7 +696,7 @@ class GameRepositoryImpl {
           const randomBytes = Buffer.from(crypto.randomBytes(5));
           playerInGame.gameToken = randomBytes.toString('hex');
           playerInGame.status = PlayerStatus.NOT_PLAYING;
-          playerInGame.runItTwicePrompt = game.runItTwiceAllowed;
+          playerInGame.runItTwicePrompt = gameUpdate.runItTwiceAllowed;
           playerInGame.muckLosingHand = game.muckLosingHand;
           playerInGame.playerIp = ip;
           if (location) {
@@ -686,7 +709,7 @@ class GameRepositoryImpl {
           }
 
           try {
-            if (game.useAgora) {
+            if (gameUpdate.useAgora) {
               playerInGame.audioToken = await this.getAudioToken(
                 player,
                 game,
@@ -1756,8 +1779,13 @@ class GameRepositoryImpl {
       playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     }
     // TODO: start a buy-in timer
+    const gameUpdateRepo = getGameRepository(PokerGameUpdates);
+    const gameUpdate = await gameUpdateRepo.findOne({gameID: game.id});
+    let timeout = 60;
+    if (gameUpdate) {
+      timeout = gameUpdate.buyInTimeout;
+    }
     const buyinTimeExp = new Date();
-    const timeout = game.buyInTimeout;
     buyinTimeExp.setSeconds(buyinTimeExp.getSeconds() + timeout);
     const exp = utcTime(buyinTimeExp);
     let setProps: any = {};
@@ -1885,9 +1913,9 @@ class GameRepositoryImpl {
   }
 
   public async updateAudioConfDisabled(gameID: number) {
-    const gameUpdatesRepo = getGameRepository(PokerGame);
+    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
     await gameUpdatesRepo.update(
-      {id: gameID},
+      {gameID: gameID},
       {
         audioConfEnabled: false,
       }

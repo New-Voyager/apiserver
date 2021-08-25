@@ -250,9 +250,14 @@ export class WaitListMgmt {
       // notify all the users waiting list process is complete
       return;
     }
-
+    const gameUpdates = await gameUpdatesRepo.findOne({gameID: this.game.id});
+    if (!gameUpdates) {
+      throw new Error(
+        `Game ${this.game.gameCode} is not found in PokerGameUpdates`
+      );
+    }
     const waitingListTimeExp = new Date();
-    const timeout = this.game.waitlistSittingTimeout;
+    const timeout = gameUpdates.waitlistSittingTimeout;
     waitingListTimeExp.setSeconds(waitingListTimeExp.getSeconds() + timeout);
     await playerGameTrackerRepository.update(
       {
