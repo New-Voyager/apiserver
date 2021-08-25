@@ -1,6 +1,6 @@
 import {PokerGame} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
-import {GameType} from '@src/entity/types';
+import {GameType, PlayerStatus} from '@src/entity/types';
 import {HighHandWinner, NewUpdate} from '@src/repositories/types';
 import {getLogger} from '@src/utils/log';
 import * as nats from 'nats';
@@ -443,6 +443,39 @@ class NatsClass {
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
+  public async playerStatusChanged(
+    game: PokerGame,
+    player: any,
+    oldStatus: PlayerStatus,
+    newStatus: NewUpdate,
+    stack: number,
+    seatNo: number,
+    messageId?: string,
+  ) {
+    if (this.client === null) {
+      return;
+    }
+
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message = {
+      requestId: messageId,
+      type: 'PLAYER_UPDATE',
+      gameId: game.id,
+      playerId: player.id,
+      playerUuid: player.uuid,
+      name: player.name,
+      seatNo: seatNo,
+      stack: stack,
+      status: PlayerStatus[oldStatus],
+      newUpdate: NewUpdate[newStatus],
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getGameChannel(game.gameCode);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
+  }
   /*
   message HighHandWinner {
     uint64 player_id = 1;

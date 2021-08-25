@@ -42,6 +42,7 @@ import {
   getUserConnection,
   getUserRepository,
 } from '.';
+import { Nats } from '@src/nats';
 
 const logger = getLogger('buyin');
 
@@ -231,6 +232,15 @@ export class BuyIn {
     cancelTimer(this.game.id, this.player.id, BUYIN_TIMEOUT);
     cancelTime = new Date().getTime() - cancelTime;
 
+    await Nats.playerStatusChanged(
+      this.game,
+      this.player,
+      PlayerStatus.PLAYING,
+      NewUpdate.NEW_BUYIN,
+      playerInGame.stack,
+      playerInGame.seatNo
+    );
+
     let gameServerTime = new Date().getTime();
     // send a message to gameserver
     // get game server of this game
@@ -408,14 +418,6 @@ export class BuyIn {
               throw new Error('Unable to get the updated row');
             }
             stack = updated?.stack;
-            playerStatusChanged(
-              this.game,
-              this.player,
-              prevStatus.status,
-              newUpdate,
-              stack,
-              playerInGame.seatNo
-            );
           }
         }
 
