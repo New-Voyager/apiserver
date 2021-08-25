@@ -388,7 +388,7 @@ class NatsClass {
     playerGameInfo: PlayerGameTracker,
     oldSeatNo: number,
     messageId?: string
-  ) {
+  ): Promise<void> {
     if (this.client === null) {
       return;
     }
@@ -407,7 +407,7 @@ class NatsClass {
       oldSeatNo: oldSeatNo,
       seatNo: playerGameInfo.seatNo,
       stack: playerGameInfo.stack,
-      status: playerGameInfo.status,
+      status: PlayerStatus[playerGameInfo.status],
       buyIn: playerGameInfo.buyIn,
     };
     const messageStr = JSON.stringify(message);

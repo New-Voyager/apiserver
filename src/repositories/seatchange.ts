@@ -666,7 +666,7 @@ export class SeatChangeProcess {
         // if there is a player in the seat, return an error
 
         // if the current player in seat tried to sit in the same seat, do nothing
-        if (playerInSeat != null) {
+        if (playerInSeat) {
           throw new Error('A player is in the seat');
         }
 
@@ -719,7 +719,12 @@ export class SeatChangeProcess {
         }
 
         // send an update message
-        Nats.notifyPlayerSwitchSeat(this.game, player, playerInSeat, oldSeatNo);
+        await Nats.notifyPlayerSwitchSeat(
+          this.game,
+          player,
+          playerInSeat,
+          oldSeatNo
+        );
 
         logger.info(
           `[${this.game.gameCode}] Player: ${player.name} switched to seat: ${seatNo}`
