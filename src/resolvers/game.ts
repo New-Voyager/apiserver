@@ -106,7 +106,7 @@ export async function configureGame(
             game.id
           }. Error: ${err.toString()}`
         );
-        await GameRepository.updateAudioConfDisabled(gameInfo.id);
+        await GameRepository.updateAudioConfDisabled(gameInfo.gameCode);
         game.audioConfEnabled = false;
       }
     }
@@ -225,7 +225,7 @@ export async function joinGame(
     }
     let ip = '';
     let location: any = null;
-    if (locationCheck != null) {
+    if (locationCheck) {
       ip = locationCheck.ip;
       location = locationCheck.location;
     }
@@ -947,7 +947,7 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     const ret = _.cloneDeep(game) as any;
 
     if (ret.host) {
-      if (ret.host.uuid == playerUuid) {
+      if (ret.host.uuid === playerUuid) {
         isHost = true;
       }
     }
@@ -963,24 +963,24 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.agoraAppId = getAgoraAppId();
 
     const updates = await GameRepository.getGameUpdates(game.id);
-    if (updates) {
-      ret.useAgora = updates.useAgora;
-      ret.audioConfEnabled = updates.audioConfEnabled;
+    const settings = await GameRepository.getGameSettings(game.gameCode);
+    if (updates && settings) {
+      ret.useAgora = settings.useAgora;
+      ret.audioConfEnabled = settings.audioConfEnabled;
       ret.rakeCollected = updates.rake;
       ret.handNum = updates.handNum;
       ret.janusRoomId = updates.janusRoomId;
       ret.janusRoomPin = updates.janusRoomPin;
 
-      ret.bombPotEnabled = updates.bombPotEnabled;
+      ret.bombPotEnabled = settings.bombPotEnabled;
       if (ret.bombPotEnabled) {
-        ret.bombPotBet = updates.bombPotBet;
-        ret.doubleBoardBombPot = updates.doubleBoardBombPot;
-        ret.bombPotInterval = Math.floor(updates.bombPotInterval / 60);
-        ret.bombPotIntervalInSecs = updates.bombPotInterval;
+        ret.bombPotBet = settings.bombPotBet;
+        ret.doubleBoardBombPot = settings.doubleBoardBombPot;
+        ret.bombPotInterval = Math.floor(settings.bombPotInterval / 60);
+        ret.bombPotIntervalInSecs = settings.bombPotInterval;
       }
-
-      ret.ipCheck = updates.ipCheck;
-      ret.gpsCheck = updates.gpsCheck;
+      ret.ipCheck = settings.ipCheck;
+      ret.gpsCheck = settings.gpsCheck;
     }
     const now = new Date().getTime();
     // get player's game state

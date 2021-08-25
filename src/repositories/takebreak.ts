@@ -2,6 +2,7 @@ import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {
   NextHandUpdates,
   PokerGame,
+  PokerGameSettings,
   PokerGameUpdates,
 } from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
@@ -128,16 +129,19 @@ export class TakeBreak {
   private async startTimer(
     playerGameTrackerRepository: Repository<PlayerGameTracker>
   ) {
-    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-    const gameUpdates = await gameUpdatesRepo.findOne({gameID: this.game.id});
-    if (!gameUpdates) {
+    const gameSettingsRepo = getGameRepository(PokerGameSettings);
+    const gameSettings = await gameSettingsRepo.findOne({
+      gameCode: this.game.gameCode,
+    });
+    if (!gameSettings) {
       throw new Error(
-        `Game ${this.game.gameCode} is not found in PokerGameUpdates`
+        `Game code: ${this.game.gameCode} is not found in PokerGameSettings`
       );
     }
+
     const now = utcTime(new Date());
     const breakTimeExpAt = new Date();
-    let timeoutInMins = gameUpdates.breakLength;
+    let timeoutInMins = gameSettings.breakLength;
     timeoutInMins = 1;
     const timeoutInSeconds = timeoutInMins * 10 * 60;
     breakTimeExpAt.setSeconds(breakTimeExpAt.getSeconds() + timeoutInSeconds);

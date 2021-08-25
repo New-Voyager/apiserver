@@ -5,6 +5,7 @@ import {Player} from '@src/entity/player/player';
 import {
   NextHandUpdates,
   PokerGame,
+  PokerGameSettings,
   PokerGameUpdates,
 } from '@src/entity/game/game';
 import {
@@ -92,15 +93,15 @@ export class Reload {
       async transactionEntityManager => {
         databaseTime = new Date().getTime();
         let approved: boolean;
-        const gameUpdatesRepo = transactionEntityManager.getRepository(
-          PokerGameUpdates
+        const gameSettingsRepo = transactionEntityManager.getRepository(
+          PokerGameSettings
         );
-        const gameUpdate = await gameUpdatesRepo.findOne({
-          gameID: this.game.id,
+        const gameSettings = await gameSettingsRepo.findOne({
+          gameCode: this.game.gameCode,
         });
-        if (!gameUpdate) {
+        if (!gameSettings) {
           throw new Error(
-            `Game code: ${this.game.gameCode} is not found in PokerGameUpdates`
+            `Game code: ${this.game.gameCode} is not found in PokerGameSettings`
           );
         }
 
@@ -154,7 +155,7 @@ export class Reload {
           databaseTime = new Date().getTime() - databaseTime;
           if (!approved) {
             const reloadTimeExp = new Date();
-            const timeout = gameUpdate.buyInTimeout;
+            const timeout = gameSettings.buyInTimeout;
             reloadTimeExp.setSeconds(reloadTimeExp.getSeconds() + timeout);
 
             // start reload expiry timeout
@@ -320,11 +321,13 @@ export class Reload {
       throw new Error(`The player ${this.player.uuid} is not in the club`);
     }
 
-    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-    const gameUpdate = await gameUpdatesRepo.findOne({gameID: this.game.id});
-    if (!gameUpdate) {
+    const gameSettingsRepo = getGameRepository(PokerGameSettings);
+    const gameSettings = await gameSettingsRepo.findOne({
+      gameCode: this.game.gameCode,
+    });
+    if (!gameSettings) {
       throw new Error(
-        `Game ${this.game.gameCode} is not found in PokerGameUpdates`
+        `Game code: ${this.game.gameCode} is not found in PokerGameSettings`
       );
     }
 
@@ -336,7 +339,7 @@ export class Reload {
       clubMember.isOwner ||
       clubMember.isManager ||
       clubMember.autoBuyinApproval ||
-      !gameUpdate.buyInApproval ||
+      !gameSettings.buyInApproval ||
       isHost
     ) {
       approved = true;
@@ -359,7 +362,7 @@ export class Reload {
             Auto approval: ${clubMember.autoBuyinApproval} 
             isHost: {isHost}`);
       logger.info(
-        `Game.buyInApproval: ${gameUpdate.buyInApproval} creditLimit: ${clubMember.creditLimit} outstandingBalance: ${outstandingBalance}`
+        `Game.buyInApproval: ${gameSettings.buyInApproval} creditLimit: ${clubMember.creditLimit} outstandingBalance: ${outstandingBalance}`
       );
 
       let availableCredit = 0.0;

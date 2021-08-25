@@ -1,4 +1,8 @@
-import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {
+  PokerGame,
+  PokerGameSettings,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
 import {getGameManager} from '.';
 import {Cache} from '@src/cache/index';
 import {GameType, PlayerStatus, TableStatus} from '@src/entity/types';
@@ -32,6 +36,18 @@ export class NextHandProcess {
           throw new Error(`Game code: ${this.gameCode} not found`);
         }
 
+        const gameSettingsRepo = transactionEntityManager.getRepository(
+          PokerGameSettings
+        );
+        const gameSettings = await gameSettingsRepo.findOne({
+          gameCode: this.gameCode,
+        });
+        if (!gameSettings) {
+          throw new Error(
+            `Game ${this.gameCode} is not found in PokerGameSettings`
+          );
+        }
+
         const gameUpdatesRepo = transactionEntityManager.getRepository(
           PokerGameUpdates
         );
@@ -54,7 +70,7 @@ export class NextHandProcess {
         }
 
         let playerInSeatsInPrevHand: Array<number> = [];
-        if (gameUpdate.playersInLastHand != null) {
+        if (gameUpdate.playersInLastHand !== null) {
           playerInSeatsInPrevHand = JSON.parse(gameUpdate.playersInLastHand);
         }
 
@@ -84,7 +100,7 @@ export class NextHandProcess {
           if (!playerSeat) {
             occupiedSeats.push(0);
           } else {
-            if (playerSeat.status == PlayerStatus.PLAYING) {
+            if (playerSeat.status === PlayerStatus.PLAYING) {
               occupiedSeats.push(playerSeat.playerId);
             } else {
               occupiedSeats.push(0);
@@ -251,9 +267,9 @@ export class NextHandProcess {
           calculateButtonPos: true, // calculate button position for next hand
         };
         // calculate whether we need to do bomb pot next hand
-        if (gameUpdate.bombPotEnabled) {
+        if (gameSettings.bombPotEnabled) {
           //console.log('****** Bomb pot enabled ***** ');
-          this.determineBombPotNextHand(gameUpdate, setProps);
+          this.determineBombPotNextHand(gameUpdate, gameSettings, setProps);
         }
         // update button pos and gameType
         await gameUpdatesRepo
@@ -308,6 +324,18 @@ export class NextHandProcess {
         );
         if (!game) {
           throw new Error(`Game code: ${this.gameCode} not found`);
+        }
+
+        const gameSettingsRepo = transactionEntityManager.getRepository(
+          PokerGameSettings
+        );
+        const gameSettings = await gameSettingsRepo.findOne({
+          gameCode: this.gameCode,
+        });
+        if (!gameSettings) {
+          throw new Error(
+            `Game ${this.gameCode} is not found in PokerGameSettings`
+          );
         }
 
         const gameUpdatesRepo = transactionEntityManager.getRepository(
@@ -367,7 +395,7 @@ export class NextHandProcess {
         // 3. if less than 2 players opted for bomb pot, then don't do bomb pot
         let minBetAmount = game.bigBlind;
         if (bombPotThisHand) {
-          minBetAmount = gameUpdate.bombPotBet * game.bigBlind;
+          minBetAmount = gameSettings.bombPotBet * game.bigBlind;
           let playersWithBombPotStack = 0;
           for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
             const playerSeat = takenSeats[seatNo];
@@ -508,7 +536,7 @@ export class NextHandProcess {
         }
         let doubleBoard = false;
         if (bombPotThisHand) {
-          doubleBoard = gameUpdate.doubleBoardBombPot;
+          doubleBoard = gameSettings.doubleBoardBombPot;
         }
         const nextHandInfo: NewHandInfo = {
           gameCode: this.gameCode,
@@ -526,7 +554,7 @@ export class NextHandProcess {
           bbPos: gameUpdate.bbPos,
           bombPot: bombPotThisHand,
           doubleBoardBombPot: doubleBoard,
-          bombPotBet: gameUpdate.bombPotBet,
+          bombPotBet: gameSettings.bombPotBet,
         };
         return nextHandInfo;
       }
@@ -536,13 +564,14 @@ export class NextHandProcess {
 
   private determineBombPotNextHand(
     gameUpdate: PokerGameUpdates,
+    gameSettings: PokerGameSettings,
     setProps: any
   ) {
-    if (!gameUpdate.bombPotEnabled) {
+    if (!gameSettings.bombPotEnabled) {
       return;
     }
     const now = new Date();
-    const intervalInMs = gameUpdate.bombPotInterval * 1000;
+    const intervalInMs = gameSettings.bombPotInterval * 1000;
     const nextBombPotTime = new Date(
       gameUpdate.lastBombPotTime.getTime() + intervalInMs
     );

@@ -1,6 +1,10 @@
 import {Cache} from '@src/cache';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {
+  PokerGame,
+  PokerGameSettings,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {GameType, PlayerStatus} from '@src/entity/types';
 import {waitlistSeating} from '@src/gameserver';
@@ -250,14 +254,19 @@ export class WaitListMgmt {
       // notify all the users waiting list process is complete
       return;
     }
-    const gameUpdates = await gameUpdatesRepo.findOne({gameID: this.game.id});
-    if (!gameUpdates) {
+
+    const gameSettingsRepo = getGameRepository(PokerGameSettings);
+    const gameSettings = await gameSettingsRepo.findOne({
+      gameCode: this.game.gameCode,
+    });
+    if (!gameSettings) {
       throw new Error(
-        `Game ${this.game.gameCode} is not found in PokerGameUpdates`
+        `Game code: ${this.game.gameCode} is not found in PokerGameSettings`
       );
     }
+
     const waitingListTimeExp = new Date();
-    const timeout = gameUpdates.waitlistSittingTimeout;
+    const timeout = gameSettings.waitlistSittingTimeout;
     waitingListTimeExp.setSeconds(waitingListTimeExp.getSeconds() + timeout);
     await playerGameTrackerRepository.update(
       {
