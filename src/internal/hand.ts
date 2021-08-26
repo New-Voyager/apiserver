@@ -5,7 +5,7 @@ import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {Cache} from '@src/cache';
 import {WonAtStatus} from '@src/entity/types';
 import {HandRepository} from '@src/repositories/hand';
-import {getGameRepository} from '@src/repositories';
+import {getGameConnection, getGameRepository} from '@src/repositories';
 import {getLogger} from '@src/utils/log';
 const logger = getLogger('internal::hand');
 
@@ -193,73 +193,77 @@ async function processConsecutiveActionTimeouts(
       `Unable to find game with ID ${gameID} while processing consecutive action timeouts`
     );
   }
-  const playerGameTrackerRepository: Repository<PlayerGameTracker> = getGameRepository(
-    PlayerGameTracker
-  );
 
-  const playersInGameArr: Array<PlayerGameTracker> = await playerGameTrackerRepository.find(
-    {
-      game: {id: gameID},
-    }
-  );
-  if (!playersInGameArr) {
-    throw new Error(
-      `Unable to find player tracker records with game ID ${gameID} while processing consecutive action timeouts`
+  await getGameConnection().transaction(async transactionEntityManager => {
+    const playerGameTrackerRepository: Repository<PlayerGameTracker> = transactionEntityManager.getRepository(
+      PlayerGameTracker
     );
-  }
 
-  const playersInGame = Object.assign(
-    {},
-    ...playersInGameArr.map(p => ({[p.playerId]: p}))
-  );
-
-  for (const playerIdStr of Object.keys(timeoutStats)) {
-    const currentHandTimeouts =
-      timeoutStats[playerIdStr].consecutiveActionTimeouts;
-    const didTheTimeoutsResetInCurrentHand =
-      timeoutStats[playerIdStr].isConsecutiveActionTimeoutsReset;
-
-    const playerID = parseInt(playerIdStr);
-    const playerInGame: PlayerGameTracker | undefined = playersInGame[playerID];
-    if (!playerInGame) {
+    const playersInGameArr: Array<PlayerGameTracker> = await playerGameTrackerRepository.find(
+      {
+        game: {id: gameID},
+      }
+    );
+    if (!playersInGameArr) {
       throw new Error(
-        `Unable to find player tracker with game ID ${gameID} and player ID ${playerID} while processing consecutive action timeouts`
+        `Unable to find player tracker records with game ID ${gameID} while processing consecutive action timeouts`
       );
     }
 
-    const prevTimeouts: number = playerInGame.consecutiveActionTimeouts;
-    let newTimeouts: number;
-    if (didTheTimeoutsResetInCurrentHand) {
-      newTimeouts = currentHandTimeouts;
-    } else {
-      newTimeouts = prevTimeouts + currentHandTimeouts;
-    }
+    const playersInGame = Object.assign(
+      {},
+      ...playersInGameArr.map(p => ({[p.playerId]: p}))
+    );
 
-    if (
-      prevTimeouts <= maxAllowedTimeouts &&
-      newTimeouts > maxAllowedTimeouts
-    ) {
-      // Put the player in break.
-      const player = await Cache.getPlayerById(playerID);
-      const takeBreak = new TakeBreak(game, player);
-      await takeBreak.takeBreak();
-      newTimeouts = 0;
-    }
+    for (const playerIdStr of Object.keys(timeoutStats)) {
+      const currentHandTimeouts =
+        timeoutStats[playerIdStr].consecutiveActionTimeouts;
+      const didTheTimeoutsResetInCurrentHand =
+        timeoutStats[playerIdStr].isConsecutiveActionTimeoutsReset;
 
-    if (newTimeouts != prevTimeouts) {
-      await playerGameTrackerRepository
-        .createQueryBuilder()
-        .update()
-        .where({
-          game: {id: gameID},
-          playerId: playerID,
-        })
-        .set({
-          consecutiveActionTimeouts: newTimeouts,
-        })
-        .execute();
+      const playerID = parseInt(playerIdStr);
+      const playerInGame: PlayerGameTracker | undefined =
+        playersInGame[playerID];
+      if (!playerInGame) {
+        throw new Error(
+          `Unable to find player tracker with game ID ${gameID} and player ID ${playerID} while processing consecutive action timeouts`
+        );
+      }
+
+      const prevTimeouts: number = playerInGame.consecutiveActionTimeouts;
+      let newTimeouts: number;
+      if (didTheTimeoutsResetInCurrentHand) {
+        newTimeouts = currentHandTimeouts;
+      } else {
+        newTimeouts = prevTimeouts + currentHandTimeouts;
+      }
+
+      if (
+        prevTimeouts <= maxAllowedTimeouts &&
+        newTimeouts > maxAllowedTimeouts
+      ) {
+        // Put the player in break.
+        const player = await Cache.getPlayerById(playerID);
+        const takeBreak = new TakeBreak(game, player);
+        await takeBreak.takeBreak(transactionEntityManager);
+        newTimeouts = 0;
+      }
+
+      if (newTimeouts != prevTimeouts) {
+        await playerGameTrackerRepository
+          .createQueryBuilder()
+          .update()
+          .where({
+            game: {id: gameID},
+            playerId: playerID,
+          })
+          .set({
+            consecutiveActionTimeouts: newTimeouts,
+          })
+          .execute();
+      }
     }
-  }
+  });
 
   if (game) {
     await Cache.updateGamePendingUpdates(game.gameCode, true);
