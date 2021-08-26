@@ -246,17 +246,19 @@ async function processConsecutiveActionTimeouts(
       newTimeouts = 0;
     }
 
-    await playerGameTrackerRepository
-      .createQueryBuilder()
-      .update()
-      .where({
-        game: {id: gameID},
-        playerId: playerID,
-      })
-      .set({
-        consecutiveActionTimeouts: newTimeouts,
-      })
-      .execute();
+    if (newTimeouts != prevTimeouts) {
+      await playerGameTrackerRepository
+        .createQueryBuilder()
+        .update()
+        .where({
+          game: {id: gameID},
+          playerId: playerID,
+        })
+        .set({
+          consecutiveActionTimeouts: newTimeouts,
+        })
+        .execute();
+    }
   }
 
   if (game) {
