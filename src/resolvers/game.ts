@@ -40,6 +40,7 @@ import {PlayersInGame} from '@src/entity/history/player';
 import {getAgoraAppId} from '@src/3rdparty/agora';
 import {SeatChangeProcess} from '@src/repositories/seatchange';
 import {analyticsreporting_v4} from 'googleapis';
+import {GameSettingsRepository} from '@src/repositories/gamesettings';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -913,6 +914,23 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
   }
 }
 
+export async function gameSettings(playerUuid: string, gameCode: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const gameSettings = await GameSettingsRepository.get(gameCode);
+    if (!gameSettings) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+    return gameSettings;
+  } catch (err) {
+    logger.error(JSON.stringify(err));
+    throw new Error(`Getting game settings failed`);
+  }
+}
+
 export async function getGameInfo(playerUuid: string, gameCode: string) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
@@ -964,7 +982,7 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.agoraAppId = getAgoraAppId();
 
     const updates = await Cache.getGameUpdates(game.gameCode);
-    const settings = await Cache.getGameSettings(game.gameCode);
+    const settings = await GameSettingsRepository.get(game.gameCode);
     if (updates && settings) {
       ret.useAgora = settings.useAgora;
       ret.audioConfEnabled = settings.audioConfEnabled;
@@ -2075,6 +2093,9 @@ const resolvers: any = {
     },
     playersGameTrackerById: async (parent, args, ctx, info) => {
       return await playersGameTrackerById(ctx.req.playerId, args.gameCode);
+    },
+    gameSettings: async (parent, args, ctx, info) => {
+      return await gameSettings(ctx.req.playerId, args.gameCode);
     },
   },
   GameInfo: {

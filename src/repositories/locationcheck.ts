@@ -189,7 +189,7 @@ export class LocationCheck {
 
     // check whether this player can sit in this game
     if (this.gameSettings.ipCheck) {
-      if (ip === null || ip.length === 0) {
+      if (ip === undefined || ip === null || ip.length === 0) {
         throw new IpAddressMissingError(player.name);
       }
       const appSettings = getAppSettings();

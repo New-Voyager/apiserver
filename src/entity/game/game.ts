@@ -174,6 +174,9 @@ export class PokerGameSettings {
   @Column({unique: true, name: 'game_code'})
   public gameCode!: string;
 
+  @Column({name: 'show_hand_rank', default: false})
+  public showHandRank!: boolean;
+
   // bomb pot settings
   @Column({name: 'bomb_pot_on', default: false})
   public bombPotEnabled!: boolean;
@@ -332,9 +335,6 @@ export class PokerGame {
 
   @Column({name: 'auto_kick_after_break', default: true})
   public autoKickAfterBreak!: boolean;
-
-  @Column({name: 'show_hand_rank', default: false})
-  public showHandRank!: boolean;
 
   @Column({name: 'app_coins_needed', default: false})
   public appCoinsNeeded!: boolean;

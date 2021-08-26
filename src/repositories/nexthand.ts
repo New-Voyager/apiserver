@@ -12,6 +12,7 @@ import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {markDealerChoiceNextHand} from './pendingupdates';
 import {NewHandInfo, PlayerInSeat} from './types';
 import _ from 'lodash';
+import {GameSettingsRepository} from './gamesettings';
 
 const logger = getLogger('next_hand_process');
 
@@ -36,7 +37,7 @@ export class NextHandProcess {
           throw new Error(`Game code: ${this.gameCode} not found`);
         }
 
-        const gameSettings = await Cache.getGameSettings(game.gameCode);
+        const gameSettings = await GameSettingsRepository.get(game.gameCode);
         if (!gameSettings) {
           throw new Error(
             `Game ${this.gameCode} is not found in PokerGameSettings`
@@ -322,7 +323,7 @@ export class NextHandProcess {
           throw new Error(`Game code: ${this.gameCode} not found`);
         }
 
-        const gameSettings = await Cache.getGameSettings(game.gameCode);
+        const gameSettings = await GameSettingsRepository.get(game.gameCode);
         if (!gameSettings) {
           throw new Error(
             `Game ${this.gameCode} is not found in PokerGameSettings`

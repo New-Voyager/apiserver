@@ -261,24 +261,19 @@ type GameInfo {
   agoraAppId: String
 }
 
-input GameConfigUpdateInput {
-    # coming from game updates (can be changed)
+type GameSettings {
+  buyInApproval: Boolean
+  runItTwiceAllowed: Boolean
+  allowRabbitHunt: Boolean
+  showHandRank: Boolean
+
+  # bomb pot (comes from PokerGameUpdates)
   bombPotEnabled: Boolean
   bombPotBet: Int
   doubleBoardBombPot: Boolean
   bombPotInterval: Int        
-  bombPotIntervalInSecs: Int  # for tests
+  bombPotIntervalInSecs: Int 
 
-  ipCheck: Boolean
-  gpsCheck: Boolean
-
-  useAgora: Boolean
-  audioConfEnabled: Boolean
-
-  allowRabbitHunt: Boolean
-  roeGames: [GameType!]
-  dealerChoiceGames: [GameType!]
-  runItTwiceAllowed: Boolean
   seatChangeAllowed: Boolean
   seatChangeTimeout: Int    # default 10 seconds
   waitlistAllowed: Boolean
@@ -286,9 +281,41 @@ input GameConfigUpdateInput {
 
   breakAllowed: Boolean
   breakLength: Int # in minutes (default 15 mins)
+
+  ipCheck: Boolean
+  gpsCheck: Boolean
+
+  roeGames: [GameType!]
+  dealerChoiceGames: [GameType!]
 }
 
+input GameSettingsUpdateInput {
+  buyInApproval: Boolean
+  runItTwiceAllowed: Boolean
+  allowRabbitHunt: Boolean
+  showHandRank: Boolean
 
+  # bomb pot (comes from PokerGameUpdates)
+  bombPotEnabled: Boolean
+  bombPotBet: Int
+  doubleBoardBombPot: Boolean
+  bombPotInterval: Int        
+  bombPotIntervalInSecs: Int 
+
+  seatChangeAllowed: Boolean
+  seatChangeTimeout: Int    # default 10 seconds
+  waitlistAllowed: Boolean
+  waitlistSittingTimeout: Int
+
+  breakAllowed: Boolean
+  breakLength: Int # in minutes (default 15 mins)
+
+  ipCheck: Boolean
+  gpsCheck: Boolean
+
+  roeGames: [GameType!]
+  dealerChoiceGames: [GameType!]
+}
 
 input GameConfigUpdateInput {
   # coming from game updates (can be changed)
@@ -434,6 +461,11 @@ input GameConfigChangeInput {
   runItTwicePrompt: Boolean
 }
 
+input PlayerGameConfigChangeInput {
+  muckLosingHand: Boolean
+  runItTwicePrompt: Boolean
+}
+
 input LocationInput {
   lat: Float!
   long: Float!
@@ -480,7 +512,7 @@ type Mutation {
   switchSeat(gameCode: String!, seatNo: Int!): PlayerGameStatus!
 
   # player changes in live game
-  updatePlayerGameConfig(gameCode: String!, config: GameConfigChangeInput!): Boolean
+  updatePlayerGameConfig(gameCode: String!, config: PlayerGameConfigChangeInput!): Boolean
 
   # seat change APIs
   requestSeatChange(gameCode: String!, cancel: Boolean): DateTime!
@@ -495,6 +527,9 @@ type Mutation {
 
   # post blind
   postBlind(gameCode: String!): Boolean
+
+  # update game settings
+  updateGameSettings(gameCode: String!, settings: GameSettingsUpdateInput!): Boolean
 }
 
 type gameId{
@@ -539,6 +574,7 @@ type Query {
   # implemented
   gameById(gameCode: String!): gameId!
   gameInfo(gameCode: String!): GameInfo
+  gameSettings(gameCode: String!): GameSettings!
   myGameState(gameCode: String!): PlayerGameState
   tableGameState(gameCode: String!): [PlayerGameState!]
   waitingList(gameCode: String!): [WaitingListPlayer!]
