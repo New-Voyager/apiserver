@@ -214,6 +214,7 @@ describe('Appcoin tests', () => {
     config.freeTime = 15; // 15 seconds
     config.consumeTime = 15; // charge every 15 seconds
     config.newUserFreeCoins = 0;
+    let nextHandNum = 1;
 
     const [
       owner,
@@ -244,19 +245,23 @@ describe('Appcoin tests', () => {
       playerIds
     );
     // we are going to post multiple hands
+    data.handNum = nextHandNum++;
     let resp = await saveHand(gameId, data.handNum, data);
     let pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
     expect(pendingUpdates).toBeFalsy();
     await sleep(10000);
+    data.handNum = nextHandNum++;
     resp = await saveHand(gameId, data.handNum, data);
     pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
     expect(pendingUpdates).toBeFalsy();        
     await sleep(10000);
+    data.handNum = nextHandNum++;
     resp = await saveHand(gameId, data.handNum, data);
     pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
     expect(pendingUpdates).toBeFalsy();        
     await sleep(10000);
 
+    data.handNum = nextHandNum++;
     resp = await saveHand(gameId, data.handNum, data);
     pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
     expect(pendingUpdates).toBeTruthy();
@@ -281,6 +286,7 @@ describe('Appcoin tests', () => {
       config.freeTime = 15; // 15 seconds
       config.consumeTime = 15; // charge every 15 seconds
       config.gameCoinsPerBlock = 3; // charge 3 coins per block of game time
+      let nextHandNum = 1;
 
       const [
         owner,
@@ -311,15 +317,18 @@ describe('Appcoin tests', () => {
         playerIds
       );
       // we are going to post multiple hands
+      data.handNum = nextHandNum++;
       let resp = await saveHand(gameId, data.handNum, data);
       let pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
       expect(pendingUpdates).toBeFalsy();
       await sleep(10000);
+      data.handNum = nextHandNum++;
       resp = await saveHand(gameId, data.handNum, data);
       pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
       expect(pendingUpdates).toBeFalsy();
       await sleep(10000);
       await AppCoinRepository.buyCoins(owner, 10);
+      data.handNum = nextHandNum++;
       resp = await saveHand(gameId, data.handNum, data);
       pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
       expect(pendingUpdates).toBeFalsy();

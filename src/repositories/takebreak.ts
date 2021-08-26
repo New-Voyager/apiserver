@@ -11,12 +11,11 @@ import {playerStatusChanged} from '@src/gameserver';
 import {startTimer} from '@src/timer';
 import {utcTime} from '@src/utils';
 import {getLogger} from '@src/utils/log';
-import {Repository} from 'typeorm';
+import {EntityManager, Repository} from 'typeorm';
 import {BREAK_TIMEOUT, NewUpdate} from './types';
 import {Cache} from '@src/cache/index';
 import {getGameRepository} from '.';
 import {GameRepository} from './game';
-
 const logger = getLogger('takebreak');
 
 export class TakeBreak {
@@ -28,9 +27,20 @@ export class TakeBreak {
     this.player = player;
   }
 
-  public async takeBreak(): Promise<boolean> {
-    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
-    const nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
+  public async takeBreak(transactionManager?: EntityManager): Promise<boolean> {
+    let playerGameTrackerRepository;
+    let nextHandUpdatesRepository;
+    if (transactionManager) {
+      playerGameTrackerRepository = transactionManager.getRepository(
+        PlayerGameTracker
+      );
+      nextHandUpdatesRepository = transactionManager.getRepository(
+        NextHandUpdates
+      );
+    } else {
+      playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+      nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
+    }
     const rows = await playerGameTrackerRepository.findOne({
       game: {id: this.game.id},
       playerId: this.player.id,
