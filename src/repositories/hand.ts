@@ -33,6 +33,7 @@ import {AppCoinRepository} from './appcoin';
 import {GameRepository} from './game';
 import * as lz from 'lzutf8';
 import {getAppSettings} from '@src/firebase';
+import {Repository} from 'typeorm';
 const logger = getLogger('hand');
 
 const MAX_STARRED_HAND = 25;
@@ -1003,6 +1004,36 @@ class HandRepositoryImpl {
       let saveResult: any = {};
       saveResult = await getGameManager().transaction(
         async transactionEntityManager => {
+          const pokerGameUpdatesRepo: Repository<PokerGameUpdates> = transactionEntityManager.getRepository(
+            PokerGameUpdates
+          );
+          const pokerGameUpdates:
+            | PokerGameUpdates
+            | undefined = await pokerGameUpdatesRepo.findOne({
+            gameID: gameID,
+          });
+          if (!pokerGameUpdates) {
+            throw new Error(
+              `Unable to entry in poker game updates repo with game ID ${gameID} while saving hand result`
+            );
+          }
+          if (pokerGameUpdates.lastResultProcessedHand >= handNum) {
+            // This is a rare condition that could be hit when game server crashes and
+            // this function gets called more than once for the same hand.
+            // We are just guarding against incrementing some stats multiple times when
+            // that happens.
+            logger.warn(
+              `Hand result was already processed for game ${gameID} hand ${pokerGameUpdates.lastResultProcessedHand}. Skipping the processing for hand ${handNum}`
+            );
+            const saveResult: SaveHandResult = {
+              gameCode: pokerGameUpdates.gameCode,
+              handNum: handNum,
+              success: true,
+              skipped: true,
+            };
+            return saveResult;
+          }
+
           /**
            * Assigning player chips values
            */
@@ -1036,11 +1067,11 @@ class HandRepositoryImpl {
           }
           await getHistoryRepository(HandHistory).save(handHistory);
           // update game rake and last hand number
-          await transactionEntityManager
-            .getRepository(PokerGameUpdates)
+          await pokerGameUpdatesRepo
             .createQueryBuilder()
             .update()
             .set({
+              lastResultProcessedHand: handNum,
               rake: () => `rake + ${handRake}`,
             })
             .where({
@@ -1052,6 +1083,7 @@ class HandRepositoryImpl {
             gameCode: game.gameCode,
             handNum: result.handNum,
             success: true,
+            skipped: false,
           };
           await this.handleHighHand(
             game,
@@ -1064,6 +1096,10 @@ class HandRepositoryImpl {
           return saveResult;
         }
       );
+
+      if (saveResult.skipped) {
+        return saveResult;
+      }
 
       let pendingUpdates = false;
       for (const seatNo of Object.keys(playersInHand)) {
@@ -1120,6 +1156,7 @@ class HandRepositoryImpl {
         gameCode: gameCode,
         handNum: handNum,
         success: false,
+        skipped: false,
         error: err.message,
       };
     }

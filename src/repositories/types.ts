@@ -57,6 +57,7 @@ export interface SaveHandResult {
   gameCode: string;
   handNum: number;
   success: boolean;
+  skipped: boolean;
   error?: string;
   highHand?: HighHandResult;
 }
