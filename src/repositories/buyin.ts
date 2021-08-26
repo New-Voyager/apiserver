@@ -5,6 +5,7 @@ import {Player} from '@src/entity/player/player';
 import {
   NextHandUpdates,
   PokerGame,
+  PokerGameSettings,
   PokerGameUpdates,
 } from '@src/entity/game/game';
 import {
@@ -42,6 +43,7 @@ import {
   getUserConnection,
   getUserRepository,
 } from '.';
+import {Nats} from '@src/nats';
 
 const logger = getLogger('buyin');
 
@@ -104,14 +106,7 @@ export class BuyIn {
       throw new Error(`The player ${this.player.uuid} is not in the club`);
     }
 
-    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-    const gameUpdate = await gameUpdatesRepo.findOne({gameID: this.game.id});
-    if (!gameUpdate) {
-      throw new Error(
-        `Game ${this.game.gameCode} is not found in PokerGameUpdates`
-      );
-    }
-    // clubMember.autoBuyinApproval = false;
+    const gameSettings = await Cache.getGameSettings(this.game.gameCode);
 
     let playerStatus: PlayerStatus = PlayerStatus.WAIT_FOR_BUYIN;
     let updatedPlayerInGame: PlayerGameTracker;
@@ -126,7 +121,7 @@ export class BuyIn {
       clubMember.isOwner ||
       clubMember.isManager ||
       clubMember.autoBuyinApproval ||
-      !gameUpdate.buyInApproval ||
+      !gameSettings.buyInApproval ||
       isHost
     ) {
       // logger.info(`***** [${this.game.gameCode}] Player: ${this.player.name} buyin approved.
@@ -159,7 +154,7 @@ export class BuyIn {
             Auto approval: ${clubMember.autoBuyinApproval} 
             isHost: {isHost}`);
       logger.info(
-        `Game.buyInApproval: ${gameUpdate.buyInApproval} creditLimit: ${clubMember.creditLimit} outstandingBalance: ${outstandingBalance}`
+        `Game.buyInApproval: ${gameSettings.buyInApproval} creditLimit: ${clubMember.creditLimit} outstandingBalance: ${outstandingBalance}`
       );
 
       let availableCredit = 0.0;
@@ -225,11 +220,21 @@ export class BuyIn {
         gameID: this.game.id,
       })
       .execute();
+    await Cache.getGameUpdates(this.game.gameCode, true);
     databaseTime = new Date().getTime() - databaseTime;
 
     cancelTime = new Date().getTime();
     cancelTimer(this.game.id, this.player.id, BUYIN_TIMEOUT);
     cancelTime = new Date().getTime() - cancelTime;
+
+    await Nats.playerStatusChanged(
+      this.game,
+      this.player,
+      PlayerStatus.PLAYING,
+      NewUpdate.NEW_BUYIN,
+      playerInGame.stack,
+      playerInGame.seatNo
+    );
 
     let gameServerTime = new Date().getTime();
     // send a message to gameserver
@@ -341,7 +346,7 @@ export class BuyIn {
           }
           let stack = prevStatus.stack;
           let newUpdate: NewUpdate = NewUpdate.UNKNOWN_PLAYER_UPDATE;
-          if (playerStatus == PlayerStatus.WAIT_FOR_BUYIN_APPROVAL) {
+          if (playerStatus === PlayerStatus.WAIT_FOR_BUYIN_APPROVAL) {
             newUpdate = NewUpdate.WAIT_FOR_BUYIN_APPROVAL;
           } else if (approved) {
             newUpdate = NewUpdate.NEW_BUYIN;
@@ -408,14 +413,6 @@ export class BuyIn {
               throw new Error('Unable to get the updated row');
             }
             stack = updated?.stack;
-            playerStatusChanged(
-              this.game,
-              this.player,
-              prevStatus.status,
-              newUpdate,
-              stack,
-              playerInGame.seatNo
-            );
           }
         }
 
@@ -856,8 +853,8 @@ export class BuyIn {
     }
 
     if (
-      playerInSeat.status == PlayerStatus.WAIT_FOR_BUYIN ||
-      playerInSeat.status == PlayerStatus.WAIT_FOR_BUYIN_APPROVAL
+      playerInSeat.status === PlayerStatus.WAIT_FOR_BUYIN ||
+      playerInSeat.status === PlayerStatus.WAIT_FOR_BUYIN_APPROVAL
     ) {
       // buyin timeout expired
 
@@ -891,7 +888,7 @@ export class BuyIn {
         playerInSeat.stack,
         playerInSeat.seatNo
       );
-    } else if (playerInSeat.status == PlayerStatus.PLAYING) {
+    } else if (playerInSeat.status === PlayerStatus.PLAYING) {
       // cancel timer wasn't called (ignore the timeout callback)
     }
   }

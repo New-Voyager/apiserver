@@ -1,5 +1,5 @@
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {PokerGame, PokerGameSettings} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {getDistanceInMeters, utcTime} from '@src/utils';
 import {getLogger} from '@src/utils/log';
@@ -18,11 +18,11 @@ const logger = getLogger('takebreak');
 
 export class LocationCheck {
   private game: PokerGame;
-  private gameUpdate: PokerGameUpdates;
+  private gameSettings: PokerGameSettings;
 
-  constructor(game: PokerGame, gameUpdate: PokerGameUpdates) {
+  constructor(game: PokerGame, gameUpdate: PokerGameSettings) {
     this.game = game;
-    this.gameUpdate = gameUpdate;
+    this.gameSettings = gameUpdate;
   }
 
   public async check() {
@@ -111,7 +111,7 @@ export class LocationCheck {
     const ret = new Array<PlayerGameTracker>();
 
     // check whether this player can sit in this game
-    if (this.gameUpdate.ipCheck) {
+    if (this.gameSettings.ipCheck) {
       const appSettings = getAppSettings();
       if (player.ipAddress) {
         const now = new Date();
@@ -146,7 +146,7 @@ export class LocationCheck {
       }
     }
 
-    if (this.gameUpdate.gpsCheck) {
+    if (this.gameSettings.gpsCheck) {
       if (player.location) {
         // split the location first
         for (const player2 of playersInSeats) {
@@ -162,7 +162,7 @@ export class LocationCheck {
               playerInSeat.location.lat,
               playerInSeat.location.long
             );
-            if (distance <= this.gameUpdate.gpsAllowedDistance) {
+            if (distance <= this.gameSettings.gpsAllowedDistance) {
               ret.push(player2);
             }
           }
@@ -188,7 +188,7 @@ export class LocationCheck {
     }
 
     // check whether this player can sit in this game
-    if (this.gameUpdate.ipCheck) {
+    if (this.gameSettings.ipCheck) {
       if (ip === null || ip.length === 0) {
         throw new IpAddressMissingError(player.name);
       }
@@ -226,7 +226,7 @@ export class LocationCheck {
       }
     }
 
-    if (this.gameUpdate.gpsCheck) {
+    if (this.gameSettings.gpsCheck) {
       if (location) {
         // split the location first
         for (const player2 of playersInSeats) {
@@ -241,7 +241,7 @@ export class LocationCheck {
               playerInSeat.location.lat,
               playerInSeat.location.long
             );
-            if (distance <= this.gameUpdate.gpsAllowedDistance) {
+            if (distance <= this.gameSettings.gpsAllowedDistance) {
               throw new LocationPromixityError(playerInSeat.name, player.name);
             }
           }

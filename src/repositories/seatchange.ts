@@ -77,6 +77,8 @@ export class SeatChangeProcess {
         seatChangeInProgress: true,
       }
     );
+    await Cache.getGameUpdates(this.game.gameCode, true);
+
     this.promptPlayer(openedSeat);
   }
 
@@ -378,6 +380,7 @@ export class SeatChangeProcess {
           seatChangeOpenSeat: playerInGame.seatNo,
         }
       );
+      await Cache.getGameUpdates(this.game.gameCode, true);
 
       // send a message in NATS (the UI will do an animation)
       Nats.sendPlayerSeatMove(
@@ -666,7 +669,7 @@ export class SeatChangeProcess {
         // if there is a player in the seat, return an error
 
         // if the current player in seat tried to sit in the same seat, do nothing
-        if (playerInSeat != null) {
+        if (playerInSeat) {
           throw new Error('A player is in the seat');
         }
 
@@ -719,7 +722,12 @@ export class SeatChangeProcess {
         }
 
         // send an update message
-        Nats.notifyPlayerSwitchSeat(this.game, player, playerInSeat, oldSeatNo);
+        await Nats.notifyPlayerSwitchSeat(
+          this.game,
+          player,
+          playerInSeat,
+          oldSeatNo
+        );
 
         logger.info(
           `[${this.game.gameCode}] Player: ${player.name} switched to seat: ${seatNo}`

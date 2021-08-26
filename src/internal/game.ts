@@ -3,7 +3,11 @@ import {GameRepository} from '@src/repositories/game';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
-import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {
+  PokerGame,
+  PokerGameSettings,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
 import {PlayerStatus} from '@src/entity/types';
 import _ from 'lodash';
 import {delay} from '@src/utils';
@@ -171,15 +175,7 @@ class GameAPIs {
             if (!game) {
               throw new Error(`Game ${gameCode} is not found`);
             }
-
-            const gameUpdateRepo = getGameRepository(PokerGameUpdates);
-            const gameUpdate = await gameUpdateRepo.findOne({gameID: game.id});
-            if (!gameUpdate) {
-              throw new Error(
-                `Game ${gameCode} is not found in PokerGameUpdates`
-              );
-            }
-
+            const gameSettings = await Cache.getGameSettings(game.gameCode);
             const playersInSeats = await GameRepository.getPlayersInSeats(
               game.id,
               transactionEntityManager
@@ -233,7 +229,7 @@ class GameAPIs {
               privateGame: game.privateGame,
               startedBy: game.hostName,
               startedByUuid: game.hostUuid,
-              breakLength: gameUpdate.breakLength,
+              breakLength: gameSettings.breakLength,
               autoKickAfterBreak: game.autoKickAfterBreak,
               rewardTrackingIds: rewardTrackingIds,
               seatInfo: {
@@ -366,6 +362,7 @@ class GameAPIs {
             calculateButtonPos: false,
           }
         );
+        await Cache.getGameUpdates(game.gameCode, true);
       }
     );
   }

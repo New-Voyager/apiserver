@@ -1,6 +1,10 @@
 import {Cache} from '@src/cache';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {
+  PokerGame,
+  PokerGameSettings,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {GameType, PlayerStatus} from '@src/entity/types';
 import {waitlistSeating} from '@src/gameserver';
@@ -57,6 +61,8 @@ export class WaitListMgmt {
           waitlistSeatingInprogress: false,
         }
       );
+      await Cache.getGameUpdates(this.game.gameCode, true);
+
       // continue to sit this player in the seat
     } else {
       if (playerAskedToSit.playerId !== player.id) {
@@ -80,6 +86,7 @@ export class WaitListMgmt {
           waitlistSeatingInprogress: false,
         }
       );
+      await Cache.getGameUpdates(this.game.gameCode, true);
     }
   }
 
@@ -131,6 +138,8 @@ export class WaitListMgmt {
         waitlistSeatingInprogress: false,
       }
     );
+    await Cache.getGameUpdates(this.game.gameCode, true);
+
     if (count > 0) {
       // continue to run the waitlist seating
       this.runWaitList();
@@ -245,19 +254,21 @@ export class WaitListMgmt {
           waitlistSeatingInprogress: false,
         }
       );
+      await Cache.getGameUpdates(this.game.gameCode, true);
 
       //logger.info(`Game: ${gameId} No players in the waiting list`);
       // notify all the users waiting list process is complete
       return;
     }
-    const gameUpdates = await gameUpdatesRepo.findOne({gameID: this.game.id});
-    if (!gameUpdates) {
+    const gameSettings = await Cache.getGameSettings(this.game.gameCode);
+    if (!gameSettings) {
       throw new Error(
-        `Game ${this.game.gameCode} is not found in PokerGameUpdates`
+        `Game code: ${this.game.gameCode} is not found in PokerGameSettings`
       );
     }
+
     const waitingListTimeExp = new Date();
-    const timeout = gameUpdates.waitlistSittingTimeout;
+    const timeout = gameSettings.waitlistSittingTimeout;
     waitingListTimeExp.setSeconds(waitingListTimeExp.getSeconds() + timeout);
     await playerGameTrackerRepository.update(
       {

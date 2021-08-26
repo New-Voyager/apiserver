@@ -1,5 +1,9 @@
 import {Club, ClubMember} from '@src/entity/player/club';
-import {PokerGame} from '@src/entity/game/game';
+import {
+  PokerGame,
+  PokerGameSettings,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {EntityManager, getRepository, Repository} from 'typeorm';
 import * as redis from 'redis';
@@ -112,37 +116,6 @@ class GameCache {
     }
   }
 
-  /**
-   * Update the cache with next coin consume time.
-   * @param gameCode
-   * @param nextCoinConsumeTime
-   */
-  public async updateGameCoinConsumeTime(
-    gameCode: string,
-    coinConsumeTime: Date
-  ) {
-    const getResp = await this.getCache(`gameCache-${gameCode}`);
-    if (getResp.success && getResp.data) {
-      const game: PokerGame = JSON.parse(getResp.data) as PokerGame;
-      game.nextCoinConsumeTime = coinConsumeTime;
-      await this.setCache(`gameCache-${gameCode}`, JSON.stringify(game));
-    }
-  }
-
-  /**
-   * Update the cache with last ip check time
-   * @param gameCode
-   * @param lastIpCheckTime
-   */
-  public async updateGameIpCheckTime(gameCode: string, lastIpCheckTime: Date) {
-    const getResp = await this.getCache(`gameCache-${gameCode}`);
-    if (getResp.success && getResp.data) {
-      const game: PokerGame = JSON.parse(getResp.data) as PokerGame;
-      game.lastIpCheckTime = lastIpCheckTime;
-      await this.setCache(`gameCache-${gameCode}`, JSON.stringify(game));
-    }
-  }
-
   public async observeGame(gameCode: string, player: Player): Promise<boolean> {
     const setResp = await this.setCache(
       `observersCache-${gameCode}-${player.uuid}`,
@@ -188,19 +161,6 @@ class GameCache {
     const getResp = await this.getCache(`gameCache-${gameCode}`);
     if (getResp.success && getResp.data && !update) {
       let ret = JSON.parse(getResp.data) as PokerGame;
-      let oldConsumeTime = ret.nextCoinConsumeTime;
-      if (!oldConsumeTime) {
-        ret.nextCoinConsumeTime = null;
-      } else {
-        ret.nextCoinConsumeTime = new Date(
-          Date.parse(oldConsumeTime.toString())
-        );
-      }
-      if (ret.lastIpCheckTime) {
-        ret.lastIpCheckTime = new Date(
-          Date.parse(ret.lastIpCheckTime.toString())
-        );
-      }
       return ret;
     } else {
       let repo: Repository<PokerGame>;
@@ -221,24 +181,85 @@ class GameCache {
         const oldGame = JSON.parse(getResp.data) as PokerGame;
         game.highHandRank = oldGame.highHandRank;
         game.pendingUpdates = oldGame.pendingUpdates;
-        let oldConsumeTime = oldGame.nextCoinConsumeTime;
-        if (!oldConsumeTime) {
-          game.nextCoinConsumeTime = null;
-        } else {
-          game.nextCoinConsumeTime = new Date(
-            Date.parse(oldConsumeTime.toString())
-          );
-        }
-        if (oldGame.lastIpCheckTime) {
-          game.lastIpCheckTime = new Date(
-            Date.parse(oldGame.lastIpCheckTime.toString())
-          );
-        }
       }
 
       await this.setCache(`gameCache-${gameCode}`, JSON.stringify(game));
       await this.setCache(`gameIdCache-${game.id}`, JSON.stringify(game));
       return game;
+    }
+  }
+
+  public async getGameSettings(
+    gameCode: string,
+    update = false,
+    transactionManager?: EntityManager
+  ): Promise<PokerGameSettings> {
+    const getResp = await this.getCache(`gameSettingsCache-${gameCode}`);
+    if (getResp.success && getResp.data && !update) {
+      const ret = JSON.parse(getResp.data) as PokerGameSettings;
+      return ret;
+    } else {
+      let repo: Repository<PokerGameSettings>;
+      if (transactionManager) {
+        repo = transactionManager.getRepository(PokerGameSettings);
+      } else {
+        repo = getGameRepository(PokerGameSettings);
+      }
+      const gameSettings = await repo.findOne({
+        where: {gameCode: gameCode},
+      });
+      if (!gameSettings) {
+        throw new Error(`Cannot find with game code: ${gameCode}`);
+      }
+
+      await this.setCache(
+        `gameSettingsCache-${gameCode}`,
+        JSON.stringify(gameSettings)
+      );
+      return gameSettings;
+    }
+  }
+
+  public async getGameUpdates(
+    gameCode: string,
+    update = false,
+    transactionManager?: EntityManager
+  ): Promise<PokerGameUpdates> {
+    const getResp = await this.getCache(`gameUpdatesCache-${gameCode}`);
+    if (getResp.success && getResp.data && !update) {
+      const cacheRet = JSON.parse(getResp.data) as any;
+      const ret = cacheRet as PokerGameUpdates;
+      if (cacheRet && cacheRet.nextCoinConsumeTime) {
+        ret.nextCoinConsumeTime = new Date(
+          Date.parse(cacheRet.nextCoinConsumeTime.toString())
+        );
+      }
+
+      if (cacheRet && cacheRet.lastIpGpsCheckTime) {
+        ret.lastIpGpsCheckTime = new Date(
+          Date.parse(cacheRet.lastIpGpsCheckTime.toString())
+        );
+      }
+      return ret;
+    } else {
+      let repo: Repository<PokerGameUpdates>;
+      if (transactionManager) {
+        repo = transactionManager.getRepository(PokerGameUpdates);
+      } else {
+        repo = getGameRepository(PokerGameUpdates);
+      }
+      const gameUpdates = await repo.findOne({
+        where: {gameCode: gameCode},
+      });
+      if (!gameUpdates) {
+        throw new Error(`Cannot find with game code: ${gameCode}`);
+      }
+
+      await this.setCache(
+        `gameUpdatesCache-${gameCode}`,
+        JSON.stringify(gameUpdates)
+      );
+      return gameUpdates;
     }
   }
 
