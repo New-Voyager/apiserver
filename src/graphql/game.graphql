@@ -86,9 +86,7 @@ input GameCreateInput {
   maxPlayers: Int! # 2-9
   gameLength: Int! # in minutes
   buyInApproval: Boolean
-  breakLength: Int # in minutes (default 15 mins)
   autoKickAfterBreak: Boolean
-  waitlistSupported: Boolean
   sitInApproval: Boolean
   highHandTracked: Boolean
   maxWaitList: Int
@@ -99,25 +97,37 @@ input GameCreateInput {
   actionTime: Int! # default 20 secs
   muckLosingHand: Boolean
   waitForBigBlind: Boolean
-  waitlistSittingTimeout: Int
   rewardIds: [Int]
   pauseAfterShowdown: Int   # default 2 seconds
-  buyInTimeout: Int        # default 60 seconds
-  seatChangeAllowed: Boolean
+  buyInTimeout: Int         # default 60 seconds
   botGame: Boolean
-  runItTwiceAllowed: Boolean
-  roeGames: [GameType!]
-  dealerChoiceGames: [GameType!]
-  audioConfEnabled: Boolean
-  allowRabbitHunt: Boolean
   showHandRank: Boolean
-  useAgora: Boolean
   appCoinsNeeded: Boolean
+
+  # coming from game updates (can be changed)
   bombPotEnabled: Boolean
   bombPotBet: Int
   doubleBoardBombPot: Boolean
   bombPotInterval: Int        
   bombPotIntervalInSecs: Int  # for tests
+
+  ipCheck: Boolean
+  gpsCheck: Boolean
+
+  useAgora: Boolean
+  audioConfEnabled: Boolean
+
+  allowRabbitHunt: Boolean
+  roeGames: [GameType!]
+  dealerChoiceGames: [GameType!]
+  runItTwiceAllowed: Boolean
+  seatChangeAllowed: Boolean
+  seatChangeTimeout: Int    # default 10 seconds
+  waitlistAllowed: Boolean
+  waitlistSittingTimeout: Int
+
+  breakAllowed: Boolean
+  breakLength: Int # in minutes (default 15 mins)
 }
 
 type SeatInfo {
@@ -164,9 +174,10 @@ type GameInfo {
   maxPlayers: Int
   gameLength: Int
   buyInApproval: Boolean
+  breakAllowed: Boolean
+  waitlistAllowed: Boolean
   breakLength: Int
   autoKickAfterBreak: Boolean
-  waitlistSupported: Boolean
   sitInApproval: Boolean
   highHandTracked: Boolean
   maxWaitList: Int
@@ -199,6 +210,9 @@ type GameInfo {
   doubleBoardBombPot: Boolean
   bombPotInterval: Int        
   bombPotIntervalInSecs: Int 
+
+  ipCheck: Boolean
+  gpsCheck: Boolean
 
   roeGames: [GameType!]
   dealerChoiceGames: [GameType!]
@@ -245,6 +259,43 @@ type GameInfo {
   useAgora: Boolean
   agoraToken: String
   agoraAppId: String
+}
+
+input GameConfigUpdateInput {
+    # coming from game updates (can be changed)
+  bombPotEnabled: Boolean
+  bombPotBet: Int
+  doubleBoardBombPot: Boolean
+  bombPotInterval: Int        
+  bombPotIntervalInSecs: Int  # for tests
+
+  ipCheck: Boolean
+  gpsCheck: Boolean
+
+  useAgora: Boolean
+  audioConfEnabled: Boolean
+
+  allowRabbitHunt: Boolean
+  roeGames: [GameType!]
+  dealerChoiceGames: [GameType!]
+  runItTwiceAllowed: Boolean
+  seatChangeAllowed: Boolean
+  seatChangeTimeout: Int    # default 10 seconds
+  waitlistAllowed: Boolean
+  waitlistSittingTimeout: Int
+
+  breakAllowed: Boolean
+  breakLength: Int # in minutes (default 15 mins)
+}
+
+
+
+input GameConfigUpdateInput {
+  # coming from game updates (can be changed)
+  autoStraddle: Boolean
+  straddleOption: Boolean
+  participateBombPot: Boolean
+  muckLosingHand: Boolean
 }
 
 type PlayerRole {
@@ -383,7 +434,10 @@ input GameConfigChangeInput {
   runItTwicePrompt: Boolean
 }
 
-
+input LocationInput {
+  lat: Float!
+  long: Float!
+}
 
 type Mutation {
   # Not implemented
@@ -401,8 +455,8 @@ type Mutation {
   # implemented
   configureGame(clubCode: String!, game: GameCreateInput!): GameInfo!
   configureFriendsGame(game: GameCreateInput!): GameInfo!
-  joinGame(gameCode: String!, seatNo: Int!): PlayerGameStatus!
-  takeSeat(gameCode: String!, seatNo: Int!): SeatInfo!
+  joinGame(gameCode: String!, seatNo: Int!, location: LocationInput): PlayerGameStatus!
+  takeSeat(gameCode: String!, seatNo: Int!, location: LocationInput): SeatInfo!
   buyIn(gameCode: String!, amount: Float!): BuyInStatus!
   reload(gameCode: String!, amount: Float!): BuyInStatus!
   approveRequest(
@@ -413,7 +467,7 @@ type Mutation {
   ): Boolean!
   startGame(gameCode: String!): GameStatus!
   takeBreak(gameCode: String!): Boolean!
-  sitBack(gameCode: String!): Boolean!
+  sitBack(gameCode: String!, location: LocationInput): Boolean!
   leaveGame(gameCode: String!): Boolean!
   pauseGame(gameCode: String!): GameStatus!
   endGame(gameCode: String!): GameStatus!

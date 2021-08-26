@@ -23,16 +23,6 @@ class ChipsTrackRepositoryImpl {
       //   return true;
       // }
 
-      const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-
-      const gameId = game.id;
-      const gameUpdates = await gameUpdatesRepo.findOne({
-        gameID: gameId,
-      });
-      if (!gameUpdates) {
-        throw new Error(`Game Updates for ${gameId} is not found`);
-      }
-
       //logger.info('****** STARTING TRANSACTION FOR RAKE CALCULATION');
       await getGameManager().transaction(async transactionEntityManager => {
         // update session time
@@ -145,7 +135,7 @@ class ChipsTrackRepositoryImpl {
           const playerChips = await transactionEntityManager
             .getRepository(PlayerGameTracker)
             .find({
-              where: {game: {id: gameId}},
+              where: {game: {id: game.id}},
             });
 
           for (const playerChip of playerChips) {
@@ -242,13 +232,13 @@ class ChipsTrackRepositoryImpl {
 
     const game = await Cache.getGame(gameCode);
     const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-    const gameUpdates = await gameUpdatesRepo.find({
+    const gameUpdate = await gameUpdatesRepo.findOne({
       where: {gameID: game.id},
     });
-    if (!gameUpdates || gameUpdates.length === 0) {
+    if (!gameUpdate) {
       return 0;
     }
-    return gameUpdates[0].rake;
+    return gameUpdate.rake;
   }
 }
 

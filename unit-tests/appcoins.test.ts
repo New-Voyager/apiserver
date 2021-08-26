@@ -78,7 +78,7 @@ const holdemGameInput = {
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,
-  waitlistSupported: true,
+  waitlistAllowed: true,
   maxWaitList: 10,
   sitInApproval: true,
   rakePercentage: 5.0,
@@ -208,7 +208,7 @@ describe('Appcoin tests', () => {
   // free time: 15 seconds
   // after free time, we give extra free 15 seconds to let the host buy coins
   // in this case, the host does not buy any app coins
-  test('AppCoin: host does not buy coins', async () => {
+  test.skip('AppCoin: host does not buy coins', async () => {
     // setup server configuration
     const config = getAppSettings();
     config.freeTime = 15; // 15 seconds
@@ -229,7 +229,7 @@ describe('Appcoin tests', () => {
       playerUuids,
       100
     );
-    
+
     const dir = 'hand-results/app-coin';
     const files = await glob.sync('**/*.json', {
       onlyFiles: false,

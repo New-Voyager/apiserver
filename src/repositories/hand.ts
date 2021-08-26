@@ -825,6 +825,11 @@ class HandRepositoryImpl {
         throw new Error(`Game ${gameID} is not found`);
       }
       gameCode = gameFromCache.gameCode;
+      const gameUpdates = await Cache.getGameUpdates(gameCode);
+      if (!gameUpdates) {
+        throw new Error(`Game ${gameID} is not found`);
+      }
+
       game = gameFromCache;
       const playersInHand = result.result.playerInfo;
       let gameType = GameType[result.gameType as keyof typeof GameType];
@@ -847,6 +852,7 @@ class HandRepositoryImpl {
             }
 
             if (gameType !== GameType.UNKNOWN) {
+              gameUpdates;
               await StatsRepository.newClubGame(gameType, game.clubId);
             }
           } catch (err) {}
@@ -1041,6 +1047,7 @@ class HandRepositoryImpl {
               gameID: gameID,
             })
             .execute();
+          await Cache.getGameUpdates(game.gameCode, true);
           const saveResult: SaveHandResult = {
             gameCode: game.gameCode,
             handNum: result.handNum,
@@ -1058,13 +1065,15 @@ class HandRepositoryImpl {
         }
       );
 
+      let pendingUpdates = false;
       for (const seatNo of Object.keys(playersInHand)) {
         const player = playersInHand[seatNo];
-        if (player.balance.after == 0) {
+        if (player.balance.after === 0) {
           logger.info(
             `Game [${game.gameCode}]: A player balance stack went to 0`
           );
           await Cache.updateGamePendingUpdates(game.gameCode, true);
+          pendingUpdates = true;
           break;
         }
       }
@@ -1083,11 +1092,25 @@ class HandRepositoryImpl {
             // set pending updates true
             await Cache.updateGamePendingUpdates(game.gameCode, true);
             const player = await Cache.getPlayer(game.hostUuid);
-
             GameRepository.endGameNextHand(player, game.id);
+            pendingUpdates = true;
           }
         }
       } catch (err) {}
+
+      if (!pendingUpdates) {
+        if (gameUpdates.lastIpGpsCheckTime) {
+          const now = new Date();
+          const diff = Math.ceil(
+            (now.getTime() - gameUpdates.lastIpGpsCheckTime.getTime()) / 1000
+          );
+          if (diff > getAppSettings().ipGpsCheckInterval) {
+            logger.info('Game: [${game.gameCode}] time to check IP/GPS');
+            await Cache.updateGamePendingUpdates(game.gameCode, true);
+          }
+        }
+      }
+
       //logger.info(`Result: ${JSON.stringify(saveResult)}`);
       //logger.info('****** ENDING TRANSACTION TO SAVE a hand result');
       return saveResult;

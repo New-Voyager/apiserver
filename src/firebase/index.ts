@@ -453,6 +453,7 @@ export interface AppSettings {
   gameCoinsPerBlock: number;
   agoraCoinsPerBlock: number;
   compressHandData: boolean;
+  ipGpsCheckInterval: number;
 }
 
 // get from firebase and update periodically
@@ -466,6 +467,7 @@ let settings: AppSettings = {
   gameCoinsPerBlock: 3, // 3 coins per 15 minutes
   agoraCoinsPerBlock: 3, // 3 coins per 15 minutes
   compressHandData: false,
+  ipGpsCheckInterval: 15 * 60, // ip/gps check interval in seconds
 };
 
 export function getAppSettings(): AppSettings {
@@ -483,6 +485,7 @@ export function resetAppSettings() {
     agoraCoinsPerBlock: 3, // 3 coins per 15 minutes
     notifyHostTimeWindow: 10 * 60,
     compressHandData: false,
+    ipGpsCheckInterval: 15 * 60,
   };
 }
 

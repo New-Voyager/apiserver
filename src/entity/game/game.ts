@@ -25,6 +25,10 @@ export class PokerGameUpdates {
   @Column({primary: true, name: 'game_id'})
   public gameID!: number;
 
+  @Index()
+  @Column({unique: true, name: 'game_code'})
+  public gameCode!: string;
+
   @Column({name: 'players_in_seats', type: 'int', default: 0})
   public playersInSeats!: number;
 
@@ -104,18 +108,8 @@ export class PokerGameUpdates {
   })
   public nextCoinConsumeTime!: Date;
 
-  // bomb pot settings
-  @Column({name: 'bomb_pot_on', default: false})
-  public bombPotEnabled!: boolean;
-
-  @Column({type: 'int', name: 'bomb_pot_bet', default: 5}) // x BB
-  public bombPotBet!: number;
-
-  @Column({name: 'double_board_bomb_pot', default: false})
-  public doubleBoardBombPot!: boolean;
-
-  @Column({type: 'int', name: 'bomb_pot_interval_in_secs', default: 30 * 60})
-  public bombPotInterval!: number;
+  @Column({type: 'int', name: 'bomb_pot_next_hand_num', default: 0}) // next bomb pot hand number
+  public bombPotNextHandNum!: number;
 
   @DbAwareColumn({
     name: 'last_bomb_pot_time',
@@ -123,9 +117,6 @@ export class PokerGameUpdates {
     nullable: true,
   })
   public lastBombPotTime!: Date;
-
-  @Column({type: 'int', name: 'bomb_pot_next_hand_num', default: 0}) // next bomb pot hand number
-  public bombPotNextHandNum!: number;
 
   @Column({name: 'appcoin_host_notified', default: false})
   public appCoinHostNotified!: boolean;
@@ -135,6 +126,13 @@ export class PokerGameUpdates {
 
   @Column({name: 'appcoin_consume_block', default: 0, type: 'int'}) // game time (in seconds) to allow game runtime
   public appcoinConsumeBlock!: number;
+
+  @DbAwareColumn({
+    name: 'last_ip_gps_check_time',
+    type: 'timestamp',
+    nullable: true,
+  })
+  public lastIpGpsCheckTime!: Date;
 
   @Column({name: 'seat1', type: 'int', default: SeatStatus.OPEN})
   public seat1!: number;
@@ -165,6 +163,79 @@ export class PokerGameUpdates {
 
   @Column({name: 'seat10', type: 'int', default: SeatStatus.OPEN})
   public seat10!: number;
+}
+
+@Entity({name: 'poker_game_settings'})
+export class PokerGameSettings {
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @Index()
+  @Column({unique: true, name: 'game_code'})
+  public gameCode!: string;
+
+  // bomb pot settings
+  @Column({name: 'bomb_pot_on', default: false})
+  public bombPotEnabled!: boolean;
+
+  @Column({type: 'int', name: 'bomb_pot_bet', default: 5}) // x BB
+  public bombPotBet!: number;
+
+  @Column({name: 'double_board_bomb_pot', default: false})
+  public doubleBoardBombPot!: boolean;
+
+  @Column({type: 'int', name: 'bomb_pot_interval_in_secs', default: 30 * 60})
+  public bombPotInterval!: number;
+
+  @Column({name: 'break_allowed', default: false})
+  public breakAllowed!: boolean;
+
+  @Column({name: 'break_length', default: 1})
+  public breakLength!: number;
+
+  @Column({name: 'seat_change_allowed', default: true})
+  public seatChangeAllowed!: boolean;
+
+  @Column({name: 'waitlist_allowed', default: true})
+  public waitlistAllowed!: boolean;
+
+  @Column({name: 'max_waitlist', type: 'int', default: 20})
+  public maxWaitlist!: number;
+
+  @Column({name: 'seatchange_timeout', type: 'int', default: 30})
+  public seatChangeTimeout!: number;
+
+  @Column({name: 'buy_in_approval', default: false})
+  public buyInApproval!: boolean;
+
+  @Column({name: 'buyin_timeout', type: 'int', default: 60})
+  public buyInTimeout!: number;
+
+  @Column({name: 'waitlist_sitting_timeout', type: 'int', default: 180})
+  public waitlistSittingTimeout!: number;
+
+  @Column({name: 'run_it_twice_allowed', default: false})
+  public runItTwiceAllowed!: boolean;
+
+  @Column({name: 'allow_rabbit_hunt', default: true})
+  public allowRabbitHunt!: boolean;
+
+  // used for tracking game number for club games
+  @Column({name: 'audio_conf_enabled', default: false})
+  public audioConfEnabled!: boolean;
+
+  // flag to indicate whether agroa conference should be used or not
+  @Column({name: 'use_agora', default: false})
+  public useAgora!: boolean;
+
+  @Column({name: 'ip_check', default: false})
+  public ipCheck!: boolean;
+
+  @Column({name: 'gps_check', default: false})
+  public gpsCheck!: boolean;
+
+  @Column({name: 'gps_allowed_distance', default: 30})
+  public gpsAllowedDistance!: number;
 }
 
 @Entity({name: 'poker_game'})
@@ -256,44 +327,11 @@ export class PokerGame {
   @Column({name: 'game_length', type: 'int'})
   public gameLength!: number;
 
-  @Column({name: 'buy_in_approval', default: false})
-  public buyInApproval!: boolean;
-
   @Column({name: 'sit_in_approval', default: false})
   public sitInApproval!: boolean;
 
-  @Column({name: 'break_length', default: 1})
-  public breakLength!: number;
-
-  @Column({name: 'seat_change_allowed', default: true})
-  public seatChangeAllowed!: boolean;
-
-  @Column({name: 'waitlist_allowed', default: true})
-  public waitlistAllowed!: boolean;
-
   @Column({name: 'auto_kick_after_break', default: true})
   public autoKickAfterBreak!: boolean;
-
-  @Column({name: 'waitlist_supported', default: true})
-  public waitlistSupported!: boolean;
-
-  @Column({name: 'max_waitlist', type: 'int', default: 20})
-  public maxWaitlist!: number;
-
-  @Column({name: 'seatchange_timeout', type: 'int', default: 30})
-  public seatChangeTimeout!: number;
-
-  @Column({name: 'buyin_timeout', type: 'int', default: 60})
-  public buyInTimeout!: number;
-
-  @Column({name: 'waitlist_sitting_timeout', type: 'int', default: 180})
-  public waitlistSittingTimeout!: number;
-
-  @Column({name: 'run_it_twice_allowed', default: false})
-  public runItTwiceAllowed!: boolean;
-
-  @Column({name: 'allow_rabbit_hunt', default: true})
-  public allowRabbitHunt!: boolean;
 
   @Column({name: 'show_hand_rank', default: false})
   public showHandRank!: boolean;
@@ -402,14 +440,6 @@ export class PokerGame {
   @Column({name: 'hh_tracked', default: false})
   public highHandTracked!: boolean;
 
-  // used for tracking game number for club games
-  @Column({name: 'audio_conf_enabled', default: false})
-  public audioConfEnabled!: boolean;
-
-  // flag to indicate whether agroa conference should be used or not
-  @Column({name: 'use_agora', default: false})
-  public useAgora!: boolean;
-
   @Column({name: 'data_moved', default: false})
   public dataMoved!: boolean;
 
@@ -418,7 +448,9 @@ export class PokerGame {
 
   public pendingUpdates = false;
 
-  public nextCoinConsumeTime: Date | null = null;
+  // public nextCoinConsumeTime: Date | null = null;
+
+  // public lastIpCheckTime: Date | null = null;
 }
 
 @Entity({name: 'next_hand_updates'})

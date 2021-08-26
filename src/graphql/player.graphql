@@ -167,4 +167,5 @@ type Mutation {
   sendPlayerFcmMessage(message: Json!): Boolean
   changeDisplayName(name: String!): Boolean
   updatePlayer(input: PlayerUpdateInput!): Boolean
+  updateLocation(location: LocationInput!): Boolean!
 }

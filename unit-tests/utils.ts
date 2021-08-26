@@ -10,6 +10,7 @@ import {
   PokerGame,
   NextHandUpdates,
   PokerGameUpdates,
+  PokerGameSettings,
 } from '../src/entity/game/game';
 import {HandHistory} from '../src/entity/history/hand';
 import {PlayerGameTracker} from '../src/entity/game/player_game_tracker';
@@ -31,7 +32,11 @@ import {
 
 import {Announcement} from '../src/entity/player/announcements';
 import {ClubTokenTransactions} from '../src/entity/player/accounting';
-import {CoinPurchaseTransaction, PlayerCoin, CoinConsumeTransaction} from '../src/entity/player/appcoin';
+import {
+  CoinPurchaseTransaction,
+  PlayerCoin,
+  CoinConsumeTransaction,
+} from '../src/entity/player/appcoin';
 
 import {
   ClubMessageInput,
@@ -92,6 +97,7 @@ export async function sqlliteConnection() {
           GameServer,
           TrackGameServer,
           PokerGameUpdates,
+          PokerGameSettings,
           HighHand,
           GameReward,
           GameRewardTracking,
@@ -139,6 +145,7 @@ export async function setupGameEnvironment(
   players: Array<string>,
   buyin: number,
   gameInput: any,
+  playersInfo?: any
 ): Promise<[string, number]> {
   const gameServer = {
     ipAddress: '10.1.1.1',
@@ -150,14 +157,27 @@ export async function setupGameEnvironment(
   const game = await configureGame(owner, club, gameInput);
   let i = 1;
   for await (const player of players) {
-    await joinGame(player, game.gameCode, i);
+    let joined = false;
+    if (playersInfo) {
+      const playerInfo = playersInfo[player];
+      if (playerInfo && playerInfo.location) {
+        await joinGame(player, game.gameCode, i, {
+          ip: playerInfo.ipAddress,
+          location: playerInfo.location,
+        });
+        joined = true;
+      }
+    }
+
+    if (!joined) {
+      await joinGame(player, game.gameCode, i);
+    }
     await buyIn(player, game.gameCode, buyin);
     i++;
   }
   await startGame(owner, game.gameCode);
   return [game.gameCode, game.id];
 }
-
 
 export async function createClubWithMembers(
   ownerInput: any,

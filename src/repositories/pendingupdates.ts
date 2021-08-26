@@ -12,6 +12,7 @@ import {getLogger} from '@src/utils/log';
 import {
   NextHandUpdates,
   PokerGame,
+  PokerGameSettings,
   PokerGameUpdates,
 } from '@src/entity/game/game';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
@@ -34,6 +35,7 @@ import {reloadApprovalTimeoutExpired} from './timer';
 import {Reload} from './reload';
 import {getGameConnection, getGameManager, getGameRepository} from '.';
 import {Player} from '@src/entity/player/player';
+import {LocationCheck} from './locationcheck';
 
 const logger = getLogger('pending-updates');
 
@@ -69,6 +71,11 @@ export async function processPendingUpdates(gameId: number) {
   const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
   const gameUpdate = await gameUpdatesRepo.findOne({gameID: game.id});
   if (!gameUpdate) {
+    return;
+  }
+
+  const gameSettings = await Cache.getGameSettings(game.gameCode);
+  if (!gameSettings) {
     return;
   }
 
@@ -198,7 +205,7 @@ export async function processPendingUpdates(gameId: number) {
       }
     }
 
-    let seatChangeAllowed = game.seatChangeAllowed;
+    let seatChangeAllowed = gameSettings.seatChangeAllowed;
     const seats = await occupiedSeats(game.id);
     seatChangeAllowed = true; // debugging
     if (seatChangeAllowed && openedSeat) {
@@ -216,12 +223,18 @@ export async function processPendingUpdates(gameId: number) {
     }
   }
 
-  if (!seatChangeInProgress && game.waitlistAllowed) {
+  if (!seatChangeInProgress && gameSettings.waitlistAllowed) {
     const waitlistMgmt = new WaitListMgmt(game);
     await waitlistMgmt.runWaitList();
   }
 
   if (endPendingProcess) {
+    if (gameSettings.gpsCheck || gameSettings.ipCheck) {
+      logger.info(`Game: [${game.gameCode}] Running location check...`);
+      const locationCheck = new LocationCheck(game, gameSettings);
+      await locationCheck.check();
+    }
+
     // start buy in timers for the player's whose stack is 0 and playing
     await BuyIn.startBuyInTimers(game);
 

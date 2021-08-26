@@ -1,19 +1,17 @@
 import {GameStatus, GameType, TableStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
-import {
-  markDealerChoiceNextHand,
-  processPendingUpdates,
-} from '@src/repositories/pendingupdates';
+import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
-import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {
+  PokerGame,
+  PokerGameSettings,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
 import {PlayerStatus} from '@src/entity/types';
-import {getManager, getRepository} from 'typeorm';
-import {NewHandInfo, PlayerInSeat} from '@src/repositories/types';
 import _ from 'lodash';
 import {delay} from '@src/utils';
-import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {getGameManager} from '@src/repositories';
+import {getGameManager, getGameRepository} from '@src/repositories';
 import {GameReward} from '@src/entity/game/reward';
 import {NextHandProcess} from '@src/repositories/nexthand';
 
@@ -177,6 +175,7 @@ class GameAPIs {
             if (!game) {
               throw new Error(`Game ${gameCode} is not found`);
             }
+            const gameSettings = await Cache.getGameSettings(game.gameCode);
             const playersInSeats = await GameRepository.getPlayersInSeats(
               game.id,
               transactionEntityManager
@@ -230,7 +229,7 @@ class GameAPIs {
               privateGame: game.privateGame,
               startedBy: game.hostName,
               startedByUuid: game.hostUuid,
-              breakLength: game.breakLength,
+              breakLength: gameSettings.breakLength,
               autoKickAfterBreak: game.autoKickAfterBreak,
               rewardTrackingIds: rewardTrackingIds,
               seatInfo: {
@@ -363,6 +362,7 @@ class GameAPIs {
             calculateButtonPos: false,
           }
         );
+        await Cache.getGameUpdates(game.gameCode, true);
       }
     );
   }

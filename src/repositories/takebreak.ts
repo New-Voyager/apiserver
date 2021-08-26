@@ -1,5 +1,10 @@
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {NextHandUpdates, PokerGame} from '@src/entity/game/game';
+import {
+  NextHandUpdates,
+  PokerGame,
+  PokerGameSettings,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {GameStatus, NextHandUpdate, PlayerStatus} from '@src/entity/types';
 import {playerStatusChanged} from '@src/gameserver';
@@ -97,7 +102,7 @@ export class TakeBreak {
     return true;
   }
 
-  public async processPendingUpdate(update: NextHandUpdates) {
+  public async processPendingUpdate(update: NextHandUpdates | null) {
     logger.info(`Player ${this.player.name} is taking a break`);
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const rows = await playerGameTrackerRepository
@@ -115,9 +120,10 @@ export class TakeBreak {
     const playerInGame = rows[0];
 
     await this.startTimer(playerGameTrackerRepository);
-
-    const pendingUpdatesRepo = getGameRepository(NextHandUpdates);
-    pendingUpdatesRepo.delete({id: update.id});
+    if (update) {
+      const pendingUpdatesRepo = getGameRepository(NextHandUpdates);
+      pendingUpdatesRepo.delete({id: update.id});
+    }
 
     // update the clients with new status
     await playerStatusChanged(
@@ -133,9 +139,16 @@ export class TakeBreak {
   private async startTimer(
     playerGameTrackerRepository: Repository<PlayerGameTracker>
   ) {
+    const gameSettings = await Cache.getGameSettings(this.game.gameCode);
+    if (!gameSettings) {
+      throw new Error(
+        `Game code: ${this.game.gameCode} is not found in PokerGameSettings`
+      );
+    }
+
     const now = utcTime(new Date());
     const breakTimeExpAt = new Date();
-    let timeoutInMins = this.game.breakLength;
+    let timeoutInMins = gameSettings.breakLength;
     timeoutInMins = 1;
     const timeoutInSeconds = timeoutInMins * 10 * 60;
     breakTimeExpAt.setSeconds(breakTimeExpAt.getSeconds() + timeoutInSeconds);

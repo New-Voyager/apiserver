@@ -184,6 +184,9 @@ const resolvers: any = {
     updateFirebaseToken: async (parent, args, ctx, info) => {
       return updateFirebaseToken(ctx.req.playerId, args.token);
     },
+    updateLocation: async (parent, args, ctx, info) => {
+      return updateLocation(ctx.req.playerId, '', args.location);
+    },
     setNotes: async (parent, args, ctx, info) => {
       const ret = await setNotes(
         ctx.req.playerId,
@@ -688,4 +691,17 @@ export async function changeDisplayName(
     throw new Error('Unauthorized');
   }
   return await PlayerRepository.changeDisplayName(playerId, name);
+}
+
+export async function updateLocation(
+  playerUuid: string,
+  ip: string,
+  location: any
+) {
+  // update player location
+  const player = await Cache.getPlayer(playerUuid);
+  if (!player) {
+    throw new Error(`Player ${playerUuid} is not found`);
+  }
+  await Cache.updatePlayerLocation(playerUuid, location, ip);
 }
