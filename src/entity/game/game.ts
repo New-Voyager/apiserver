@@ -177,6 +177,9 @@ export class PokerGameSettings {
   @Column({name: 'show_hand_rank', default: false})
   public showHandRank!: boolean;
 
+  @Column({name: 'double_board_every_hand', default: false})
+  public doubleBoardEveryHand!: boolean;
+
   // bomb pot settings
   @Column({name: 'bomb_pot_on', default: false})
   public bombPotEnabled!: boolean;
@@ -189,6 +192,9 @@ export class PokerGameSettings {
 
   @Column({type: 'int', name: 'bomb_pot_interval_in_secs', default: 30 * 60})
   public bombPotInterval!: number;
+
+  @Column({name: 'bomb_pot_every_hand', default: false})
+  public bombPotEveryHand!: boolean;
 
   @Column({name: 'break_allowed', default: false})
   public breakAllowed!: boolean;

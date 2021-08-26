@@ -21,9 +21,12 @@ class GameSettingsRepositoryImpl {
     }
     gameSettings.gameCode = gameCode;
     gameSettings.useAgora = input.useAgora;
+    gameSettings.doubleBoardEveryHand = input.doubleBoardEveryHand;
+
     // setup bomb pot settings
+    gameSettings.bombPotEnabled = input.bombPotEnabled;
     if (input.bombPotEnabled) {
-      gameSettings.bombPotEnabled = input.bombPotEnabled;
+      gameSettings.bombPotEveryHand = input.bombPotEveryHand;
       gameSettings.bombPotBet = input.bombPotBet; // x BB value
       gameSettings.doubleBoardBombPot = input.doubleBoardBombPot;
       if (input.bombBotInterval) {
@@ -78,10 +81,16 @@ class GameSettingsRepositoryImpl {
     if (input.showHandRank !== undefined) {
       gameSettingsProps.showHandRank = input.showHandRank;
     }
-
+    if (input.doubleBoardEveryHand !== undefined) {
+      gameSettingsProps.doubleBoardEveryHand = input.doubleBoardEveryHand;
+    }
     if (input.bombPotEnabled !== undefined) {
       gameSettingsProps.bombPotEnabled = input.bombPotEnabled;
     }
+    if (input.doubleBoardEveryHand !== undefined) {
+      gameSettingsProps.doubleBoardEveryHand = input.doubleBoardEveryHand;
+    }
+
     if (input.doubleBoardBombPot !== undefined) {
       gameSettingsProps.doubleBoardBombPot = input.doubleBoardBombPot;
     }

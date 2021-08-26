@@ -103,6 +103,7 @@ input GameCreateInput {
   botGame: Boolean
   showHandRank: Boolean
   appCoinsNeeded: Boolean
+  doubleBoardEveryHand: Boolean
 
   # coming from game updates (can be changed)
   bombPotEnabled: Boolean
@@ -110,6 +111,7 @@ input GameCreateInput {
   doubleBoardBombPot: Boolean
   bombPotInterval: Int        
   bombPotIntervalInSecs: Int  # for tests
+  bombPotEveryHand: Boolean
 
   ipCheck: Boolean
   gpsCheck: Boolean
@@ -203,6 +205,7 @@ type GameInfo {
   runItTwiceAllowed: Boolean
   allowRabbitHunt: Boolean
   showHandRank: Boolean
+  doubleBoardEveryHand: Boolean
 
   # bomb pot (comes from PokerGameUpdates)
   bombPotEnabled: Boolean
@@ -210,7 +213,8 @@ type GameInfo {
   doubleBoardBombPot: Boolean
   bombPotInterval: Int        
   bombPotIntervalInSecs: Int 
-
+  bombPotEveryHand: Boolean
+  
   ipCheck: Boolean
   gpsCheck: Boolean
 
@@ -266,6 +270,7 @@ type GameSettings {
   runItTwiceAllowed: Boolean
   allowRabbitHunt: Boolean
   showHandRank: Boolean
+  doubleBoardEveryHand: Boolean
 
   # bomb pot (comes from PokerGameUpdates)
   bombPotEnabled: Boolean
@@ -273,6 +278,7 @@ type GameSettings {
   doubleBoardBombPot: Boolean
   bombPotInterval: Int        
   bombPotIntervalInSecs: Int 
+  bombPotEveryHand: Boolean
 
   seatChangeAllowed: Boolean
   seatChangeTimeout: Int    # default 10 seconds
@@ -294,6 +300,7 @@ input GameSettingsUpdateInput {
   runItTwiceAllowed: Boolean
   allowRabbitHunt: Boolean
   showHandRank: Boolean
+  doubleBoardEveryHand: Boolean
 
   # bomb pot (comes from PokerGameUpdates)
   bombPotEnabled: Boolean
@@ -301,6 +308,7 @@ input GameSettingsUpdateInput {
   doubleBoardBombPot: Boolean
   bombPotInterval: Int        
   bombPotIntervalInSecs: Int 
+  bombPotEveryHand: Boolean
 
   seatChangeAllowed: Boolean
   seatChangeTimeout: Int    # default 10 seconds
