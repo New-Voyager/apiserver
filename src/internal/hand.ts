@@ -1,6 +1,6 @@
 import {TakeBreak} from '@src/repositories/takebreak';
 import {getRepository, Repository} from 'typeorm';
-import {PokerGame} from '@src/entity/game/game';
+import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {Cache} from '@src/cache';
 import {WonAtStatus} from '@src/entity/types';
@@ -139,6 +139,7 @@ class HandServerAPIs {
       if (result.result?.timeoutStats) {
         await processConsecutiveActionTimeouts(
           gameID,
+          handNum,
           result.result.timeoutStats
         );
       } else {
@@ -174,14 +175,9 @@ export async function saveHand(gameID: number, handNum: number, result: any) {
 
 async function processConsecutiveActionTimeouts(
   gameID: number,
+  handNum: number,
   timeoutStats: any
 ) {
-  // TODO: Make this function idempotent.
-  // Add hand number to the player_action_tracker table and check it
-  // before accumulating the timeout counts so that we don't add the count multiple times
-  // and put the player in break prematurely if game server crashes and this
-  // function gets called more than once.
-
   const maxAllowedTimeouts = 4;
 
   const gameRespository: Repository<PokerGame> = getGameRepository(PokerGame);
@@ -195,6 +191,26 @@ async function processConsecutiveActionTimeouts(
   }
 
   await getGameConnection().transaction(async transactionEntityManager => {
+    const pokerGameUpdatesRepo: Repository<PokerGameUpdates> = transactionEntityManager.getRepository(
+      PokerGameUpdates
+    );
+    const pokerGameUpdates:
+      | PokerGameUpdates
+      | undefined = await pokerGameUpdatesRepo.findOne({
+      gameID: gameID,
+    });
+    if (!pokerGameUpdates) {
+      throw new Error(
+        `Unable to entry in poker game updates repo with game ID ${gameID} while processing consecutive action timeouts`
+      );
+    }
+    if (pokerGameUpdates.lastConsecutiveTimeoutProcessedHand >= handNum) {
+      logger.warn(
+        `Consecutive action timeouts were already processed for game ${gameID} hand ${pokerGameUpdates.lastConsecutiveTimeoutProcessedHand}. Skipping the processing for hand ${handNum}`
+      );
+      return;
+    }
+
     const playerGameTrackerRepository: Repository<PlayerGameTracker> = transactionEntityManager.getRepository(
       PlayerGameTracker
     );
@@ -263,6 +279,16 @@ async function processConsecutiveActionTimeouts(
           .execute();
       }
     }
+
+    // Remember that we processed the consecutive timeout counts for this hand,
+    // so that we don't add the count again if the game server crashes
+    // and this function gets called again.
+    await pokerGameUpdatesRepo
+      .createQueryBuilder()
+      .update()
+      .where({gameID: gameID})
+      .set({lastConsecutiveTimeoutProcessedHand: handNum})
+      .execute();
   });
 
   if (game) {
