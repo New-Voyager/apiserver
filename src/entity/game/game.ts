@@ -134,6 +134,16 @@ export class PokerGameUpdates {
   })
   public lastIpGpsCheckTime!: Date;
 
+  @Column({name: 'last_result_processed_hand', type: 'int', default: 0})
+  public lastResultProcessedHand!: number;
+
+  @Column({
+    name: 'last_consecutive_timeout_processed_hand',
+    type: 'int',
+    default: 0,
+  })
+  public lastConsecutiveTimeoutProcessedHand!: number;
+
   @Column({name: 'seat1', type: 'int', default: SeatStatus.OPEN})
   public seat1!: number;
 
