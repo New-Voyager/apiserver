@@ -79,6 +79,7 @@ import {
 } from '@src/errors';
 import {LocationCheck} from './locationcheck';
 import {Nats} from '@src/nats';
+import {GameSettingsRepository} from './gamesettings';
 const logger = getLogger('game');
 
 class GameRepositoryImpl {
@@ -182,69 +183,30 @@ class GameRepositoryImpl {
           const gameUpdatesRepo = transactionEntityManager.getRepository(
             PokerGameUpdates
           );
-          const gameSettingsRepo = transactionEntityManager.getRepository(
-            PokerGameSettings
-          );
           const gameUpdates = new PokerGameUpdates();
           gameUpdates.gameCode = savedGame.gameCode;
           gameUpdates.gameID = savedGame.id;
           const appSettings = getAppSettings();
           gameUpdates.appcoinPerBlock = appSettings.gameCoinsPerBlock;
 
-          const gameSettings = new PokerGameSettings();
-
           if (input.useAgora) {
             gameUpdates.appcoinPerBlock += appSettings.agoraCoinsPerBlock;
           }
-
-          gameSettings.gameCode = game.gameCode;
-          gameSettings.useAgora = input.useAgora;
-          // setup bomb pot settings
           if (input.bombPotEnabled) {
-            gameSettings.bombPotEnabled = input.bombPotEnabled;
-            gameSettings.bombPotBet = input.bombPotBet; // x BB value
-            gameSettings.doubleBoardBombPot = input.doubleBoardBombPot;
-            if (input.bombBotInterval) {
-              gameSettings.bombPotInterval = input.bombBotInterval * 60;
-            } else if (input.bombPotIntervalInSecs) {
-              gameSettings.bombPotInterval = input.bombPotIntervalInSecs;
-            }
             // set current time as last bomb pot time
             gameUpdates.lastBombPotTime = new Date();
 
             // first hand is bomb pot hand
             gameUpdates.bombPotNextHandNum = 1;
           }
-
-          /*
-            public buyInApproval!: boolean;
-            public breakAllowed!: boolean;
-            public breakLength!: number;
-            public seatChangeAllowed!: boolean;
-            public waitlistAllowed!: boolean;
-            public maxWaitlist!: number;
-            public seatChangeTimeout!: number;
-            public buyInTimeout!: number;
-            public waitlistSittingTimeout!: number;
-            public runItTwiceAllowed!: boolean;
-            public allowRabbitHunt!: boolean;
-          */
-          gameSettings.buyInApproval = input.buyInApproval;
-          gameSettings.breakAllowed = input.breakAllowed;
-          gameSettings.breakLength = input.breakLength;
-          gameSettings.seatChangeAllowed = input.seatChangeAllowed;
-          gameSettings.waitlistAllowed = input.waitlistAllowed;
-          gameSettings.waitlistSittingTimeout = input.waitlistSittingTimeout;
-          gameSettings.maxWaitlist = input.maxWaitList;
-          gameSettings.seatChangeTimeout = input.seatChangeTimeout;
-          gameSettings.breakAllowed = input.breakAllowed;
-          gameSettings.breakLength = input.breakLength;
-          gameSettings.buyInTimeout = input.buyInTimeout;
-          gameSettings.ipCheck = input.ipCheck;
-          gameSettings.gpsCheck = input.gpsCheck;
-
-          await gameSettingsRepo.save(gameSettings);
+          await GameSettingsRepository.create(
+            game.id,
+            game.gameCode,
+            input,
+            transactionEntityManager
+          );
           await gameUpdatesRepo.save(gameUpdates);
+
           saveUpdateTime = new Date().getTime() - saveUpdateTime;
           let pick = 0;
           if (gameServers.length > 0) {
@@ -376,7 +338,7 @@ class GameRepositoryImpl {
         }
       });
 
-      await Cache.getGameSettings(game.gameCode, true);
+      await GameSettingsRepository.get(game.gameCode, true);
       await Cache.getGameUpdates(game.gameCode, true);
       //logger.info('****** ENDING TRANSACTION TO CREATE a private game');
       logger.info(
@@ -458,7 +420,7 @@ class GameRepositoryImpl {
           g.big_blind as "bigBlind",
           g.started_at as "startedAt", 
           g.max_players as "maxPlayers", 
-          pgu.max_waitlist as "maxWaitList", 
+          100 as "maxWaitList", 
           pgu.players_in_waitlist as "waitlistCount", 
           pgu.players_in_seats as "tableCount", 
           g.game_status as "gameStatus",
@@ -495,7 +457,7 @@ class GameRepositoryImpl {
           g.big_blind as "bigBlind",
           g.started_at as "startedAt", 
           g.max_players as "maxPlayers", 
-          pgu.max_waitlist as "maxWaitList", 
+          100 as "maxWaitList", 
           pgu.players_in_waitlist as "waitlistCount", 
           pgu.players_in_seats as "tableCount", 
           g.game_status as "gameStatus",
@@ -632,7 +594,7 @@ class GameRepositoryImpl {
             `Seat change is in progress for game: ${game.gameCode}`
           );
         }
-        const gameSettings = await Cache.getGameSettings(game.gameCode);
+        const gameSettings = await GameSettingsRepository.get(game.gameCode);
         if (!gameSettings) {
           logger.error(`Game settings is not found for game: ${game.gameCode}`);
           throw new Error(
@@ -953,7 +915,7 @@ class GameRepositoryImpl {
       logger.error(`Game: ${game.gameCode} not available`);
       throw new Error(`Game: ${game.gameCode} not available`);
     }
-    const gameSettings = await Cache.getGameSettings(game.gameCode);
+    const gameSettings = await GameSettingsRepository.get(game.gameCode);
     if (!gameSettings) {
       throw new Error(
         `Game: ${game.gameCode} is not found in PokerGameSettings`

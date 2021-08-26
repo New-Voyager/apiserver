@@ -36,6 +36,7 @@ import {Reload} from './reload';
 import {getGameConnection, getGameManager, getGameRepository} from '.';
 import {Player} from '@src/entity/player/player';
 import {LocationCheck} from './locationcheck';
+import {GameSettingsRepository} from './gamesettings';
 
 const logger = getLogger('pending-updates');
 
@@ -74,7 +75,7 @@ export async function processPendingUpdates(gameId: number) {
     return;
   }
 
-  const gameSettings = await Cache.getGameSettings(game.gameCode);
+  const gameSettings = await GameSettingsRepository.get(game.gameCode);
   if (!gameSettings) {
     return;
   }

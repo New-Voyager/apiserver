@@ -14,6 +14,7 @@ import {delay} from '@src/utils';
 import {getGameManager, getGameRepository} from '@src/repositories';
 import {GameReward} from '@src/entity/game/reward';
 import {NextHandProcess} from '@src/repositories/nexthand';
+import {GameSettingsRepository} from '@src/repositories/gamesettings';
 
 const logger = getLogger('GameAPIs');
 
@@ -175,7 +176,9 @@ class GameAPIs {
             if (!game) {
               throw new Error(`Game ${gameCode} is not found`);
             }
-            const gameSettings = await Cache.getGameSettings(game.gameCode);
+            const gameSettings = await GameSettingsRepository.get(
+              game.gameCode
+            );
             const playersInSeats = await GameRepository.getPlayersInSeats(
               game.id,
               transactionEntityManager
