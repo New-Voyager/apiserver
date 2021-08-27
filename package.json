@@ -72,7 +72,7 @@
     "nodemailer": "^6.6.3",
     "nodemailer-smtp-transport": "^2.7.4",
     "pg": "^8.2.1",
-    "redis": "^3.0.2",
+    "redis": "^3.1.1",
     "reflect-metadata": "^0.1.13",
     "tsc-watch": "^4.2.8",
     "typeorm": "^0.2.25",
