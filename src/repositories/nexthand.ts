@@ -81,7 +81,7 @@ export class NextHandProcess {
           if (
             playerSeat &&
             playerSeat['stack'] === 0 &&
-            playerSeat['status'] == PlayerStatus.PLAYING
+            playerSeat['status'] === PlayerStatus.PLAYING
           ) {
             playerSeat['status'] = PlayerStatus.WAIT_FOR_BUYIN;
           }
@@ -111,7 +111,7 @@ export class NextHandProcess {
         const prevGameType = gameUpdate.gameType;
 
         // if this is the first hand, then use the currently occupied seats to determine button position
-        if (playerInSeatsInPrevHand.length == 0) {
+        if (playerInSeatsInPrevHand.length === 0) {
           playerInSeatsInPrevHand = occupiedSeats;
         }
 
@@ -140,15 +140,25 @@ export class NextHandProcess {
         let maxPlayers = game.maxPlayers;
         if (gameUpdate.calculateButtonPos) {
           while (maxPlayers > 0) {
+            maxPlayers--;
             buttonPos++;
             if (buttonPos > game.maxPlayers) {
               buttonPassedDealer = true;
               buttonPos = 1;
             }
+
+            // if the button position player had missed the blind and hasn't posted blind
+            // then the player cannot be in the hand
+            const playerSeat = takenSeats[buttonPos];
+            if (playerSeat) {
+              if (playerSeat.missedBlind && !playerSeat.postedBlind) {
+                continue;
+              }
+            }
+
             if (playerInSeatsInPrevHand[buttonPos] !== 0) {
               break;
             }
-            maxPlayers--;
           }
           gameUpdate.buttonPos = buttonPos;
         }
@@ -163,6 +173,14 @@ export class NextHandProcess {
           if (playerInSeatsInPrevHand[sbPos] !== 0) {
             break;
           }
+
+          // if there is a new player now in this hand
+          // and posted the blind, then the new player can play small blind
+          if (takenSeats[sbPos]) {
+            if (takenSeats[sbPos].postedBlind) {
+              break;
+            }
+          }
           maxPlayers--;
         }
         let bbPos = sbPos;
@@ -175,8 +193,9 @@ export class NextHandProcess {
 
           if (takenSeats[bbPos]) {
             const takenSeat = takenSeats[bbPos];
+
+            // this player is in break and missed the blind
             if (takenSeat.status === PlayerStatus.IN_BREAK) {
-              // this player missed the blind
               missedBlinds.push(bbPos);
             }
           }
@@ -365,7 +384,7 @@ export class NextHandProcess {
           if (
             playerSeat &&
             playerSeat['stack'] <= game.bigBlind &&
-            playerSeat['status'] == PlayerStatus.PLAYING
+            playerSeat['status'] === PlayerStatus.PLAYING
           ) {
             const player = await Cache.getPlayerById(playerSeat['playerId']);
             // if player balance is 0, we need to mark this player to add buyin
@@ -445,8 +464,14 @@ export class NextHandProcess {
               breakTimeExp = playerSeat.breakTimeExpAt.toISOString();
             }
             let activeSeat = true;
-            if (playerSeat.status == PlayerStatus.PLAYING) {
+            if (playerSeat.status === PlayerStatus.PLAYING) {
               inhand = true;
+
+              /*
+              If a player missed a blind and he is natural big blind, 
+              then include the player in this hand. Otherwise, mark
+              the player to post blind.
+              */
               // did this player missed blind?
               if (gameUpdate.bbPos !== seatNo) {
                 if (playerSeat.missedBlind) {
@@ -473,6 +498,20 @@ export class NextHandProcess {
                     playerSeat.status = PlayerStatus.NEED_TO_POST_BLIND;
                     inhand = false;
                   }
+                }
+              } else {
+                // this player is natural big blind, reset missed blind/posted blind if needed
+                if (playerSeat.missedBlind) {
+                  await playerGameTrackerRepo.update(
+                    {
+                      game: {id: game.id},
+                      seatNo: seatNo,
+                    },
+                    {
+                      missedBlind: false,
+                      postedBlind: false,
+                    }
+                  );
                 }
               }
               // don't allow the players who don't have min balance
@@ -508,7 +547,7 @@ export class NextHandProcess {
         }
         let tableStatus = game.tableStatus;
         const gameStatus = game.status;
-        if (activeSeats == 1) {
+        if (activeSeats === 1) {
           // not enough players
           await GameRepository.markTableStatus(
             game.id,

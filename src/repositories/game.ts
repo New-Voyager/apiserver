@@ -688,7 +688,10 @@ class GameRepositoryImpl {
             playerInGame.playerLocation = `${location.lat},${location.long}`;
           }
 
-          if (game.status === GameStatus.ACTIVE) {
+          if (
+            game.status === GameStatus.ACTIVE &&
+            game.tableStatus === TableStatus.GAME_RUNNING
+          ) {
             // player must post blind
             playerInGame.missedBlind = true;
           }
