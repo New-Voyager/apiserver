@@ -588,3 +588,140 @@ class NatsClass {
 
 const Nats = new NatsClass();
 export {Nats};
+
+
+export async function newPlayerSat(
+  game: PokerGame,
+  player: Player,
+  seatNo: number,
+  playerGameInfo: PlayerGameTracker
+) {
+  if (!notifyGameServer) {
+    return;
+  }
+
+  const gameServerUrl = await getGameServerUrl(game.id);
+
+  const message = {
+    type: 'PlayerUpdate',
+    gameId: game.id,
+    playerId: player.id,
+    playerUuid: player.uuid,
+    name: player.name,
+    seatNo: seatNo,
+    stack: playerGameInfo.stack,
+    status: playerGameInfo.status,
+    buyIn: playerGameInfo.buyIn,
+    gameToken: playerGameInfo.gameToken,
+    newUpdate: NewUpdate.NEW_PLAYER,
+  };
+
+  const url = `${gameServerUrl}/player-update`;
+  try {
+    const resp = await axios.post(url, message);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+  } catch (err) {
+    const msg = `Error while posting player update to ${url}: ${err.message}`;
+    logger.error(msg);
+  }
+}
+
+export async function playerBuyIn(
+  game: PokerGame,
+  player: Player,
+  playerGameInfo: PlayerGameTracker
+) {
+  if (!notifyGameServer) {
+    return;
+  }
+
+  const gameServerUrl = await getGameServerUrl(game.id);
+
+  const message = {
+    type: 'PlayerUpdate',
+    gameId: game.id,
+    playerId: player.id,
+    playerUuid: player.uuid,
+    name: player.name,
+    seatNo: playerGameInfo.seatNo,
+    stack: playerGameInfo.stack,
+    status: playerGameInfo.status,
+    buyIn: playerGameInfo.buyIn,
+    newUpdate: NewUpdate.NEW_BUYIN,
+  };
+  const url = `${gameServerUrl}/player-update`;
+  try {
+    const resp = await axios.post(url, message);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+  } catch (err) {
+    const msg = `Error while posting player update to ${url}: ${err.message}`;
+    logger.error(msg);
+  }
+}
+
+export async function changeGameStatus(
+  game: PokerGame,
+  status: GameStatus,
+  tableStatus: TableStatus
+) {
+  if (!notifyGameServer) {
+    return;
+  }
+  const gameServerUrl = await getGameServerUrl(game.id);
+
+  const message = {
+    type: 'GameStatus',
+    gameId: game.id,
+    gameStatus: status,
+    tableStatus: tableStatus,
+  };
+  const url = `${gameServerUrl}/game-update-status`;
+  try {
+    const resp = await axios.post(url, message);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+  } catch (err) {
+    const msg = `Error while posting game status change to ${url}: ${err.message}`;
+    logger.error(msg);
+    throw new Error(msg);
+  }
+}
+
+export async function playerKickedOut(
+  game: PokerGame,
+  player: any,
+  seatNo: number
+) {
+  if (!notifyGameServer) {
+    return;
+  }
+
+  const gameServerUrl = await getGameServerUrl(game.id);
+
+  const message = {
+    type: 'PlayerUpdate',
+    gameId: game.id,
+    playerId: player.id,
+    playerUuid: player.uuid,
+    name: player.name,
+    seatNo: seatNo,
+    status: PlayerStatus.KICKED_OUT,
+    newUpdate: NewUpdate.LEFT_THE_GAME,
+  };
+
+  const url = `${gameServerUrl}/player-update`;
+  try {
+    const resp = await axios.post(url, message);
+    if (resp?.status !== 200) {
+      throw new Error(`Received HTTP ${resp?.status}`);
+    }
+  } catch (err) {
+    const msg = `Error while posting player update to ${url}: ${err.message}`;
+    logger.error(msg);
+  }
+}
