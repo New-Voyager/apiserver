@@ -19,11 +19,7 @@ import {
 } from '@src/entity/types';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {GameRepository} from './game';
-import {
-  pendingProcessDone,
-  playerBuyIn,
-  playerStatusChanged,
-} from '@src/gameserver';
+import {playerStatusChanged} from '@src/gameserver';
 import {startTimer, cancelTimer} from '@src/timer';
 import {
   BUYIN_APPROVAL_TIMEOUT,
@@ -241,7 +237,7 @@ export class BuyIn {
     // get game server of this game
     const gameServer = await GameRepository.getGameServer(this.game.id);
     if (gameServer) {
-      playerBuyIn(this.game, this.player, playerInGame);
+      Nats.playerBuyIn(this.game, this.player, playerInGame);
     }
     gameServerTime = new Date().getTime() - gameServerTime;
 

@@ -16,16 +16,10 @@ import {
   PokerGameUpdates,
 } from '@src/entity/game/game';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {
-  pendingProcessDone,
-  playerBuyIn,
-  playerKickedOut,
-  playerLeftGame,
-} from '@src/gameserver';
 import {startTimer} from '@src/timer';
 import {occupiedSeats, WaitListMgmt} from './waitlist';
 import {SeatChangeProcess} from './seatchange';
-import {BUYIN_TIMEOUT, DEALER_CHOICE_TIMEOUT, NewUpdate} from './types';
+import {DEALER_CHOICE_TIMEOUT, NewUpdate} from './types';
 import _ from 'lodash';
 import {Nats} from '@src/nats';
 import {TakeBreak} from './takebreak';
@@ -37,6 +31,7 @@ import {getGameConnection, getGameManager, getGameRepository} from '.';
 import {Player} from '@src/entity/player/player';
 import {LocationCheck} from './locationcheck';
 import {GameSettingsRepository} from './gamesettings';
+import {resumeGame} from '@src/gameserver';
 
 const logger = getLogger('pending-updates');
 
@@ -245,11 +240,7 @@ export async function processPendingUpdates(gameId: number) {
       await handleDealersChoice(game, dealerChoiceUpdate, pendingUpdatesRepo);
     } else {
       const cachedGame = await Cache.getGame(game.gameCode);
-      await pendingProcessDone(
-        gameId,
-        cachedGame.status,
-        cachedGame.tableStatus
-      );
+      await resumeGame(gameId);
     }
   }
 }
@@ -293,9 +284,8 @@ async function kickoutPlayer(
   await GameRepository.seatOpened(game, playerInGame.seatNo);
 
   if (playerInGame) {
-    // notify game server, player is kicked out
     const player = await Cache.getPlayerById(update.playerId);
-    playerKickedOut(game, player, playerInGame.seatNo);
+    Nats.playerKickedOut(game, player, playerInGame.seatNo);
   }
   // delete this update
   pendingUpdatesRepo.delete({id: update.id});
@@ -405,7 +395,7 @@ async function leaveGame(
   if (playerInGame) {
     // notify game server, player is kicked out
     const player = await Cache.getPlayerById(update.playerId);
-    playerLeftGame(game, player, playerInGame.seatNo);
+    Nats.playerLeftGame(game, player, playerInGame.seatNo);
   }
   // delete this update
   pendingUpdatesRepo.delete({id: update.id});
@@ -452,7 +442,7 @@ async function buyinApproved(
   if (playerInGame) {
     const player = await Cache.getPlayerById(update.playerId);
     // notify game server, player has a new buyin
-    await playerBuyIn(game, player, playerInGame);
+    await Nats.playerBuyIn(game, player, playerInGame);
   }
   // delete this update
   await pendingUpdatesRepo.delete({id: update.id});

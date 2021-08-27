@@ -7,7 +7,6 @@ import {
   PlayerStatus,
   TableStatus,
 } from '@src/entity/types';
-import {pendingProcessDone, playerStatusChanged} from '@src/gameserver';
 import {getLogger} from '@src/utils/log';
 import {BuyIn} from './buyin';
 import {SeatChangeProcess} from './seatchange';
@@ -26,6 +25,7 @@ import {
 } from './types';
 import {WaitListMgmt} from './waitlist';
 import {getGameRepository, getUserRepository} from '.';
+import {resumeGame} from '@src/gameserver';
 
 const logger = getLogger('timer');
 
@@ -252,12 +252,12 @@ export async function dealerChoiceTimeout(gameID: number, playerID: number) {
     `Dealer choice timeout expired. GameID: ${gameID}, playerID: ${playerID}`
   );
   // pending updates done (resume game)
-  const game = await Cache.getGameById(gameID);
-  let gameStatus: GameStatus = GameStatus.ACTIVE;
-  let tableStatus: TableStatus = TableStatus.GAME_RUNNING;
-  if (game) {
-    gameStatus = game.status;
-    tableStatus = game.tableStatus;
-  }
-  await pendingProcessDone(gameID, gameStatus, tableStatus);
+  // const game = await Cache.getGameById(gameID);
+  // let gameStatus: GameStatus = GameStatus.ACTIVE;
+  // let tableStatus: TableStatus = TableStatus.GAME_RUNNING;
+  // if (game) {
+  //   gameStatus = game.status;
+  //   tableStatus = game.tableStatus;
+  // }
+  await resumeGame(gameID);
 }

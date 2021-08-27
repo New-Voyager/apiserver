@@ -66,26 +66,26 @@ export async function publishNewGame(game: any, gameServer: any) {
   }
 }
 
-export async function pendingProcessDone(
-  gameId: number,
-  gameStatus: GameStatus,
-  tableStatus: TableStatus
-) {
-  if (!notifyGameServer) {
-    return;
-  }
-  const gameServerUrl = await getGameServerUrl(gameId);
-  const url = `${gameServerUrl}/pending-updates?game-id=${gameId}&done=1&status=${gameStatus}&table-status=${tableStatus}`;
-  try {
-    const resp = await axios.post(url);
-    if (resp.status !== 200) {
-      logger.error(`Failed to update pending updates: ${url}`);
-      throw new Error(`Failed to update pending updates: ${url}`);
-    }
-  } catch (err) {
-    logger.error(`Failed to update pending updates for game: ${gameId}.`);
-  }
-}
+// export async function pendingProcessDone(
+//   gameId: number,
+//   gameStatus: GameStatus,
+//   tableStatus: TableStatus
+// ) {
+//   if (!notifyGameServer) {
+//     return;
+//   }
+//   const gameServerUrl = await getGameServerUrl(gameId);
+//   const url = `${gameServerUrl}/pending-updates?game-id=${gameId}&done=1&status=${gameStatus}&table-status=${tableStatus}`;
+//   try {
+//     const resp = await axios.post(url);
+//     if (resp.status !== 200) {
+//       logger.error(`Failed to update pending updates: ${url}`);
+//       throw new Error(`Failed to update pending updates: ${url}`);
+//     }
+//   } catch (err) {
+//     logger.error(`Failed to update pending updates for game: ${gameId}.`);
+//   }
+// }
 
 export async function resumeGame(gameId: number) {
   if (!notifyGameServer) {
@@ -128,40 +128,6 @@ export async function playerStatusChanged(
     stack: stack,
     status: oldStatus,
     newUpdate: newStatus,
-  };
-
-  const url = `${gameServerUrl}/player-update`;
-  try {
-    const resp = await axios.post(url, message);
-    if (resp?.status !== 200) {
-      throw new Error(`Received HTTP ${resp?.status}`);
-    }
-  } catch (err) {
-    const msg = `Error while posting player update to ${url}: ${err.message}`;
-    logger.error(msg);
-  }
-}
-
-export async function playerLeftGame(
-  game: PokerGame,
-  player: Player,
-  seatNo: number
-) {
-  if (!notifyGameServer) {
-    return;
-  }
-
-  const gameServerUrl = await getGameServerUrl(game.id);
-
-  const message = {
-    type: 'PlayerUpdate',
-    gameId: game.id,
-    playerId: player.id,
-    playerUuid: player.uuid,
-    name: player.name,
-    seatNo: seatNo,
-    status: PlayerStatus.LEFT,
-    newUpdate: NewUpdate.LEFT_THE_GAME,
   };
 
   const url = `${gameServerUrl}/player-update`;

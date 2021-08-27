@@ -28,13 +28,10 @@ import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
 import {
-  newPlayerSat,
   publishNewGame,
-  changeGameStatus,
-  playerKickedOut,
   playerConfigUpdate,
-  pendingProcessDone,
   playerStatusChanged,
+  resumeGame,
 } from '@src/gameserver';
 import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery, getDistanceInMeters} from '@src/utils';
@@ -1050,11 +1047,7 @@ class GameRepositoryImpl {
               // refresh the cache
               const gameUpdate = await Cache.getGame(game.gameCode, true);
               // resume the game
-              await pendingProcessDone(
-                gameUpdate.id,
-                gameUpdate.status,
-                gameUpdate.tableStatus
-              );
+              await resumeGame(gameUpdate.id);
             }
           }
         }
@@ -1364,7 +1357,11 @@ class GameRepositoryImpl {
       // update cached game
       game = await Cache.getGame(game.gameCode, true /** update */);
       // update the game server with new status
-      await changeGameStatus(game, status, TableStatus.WAITING_TO_BE_STARTED);
+      await Nats.changeGameStatus(
+        game,
+        status,
+        TableStatus.WAITING_TO_BE_STARTED
+      );
       return status;
     } else {
       if (status === GameStatus.ACTIVE) {
@@ -1424,7 +1421,7 @@ class GameRepositoryImpl {
           await Cache.getGameUpdates(game.gameCode, true);
         }
         // update the game server with new status
-        await changeGameStatus(game, status, game.tableStatus);
+        await Nats.changeGameStatus(game, status, game.tableStatus);
 
         const updatedGame = await Cache.getGame(
           game.gameCode,
@@ -1560,8 +1557,7 @@ class GameRepositoryImpl {
         );
         await Cache.getGameUpdates(game.gameCode, true);
 
-        // notify game server, player is kicked out
-        playerKickedOut(game, player, playerInGame.seatNo);
+        Nats.playerKickedOut(game, player, playerInGame.seatNo);
       } else {
         // game is running, so kickout the user in next hand
         // deal with this in the next hand update
@@ -1872,7 +1868,7 @@ class GameRepositoryImpl {
     await Cache.getGameUpdates(game.gameCode, true);
 
     // pending updates done
-    await pendingProcessDone(game.id, game.status, game.tableStatus);
+    await resumeGame(game.id);
   }
 
   public async updateJanus(
