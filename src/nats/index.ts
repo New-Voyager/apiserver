@@ -12,6 +12,9 @@ import * as nats from 'nats';
 import {v4 as uuidv4} from 'uuid';
 import {Cache} from '@src/cache';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
+import * as Constants from '../const';
+import {SeatMove, SeatUpdate} from '@src/types';
+
 const logger = getLogger('nats');
 
 class NatsClass {
@@ -503,9 +506,9 @@ class NatsClass {
       name: player.name,
       seatNo: playerGameInfo.seatNo,
       stack: playerGameInfo.stack,
-      status: playerGameInfo.status,
+      status: PlayerStatus[playerGameInfo.status],
       buyIn: playerGameInfo.buyIn,
-      newUpdate: NewUpdate.NEW_BUYIN,
+      newUpdate: NewUpdate[NewUpdate.NEW_BUYIN],
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
@@ -533,8 +536,8 @@ class NatsClass {
       playerUuid: player.uuid,
       name: player.name,
       seatNo: seatNo,
-      status: PlayerStatus.KICKED_OUT,
-      newUpdate: NewUpdate.LEFT_THE_GAME,
+      status: PlayerStatus[PlayerStatus.KICKED_OUT],
+      newUpdate: NewUpdate[NewUpdate.LEFT_THE_GAME],
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
@@ -651,8 +654,8 @@ class NatsClass {
       playerUuid: player.uuid,
       name: player.name,
       seatNo: seatNo,
-      status: PlayerStatus.LEFT,
-      newUpdate: NewUpdate.LEFT_THE_GAME,
+      status: PlayerStatus[PlayerStatus.LEFT],
+      newUpdate: NewUpdate[NewUpdate.LEFT_THE_GAME],
     };
     const messageStr = JSON.stringify(message);
     console.log(messageStr);
@@ -679,6 +682,114 @@ class NatsClass {
       gameId: game.id,
       gameStatus: GameStatus[status],
       tableStatus: TableStatus[tableStatus],
+    };
+    const messageStr = JSON.stringify(message);
+    console.log(messageStr);
+    const subject = this.getGameChannel(game.gameCode);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
+  }
+
+  // indicate the players that host has started to make seat change
+  public async hostSeatChangeProcessStarted(
+    game: PokerGame,
+    seatChangeHostId: number,
+    messageId?: string
+  ) {
+    if (this.client === null) {
+      return;
+    }
+
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message = {
+      type: 'TABLE_UPDATE',
+      subType: Constants.TableHostSeatChangeProcessStart,
+      gameId: game.id,
+      seatChangeHostId: seatChangeHostId,
+    };
+    const messageStr = JSON.stringify(message);
+    console.log(messageStr);
+    const subject = this.getGameChannel(game.gameCode);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
+  }
+
+  // indicate the players that host has ended the seat change
+  public async hostSeatChangeProcessEnded(
+    game: PokerGame,
+    seatUpdates: Array<SeatUpdate>,
+    seatChangeHostId: number,
+    messageId?: string
+  ) {
+    if (this.client === null) {
+      return;
+    }
+
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message = {
+      type: 'TABLE_UPDATE',
+      subType: Constants.TableHostSeatChangeProcessEnd,
+      gameId: game.id,
+      seatUpdates: seatUpdates,
+      seatChangeHostId: seatChangeHostId,
+    };
+    const messageStr = JSON.stringify(message);
+    console.log(messageStr);
+    const subject = this.getGameChannel(game.gameCode);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
+  }
+
+  // indicate the players that host has ended the seat change
+  public async hostSeatChangeSeatMove(
+    game: PokerGame,
+    updates: Array<SeatMove>,
+    messageId?: string
+  ) {
+    if (this.client === null) {
+      return;
+    }
+
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+    const message = {
+      type: 'TABLE_UPDATE',
+      subType: Constants.TableHostSeatChangeMove,
+      gameId: game.id,
+      seatMoves: updates,
+    };
+    const messageStr = JSON.stringify(message);
+    console.log(messageStr);
+    const subject = this.getGameChannel(game.gameCode);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
+  }
+
+  public async initiateSeatChangeProcess(
+    game: PokerGame,
+    seatNo: number,
+    timeRemaining: number,
+    seatChangePlayers: Array<number>,
+    seatChangeSeatNos: Array<number>,
+    messageId?: string
+  ) {
+    if (this.client === null) {
+      return;
+    }
+
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+    const message = {
+      type: Constants.TableSeatChangeProcess,
+      gameId: game.id,
+      seatNo: seatNo,
+      seatChangeRemainingTime: timeRemaining,
+      seatChangePlayers: seatChangePlayers,
+      seatChangeSeatNos: seatChangeSeatNos,
     };
     const messageStr = JSON.stringify(message);
     console.log(messageStr);

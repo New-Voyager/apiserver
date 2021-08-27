@@ -15,11 +15,6 @@ import {
 import {getLogger} from '@src/utils/log';
 import {EntityManager, IsNull, Not, Repository} from 'typeorm';
 import * as _ from 'lodash';
-import {
-  hostSeatChangeProcessEnded,
-  hostSeatChangeProcessStarted,
-  hostSeatChangeSeatMove,
-} from '@src/gameserver';
 import {cancelTimer, startTimer} from '@src/timer';
 import {PLAYER_SEATCHANGE_PROMPT} from './types';
 import {
@@ -476,7 +471,7 @@ export class SeatChangeProcess {
       }
 
       // notify the players seat change process has begun
-      await hostSeatChangeProcessStarted(this.game, host.id);
+      await Nats.hostSeatChangeProcessStarted(this.game, host.id);
     });
   }
 
@@ -562,7 +557,7 @@ export class SeatChangeProcess {
       );
 
       // notify the players seat change process has ended
-      await hostSeatChangeSeatMove(this.game, seatMoves);
+      await Nats.hostSeatChangeSeatMove(this.game, seatMoves);
     });
 
     return true;
@@ -612,7 +607,11 @@ export class SeatChangeProcess {
         transactionEntityManager
       );
       // notify the players seat change process has ended
-      await hostSeatChangeProcessEnded(this.game, currentSeatStatus, host.id);
+      await Nats.hostSeatChangeProcessEnded(
+        this.game,
+        currentSeatStatus,
+        host.id
+      );
     });
   }
 

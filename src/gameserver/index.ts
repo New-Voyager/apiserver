@@ -7,7 +7,6 @@ import {GameStatus, PlayerStatus, TableStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {NewUpdate} from '@src/repositories/types';
 import * as Constants from '../const';
-import {SeatMove, SeatUpdate} from '@src/types';
 
 export let notifyGameServer = false;
 const logger = getLogger('gameServer');
@@ -207,129 +206,6 @@ export async function waitlistSeating(
     waitlistPlayerName: player.name,
     waitlisttPlayerUuid: player.uuid,
     waitlistRemainingTime: timeRemaining,
-  };
-
-  const url = `${gameServerUrl}/table-update`;
-  try {
-    const resp = await axios.post(url, message);
-    if (resp?.status !== 200) {
-      throw new Error(`Received HTTP ${resp?.status}`);
-    }
-  } catch (err) {
-    const msg = `Error while posting table update to ${url}: ${err.message}`;
-    logger.error(msg);
-    throw new Error(msg);
-  }
-}
-
-export async function initiateSeatChangeProcess(
-  game: PokerGame,
-  seatNo: number,
-  timeRemaining: number,
-  seatChangePlayers: Array<number>,
-  seatChangeSeatNos: Array<number>
-) {
-  if (!notifyGameServer) {
-    return;
-  }
-
-  const gameServerUrl = await getGameServerUrl(game.id);
-  const message = {
-    type: Constants.TableSeatChangeProcess,
-    gameId: game.id,
-    seatNo: seatNo,
-    seatChangeRemainingTime: timeRemaining,
-    seatChangePlayers: seatChangePlayers,
-    seatChangeSeatNos: seatChangeSeatNos,
-  };
-
-  const url = `${gameServerUrl}/table-update`;
-  try {
-    const resp = await axios.post(url, message);
-    if (resp?.status !== 200) {
-      throw new Error(`Received HTTP ${resp?.status}`);
-    }
-  } catch (err) {
-    const msg = `Error while posting table update to ${url}: ${err.message}`;
-    logger.error(msg);
-    throw new Error(msg);
-  }
-}
-
-// indicate the players that host has started to make seat change
-export async function hostSeatChangeProcessStarted(
-  game: PokerGame,
-  seatChangeHostId: number
-) {
-  if (!notifyGameServer) {
-    return;
-  }
-
-  const gameServerUrl = await getGameServerUrl(game.id);
-  const message = {
-    type: Constants.TableHostSeatChangeProcessStart,
-    gameId: game.id,
-    seatChangeHostId: seatChangeHostId,
-  };
-
-  const url = `${gameServerUrl}/table-update`;
-  try {
-    const resp = await axios.post(url, message);
-    if (resp?.status !== 200) {
-      throw new Error(`Received HTTP ${resp?.status}`);
-    }
-  } catch (err) {
-    const msg = `Error while posting table update to ${url}: ${err.message}`;
-    logger.error(msg);
-    throw new Error(msg);
-  }
-}
-
-// indicate the players that host has ended the seat change
-export async function hostSeatChangeProcessEnded(
-  game: PokerGame,
-  seatUpdates: Array<SeatUpdate>,
-  seatChangeHostId: number
-) {
-  if (!notifyGameServer) {
-    return;
-  }
-
-  const gameServerUrl = await getGameServerUrl(game.id);
-  const message = {
-    type: Constants.TableHostSeatChangeProcessEnd,
-    gameId: game.id,
-    seatUpdates: seatUpdates,
-    seatChangeHostId: seatChangeHostId,
-  };
-
-  const url = `${gameServerUrl}/table-update`;
-  try {
-    const resp = await axios.post(url, message);
-    if (resp?.status !== 200) {
-      throw new Error(`Received HTTP ${resp?.status}`);
-    }
-  } catch (err) {
-    const msg = `Error while posting table update to ${url}: ${err.message}`;
-    logger.error(msg);
-    throw new Error(msg);
-  }
-}
-
-// indicate the players that host has ended the seat change
-export async function hostSeatChangeSeatMove(
-  game: PokerGame,
-  updates: Array<SeatMove>
-) {
-  if (!notifyGameServer) {
-    return;
-  }
-
-  const gameServerUrl = await getGameServerUrl(game.id);
-  const message = {
-    type: Constants.TableHostSeatChangeMove,
-    gameId: game.id,
-    seatMoves: updates,
   };
 
   const url = `${gameServerUrl}/table-update`;
