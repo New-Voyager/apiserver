@@ -2,7 +2,7 @@ import {Cache} from '@src/cache/index';
 import {PokerGame} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {PlayerStatus} from '@src/entity/types';
-import {openSeat} from '@src/gameserver';
+// import {openSeat} from '@src/gameserver';
 import {GameRepository} from '@src/repositories/game';
 import {
   hostSeatChangePlayers,
