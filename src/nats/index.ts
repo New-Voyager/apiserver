@@ -60,12 +60,15 @@ class NatsClass {
       bigBlind: game.bigBlind,
       title: title,
       clubName: clubName,
+      waitlistPlayerId: player.id,
       expTime: expTime.toISOString(),
       requestId: messageId,
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getPlayerChannel(player);
+    const gameChannel = this.getGameChannel(gameCode);
     this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.client.publish(gameChannel, this.stringCodec.encode(messageStr));
   }
 
   /*

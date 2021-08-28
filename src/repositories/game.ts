@@ -1736,21 +1736,21 @@ class GameRepositoryImpl {
         }
         await gameUpdateRepo.save(playerTrack);
       }
-      row = await gameUpdateRepo.findOne({
-        game: {id: game.id},
-        playerId: player.id,
-      });
+      // row = await gameUpdateRepo.findOne({
+      //   game: {id: game.id},
+      //   playerId: player.id,
+      // });
 
-      if (row) {
-        const update: any = {
-          playerId: player.id,
-          gameId: game.id,
-          muckLosingHand: row?.muckLosingHand,
-          runItTwicePrompt: row?.runItTwicePrompt,
-        };
+      // if (row) {
+      //   const update: any = {
+      //     playerId: player.id,
+      //     gameId: game.id,
+      //     muckLosingHand: row?.muckLosingHand,
+      //     runItTwicePrompt: row?.runItTwicePrompt,
+      //   };
 
-        await playerConfigUpdate(game, update);
-      }
+      //   await playerConfigUpdate(game, update);
+      // }
     });
   }
 

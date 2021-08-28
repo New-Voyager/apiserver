@@ -538,6 +538,7 @@ export class NextHandProcess {
               stack: playerSeat.stack,
               buyIn: playerSeat.buyIn,
               status: playerSeat.status,
+              runItTwice: playerSeat.runItTwicePrompt,
               buyInTimeExpAt: buyInExpTime,
               breakTimeExpAt: breakTimeExp,
               gameToken: '',

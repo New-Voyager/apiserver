@@ -79,6 +79,7 @@ export interface PlayerInSeat {
   muckLosingHand: boolean;
   activeSeat: boolean;
   postedBlind: boolean;
+  runItTwice?: boolean;
 }
 
 export interface NewHandInfo {
