@@ -7,7 +7,6 @@ import {
 } from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {GameStatus, NextHandUpdate, PlayerStatus} from '@src/entity/types';
-import {playerStatusChanged} from '@src/gameserver';
 import {startTimer} from '@src/timer';
 import {utcTime} from '@src/utils';
 import {getLogger} from '@src/utils/log';
@@ -16,6 +15,7 @@ import {BREAK_TIMEOUT, NewUpdate} from './types';
 import {Cache} from '@src/cache/index';
 import {getGameRepository} from '.';
 import {GameRepository} from './game';
+import {Nats} from '@src/nats';
 const logger = getLogger('takebreak');
 
 export class TakeBreak {
@@ -82,7 +82,7 @@ export class TakeBreak {
       await this.startTimer(playerGameTrackerRepository);
 
       // update the clients with new status
-      await playerStatusChanged(
+      await Nats.playerStatusChanged(
         this.game,
         this.player,
         playerInGame.status,
@@ -126,7 +126,7 @@ export class TakeBreak {
     }
 
     // update the clients with new status
-    await playerStatusChanged(
+    await Nats.playerStatusChanged(
       this.game,
       this.player,
       PlayerStatus.IN_BREAK,
@@ -218,7 +218,7 @@ export class TakeBreak {
     if (!playerInGame) {
       logger.error(`Game: ${this.game.gameCode} not available`);
     } else {
-      await playerStatusChanged(
+      await Nats.playerStatusChanged(
         this.game,
         this.player,
         playerInGame.status,

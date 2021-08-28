@@ -103,43 +103,61 @@ export async function resumeGame(gameId: number) {
   }
 }
 
-export async function playerStatusChanged(
-  game: PokerGame,
-  player: any,
-  oldStatus: PlayerStatus,
-  newStatus: NewUpdate,
-  stack: number,
-  seatNo: number
-) {
+export async function endGame(gameId: number) {
   if (!notifyGameServer) {
     return;
   }
-
-  const gameServerUrl = await getGameServerUrl(game.id);
-
-  const message = {
-    type: 'PlayerUpdate',
-    gameId: game.id,
-    playerId: player.id,
-    playerUuid: player.uuid,
-    name: player.name,
-    seatNo: seatNo,
-    stack: stack,
-    status: oldStatus,
-    newUpdate: newStatus,
-  };
-
-  const url = `${gameServerUrl}/player-update`;
+  const gameServerUrl = await getGameServerUrl(gameId);
+  const url = `${gameServerUrl}/end-game?game-id=${gameId}`;
   try {
-    const resp = await axios.post(url, message);
-    if (resp?.status !== 200) {
-      throw new Error(`Received HTTP ${resp?.status}`);
+    const resp = await axios.post(url);
+    if (resp.status !== 200) {
+      const msg = `Could not post to URL: ${url}`;
+      logger.error(msg);
+      throw new Error(msg);
     }
   } catch (err) {
-    const msg = `Error while posting player update to ${url}: ${err.message}`;
-    logger.error(msg);
+    logger.error(`Failed to end game: ${gameId}.`);
   }
 }
+
+// export async function playerStatusChanged(
+//   game: PokerGame,
+//   player: any,
+//   oldStatus: PlayerStatus,
+//   newStatus: NewUpdate,
+//   stack: number,
+//   seatNo: number
+// ) {
+//   if (!notifyGameServer) {
+//     return;
+//   }
+
+//   const gameServerUrl = await getGameServerUrl(game.id);
+
+//   const message = {
+//     type: 'PlayerUpdate',
+//     gameId: game.id,
+//     playerId: player.id,
+//     playerUuid: player.uuid,
+//     name: player.name,
+//     seatNo: seatNo,
+//     stack: stack,
+//     status: oldStatus,
+//     newUpdate: newStatus,
+//   };
+
+//   const url = `${gameServerUrl}/player-update`;
+//   try {
+//     const resp = await axios.post(url, message);
+//     if (resp?.status !== 200) {
+//       throw new Error(`Received HTTP ${resp?.status}`);
+//     }
+//   } catch (err) {
+//     const msg = `Error while posting player update to ${url}: ${err.message}`;
+//     logger.error(msg);
+//   }
+// }
 
 export async function getCurrentHandLog(gameId: number): Promise<any> {
   if (!notifyGameServer) {

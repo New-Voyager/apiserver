@@ -570,6 +570,7 @@ export class NextHandProcess {
           doubleBoard = gameSettings.doubleBoardBombPot;
         }
         const nextHandInfo: NewHandInfo = {
+          gameId: game.id,
           gameCode: this.gameCode,
           gameType: gameUpdate.gameType,
           announceGameType: announceGameType,
@@ -579,6 +580,10 @@ export class NextHandProcess {
           maxPlayers: game.maxPlayers,
           buttonPos: gameUpdate.buttonPos,
           handNum: gameUpdate.handNum,
+          actionTime: game.actionTime,
+          straddleBet: game.straddleBet,
+          rakePercentage: game.rakePercentage,
+          rakeCap: game.rakeCap,
           gameStatus: gameStatus,
           tableStatus: tableStatus,
           sbPos: gameUpdate.sbPos,
@@ -586,6 +591,8 @@ export class NextHandProcess {
           bombPot: bombPotThisHand,
           doubleBoardBombPot: doubleBoard,
           bombPotBet: gameSettings.bombPotBet,
+          // Not implemented yet (do we need it?)
+          bringIn: 0,
         };
         return nextHandInfo;
       }

@@ -19,7 +19,6 @@ import {
 } from '@src/entity/types';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {GameRepository} from './game';
-import {playerStatusChanged} from '@src/gameserver';
 import {startTimer, cancelTimer} from '@src/timer';
 import {
   BUYIN_APPROVAL_TIMEOUT,
@@ -257,7 +256,7 @@ export class BuyIn {
     // get game server of this game
     const gameServer = await GameRepository.getGameServer(this.game.id);
     if (gameServer) {
-      await playerStatusChanged(
+      await Nats.playerStatusChanged(
         this.game,
         this.player,
         playerInGame.status,
@@ -373,7 +372,7 @@ export class BuyIn {
             );
 
             // refresh the screen
-            playerStatusChanged(
+            Nats.playerStatusChanged(
               this.game,
               this.player,
               prevStatus.status,
@@ -877,7 +876,7 @@ export class BuyIn {
         newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
       });
       // update the clients with new status
-      await playerStatusChanged(
+      await Nats.playerStatusChanged(
         this.game,
         this.player,
         playerInSeat.status,
@@ -921,7 +920,7 @@ export class BuyIn {
         );
 
         // notify clients to update the new status
-        await playerStatusChanged(
+        await Nats.playerStatusChanged(
           game,
           {
             id: player.playerId,

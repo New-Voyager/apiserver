@@ -30,8 +30,8 @@ import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
 import {
   publishNewGame,
   playerConfigUpdate,
-  playerStatusChanged,
   resumeGame,
+  endGame,
 } from '@src/gameserver';
 import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery, getDistanceInMeters} from '@src/utils';
@@ -949,7 +949,7 @@ class GameRepositoryImpl {
     );
 
     // update the clients with new status
-    await playerStatusChanged(
+    await Nats.playerStatusChanged(
       game,
       player,
       playerInGame.status,
@@ -1360,7 +1360,15 @@ class GameRepositoryImpl {
     if (status === GameStatus.ENDED) {
       // update cached game
       game = await Cache.getGame(game.gameCode, true /** update */);
-      // update the game server with new status
+
+      try {
+        // update the game server with new status
+        await endGame(game.id);
+      } catch (err) {
+        logger.warn(`Could not end game in game server: ${err.toString()}`);
+      }
+
+      // announce to the players the game has ended
       await Nats.changeGameStatus(
         game,
         status,
