@@ -730,11 +730,20 @@ class NatsClass {
       messageId = uuidv4();
     }
 
+    const seatUpdatesArray = new Array<any>();
+    for (const update of seatUpdates) {
+      const seatUpdatesAny = update as any;
+      if (update.status) {
+        seatUpdatesAny.status = PlayerStatus[update.status];
+      }
+      seatUpdatesArray.push(seatUpdatesAny);
+    }
+
     const message = {
       type: 'TABLE_UPDATE',
       subType: Constants.TableHostSeatChangeProcessEnd,
       gameId: game.id,
-      seatUpdates: seatUpdates,
+      seatUpdates: seatUpdatesArray,
       seatChangeHostId: seatChangeHostId,
     };
     const messageStr = JSON.stringify(message);
