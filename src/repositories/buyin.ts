@@ -244,6 +244,7 @@ export class BuyIn {
     await GameRepository.restartGameIfNeeded(
       this.game,
       true,
+      false /* resumed due to new player */,
       transactionEntityManager
     );
   }

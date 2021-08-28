@@ -769,7 +769,7 @@ class GameRepositoryImpl {
     }
 
     if (playerInGame.status === PlayerStatus.PLAYING) {
-      await GameRepository.restartGameIfNeeded(game, true);
+      await GameRepository.restartGameIfNeeded(game, true, false);
     }
 
     timeTaken = new Date().getTime() - startTime;
@@ -968,13 +968,14 @@ class GameRepositoryImpl {
     if (nextHandUpdate) {
       await nextHandUpdatesRepository.delete({id: nextHandUpdate.id});
     }
-    await this.restartGameIfNeeded(game, true);
+    await this.restartGameIfNeeded(game, true, false);
     return true;
   }
 
   public async restartGameIfNeeded(
     game: PokerGame,
     processPendingUpdates: boolean,
+    hostStartedGame: boolean,
     transactionEntityManager?: EntityManager
   ): Promise<void> {
     if (game.status !== GameStatus.ACTIVE) {
@@ -1043,7 +1044,10 @@ class GameRepositoryImpl {
                 tableStatus: newTableStatus,
               }
             );
-            if (processPendingUpdates && newTableStatus !== prevTableStatus) {
+            if (
+              (processPendingUpdates && newTableStatus !== prevTableStatus) ||
+              hostStartedGame
+            ) {
               // refresh the cache
               const gameUpdate = await Cache.getGame(game.gameCode, true);
               // resume the game
@@ -1428,7 +1432,13 @@ class GameRepositoryImpl {
           true /** update */
         );
 
-        await this.restartGameIfNeeded(updatedGame, false);
+        if (status === GameStatus.ACTIVE) {
+          await this.restartGameIfNeeded(
+            updatedGame,
+            false,
+            true /* host started game */
+          );
+        }
       }
     }
 
