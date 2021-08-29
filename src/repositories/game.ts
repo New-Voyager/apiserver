@@ -1360,6 +1360,15 @@ class GameRepositoryImpl {
       .where('id = :id', {id: gameId})
       .execute();
 
+    if (status === GameStatus.PAUSED) {
+      // game is paused
+      await Nats.changeGameStatus(
+        game,
+        status,
+        TableStatus.WAITING_TO_BE_STARTED
+      );
+      return status;
+    }
     // if game ended
     if (status === GameStatus.ENDED) {
       // update cached game
