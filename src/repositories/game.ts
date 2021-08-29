@@ -292,7 +292,11 @@ class GameRepositoryImpl {
                     game.gameCode
                   }`
                 );
-                tableStatus = await publishNewGame(gameInput, gameServer);
+                tableStatus = await publishNewGame(
+                  gameInput,
+                  gameServer,
+                  false
+                );
                 logger.info(
                   `Game ${game.gameCode} is hosted in ${gameServer.toString()}`
                 );

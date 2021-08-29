@@ -35,7 +35,11 @@ async function getGameServerUrl(gameId: number): Promise<string> {
   return gameServer.url;
 }
 
-export async function publishNewGame(game: any, gameServer: any) {
+export async function publishNewGame(
+  game: any,
+  gameServer: any,
+  isRestart: boolean
+) {
   if (!notifyGameServer) {
     return;
   }
@@ -46,6 +50,7 @@ export async function publishNewGame(game: any, gameServer: any) {
   const message = {
     gameId: game.id,
     gameCode: game.gameCode,
+    isRestart: isRestart,
   };
 
   const url = `${gameServerUrl}/new-game`;
