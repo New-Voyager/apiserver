@@ -55,16 +55,14 @@ export class NextHandProcess {
           throw new Error(`Game code: ${this.gameCode} not found`);
         }
         const gameUpdate = gameUpdates[0];
-        if (this.gameServerHandNum !== 0) {
-          if (gameUpdate.handNum > this.gameServerHandNum) {
-            // API server has already moved to the next hand and is ahead of the game server.
-            // Perhaps game server crashed after already having called this endpoint and is recovering now.
-            // Don't do anything in that case.
-            return {
-              gameCode: this.gameCode,
-              handNum: gameUpdate.handNum,
-            };
-          }
+        if (gameUpdate.handNum > this.gameServerHandNum) {
+          // API server has already moved to the next hand and is ahead of the game server.
+          // Perhaps game server crashed after already having called this endpoint and is recovering now.
+          // Don't do anything in that case.
+          return {
+            gameCode: this.gameCode,
+            handNum: gameUpdate.handNum,
+          };
         }
 
         let playerInSeatsInPrevHand: Array<number> = [];
