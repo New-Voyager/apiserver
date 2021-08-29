@@ -20,7 +20,7 @@ import {PokerGame} from '@src/entity/game/game';
 import {GameHistory} from '@src/entity/history/game';
 import {fillSeats} from '@src/botrunner';
 import {ClubRepository} from '@src/repositories/club';
-import {getCurrentHandLog, playerStatusChanged} from '@src/gameserver';
+import {getCurrentHandLog} from '@src/gameserver';
 import {isHostOrManagerOrOwner} from './util';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {pendingApprovalsForClubData} from '@src/types';

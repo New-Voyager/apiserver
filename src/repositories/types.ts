@@ -79,9 +79,11 @@ export interface PlayerInSeat {
   muckLosingHand: boolean;
   activeSeat: boolean;
   postedBlind: boolean;
+  runItTwice?: boolean;
 }
 
 export interface NewHandInfo {
+  gameId: number;
   gameCode: string;
   gameType: GameType;
   maxPlayers: number;
@@ -89,6 +91,10 @@ export interface NewHandInfo {
   bigBlind: number;
   buttonPos: number;
   handNum: number;
+  actionTime: number;
+  straddleBet: number;
+  rakePercentage: number;
+  rakeCap: number;
   announceGameType: boolean;
   playersInSeats: Array<PlayerInSeat>;
   gameStatus: GameStatus;
@@ -98,6 +104,7 @@ export interface NewHandInfo {
   bombPot: boolean;
   doubleBoardBombPot: boolean;
   bombPotBet: number;
+  bringIn: number;
 }
 
 export const WAITLIST_SEATING = 'WAITLIST_SEATING';

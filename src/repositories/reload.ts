@@ -16,7 +16,6 @@ import {
 } from '@src/entity/types';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {GameRepository} from './game';
-import {playerStatusChanged} from '@src/gameserver';
 import {startTimer, cancelTimer} from '@src/timer';
 import {NewUpdate, RELOAD_APPROVAL_TIMEOUT, RELOAD_TIMEOUT} from './types';
 import {buyInRequest, pendingApprovalsForClubData} from '@src/types';
@@ -386,7 +385,7 @@ export class Reload {
     // get game server of this game
     const gameServer = await GameRepository.getGameServer(this.game.id);
     if (gameServer) {
-      await playerStatusChanged(
+      await Nats.playerStatusChanged(
         this.game,
         this.player,
         playerInGame.status,

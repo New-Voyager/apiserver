@@ -295,7 +295,7 @@ class GameAPIs {
     const gameCode = req.params.gameCode;
     const gameServerHandNum = parseInt(req.params.currentHandNum, 10);
     logger.info(
-      `moveToNextHand called for game: ${gameCode} current hand number: ${gameServerHandNum}`
+      `moveToNextHand called for game: ${gameCode} game server current hand number: ${gameServerHandNum}`
     );
     if (gameServerHandNum < 0) {
       const res = {

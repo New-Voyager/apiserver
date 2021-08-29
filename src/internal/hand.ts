@@ -231,6 +231,7 @@ async function processConsecutiveActionTimeouts(
       ...playersInGameArr.map(p => ({[p.playerId]: p}))
     );
 
+    let shouldUpdateCache = false;
     for (const playerIdStr of Object.keys(timeoutStats)) {
       const currentHandTimeouts =
         timeoutStats[playerIdStr].consecutiveActionTimeouts;
@@ -262,6 +263,7 @@ async function processConsecutiveActionTimeouts(
         const player = await Cache.getPlayerById(playerID);
         const takeBreak = new TakeBreak(game, player);
         await takeBreak.takeBreak(transactionEntityManager);
+        shouldUpdateCache = true;
         newTimeouts = 0;
       }
 
@@ -289,9 +291,9 @@ async function processConsecutiveActionTimeouts(
       .where({gameID: gameID})
       .set({lastConsecutiveTimeoutProcessedHand: handNum})
       .execute();
-  });
 
-  if (game) {
-    await Cache.updateGamePendingUpdates(game.gameCode, true);
-  }
+    if (shouldUpdateCache) {
+      await Cache.updateGamePendingUpdates(game.gameCode, true);
+    }
+  });
 }

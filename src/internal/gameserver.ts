@@ -236,7 +236,7 @@ async function restartGameServerGames(
       `Restarting game ${game.title} (id: ${game.id}, code: ${game.gameCode}) in game server ID: ${gameServer.id} url: ${gameServer.url}`
     );
     try {
-      await publishNewGame(game, gameServer);
+      await publishNewGame(game, gameServer, true);
       logger.info(
         `Successfully restarted game ${game.title} (id: ${game.id}, code: ${game.gameCode})`
       );

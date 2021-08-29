@@ -7,7 +7,7 @@ import {
 } from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {GameType, PlayerStatus} from '@src/entity/types';
-import {waitlistSeating} from '@src/gameserver';
+// import {waitlistSeating} from '@src/gameserver';
 import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery} from '@src/utils';
 import {getLogger} from '@src/utils/log';
@@ -310,7 +310,7 @@ export class WaitListMgmt {
     );
     // we will send a notification which player is coming to the table
     const player = await Cache.getPlayer(nextPlayer.playerUuid);
-    waitlistSeating(nextPlayer.game, player, timeout);
+    // await waitlistSeating(nextPlayer.game, player, timeout);
     let clubName = '';
     if (game.clubName !== null) {
       clubName = game.clubName;

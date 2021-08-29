@@ -28,13 +28,10 @@ import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
 import {
-  newPlayerSat,
   publishNewGame,
-  changeGameStatus,
-  playerKickedOut,
   playerConfigUpdate,
-  pendingProcessDone,
-  playerStatusChanged,
+  resumeGame,
+  endGame,
 } from '@src/gameserver';
 import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery, getDistanceInMeters} from '@src/utils';
@@ -295,7 +292,11 @@ class GameRepositoryImpl {
                     game.gameCode
                   }`
                 );
-                tableStatus = await publishNewGame(gameInput, gameServer);
+                tableStatus = await publishNewGame(
+                  gameInput,
+                  gameServer,
+                  false
+                );
                 logger.info(
                   `Game ${game.gameCode} is hosted in ${gameServer.toString()}`
                 );
@@ -772,7 +773,7 @@ class GameRepositoryImpl {
     }
 
     if (playerInGame.status === PlayerStatus.PLAYING) {
-      await GameRepository.restartGameIfNeeded(game, true);
+      await GameRepository.restartGameIfNeeded(game, true, false);
     }
 
     timeTaken = new Date().getTime() - startTime;
@@ -952,7 +953,7 @@ class GameRepositoryImpl {
     );
 
     // update the clients with new status
-    await playerStatusChanged(
+    await Nats.playerStatusChanged(
       game,
       player,
       playerInGame.status,
@@ -971,13 +972,14 @@ class GameRepositoryImpl {
     if (nextHandUpdate) {
       await nextHandUpdatesRepository.delete({id: nextHandUpdate.id});
     }
-    await this.restartGameIfNeeded(game, true);
+    await this.restartGameIfNeeded(game, true, false);
     return true;
   }
 
   public async restartGameIfNeeded(
     game: PokerGame,
     processPendingUpdates: boolean,
+    hostStartedGame: boolean,
     transactionEntityManager?: EntityManager
   ): Promise<void> {
     if (game.status !== GameStatus.ACTIVE) {
@@ -1046,15 +1048,14 @@ class GameRepositoryImpl {
                 tableStatus: newTableStatus,
               }
             );
-            if (processPendingUpdates && newTableStatus !== prevTableStatus) {
+            if (
+              (processPendingUpdates && newTableStatus !== prevTableStatus) ||
+              hostStartedGame
+            ) {
               // refresh the cache
               const gameUpdate = await Cache.getGame(game.gameCode, true);
               // resume the game
-              await pendingProcessDone(
-                gameUpdate.id,
-                gameUpdate.status,
-                gameUpdate.tableStatus
-              );
+              await resumeGame(gameUpdate.id);
             }
           }
         }
@@ -1359,12 +1360,33 @@ class GameRepositoryImpl {
       .where('id = :id', {id: gameId})
       .execute();
 
+    if (status === GameStatus.PAUSED) {
+      // game is paused
+      await Nats.changeGameStatus(
+        game,
+        status,
+        TableStatus.WAITING_TO_BE_STARTED
+      );
+      return status;
+    }
     // if game ended
     if (status === GameStatus.ENDED) {
       // update cached game
       game = await Cache.getGame(game.gameCode, true /** update */);
-      // update the game server with new status
-      await changeGameStatus(game, status, TableStatus.WAITING_TO_BE_STARTED);
+
+      try {
+        // update the game server with new status
+        await endGame(game.id);
+      } catch (err) {
+        logger.warn(`Could not end game in game server: ${err.toString()}`);
+      }
+
+      // announce to the players the game has ended
+      await Nats.changeGameStatus(
+        game,
+        status,
+        TableStatus.WAITING_TO_BE_STARTED
+      );
       return status;
     } else {
       if (status === GameStatus.ACTIVE) {
@@ -1424,14 +1446,20 @@ class GameRepositoryImpl {
           await Cache.getGameUpdates(game.gameCode, true);
         }
         // update the game server with new status
-        await changeGameStatus(game, status, game.tableStatus);
+        await Nats.changeGameStatus(game, status, game.tableStatus);
 
         const updatedGame = await Cache.getGame(
           game.gameCode,
           true /** update */
         );
 
-        await this.restartGameIfNeeded(updatedGame, false);
+        if (status === GameStatus.ACTIVE) {
+          await this.restartGameIfNeeded(
+            updatedGame,
+            false,
+            true /* host started game */
+          );
+        }
       }
     }
 
@@ -1560,8 +1588,7 @@ class GameRepositoryImpl {
         );
         await Cache.getGameUpdates(game.gameCode, true);
 
-        // notify game server, player is kicked out
-        playerKickedOut(game, player, playerInGame.seatNo);
+        Nats.playerKickedOut(game, player, playerInGame.seatNo);
       } else {
         // game is running, so kickout the user in next hand
         // deal with this in the next hand update
@@ -1722,21 +1749,21 @@ class GameRepositoryImpl {
         }
         await gameUpdateRepo.save(playerTrack);
       }
-      row = await gameUpdateRepo.findOne({
-        game: {id: game.id},
-        playerId: player.id,
-      });
+      // row = await gameUpdateRepo.findOne({
+      //   game: {id: game.id},
+      //   playerId: player.id,
+      // });
 
-      if (row) {
-        const update: any = {
-          playerId: player.id,
-          gameId: game.id,
-          muckLosingHand: row?.muckLosingHand,
-          runItTwicePrompt: row?.runItTwicePrompt,
-        };
+      // if (row) {
+      //   const update: any = {
+      //     playerId: player.id,
+      //     gameId: game.id,
+      //     muckLosingHand: row?.muckLosingHand,
+      //     runItTwicePrompt: row?.runItTwicePrompt,
+      //   };
 
-        await playerConfigUpdate(game, update);
-      }
+      //   await playerConfigUpdate(game, update);
+      // }
     });
   }
 
@@ -1872,7 +1899,7 @@ class GameRepositoryImpl {
     await Cache.getGameUpdates(game.gameCode, true);
 
     // pending updates done
-    await pendingProcessDone(game.id, game.status, game.tableStatus);
+    await resumeGame(game.id);
   }
 
   public async updateJanus(
