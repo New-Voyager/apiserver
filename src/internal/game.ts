@@ -294,7 +294,7 @@ class GameAPIs {
     }
     const gameCode = req.params.gameCode;
     const gameServerHandNum = parseInt(req.params.currentHandNum, 10);
-    logger.info(
+    logger.debug(
       `moveToNextHand called for game: ${gameCode} game server current hand number: ${gameServerHandNum}`
     );
     if (gameServerHandNum < 0) {
@@ -334,7 +334,7 @@ class GameAPIs {
       resp.status(500).send(JSON.stringify(res));
       return;
     }
-    logger.info(`New hand info: ${gameCode}`);
+    logger.debug(`New hand info: ${gameCode}`);
 
     try {
       const nextHandProcess = new NextHandProcess(gameCode, -1);

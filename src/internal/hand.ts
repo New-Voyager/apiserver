@@ -135,7 +135,6 @@ class HandServerAPIs {
     }
     try {
       const result = req.body;
-      console.log(JSON.stringify(result));
       if (result.result?.timeoutStats) {
         await processConsecutiveActionTimeouts(
           gameID,

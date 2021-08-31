@@ -75,7 +75,7 @@ export async function processPendingUpdates(gameId: number) {
     return;
   }
 
-  logger.info(`Processing pending updates for game id: ${game.gameCode}`);
+  logger.debug(`Processing pending updates for game id: ${game.gameCode}`);
   if (gameUpdate.seatChangeInProgress) {
     logger.info(
       `Seat change is in progress for game id: ${game.gameCode}. No updates will be performed.`
@@ -226,7 +226,6 @@ export async function processPendingUpdates(gameId: number) {
 
   if (endPendingProcess) {
     if (gameSettings.gpsCheck || gameSettings.ipCheck) {
-      logger.info(`Game: [${game.gameCode}] Running location check...`);
       const locationCheck = new LocationCheck(game, gameSettings);
       await locationCheck.check();
     }

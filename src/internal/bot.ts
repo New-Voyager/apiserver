@@ -86,7 +86,6 @@ const cardMap: any = {
 };
 
 function getCards(cardsInt: Array<number> | number): Array<string> | string {
-  console.log(cardsInt.toString());
   if (typeof cardsInt === 'number') {
     return cardMap[cardsInt as number];
   } else {
@@ -181,8 +180,6 @@ function handActionSteps(actionSteps: Array<any>): any {
 }
 
 export async function updateButtonPos(req: any, resp: any) {
-  //resp.status(200).send(JSON.stringify({urls: process.env.NATS_URL}));
-  console.log(`current directory: ${__dirname}`);
   try {
     const gameCode = req.params.gameCode;
     if (!gameCode) {
@@ -205,11 +202,6 @@ export async function updateButtonPos(req: any, resp: any) {
 }
 
 function convertHandLogToYaml(handlog: any): string {
-  for (const seatNo in handlog['players']) {
-    const name = playerIdName[seatNo];
-    console.log(JSON.stringify(name));
-  }
-
   const club: any = {
     name: 'Bug Testing',
     description: 'testing',
@@ -250,7 +242,6 @@ function convertHandLogToYaml(handlog: any): string {
 
   // sort the seat number
   occupiedSeats.sort();
-  console.log(occupiedSeats);
 
   const log = handlog['handLog'];
   const gameType = handlog['gameType'];
@@ -323,8 +314,6 @@ function convertHandLogToYaml(handlog: any): string {
 }
 
 export async function generateBotScript(req: any, resp: any) {
-  //resp.status(200).send(JSON.stringify({urls: process.env.NATS_URL}));
-  console.log(`current directory: ${__dirname}`);
   try {
     const gameCode = req.params.gameCode;
     if (!gameCode) {
@@ -339,16 +328,11 @@ export async function generateBotScript(req: any, resp: any) {
       return;
     }
     const handlog = await HandRepository.getHandLog(gameCode, handNum);
-    // let rawdata = fs
-    //   .readFileSync(`${__dirname}/../bugs/handlog2.json`)
-    //   .toString();
-    // let handlog = JSON.parse(rawdata);
     if (handlog == null) {
       resp.status(404).send(JSON.stringify({error: 'Cannot find the hand'}));
       return;
     }
     const yamlScript = convertHandLogToYaml(handlog);
-    //console.log(handlog);
     resp.status(200).send(yamlScript);
   } catch (e) {
     resp.status(500).send({errors: e.toString()});
@@ -399,8 +383,6 @@ export async function resetServerSettings(req: any, resp: any) {
 }
 
 export async function generateBotScriptDebugHand(req: any, resp: any) {
-  //resp.status(200).send(JSON.stringify({urls: process.env.NATS_URL}));
-  console.log(`current directory: ${__dirname}`);
   try {
     const gameCode = req.params.gameCode;
     if (!gameCode) {
@@ -424,7 +406,6 @@ export async function generateBotScriptDebugHand(req: any, resp: any) {
       return;
     }
     const yamlScript = convertHandLogToYaml(handlog);
-    //console.log(handlog);
     resp.status(200).send(yamlScript);
   } catch (e) {
     resp.status(500).send({errors: e.toString()});
@@ -432,8 +413,6 @@ export async function generateBotScriptDebugHand(req: any, resp: any) {
 }
 
 export async function buyBotCoins(req: any, resp: any) {
-  //resp.status(200).send(JSON.stringify({urls: process.env.NATS_URL}));
-  console.log(`current directory: ${__dirname}`);
   try {
     const payload = req.body;
     const playerUuid = payload['player-uuid'];

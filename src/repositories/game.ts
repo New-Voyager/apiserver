@@ -158,6 +158,7 @@ class GameRepositoryImpl {
     game.hostId = player.id;
     game.hostName = player.name;
     game.hostUuid = player.uuid;
+    let gameServer: GameServer | null;
 
     let saveTime, saveUpdateTime, publishNewTime;
     try {
@@ -274,7 +275,6 @@ class GameRepositoryImpl {
           publishNewTime = new Date().getTime();
           let tableStatus = TableStatus.WAITING_TO_BE_STARTED;
           let scanServer = 0;
-          let gameServer;
 
           if (useGameServer) {
             for (
@@ -297,13 +297,20 @@ class GameRepositoryImpl {
                   gameServer,
                   false
                 );
-                logger.info(
-                  `Game ${game.gameCode} is hosted in ${gameServer.toString()}`
-                );
+                let serverUrl = '';
+                if (gameServer) {
+                  serverUrl = gameServer.url;
+                }
+
+                logger.info(`Game ${game.gameCode} is hosted in ${serverUrl}`);
                 break;
               } catch (err) {
+                let serverUrl = '';
+                if (gameServer) {
+                  serverUrl = gameServer.url;
+                }
                 logger.warn(
-                  `Game Id: ${savedGame.id} cannot be hosted by game server: ${gameServer.url}`
+                  `Game Id: ${savedGame.id} cannot be hosted by game server: ${serverUrl}`
                 );
               }
               gameServer = null;
@@ -342,7 +349,7 @@ class GameRepositoryImpl {
       await GameSettingsRepository.get(game.gameCode, true);
       await Cache.getGameUpdates(game.gameCode, true);
       //logger.info('****** ENDING TRANSACTION TO CREATE a private game');
-      logger.info(
+      logger.debug(
         `createPrivateGame saveTime: ${saveTime}, saveUpdateTime: ${saveUpdateTime}, publishNewTime: ${publishNewTime}`
       );
     } catch (err) {
@@ -436,8 +443,6 @@ class GameRepositoryImpl {
         where
         g.game_status NOT IN (${GameStatus.ENDED}) AND
         g.club_id IN (${clubIdsIn})`;
-    //console.log(query);
-    // EXTRACT(EPOCH FROM (now()-g.started_at)) as "elapsedTime",  Showing some error
     const resp = await getGameConnection().query(query);
     return resp;
   }
@@ -473,8 +478,6 @@ class GameRepositoryImpl {
         where
         g.game_status NOT IN (${GameStatus.ENDED}) AND
         g.host_id = ${player.id}`;
-    //console.log(query);
-    // EXTRACT(EPOCH FROM (now()-g.started_at)) as "elapsedTime",  Showing some error
     const resp = await getGameConnection().query(query);
     return resp;
   }
@@ -760,7 +763,7 @@ class GameRepositoryImpl {
       }
     );
     let timeTaken = new Date().getTime() - startTime;
-    logger.info(`joingame database time taken: ${timeTaken}`);
+    logger.debug(`joingame database time taken: ${timeTaken}`);
     startTime = new Date().getTime();
     if (newPlayer) {
       await Cache.removeGameObserver(game.gameCode, player);
@@ -777,7 +780,7 @@ class GameRepositoryImpl {
     }
 
     timeTaken = new Date().getTime() - startTime;
-    logger.info(`joingame server notification time taken: ${timeTaken}`);
+    logger.debug(`joingame server notification time taken: ${timeTaken}`);
     startTime = new Date().getTime();
     return playerInGame.status;
   }
@@ -871,9 +874,6 @@ class GameRepositoryImpl {
         const currentSessionTime = new Date().getTime() - satAt.getTime();
         const roundSeconds = Math.round(currentSessionTime / 1000);
         sessionTime = sessionTime + roundSeconds;
-        logger.info(
-          `Session Time: Player: ${player.id} sessionTime: ${sessionTime}`
-        );
         setProps.satAt = undefined;
         setProps.sessionTime = sessionTime;
       }
@@ -1774,7 +1774,7 @@ class GameRepositoryImpl {
     props?: any,
     transactionEntityManager?: EntityManager
   ) {
-    logger.info(
+    logger.debug(
       `[${game.gameCode}] Starting buyin timer for player: ${playerName}`
     );
     let playerGameTrackerRepository: Repository<PlayerGameTracker>;
@@ -1883,9 +1883,6 @@ class GameRepositoryImpl {
     // cancel the dealer choice timer
     cancelTimer(game.id, 0, DEALER_CHOICE_TIMEOUT);
 
-    logger.info(
-      `Game: ${game.gameType} dealers choice: ${gameType.toString()}`
-    );
     // update game type in the GameUpdates table
     const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
     await gameUpdatesRepo.update(

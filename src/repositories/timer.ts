@@ -51,7 +51,7 @@ export async function timerCallback(req: any, resp: any) {
     return;
   }
 
-  logger.info(
+  logger.debug(
     `Timer callback for game: ${gameID} player: ${playerID} purpose: ${purpose}`
   );
 
@@ -80,7 +80,7 @@ export async function timerCallback(req: any, resp: any) {
 }
 
 export async function waitlistTimeoutExpired(gameID: number, playerID: number) {
-  logger.info(
+  logger.debug(
     `Wait list timer expired. GameID: ${gameID}, PlayerID: ${playerID}. Go to next player`
   );
   const game = await Cache.getGameById(gameID);
@@ -109,7 +109,7 @@ export async function playerSeatChangeTimeoutExpired(
   gameID: number,
   playerID: number
 ) {
-  logger.info(`Seat change timeout expired. GameID: ${gameID}`);
+  logger.debug(`Seat change timeout expired. GameID: ${gameID}`);
 
   const game = await Cache.getGameById(gameID);
   if (!game) {
@@ -129,7 +129,7 @@ export async function buyInTimeoutExpired(gameID: number, playerID: number) {
     if (!player) {
       logger.error(`Player: ${playerID} is not found`);
     } else {
-      logger.info(
+      logger.debug(
         `[${game.gameCode}] Buyin timeout expired. player: ${player.name}`
       );
 
@@ -143,7 +143,7 @@ export async function buyInApprovalTimeoutExpired(
   gameID: number,
   playerID: number
 ) {
-  logger.info(
+  logger.debug(
     `Buyin approval timeout expired. GameID: ${gameID}, playerID: ${playerID}`
   );
   const game = await Cache.getGameById(gameID);
@@ -154,7 +154,7 @@ export async function buyInApprovalTimeoutExpired(
     if (!player) {
       logger.error(`Player: ${playerID} is not found`);
     } else {
-      logger.info(
+      logger.debug(
         `[${game.gameCode}] Buyin timeout expired. player: ${player.name}`
       );
       // handle buyin approval timeout
@@ -188,7 +188,7 @@ export async function reloadApprovalTimeoutExpired(
   gameID: number,
   playerID: number
 ) {
-  logger.info(
+  logger.debug(
     `Reload approval timeout expired. GameID: ${gameID}, playerID: ${playerID}`
   );
   const game = await Cache.getGameById(gameID);
@@ -248,16 +248,8 @@ export async function reloadApprovalTimeoutExpired(
 }
 
 export async function dealerChoiceTimeout(gameID: number, playerID: number) {
-  logger.info(
+  logger.debug(
     `Dealer choice timeout expired. GameID: ${gameID}, playerID: ${playerID}`
   );
-  // pending updates done (resume game)
-  // const game = await Cache.getGameById(gameID);
-  // let gameStatus: GameStatus = GameStatus.ACTIVE;
-  // let tableStatus: TableStatus = TableStatus.GAME_RUNNING;
-  // if (game) {
-  //   gameStatus = game.status;
-  //   tableStatus = game.tableStatus;
-  // }
   await resumeGame(gameID);
 }

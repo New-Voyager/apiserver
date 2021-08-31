@@ -26,7 +26,7 @@ export class LocationCheck {
   }
 
   public async check() {
-    logger.info(
+    logger.debug(
       `Location Check: Running location check on game  ${this.game.gameCode}`
     );
 
@@ -47,11 +47,6 @@ export class LocationCheck {
     }
 
     for (const cachedPlayer of cachedPlayers) {
-      //const cachedPlayer = await Cache.getPlayer(playerInSeat.playerUuid);
-      logger.info(
-        `Location Check: Player: ${cachedPlayer.name} ip: ${cachedPlayer.ipAddress}`
-      );
-
       const playersInProxmity = await this.playersInProxmity(
         cachedPlayer,
         cachedPlayers
@@ -61,7 +56,7 @@ export class LocationCheck {
         proxmityPlayersMap[cachedPlayer.uuid] = playersInProxmity;
       }
     }
-    logger.info(
+    logger.debug(
       `Location Check: Game: [${this.game.gameCode}] ${
         Object.keys(proxmityPlayersMap).length
       } players are in proxmity`

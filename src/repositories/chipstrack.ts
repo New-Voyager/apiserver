@@ -18,12 +18,6 @@ const logger = getLogger('chipstrack');
 class ChipsTrackRepositoryImpl {
   public async settleClubBalances(game: PokerGame): Promise<boolean> {
     try {
-      // if (!game.clubCode) {
-      //   // we don't track balances of individual host games
-      //   return true;
-      // }
-
-      //logger.info('****** STARTING TRANSACTION FOR RAKE CALCULATION');
       await getGameManager().transaction(async transactionEntityManager => {
         // update session time
         const playerGameRepo = transactionEntityManager.getRepository(

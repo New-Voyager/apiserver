@@ -81,7 +81,7 @@ export async function configureGame(
     ret.janusRoomId = gameInfo.id;
     if (game.audioConfEnabled) {
       audioConfCreateTime = new Date().getTime();
-      logger.info(`Joining Janus audio conference: ${game.id}`);
+      //logger.info(`Joining Janus audio conference: ${game.id}`);
       try {
         const session = await JanusSession.create(JANUS_APISECRET);
         await session.attachAudio();
@@ -96,14 +96,13 @@ export async function configureGame(
         );
         audioConfCreateTime = new Date().getTime() - audioConfCreateTime;
         const endTime = new Date().getTime();
-        logger.info(
+        logger.debug(
           `Time taken to create a new game: ${ret.gameCode} ${
             endTime - startTime
           }ms  audioConfCreateTime: ${audioConfCreateTime} createGameTime: ${createGameTime}`
         );
-        logger.info(`Successfully joined Janus audio conference: ${game.id}`);
       } catch (err) {
-        logger.info(
+        logger.debug(
           `Failed to join Janus audio conference: ${
             game.id
           }. Error: ${err.toString()}`
@@ -207,7 +206,7 @@ export async function joinGame(
     let player: Player | null = await Cache.getPlayer(playerUuid);
     playerName = player.name;
 
-    logger.info(`Player ${playerName} is joining game ${gameCode}`);
+    logger.debug(`Player ${playerName} is joining game ${gameCode}`);
     // get game using game code
     const game = await Cache.getGame(gameCode);
     if (!game) {
@@ -243,7 +242,7 @@ export async function joinGame(
       ip,
       location
     );
-    logger.info(
+    logger.debug(
       `Player: ${player.name} isBot: ${player.bot} joined game: ${game.gameCode}`
     );
     // player is good to go
@@ -251,7 +250,6 @@ export async function joinGame(
     return playerStatus;
   } catch (err) {
     logger.error(JSON.stringify(err));
-    console.log(err);
     if (err instanceof ApolloError) {
       throw err;
     } else {
@@ -261,7 +259,7 @@ export async function joinGame(
     }
   } finally {
     const timeTaken = new Date().getTime() - startTime;
-    logger.info(`joinGame took ${timeTaken} ms`);
+    logger.debug(`joinGame took ${timeTaken} ms`);
   }
 }
 
@@ -283,7 +281,7 @@ export async function takeSeat(
     const player = await Cache.getPlayer(playerUuid);
     playerName = player.name;
 
-    logger.info(`Player ${playerName} is joining game ${gameCode}`);
+    logger.debug(`Player ${playerName} is joining game ${gameCode}`);
     // get game using game code
     const game = await Cache.getGame(gameCode);
     if (!game) {
@@ -314,7 +312,7 @@ export async function takeSeat(
       ip,
       location
     );
-    logger.info(
+    logger.debug(
       `Player: ${player.name} isBot: ${player.bot} joined game: ${game.gameCode}`
     );
 
@@ -331,7 +329,6 @@ export async function takeSeat(
     return playerInSeat;
   } catch (err) {
     logger.error(JSON.stringify(err));
-    console.log(err);
     if (err instanceof ApolloError) {
       throw err;
     } else {
@@ -341,7 +338,7 @@ export async function takeSeat(
     }
   } finally {
     const timeTaken = new Date().getTime() - startTime;
-    logger.info(`joinGame took ${timeTaken} ms`);
+    logger.debug(`joinGame took ${timeTaken} ms`);
   }
 }
 
@@ -394,7 +391,7 @@ export async function startGame(
         await new Promise(r => setTimeout(r, 1000));
         players = await GameRepository.getPlayersInSeats(game.id);
         if (players.length != game.maxPlayers) {
-          logger.info(
+          logger.debug(
             `[${game.gameCode}] Waiting for bots to take empty seats`
           );
         } else {
@@ -460,12 +457,12 @@ export async function buyIn(
     const status = await buyin.request(amount);
 
     const timeTaken = new Date().getTime() - startTime;
-    logger.info(`Buyin took ${timeTaken}ms`);
+    logger.debug(`Buyin took ${timeTaken}ms`);
     // player is good to go
     return status;
   } catch (err) {
     const timeTaken = new Date().getTime() - startTime;
-    logger.info(`Buyin took ${timeTaken}ms`);
+    logger.debug(`Buyin took ${timeTaken}ms`);
     logger.error(JSON.stringify(err));
     throw new Error(`Failed to update buyin. ${err.toString()}`);
   }
@@ -1016,7 +1013,7 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
       }
 
       ret.sessionTime = 0;
-      logger.info(
+      logger.debug(
         `Session time: ${playerState.sessionTime} satAt: ${playerState.satAt}`
       );
       if (
@@ -1592,7 +1589,7 @@ export async function switchSeat(
     const player = await Cache.getPlayer(playerUuid);
     const process = new SeatChangeProcess(game);
     const status = await process.switchSeat(player, seatNo);
-    logger.info(
+    logger.debug(
       `Player: ${player.name} isBot: ${player.bot} switched seat game: ${game.gameCode}`
     );
     // player is good to go
@@ -1600,7 +1597,6 @@ export async function switchSeat(
     return playerStatus;
   } catch (err) {
     logger.error(JSON.stringify(err));
-    console.log(err);
     throw new Error(
       `Player: ${playerUuid} Failed to join the game. ${JSON.stringify(err)}`
     );

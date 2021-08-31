@@ -599,7 +599,6 @@ export async function getPendingApprovalCount(
   playerId: string,
   clubCode: string
 ) {
-  //logger.info(`Get unread message count club: ${clubCode} player: ${playerId}`);
   const club = await Cache.getClub(clubCode);
   const player = await Cache.getPlayer(playerId);
   if (!club || !player) {
@@ -617,9 +616,6 @@ export async function getHostMessageUnreadCount(
   playerId: string,
   clubCode: string
 ) {
-  // logger.info(
-  //   `Get unread host message unread count club: ${clubCode} player: ${playerId}`
-  // );
   const club = await Cache.getClub(clubCode);
   const player = await Cache.getPlayer(playerId);
   if (!club || !player) {
@@ -633,9 +629,6 @@ export async function getHostMessageUnreadCount(
 }
 
 export async function getMemberUnreadCount(playerId: string, clubCode: string) {
-  // logger.info(
-  //   `Get unread host message unread count club: ${clubCode} player: ${playerId}`
-  // );
   const club = await Cache.getClub(clubCode);
   const player = await Cache.getPlayer(playerId);
   const clubMember = await Cache.getClubMember(playerId, clubCode);
@@ -649,9 +642,6 @@ export async function getMessageUnreadCount(
   playerId: string,
   clubCode: string
 ) {
-  // logger.info(
-  //   `Get unread club message unread count club: ${clubCode} player: ${playerId}`
-  // );
   const club = await Cache.getClub(clubCode);
   const player = await Cache.getPlayer(playerId);
   const clubMember = await Cache.getClubMember(playerId, clubCode);
@@ -668,7 +658,7 @@ export async function getMessageUnreadCount(
 }
 
 export async function getLiveGameCount(clubCode: string) {
-  logger.info(`Get live game count for club: ${clubCode}`);
+  logger.debug(`Get live game count for club: ${clubCode}`);
   const club = await Cache.getClub(clubCode);
   if (!club) {
     return 0;

@@ -182,7 +182,6 @@ class FirebaseClass {
           },
         });
         const respData = resp.data;
-        logger.info('${respData}');
         // return notification key
         return [groupName, respData['notification_key']];
       } catch (err) {
@@ -264,7 +263,6 @@ class FirebaseClass {
         const diff = now.getTime() - this.productsFetchTime.getTime();
         const diffInMins = diff / (60 * 1000);
         if (diffInMins > FETCH_INTERVAL) {
-          logger.info('Fetch iap products');
           fetch = true;
         }
       }
@@ -331,7 +329,7 @@ class FirebaseClass {
           updatedDate: updatedDate,
         });
 
-        logger.info(
+        logger.debug(
           `Name: ${name} Size: ${size} active: ${active} type: ${type} url: ${link}`
         );
       }
@@ -364,7 +362,7 @@ class FirebaseClass {
             coins: coins,
           });
         }
-        logger.info(`Coin: ${id} coin: ${coins} active: ${active}`);
+        logger.debug(`Coin: ${id} coin: ${coins} active: ${active}`);
       }
       this.iapProducts = iapProducts;
       return this.iapProducts;
