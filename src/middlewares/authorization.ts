@@ -26,5 +26,9 @@ export async function authorize(req, res, next) {
       }
     }
   }
+
+  if (req.headers['x-realip']) {
+    req.userIp = req.headers['x-realip'];
+  }
   next();
 }

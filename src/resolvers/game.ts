@@ -231,6 +231,7 @@ export async function joinGame(
       ip = locationCheck.ip;
       location = locationCheck.location;
     }
+
     player = await Cache.updatePlayerLocation(player.uuid, location, ip);
     if (!player) {
       throw new Error(`Player ${playerUuid} is not found`);
@@ -2241,8 +2242,16 @@ const resolvers: any = {
       return configureGameByPlayer(ctx.req.playerId, args.game);
     },
     joinGame: async (parent, args, ctx, info) => {
+      let ip = '';
+      const gameSettings = await Cache.getGameSettings(args.gameCode);
+      if (gameSettings !== null) {
+        if (gameSettings.ipCheck) {
+          ip = ctx.req.userIp;
+        }
+      }
+
       return joinGame(ctx.req.playerId, args.gameCode, args.seatNo, {
-        ip: '',
+        ip: ip,
         location: args.location,
       });
     },
@@ -2299,8 +2308,16 @@ const resolvers: any = {
       return takeBreak(ctx.req.playerId, args.gameCode);
     },
     sitBack: async (parent, args, ctx, info) => {
+      let ip = '';
+      const gameSettings = await Cache.getGameSettings(args.gameCode);
+      if (gameSettings !== null) {
+        if (gameSettings.ipCheck) {
+          ip = ctx.req.userIp;
+        }
+      }
+
       return sitBack(ctx.req.playerId, args.gameCode, {
-        ip: '',
+        ip: ip,
         location: args.location,
       });
     },

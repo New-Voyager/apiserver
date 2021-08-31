@@ -357,8 +357,12 @@ class GameCache {
     const getResp = await this.getCache(`playerCache-${playerUuid}`);
     if (getResp.success && getResp.data) {
       const player = JSON.parse(getResp.data) as Player;
-      player.location = playerLocation;
-      player.ipAddress = ipAddr;
+      if (playerLocation) {
+        player.location = playerLocation;
+      }
+      if (ipAddr) {
+        player.ipAddress = ipAddr;
+      }
       player.locationUpdatedAt = new Date();
       await this.setCache(`playerCache-${playerUuid}`, JSON.stringify(player));
       await this.setCache(`playerIdCache-${player.id}`, JSON.stringify(player));

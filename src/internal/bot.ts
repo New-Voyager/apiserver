@@ -362,6 +362,7 @@ export async function setServerSettings(req: any, resp: any) {
   const gameCoinsPerBlock = payload['game-coins-per-block'];
   const freeTime = payload['free-time'];
   const newUserFreeCoins = payload['new-user-free-coins'];
+  const ipGpsCheckInterval = payload['ip-gps-check-interval'];
 
   const appSettings = getAppSettings();
   if (gameBlockTime) {
@@ -382,6 +383,10 @@ export async function setServerSettings(req: any, resp: any) {
 
   if (newUserFreeCoins !== undefined && newUserFreeCoins !== null) {
     appSettings.newUserFreeCoins = newUserFreeCoins;
+  }
+
+  if (ipGpsCheckInterval) {
+    appSettings.ipGpsCheckInterval = ipGpsCheckInterval;
   }
 
   resp.status(200).send({status: 'OK'});

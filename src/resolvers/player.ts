@@ -202,6 +202,13 @@ const resolvers: any = {
     changeDisplayName: async (parent, args, ctx, info) => {
       return changeDisplayName(ctx.req.playerId, args.name);
     },
+    ipChanged: async (parent, args, ctx, info) => {
+      const player = await Cache.getPlayer(ctx.req.playerId);
+      if (ctx.req.userIp !== player.ipAddress) {
+        return updateLocation(ctx.req.playerId, ctx.req.userIp, undefined);
+      }
+      return false;
+    },
   },
   Player: {
     clubs: async (parent, args, ctx, info) => {
