@@ -1,2 +1,2 @@
-0.6.20-locationcheck
+0.6.21
 
