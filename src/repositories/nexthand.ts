@@ -589,6 +589,7 @@ export class NextHandProcess {
           tableStatus: tableStatus,
           sbPos: gameUpdate.sbPos,
           bbPos: gameUpdate.bbPos,
+          resultPauseTime: 5000,
           bombPot: bombPotThisHand,
           doubleBoardBombPot: doubleBoard,
           bombPotBet: gameSettings.bombPotBet,

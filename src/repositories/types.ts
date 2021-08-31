@@ -101,6 +101,7 @@ export interface NewHandInfo {
   tableStatus: TableStatus;
   sbPos?: number;
   bbPos?: number;
+  resultPauseTime: number;
   bombPot: boolean;
   doubleBoardBombPot: boolean;
   bombPotBet: number;
