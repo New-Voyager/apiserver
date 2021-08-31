@@ -26,26 +26,45 @@ export class LocationCheck {
   }
 
   public async check() {
+    logger.info(
+      `Location Check: Running location check on game  ${this.game.gameCode}`
+    );
+
     // get active players in the game
     const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
-    const playersInSeats = await playerGameTrackerRepo.find({
+    const playersInSeatsTemp = await playerGameTrackerRepo.find({
       game: {id: this.game.id},
       seatNo: Not(IsNull()),
     });
+
+    const playersInSeats = _.keyBy(playersInSeatsTemp, 'playerUuid');
+
     const proxmityPlayersMap: any = {};
-    for (const playerInSeat of playersInSeats) {
+    const cachedPlayers = new Array<Player>();
+    for (const playerInSeat of Object.values(playersInSeats)) {
       const cachedPlayer = await Cache.getPlayer(playerInSeat.playerUuid);
+      cachedPlayers.push(cachedPlayer);
+    }
+
+    for (const cachedPlayer of cachedPlayers) {
+      //const cachedPlayer = await Cache.getPlayer(playerInSeat.playerUuid);
+      logger.info(
+        `Location Check: Player: ${cachedPlayer.name} ip: ${cachedPlayer.ipAddress}`
+      );
+
       const playersInProxmity = await this.playersInProxmity(
         cachedPlayer,
-        playersInSeats
+        cachedPlayers
       );
       if (playersInProxmity.length > 0) {
-        playersInProxmity.push(playerInSeat);
-        proxmityPlayersMap[playerInSeat.playerUuid] = playersInProxmity;
+        playersInProxmity.push(cachedPlayer);
+        proxmityPlayersMap[cachedPlayer.uuid] = playersInProxmity;
       }
     }
     logger.info(
-      `Game: [${this.game.gameCode}] ${proxmityPlayersMap.length} players are in proxmity`
+      `Location Check: Game: [${this.game.gameCode}] ${
+        Object.keys(proxmityPlayersMap).length
+      } players are in proxmity`
     );
     const removePlayers = new Array<string>();
     if (Object.keys(proxmityPlayersMap).length > 0) {
@@ -53,19 +72,20 @@ export class LocationCheck {
       for (const playerUuid of Object.keys(proxmityPlayersMap)) {
         const playersInProxmity = proxmityPlayersMap[
           playerUuid
-        ] as Array<PlayerGameTracker>;
+        ] as Array<Player>;
         // we need to remove the players who have recently joined
         let longestPlayer: PlayerGameTracker | undefined;
         for (const player of playersInProxmity) {
+          const playerInSeat = playersInSeats[player.uuid];
           // if this player is already in remove list, skip the player
-          if (removePlayers.indexOf(player.playerUuid) !== -1) {
+          if (removePlayers.indexOf(player.uuid) !== -1) {
             continue;
           }
           if (!longestPlayer) {
-            longestPlayer = player;
+            longestPlayer = playerInSeat;
           } else {
-            if (player.satAt.getTime() < longestPlayer.satAt.getTime()) {
-              longestPlayer = player;
+            if (playerInSeat.satAt.getTime() < longestPlayer.satAt.getTime()) {
+              longestPlayer = playerInSeat;
             }
           }
         }
@@ -74,8 +94,8 @@ export class LocationCheck {
         if (longestPlayer) {
           const otherPlayers = _.filter(
             playersInProxmity,
-            p => p.playerUuid !== longestPlayer?.playerUuid
-          ).map(e => e.playerUuid);
+            p => p.uuid !== longestPlayer?.playerUuid
+          ).map(e => e.uuid);
           for (const removePlayer of otherPlayers) {
             if (removePlayers.indexOf(removePlayer) === -1) {
               removePlayers.push(...otherPlayers);
@@ -106,9 +126,9 @@ export class LocationCheck {
   */
   protected async playersInProxmity(
     player: Player,
-    playersInSeats: Array<PlayerGameTracker>
-  ): Promise<Array<PlayerGameTracker>> {
-    const ret = new Array<PlayerGameTracker>();
+    playersInSeats: Array<Player>
+  ): Promise<Array<Player>> {
+    const ret = new Array<Player>();
 
     // check whether this player can sit in this game
     if (this.gameSettings.ipCheck) {
@@ -116,28 +136,27 @@ export class LocationCheck {
       if (player.ipAddress) {
         const now = new Date();
         for (const player2 of playersInSeats) {
-          if (player2.playerUuid === player.uuid) {
+          if (player2.uuid === player.uuid) {
             // same player
             continue;
           }
-          const playerInSeat = await Cache.getPlayer(player2.playerUuid);
-          if (!playerInSeat.locationUpdatedAt) {
+          if (!player2.locationUpdatedAt) {
             continue;
           }
 
           // when was this player's location updated (should be recent)
           const diff = Math.ceil(
-            (now.getTime() - playerInSeat.locationUpdatedAt.getTime()) / 1000
+            (now.getTime() - player2.locationUpdatedAt.getTime()) / 1000
           );
-          if (diff > 2 * appSettings.ipGpsCheckInterval) {
-            // stale location
-            continue;
-          }
+          // if (diff > 2 * appSettings.ipGpsCheckInterval) {
+          //   // stale location
+          //   continue;
+          // }
 
-          if (playerInSeat.ipAddress) {
-            if (playerInSeat.ipAddress === player.ipAddress) {
+          if (player2.ipAddress) {
+            if (player2.ipAddress === player.ipAddress) {
               logger.error(
-                `Game: [${this.game.gameCode}] Player ${playerInSeat.name} has the same ip as player: ${player.name}. Ipaddres: ${player.ipAddress}`
+                `Game: [${this.game.gameCode}] Player ${player2.name} has the same ip as player: ${player.name}. Ipaddres: ${player.ipAddress}`
               );
               ret.push(player2);
             }
@@ -150,11 +169,11 @@ export class LocationCheck {
       if (player.location) {
         // split the location first
         for (const player2 of playersInSeats) {
-          if (player2.playerUuid === player.uuid) {
+          if (player2.uuid === player.uuid) {
             // same player
             continue;
           }
-          const playerInSeat = await Cache.getPlayer(player2.playerUuid);
+          const playerInSeat = await Cache.getPlayer(player2.uuid);
           if (playerInSeat.location) {
             const distance = getDistanceInMeters(
               player.location.lat,
