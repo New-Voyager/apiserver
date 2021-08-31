@@ -7,7 +7,7 @@ import {
 import {Player} from '@src/entity/player/player';
 import {EntityManager, getRepository, Repository} from 'typeorm';
 import * as redis from 'redis';
-import {redisHost, redisPort} from '@src/utils';
+import {redisHost, redisPort, redisUser, redisPassword} from '@src/utils';
 import {getGameRepository, getUserRepository} from '@src/repositories';
 import {PlayerLocation} from '@src/entity/types';
 
@@ -16,8 +16,18 @@ interface CachedHighHandTracking {
   trackingId: number;
   gameCodes: Array<string>;
 }
+let client: any;
 
-const client = redis.createClient(redisPort(), redisHost());
+if (redisUser() || redisPassword()) {
+  client = redis.createClient({
+    port: redisPort(),
+    host: redisHost(),
+    user: redisUser(),
+    password: redisPassword(),
+  });
+} else {
+  client = redis.createClient(redisPort(), redisHost());
+}
 client.on('error', error => {
   console.log(error);
   process.exit(0);

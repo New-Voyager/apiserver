@@ -41,6 +41,22 @@ export function redisPort(): number {
   }
 }
 
+export function redisUser(): string | undefined {
+  if (process.env.REDIS_USER) {
+    return process.env.REDIS_USER;
+  } else {
+    return undefined;
+  }
+}
+
+export function redisPassword(): string | undefined {
+  if (process.env.REDIS_PASSWORD) {
+    return process.env.REDIS_PASSWORD;
+  } else {
+    return undefined;
+  }
+}
+
 export function utcTime(date: Date): Date {
   return new Date(
     Date.UTC(
