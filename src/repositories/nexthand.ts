@@ -104,7 +104,7 @@ export class NextHandProcess {
           }
         }
 
-        logger.info(
+        logger.debug(
           `Previous hand: [${playerInSeatsInPrevHand.toString()}] Current hand: [${occupiedSeats.toString()}]`
         );
 
@@ -207,7 +207,7 @@ export class NextHandProcess {
         }
         gameUpdate.sbPos = sbPos;
         gameUpdate.bbPos = bbPos;
-        logger.info(
+        logger.debug(
           `Hand number: ${gameUpdate.handNum} buttonPos: ${buttonPos} sbPos: ${sbPos} bbPos: ${bbPos}`
         );
 
@@ -255,7 +255,7 @@ export class NextHandProcess {
         }
 
         if (missedBlinds.length > 0) {
-          logger.info(`Players missed blinds: ${missedBlinds.toString()}`);
+          logger.debug(`Players missed blinds: ${missedBlinds.toString()}`);
           const playerGameTrackerRepo = transactionEntityManager.getRepository(
             PlayerGameTracker
           );
@@ -283,7 +283,6 @@ export class NextHandProcess {
         };
         // calculate whether we need to do bomb pot next hand
         if (gameSettings.bombPotEnabled) {
-          //console.log('****** Bomb pot enabled ***** ');
           this.determineBombPotNextHand(gameUpdate, gameSettings, setProps);
         }
         // update button pos and gameType
@@ -304,7 +303,7 @@ export class NextHandProcess {
 
         if (prevGameType !== gameUpdate.gameType) {
           // announce the new game type
-          logger.info(
+          logger.debug(
             `Game type is changed. New game type: ${gameUpdate.gameType}`
           );
         }
@@ -366,7 +365,7 @@ export class NextHandProcess {
         const gameUpdate = gameUpdates[0];
 
         let bombPotThisHand = false;
-        console.log(
+        logger.debug(
           `Bomb pot next hand num: ${gameUpdate.bombPotNextHandNum} current hand num: ${gameUpdate.handNum}`
         );
         if (gameUpdate.handNum === gameUpdate.bombPotNextHandNum) {
@@ -615,11 +614,11 @@ export class NextHandProcess {
     const nextBombPotTime = new Date(
       gameUpdate.lastBombPotTime.getTime() + intervalInMs
     );
-    logger.info(
+    logger.debug(
       `Next bomb time: ${nextBombPotTime.toISOString()} now: ${now.toISOString()}`
     );
     if (now.getTime() > nextBombPotTime.getTime()) {
-      logger.info(`Game: ${this.gameCode} Time for next bomb pot`);
+      logger.debug(`Game: ${this.gameCode} Time for next bomb pot`);
       setProps.bombPotNextHandNum = this.gameServerHandNum + 1;
       setProps.lastBombPotTime = now;
     }

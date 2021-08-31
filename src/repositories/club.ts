@@ -262,7 +262,7 @@ class ClubRepositoryImpl {
     const clubRepository = getUserRepository(Club);
     const club = await clubRepository.findOne({where: {name: clubName}});
     if (club) {
-      logger.info('****** STARTING TRANSACTION TO delete club');
+      logger.debug('****** STARTING TRANSACTION TO delete club');
       await getUserManager().transaction(async transactionEntityManager => {
         await transactionEntityManager
           .createQueryBuilder()
@@ -272,7 +272,7 @@ class ClubRepositoryImpl {
           .execute();
         transactionEntityManager.getRepository(Club).delete(club);
       });
-      logger.info('****** ENDING TRANSACTION TO delete club');
+      logger.debug('****** ENDING TRANSACTION TO delete club');
     }
   }
 
@@ -379,7 +379,6 @@ class ClubRepositoryImpl {
       FROM club_member_stat cms 
       INNER JOIN player p on p.id = cms.player_id 
       where club_id = ${clubId} ORDER BY cms.total_winnings DESC`);
-    logger.info(sql);
     const statsResp = await getUserConnection().query(sql, []);
     return statsResp;
   }
@@ -744,7 +743,6 @@ class ClubRepositoryImpl {
         pgt.pgt_game_id = pg.id AND pgt.pgt_player_id = ?
         WHERE pg.club_code = ? ${endedAt}
         ORDER BY pg.id DESC`);
-    logger.info(query);
     // TODO: we need to do pagination here
     const result = await getGameConnection().query(query, [playerId, clubCode]);
     return result;

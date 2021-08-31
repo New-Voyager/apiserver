@@ -160,7 +160,7 @@ export class Reload {
               reloadTimeExp
             );
 
-            logger.info(
+            logger.debug(
               `************ [${this.game.gameCode}]: Player ${this.player.name} is waiting for approval`
             );
             // notify game host that the player is waiting for buyin
@@ -191,7 +191,7 @@ export class Reload {
               messageId
             );
           } else {
-            logger.info(
+            logger.debug(
               `************ [${this.game.gameCode}]: Player ${this.player.name} is approved`
             );
           }
@@ -200,7 +200,7 @@ export class Reload {
           throw new Error('Individual game is not implemented yet');
         }
         if (approved) {
-          logger.info(
+          logger.debug(
             `************ [${this.game.gameCode}]: Player ${this.player.name} bot: ${this.player.bot} buyin is approved`
           );
           buyInApprovedTime = new Date().getTime();
@@ -212,7 +212,7 @@ export class Reload {
       }
     );
     const timeTaken = new Date().getTime() - startTime;
-    logger.info(
+    logger.debug(
       `Reload process total time: ${timeTaken} reload: ${buyInApprovedTime} databaseTime: ${databaseTime}`
     );
 
@@ -348,13 +348,10 @@ export class Reload {
       if (currentBuyin) {
         outstandingBalance += currentBuyin;
       }
-      logger.info(`[${this.game.gameCode}] Player: ${this.player.name} reload request. 
+      logger.debug(`[${this.game.gameCode}] Player: ${this.player.name} reload request. 
             clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager} 
             Auto approval: ${clubMember.autoBuyinApproval} 
             isHost: {isHost}`);
-      logger.info(
-        `Game.buyInApproval: ${gameSettings.buyInApproval} creditLimit: ${clubMember.creditLimit} outstandingBalance: ${outstandingBalance}`
-      );
 
       let availableCredit = 0.0;
       if (clubMember.creditLimit >= 0) {
@@ -443,7 +440,6 @@ export class Reload {
               playerInGame
             );
           } else {
-            logger.info('Game is running. Update stack in the next hand');
             await this.addToNextHand(
               reloadRequest.buyinAmount,
               NextHandUpdate.RELOAD_APPROVED,

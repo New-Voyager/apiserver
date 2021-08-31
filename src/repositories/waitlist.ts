@@ -93,7 +93,7 @@ export class WaitListMgmt {
   public async declineWaitlistSeat(player: Player) {
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const gameUpdateRepo = getGameRepository(PokerGameUpdates);
-    logger.info(
+    logger.debug(
       `Player [${player.name}: ${player.id}] declined to join the game. ${this.game.gameCode}`
     );
 
@@ -175,7 +175,7 @@ export class WaitListMgmt {
     const gameId = this.game.id;
     const seatsTaken = await occupiedSeats(gameId);
     if (seatsTaken === this.game.maxPlayers) {
-      logger.info(`No open seats in game: ${this.game.gameCode}`);
+      logger.debug(`No open seats in game: ${this.game.gameCode}`);
       return;
     }
     await this.resetExistingWaitingList();
@@ -305,7 +305,7 @@ export class WaitListMgmt {
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
     }
-    logger.info(
+    logger.debug(
       `Game: [${game.gameCode}], Player: ${nextPlayer.playerName}:${nextPlayer.playerUuid} is requested to take open seat`
     );
     // we will send a notification which player is coming to the table
@@ -332,7 +332,7 @@ export class WaitListMgmt {
   }
 
   public async addToWaitingList(playerUuid: string) {
-    logger.info('****** STARTING TRANSACTION TO ADD a player to waitlist');
+    logger.debug('****** STARTING TRANSACTION TO ADD a player to waitlist');
     const player = await Cache.getPlayer(playerUuid);
     let playerInGame = await getGameRepository(PlayerGameTracker).findOne({
       where: {
@@ -415,7 +415,7 @@ export class WaitListMgmt {
         playerId: player.id,
       })
       .execute();
-    logger.info('****** ENDING TRANSACTION TO ADD a player to waitlist');
+    logger.debug('****** ENDING TRANSACTION TO ADD a player to waitlist');
   }
 
   public async removeFromWaitingList(playerUuid: string) {
@@ -511,7 +511,7 @@ export class WaitListMgmt {
         },
       });
       if (count !== players.length) {
-        logger.info(
+        logger.debug(
           `Waiting list count: Expected - ${count} but received - ${players.length}`
         );
         throw new Error(

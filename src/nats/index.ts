@@ -631,7 +631,6 @@ class NatsClass {
       requestId: messageId,
     };
     const messageStr = JSON.stringify(message);
-    console.log(messageStr);
     const subject = this.getGameChannel(game.gameCode);
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
@@ -661,7 +660,6 @@ class NatsClass {
       newUpdate: NewUpdate[NewUpdate.LEFT_THE_GAME],
     };
     const messageStr = JSON.stringify(message);
-    console.log(messageStr);
     const subject = this.getGameChannel(game.gameCode);
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
@@ -687,7 +685,6 @@ class NatsClass {
       tableStatus: TableStatus[tableStatus],
     };
     const messageStr = JSON.stringify(message);
-    console.log(messageStr);
     const subject = this.getGameChannel(game.gameCode);
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
@@ -713,7 +710,6 @@ class NatsClass {
       seatChangeHostId: seatChangeHostId,
     };
     const messageStr = JSON.stringify(message);
-    console.log(messageStr);
     const subject = this.getGameChannel(game.gameCode);
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
@@ -750,7 +746,6 @@ class NatsClass {
       seatChangeHostId: seatChangeHostId,
     };
     const messageStr = JSON.stringify(message);
-    console.log(messageStr);
     const subject = this.getGameChannel(game.gameCode);
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
@@ -775,7 +770,6 @@ class NatsClass {
       seatMoves: updates,
     };
     const messageStr = JSON.stringify(message);
-    console.log(messageStr);
     const subject = this.getGameChannel(game.gameCode);
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
@@ -804,7 +798,6 @@ class NatsClass {
       seatChangeSeatNos: seatChangeSeatNos,
     };
     const messageStr = JSON.stringify(message);
-    console.log(messageStr);
     const subject = this.getGameChannel(game.gameCode);
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }

@@ -359,7 +359,7 @@ export class BuyIn {
           }
           databaseTime = new Date().getTime() - databaseTime;
           if (!approved) {
-            logger.info(
+            logger.debug(
               `************ [${this.game.gameCode}]: Player ${this.player.name} is waiting for approval`
             );
             // notify game host that the player is waiting for buyin
@@ -413,7 +413,7 @@ export class BuyIn {
         }
 
         if (approved) {
-          logger.info(
+          logger.debug(
             `************ [${this.game.gameCode}]: Player ${this.player.name} bot: ${this.player.bot} buyin is approved`
           );
           buyInApprovedTime = new Date().getTime();
@@ -425,7 +425,7 @@ export class BuyIn {
       }
     );
     const timeTaken = new Date().getTime() - startTime;
-    logger.info(
+    logger.debug(
       `Buyin process total time: ${timeTaken} buyInApprovedTime: ${buyInApprovedTime} databaseTime: ${databaseTime}`
     );
 

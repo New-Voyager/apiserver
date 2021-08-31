@@ -216,7 +216,6 @@ class PlayerRepositoryImpl {
         notes: notes,
       });
     }
-    logger.info(`Affected rows: ${affectedRows}`);
   }
 
   public async sendFcmMessage(player: Player, message: any) {
@@ -237,7 +236,6 @@ class PlayerRepositoryImpl {
         name: name,
       }
     );
-    logger.info(`Affected rows: ${affectedRows}`);
     if (affectedRows.affected != 0) {
       // member -> host message
       const clubMemberRepo = getUserRepository(ClubMember);
@@ -247,7 +245,6 @@ class PlayerRepositoryImpl {
           player: {id: player.id},
         },
       });
-      logger.info(`player Clubs: ${playerClubs}`);
       for await (const data of playerClubs) {
         await HostMessageRepository.sendHostMessage(
           data.club,

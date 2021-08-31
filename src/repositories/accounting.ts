@@ -48,7 +48,7 @@ class AccountingRepositoryImpl {
     amount: number,
     notes: string
   ): Promise<boolean> {
-    logger.info('****** STARTING TRANSACTION FOR ADD TOKENS TO PLAYER');
+    logger.debug('****** STARTING TRANSACTION FOR ADD TOKENS TO PLAYER');
     await getUserManager().transaction(async transactionEntityManager => {
       const updateClubMemberQuery = `update club_member set balance = balance + ${amount} where id = ${clubMember.id}`;
       await transactionEntityManager.query(updateClubMemberQuery);
@@ -66,7 +66,7 @@ class AccountingRepositoryImpl {
         .getRepository(ClubTokenTransactions)
         .save(transaction);
     });
-    logger.info('****** ENDING TRANSACTION FOR ADD TOKENS TO PLAYER');
+    logger.debug('****** ENDING TRANSACTION FOR ADD TOKENS TO PLAYER');
     return true;
   }
 
@@ -79,7 +79,7 @@ class AccountingRepositoryImpl {
     amount: number,
     notes: string
   ): Promise<boolean> {
-    logger.info('****** STARTING TRANSACTION FOR WITHDRAW TOKENS FROM PLAYER');
+    logger.debug('****** STARTING TRANSACTION FOR WITHDRAW TOKENS FROM PLAYER');
     await getUserManager().transaction(async transactionEntityManager => {
       const updateClubMemberQuery = `update club_member set balance = balance - ${amount} where id = ${clubMember.id}`;
       await transactionEntityManager.query(updateClubMemberQuery);
@@ -97,7 +97,7 @@ class AccountingRepositoryImpl {
         .getRepository(ClubTokenTransactions)
         .save(transaction);
     });
-    logger.info('****** ENDING TRANSACTION FOR WITHDRAW TOKENS FROM PLAYER');
+    logger.debug('****** ENDING TRANSACTION FOR WITHDRAW TOKENS FROM PLAYER');
     return true;
   }
 
@@ -108,7 +108,7 @@ class AccountingRepositoryImpl {
     amount: number,
     notes: string
   ): Promise<boolean> {
-    logger.info('****** STARTING TRANSACTION FOR ADD TOKENS TO CLUB');
+    logger.debug('****** STARTING TRANSACTION FOR ADD TOKENS TO CLUB');
     await getUserManager().transaction(async transactionEntityManager => {
       const updateClubQuery = `update club set balance = balance + ${amount} where id = ${club.id}`;
       await transactionEntityManager.query(updateClubQuery);
@@ -125,7 +125,7 @@ class AccountingRepositoryImpl {
         .getRepository(ClubTokenTransactions)
         .save(transaction);
     });
-    logger.info('****** ENDING TRANSACTION FOR ADD TOKENS TO CLUB');
+    logger.debug('****** ENDING TRANSACTION FOR ADD TOKENS TO CLUB');
     return true;
   }
 
@@ -136,7 +136,7 @@ class AccountingRepositoryImpl {
     amount: number,
     notes: string
   ): Promise<boolean> {
-    logger.info('****** STARTING TRANSACTION FOR WITHDRAW TOKENS FROM CLUB');
+    logger.debug('****** STARTING TRANSACTION FOR WITHDRAW TOKENS FROM CLUB');
     await getUserManager().transaction(async transactionEntityManager => {
       const updateClubQuery = `update club set balance = balance - ${amount} where id = ${club.id}`;
       await transactionEntityManager.query(updateClubQuery);
@@ -153,7 +153,7 @@ class AccountingRepositoryImpl {
         .getRepository(ClubTokenTransactions)
         .save(transaction);
     });
-    logger.info('****** ENDING TRANSACTION FOR WITHDRAW TOKENS FROM CLUB');
+    logger.debug('****** ENDING TRANSACTION FOR WITHDRAW TOKENS FROM CLUB');
     return true;
   }
 
@@ -163,7 +163,7 @@ class AccountingRepositoryImpl {
     amount: number,
     notes: string
   ): Promise<boolean> {
-    logger.info('****** STARTING TRANSACTION FOR UPDATE CLUB BALANCE');
+    logger.debug('****** STARTING TRANSACTION FOR UPDATE CLUB BALANCE');
     await getUserManager().transaction(async transactionEntityManager => {
       const updateClubQuery = `update club set balance = ${amount} where id = ${club.id}`;
       await transactionEntityManager.query(updateClubQuery);
@@ -179,7 +179,7 @@ class AccountingRepositoryImpl {
         .getRepository(ClubTokenTransactions)
         .save(transaction);
     });
-    logger.info('****** ENDING TRANSACTION FOR UPDATE CLUB BALANCE');
+    logger.debug('****** ENDING TRANSACTION FOR UPDATE CLUB BALANCE');
     return true;
   }
 
@@ -191,7 +191,7 @@ class AccountingRepositoryImpl {
     amount: number,
     notes: string
   ): Promise<boolean> {
-    logger.info('****** STARTING TRANSACTION FOR UPDATE PLAYER BALANCE');
+    logger.debug('****** STARTING TRANSACTION FOR UPDATE PLAYER BALANCE');
     await getUserManager().transaction(async transactionEntityManager => {
       const updateClubMemberQuery = `update club_member set balance = ${amount} where id = ${clubMember.id}`;
       await transactionEntityManager.query(updateClubMemberQuery);
@@ -208,7 +208,7 @@ class AccountingRepositoryImpl {
         .getRepository(ClubTokenTransactions)
         .save(transaction);
     });
-    logger.info('****** ENDING TRANSACTION FOR UPDATE PLAYER BALANCE');
+    logger.debug('****** ENDING TRANSACTION FOR UPDATE PLAYER BALANCE');
     return true;
   }
 
@@ -253,7 +253,7 @@ class AccountingRepositoryImpl {
     amount: number,
     notes: string
   ): Promise<boolean> {
-    logger.info('****** STARTING TRANSACTION FOR SETTLE PLAYER TO PLAYER');
+    logger.debug('****** STARTING TRANSACTION FOR SETTLE PLAYER TO PLAYER');
     await getUserManager().transaction(async transactionEntityManager => {
       const updateFromClubMemberQuery = `update club_member set balance = balance - ${amount} where id = ${fromClubMember.id}`;
       const updateToClubMemberQuery = `update club_member set balance = balance + ${amount} where id = ${toClubMember.id}`;
@@ -287,7 +287,7 @@ class AccountingRepositoryImpl {
         .getRepository(ClubTokenTransactions)
         .save(fromTransaction);
     });
-    logger.info('****** ENDING TRANSACTION FOR SETTLE PLAYER TO PLAYER');
+    logger.debug('****** ENDING TRANSACTION FOR SETTLE PLAYER TO PLAYER');
     return true;
   }
 }

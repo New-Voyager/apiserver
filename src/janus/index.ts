@@ -69,7 +69,7 @@ export class JanusSession {
     };
     const url = `${JanusSession.janusUrl()}/${this._id}`;
     const resp = await axios.post(url, payload);
-    logger.info(JSON.stringify(resp.data));
+    //logger.info(JSON.stringify(resp.data));
     this._handleId = resp.data.data['id'];
   }
 
@@ -101,7 +101,7 @@ export class JanusSession {
     const url = `${JanusSession.janusUrl()}/${this._id}/${this._handleId}`;
     const resp = await axios.post(url, payload);
     logger.info(`Created janus room: ${roomId}`);
-    logger.info(JSON.stringify(resp.data));
+    //logger.info(JSON.stringify(resp.data));
   }
 
   public async joinRoom(roomId: number) {
@@ -119,7 +119,7 @@ export class JanusSession {
     };
     const url = `${JanusSession.janusUrl()}/${this._id}/${this._handleId}`;
     const resp = await axios.post(url, payload);
-    logger.info(JSON.stringify(resp.data));
+    //logger.info(JSON.stringify(resp.data));
   }
 
   public async leaveRoom(roomId: number) {
@@ -136,7 +136,7 @@ export class JanusSession {
     };
     const url = `${JanusSession.janusUrl()}/${this._id}/${this._handleId}`;
     const resp = await axios.post(url, payload);
-    logger.info(JSON.stringify(resp.data));
+    //logger.info(JSON.stringify(resp.data));
   }
 
   public async deleteRoom(roomId: number) {
@@ -154,6 +154,6 @@ export class JanusSession {
     };
     const url = `${JanusSession.janusUrl()}/${this._id}/${this._handleId}`;
     const resp = await axios.post(url, payload);
-    logger.info(JSON.stringify(resp.data));
+    //logger.info(JSON.stringify(resp.data));
   }
 }

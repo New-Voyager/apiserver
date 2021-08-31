@@ -1,7 +1,11 @@
 'use strict';
+
+import {getLogger} from '@src/utils/log';
+
 const nodemailer = require('nodemailer');
 const account = 'contact.poker.clubapp@gmail.com';
 const password = 'Poker!234';
+const logger = getLogger('email');
 export async function sendRecoveryCode(
   to: string,
   from: string | undefined | null,
@@ -44,9 +48,9 @@ async function sendEmail(
 
   transporter.sendMail(mailOptions, function (error, info) {
     if (error) {
-      console.log(error);
+      logger.error(error);
     } else {
-      console.log('Email sent: ' + info.response);
+      logger.verbose('Email sent: ' + info.response);
     }
   });
 }

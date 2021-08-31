@@ -162,8 +162,6 @@ class HandRepositoryImpl {
       }
     }
 
-    //logger.info(`pageOptions count: ${pageOptions.count}`);
-
     const findOptions: any = {
       where: {
         gameId: gameId,
@@ -308,9 +306,6 @@ class HandRepositoryImpl {
         await savedHandsRepository.delete({
           id: bookmarkId,
         });
-        logger.info('Bookmark is removed');
-      } else {
-        logger.info('Bookmark is not found');
       }
     } catch (error) {
       logger.error(
@@ -506,7 +501,6 @@ class HandRepositoryImpl {
     let game: PokerGame;
     let gameCode = '';
     try {
-      //console.log(JSON.stringify(result));
       const gameFromCache = await Cache.getGameById(gameID);
       if (!gameFromCache) {
         throw new Error(`Game ${gameID} is not found`);
@@ -686,7 +680,6 @@ class HandRepositoryImpl {
       result.playerStats = playerStats;
       result.playerRound = playerRound;
 
-      // //logger.info('****** STARTING TRANSACTION TO SAVE a hand result');
       let saveResult: any = {};
       saveResult = await getGameManager().transaction(
         async transactionEntityManager => {
@@ -791,9 +784,6 @@ class HandRepositoryImpl {
       for (const seatNo of Object.keys(playersInHand)) {
         const player = playersInHand[seatNo];
         if (player.balance.after === 0) {
-          logger.info(
-            `Game [${game.gameCode}]: A player balance stack went to 0`
-          );
           await Cache.updateGamePendingUpdates(game.gameCode, true);
           pendingUpdates = true;
           break;
@@ -827,14 +817,11 @@ class HandRepositoryImpl {
             (now.getTime() - gameUpdates.lastIpGpsCheckTime.getTime()) / 1000
           );
           if (diff > getAppSettings().ipGpsCheckInterval) {
-            logger.info('Game: [${game.gameCode}] time to check IP/GPS');
+            logger.debug('Game: [${game.gameCode}] time to check IP/GPS');
             await Cache.updateGamePendingUpdates(game.gameCode, true);
           }
         }
       }
-
-      //logger.info(`Result: ${JSON.stringify(saveResult)}`);
-      //logger.info('****** ENDING TRANSACTION TO SAVE a hand result');
       return saveResult;
     } catch (err) {
       logger.error(`Error when trying to save hand log: ${err.toString()}`);

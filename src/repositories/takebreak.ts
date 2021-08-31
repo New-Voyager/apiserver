@@ -103,7 +103,7 @@ export class TakeBreak {
   }
 
   public async processPendingUpdate(update: NextHandUpdates | null) {
-    logger.info(`Player ${this.player.name} is taking a break`);
+    logger.debug(`Player ${this.player.name} is taking a break`);
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const rows = await playerGameTrackerRepository
       .createQueryBuilder()
@@ -153,7 +153,7 @@ export class TakeBreak {
     const timeoutInSeconds = timeoutInMins * 10 * 60;
     breakTimeExpAt.setSeconds(breakTimeExpAt.getSeconds() + timeoutInSeconds);
     const exp = utcTime(breakTimeExpAt);
-    logger.info(
+    logger.debug(
       `Player ${
         this.player.name
       } is taking a break. Now: ${now.toISOString()} Timer expires at ${exp.toISOString()}`
@@ -177,7 +177,7 @@ export class TakeBreak {
   public async timerExpired() {
     const now = new Date();
     const nowUtc = utcTime(now);
-    logger.info(
+    logger.debug(
       `Player ${
         this.player.name
       } break time expired. Current time: ${nowUtc.toISOString()}`
