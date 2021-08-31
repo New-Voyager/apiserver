@@ -19,12 +19,12 @@ interface CachedHighHandTracking {
 let client: any;
 
 if (redisUser() || redisPassword()) {
-  client = redis.createClient({
-    port: redisPort(),
-    host: redisHost(),
+  const url = `rediss://${redisHost()}:${redisPort()}`;
+  client = redis.createClient(url, {
     user: redisUser(),
     password: redisPassword(),
   });
+  console.log('Successfully connected to redis');
 } else {
   client = redis.createClient(redisPort(), redisHost());
 }
