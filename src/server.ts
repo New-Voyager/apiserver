@@ -124,19 +124,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     // create databases
     try {
       const defaultObj = default1 as any;
-      const conn = await createConnection({
-        type: defaultObj.type,
-        host: defaultObj.host,
-        port: defaultObj.port,
-        username: defaultObj.username,
-        password: defaultObj.password,
-        database: process.env.DB_NAME,
-        cache: defaultObj.cache,
-        synchronize: defaultObj.synchronize,
-        bigNumberStrings: defaultObj.bigNumberStrings,
-        entities: defaultObj.entities,
-        name: 'default',
-      });
+      const conn = await createConnection(defaultObj);
       try {
         await conn.query('CREATE DATABASE livegames');
         await conn.query(
@@ -186,42 +174,15 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     try {
       await createConnections([
         {
-          type: userObj.type,
-          host: userObj.host,
-          port: userObj.port,
-          username: userObj.username,
-          password: userObj.password,
-          database: 'users', //process.env.DB_NAME,
-          cache: userObj.cache,
-          synchronize: userObj.synchronize,
-          bigNumberStrings: userObj.bigNumberStrings,
-          entities: userObj.entities,
+          ...userObj,
           name: 'users',
         },
         {
-          type: liveGameObj.type,
-          host: liveGameObj.host,
-          port: liveGameObj.port,
-          username: liveGameObj.username,
-          password: liveGameObj.password,
-          database: 'livegames', //process.env.DB_NAME,
-          cache: liveGameObj.cache,
-          synchronize: liveGameObj.synchronize,
-          bigNumberStrings: liveGameObj.bigNumberStrings,
-          entities: liveGameObj.entities,
+          ...liveGameObj,
           name: 'livegames',
         },
         {
-          type: historyObj.type,
-          host: historyObj.host,
-          port: historyObj.port,
-          username: historyObj.username,
-          password: historyObj.password,
-          database: 'history',
-          cache: historyObj.cache,
-          synchronize: historyObj.synchronize,
-          bigNumberStrings: historyObj.bigNumberStrings,
-          entities: historyObj.entities,
+          ...historyObj,
           name: 'history',
         },
         {

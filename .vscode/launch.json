@@ -42,6 +42,29 @@
       }
     },
     {
+      "name": "Run prod",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "watch-debug"],
+      "port": 9235,
+      "outputCapture": "std",
+      "console": "internalConsole",
+      "env": {
+        "POSTGRES_HOST": "db-postgresql-nyc1-prod1-do-user-7667119-0.b.db.ondigitalocean.com",
+        "POSTGRES_PORT": "25060",
+        "POSTGRES_USER": "doadmin",
+        "POSTGRES_PASSWORD": "w3umlfs3bqu21tsi",
+        "POSTGRES_DB": "defaultdb",
+        "POSTGRES_SSL": "1",
+        "REDIS_HOST": "db-redis-nyc1-prod1-do-user-7667119-0.b.db.ondigitalocean.com",
+        "REDIS_PORT": "25061",
+        "REDIS_USER": "default",
+        "REDIS_PASSWORD": "fwk0hhx8306zmefl"
+      }
+    },    
+    {
       "name": "Test Server debug",
       "type": "node",
       "request": "launch",
@@ -101,7 +124,7 @@
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
         "--testNamePattern",
-        "start a new game"
+        "approve buyIn for a club game"
       ],
       "env": {
         "NODE_ENV": "test",
@@ -121,7 +144,7 @@
         "--runInBand",
         "./unit-tests",
         "--testNamePattern",
-        "host does not buy coins"
+        "gamesettings: update game settings"
       ],
       "env": {
         "NODE_ENV": "test",

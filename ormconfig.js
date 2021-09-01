@@ -201,6 +201,9 @@ if (process.env.NODE_ENV === 'test') {
         rejectUnauthorized: false,
       },
     };
+    configs.default.ssl = true;
+    configs.default.extra = extra;
+
     configs.livegames.ssl = true;
     configs.livegames.extra = extra;
 
