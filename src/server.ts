@@ -126,6 +126,13 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
       const defaultObj = default1 as any;
       const conn = await createConnection(defaultObj);
       try {
+        logger.info('Enabling pg_stat_statements extension');
+        await conn.query('CREATE EXTENSION pg_stat_statements');
+        logger.info('Enabled pg_stat_statements extension');
+      } catch(err) {
+        logger.error(`Enabling pg_stat_statements extension failed. Error: ${err.message}`);
+      }
+      try {
         await conn.query('CREATE DATABASE livegames');
         await conn.query(
           `GRANT ALL PRIVILEGES ON DATABASE livegames TO "${defaultObj.username}"`
