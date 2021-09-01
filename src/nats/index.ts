@@ -25,8 +25,14 @@ class NatsClass {
     const connOpts = {
       servers: natsUrls.split(','),
     };
-    this.client = await nats.connect(connOpts);
-    logger.info('Nats is initialized');
+    try {
+      logger.info(`Connecting to NATS url: ${natsUrls}. Options: ${JSON.stringify(connOpts)}`);
+      this.client = await nats.connect(connOpts);
+      logger.info('Nats is initialized');
+    } catch(err) {
+      logger.error(`Cannot connect to urls: ${natsUrls}. Error: ${err.message}`);
+      throw err;
+    }
   }
 
   public sendWaitlistMessage(
