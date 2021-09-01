@@ -255,7 +255,7 @@ export class NextHandProcess {
         }
 
         if (missedBlinds.length > 0) {
-          logger.debug(`Players missed blinds: ${missedBlinds.toString()}`);
+          logger.info(`Players missed blinds: ${missedBlinds.toString()}`);
           const playerGameTrackerRepo = transactionEntityManager.getRepository(
             PlayerGameTracker
           );

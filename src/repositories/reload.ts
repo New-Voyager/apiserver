@@ -254,6 +254,7 @@ export class Reload {
 
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     if (!playerInGame) {
+      logger.info('approvedAndUpdateStack');
       playerInGame = await playerGameTrackerRepository.findOne({
         game: {id: this.game.id},
         playerId: this.player.id,

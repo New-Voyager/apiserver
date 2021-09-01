@@ -179,16 +179,12 @@ async function processConsecutiveActionTimeouts(
 ) {
   const maxAllowedTimeouts = 4;
 
-  const gameRespository: Repository<PokerGame> = getGameRepository(PokerGame);
-  const game: PokerGame | undefined = await gameRespository.findOne({
-    id: gameID,
-  });
+  const game = await Cache.getGameById(gameID);
   if (!game) {
     throw new Error(
       `Unable to find game with ID ${gameID} while processing consecutive action timeouts`
     );
   }
-
   await getGameConnection().transaction(async transactionEntityManager => {
     const pokerGameUpdatesRepo: Repository<PokerGameUpdates> = transactionEntityManager.getRepository(
       PokerGameUpdates
