@@ -771,7 +771,8 @@ class HandRepositoryImpl {
             saveResult,
             transactionEntityManager
           );
-          await StatsRepository.saveHandStats(game, result, handNum);
+          // TODO: save hand stats will be handled differently
+          // await StatsRepository.saveHandStats(game, result, handNum);
           return saveResult;
         }
       );

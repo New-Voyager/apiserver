@@ -79,4 +79,8 @@ export class GameHistory {
 
   @Column({name: 'ended_by_name', nullable: true})
   public endedByName!: string;
+
+  // this flag is used to determine whether the data was aggregated after the game ended
+  @Column({name: 'data_aggregated', nullable: false, default: false})
+  public dataAggregated!: number;
 }
