@@ -117,12 +117,13 @@ export class BuyIn {
       clubMember.isManager ||
       clubMember.autoBuyinApproval ||
       !gameSettings.buyInApproval ||
+      this.player.bot ||
       isHost
     ) {
-      // logger.info(`***** [${this.game.gameCode}] Player: ${this.player.name} buyin approved.
-      //       clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager}
-      //       Auto approval: ${clubMember.autoBuyinApproval}
-      //       isHost: ${isHost} Game.buyInApproval: ${this.game.buyInApproval} *****`);
+      logger.debug(`***** [${this.game.gameCode}] Player: ${this.player.name} buyin approved.
+            clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager}
+            Auto approval: ${clubMember.autoBuyinApproval}
+            isHost: ${isHost} Game.buyInApproval: ${gameSettings.buyInApproval} *****`);
       approved = true;
       updatedPlayerInGame = await this.approveBuyInRequest(
         amount,
@@ -144,11 +145,11 @@ export class BuyIn {
       if (currentBuyin) {
         outstandingBalance += currentBuyin;
       }
-      logger.info(`[${this.game.gameCode}] Player: ${this.player.name} buyin request. 
+      logger.debug(`[${this.game.gameCode}] Player: ${this.player.name} buyin request. 
             clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager} 
             Auto approval: ${clubMember.autoBuyinApproval} 
             isHost: {isHost}`);
-      logger.info(
+      logger.debug(
         `Game.buyInApproval: ${gameSettings.buyInApproval} creditLimit: ${clubMember.creditLimit} outstandingBalance: ${outstandingBalance}`
       );
 
@@ -928,7 +929,7 @@ export class BuyIn {
             name: player.playerName,
           },
           player.status,
-          NewUpdate.WAIT_FOR_BUYIN_APPROVAL,
+          NewUpdate.WAIT_FOR_BUYIN,
           player.stack,
           player.seatNo
         );
