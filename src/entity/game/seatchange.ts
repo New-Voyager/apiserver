@@ -7,6 +7,7 @@ export class HostSeatChangeProcess {
   @PrimaryGeneratedColumn()
   public id!: number;
 
+  @Index()
   @Column({name: 'game_code'})
   public gameCode!: string;
 
@@ -34,6 +35,7 @@ export class PlayerSeatChangeProcess {
   @PrimaryGeneratedColumn()
   public id!: number;
 
+  @Index()
   @Column({name: 'game_code'})
   public gameCode!: string;
 

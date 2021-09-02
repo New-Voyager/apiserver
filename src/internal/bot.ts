@@ -2,6 +2,7 @@ import {HandHistory} from '@src/entity/history/hand';
 import {getAppSettings, resetAppSettings} from '@src/firebase';
 import {AppCoinRepository} from '@src/repositories/appcoin';
 import {DevRepository} from '@src/repositories/dev';
+import {GameUpdatesRepository} from '@src/repositories/gameupdates';
 import {HandRepository} from '@src/repositories/hand';
 import {getLogger} from '@src/utils/log';
 import * as fs from 'fs';
@@ -194,7 +195,7 @@ export async function updateButtonPos(req: any, resp: any) {
       return;
     }
 
-    await GameAPI.updateButtonPos(gameCode, buttonPos);
+    await GameUpdatesRepository.updateButtonPos(gameCode, buttonPos);
     resp.status(200).send({status: 'OK'});
   } catch (e) {
     resp.status(500).send({errors: e.toString()});

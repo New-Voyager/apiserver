@@ -19,6 +19,7 @@ export class Player {
   @PrimaryGeneratedColumn()
   public id!: number;
 
+  @Index()
   @Column({unique: true})
   public uuid!: string;
 
@@ -36,7 +37,6 @@ export class Player {
   @Column({name: 'device_id', unique: true, nullable: true})
   public deviceId!: string;
 
-  @Index()
   @Column({name: 'device_secret', nullable: true})
   public deviceSecret!: string;
 
@@ -101,6 +101,7 @@ export class SavedHands {
   @PrimaryGeneratedColumn()
   public id!: number;
 
+  @Index()
   @ManyToOne(() => Player, sharedBy => sharedBy.id, {
     nullable: true,
     eager: true,
@@ -108,10 +109,12 @@ export class SavedHands {
   @JoinColumn({name: 'shared_by'})
   public sharedBy!: Player;
 
+  @Index()
   @ManyToOne(() => Player, savedBy => savedBy.id, {nullable: true, eager: true})
   @JoinColumn({name: 'saved_by'})
   public savedBy!: Player;
 
+  @Index()
   @ManyToOne(() => Club, sharedTo => sharedTo.id, {nullable: true})
   @JoinColumn({name: 'shared_to'})
   public sharedTo!: Club;

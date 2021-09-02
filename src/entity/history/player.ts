@@ -48,6 +48,10 @@ export class PlayersInGame {
   @Column({name: 'status', nullable: false, type: 'int'})
   public status!: PlayerStatus;
 
+  // json column stores hand stats of the player in the game
+  @DbAwareColumn({name: 'hand_stats', type: 'text', nullable: true})
+  public handStats!: string;
+
   @DbAwareColumn({
     name: 'left_at',
     type: 'timestamp',

@@ -2,20 +2,13 @@ import {EntityManager, In} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player/player';
-import {
-  NextHandUpdates,
-  PokerGame,
-  PokerGameSettings,
-  PokerGameUpdates,
-} from '@src/entity/game/game';
+import {NextHandUpdates, PokerGame} from '@src/entity/game/game';
 import {
   ApprovalStatus,
   ApprovalType,
   GameStatus,
-  GameType,
   NextHandUpdate,
   PlayerStatus,
-  TableStatus,
 } from '@src/entity/types';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {GameRepository} from './game';
@@ -39,6 +32,7 @@ import {
   getUserRepository,
 } from '.';
 import {Nats} from '@src/nats';
+import {PlayersInGameRepository} from './playersingame';
 
 const logger = getLogger('buyin');
 
@@ -187,36 +181,12 @@ export class BuyIn {
     let databaseTime = new Date().getTime();
     let cancelTime;
 
-    const playerGameTrackerRepository = transactionEntityManager.getRepository(
-      PlayerGameTracker
+    await GameRepository.seatOccupied(
+      this.game,
+      playerInGame.seatNo,
+      transactionEntityManager
     );
-    const count = await playerGameTrackerRepository
-      .createQueryBuilder()
-      .where({
-        game: {id: this.game.id},
-        status: In([
-          PlayerStatus.PLAYING,
-          PlayerStatus.IN_BREAK,
-          PlayerStatus.WAIT_FOR_BUYIN,
-          PlayerStatus.WAIT_FOR_BUYIN_APPROVAL,
-        ]),
-      })
-      .getCount();
 
-    const gameUpdatesRepo = transactionEntityManager.getRepository(
-      PokerGameUpdates
-    );
-    await gameUpdatesRepo
-      .createQueryBuilder()
-      .update()
-      .set({
-        playersInSeats: count,
-      })
-      .where({
-        gameID: this.game.id,
-      })
-      .execute();
-    await Cache.getGameUpdates(this.game.gameCode, true);
     databaseTime = new Date().getTime() - databaseTime;
 
     cancelTime = new Date().getTime();
@@ -236,9 +206,7 @@ export class BuyIn {
     // send a message to gameserver
     // get game server of this game
     const gameServer = await GameRepository.getGameServer(this.game.id);
-    if (gameServer) {
-      Nats.playerBuyIn(this.game, this.player, playerInGame);
-    }
+    Nats.playerBuyIn(this.game, this.player, playerInGame);
     gameServerTime = new Date().getTime() - gameServerTime;
 
     await GameRepository.restartGameIfNeeded(
@@ -256,16 +224,14 @@ export class BuyIn {
     // send a message to gameserver
     // get game server of this game
     const gameServer = await GameRepository.getGameServer(this.game.id);
-    if (gameServer) {
-      await Nats.playerStatusChanged(
-        this.game,
-        this.player,
-        playerInGame.status,
-        NewUpdate.BUYIN_DENIED,
-        playerInGame.stack,
-        playerInGame.seatNo
-      );
-    }
+    await Nats.playerStatusChanged(
+      this.game,
+      this.player,
+      playerInGame.status,
+      NewUpdate.BUYIN_DENIED,
+      playerInGame.stack,
+      playerInGame.seatNo
+    );
   }
 
   public async request(amount: number): Promise<buyInRequest> {
@@ -289,6 +255,7 @@ export class BuyIn {
         const playerGameTrackerRepository = transactionEntityManager.getRepository(
           PlayerGameTracker
         );
+        logger.info('buyin request');
         const playerInGame = await playerGameTrackerRepository.findOne({
           game: {id: this.game.id},
           playerId: this.player.id,
@@ -299,6 +266,7 @@ export class BuyIn {
           );
           throw new Error(`Player ${this.player.uuid} is not in the game`);
         }
+        const prevStatus = playerInGame;
 
         // check amount should be between game.minBuyIn and game.maxBuyIn
         if (
@@ -308,14 +276,6 @@ export class BuyIn {
           throw new Error(
             `Buyin must be between ${this.game.buyInMin} and ${this.game.buyInMax}`
           );
-        }
-        const prevStatus = await playerGameTrackerRepository.findOne({
-          game: {id: this.game.id},
-          playerId: this.player.id,
-        });
-
-        if (!prevStatus) {
-          throw new Error(`Player ${this.player.name} is not in the game`);
         }
         if (this.game.clubCode) {
           // club game
@@ -338,10 +298,10 @@ export class BuyIn {
           );
 
           let seatNo = 0;
-          if (prevStatus.seatNo) {
-            seatNo = prevStatus.seatNo;
+          if (playerInGame.seatNo) {
+            seatNo = playerInGame.seatNo;
           }
-          let stack = prevStatus.stack;
+          let stack = playerInGame.stack;
           let newUpdate: NewUpdate = NewUpdate.UNKNOWN_PLAYER_UPDATE;
           if (playerStatus === PlayerStatus.WAIT_FOR_BUYIN_APPROVAL) {
             newUpdate = NewUpdate.WAIT_FOR_BUYIN_APPROVAL;
@@ -910,7 +870,7 @@ export class BuyIn {
           `Player: ${player.playerName} stack is empty. Starting a buyin timer`
         );
         // if player balance is 0, we need to mark this player to add buyin
-        await GameRepository.startBuyinTimer(
+        await PlayersInGameRepository.startBuyinTimer(
           game,
           player.playerId,
           player.playerName,

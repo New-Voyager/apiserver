@@ -2,12 +2,7 @@ import {EntityManager} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player/player';
-import {
-  NextHandUpdates,
-  PokerGame,
-  PokerGameSettings,
-  PokerGameUpdates,
-} from '@src/entity/game/game';
+import {NextHandUpdates, PokerGame} from '@src/entity/game/game';
 import {
   ApprovalStatus,
   GameStatus,
@@ -98,6 +93,7 @@ export class Reload {
             `Game code: ${this.game.gameCode} is not found in PokerGameSettings`
           );
         }
+        logger.info('reload');
 
         // player must be already in a seat or waiting list
         // if credit limit is set, make sure his buyin amount is within the credit limit
@@ -130,6 +126,8 @@ export class Reload {
         }
 
         if (this.game.clubCode) {
+          logger.info('reload2');
+
           const prevStatus = await playerGameTrackerRepository.findOne({
             game: {id: this.game.id},
             playerId: this.player.id,
@@ -254,6 +252,7 @@ export class Reload {
 
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     if (!playerInGame) {
+      logger.info('approvedAndUpdateStack');
       playerInGame = await playerGameTrackerRepository.findOne({
         game: {id: this.game.id},
         playerId: this.player.id,
@@ -381,16 +380,14 @@ export class Reload {
     // send a message to gameserver
     // get game server of this game
     const gameServer = await GameRepository.getGameServer(this.game.id);
-    if (gameServer) {
-      await Nats.playerStatusChanged(
-        this.game,
-        this.player,
-        playerInGame.status,
-        NewUpdate.BUYIN_DENIED,
-        playerInGame.stack,
-        playerInGame.seatNo
-      );
-    }
+    await Nats.playerStatusChanged(
+      this.game,
+      this.player,
+      playerInGame.status,
+      NewUpdate.BUYIN_DENIED,
+      playerInGame.stack,
+      playerInGame.seatNo
+    );
   }
 
   public async approveDeny(status: ApprovalStatus): Promise<boolean> {

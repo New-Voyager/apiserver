@@ -12,8 +12,7 @@ import {getLogger} from '@src/utils/log';
 import {
   NextHandUpdates,
   PokerGame,
-  PokerGameSettings,
-  PokerGameUpdates,
+  PokerGameSeatInfo,
 } from '@src/entity/game/game';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {startTimer} from '@src/timer';
@@ -32,6 +31,8 @@ import {Player} from '@src/entity/player/player';
 import {LocationCheck} from './locationcheck';
 import {GameSettingsRepository} from './gamesettings';
 import {resumeGame} from '@src/gameserver';
+import {PlayersInGameRepository} from './playersingame';
+import {GameUpdatesRepository} from './gameupdates';
 
 const logger = getLogger('pending-updates');
 
@@ -64,9 +65,9 @@ export async function processPendingUpdates(gameId: number) {
   }
 
   await Cache.updateGamePendingUpdates(game?.gameCode, false);
-  const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-  const gameUpdate = await gameUpdatesRepo.findOne({gameID: game.id});
-  if (!gameUpdate) {
+  const gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
+  const gameSeatInfo = await gameSeatInfoRepo.findOne({gameID: game.id});
+  if (!gameSeatInfo) {
     return;
   }
 
@@ -76,7 +77,7 @@ export async function processPendingUpdates(gameId: number) {
   }
 
   logger.debug(`Processing pending updates for game id: ${game.gameCode}`);
-  if (gameUpdate.seatChangeInProgress) {
+  if (gameSeatInfo.seatChangeInProgress) {
     logger.info(
       `Seat change is in progress for game id: ${game.gameCode}. No updates will be performed.`
     );
@@ -482,18 +483,11 @@ async function handleDealersChoice(
   await pendingUpdatesRepo.delete({id: update.id});
 
   // get next player and send the notification
-  const playersInSeats = await GameRepository.getPlayersInSeats(game.id);
+  const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
+    game.id
+  );
   const takenSeats = _.keyBy(playersInSeats, 'seatNo');
-
-  const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-  const gameUpdates = await gameUpdatesRepo.find({
-    gameID: game.id,
-  });
-  if (gameUpdates.length === 0) {
-    return;
-  }
-
-  const gameUpdate = gameUpdates[0];
+  const gameUpdate = await GameUpdatesRepository.get(game.gameCode, true);
   const occupiedSeats = new Array<number>();
   // dealer
   occupiedSeats.push(0);
@@ -524,15 +518,7 @@ async function handleDealersChoice(
     }
     maxPlayers--;
   }
-
-  await gameUpdatesRepo.update(
-    {
-      dealerChoiceSeat: playerId,
-    },
-    {
-      gameID: game.id,
-    }
-  );
+  await GameUpdatesRepository.updateDealersChoiceSeat(game, playerId);
 
   Nats.sendDealersChoiceMessage(game, playerId, timeout);
 
@@ -559,16 +545,16 @@ export async function switchSeatNextHand(
       NextHandUpdates
     );
     await nextHandUpdatesRepository.save(update);
-    const gameUpdateProps: any = {};
-    gameUpdateProps[`seat${seatNo}`] = SeatStatus.RESERVED;
-    const gameUpdatesRepo = transactionEntityManager.getRepository(
-      PokerGameUpdates
+    const gameSeatInfoProps: any = {};
+    gameSeatInfoProps[`seat${seatNo}`] = SeatStatus.RESERVED;
+    const gameSeatInfoRepo = transactionEntityManager.getRepository(
+      PokerGameSeatInfo
     );
-    await gameUpdatesRepo.update(
+    await gameSeatInfoRepo.update(
       {
-        gameID: game.id,
+        gameCode: game.gameCode,
       },
-      gameUpdateProps
+      gameSeatInfoProps
     );
   } else {
     await getGameManager().transaction(async transactionEntityManager => {
@@ -576,16 +562,16 @@ export async function switchSeatNextHand(
         NextHandUpdates
       );
       await nextHandUpdatesRepository.save(update);
-      const gameUpdatesRepo = transactionEntityManager.getRepository(
-        PokerGameUpdates
+      const gameSeatInfoRepo = transactionEntityManager.getRepository(
+        PokerGameSeatInfo
       );
-      const gameUpdateProps: any = {};
-      gameUpdateProps[`seat${seatNo}`] = SeatStatus.RESERVED;
-      await gameUpdatesRepo.update(
+      const gameSeatInfoProps: any = {};
+      gameSeatInfoProps[`seat${seatNo}`] = SeatStatus.RESERVED;
+      await gameSeatInfoRepo.update(
         {
-          gameID: game.id,
+          gameCode: game.gameCode,
         },
-        gameUpdateProps
+        gameSeatInfoProps
       );
     });
   }

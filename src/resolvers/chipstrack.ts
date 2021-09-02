@@ -2,6 +2,7 @@ import * as _ from 'lodash';
 import {ChipsTrackRepository} from '@src/repositories/chipstrack';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
+import {GameUpdatesRepository} from '@src/repositories/gameupdates';
 
 const logger = getLogger('chipstrack-resolver');
 
@@ -53,7 +54,7 @@ export async function getRakeCollected(playerId: string, gameCode: string) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  return await ChipsTrackRepository.getRakeCollected(playerId, gameCode);
+  return await GameUpdatesRepository.getRakeCollected(playerId, gameCode);
 }
 
 const resolvers: any = {

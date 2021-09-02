@@ -10,6 +10,7 @@ import * as redis from 'redis';
 import {redisHost, redisPort, redisUser, redisPassword} from '@src/utils';
 import {getGameRepository, getUserRepository} from '@src/repositories';
 import {PlayerLocation} from '@src/entity/types';
+import {GameServer} from '@src/entity/game/gameserver';
 
 interface CachedHighHandTracking {
   rewardId: number;
@@ -270,6 +271,34 @@ class GameCache {
         JSON.stringify(gameUpdates)
       );
       return gameUpdates;
+    }
+  }
+
+  public async getGameServer(
+    url: string,
+    update = false,
+    transactionManager?: EntityManager
+  ): Promise<GameServer> {
+    const getResp = await this.getCache(`gameServerCache-${url}`);
+    if (getResp.success && getResp.data && !update) {
+      const ret = JSON.parse(getResp.data) as GameServer;
+      return ret;
+    } else {
+      let repo: Repository<GameServer>;
+      if (transactionManager) {
+        repo = transactionManager.getRepository(GameServer);
+      } else {
+        repo = getGameRepository(GameServer);
+      }
+      const gameServer = await repo.findOne({
+        where: {url: url},
+      });
+      if (!gameServer) {
+        throw new Error(`Cannot find game server with url: ${url}`);
+      }
+
+      await this.setCache(`gameServerCache-${url}`, JSON.stringify(gameServer));
+      return gameServer;
     }
   }
 

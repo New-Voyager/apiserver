@@ -1,8 +1,11 @@
-import {PokerGameSettings} from '@src/entity/game/game';
+import {PokerGame, PokerGameSettings} from '@src/entity/game/game';
 import {EntityManager, getRepository, Repository} from 'typeorm';
 import {Cache} from '@src/cache/index';
 import {getGameRepository} from '.';
+import {getLogger} from '@src/utils/log';
+import {JanusSession} from '@src/janus';
 
+const logger = getLogger('game_settings');
 class GameSettingsRepositoryImpl {
   public async create(
     gameId: number,
@@ -146,6 +149,22 @@ class GameSettingsRepositoryImpl {
     transManager?: EntityManager
   ): Promise<PokerGameSettings> {
     return Cache.getGameSettings(gameCode, update, transManager);
+  }
+
+  public async deleteAudioConf(game: PokerGame) {
+    const gameSettingsRepo = getGameRepository(PokerGameSettings);
+    const gameSettings = await gameSettingsRepo.findOne({
+      gameCode: game.gameCode,
+    });
+    if (gameSettings) {
+      if (gameSettings.janusSessionId && gameSettings.janusPluginHandle) {
+        logger.info(`Deleting janus room: ${game.id}`);
+        const session = JanusSession.joinSession(gameSettings.janusSessionId);
+        session.attachAudioWithId(gameSettings.janusPluginHandle);
+        session.deleteRoom(game.id);
+        logger.info(`Janus room: ${game.id} is deleted`);
+      }
+    }
   }
 }
 

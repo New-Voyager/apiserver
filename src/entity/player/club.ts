@@ -23,6 +23,7 @@ export class Club {
   @Column()
   public name!: string;
 
+  @Index()
   @Column({name: 'club_code', unique: true})
   public clubCode!: string;
 

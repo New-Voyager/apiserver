@@ -1,9 +1,5 @@
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {
-  NextHandUpdates,
-  PokerGame,
-  PokerGameUpdates,
-} from '@src/entity/game/game';
+import {PokerGame, PokerGameSeatInfo} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {
   GameStatus,
@@ -62,8 +58,8 @@ export class SeatChangeProcess {
       await playerSeatChangeRepo.save(playerSeatChange);
     }
 
-    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-    gameUpdatesRepo.update(
+    const gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
+    await gameSeatInfoRepo.update(
       {
         gameID: this.game.id,
       },
@@ -72,8 +68,6 @@ export class SeatChangeProcess {
         seatChangeInProgress: true,
       }
     );
-    await Cache.getGameUpdates(this.game.gameCode, true);
-
     this.promptPlayer(openedSeat);
   }
 
@@ -105,7 +99,7 @@ export class SeatChangeProcess {
       where: {game: {id: this.game.id}, status: PlayerStatus.PLAYING},
     });
 
-    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
+    const gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
     if (
       seatChangeRequestedPlayers.length === 0 ||
       count === this.game.maxPlayers
@@ -114,7 +108,7 @@ export class SeatChangeProcess {
         `[${this.game.gameCode}] Seat change process is done. Resuming the game`
       );
       Nats.sendPlayerSeatChangeDone(this.game.gameCode);
-      await gameUpdatesRepo.update(
+      await gameSeatInfoRepo.update(
         {
           gameID: this.game.id,
         },
@@ -129,14 +123,14 @@ export class SeatChangeProcess {
     }
     // get the open seat
     if (openedSeat === 0) {
-      const gameUpdate = await gameUpdatesRepo.findOne({
+      const gameUpdate = await gameSeatInfoRepo.findOne({
         gameID: this.game.id,
       });
       if (
         gameUpdate === undefined ||
         gameUpdate.seatChangeOpenSeat === undefined
       ) {
-        await gameUpdatesRepo.update(
+        await gameSeatInfoRepo.update(
           {
             gameID: this.game.id,
           },
@@ -366,8 +360,8 @@ export class SeatChangeProcess {
           seatNo: 0,
         }
       );
-      const gameUpdatesRepo = tran.getRepository(PokerGameUpdates);
-      gameUpdatesRepo.update(
+      const gameSeatInfoRepo = tran.getRepository(PokerGameSeatInfo);
+      await gameSeatInfoRepo.update(
         {
           gameID: this.game.id,
         },
@@ -375,7 +369,6 @@ export class SeatChangeProcess {
           seatChangeOpenSeat: playerInGame.seatNo,
         }
       );
-      await Cache.getGameUpdates(this.game.gameCode, true);
 
       // send a message in NATS (the UI will do an animation)
       Nats.sendPlayerSeatMove(
@@ -628,15 +621,15 @@ export class SeatChangeProcess {
     const [playerInGame, newPlayer] = await getGameManager().transaction(
       async transactionEntityManager => {
         // get game updates
-        const gameUpdateRepo = transactionEntityManager.getRepository(
-          PokerGameUpdates
+        const gameSeatInfoRepo = transactionEntityManager.getRepository(
+          PokerGameSeatInfo
         );
-        const gameUpdate = await gameUpdateRepo.findOne({
+        const gameSeatInfo = await gameSeatInfoRepo.findOne({
           where: {
             gameID: this.game.id,
           },
         });
-        if (!gameUpdate) {
+        if (!gameSeatInfo) {
           logger.error(
             `Game status is not found for game: ${this.game.gameCode}`
           );
@@ -645,8 +638,8 @@ export class SeatChangeProcess {
           );
         }
         if (
-          gameUpdate.waitlistSeatingInprogress ||
-          gameUpdate.seatChangeInProgress
+          gameSeatInfo.waitlistSeatingInprogress ||
+          gameSeatInfo.seatChangeInProgress
         ) {
           throw new Error(
             `Seat change is in progress for game: ${this.game.gameCode}`

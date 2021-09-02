@@ -1,4 +1,4 @@
-import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {PokerGame} from '@src/entity/game/game';
 import {Club, ClubMember} from '@src/entity/player/club';
 import {UpdateResult} from 'typeorm';
 import {getLogger} from '@src/utils/log';
@@ -215,24 +215,6 @@ class ChipsTrackRepositoryImpl {
       throw new Error('Error in retreiving data');
     }
     return clubPlayerBalance;
-  }
-
-  public async getRakeCollected(
-    playerId: string,
-    gameCode: string
-  ): Promise<number> {
-    // only club owner or game host can get the rake
-    // verify it here
-
-    const game = await Cache.getGame(gameCode);
-    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-    const gameUpdate = await gameUpdatesRepo.findOne({
-      where: {gameID: game.id},
-    });
-    if (!gameUpdate) {
-      return 0;
-    }
-    return gameUpdate.rake;
   }
 }
 

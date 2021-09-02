@@ -58,20 +58,7 @@ export class GameServer {
   @DbAwareColumn({type: 'int8', name: 'server_num', unique: true})
   public serverNumber!: number;
 
+  @Index()
   @DbAwareColumn({name: 'url', unique: true})
   public url!: string;
-}
-
-@Entity({name: 'game_gameserver'})
-export class TrackGameServer {
-  @PrimaryGeneratedColumn()
-  public id!: number;
-
-  @ManyToOne(type => GameServer, {eager: true, nullable: false})
-  public gameServer!: GameServer;
-
-  @Index('gameserver-game-idx')
-  @ManyToOne(type => PokerGame, {eager: true, nullable: false})
-  @JoinColumn({name: 'game_id'})
-  public game!: PokerGame;
 }

@@ -22,35 +22,8 @@ import {
 
 @Entity({name: 'poker_game_updates'})
 export class PokerGameUpdates {
-  @Column({primary: true, name: 'game_id'})
-  public gameID!: number;
-
-  @Index()
-  @Column({unique: true, name: 'game_code'})
+  @Column({primary: true, name: 'game_code'})
   public gameCode!: string;
-
-  @Column({name: 'players_in_seats', type: 'int', default: 0})
-  public playersInSeats!: number;
-
-  @Column({name: 'players_in_waitlist', type: 'int', default: 0})
-  public playersInWaitList!: number;
-
-  @Column({name: 'waitlist_seating_inprogress', default: false})
-  public waitlistSeatingInprogress!: boolean;
-
-  @Column({name: 'seat_change_inprogress', default: false})
-  public seatChangeInProgress!: boolean;
-
-  @Column({
-    name: 'seat_change_open_seat',
-    default: 0,
-    nullable: true,
-    type: 'int',
-  })
-  public seatChangeOpenSeat!: number;
-
-  @Column({name: 'seat_change', default: null, nullable: true})
-  public seatChange!: SeatChangeProcessType;
 
   @Column({name: 'rake', type: 'decimal', precision: 8, scale: 2, default: 0.0})
   public rake!: number;
@@ -84,6 +57,7 @@ export class PokerGameUpdates {
   @Column({name: 'game_type', default: GameType.UNKNOWN})
   public gameType!: GameType;
 
+  /*
   @Column({name: 'janus_session_id', nullable: true, default: ''})
   public janusSessionId!: string;
 
@@ -97,7 +71,7 @@ export class PokerGameUpdates {
   // janus room pin
   @Column({name: 'janus_room_pin', default: ''})
   public janusRoomPin!: string;
-
+  */
   @Column({name: 'coins_used', default: 0, type: 'int'})
   public coinsUsed!: number;
 
@@ -143,6 +117,71 @@ export class PokerGameUpdates {
     default: 0,
   })
   public lastConsecutiveTimeoutProcessedHand!: number;
+
+  /*
+  @Column({name: 'seat1', type: 'int', default: SeatStatus.OPEN})
+  public seat1!: number;
+
+  @Column({name: 'seat2', type: 'int', default: SeatStatus.OPEN})
+  public seat2!: number;
+
+  @Column({name: 'seat3', type: 'int', default: SeatStatus.OPEN})
+  public seat3!: number;
+
+  @Column({name: 'seat4', type: 'int', default: SeatStatus.OPEN})
+  public seat4!: number;
+
+  @Column({name: 'seat5', type: 'int', default: SeatStatus.OPEN})
+  public seat5!: number;
+
+  @Column({name: 'seat6', type: 'int', default: SeatStatus.OPEN})
+  public seat6!: number;
+
+  @Column({name: 'seat7', type: 'int', default: SeatStatus.OPEN})
+  public seat7!: number;
+
+  @Column({name: 'seat8', type: 'int', default: SeatStatus.OPEN})
+  public seat8!: number;
+
+  @Column({name: 'seat9', type: 'int', default: SeatStatus.OPEN})
+  public seat9!: number;
+
+  @Column({name: 'seat10', type: 'int', default: SeatStatus.OPEN})
+  public seat10!: number;
+  */
+}
+
+@Entity({name: 'poker_game_seat_info'})
+export class PokerGameSeatInfo {
+  @Column({primary: true, name: 'game_id'})
+  public gameID!: number;
+
+  @Index()
+  @Column({unique: true, name: 'game_code'})
+  public gameCode!: string;
+
+  @Column({name: 'players_in_seats', type: 'int', default: 0})
+  public playersInSeats!: number;
+
+  @Column({name: 'players_in_waitlist', type: 'int', default: 0})
+  public playersInWaitList!: number;
+
+  @Column({name: 'waitlist_seating_inprogress', default: false})
+  public waitlistSeatingInprogress!: boolean;
+
+  @Column({name: 'seat_change_inprogress', default: false})
+  public seatChangeInProgress!: boolean;
+
+  @Column({
+    name: 'seat_change_open_seat',
+    default: 0,
+    nullable: true,
+    type: 'int',
+  })
+  public seatChangeOpenSeat!: number;
+
+  @Column({name: 'seat_change', default: null, nullable: true})
+  public seatChange!: SeatChangeProcessType;
 
   @Column({name: 'seat1', type: 'int', default: SeatStatus.OPEN})
   public seat1!: number;
@@ -255,6 +294,20 @@ export class PokerGameSettings {
 
   @Column({name: 'gps_allowed_distance', default: 30})
   public gpsAllowedDistance!: number;
+
+  @Column({name: 'janus_session_id', nullable: true, default: ''})
+  public janusSessionId!: string;
+
+  @Column({name: 'janus_plugin_handle', nullable: true, default: ''})
+  public janusPluginHandle!: string;
+
+  // janus room id
+  @Column({name: 'janus_room_id', default: 0})
+  public janusRoomId!: number;
+
+  // janus room pin
+  @Column({name: 'janus_room_pin', default: ''})
+  public janusRoomPin!: string;
 }
 
 @Entity({name: 'poker_game'})
@@ -283,6 +336,7 @@ export class PokerGame {
   @Column({name: 'host_name'})
   public hostName!: string;
 
+  @Index()
   @Column({name: 'host_uuid'})
   public hostUuid!: string;
 
@@ -459,6 +513,10 @@ export class PokerGame {
   @Column({name: 'data_moved', default: false})
   public dataMoved!: boolean;
 
+  @Index()
+  @Column({name: 'game_server_url', default: ''})
+  public gameServerUrl!: string;
+
   // This is not a database column and used for tracking highhand in the cache
   public highHandRank = 0;
 
@@ -483,6 +541,7 @@ export class NextHandUpdates {
   @Column({name: 'player_name', nullable: true})
   public playerName!: string;
 
+  @Index()
   @ManyToOne(() => PokerGame, game => game.id, {eager: true})
   @JoinColumn({name: 'game_id'})
   public game!: PokerGame;

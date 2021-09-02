@@ -17,6 +17,7 @@ export class Reward {
   @PrimaryGeneratedColumn()
   public id!: number;
 
+  @Index()
   @ManyToOne(() => Club, clubId => clubId.id, {eager: true, nullable: false})
   @JoinColumn({name: 'club_id'})
   public clubId!: Club;

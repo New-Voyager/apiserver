@@ -11,6 +11,7 @@ import {
   NextHandUpdates,
   PokerGameUpdates,
   PokerGameSettings,
+  PokerGameSeatInfo,
 } from '../src/entity/game/game';
 import {HandHistory} from '../src/entity/history/hand';
 import {PlayerGameTracker} from '../src/entity/game/player_game_tracker';
@@ -42,7 +43,7 @@ import {
   ClubMessageInput,
   ClubHostMessages,
 } from '../src/entity/player/clubmessage';
-import {GameServer, TrackGameServer} from '../src/entity/game/gameserver';
+import {GameServer} from '../src/entity/game/gameserver';
 import {HostSeatChangeProcess} from '../src/entity/game/seatchange';
 import {buyIn, configureGame, joinGame, startGame} from '../src/resolvers/game';
 import {createPlayer, getPlayerById} from '../src/resolvers/player';
@@ -95,9 +96,9 @@ export async function sqlliteConnection() {
           NextHandUpdates,
           PlayerGameTracker,
           GameServer,
-          TrackGameServer,
           PokerGameUpdates,
           PokerGameSettings,
+          PokerGameSeatInfo,
           HighHand,
           GameReward,
           GameRewardTracking,
