@@ -823,6 +823,7 @@ class HandRepositoryImpl {
           }
         }
       }
+      //logger.info(`Hand ended`);
       return saveResult;
     } catch (err) {
       logger.error(`Error when trying to save hand log: ${err.toString()}`);

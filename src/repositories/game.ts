@@ -626,7 +626,7 @@ class GameRepositoryImpl {
         // create a record in the player_game_tracker
         // set the player status to waiting_for_buyin
         // send a message to game server that a new player is in the seat
-        logger.info(`Perf: Calling join game query`);
+        //logger.info(`Perf: Calling join game query`);
         const playerInSeat = await playerGameTrackerRepository.findOne({
           where: {
             game: {id: game.id},
@@ -1530,7 +1530,7 @@ class GameRepositoryImpl {
     game: PokerGame,
     player: Player
   ): Promise<PlayerGameTracker | null> {
-    logger.info(`getGamePlayerState is called`);
+    //logger.info(`getGamePlayerState is called`);
     const repo = getGameRepository(PlayerGameTracker);
     const resp = await repo.find({
       playerId: player.id,
@@ -1711,7 +1711,7 @@ class GameRepositoryImpl {
     config: any
   ): Promise<void> {
     await getGameManager().transaction(async transactionEntityManager => {
-      logger.info(`updatePlayerConfig is called`);
+      //logger.info(`updatePlayerConfig is called`);
       const updates: any = {};
       if (config.muckLosingHand !== undefined) {
         updates.muckLosingHand = config.muckLosingHand;
