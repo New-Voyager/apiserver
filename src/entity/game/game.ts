@@ -336,6 +336,7 @@ export class PokerGame {
   @Column({name: 'host_name'})
   public hostName!: string;
 
+  @Index()
   @Column({name: 'host_uuid'})
   public hostUuid!: string;
 
@@ -512,6 +513,7 @@ export class PokerGame {
   @Column({name: 'data_moved', default: false})
   public dataMoved!: boolean;
 
+  @Index()
   @Column({name: 'game_server_url', default: ''})
   public gameServerUrl!: string;
 
@@ -539,6 +541,7 @@ export class NextHandUpdates {
   @Column({name: 'player_name', nullable: true})
   public playerName!: string;
 
+  @Index()
   @ManyToOne(() => PokerGame, game => game.id, {eager: true})
   @JoinColumn({name: 'game_id'})
   public game!: PokerGame;

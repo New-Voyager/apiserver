@@ -8,6 +8,7 @@ import {PokerGame} from '@src/entity/game/game';
 import {publishNewGame} from '@src/gameserver';
 import {getGameConnection, getGameRepository} from '@src/repositories';
 import {Cache} from '@src/cache/index';
+import {GameServerRepository} from '@src/repositories/gameserver';
 const logger = getLogger('internal::gameserver');
 
 class GameServerAPIs {
@@ -137,34 +138,23 @@ class GameServerAPIs {
     } else {
       url = payload.url;
     }
-    const records: Array<GameServer> = await getGameRepository(GameServer).find(
-      {
-        where: {
-          url: url,
-        },
+    let gameServer: GameServer | null;
+    try {
+      gameServer = await GameServerRepository.get(url);
+      if (!gameServer) {
+        throw new Error(`Cannot find game server with url: ${url}`);
       }
-    );
-
-    let err = '';
-
-    if (records.length > 1) {
-      err = `Found ${records.length} game servers with URL [${url}]. Expected 0 or 1.`;
-    }
-
-    if (err) {
+    } catch (err) {
+      logger.error(
+        `Unable to restart all games in game server. Error: ${err.message}`
+      );
       const response = {
-        error: err,
+        error: err.message,
       };
       resp.status(500).send(JSON.stringify(response));
       return;
     }
 
-    if (records.length == 0) {
-      resp.status(200).send(JSON.stringify({status: 'OK'}));
-      return;
-    }
-
-    const gameServer: GameServer = records[0];
     try {
       await restartGameServerGames(gameServer);
     } catch (err) {
@@ -238,7 +228,9 @@ async function restartGameServerGames(
   gameServer: any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<void> {
-  const games: Array<PokerGame> = await getGamesForGameServer(gameServer.url);
+  const games: Array<PokerGame> = await GameServerRepository.getGamesForGameServer(
+    gameServer.url
+  );
   for (const game of games) {
     logger.info(
       `Restarting game ${game.title} (id: ${game.id}, code: ${game.gameCode}) in game server ID: ${gameServer.id} url: ${gameServer.url}`
@@ -296,30 +288,4 @@ export async function getAllGameServers() {
   const gameServerRepository = getGameRepository(GameServer);
   const gameServers = await gameServerRepository.find();
   return gameServers;
-}
-
-export async function getGamesForGameServer(
-  gameServerUrl: string
-): Promise<Array<PokerGame>> {
-  let query = `SELECT pg.id FROM poker_game pg
-      INNER JOIN game_server gs ON gg."gameServerId" = gs.id
-      WHERE 
-        gs.url = ? 
-        AND pg.game_server_url = gs.url
-        AND pg.game_status = ?`;
-  query = fixQuery(query);
-  const records = await getGameConnection().query(query, [
-    gameServerUrl,
-    GameStatus.ACTIVE,
-  ]);
-
-  if (records.length > 0) {
-    const games: Array<PokerGame> = await getGameRepository(PokerGame).find({
-      where: {
-        id: In(records.map(r => r.id)),
-      },
-    });
-    return games;
-  }
-  return [];
 }

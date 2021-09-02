@@ -1,8 +1,10 @@
 import {PokerGame} from '@src/entity/game/game';
 import {GameServer} from '@src/entity/game/gameserver';
 import {getLogger} from '@src/utils/log';
-import {getGameRepository} from '.';
+import {getGameConnection, getGameRepository} from '.';
 import {Cache} from '@src/cache/index';
+import {fixQuery} from '@src/utils';
+import {GameStatus} from '@src/entity/types';
 
 const logger = getLogger('game_server');
 
@@ -21,6 +23,17 @@ class GameServerRepositoryImpl {
   public async get(url: string): Promise<GameServer | null> {
     const gameServer = await Cache.getGameServer(url);
     return gameServer;
+  }
+
+  public async getGamesForGameServer(
+    gameServerUrl: string
+  ): Promise<Array<PokerGame>> {
+    const gameRepo = getGameRepository(PokerGame);
+    const games = await gameRepo.find({
+      gameServerUrl: gameServerUrl,
+      status: GameStatus.ACTIVE,
+    });
+    return games;
   }
 }
 

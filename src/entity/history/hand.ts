@@ -1,4 +1,10 @@
-import {Entity, PrimaryGeneratedColumn, Column, Index} from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  Index,
+  PrimaryColumn,
+} from 'typeorm';
 import {DbAwareColumn} from '../dbaware';
 import {GameType, WonAtStatus} from '../types';
 
