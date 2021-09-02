@@ -32,6 +32,7 @@ export class PlayerGameTracker {
   @Column({name: 'player_name'})
   public playerName!: string;
 
+  @Index()
   @Column({name: 'player_uuid'})
   public playerUuid!: string;
 

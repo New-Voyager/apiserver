@@ -19,6 +19,7 @@ export class Player {
   @PrimaryGeneratedColumn()
   public id!: number;
 
+  @Index()
   @Column({unique: true})
   public uuid!: string;
 
@@ -36,7 +37,6 @@ export class Player {
   @Column({name: 'device_id', unique: true, nullable: true})
   public deviceId!: string;
 
-  @Index()
   @Column({name: 'device_secret', nullable: true})
   public deviceSecret!: string;
 

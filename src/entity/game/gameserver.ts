@@ -58,6 +58,7 @@ export class GameServer {
   @DbAwareColumn({type: 'int8', name: 'server_num', unique: true})
   public serverNumber!: number;
 
+  @Index()
   @DbAwareColumn({name: 'url', unique: true})
   public url!: string;
 }

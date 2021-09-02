@@ -61,9 +61,11 @@ export class GameReward {
   @PrimaryGeneratedColumn()
   public id!: number;
 
+  @Index()
   @Column({name: 'game_id', nullable: false})
   public gameId!: number;
 
+  @Index()
   @Column({name: 'game_code', nullable: false})
   public gameCode!: string;
 
@@ -84,6 +86,7 @@ export class HighHand {
   @PrimaryGeneratedColumn()
   public id!: number;
 
+  @Index()
   @Column({name: 'game_id', nullable: false, type: 'int'})
   public gameId!: number;
 

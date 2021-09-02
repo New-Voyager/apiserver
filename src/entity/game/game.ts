@@ -22,7 +22,6 @@ import {
 
 @Entity({name: 'poker_game_updates'})
 export class PokerGameUpdates {
-  @Index()
   @Column({primary: true, name: 'game_code'})
   public gameCode!: string;
 
