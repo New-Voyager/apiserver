@@ -14,6 +14,7 @@ import {NewHandInfo, PlayerInSeat} from './types';
 import _ from 'lodash';
 import {GameSettingsRepository} from './gamesettings';
 import {PlayersInGameRepository} from './playersingame';
+import {GameUpdatesRepository} from './gameupdates';
 
 const logger = getLogger('next_hand_process');
 
@@ -45,13 +46,8 @@ export class NextHandProcess {
           );
         }
 
-        const gameUpdatesRepo = transactionEntityManager.getRepository(
-          PokerGameUpdates
-        );
-        const gameUpdates = await gameUpdatesRepo.find({
-          gameID: game.id,
-        });
-        if (gameUpdates.length === 0) {
+        const gameUpdates = Cache.getGameUpdates(game.gameCode);
+        if (!gameUpdates) {
           const res = {error: 'GameUpdates not found'};
           throw new Error(`Game code: ${this.gameCode} not found`);
         }
@@ -286,6 +282,9 @@ export class NextHandProcess {
         if (gameSettings.bombPotEnabled) {
           this.determineBombPotNextHand(gameUpdate, gameSettings, setProps);
         }
+        const gameUpdatesRepo = transactionEntityManager.getRepository(
+          PokerGameUpdates
+        );
         // update button pos and gameType
         await gameUpdatesRepo
           .createQueryBuilder()
@@ -349,13 +348,8 @@ export class NextHandProcess {
           );
         }
 
-        const gameUpdatesRepo = transactionEntityManager.getRepository(
-          PokerGameUpdates
-        );
-        const gameUpdates = await gameUpdatesRepo.find({
-          gameID: game.id,
-        });
-        if (gameUpdates.length === 0) {
+        const gameUpdates = await GameUpdatesRepository.get(this.gameCode);
+        if (!gameUpdates) {
           throw new Error(`Game code: Game updates ${this.gameCode} not found`);
         }
 

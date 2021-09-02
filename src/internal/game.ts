@@ -3,11 +3,7 @@ import {GameRepository} from '@src/repositories/game';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
-import {
-  PokerGame,
-  PokerGameSettings,
-  PokerGameUpdates,
-} from '@src/entity/game/game';
+import {PokerGame} from '@src/entity/game/game';
 import {PlayerStatus} from '@src/entity/types';
 import _ from 'lodash';
 import {delay} from '@src/utils';
@@ -344,31 +340,6 @@ class GameAPIs {
     } catch (err) {
       resp.status(500).send({error: err.message});
     }
-  }
-
-  public async updateButtonPos(gameCode: string, buttonPos: number) {
-    const game = await Cache.getGame(gameCode);
-    if (!game) {
-      throw new Error('Updating button position failed');
-    }
-
-    const ret = await getGameManager().transaction(
-      async transactionEntityManager => {
-        const pokerGameUpdates = transactionEntityManager.getRepository(
-          PokerGameUpdates
-        );
-        await pokerGameUpdates.update(
-          {
-            gameID: game.id,
-          },
-          {
-            buttonPos: buttonPos,
-            calculateButtonPos: false,
-          }
-        );
-        await Cache.getGameUpdates(game.gameCode, true);
-      }
-    );
   }
 }
 

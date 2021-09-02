@@ -1,5 +1,5 @@
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {PokerGame} from '@src/entity/game/game';
 import {GameHistory} from '@src/entity/history/game';
 import {HighHandHistory} from '@src/entity/history/hand';
 import {PlayersInGame} from '@src/entity/history/player';
@@ -39,10 +39,7 @@ class HistoryRepositoryImpl {
     await gameHistoryRepo.save(gameHistory);
   }
 
-  public async gameEnded(
-    game: PokerGame,
-    updates: PokerGameUpdates | undefined
-  ) {
+  public async gameEnded(game: PokerGame, handsDealt: number) {
     const values: any = {
       status: game.status,
       startedAt: game.startedAt,
@@ -50,9 +47,7 @@ class HistoryRepositoryImpl {
       endedBy: game.endedBy,
       endedByName: game.endedByName,
     };
-    if (updates) {
-      values.handsDealt = updates.handNum;
-    }
+    values.handsDealt = handsDealt;
     await getHistoryManager().transaction(async transactionEntityManager => {
       await transactionEntityManager
         .createQueryBuilder()

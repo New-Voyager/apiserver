@@ -12,7 +12,6 @@ import {
   PokerGame,
   PokerGameSeatInfo,
   PokerGameSettings,
-  PokerGameUpdates,
 } from '@src/entity/game/game';
 import {
   GameType,
@@ -79,6 +78,7 @@ import {LocationCheck} from './locationcheck';
 import {Nats} from '@src/nats';
 import {GameSettingsRepository} from './gamesettings';
 import {PlayersInGameRepository} from './playersingame';
+import {GameUpdatesRepository} from './gameupdates';
 const logger = getLogger('game');
 
 class GameRepositoryImpl {
@@ -179,33 +179,18 @@ class GameRepositoryImpl {
           await HistoryRepository.newGameCreated(game);
 
           saveUpdateTime = new Date().getTime();
-          // create a entry in PokerGameUpdates
-          const gameUpdatesRepo = transactionEntityManager.getRepository(
-            PokerGameUpdates
+          await GameUpdatesRepository.create(
+            game.id,
+            game.gameCode,
+            input,
+            transactionEntityManager
           );
-          const gameUpdates = new PokerGameUpdates();
-          gameUpdates.gameCode = savedGame.gameCode;
-          gameUpdates.gameID = savedGame.id;
-          const appSettings = getAppSettings();
-          gameUpdates.appcoinPerBlock = appSettings.gameCoinsPerBlock;
-
-          if (input.useAgora) {
-            gameUpdates.appcoinPerBlock += appSettings.agoraCoinsPerBlock;
-          }
-          if (input.bombPotEnabled) {
-            // set current time as last bomb pot time
-            gameUpdates.lastBombPotTime = new Date();
-
-            // first hand is bomb pot hand
-            gameUpdates.bombPotNextHandNum = 1;
-          }
           await GameSettingsRepository.create(
             game.id,
             game.gameCode,
             input,
             transactionEntityManager
           );
-          await gameUpdatesRepo.save(gameUpdates);
 
           const gameSeatInfoRepo = transactionEntityManager.getRepository(
             PokerGameSeatInfo
@@ -357,7 +342,8 @@ class GameRepositoryImpl {
       });
 
       await GameSettingsRepository.get(game.gameCode, true);
-      await Cache.getGameUpdates(game.gameCode, true);
+      await GameUpdatesRepository.get(game.gameCode, true);
+
       //logger.info('****** ENDING TRANSACTION TO CREATE a private game');
       logger.debug(
         `createPrivateGame saveTime: ${saveTime}, saveUpdateTime: ${saveUpdateTime}, publishNewTime: ${publishNewTime}`
@@ -544,13 +530,13 @@ class GameRepositoryImpl {
     seatNo: number,
     transManager?: EntityManager
   ) {
-    let gameUpdatesRepo: Repository<PokerGameUpdates>;
+    let gameSeatInfoRepo: Repository<PokerGameSeatInfo>;
     let playerGameTrackerRepo: Repository<PlayerGameTracker>;
     if (transManager) {
-      gameUpdatesRepo = transManager.getRepository(PokerGameUpdates);
+      gameSeatInfoRepo = transManager.getRepository(PokerGameSeatInfo);
       playerGameTrackerRepo = transManager.getRepository(PlayerGameTracker);
     } else {
-      gameUpdatesRepo = getGameRepository(PokerGameUpdates);
+      gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
       playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     }
     // get number of players in the seats
@@ -566,15 +552,14 @@ class GameRepositoryImpl {
       },
     });
 
-    const gameUpdateProps: any = {playersInSeats: count};
-    gameUpdateProps[`seat${seatNo}`] = SeatStatus.OPEN;
-    await gameUpdatesRepo.update(
+    const gameSeatInfoProps: any = {playersInSeats: count};
+    gameSeatInfoProps[`seat${seatNo}`] = SeatStatus.OPEN;
+    await gameSeatInfoRepo.update(
       {
         gameID: game.id,
       },
-      gameUpdateProps
+      gameSeatInfoProps
     );
-    await Cache.getGameUpdates(game.gameCode, true);
   }
 
   public async joinGame(
@@ -1048,7 +1033,7 @@ class GameRepositoryImpl {
             row.status === GameStatus.ACTIVE &&
             newTableStatus === TableStatus.GAME_RUNNING
           ) {
-            await this.updateAppcoinNextConsumeTime(game);
+            await GameUpdatesRepository.updateAppcoinNextConsumeTime(game);
 
             // update game status
             await gameRepo.update(
@@ -1075,48 +1060,6 @@ class GameRepositoryImpl {
       }
     }
   }
-
-  public async updateAppcoinNextConsumeTime(game: PokerGame) {
-    if (!game.appCoinsNeeded) {
-      return;
-    }
-
-    try {
-      // update next consume time
-      const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-      const gameUpdateRow = await gameUpdatesRepo.findOne({
-        gameID: game.id,
-      });
-      if (!gameUpdateRow) {
-        return;
-      }
-      if (!gameUpdateRow.nextCoinConsumeTime) {
-        const freeTime = getAppSettings().freeTime;
-        const now = new Date();
-        const nextConsumeTime = new Date(now.getTime() + freeTime * 1000);
-        await gameUpdatesRepo.update(
-          {
-            gameID: game.id,
-          },
-          {
-            nextCoinConsumeTime: nextConsumeTime,
-          }
-        );
-        gameUpdateRow.nextCoinConsumeTime = nextConsumeTime;
-      }
-      await Cache.getGameUpdates(game.gameCode, true);
-      logger.info(
-        `[${
-          game.gameCode
-        }] Next coin consume time: ${gameUpdateRow.nextCoinConsumeTime.toISOString()}`
-      );
-    } catch (err) {
-      logger.error(
-        `Failed to update appcoins next consumption time. Error: ${err.toString()}`
-      );
-    }
-  }
-
   public async updateBreakTime(playerId: number, gameId: number) {
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const rows = await playerGameTrackerRepository
@@ -1225,8 +1168,6 @@ class GameRepositoryImpl {
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
     }
-    const updatesRepo = getGameRepository(PokerGameUpdates);
-    const updates = await updatesRepo.findOne({where: {gameID: gameId}});
 
     // update session time
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
@@ -1269,8 +1210,9 @@ class GameRepositoryImpl {
 
     const ret = this.markGameStatus(gameId, GameStatus.ENDED);
     game.status = GameStatus.ENDED;
+    const updates = await GameUpdatesRepository.get(game.gameCode);
     // update history tables
-    await HistoryRepository.gameEnded(game, updates);
+    await HistoryRepository.gameEnded(game, updates.handNum);
     return ret;
   }
 
@@ -1444,17 +1386,7 @@ class GameRepositoryImpl {
           // game started
 
           // update last ip gps check time
-          const lastIpCheckTime = new Date();
-          await getGameRepository(PokerGameUpdates).update(
-            {
-              gameID: game.id,
-            },
-            {
-              lastIpGpsCheckTime: lastIpCheckTime,
-            }
-          );
-
-          await Cache.getGameUpdates(game.gameCode, true);
+          GameUpdatesRepository.updateLastIpCheckTime(game);
         }
         // update the game server with new status
         await Nats.changeGameStatus(game, status, game.tableStatus);
@@ -1604,19 +1536,7 @@ class GameRepositoryImpl {
   ) {
     // cancel the dealer choice timer
     cancelTimer(game.id, 0, DEALER_CHOICE_TIMEOUT);
-
-    // update game type in the GameUpdates table
-    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-    await gameUpdatesRepo.update(
-      {
-        gameID: game.id,
-      },
-      {
-        gameType: gameType,
-      }
-    );
-    await Cache.getGameUpdates(game.gameCode, true);
-
+    await GameUpdatesRepository.updateNextGameType(game, gameType);
     // pending updates done
     await resumeGame(game.id);
   }
@@ -1805,17 +1725,17 @@ class GameRepositoryImpl {
       return [];
     }
 
-    const pokerGameUpdatesRepo = getGameRepository(PokerGameUpdates);
-    const pokerGameUpdates = await pokerGameUpdatesRepo.findOne({
-      gameID: gameID,
+    const pokerGameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
+    const gameSeatInfo = await pokerGameSeatInfoRepo.findOne({
+      gameCode: game.gameCode,
     });
 
     const seatStatuses = new Array<SeatStatus>();
     seatStatuses.push(SeatStatus.UNKNOWN);
-    if (pokerGameUpdates) {
-      const pokerGameUpdatesAny = pokerGameUpdates as any;
+    if (gameSeatInfo) {
+      const gameSeatInfoAny = gameSeatInfo as any;
       for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
-        seatStatuses.push(pokerGameUpdatesAny[`seat${seatNo}`] as SeatStatus);
+        seatStatuses.push(gameSeatInfoAny[`seat${seatNo}`] as SeatStatus);
       }
     }
     return seatStatuses;

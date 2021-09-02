@@ -7,7 +7,7 @@ import {
   PlayerHandStats,
   SystemStats,
 } from '@src/entity/history/stats';
-import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {PokerGame} from '@src/entity/game/game';
 import {isArray} from 'lodash';
 import {loggers} from 'winston';
 import {getLogger} from '@src/utils/log';

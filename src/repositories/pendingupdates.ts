@@ -13,8 +13,6 @@ import {
   NextHandUpdates,
   PokerGame,
   PokerGameSeatInfo,
-  PokerGameSettings,
-  PokerGameUpdates,
 } from '@src/entity/game/game';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {startTimer} from '@src/timer';
@@ -34,6 +32,7 @@ import {LocationCheck} from './locationcheck';
 import {GameSettingsRepository} from './gamesettings';
 import {resumeGame} from '@src/gameserver';
 import {PlayersInGameRepository} from './playersingame';
+import {GameUpdatesRepository} from './gameupdates';
 
 const logger = getLogger('pending-updates');
 
@@ -488,16 +487,7 @@ async function handleDealersChoice(
     game.id
   );
   const takenSeats = _.keyBy(playersInSeats, 'seatNo');
-
-  const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-  const gameUpdates = await gameUpdatesRepo.find({
-    gameID: game.id,
-  });
-  if (gameUpdates.length === 0) {
-    return;
-  }
-
-  const gameUpdate = gameUpdates[0];
+  const gameUpdate = await Cache.getGameUpdates(game.gameCode, true);
   const occupiedSeats = new Array<number>();
   // dealer
   occupiedSeats.push(0);
@@ -528,15 +518,7 @@ async function handleDealersChoice(
     }
     maxPlayers--;
   }
-
-  await gameUpdatesRepo.update(
-    {
-      dealerChoiceSeat: playerId,
-    },
-    {
-      gameID: game.id,
-    }
-  );
+  await GameUpdatesRepository.updateDealersChoiceSeat(game, playerId);
 
   Nats.sendDealersChoiceMessage(game, playerId, timeout);
 
@@ -563,16 +545,16 @@ export async function switchSeatNextHand(
       NextHandUpdates
     );
     await nextHandUpdatesRepository.save(update);
-    const gameUpdateProps: any = {};
-    gameUpdateProps[`seat${seatNo}`] = SeatStatus.RESERVED;
-    const gameUpdatesRepo = transactionEntityManager.getRepository(
-      PokerGameUpdates
+    const gameSeatInfoProps: any = {};
+    gameSeatInfoProps[`seat${seatNo}`] = SeatStatus.RESERVED;
+    const gameSeatInfoRepo = transactionEntityManager.getRepository(
+      PokerGameSeatInfo
     );
-    await gameUpdatesRepo.update(
+    await gameSeatInfoRepo.update(
       {
-        gameID: game.id,
+        gameCode: game.gameCode,
       },
-      gameUpdateProps
+      gameSeatInfoProps
     );
   } else {
     await getGameManager().transaction(async transactionEntityManager => {
@@ -580,16 +562,16 @@ export async function switchSeatNextHand(
         NextHandUpdates
       );
       await nextHandUpdatesRepository.save(update);
-      const gameUpdatesRepo = transactionEntityManager.getRepository(
-        PokerGameUpdates
+      const gameSeatInfoRepo = transactionEntityManager.getRepository(
+        PokerGameSeatInfo
       );
-      const gameUpdateProps: any = {};
-      gameUpdateProps[`seat${seatNo}`] = SeatStatus.RESERVED;
-      await gameUpdatesRepo.update(
+      const gameSeatInfoProps: any = {};
+      gameSeatInfoProps[`seat${seatNo}`] = SeatStatus.RESERVED;
+      await gameSeatInfoRepo.update(
         {
-          gameID: game.id,
+          gameCode: game.gameCode,
         },
-        gameUpdateProps
+        gameSeatInfoProps
       );
     });
   }

@@ -7,7 +7,6 @@ import {
   PokerGame,
   PokerGameSeatInfo,
   PokerGameSettings,
-  PokerGameUpdates,
 } from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {Cache} from '@src/cache';

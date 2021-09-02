@@ -22,37 +22,10 @@ import {
 
 @Entity({name: 'poker_game_updates'})
 export class PokerGameUpdates {
-  @Column({primary: true, name: 'game_id'})
-  public gameID!: number;
-
   @Index()
-  @Column({unique: true, name: 'game_code'})
+  @Column({primary: true, name: 'game_code'})
   public gameCode!: string;
 
-  /*
-  @Column({name: 'players_in_seats', type: 'int', default: 0})
-  public playersInSeats!: number;
-
-  @Column({name: 'players_in_waitlist', type: 'int', default: 0})
-  public playersInWaitList!: number;
-
-  @Column({name: 'waitlist_seating_inprogress', default: false})
-  public waitlistSeatingInprogress!: boolean;
-
-  @Column({name: 'seat_change_inprogress', default: false})
-  public seatChangeInProgress!: boolean;
-
-  @Column({
-    name: 'seat_change_open_seat',
-    default: 0,
-    nullable: true,
-    type: 'int',
-  })
-  public seatChangeOpenSeat!: number;
-
-  @Column({name: 'seat_change', default: null, nullable: true})
-  public seatChange!: SeatChangeProcessType;
-  */
   @Column({name: 'rake', type: 'decimal', precision: 8, scale: 2, default: 0.0})
   public rake!: number;
 

@@ -1,10 +1,5 @@
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {
-  NextHandUpdates,
-  PokerGame,
-  PokerGameSeatInfo,
-  PokerGameUpdates,
-} from '@src/entity/game/game';
+import {PokerGame, PokerGameSeatInfo} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {
   GameStatus,

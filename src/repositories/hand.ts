@@ -9,7 +9,7 @@ import {
 } from '@src/entity/types';
 import {LessThan, MoreThan, getManager, EntityManager} from 'typeorm';
 import {PageOptions} from '@src/types';
-import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {PokerGame} from '@src/entity/game/game';
 import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {Cache} from '@src/cache';
@@ -34,6 +34,7 @@ import {GameRepository} from './game';
 import * as lz from 'lzutf8';
 import {getAppSettings} from '@src/firebase';
 import {Repository} from 'typeorm';
+import {GameUpdatesRepository} from './gameupdates';
 const logger = getLogger('hand');
 
 const MAX_STARRED_HAND = 25;
@@ -683,14 +684,10 @@ class HandRepositoryImpl {
       let saveResult: any = {};
       saveResult = await getGameManager().transaction(
         async transactionEntityManager => {
-          const pokerGameUpdatesRepo: Repository<PokerGameUpdates> = transactionEntityManager.getRepository(
-            PokerGameUpdates
+          const pokerGameUpdates = await GameUpdatesRepository.get(
+            game.gameCode
           );
-          const pokerGameUpdates:
-            | PokerGameUpdates
-            | undefined = await pokerGameUpdatesRepo.findOne({
-            gameID: gameID,
-          });
+
           if (!pokerGameUpdates) {
             throw new Error(
               `Unable to entry in poker game updates repo with game ID ${gameID} while saving hand result`
@@ -746,18 +743,12 @@ class HandRepositoryImpl {
           }
           await getHistoryRepository(HandHistory).save(handHistory);
           // update game rake and last hand number
-          await pokerGameUpdatesRepo
-            .createQueryBuilder()
-            .update()
-            .set({
-              lastResultProcessedHand: handNum,
-              rake: () => `rake + ${handRake}`,
-            })
-            .where({
-              gameID: gameID,
-            })
-            .execute();
-          await Cache.getGameUpdates(game.gameCode, true);
+          await GameUpdatesRepository.updateRake(
+            game,
+            handNum,
+            handRake,
+            transactionEntityManager
+          );
           const saveResult: SaveHandResult = {
             gameCode: game.gameCode,
             handNum: result.handNum,

@@ -1,15 +1,14 @@
 import {TakeBreak} from '@src/repositories/takebreak';
-import {getRepository, Repository} from 'typeorm';
-import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {Cache} from '@src/cache';
 import {WonAtStatus} from '@src/entity/types';
 import {HandRepository} from '@src/repositories/hand';
-import {getGameConnection, getGameRepository} from '@src/repositories';
+import {getGameConnection} from '@src/repositories';
 import {getLogger} from '@src/utils/log';
-import {PlayersInGame} from '@src/entity/history/player';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
 import _ from 'lodash';
+import {GameUpdatesRepository} from '@src/repositories/gameupdates';
+import { PokerGameUpdates } from '@src/entity/game/game';
 const logger = getLogger('internal::hand');
 
 function validateHandData(handData: any): Array<string> {
@@ -137,9 +136,14 @@ class HandServerAPIs {
       return;
     }
     try {
+      const game = await Cache.getGameById(gameID);
+      if (!game) {
+        throw new Error(`Game: ${gameID} is not found`);
+      }
       const result = req.body;
       if (result.result?.timeoutStats) {
         await processConsecutiveActionTimeouts(
+          game?.gameCode,
           gameID,
           handNum,
           result.result.timeoutStats
@@ -176,6 +180,7 @@ export async function saveHand(gameID: number, handNum: number, result: any) {
 }
 
 async function processConsecutiveActionTimeouts(
+  gameCode: string,
   gameID: number,
   handNum: number,
   timeoutStats: any
@@ -189,14 +194,7 @@ async function processConsecutiveActionTimeouts(
     );
   }
   await getGameConnection().transaction(async transactionEntityManager => {
-    const pokerGameUpdatesRepo: Repository<PokerGameUpdates> = transactionEntityManager.getRepository(
-      PokerGameUpdates
-    );
-    const pokerGameUpdates:
-      | PokerGameUpdates
-      | undefined = await pokerGameUpdatesRepo.findOne({
-      gameID: gameID,
-    });
+    const pokerGameUpdates = await GameUpdatesRepository.get(gameCode);
     if (!pokerGameUpdates) {
       throw new Error(
         `Unable to entry in poker game updates repo with game ID ${gameID} while processing consecutive action timeouts`
@@ -272,6 +270,7 @@ async function processConsecutiveActionTimeouts(
     // Remember that we processed the consecutive timeout counts for this hand,
     // so that we don't add the count again if the game server crashes
     // and this function gets called again.
+    const pokerGameUpdatesRepo = transactionEntityManager.getRepository(PokerGameUpdates);
     await pokerGameUpdatesRepo
       .createQueryBuilder()
       .update()
