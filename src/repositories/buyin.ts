@@ -289,6 +289,7 @@ export class BuyIn {
         const playerGameTrackerRepository = transactionEntityManager.getRepository(
           PlayerGameTracker
         );
+        logger.info('buyin request');
         const playerInGame = await playerGameTrackerRepository.findOne({
           game: {id: this.game.id},
           playerId: this.player.id,
@@ -299,6 +300,7 @@ export class BuyIn {
           );
           throw new Error(`Player ${this.player.uuid} is not in the game`);
         }
+        const prevStatus = playerInGame;
 
         // check amount should be between game.minBuyIn and game.maxBuyIn
         if (
@@ -308,14 +310,6 @@ export class BuyIn {
           throw new Error(
             `Buyin must be between ${this.game.buyInMin} and ${this.game.buyInMax}`
           );
-        }
-        const prevStatus = await playerGameTrackerRepository.findOne({
-          game: {id: this.game.id},
-          playerId: this.player.id,
-        });
-
-        if (!prevStatus) {
-          throw new Error(`Player ${this.player.name} is not in the game`);
         }
         if (this.game.clubCode) {
           // club game
@@ -338,10 +332,10 @@ export class BuyIn {
           );
 
           let seatNo = 0;
-          if (prevStatus.seatNo) {
-            seatNo = prevStatus.seatNo;
+          if (playerInGame.seatNo) {
+            seatNo = playerInGame.seatNo;
           }
-          let stack = prevStatus.stack;
+          let stack = playerInGame.stack;
           let newUpdate: NewUpdate = NewUpdate.UNKNOWN_PLAYER_UPDATE;
           if (playerStatus === PlayerStatus.WAIT_FOR_BUYIN_APPROVAL) {
             newUpdate = NewUpdate.WAIT_FOR_BUYIN_APPROVAL;

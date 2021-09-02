@@ -1519,6 +1519,7 @@ class GameRepositoryImpl {
     } else {
       playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     }
+    logger.info('getSeatInfo');
     const resp = await playerGameTrackerRepo.findOne({
       game: {id: gameId},
       seatNo: seatNo,
@@ -1549,6 +1550,7 @@ class GameRepositoryImpl {
       const playerGameTrackerRepository = transactionEntityManager.getRepository(
         PlayerGameTracker
       );
+      logger.info('kickOutPlayer');
       const playerInGame = await playerGameTrackerRepository.findOne({
         where: {
           game: {id: game.id},
@@ -1721,15 +1723,17 @@ class GameRepositoryImpl {
       }
 
       // get game updates
-      const gameUpdateRepo = transactionEntityManager.getRepository(
+      const playerGameTrackerRepo = transactionEntityManager.getRepository(
         PlayerGameTracker
       );
-      let row = await gameUpdateRepo.findOne({
+      logger.info('updatePlayerGameConfig');
+
+      let row = await playerGameTrackerRepo.findOne({
         game: {id: game.id},
         playerId: player.id,
       });
       if (row !== null) {
-        await gameUpdateRepo.update(
+        await playerGameTrackerRepo.update(
           {
             game: {id: game.id},
             playerId: player.id,
@@ -1752,23 +1756,8 @@ class GameRepositoryImpl {
         if (config.runItTwicePrompt !== undefined) {
           playerTrack.runItTwicePrompt = config.runItTwicePrompt;
         }
-        await gameUpdateRepo.save(playerTrack);
+        await playerGameTrackerRepo.save(playerTrack);
       }
-      // row = await gameUpdateRepo.findOne({
-      //   game: {id: game.id},
-      //   playerId: player.id,
-      // });
-
-      // if (row) {
-      //   const update: any = {
-      //     playerId: player.id,
-      //     gameId: game.id,
-      //     muckLosingHand: row?.muckLosingHand,
-      //     runItTwicePrompt: row?.runItTwicePrompt,
-      //   };
-
-      //   await playerConfigUpdate(game, update);
-      // }
     });
   }
 

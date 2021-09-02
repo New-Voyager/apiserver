@@ -98,6 +98,7 @@ export class Reload {
             `Game code: ${this.game.gameCode} is not found in PokerGameSettings`
           );
         }
+        logger.info('reload');
 
         // player must be already in a seat or waiting list
         // if credit limit is set, make sure his buyin amount is within the credit limit
@@ -130,6 +131,8 @@ export class Reload {
         }
 
         if (this.game.clubCode) {
+        logger.info('reload2');
+
           const prevStatus = await playerGameTrackerRepository.findOne({
             game: {id: this.game.id},
             playerId: this.player.id,
