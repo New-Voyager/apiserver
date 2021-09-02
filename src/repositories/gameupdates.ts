@@ -97,9 +97,9 @@ class GameUpdatesRepositoryImpl {
             calculateButtonPos: false,
           }
         );
-        await GameUpdatesRepository.get(gameCode, true);
       }
     );
+    await GameUpdatesRepository.get(gameCode, true);
   }
 
   public async getRakeCollected(
@@ -198,7 +198,7 @@ class GameUpdatesRepositoryImpl {
     await GameUpdatesRepository.get(game.gameCode, true);
   }
 
-  public async updateRake(
+  public async updateHandResult(
     game: PokerGame,
     handNum: number,
     rake: number,
@@ -218,7 +218,6 @@ class GameUpdatesRepositoryImpl {
         gameCode: game.gameCode,
       })
       .execute();
-    await GameUpdatesRepository.get(game.gameCode, true);
   }
 
   public async get(

@@ -1,5 +1,5 @@
 import {In} from 'typeorm';
-import {GameServer, TrackGameServer} from '@src/entity/game/gameserver';
+import {GameServer} from '@src/entity/game/gameserver';
 import {GameServerStatus, GameStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {fixQuery} from '@src/utils';
@@ -7,6 +7,7 @@ import {getLogger} from '@src/utils/log';
 import {PokerGame} from '@src/entity/game/game';
 import {publishNewGame} from '@src/gameserver';
 import {getGameConnection, getGameRepository} from '@src/repositories';
+import {Cache} from '@src/cache/index';
 const logger = getLogger('internal::gameserver');
 
 class GameServerAPIs {
@@ -113,8 +114,15 @@ class GameServerAPIs {
       return;
     }
     try {
-      const response = await getParticularGameServer(gameCode);
-      resp.status(200).send(JSON.stringify({server: response}));
+      const game = await Cache.getGame(gameCode);
+      if (!game) {
+        throw new Error(`Game: ${gameCode} is not found`);
+      }
+      const gameServer = await Cache.getGameServer(game.gameServerUrl);
+      if (!gameServer) {
+        throw new Error(`Game server is not found: ${gameCode}`);
+      }
+      resp.status(200).send(JSON.stringify({server: gameServer}));
     } catch (err) {
       logger.error(err.message);
       resp.status(500).send(JSON.stringify({error: err.message}));
@@ -290,28 +298,15 @@ export async function getAllGameServers() {
   return gameServers;
 }
 
-export async function getParticularGameServer(gameCode: string) {
-  const game = await GameRepository.getGameByCode(gameCode);
-  if (!game) {
-    throw new Error('Game not found');
-  }
-  const trackGameServerRepository = getGameRepository(TrackGameServer);
-  const trackGameServer = await trackGameServerRepository.findOne({
-    where: {
-      game: {id: game.id},
-    },
-  });
-  return trackGameServer?.gameServer;
-}
-
 export async function getGamesForGameServer(
   gameServerUrl: string
 ): Promise<Array<PokerGame>> {
   let query = `SELECT pg.id FROM poker_game pg
-      INNER JOIN game_gameserver gg ON pg.id = gg.game_id 
       INNER JOIN game_server gs ON gg."gameServerId" = gs.id
-      WHERE gs.url = ?
-      AND pg.game_status = ?`;
+      WHERE 
+        gs.url = ? 
+        AND pg.game_server_url = gs.url
+        AND pg.game_status = ?`;
   query = fixQuery(query);
   const records = await getGameConnection().query(query, [
     gameServerUrl,

@@ -513,6 +513,9 @@ export class PokerGame {
   @Column({name: 'data_moved', default: false})
   public dataMoved!: boolean;
 
+  @Column({name: 'game_server_url', default: ''})
+  public gameServerUrl!: string;
+
   // This is not a database column and used for tracking highhand in the cache
   public highHandRank = 0;
 

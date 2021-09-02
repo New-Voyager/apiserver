@@ -1,12 +1,5 @@
 import * as crypto from 'crypto';
-import {
-  In,
-  Repository,
-  EntityManager,
-  Not,
-  getRepository,
-  IsNull,
-} from 'typeorm';
+import {In, Repository, EntityManager} from 'typeorm';
 import {
   NextHandUpdates,
   PokerGame,
@@ -16,14 +9,12 @@ import {
 import {
   GameType,
   GameStatus,
-  ClubMemberStatus,
-  ClubStatus,
   PlayerStatus,
   TableStatus,
   NextHandUpdate,
   SeatStatus,
 } from '@src/entity/types';
-import {GameServer, TrackGameServer} from '@src/entity/game/gameserver';
+import {GameServer} from '@src/entity/game/gameserver';
 import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
@@ -79,6 +70,7 @@ import {Nats} from '@src/nats';
 import {GameSettingsRepository} from './gamesettings';
 import {PlayersInGameRepository} from './playersingame';
 import {GameUpdatesRepository} from './gameupdates';
+import {GameServerRepository} from './gameserver';
 const logger = getLogger('game');
 
 class GameRepositoryImpl {
@@ -97,15 +89,6 @@ class GameRepositoryImpl {
     template = false
   ): Promise<PokerGame> {
     const useGameServer = true;
-
-    const gameServerRepository = getGameRepository(GameServer);
-    let gameServers: Array<GameServer> = new Array<GameServer>();
-    if (useGameServer) {
-      gameServers = await gameServerRepository.find();
-      if (gameServers.length === 0) {
-        throw new Error('No game server is availabe');
-      }
-    }
 
     // create the game
     const gameTypeStr: string = input['gameType'];
@@ -166,8 +149,18 @@ class GameRepositoryImpl {
     try {
       //logger.info('****** STARTING TRANSACTION TO CREATE a private game');
 
+      let gameServerUrl = '';
+      if (useGameServer) {
+        gameServer = await GameServerRepository.getNextGameServer();
+        if (!gameServer) {
+          throw new Error(`No game server is available to host the game`);
+        }
+        gameServerUrl = gameServer.url;
+      }
+
       await getGameManager().transaction(async transactionEntityManager => {
         saveTime = new Date().getTime();
+        game.gameServerUrl = gameServerUrl;
         savedGame = await transactionEntityManager
           .getRepository(PokerGame)
           .save(game);
@@ -202,9 +195,6 @@ class GameRepositoryImpl {
 
           saveUpdateTime = new Date().getTime() - saveUpdateTime;
           let pick = 0;
-          if (gameServers.length > 0) {
-            pick = Number.parseInt(savedGame.id) % gameServers.length;
-          }
 
           const rewardTrackingIds = new Array<number>();
           if (input.rewardIds) {
@@ -269,51 +259,23 @@ class GameRepositoryImpl {
 
           publishNewTime = new Date().getTime();
           let tableStatus = TableStatus.WAITING_TO_BE_STARTED;
-          let scanServer = 0;
-
           if (useGameServer) {
-            for (
-              scanServer = 0;
-              scanServer < gameServers.length;
-              scanServer++
-            ) {
-              // create a new game in game server within the transcation
-              try {
-                gameServer = gameServers[pick];
-                const gameInput = game as any;
-                gameInput.rewardTrackingIds = rewardTrackingIds;
-                logger.info(
-                  `Game server ${gameServer.toString()} is requested to host ${
-                    game.gameCode
-                  }`
-                );
-                tableStatus = await publishNewGame(
-                  gameInput,
-                  gameServer,
-                  false
-                );
-                let serverUrl = '';
-                if (gameServer) {
-                  serverUrl = gameServer.url;
-                }
-
-                logger.info(`Game ${game.gameCode} is hosted in ${serverUrl}`);
-                break;
-              } catch (err) {
-                let serverUrl = '';
-                if (gameServer) {
-                  serverUrl = gameServer.url;
-                }
-                logger.warn(
-                  `Game Id: ${savedGame.id} cannot be hosted by game server: ${serverUrl}`
-                );
-              }
-              gameServer = null;
-              pick++;
-              if (pick === gameServers.length) {
-                pick = 0;
-              }
+            if (!gameServer) {
+              throw new Error(`No game server available to host the game`);
             }
+            const gameInput = game as any;
+            gameInput.rewardTrackingIds = rewardTrackingIds;
+            logger.info(
+              `Game server ${gameServer.url.toString()} is requested to host ${
+                game.gameCode
+              }`
+            );
+            tableStatus = await publishNewGame(gameInput, gameServer, false);
+            let serverUrl = '';
+            if (gameServer) {
+              serverUrl = gameServer.url;
+            }
+            logger.info(`Game ${game.gameCode} is hosted in ${serverUrl}`);
             publishNewTime = new Date().getTime() - publishNewTime;
 
             if (!gameServer) {
@@ -328,16 +290,6 @@ class GameRepositoryImpl {
             },
             {tableStatus: tableStatus}
           );
-
-          if (useGameServer) {
-            const trackgameServerRepository = transactionEntityManager.getRepository(
-              TrackGameServer
-            );
-            const trackServer = new TrackGameServer();
-            trackServer.game = savedGame;
-            trackServer.gameServer = gameServers[pick];
-            await trackgameServerRepository.save(trackServer);
-          }
         }
       });
 
@@ -1136,14 +1088,12 @@ class GameRepositoryImpl {
   }
 
   public async getGameServer(gameId: number): Promise<GameServer | null> {
-    const trackgameServerRepository = getGameRepository(TrackGameServer);
-    const gameServer = await trackgameServerRepository.findOne({
-      where: {game: {id: gameId}},
-    });
-    if (!gameServer) {
-      return null;
+    const game = await Cache.getGameById(gameId);
+    if (!game) {
+      throw new Error(`Game id ${gameId} not found`);
     }
-    return gameServer.gameServer;
+    const gameServer = await GameServerRepository.get(game.gameServerUrl);
+    return gameServer;
   }
 
   public async startGame(player: Player, game: PokerGame): Promise<GameStatus> {
@@ -1487,9 +1437,6 @@ class GameRepositoryImpl {
         await transactionEntityManager
           .getRepository(NextHandUpdates)
           .delete({game: {id: game.id}});
-        await transactionEntityManager
-          .getRepository(TrackGameServer)
-          .delete({game: {id: game.id}});
 
         if (!includeGame) {
           await transactionEntityManager
@@ -1508,11 +1455,6 @@ class GameRepositoryImpl {
           .execute();
         await transactionEntityManager
           .getRepository(NextHandUpdates)
-          .createQueryBuilder()
-          .delete()
-          .execute();
-        await transactionEntityManager
-          .getRepository(TrackGameServer)
           .createQueryBuilder()
           .delete()
           .execute();

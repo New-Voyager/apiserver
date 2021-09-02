@@ -206,9 +206,7 @@ export class BuyIn {
     // send a message to gameserver
     // get game server of this game
     const gameServer = await GameRepository.getGameServer(this.game.id);
-    if (gameServer) {
-      Nats.playerBuyIn(this.game, this.player, playerInGame);
-    }
+    Nats.playerBuyIn(this.game, this.player, playerInGame);
     gameServerTime = new Date().getTime() - gameServerTime;
 
     await GameRepository.restartGameIfNeeded(
@@ -226,16 +224,14 @@ export class BuyIn {
     // send a message to gameserver
     // get game server of this game
     const gameServer = await GameRepository.getGameServer(this.game.id);
-    if (gameServer) {
-      await Nats.playerStatusChanged(
-        this.game,
-        this.player,
-        playerInGame.status,
-        NewUpdate.BUYIN_DENIED,
-        playerInGame.stack,
-        playerInGame.seatNo
-      );
-    }
+    await Nats.playerStatusChanged(
+      this.game,
+      this.player,
+      playerInGame.status,
+      NewUpdate.BUYIN_DENIED,
+      playerInGame.stack,
+      playerInGame.seatNo
+    );
   }
 
   public async request(amount: number): Promise<buyInRequest> {

@@ -745,7 +745,7 @@ class HandRepositoryImpl {
           }
           await getHistoryRepository(HandHistory).save(handHistory);
           // update game rake and last hand number
-          await GameUpdatesRepository.updateRake(
+          await GameUpdatesRepository.updateHandResult(
             game,
             handNum,
             handRake,
@@ -773,6 +773,9 @@ class HandRepositoryImpl {
       if (saveResult.skipped) {
         return saveResult;
       }
+
+      // we need to refresh to reflect last processed hand
+      await GameUpdatesRepository.get(game.gameCode, true);
 
       let pendingUpdates = false;
       for (const seatNo of Object.keys(playersInHand)) {
