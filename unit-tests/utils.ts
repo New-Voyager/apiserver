@@ -11,6 +11,7 @@ import {
   NextHandUpdates,
   PokerGameUpdates,
   PokerGameSettings,
+  PokerGameSeatInfo,
 } from '../src/entity/game/game';
 import {HandHistory} from '../src/entity/history/hand';
 import {PlayerGameTracker} from '../src/entity/game/player_game_tracker';
@@ -98,6 +99,7 @@ export async function sqlliteConnection() {
           TrackGameServer,
           PokerGameUpdates,
           PokerGameSettings,
+          PokerGameSeatInfo,
           HighHand,
           GameReward,
           GameRewardTracking,

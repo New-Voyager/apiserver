@@ -15,6 +15,7 @@ import {getGameManager, getGameRepository} from '@src/repositories';
 import {GameReward} from '@src/entity/game/reward';
 import {NextHandProcess} from '@src/repositories/nexthand';
 import {GameSettingsRepository} from '@src/repositories/gamesettings';
+import {PlayersInGameRepository} from '@src/repositories/playersingame';
 
 const logger = getLogger('GameAPIs');
 
@@ -179,7 +180,7 @@ class GameAPIs {
             const gameSettings = await GameSettingsRepository.get(
               game.gameCode
             );
-            const playersInSeats = await GameRepository.getPlayersInSeats(
+            const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
               game.id,
               transactionEntityManager
             );

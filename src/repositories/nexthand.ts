@@ -13,6 +13,7 @@ import {markDealerChoiceNextHand} from './pendingupdates';
 import {NewHandInfo, PlayerInSeat} from './types';
 import _ from 'lodash';
 import {GameSettingsRepository} from './gamesettings';
+import {PlayersInGameRepository} from './playersingame';
 
 const logger = getLogger('next_hand_process');
 
@@ -70,7 +71,7 @@ export class NextHandProcess {
           playerInSeatsInPrevHand = JSON.parse(gameUpdate.playersInLastHand);
         }
 
-        const playersInSeats = await GameRepository.getPlayersInSeats(
+        const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
           game.id,
           transactionEntityManager
         );
@@ -372,7 +373,7 @@ export class NextHandProcess {
           bombPotThisHand = true;
         }
 
-        const playersInSeats = await GameRepository.getPlayersInSeats(
+        const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
           game.id,
           transactionEntityManager
         );
@@ -387,7 +388,7 @@ export class NextHandProcess {
           ) {
             const player = await Cache.getPlayerById(playerSeat['playerId']);
             // if player balance is 0, we need to mark this player to add buyin
-            await GameRepository.startBuyinTimer(
+            await PlayersInGameRepository.startBuyinTimer(
               game,
               playerSeat.playerId,
               playerSeat.playerName,

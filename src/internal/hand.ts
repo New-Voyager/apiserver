@@ -7,6 +7,9 @@ import {WonAtStatus} from '@src/entity/types';
 import {HandRepository} from '@src/repositories/hand';
 import {getGameConnection, getGameRepository} from '@src/repositories';
 import {getLogger} from '@src/utils/log';
+import {PlayersInGame} from '@src/entity/history/player';
+import {PlayersInGameRepository} from '@src/repositories/playersingame';
+import _ from 'lodash';
 const logger = getLogger('internal::hand');
 
 function validateHandData(handData: any): Array<string> {
@@ -206,26 +209,15 @@ async function processConsecutiveActionTimeouts(
       return;
     }
 
-    const playerGameTrackerRepository: Repository<PlayerGameTracker> = transactionEntityManager.getRepository(
+    const playersInGameArr = await PlayersInGameRepository.getPlayersInSeats(
+      gameID,
+      transactionEntityManager
+    );
+
+    const playersInGame = _.keyBy(playersInGameArr, 'playerId');
+    const playersInGameRepo = transactionEntityManager.getRepository(
       PlayerGameTracker
     );
-
-    const playersInGameArr: Array<PlayerGameTracker> = await playerGameTrackerRepository.find(
-      {
-        game: {id: gameID},
-      }
-    );
-    if (!playersInGameArr) {
-      throw new Error(
-        `Unable to find player tracker records with game ID ${gameID} while processing consecutive action timeouts`
-      );
-    }
-
-    const playersInGame = Object.assign(
-      {},
-      ...playersInGameArr.map(p => ({[p.playerId]: p}))
-    );
-
     let shouldUpdateCache = false;
     for (const playerIdStr of Object.keys(timeoutStats)) {
       const currentHandTimeouts =
@@ -263,7 +255,7 @@ async function processConsecutiveActionTimeouts(
       }
 
       if (newTimeouts != prevTimeouts) {
-        await playerGameTrackerRepository
+        await playersInGameRepo
           .createQueryBuilder()
           .update()
           .where({

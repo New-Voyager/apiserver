@@ -19,6 +19,7 @@ import {ClubMessageRepository} from '@src/repositories/clubmessage';
 import {HostMessageRepository} from '@src/repositories/hostmessage';
 import {HandRepository} from '@src/repositories/hand';
 import {HistoryRepository} from '@src/repositories/history';
+import {PlayersInGameRepository} from '@src/repositories/playersingame';
 const logger = getLogger('player');
 
 async function getClubs(playerId: string): Promise<Array<any>> {
@@ -529,7 +530,10 @@ async function getAudioToken(
     throw new Error(`Game ${gameCode} does not exist`);
   }
   // get audio token for the player
-  const token = await GameRepository.getAudioToken(playerInfo, gameExists);
+  const token = await PlayersInGameRepository.getAudioToken(
+    playerInfo,
+    gameExists
+  );
   logger.info(
     `Player: ${playerId} is using agora token ${token} for game ${gameCode}`
   );

@@ -39,6 +39,7 @@ import {
   getUserRepository,
 } from '.';
 import {Nats} from '@src/nats';
+import {PlayersInGameRepository} from './playersingame';
 
 const logger = getLogger('buyin');
 
@@ -187,36 +188,12 @@ export class BuyIn {
     let databaseTime = new Date().getTime();
     let cancelTime;
 
-    const playerGameTrackerRepository = transactionEntityManager.getRepository(
-      PlayerGameTracker
+    await GameRepository.seatOccupied(
+      this.game,
+      playerInGame.seatNo,
+      transactionEntityManager
     );
-    const count = await playerGameTrackerRepository
-      .createQueryBuilder()
-      .where({
-        game: {id: this.game.id},
-        status: In([
-          PlayerStatus.PLAYING,
-          PlayerStatus.IN_BREAK,
-          PlayerStatus.WAIT_FOR_BUYIN,
-          PlayerStatus.WAIT_FOR_BUYIN_APPROVAL,
-        ]),
-      })
-      .getCount();
 
-    const gameUpdatesRepo = transactionEntityManager.getRepository(
-      PokerGameUpdates
-    );
-    await gameUpdatesRepo
-      .createQueryBuilder()
-      .update()
-      .set({
-        playersInSeats: count,
-      })
-      .where({
-        gameID: this.game.id,
-      })
-      .execute();
-    await Cache.getGameUpdates(this.game.gameCode, true);
     databaseTime = new Date().getTime() - databaseTime;
 
     cancelTime = new Date().getTime();
@@ -904,7 +881,7 @@ export class BuyIn {
           `Player: ${player.playerName} stack is empty. Starting a buyin timer`
         );
         // if player balance is 0, we need to mark this player to add buyin
-        await GameRepository.startBuyinTimer(
+        await PlayersInGameRepository.startBuyinTimer(
           game,
           player.playerId,
           player.playerName,

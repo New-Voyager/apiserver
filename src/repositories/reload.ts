@@ -131,7 +131,7 @@ export class Reload {
         }
 
         if (this.game.clubCode) {
-        logger.info('reload2');
+          logger.info('reload2');
 
           const prevStatus = await playerGameTrackerRepository.findOne({
             game: {id: this.game.id},

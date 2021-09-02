@@ -12,6 +12,7 @@ import {getLogger} from '@src/utils/log';
 import {
   NextHandUpdates,
   PokerGame,
+  PokerGameSeatInfo,
   PokerGameSettings,
   PokerGameUpdates,
 } from '@src/entity/game/game';
@@ -32,6 +33,7 @@ import {Player} from '@src/entity/player/player';
 import {LocationCheck} from './locationcheck';
 import {GameSettingsRepository} from './gamesettings';
 import {resumeGame} from '@src/gameserver';
+import {PlayersInGameRepository} from './playersingame';
 
 const logger = getLogger('pending-updates');
 
@@ -64,9 +66,9 @@ export async function processPendingUpdates(gameId: number) {
   }
 
   await Cache.updateGamePendingUpdates(game?.gameCode, false);
-  const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-  const gameUpdate = await gameUpdatesRepo.findOne({gameID: game.id});
-  if (!gameUpdate) {
+  const gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
+  const gameSeatInfo = await gameSeatInfoRepo.findOne({gameID: game.id});
+  if (!gameSeatInfo) {
     return;
   }
 
@@ -76,7 +78,7 @@ export async function processPendingUpdates(gameId: number) {
   }
 
   logger.debug(`Processing pending updates for game id: ${game.gameCode}`);
-  if (gameUpdate.seatChangeInProgress) {
+  if (gameSeatInfo.seatChangeInProgress) {
     logger.info(
       `Seat change is in progress for game id: ${game.gameCode}. No updates will be performed.`
     );
@@ -482,7 +484,9 @@ async function handleDealersChoice(
   await pendingUpdatesRepo.delete({id: update.id});
 
   // get next player and send the notification
-  const playersInSeats = await GameRepository.getPlayersInSeats(game.id);
+  const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
+    game.id
+  );
   const takenSeats = _.keyBy(playersInSeats, 'seatNo');
 
   const gameUpdatesRepo = getGameRepository(PokerGameUpdates);

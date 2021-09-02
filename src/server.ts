@@ -31,7 +31,12 @@ import {
   updateButtonPos,
 } from './internal/bot';
 import {restartTimers} from '@src/timer';
-import {getGameConnection, getHistoryConnection, getUserConnection, getUserRepository} from './repositories';
+import {
+  getGameConnection,
+  getHistoryConnection,
+  getUserConnection,
+  getUserRepository,
+} from './repositories';
 import {UserRegistrationPayload} from './types';
 import {PlayerRepository} from './repositories/player';
 import {
@@ -129,8 +134,10 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
         logger.info('Enabling pg_stat_statements extension');
         await conn.query('CREATE EXTENSION pg_stat_statements');
         logger.info('Enabled pg_stat_statements extension');
-      } catch(err) {
-        logger.error(`Enabling pg_stat_statements extension failed. Error: ${err.message}`);
+      } catch (err) {
+        logger.error(
+          `Enabling pg_stat_statements extension failed. Error: ${err.message}`
+        );
       }
       try {
         await conn.query('CREATE DATABASE livegames');
@@ -240,22 +247,28 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     logger.info('Enabling pg_stat_statements extension in users db');
     await getUserConnection().query('CREATE EXTENSION pg_stat_statements');
     logger.info('Enabled pg_stat_statements extension in users db');
-  } catch(err) {
-    logger.error(`Enabling pg_stat_statements in users db extension failed. Error: ${err.message}`);
+  } catch (err) {
+    logger.error(
+      `Enabling pg_stat_statements in users db extension failed. Error: ${err.message}`
+    );
   }
   try {
     logger.info('Enabling pg_stat_statements extension in users db');
     await getGameConnection().query('CREATE EXTENSION pg_stat_statements');
     logger.info('Enabled pg_stat_statements extension in users db');
-  } catch(err) {
-    logger.error(`Enabling pg_stat_statements in users db extension failed. Error: ${err.message}`);
+  } catch (err) {
+    logger.error(
+      `Enabling pg_stat_statements in users db extension failed. Error: ${err.message}`
+    );
   }
   try {
     logger.info('Enabling pg_stat_statements extension in users db');
     await getHistoryConnection().query('CREATE EXTENSION pg_stat_statements');
     logger.info('Enabled pg_stat_statements extension in users db');
-  } catch(err) {
-    logger.error(`Enabling pg_stat_statements in users db extension failed. Error: ${err.message}`);
+  } catch (err) {
+    logger.error(
+      `Enabling pg_stat_statements in users db extension failed. Error: ${err.message}`
+    );
   }
 
   await initializeNats();

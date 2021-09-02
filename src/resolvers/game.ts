@@ -41,6 +41,7 @@ import {getAgoraAppId} from '@src/3rdparty/agora';
 import {SeatChangeProcess} from '@src/repositories/seatchange';
 import {analyticsreporting_v4} from 'googleapis';
 import {GameSettingsRepository} from '@src/repositories/gamesettings';
+import {PlayersInGameRepository} from '@src/repositories/playersingame';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -316,7 +317,10 @@ export async function takeSeat(
       `Player: ${player.name} isBot: ${player.bot} joined game: ${game.gameCode}`
     );
 
-    const playerInSeat = await GameRepository.getSeatInfo(game.id, seatNo);
+    const playerInSeat = await PlayersInGameRepository.getSeatInfo(
+      game.id,
+      seatNo
+    );
 
     if (!playerInSeat.audioToken) {
       playerInSeat.agoraToken = playerInSeat.audioToken;
@@ -381,7 +385,7 @@ export async function startGame(
       gameNum = await ClubRepository.getNextGameNum(game.clubId);
     }
 
-    let players = await GameRepository.getPlayersInSeats(game.id);
+    let players = await PlayersInGameRepository.getPlayersInSeats(game.id);
     if (game.botGame && players.length < game.maxPlayers) {
       // fill the empty seats with bots
       await fillSeats(game.clubCode, game.gameCode);
@@ -389,7 +393,7 @@ export async function startGame(
       let allFilled = false;
       while (!allFilled) {
         await new Promise(r => setTimeout(r, 1000));
-        players = await GameRepository.getPlayersInSeats(game.id);
+        players = await PlayersInGameRepository.getPlayersInSeats(game.id);
         if (players.length != game.maxPlayers) {
           logger.debug(
             `[${game.gameCode}] Waiting for bots to take empty seats`
@@ -399,7 +403,7 @@ export async function startGame(
         }
       }
     }
-    players = await GameRepository.getPlayersInSeats(game.id);
+    players = await PlayersInGameRepository.getPlayersInSeats(game.id);
     // do we have enough players in the table
     // if (players.length <= 1) {
     //   throw new Error('We need more players to start the game');
@@ -986,8 +990,8 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
       ret.audioConfEnabled = settings.audioConfEnabled;
       ret.rakeCollected = updates.rake;
       ret.handNum = updates.handNum;
-      ret.janusRoomId = updates.janusRoomId;
-      ret.janusRoomPin = updates.janusRoomPin;
+      ret.janusRoomId = settings.janusRoomId;
+      ret.janusRoomPin = settings.janusRoomPin;
 
       ret.bombPotEnabled = settings.bombPotEnabled;
       if (ret.bombPotEnabled) {
@@ -1001,7 +1005,10 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     }
     const now = new Date().getTime();
     // get player's game state
-    const playerState = await GameRepository.getGamePlayerState(game, player);
+    const playerState = await PlayersInGameRepository.getGamePlayerState(
+      game,
+      player
+    );
     if (playerState) {
       ret.gameToken = playerState.gameToken;
       ret.playerGameStatus = PlayerStatus[playerState.status];
@@ -1277,7 +1284,7 @@ export async function kickOutPlayer(
     }
 
     const player = await Cache.getPlayer(kickedOutPlayer);
-    await GameRepository.kickOutPlayer(gameCode, player);
+    await PlayersInGameRepository.kickOutPlayer(gameCode, player);
     return true;
   } catch (err) {
     logger.error(JSON.stringify(err));
@@ -1691,7 +1698,7 @@ export async function updatePlayerGameConfig(
       throw new Error('Player is not found');
     }
 
-    await GameRepository.updatePlayerGameConfig(player, game, config);
+    await PlayersInGameRepository.updatePlayerGameConfig(player, game, config);
     return true;
   } catch (err) {
     logger.error(err.message);
@@ -1751,7 +1758,9 @@ export async function openSeats(playerId: string, gameCode: string) {
   }
   try {
     const game = await Cache.getGame(gameCode);
-    const playersInSeats = await GameRepository.getPlayersInSeats(game.id);
+    const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
+      game.id
+    );
     const takenSeats = playersInSeats.map(x => x.seatNo);
     const availableSeats: Array<number> = [];
     for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
@@ -2099,7 +2108,7 @@ const resolvers: any = {
     seatInfo: async (parent, args, ctx, info) => {
       const game = await Cache.getGame(parent.gameCode);
       const seatStatuses = await GameRepository.getSeatStatus(game.id);
-      const players = await GameRepository.getPlayersInSeats(game.id);
+      const players = await PlayersInGameRepository.getPlayersInSeats(game.id);
       const playersInSeats = new Array<any>();
       for (const player of players) {
         const playerInSeat = player as any;
@@ -2185,7 +2194,10 @@ const resolvers: any = {
       if (!playerState) {
         const player = await Cache.getPlayer(ctx.req.playerId);
         // get player's game state
-        playerState = await GameRepository.getGamePlayerState(game, player);
+        playerState = await PlayersInGameRepository.getGamePlayerState(
+          game,
+          player
+        );
         ctx['playerState'] = playerState;
       }
       if (playerState) {
@@ -2199,7 +2211,10 @@ const resolvers: any = {
       if (!playerState) {
         const player = await Cache.getPlayer(ctx.req.playerId);
         // get player's game state
-        playerState = await GameRepository.getGamePlayerState(game, player);
+        playerState = await PlayersInGameRepository.getGamePlayerState(
+          game,
+          player
+        );
         ctx['playerState'] = playerState;
       }
       if (playerState) {
