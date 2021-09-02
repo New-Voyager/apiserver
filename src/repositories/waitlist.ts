@@ -57,8 +57,6 @@ export class WaitListMgmt {
           waitlistSeatingInprogress: false,
         }
       );
-      await Cache.getGameUpdates(this.game.gameCode, true);
-
       // continue to sit this player in the seat
     } else {
       if (playerAskedToSit.playerId !== player.id) {
@@ -82,7 +80,6 @@ export class WaitListMgmt {
           waitlistSeatingInprogress: false,
         }
       );
-      await Cache.getGameUpdates(this.game.gameCode, true);
     }
   }
 
@@ -134,8 +131,6 @@ export class WaitListMgmt {
         waitlistSeatingInprogress: false,
       }
     );
-    await Cache.getGameUpdates(this.game.gameCode, true);
-
     if (count > 0) {
       // continue to run the waitlist seating
       this.runWaitList();
@@ -250,7 +245,6 @@ export class WaitListMgmt {
           waitlistSeatingInprogress: false,
         }
       );
-      await Cache.getGameUpdates(this.game.gameCode, true);
 
       //logger.info(`Game: ${gameId} No players in the waiting list`);
       // notify all the users waiting list process is complete

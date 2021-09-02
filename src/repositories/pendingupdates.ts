@@ -487,7 +487,7 @@ async function handleDealersChoice(
     game.id
   );
   const takenSeats = _.keyBy(playersInSeats, 'seatNo');
-  const gameUpdate = await Cache.getGameUpdates(game.gameCode, true);
+  const gameUpdate = await GameUpdatesRepository.get(game.gameCode, true);
   const occupiedSeats = new Array<number>();
   // dealer
   occupiedSeats.push(0);

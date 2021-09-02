@@ -172,7 +172,7 @@ class AppCoinRepositoryImpl {
       return false;
     }
 
-    const gameUpdates = await Cache.getGameUpdates(gameCode);
+    const gameUpdates = await GameUpdatesRepository.get(gameCode);
     if (gameUpdates === null || gameUpdates === undefined) {
       return false;
     }

@@ -507,7 +507,10 @@ class HandRepositoryImpl {
         throw new Error(`Game ${gameID} is not found`);
       }
       gameCode = gameFromCache.gameCode;
-      const gameUpdates = await Cache.getGameUpdates(gameCode);
+      const gameUpdates = await GameUpdatesRepository.get(
+        gameFromCache.gameCode,
+        true
+      );
       if (!gameUpdates) {
         throw new Error(`Game ${gameID} is not found`);
       }
@@ -534,7 +537,6 @@ class HandRepositoryImpl {
             }
 
             if (gameType !== GameType.UNKNOWN) {
-              gameUpdates;
               await StatsRepository.newClubGame(gameType, game.clubId);
             }
           } catch (err) {}

@@ -42,6 +42,7 @@ import {SeatChangeProcess} from '@src/repositories/seatchange';
 import {analyticsreporting_v4} from 'googleapis';
 import {GameSettingsRepository} from '@src/repositories/gamesettings';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
+import {GameUpdatesRepository} from '@src/repositories/gameupdates';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -983,7 +984,7 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.gameID = game.id;
     ret.agoraAppId = getAgoraAppId();
 
-    const updates = await Cache.getGameUpdates(game.gameCode);
+    const updates = await GameUpdatesRepository.get(game.gameCode);
     const settings = await GameSettingsRepository.get(game.gameCode);
     if (updates && settings) {
       ret.useAgora = settings.useAgora;
@@ -1883,7 +1884,7 @@ export async function gameDataById(playerId: string, gameCode: string) {
       }
     }
 
-    const updates = await Cache.getGameUpdates(gameCode);
+    const updates = await GameUpdatesRepository.get(game.gameCode);
     if (!updates) {
       logger.error(
         `Updates not found for the game ${gameCode} in club ${game.clubName}`

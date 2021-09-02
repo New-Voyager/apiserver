@@ -8,7 +8,7 @@ import {getLogger} from '@src/utils/log';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
 import _ from 'lodash';
 import {GameUpdatesRepository} from '@src/repositories/gameupdates';
-import { PokerGameUpdates } from '@src/entity/game/game';
+import {PokerGameUpdates} from '@src/entity/game/game';
 const logger = getLogger('internal::hand');
 
 function validateHandData(handData: any): Array<string> {
@@ -270,11 +270,13 @@ async function processConsecutiveActionTimeouts(
     // Remember that we processed the consecutive timeout counts for this hand,
     // so that we don't add the count again if the game server crashes
     // and this function gets called again.
-    const pokerGameUpdatesRepo = transactionEntityManager.getRepository(PokerGameUpdates);
+    const pokerGameUpdatesRepo = transactionEntityManager.getRepository(
+      PokerGameUpdates
+    );
     await pokerGameUpdatesRepo
       .createQueryBuilder()
       .update()
-      .where({gameID: gameID})
+      .where({gameCode: game.gameCode})
       .set({lastConsecutiveTimeoutProcessedHand: handNum})
       .execute();
 
@@ -282,4 +284,5 @@ async function processConsecutiveActionTimeouts(
       await Cache.updateGamePendingUpdates(game.gameCode, true);
     }
   });
+  await GameUpdatesRepository.get(game.gameCode, true);
 }

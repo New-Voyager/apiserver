@@ -125,8 +125,6 @@ class PlayersInGameRepositoryImpl {
           },
           {playersInSeats: count}
         );
-        await Cache.getGameUpdates(game.gameCode, true);
-
         Nats.playerKickedOut(game, player, playerInGame.seatNo);
       } else {
         // game is running, so kickout the user in next hand

@@ -28,17 +28,13 @@ export class NextHandProcess {
   }
 
   public async moveToNextHand() {
+    const game: PokerGame = await Cache.getGame(this.gameCode, false);
+    if (!game) {
+      throw new Error(`Game code: ${this.gameCode} not found`);
+    }
+
     const ret = await getGameManager().transaction(
       async transactionEntityManager => {
-        const game: PokerGame = await Cache.getGame(
-          this.gameCode,
-          false,
-          transactionEntityManager
-        );
-        if (!game) {
-          throw new Error(`Game code: ${this.gameCode} not found`);
-        }
-
         const gameSettings = await GameSettingsRepository.get(game.gameCode);
         if (!gameSettings) {
           throw new Error(
@@ -46,12 +42,11 @@ export class NextHandProcess {
           );
         }
 
-        const gameUpdates = Cache.getGameUpdates(game.gameCode);
-        if (!gameUpdates) {
+        let gameUpdate = await GameUpdatesRepository.get(game.gameCode);
+        if (!gameUpdate) {
           const res = {error: 'GameUpdates not found'};
           throw new Error(`Game code: ${this.gameCode} not found`);
         }
-        const gameUpdate = gameUpdates[0];
         if (gameUpdate.handNum > this.gameServerHandNum) {
           // API server has already moved to the next hand and is ahead of the game server.
           // Perhaps game server crashed after already having called this endpoint and is recovering now.
@@ -291,10 +286,9 @@ export class NextHandProcess {
           .update()
           .set(setProps)
           .where({
-            gameID: game.id,
+            gameCode: game.gameCode,
           })
           .execute();
-        await Cache.getGameUpdates(game.gameCode, true);
 
         if (game.gameType === GameType.DEALER_CHOICE) {
           // if the game is dealer's choice, then prompt the user for next hand
@@ -313,6 +307,7 @@ export class NextHandProcess {
         };
       }
     );
+    const gameUpdate = await GameUpdatesRepository.get(game.gameCode, true);
     return ret;
   }
 
@@ -348,16 +343,14 @@ export class NextHandProcess {
           );
         }
 
-        const gameUpdates = await GameUpdatesRepository.get(this.gameCode);
-        if (!gameUpdates) {
+        const gameUpdate = await GameUpdatesRepository.get(this.gameCode);
+        if (!gameUpdate) {
           throw new Error(`Game code: Game updates ${this.gameCode} not found`);
         }
 
         const playerGameTrackerRepo = transactionEntityManager.getRepository(
           PlayerGameTracker
         );
-
-        const gameUpdate = gameUpdates[0];
 
         let bombPotThisHand = false;
         logger.debug(

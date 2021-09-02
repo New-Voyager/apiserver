@@ -97,7 +97,7 @@ class GameUpdatesRepositoryImpl {
             calculateButtonPos: false,
           }
         );
-        await Cache.getGameUpdates(game.gameCode, true);
+        await GameUpdatesRepository.get(gameCode, true);
       }
     );
   }
@@ -131,7 +131,7 @@ class GameUpdatesRepositoryImpl {
       }
     );
 
-    await Cache.getGameUpdates(game.gameCode, true);
+    await GameUpdatesRepository.get(game.gameCode, true);
   }
 
   public async updateNextGameType(game: PokerGame, gameType: GameType) {
@@ -145,7 +145,7 @@ class GameUpdatesRepositoryImpl {
         gameType: gameType,
       }
     );
-    await Cache.getGameUpdates(game.gameCode, true);
+    await GameUpdatesRepository.get(game.gameCode, true);
   }
 
   public async updateCoinNextTime(
@@ -163,12 +163,12 @@ class GameUpdatesRepositoryImpl {
         appCoinHostNotified: appCoinHostNotified,
       }
     );
-    await Cache.getGameUpdates(game.gameCode, true);
+    await GameUpdatesRepository.get(game.gameCode, true);
   }
 
   public async updateCoinsUsed(game: PokerGame, nextCoinConsumeTime: Date) {
     const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-    const gameUpdates = await Cache.getGameUpdates(game.gameCode, true);
+    const gameUpdates = await GameUpdatesRepository.get(game.gameCode, true);
 
     await gameUpdatesRepo
       .createQueryBuilder()
@@ -181,7 +181,7 @@ class GameUpdatesRepositoryImpl {
         gameID: game.id,
       })
       .execute();
-    await Cache.getGameUpdates(game.gameCode, true);
+    await GameUpdatesRepository.get(game.gameCode, true);
   }
 
   public async updateDealersChoiceSeat(game: PokerGame, playerId: number) {
@@ -195,7 +195,7 @@ class GameUpdatesRepositoryImpl {
         gameCode: game.gameCode,
       }
     );
-    const gameUpdates = await Cache.getGameUpdates(game.gameCode, true);
+    await GameUpdatesRepository.get(game.gameCode, true);
   }
 
   public async updateRake(
@@ -218,17 +218,18 @@ class GameUpdatesRepositoryImpl {
         gameCode: game.gameCode,
       })
       .execute();
-    await Cache.getGameUpdates(game.gameCode, true);
+    await GameUpdatesRepository.get(game.gameCode, true);
   }
 
   public async get(
     gameCode: string,
-    update?: boolean
+    update?: boolean,
+    transactionEntityManager?: EntityManager
   ): Promise<PokerGameUpdates> {
     if (!update) {
       update = false;
     }
-    return Cache.getGameUpdates(gameCode, update);
+    return Cache.getGameUpdates(gameCode, update, transactionEntityManager);
   }
 }
 

@@ -58,8 +58,8 @@ export class SeatChangeProcess {
       await playerSeatChangeRepo.save(playerSeatChange);
     }
 
-    const gameUpdatesRepo = getGameRepository(PokerGameSeatInfo);
-    gameUpdatesRepo.update(
+    const gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
+    await gameSeatInfoRepo.update(
       {
         gameID: this.game.id,
       },
@@ -68,8 +68,6 @@ export class SeatChangeProcess {
         seatChangeInProgress: true,
       }
     );
-    await Cache.getGameUpdates(this.game.gameCode, true);
-
     this.promptPlayer(openedSeat);
   }
 
