@@ -100,13 +100,7 @@ async function generateHandHistoryData(
     if (!authorized) {
       ret.data = null;
     } else {
-      let data: string;
-      if (handHistory.compressed) {
-        data = lz.decompress(handHistory.data);
-      } else {
-        data = handHistory.data.toString();
-      }
-      ret.data = data;
+      ret.data = JSON.parse(HandRepository.getHandData(handHistory));
     }
   }
   return ret;

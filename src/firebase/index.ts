@@ -464,7 +464,7 @@ let settings: AppSettings = {
   consumeTime: 15 * 60, // every 15 minutes
   gameCoinsPerBlock: 3, // 3 coins per 15 minutes
   agoraCoinsPerBlock: 3, // 3 coins per 15 minutes
-  compressHandData: false,
+  compressHandData: true,
   ipGpsCheckInterval: 15 * 60, // ip/gps check interval in seconds
 };
 
@@ -482,7 +482,7 @@ export function resetAppSettings() {
     gameCoinsPerBlock: 3, // 3 coins per 15 minutes
     agoraCoinsPerBlock: 3, // 3 coins per 15 minutes
     notifyHostTimeWindow: 10 * 60,
-    compressHandData: false,
+    compressHandData: true,
     ipGpsCheckInterval: 15 * 60,
   };
 }

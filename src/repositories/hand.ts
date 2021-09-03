@@ -4,6 +4,7 @@ import {HandHistory} from '@src/entity/history/hand';
 import {
   ClubMessageType,
   GameType,
+  HandDataType,
   PlayerStatus,
   WonAtStatus,
 } from '@src/entity/types';
@@ -38,6 +39,9 @@ import {GameUpdatesRepository} from './gameupdates';
 const logger = getLogger('hand');
 
 const MAX_STARRED_HAND = 25;
+let totalHandsSaved = 0;
+let totalHandsDataLen = 0;
+let totalHandsCompressedDataLen = 0;
 
 class HandRepositoryImpl {
   private async getSummary(result: any): Promise<any> {
@@ -272,13 +276,7 @@ class HandRepositoryImpl {
         bookmarkedHand.gameType = game.gameType;
         bookmarkedHand.handNum = handHistory.handNum;
         bookmarkedHand.savedBy = player;
-        let data: string;
-        if (handHistory.compressed) {
-          data = lz.decompress(handHistory.data);
-        } else {
-          data = handHistory.data.toString();
-        }
-        bookmarkedHand.data = data;
+        bookmarkedHand.data = this.getHandData(handHistory);
       }
 
       const resp = await savedHandsRepository.save(bookmarkedHand);
@@ -316,6 +314,23 @@ class HandRepositoryImpl {
     }
   }
 
+  public getHandData(handHistory: HandHistory): string {
+    let data: string = '{}';
+    if (handHistory.compressed) {
+      if (handHistory.dataType === HandDataType.COMPRESSED_JSON_BASE64) {
+        const buf = Buffer.from(handHistory.dataBinary.toString(), 'base64');
+        data = lz.decompress(buf);
+      } else if (handHistory.dataType === HandDataType.COMPRESSED_JSON) {
+        data = lz.decompress(handHistory.dataBinary);
+      } else {
+        data = handHistory.data.toString();
+      }
+    } else {
+      data = handHistory.data.toString();
+    }
+    return data;
+  }
+
   public async shareHand(
     game: PokerGame,
     player: Player,
@@ -343,13 +358,7 @@ class HandRepositoryImpl {
             sharedHand.handNum = handHistory.handNum;
             sharedHand.sharedBy = player;
             sharedHand.sharedTo = club;
-            let data: string;
-            if (handHistory.compressed) {
-              data = lz.decompress(handHistory.data);
-            } else {
-              data = handHistory.data.toString();
-            }
-            sharedHand.data = data;
+            sharedHand.data = this.getHandData(handHistory);
           }
 
           const resp = await savedHandsRepository.save(sharedHand);
@@ -664,11 +673,31 @@ class HandRepositoryImpl {
       handHistory.playersStack = JSON.stringify(playerBalance);
       const data = JSON.stringify(result);
       const appSettings = getAppSettings();
+      totalHandsSaved++;
+      let compressedDataLen = 0;
+      let dataLen = data.length;
+      totalHandsDataLen += dataLen;
       if (appSettings.compressHandData) {
         const compressedData = lz.compress(data);
-        handHistory.data = Buffer.from(compressedData);
+        handHistory.dataType = HandDataType.COMPRESSED_JSON_BASE64;
+        const compressedDataBuffer = Buffer.from(compressedData);
+        const base64Data = compressedDataBuffer.toString('base64');
+        handHistory.dataBinary = Buffer.from(base64Data);
         handHistory.compressed = true;
+        compressedDataLen = handHistory.dataBinary.length;
+        totalHandsCompressedDataLen += compressedDataLen;
+
+        if (totalHandsSaved !== 0 && totalHandsSaved % 100 === 0) {
+          const savings =
+            ((totalHandsDataLen - totalHandsCompressedDataLen) /
+              totalHandsDataLen) *
+            100.0;
+          logger.info(
+            `Total hands: ${totalHandsSaved} data len: ${totalHandsDataLen} compressed data len: ${totalHandsCompressedDataLen} savings: ${savings}`
+          );
+        }
       } else {
+        handHistory.dataType = HandDataType.JSON;
         handHistory.data = Buffer.from(data);
         handHistory.compressed = false;
       }

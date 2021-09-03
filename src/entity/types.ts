@@ -204,3 +204,10 @@ export interface PlayerLocation {
   lat: number;
   long: number;
 }
+
+export enum HandDataType {
+  JSON,
+  COMPRESSED_JSON,
+  COMPRESSED_JSON_BASE64,
+  PROTO_HAND_V1,
+}

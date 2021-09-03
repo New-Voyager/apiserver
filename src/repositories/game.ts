@@ -377,13 +377,15 @@ class GameRepositoryImpl {
           g.started_at as "startedAt", 
           g.max_players as "maxPlayers", 
           100 as "maxWaitList", 
-          pgu.players_in_waitlist as "waitlistCount", 
-          pgu.players_in_seats as "tableCount", 
+          pgs.players_in_waitlist as "waitlistCount", 
+          pgs.players_in_seats as "tableCount", 
           g.game_status as "gameStatus",
           pgt.status as "playerStatus",
           pgu.hand_num as "handsDealt"
         FROM poker_game as g JOIN poker_game_updates as pgu ON 
-        g.id = pgu.game_id 
+          g.game_code = pgu.game_code
+        JOIN poker_game_seat_info pgs ON
+          g.game_code = pgs.game_code
         LEFT OUTER JOIN 
           player_game_tracker as pgt ON
           pgt.pgt_player_id = ${player.id} AND
@@ -412,13 +414,15 @@ class GameRepositoryImpl {
           g.started_at as "startedAt", 
           g.max_players as "maxPlayers", 
           100 as "maxWaitList", 
-          pgu.players_in_waitlist as "waitlistCount", 
-          pgu.players_in_seats as "tableCount", 
+          pgs.players_in_waitlist as "waitlistCount", 
+          pgs.players_in_seats as "tableCount", 
           g.game_status as "gameStatus",
           pgt.status as "playerStatus",
           pgu.hand_num as "handsDealt"
         FROM poker_game as g JOIN poker_game_updates as pgu ON 
-        g.id = pgu.game_id 
+          g.game_code = pgu.game_code
+        JOIN poker_game_seat_info pgs ON
+          g.game_code = pgs.game_code
         LEFT OUTER JOIN 
           player_game_tracker as pgt ON
           pgt.pgt_player_id = ${player.id} AND

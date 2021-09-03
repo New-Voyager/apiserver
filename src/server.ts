@@ -281,8 +281,18 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const express = require('express');
   app = express();
+  // const getRawBody = require('raw-body');
+  // app.use(async (req, res, next) => {
+  //   if (req.headers['content-type'] === 'application/octet-stream') {
+  //     req.rawBody = await getRawBody(req);
+  //   }
+  //   next();
+  // });
+
   app.use(authorize);
   app.use(bodyParser.json());
+  //app.use(bodyParser.raw({ inflate: false, limit: '100kb', type: 'application/octet-stream' }));
+
   server.applyMiddleware({app});
 
   const httpServer = app.listen(
@@ -314,6 +324,10 @@ function addInternalRoutes(app: any) {
     HandServerAPI.saveHand
   );
 
+  // app.post(
+  //   '/internal/save-hand-binary/gameId/:gameId/handNum/:handNum',
+  //   HandServerAPI.saveHandBinary
+  // );
   app.post('/internal/start-game', GameAPI.startGame);
   app.post('/internal/delete-club-by-name/:clubName', AdminAPI.deleteClub);
   app.post('/internal/update-player-game-state', GameAPI.updatePlayerGameState);

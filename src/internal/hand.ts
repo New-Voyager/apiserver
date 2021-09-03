@@ -11,85 +11,6 @@ import {GameUpdatesRepository} from '@src/repositories/gameupdates';
 import {PokerGameUpdates} from '@src/entity/game/game';
 const logger = getLogger('internal::hand');
 
-function validateHandData(handData: any): Array<string> {
-  const errors = new Array<string>();
-  try {
-    if (!handData.clubId && handData.clubId !== 0) {
-      errors.push('clubId is missing');
-    }
-    if (!handData.gameId) {
-      errors.push('gameId is missing');
-    }
-    if (!handData.handNum) {
-      errors.push('handNum is missing');
-    }
-    if (!handData.handResult) {
-      errors.push('handResult is missing');
-    } else {
-      if (!handData.handResult.potWinners) {
-        errors.push('potWinners is missing');
-      } else {
-        if (!handData.handResult.potWinners[0]) {
-          errors.push('potWinners of 0 is missing');
-        } else {
-          if (
-            !handData.handResult.potWinners[0].hiWinners ||
-            handData.handResult.potWinners[0].hiWinners.length === 0
-          ) {
-            errors.push('hiWinners are missing');
-          }
-        }
-      }
-      if (!handData.handResult.handStartedAt) {
-        errors.push('handStartedAt is missing');
-      }
-      if (!handData.handResult.handEndedAt) {
-        errors.push('handEndedAt is missing');
-      }
-      if (
-        !handData.handResult.playersInSeats ||
-        handData.handResult.playersInSeats.length === 0
-      ) {
-        errors.push('playersInSeats is missing');
-      }
-      if (!handData.handResult.wonAt) {
-        errors.push('wonAt is missing');
-      } else {
-        if (
-          handData.handResult.wonAt !== WonAtStatus[WonAtStatus.FLOP] &&
-          handData.handResult.wonAtt !== WonAtStatus[WonAtStatus.PREFLOP] &&
-          handData.handResult.wonAt !== WonAtStatus[WonAtStatus.RIVER] &&
-          handData.handResult.wonAt !== WonAtStatus[WonAtStatus.SHOW_DOWN] &&
-          handData.handResult.wonAt !== WonAtStatus[WonAtStatus.TURN]
-        ) {
-          errors.push('invalid wonAt field');
-        }
-      }
-      if (!handData.handResult.tips) {
-        errors.push('tips is missing');
-      }
-      if (
-        !handData.handResult.balanceAfterHand ||
-        handData.handResult.balanceAfterHand.length === 0
-      ) {
-        errors.push('balanceAfterHand are missing');
-      }
-    }
-    if (handData.handResult.qualifyingPromotionWinner) {
-      if (!handData.handResult.qualifyingPromotionWinner.promoId) {
-        errors.push('promoId field is missing');
-      }
-      if (!handData.handResult.qualifyingPromotionWinner.playerId) {
-        errors.push('playerId field is missing');
-      }
-    }
-  } catch (err) {
-    errors.push('INTERNAL');
-    return errors;
-  }
-  return errors;
-}
-
 /**
  * Hand Server API class
  */
@@ -160,6 +81,58 @@ class HandServerAPIs {
       } else {
         resp.status(500).send(saveResult);
       }
+    } catch (err) {
+      resp.status(500).send({error: err.message});
+    }
+  }
+
+  public async saveHandBinary(req: any, resp: any) {
+    const gameID = parseInt(req.params.gameId, 10);
+    if (!gameID) {
+      const res = {error: 'Invalid game id'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    const handNum = parseInt(req.params.handNum, 10);
+    if (!handNum) {
+      const res = {error: 'Invalid hand number'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+    try {
+      throw new Error('Unsupported');
+      // const game = await Cache.getGameById(gameID);
+      // if (!game) {
+      //   throw new Error(`Game: ${gameID} is not found`);
+      // }
+      // const resultBinary: Uint8Array = toArrayBuffer(req.rawBody);
+      // const handResultServer = HandResultServer.deserializeBinary(resultBinary);
+      // const result = JSON.parse(
+      //   JSON.stringify(handResultServer.toObject(false))
+      // );
+
+      // // result in binary format
+      // // convert to json
+
+      // if (result.result?.timeoutStats) {
+      //   await processConsecutiveActionTimeouts(
+      //     game?.gameCode,
+      //     gameID,
+      //     handNum,
+      //     result.result.timeoutStatsMap
+      //   );
+      // } else {
+      //   logger.warn(
+      //     `No timeoutStats present in hand result of game ${gameID} hand ${handNum}. Consecutive timeout counts will not be processed.`
+      //   );
+      // }
+      // const saveResult = await saveHand(gameID, handNum, result);
+      // if (saveResult.success) {
+      //   resp.status(200).send(saveResult);
+      //   return;
+      // } else {
+      //   resp.status(500).send(saveResult);
+      // }
     } catch (err) {
       resp.status(500).send({error: err.message});
     }
@@ -285,4 +258,13 @@ async function processConsecutiveActionTimeouts(
     }
   });
   await GameUpdatesRepository.get(game.gameCode, true);
+}
+
+function toArrayBuffer(buf): Uint8Array {
+  var ab = new ArrayBuffer(buf.length);
+  var view = new Uint8Array(ab);
+  for (var i = 0; i < buf.length; ++i) {
+    view[i] = buf[i];
+  }
+  return view;
 }
