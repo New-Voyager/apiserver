@@ -901,6 +901,7 @@ class GameRepositoryImpl {
       {
         status: playerInGame.status,
         breakTimeExpAt: undefined,
+        consecutiveActionTimeouts: 0,
       }
     );
 

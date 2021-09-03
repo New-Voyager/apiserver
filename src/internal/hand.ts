@@ -200,9 +200,10 @@ async function processConsecutiveActionTimeouts(
       const playerInGame: PlayerGameTracker | undefined =
         playersInGame[playerID];
       if (!playerInGame) {
-        throw new Error(
+        logger.warn(
           `Unable to find player tracker with game ID ${gameID} and player ID ${playerID} while processing consecutive action timeouts`
         );
+        continue;
       }
 
       const prevTimeouts: number = playerInGame.consecutiveActionTimeouts;
