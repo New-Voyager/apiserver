@@ -6,7 +6,7 @@ import {
   PrimaryColumn,
 } from 'typeorm';
 import {DbAwareColumn} from '../dbaware';
-import {GameType, WonAtStatus} from '../types';
+import {GameType, HandDataType, WonAtStatus} from '../types';
 
 @Entity({name: 'hand_history'})
 export class HandHistory {
@@ -52,8 +52,14 @@ export class HandHistory {
   @DbAwareColumn({name: 'time_ended', type: 'timestamp'})
   public timeEnded!: Date;
 
+  @DbAwareColumn({name: 'data_type', type: 'int', nullable: true})
+  public dataType!: HandDataType;
+
   @DbAwareColumn({name: 'data', type: 'bytea', nullable: true})
   public data!: Buffer;
+
+  @DbAwareColumn({name: 'dataBinary', type: 'bytea', nullable: true})
+  public dataBinary!: Buffer;
 
   @Column({name: 'total_pot', type: 'float', default: 0, nullable: true})
   public totalPot!: number;
