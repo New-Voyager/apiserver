@@ -103,56 +103,104 @@ class RewardRepositoryImpl {
     handTime: Date,
     transactionManager?: EntityManager
   ): Promise<HighHandWinnerResult | null> {
+    logger.info(
+      `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1`
+    );
     let rewardTrackingId = 0;
     let gameTracking = false;
     try {
       if (gameInput.highHandTracked) {
+        logger.info(
+          `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.1`
+        );
         gameTracking = true;
       }
       if (!gameTracking) {
+        logger.info(
+          `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.2`
+        );
         if (!input.rewardTrackingIds || input.rewardTrackingIds.length === 0) {
+          logger.info(
+            `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.2.1`
+          );
           return null;
         }
       }
       const playersInHand = input.result.playerInfo;
       const boards = input.result.boards;
       if (boards.length === 0) {
+        logger.info(
+          `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.3`
+        );
         return null;
       }
 
       // get rank for all the players from all the board
       const ranks = new Array<number>();
       for (const board of boards) {
+        logger.info(
+          `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.4`
+        );
         const playerRank = board.playerRank;
         for (const seatNo of Object.keys(playerRank)) {
+          logger.info(
+            `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.4.1`
+          );
           const player = playerRank[seatNo];
           if (player.hiRank <= MIN_FULLHOUSE_RANK) {
+            logger.info(
+              `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.4.1.1`
+            );
             ranks.push(player.hiRank);
           }
         }
       }
       if (ranks.length === 0) {
+        logger.info(
+          `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.5`
+        );
         return null;
       }
 
       const highHandRank = _.min(ranks);
       if (!highHandRank) {
+        logger.info(
+          `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.6`
+        );
         return null;
       }
 
       if (highHandRank > MIN_FULLHOUSE_RANK) {
+        logger.info(
+          `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.7`
+        );
         return null;
       }
       let existingHighHandRank = Number.MAX_SAFE_INTEGER;
 
       let existingRewardTracking;
       if (gameTracking) {
+        logger.info(
+          `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.8`
+        );
       } else {
+        logger.info(
+          `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.9`
+        );
         if (input.rewardTrackingIds) {
+          logger.info(
+            `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.9.1`
+          );
           // right now, we handle only one reward
           if (input.rewardTrackingIds.length > 1) {
+            logger.info(
+              `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.9.1.1`
+            );
             logger.error(
               `Game: ${gameInput.gameCode} Cannot track more than one reward`
+            );
+            logger.info(
+              `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.9.1.2`
             );
             throw new Error('Not implemented');
           }
@@ -160,25 +208,46 @@ class RewardRepositoryImpl {
           const trackingId = input.rewardTrackingIds[0];
           rewardTrackingId = trackingId;
           let rewardTrackRepo: Repository<GameRewardTracking>;
+          logger.info(
+            `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.9.2`
+          );
           if (transactionManager) {
+            logger.info(
+              `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.9.2.1`
+            );
             rewardTrackRepo = transactionManager.getRepository(
               GameRewardTracking
             );
           } else {
+            logger.info(
+              `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.9.2.2`
+            );
             rewardTrackRepo = getGameRepository(GameRewardTracking);
           }
 
+          logger.info(
+            `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.9.3`
+          );
           existingRewardTracking = await rewardTrackRepo.findOne({
             id: trackingId,
             active: true,
           });
           if (!existingRewardTracking) {
+            logger.info(
+              `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.9.3.1`
+            );
             logger.error(
               `No existing active reward tracking found for id: ${trackingId}`
             );
             return null;
           }
+          logger.info(
+            `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.9.4`
+          );
           if (existingRewardTracking && existingRewardTracking.highHandRank) {
+            logger.info(
+              `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 1.9.4.1`
+            );
             existingHighHandRank = existingRewardTracking.highHandRank;
           }
         }
@@ -248,13 +317,22 @@ class RewardRepositoryImpl {
         }
       }
 
+      logger.info(
+        `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 2`
+      );
       // get existing high hand from the database
       // TODO: we need to handle multiple players with high hands
       if (winner && highHandWinners.length > 0) {
+        logger.info(
+          `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 2.1`
+        );
         const highHandPlayer = highHandWinners[0];
         const playerId = highHandPlayer.playerId;
 
         if (!gameTracking) {
+          logger.info(
+            `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 2.1.1`
+          );
           let rewardTrackRepo: Repository<GameRewardTracking>;
           if (transactionManager) {
             rewardTrackRepo = transactionManager.getRepository(
@@ -280,6 +358,9 @@ class RewardRepositoryImpl {
             }
           );
         }
+        logger.info(
+          `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 2.2`
+        );
         await this.logHighHand(
           existingRewardTracking,
           game.id,
@@ -293,13 +374,22 @@ class RewardRepositoryImpl {
           winner,
           existingRewardTracking?.reward
         );
+        logger.info(
+          `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 2.3`
+        );
         Cache.updateGameHighHand(game.gameCode, highHandRank);
       }
+      logger.info(
+        `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 3`
+      );
       return {
         rewardTrackingId: rewardTrackingId,
         winners: highHandWinners,
       };
     } catch (err) {
+      logger.info(
+        `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 4`
+      );
       logger.error(
         `Couldn't update reward. retry again. Error: ${err.toString()}`
       );

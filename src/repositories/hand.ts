@@ -869,14 +869,23 @@ class HandRepositoryImpl {
     saveResult: any,
     transactionEntityManager: EntityManager
   ) {
+    logger.info(
+      `Starting RewardRepository.handleHighHand for game ${game.gameCode} hand ${result.handNum}`
+    );
     const highhandWinners = await RewardRepository.handleHighHand(
       game,
       result,
       timeEnded,
       transactionEntityManager
     );
+    logger.info(
+      `Finished RewardRepository.handleHighHand for game ${game.gameCode} hand ${result.handNum}`
+    );
 
     if (highhandWinners !== null && highhandWinners.rewardTrackingId !== 0) {
+      logger.error(
+        `SHOULD NOT BE HERE (highhandWinners !== null && highhandWinners.rewardTrackingId !== 0) game ${game.gameCode} hand ${result.handNum}`
+      );
       // new high hand winners
       // get the game codes associated with the reward tracking id
       const games = await getGameRepository(GameReward).find({
@@ -893,6 +902,9 @@ class HandRepositoryImpl {
     }
 
     if (highhandWinners !== null) {
+      logger.info(
+        `Sending high hand notification for game ${game.gameCode} hand ${result.handNum}`
+      );
       Nats.sendHighHandWinners(
         game,
         result.boardCards,

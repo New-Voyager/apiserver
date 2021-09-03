@@ -92,6 +92,7 @@ export async function publishNewGame(
 // }
 
 export async function resumeGame(gameId: number) {
+  logger.info(`Starting resumeGame game: ${gameId}`);
   if (!notifyGameServer) {
     return;
   }
@@ -106,6 +107,7 @@ export async function resumeGame(gameId: number) {
   } catch (err) {
     logger.error(`Failed to update pending updates for game: ${gameId}.`);
   }
+  logger.info(`Finished resumeGame game: ${gameId}`);
 }
 
 export async function endGame(gameId: number) {
