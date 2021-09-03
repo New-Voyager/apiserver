@@ -370,11 +370,6 @@ function addInternalRoutes(app: any) {
   app.post('/internal/restart-games', GameServerAPI.restartGames);
   app.post('/internal/restart-timers', restartTimers);
 
-  app.post(
-    '/internal/save-hand/gameId/:gameId/handNum/:handNum',
-    HandServerAPI.postHand
-  );
-
   app.post('/auth/login', login);
   app.post('/auth/new-login', newlogin);
   app.post('/auth/signup', signup);
