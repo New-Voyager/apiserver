@@ -466,7 +466,6 @@ class GameRepositoryImpl {
           PlayerStatus.PLAYING,
           PlayerStatus.IN_BREAK,
           PlayerStatus.WAIT_FOR_BUYIN,
-          PlayerStatus.NEED_TO_POST_BLIND,
         ]),
       },
     });
@@ -503,7 +502,6 @@ class GameRepositoryImpl {
           PlayerStatus.PLAYING,
           PlayerStatus.IN_BREAK,
           PlayerStatus.WAIT_FOR_BUYIN,
-          PlayerStatus.NEED_TO_POST_BLIND,
         ]),
       },
     });

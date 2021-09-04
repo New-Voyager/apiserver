@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import {PokerGame} from './game';
-import {DbAwareColumn, DbAwareUpdateDateColumn} from '../dbaware';
+import {DbAwareColumn} from '../dbaware';
 import {BuyInApprovalStatus, PlayerStatus} from '../types';
 
 @Entity({name: 'player_game_tracker'})
@@ -190,4 +190,18 @@ export class PlayerGameTracker {
 
   @Column({name: 'player_ip', nullable: true})
   public playerIp!: string;
+
+  // the following two fields (posted_blind_next_hand and in_hand) is used moveToNext and getNextHandInfo
+  // this flag is used by moveToNextHand and getNextHandInfo
+  // when a player posts a blind, it is stored in posted_blind column
+  // moveToNextHand uses posted_blind column value to determine whether the player
+  // is allowed to play in the next hand or not. posted_blind flag is reset after moveToNextHand
+  // is done processing.
+  // posted_blind_next_hand indicates the player had posted blind and the player is active for the next hand
+  // moveToNextHand resets postedBlindNextHand for all the players in the game before it starts its processing
+  @Column({name: 'posted_blind_next_hand', default: false})
+  public postedBlindNextHand!: boolean;
+
+  @Column({name: 'in_hand_next_hand', default: false})
+  public inHandNextHand!: boolean;
 }

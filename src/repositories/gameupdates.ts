@@ -1,5 +1,5 @@
 import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
-import {EntityManager, getRepository, Repository} from 'typeorm';
+import {EntityManager} from 'typeorm';
 import {Cache} from '@src/cache/index';
 import {getGameManager, getGameRepository} from '.';
 import {getLogger} from '@src/utils/log';
@@ -31,7 +31,7 @@ class GameUpdatesRepositoryImpl {
       gameUpdates.lastBombPotTime = new Date();
 
       // first hand is bomb pot hand
-      gameUpdates.bombPotNextHandNum = 1;
+      gameUpdates.bombPotThisHand = true;
     }
     await gameUpdatesRepo.save(gameUpdates);
   }

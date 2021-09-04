@@ -50,6 +50,7 @@ enum PlayerGameStatus {
   WAITLIST_SEATING
   PENDING_UPDATES
   WAIT_FOR_BUYIN_APPROVAL
+  NEED_TO_POST_BLIND
 }
 
 enum BuyInApprovalStatus {
@@ -139,6 +140,7 @@ type SeatInfo {
   name: String
   buyIn: Float
   stack: Float
+  missedBlind: Boolean
   status: PlayerGameStatus
   seatStatus: SeatStatus
   buyInExpTime: DateTime
@@ -507,7 +509,7 @@ type Mutation {
   ): Boolean!
   startGame(gameCode: String!): GameStatus!
   takeBreak(gameCode: String!): Boolean!
-  sitBack(gameCode: String!, location: LocationInput): Boolean!
+  sitBack(gameCode: String!, location: LocationInput): PlayerGameStatus!
   leaveGame(gameCode: String!): Boolean!
   pauseGame(gameCode: String!): GameStatus!
   endGame(gameCode: String!): GameStatus!

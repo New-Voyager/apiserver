@@ -65,6 +65,10 @@ export async function processPendingUpdates(gameId: number) {
   }
 
   await Cache.updateGamePendingUpdates(game?.gameCode, false);
+
+  // start buy in timers for the player's whose stack is 0 and playing
+  await BuyIn.startBuyInTimers(game);
+
   const gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
   const gameSeatInfo = await gameSeatInfoRepo.findOne({gameID: game.id});
   if (!gameSeatInfo) {
@@ -230,9 +234,6 @@ export async function processPendingUpdates(gameId: number) {
       const locationCheck = new LocationCheck(game, gameSettings);
       await locationCheck.check();
     }
-
-    // start buy in timers for the player's whose stack is 0 and playing
-    await BuyIn.startBuyInTimers(game);
 
     // if the game does not have more than 1 active player, then the game cannot continue
     const canContinue = await GameRepository.determineGameStatus(game.id);
