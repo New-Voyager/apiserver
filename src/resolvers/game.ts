@@ -11,7 +11,7 @@ import {
   ApprovalStatus,
   SeatStatus,
 } from '@src/entity/types';
-import {getLogger} from '@src/utils/log';
+import {getLogger, errToLogString} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
 import {WaitListMgmt} from '@src/repositories/waitlist';
 import {default as _} from 'lodash';
@@ -122,7 +122,11 @@ export async function configureGame(
     );
     return ret;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while configuring game. playerId: ${playerId}, clubCode: ${clubCode}, game: ${JSON.stringify(
+        game
+      )}: ${errToLogString(err)}`
+    );
     throw new Error(
       `Failed to create a new game. ${err.toString()} ${JSON.stringify(err)}`
     );
@@ -145,8 +149,14 @@ export async function configureGameByPlayer(playerId: string, game: any) {
     ret.gameType = GameType[gameInfo.gameType];
     return ret;
   } catch (err) {
-    logger.error(JSON.stringify(err));
-    throw new Error(`Failed to create a new game. ${JSON.stringify(err)}`);
+    logger.error(
+      `Error while configuring game by player. playerId: ${playerId}, game: ${JSON.stringify(
+        game
+      )}: ${errToLogString(err)}`
+    );
+    throw new Error(
+      `Failed to create a new game. ${err.toString()} ${JSON.stringify(err)}`
+    );
   }
 }
 
@@ -185,7 +195,11 @@ export async function endGame(playerId: string, gameCode: string) {
     }
     return GameStatus[game.status];
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while ending game. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to end the game. ' + err.message);
   }
 }
@@ -251,7 +265,11 @@ export async function joinGame(
     const playerStatus = PlayerStatus[status];
     return playerStatus;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while joining game. playerUuid: ${playerUuid}, gameCode: ${gameCode}, seatNo: ${seatNo}, locationCheck: ${JSON.stringify(
+        locationCheck
+      )}: ${errToLogString(err)}`
+    );
     if (err instanceof ApolloError) {
       throw err;
     } else {
@@ -333,7 +351,11 @@ export async function takeSeat(
     playerInSeat.breakExpTime = playerInSeat.breakTimeExpAt;
     return playerInSeat;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while taking seat. playerUuid: ${playerUuid}, gameCode: ${gameCode}, seatNo: ${seatNo}, locationCheck: ${JSON.stringify(
+        locationCheck
+      )}: ${errToLogString(err)}`
+    );
     if (err instanceof ApolloError) {
       throw err;
     } else {
@@ -424,7 +446,11 @@ export async function startGame(
     // game is started
     return GameStatus[status];
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while starting game. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to start the game. ${JSON.stringify(err)}`);
   }
 }
@@ -467,8 +493,12 @@ export async function buyIn(
     return status;
   } catch (err) {
     const timeTaken = new Date().getTime() - startTime;
+    logger.error(
+      `Error while buying in. playerUuid: ${playerUuid}, gameCode: ${gameCode}, amount: ${amount}: ${errToLogString(
+        err
+      )}`
+    );
     logger.debug(`Buyin took ${timeTaken}ms`);
-    logger.error(JSON.stringify(err));
     throw new Error(`Failed to update buyin. ${err.toString()}`);
   }
 }
@@ -506,7 +536,11 @@ export async function reload(
     // player is good to go
     return status;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while reloading. playerUuid: ${playerUuid}, gameCode: ${gameCode}, amount: ${amount}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to update reload. ${JSON.stringify(err)}`);
   }
 }
@@ -545,7 +579,9 @@ export async function pendingApprovals(hostUuid: string) {
 
     return ret;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error in pendingApprovals. hostUuid: ${hostUuid}: ${errToLogString(err)}`
+    );
     throw new Error(
       `Failed to fetch approval requests. ${JSON.stringify(err)}`
     );
@@ -591,7 +627,11 @@ export async function pendingApprovalsForGame(
 
     return ret;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error in pendingApprovalsForGame. hostUuid: ${hostUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to get pending approvals list. ${JSON.stringify(err)}`
     );
@@ -630,7 +670,11 @@ export async function pendingApprovalsForClub(
 
     return ret;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error in pendingApprovalsForClub. hostUuid: ${hostUuid}, clubCode: ${clubCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to fetch approval requests. ${JSON.stringify(err)}`
     );
@@ -671,7 +715,11 @@ export async function completedGame(playerId: string, gameCode: string) {
     resp.gameType = GameType[resp.gameType];
     return resp;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting completed game. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to get game information. ${JSON.stringify(err)}`);
   }
 }
@@ -704,7 +752,11 @@ export async function getGameResultTable(gameCode: string) {
 
     return resp;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error in getting game result table. gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to get game result table. ${JSON.stringify(err)}`);
   }
 }
@@ -744,7 +796,11 @@ export async function downloadResult(playerId: string, gameCode: string) {
     const output = csvRows.join('\n');
     return output;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while downloading result. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to get game result table. ${JSON.stringify(err)}`);
   }
 }
@@ -754,7 +810,11 @@ export async function getGamePlayers(gameCode: string) {
     const resp = await GameRepository.getGamePlayers(gameCode);
     return resp;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting game players. gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to get game players information. ${JSON.stringify(err)}`
     );
@@ -823,7 +883,11 @@ export async function approveRequest(
     }
     return resp;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while approving request. hostUuid: ${hostUuid}, playerUuid: ${playerUuid}, gameCode: ${gameCode}, type: ${type}, status: ${status}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to approve buyin. ${JSON.stringify(err)}`);
   }
 }
@@ -866,7 +930,11 @@ export async function myGameState(playerUuid: string, gameCode: string) {
 
     return gameState;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error in myGameState. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to get game state. ${JSON.stringify(err)}`);
   }
 }
@@ -912,7 +980,11 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
 
     return tableGameState;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting table game state. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to get game state. ${JSON.stringify(err)}`);
   }
 }
@@ -929,7 +1001,11 @@ export async function gameSettings(playerUuid: string, gameCode: string) {
     }
     return gameSettings;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting game settings. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Getting game settings failed`);
   }
 }
@@ -1061,7 +1137,11 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.janusToken = JANUS_TOKEN;
     return ret;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting game info. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to get game information. Message: ${
         err.message
@@ -1114,7 +1194,11 @@ async function getPlayerRole(playerUuid: string, gameCode: string) {
 
     return ret;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting player role. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to get game information. Message: ${
         err.message
@@ -1150,7 +1234,11 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
     const status = await GameRepository.leaveGame(player, game);
     return status;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while leaving game. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to leave game. ${err.toString()} ${JSON.stringify(err)}`
     );
@@ -1184,7 +1272,11 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
     const status = await takeBreak.takeBreak();
     return status;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while taking break. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to take break. ${JSON.stringify(err)}`);
   }
 }
@@ -1228,7 +1320,11 @@ export async function sitBack(
     const status = await GameRepository.sitBack(player, game, ip, location);
     return status;
   } catch (err) {
-    logger.error(err);
+    logger.error(
+      `Error while sitting back. playerUuid: ${playerUuid}, gameCode: ${gameCode}, locationCheck: ${JSON.stringify(
+        locationCheck
+      )}: ${errToLogString(err)}`
+    );
     throw new Error(`Failed to sit back in the seat. ${JSON.stringify(err)}`);
   }
 }
@@ -1288,7 +1384,11 @@ export async function kickOutPlayer(
     await PlayersInGameRepository.kickOutPlayer(gameCode, player);
     return true;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while kicking player out. requestUser: ${requestUser}, gameCode: ${gameCode}, kickedOutPlayer: ${kickedOutPlayer}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to kick out player');
   }
 }
@@ -1312,7 +1412,7 @@ export async function addToWaitingList(playerId: string, gameCode: string) {
           `Player: ${playerId} is not a club member in club ${game.clubName}`
         );
         throw new Error(
-          `Player: ${playerId} is not authorized to kick out a user`
+          `Player: ${playerId} is not authorized to update waiting list for club ${game.clubName} (addToWaitingList)`
         );
       }
     }
@@ -1320,7 +1420,11 @@ export async function addToWaitingList(playerId: string, gameCode: string) {
     await waitlistMgmt.addToWaitingList(playerId);
     return true;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while adding to waiting list. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to add player to waiting list');
   }
 }
@@ -1347,7 +1451,7 @@ export async function removeFromWaitingList(
           `Player: ${playerId} is not a club member in club ${game.clubName}`
         );
         throw new Error(
-          `Player: ${playerId} is not authorized to kick out a user`
+          `Player: ${playerId} is not authorized to update waiting list for club ${game.clubName} (removeFromWaitingList)`
         );
       }
     }
@@ -1355,7 +1459,11 @@ export async function removeFromWaitingList(
     await waitlistMgmt.removeFromWaitingList(playerId);
     return true;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while removing from waiting list. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to remove player from waiting list');
   }
 }
@@ -1382,14 +1490,18 @@ export async function waitingList(
           `Player: ${playerId} is not a club member in club ${game.clubName}`
         );
         throw new Error(
-          `Player: ${playerId} is not authorized to kick out a user`
+          `Player: ${playerId} is not authorized to get waiting list for club ${game.clubName}`
         );
       }
     }
     const waitlistMgmt = new WaitListMgmt(game);
     return waitlistMgmt.getWaitingListUsers();
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting waiting list. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to kick out player');
   }
 }
@@ -1417,7 +1529,7 @@ export async function applyWaitlistOrder(
           `Player: ${hostUuid} is not a club member in club ${game.clubName}`
         );
         throw new Error(
-          `Player: ${hostUuid} is not authorized to kick out a user`
+          `Player: ${hostUuid} is not authorized to change waitlist order`
         );
       }
 
@@ -1449,7 +1561,11 @@ export async function applyWaitlistOrder(
     await waitlistMgmt.applyWaitlistOrder(players);
     return true;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while applying waitlist order. hostUuid: ${hostUuid}, gameCode: ${gameCode}, players: ${JSON.stringify(
+        players
+      )}: ${errToLogString(err)}`
+    );
     throw new Error('Failed to change waitlist order');
   }
 }
@@ -1473,7 +1589,7 @@ export async function declineWaitlistSeat(playerId: string, gameCode: string) {
           `Player: ${playerId} is not a club member in club ${game.clubName}`
         );
         throw new Error(
-          `Player: ${playerId} is not authorized to kick out a user`
+          `Player: ${playerId} is not authorized to update waitlist seat for club ${game.clubName} (declineWaitlistSeat)`
         );
       }
     }
@@ -1482,7 +1598,11 @@ export async function declineWaitlistSeat(playerId: string, gameCode: string) {
     await waitlistMgmt.declineWaitlistSeat(player);
     return true;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while declining waitlist seat. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to add player to waiting list');
   }
 }
@@ -1523,7 +1643,11 @@ export async function pauseGame(playerId: string, gameCode: string) {
     }
     return GameStatus[game.status];
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while pausing game. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to pause the game. ' + err.message);
   }
 }
@@ -1560,7 +1684,11 @@ export async function resumeGame(playerId: string, gameCode: string) {
     }
     return GameStatus[game.status];
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while resuming game. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
     );
@@ -1604,7 +1732,11 @@ export async function switchSeat(
     const playerStatus = PlayerStatus[status];
     return playerStatus;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while switching seat. playerUuid: ${playerUuid}, gameCode: ${gameCode}, seatNo: ${seatNo}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Player: ${playerUuid} Failed to join the game. ${JSON.stringify(err)}`
     );
@@ -1638,7 +1770,11 @@ export async function approveBuyIn(
 
     const player = await Cache.getPlayer(playerId);
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while approving buy-in. playerId: ${playerId}, gameCode: ${gameCode}, requestPlayerId: ${requestPlayerId}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
     );
@@ -1670,7 +1806,11 @@ export async function denyBuyIn(
       );
     }
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while denying buy-in. playerId: ${playerId}, gameCode: ${gameCode}, requestPlayerId: ${requestPlayerId}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
     );
@@ -1702,7 +1842,11 @@ export async function updatePlayerGameConfig(
     await PlayersInGameRepository.updatePlayerGameConfig(player, game, config);
     return true;
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while updating player game config. playerId: ${playerId}, gameCode: ${gameCode}, config: ${JSON.stringify(
+        config
+      )}: ${errToLogString(err)}`
+    );
     throw new Error(
       `Failed to update game config:  ${err.message}. Game code: ${gameCode}`
     );
@@ -1723,7 +1867,11 @@ export async function dealerChoice(
     const player = await Cache.getPlayer(playerId);
     await GameRepository.updateDealerChoice(game, player, gameType);
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while updating dealer choice. playerId: ${playerId}, gameCode: ${gameCode}, gameTypeStr: ${gameTypeStr}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to update set dealer choice:  ${err.message}. Game code: ${gameCode}`
     );
@@ -1743,7 +1891,11 @@ export async function postBlind(
     await GameRepository.postBlind(game, player);
     return true;
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while posting blind. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to post blind:  ${err.message}. Game code: ${gameCode}`
     );
@@ -1771,7 +1923,11 @@ export async function openSeats(playerId: string, gameCode: string) {
     }
     return availableSeats;
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while getting open seats. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
     );
@@ -1800,7 +1956,11 @@ export async function playerStackStat(playerId: string, gameCode: string) {
       */
     return stackStat;
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while getting player stack stat. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
     );
@@ -1856,7 +2016,11 @@ export async function gameHistoryById(playerId: string, gameCode: string) {
 
     return gameHistorydata;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting game history data. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to retreive game history data');
   }
 }
@@ -1914,7 +2078,11 @@ export async function gameDataById(playerId: string, gameCode: string) {
 
     return gamedata;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting game data. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to retreive game history data');
   }
 }
@@ -1969,7 +2137,11 @@ export async function playersInGameById(playerId: string, gameCode: string) {
     });
     return playersInGameData;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting players in game data. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to retreive players in game data - ${err}`);
   }
 }
@@ -2029,7 +2201,11 @@ export async function playersGameTrackerById(
     });
     return playerGameTrackerData;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting players game tracker data. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to retreive players in game data - ${err}`);
   }
 }
