@@ -7,8 +7,6 @@ pipeline {
         // so we need to give it some extra time here.
         timeout(time: 120, unit: 'MINUTES')
     }
-    environment {
-    }
     stages {
         stage('Setup') {
             steps {
