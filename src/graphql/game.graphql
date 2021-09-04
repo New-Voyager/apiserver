@@ -229,6 +229,7 @@ type GameInfo {
   handToAllChannel: String
   playerToHandChannel: String
   handToPlayerChannel: String
+  handToPlayerTextChannel: String
   gameChatChannel: String
   pingChannel: String
   pongChannel: String

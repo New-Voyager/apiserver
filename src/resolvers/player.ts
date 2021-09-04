@@ -705,4 +705,5 @@ export async function updateLocation(
     throw new Error(`Player ${playerUuid} is not found`);
   }
   await Cache.updatePlayerLocation(playerUuid, location, ip);
+  return true;
 }

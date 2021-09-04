@@ -1118,13 +1118,20 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     const runningTime = Math.round((now - game.startedAt.getTime()) / 1000);
     ret.runningTime = runningTime;
 
-    ret.gameToPlayerChannel = `game.${game.gameCode}.player`;
-    ret.playerToHandChannel = `player.${game.gameCode}.hand`;
-    ret.handToAllChannel = `hand.${game.gameCode}.player.all`;
-    ret.handToPlayerChannel = `hand.${game.gameCode}.player.${player.id}`;
-    ret.gameChatChannel = `game.${game.gameCode}.chat`;
-    ret.pingChannel = `ping.${game.gameCode}`;
-    ret.pongChannel = `pong.${game.gameCode}`;
+    ret.gameToPlayerChannel = Nats.getGameChannel(game.gameCode);
+    ret.playerToHandChannel = Nats.getPlayerToHandChannel(game.gameCode);
+    ret.handToAllChannel = Nats.getHandToAllChannel(game.gameCode);
+    ret.handToPlayerChannel = Nats.getPlayerHandChannel(
+      game.gameCode,
+      player.id
+    );
+    ret.handToPlayerChannel = Nats.getPlayerHandTextChannel(
+      game.gameCode,
+      player.id
+    );
+    ret.gameChatChannel = Nats.getChatChannel(game.gameCode);
+    ret.pingChannel = Nats.getPingChannel(game.gameCode);
+    ret.pongChannel = Nats.getPongChannel(game.gameCode);
 
     // player's role
     ret.isManager = isManager;
