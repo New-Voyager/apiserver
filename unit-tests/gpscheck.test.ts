@@ -13,6 +13,7 @@ import { PlayerStatus } from '../src/entity/types';
 import _ from 'lodash';
 import { processPendingUpdates } from '../src/repositories/pendingupdates';
 import {getAppSettings, resetAppSettings} from '../src/firebase';
+import { PlayersInGameRepository } from '../src/repositories/playersingame';
 
 // Create a game with double board bomb pot
 // setup to run a bomb pot every 10 seconds
@@ -273,14 +274,16 @@ describe('Game APIs', () => {
       playersInfo,
     );
     let gameInfoBefore = await getGameInfo('arya', gameCode);
-    const playersInSeatsBefore = await GameRepository.getPlayersInSeats(gameId);
+    const playersInSeatsBefore = await PlayersInGameRepository.getPlayersInSeats(
+      gameId
+    );
     const seat5PlayerBefore = _.filter(playersInSeatsBefore, (e) => e.seatNo == 5)[0];
     expect(seat5PlayerBefore.status).toEqual(PlayerStatus.PLAYING);
     console.log(JSON.stringify(gameInfoBefore));
     console.log(JSON.stringify(playersInSeatsBefore));
     await takeBreak('arya', gameCode);
     await processPendingUpdates(gameId);
-    const playersInSeatsAfter = await GameRepository.getPlayersInSeats(gameId);
+    const playersInSeatsAfter = await PlayersInGameRepository.getPlayersInSeats(gameId);
     let gameInfoAfter = await getGameInfo('arya', gameCode);
     const seat5PlayerAfter = _.filter(playersInSeatsAfter, (e) => e.seatNo == 5)[0];
     expect(seat5PlayerAfter.status).toEqual(PlayerStatus.IN_BREAK);
@@ -347,7 +350,7 @@ describe('Game APIs', () => {
       playersInfo,
     );
     let gameInfoBefore = await getGameInfo('arya', gameCode);
-    const playersInSeatsBefore = await GameRepository.getPlayersInSeats(gameId);
+    const playersInSeatsBefore = await PlayersInGameRepository.getPlayersInSeats(gameId);
     const seat5PlayerBefore = _.filter(playersInSeatsBefore, (e) => e.seatNo == 5)[0];
     expect(seat5PlayerBefore.status).toEqual(PlayerStatus.PLAYING);
     await updateLocation('arya', '', {
@@ -362,7 +365,7 @@ describe('Game APIs', () => {
     await processPendingUpdates(gameId);
 
     // recently joined player should be in break
-    const playersInSeatsAfter = await GameRepository.getPlayersInSeats(gameId);
+    const playersInSeatsAfter = await PlayersInGameRepository.getPlayersInSeats(gameId);
     let gameInfoAfter = await getGameInfo('arya', gameCode);
     const seat5PlayerAfter = _.filter(playersInSeatsAfter, (e) => e.seatNo == 5)[0];
     expect(seat5PlayerAfter.status).toEqual(PlayerStatus.IN_BREAK);
