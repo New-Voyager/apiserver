@@ -91,11 +91,11 @@ up: create-network
 # 	npx yarn run-pg
 
 .PHONY: debug
-debug: watch-debug
+debug: watch-localhost-debug
 
-.PHONY: watch-debug
-watch-debug:
-	npx yarn watch-debug
+.PHONY: watch-localhost-debug
+watch-localhost-debug:
+	npx yarn watch-localhost-debug
 
 .PHONY: publish
 publish: gcp-publish

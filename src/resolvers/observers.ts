@@ -1,7 +1,8 @@
 import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player/player';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger('observers - resolvers');
+
+const logger = getLogger('resolvers::observers');
 
 export async function observeGame(
   hostId: string,

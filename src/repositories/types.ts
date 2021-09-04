@@ -81,6 +81,7 @@ export interface PlayerInSeat {
   activeSeat: boolean;
   postedBlind: boolean;
   runItTwice?: boolean;
+  missedBlind: boolean;
 }
 
 export interface NewHandInfo {

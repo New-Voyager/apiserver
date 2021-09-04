@@ -6,7 +6,7 @@ import {Cache} from '@src/cache/index';
 import {fixQuery} from '@src/utils';
 import {GameStatus} from '@src/entity/types';
 
-const logger = getLogger('game_server');
+const logger = getLogger('repositories::gameserver');
 
 class GameServerRepositoryImpl {
   public async getNextGameServer(): Promise<GameServer> {

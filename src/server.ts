@@ -271,7 +271,10 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     );
   }
 
-  await initializeNats();
+  if (process.env.NODE_ENV !== 'unit-test' && process.env.NODE_ENV !== 'test') {
+    await initializeNats();
+  }
+
   initializeGameServer();
   await Firebase.init();
 
@@ -369,11 +372,6 @@ function addInternalRoutes(app: any) {
 
   app.post('/internal/restart-games', GameServerAPI.restartGames);
   app.post('/internal/restart-timers', restartTimers);
-
-  app.post(
-    '/internal/save-hand/gameId/:gameId/handNum/:handNum',
-    HandServerAPI.postHand
-  );
 
   app.post('/auth/login', login);
   app.post('/auth/new-login', newlogin);

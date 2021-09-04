@@ -71,6 +71,9 @@ class PlayersInGameRepositoryImpl {
       playerId: player.id,
       game: {id: game.id},
     });
+    if (resp.length === 0) {
+      return null;
+    }
     return resp[0];
   }
 
@@ -298,6 +301,22 @@ class PlayersInGameRepositoryImpl {
     );
 
     startTimer(game.id, playerId, BUYIN_TIMEOUT, buyinTimeExp);
+  }
+
+  public async resetNextHand(
+    game: PokerGame,
+    transactionEntityManager: EntityManager
+  ) {
+    const repo = transactionEntityManager.getRepository(PlayerGameTracker);
+    await repo.update(
+      {
+        postedBlindNextHand: false,
+        inHandNextHand: false,
+      },
+      {
+        game: {id: game.id},
+      }
+    );
   }
 }
 

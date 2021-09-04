@@ -19,7 +19,7 @@ import {Nats} from '@src/nats';
 import {v4 as uuidv4} from 'uuid';
 import {getGameConnection, getGameManager, getGameRepository} from '.';
 
-const logger = getLogger('reload');
+const logger = getLogger('repositories::reload');
 
 /*
 reload(gameCode, buyIn)

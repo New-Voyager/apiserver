@@ -20,7 +20,7 @@ import {HostMessageRepository} from '@src/repositories/hostmessage';
 import {HandRepository} from '@src/repositories/hand';
 import {HistoryRepository} from '@src/repositories/history';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
-const logger = getLogger('player');
+const logger = getLogger('resolvers::player');
 
 async function getClubs(playerId: string): Promise<Array<any>> {
   const player = await PlayerRepository.getPlayerById(playerId);
@@ -705,4 +705,5 @@ export async function updateLocation(
     throw new Error(`Player ${playerUuid} is not found`);
   }
   await Cache.updatePlayerLocation(playerUuid, location, ip);
+  return true;
 }

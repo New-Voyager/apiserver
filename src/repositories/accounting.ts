@@ -6,7 +6,7 @@ import {Player} from '@src/entity/player/player';
 import {getLogger} from '@src/utils/log';
 import {ClubTokenTransactions} from '@src/entity/player/accounting';
 import {getUserManager, getUserRepository} from '.';
-const logger = getLogger('accounting - repositories');
+const logger = getLogger('repositories::accounting');
 
 class AccountingRepositoryImpl {
   public async clubTransactions(club: Club): Promise<Array<ClubTransaction>> {

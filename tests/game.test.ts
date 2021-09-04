@@ -589,7 +589,7 @@ describe('Tests: Game APIs', () => {
     await gameutils.buyin(players[0], game.gameCode, 100);
     await gameutils.takeBreak(players[0], game.gameCode);
     const resp2 = await gameutils.sitBack(players[0], game.gameCode);
-    expect(resp2).toBe(true);
+    expect(resp2).toBe('PLAYING');
 
     // Sit back with player status = IN_BREAK & game status = ACTIVE
     await gameutils.joinGame(players[0], game.gameCode, 1);
@@ -597,7 +597,7 @@ describe('Tests: Game APIs', () => {
     await gameutils.takeBreak(players[0], game.gameCode);
     await gameutils.startGame(ownerId, game.gameCode);
     const resp1 = await gameutils.sitBack(players[0], game.gameCode);
-    expect(resp1).toBe(true);
+    expect(resp1).toBe('PLAYING');
 
     // Sit back with player status != IN_BREAK
     await gameutils.startGame(ownerId, game.gameCode);
@@ -605,7 +605,7 @@ describe('Tests: Game APIs', () => {
     await gameutils.buyin(players[0], game.gameCode, 100);
     await gameutils.takeBreak(players[0], game.gameCode);
     const resp3 = await gameutils.sitBack(players[0], game.gameCode);
-    expect(resp3).toBe(true);
+    expect(resp3).toBe('PLAYING');
   });
 
   test('leave a game', async () => {

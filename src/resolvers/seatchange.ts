@@ -13,7 +13,7 @@ import {getLogger} from '@src/utils/log';
 import {argsToArgsConfig} from 'graphql/type/definition';
 import _ from 'lodash';
 import {isHostOrManagerOrOwner} from './util';
-const logger = getLogger('game');
+const logger = getLogger('resolvers::seatchange');
 
 const resolvers: any = {
   Query: {

@@ -4,7 +4,7 @@ import {StatsRepository} from '@src/repositories/stats';
 import {GameType} from '@src/entity/types';
 import {Cache} from '@src/cache/index';
 
-const logger = getLogger('stats_resolvers');
+const logger = getLogger('resolvers::stats');
 
 const resolvers: any = {
   Query: {

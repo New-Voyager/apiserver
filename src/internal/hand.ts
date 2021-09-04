@@ -48,14 +48,18 @@ class HandServerAPIs {
     if (!gameID) {
       const res = {error: 'Invalid game id'};
       resp.status(500).send(JSON.stringify(res));
+      logger.error(`Finished saveHand endpoint game ${gameID} 500`);
       return;
     }
     const handNum = parseInt(req.params.handNum, 10);
     if (!handNum) {
       const res = {error: 'Invalid hand number'};
       resp.status(500).send(JSON.stringify(res));
+      logger.error(`Finished saveHand endpoint game ${gameID} 500`);
       return;
     }
+    logger.info(`Starting saveHand endpoint game ${gameID} hand ${handNum}`);
+    let processedConsecutiveTimeouts = false;
     try {
       const game = await Cache.getGameById(gameID);
       if (!game) {
@@ -74,16 +78,29 @@ class HandServerAPIs {
           `No timeoutStats present in hand result of game ${gameID} hand ${handNum}. Consecutive timeout counts will not be processed.`
         );
       }
+      processedConsecutiveTimeouts = true;
       const saveResult = await saveHand(gameID, handNum, result);
       if (saveResult.success) {
         resp.status(200).send(saveResult);
+        logger.info(
+          `Finished saveHand endpoint game ${gameID} hand ${handNum}`
+        );
         return;
       } else {
+        logger.error(
+          `Error while saving hand for game ${gameID} hand ${handNum}. saveResult is not success. saveResult: ${JSON.stringify(
+            saveResult
+          )}`
+        );
         resp.status(500).send(saveResult);
       }
     } catch (err) {
+      logger.error(
+        `Error while saving hand for game ${gameID} hand ${handNum}. Error: ${err.message}. (processedConsecutiveTimeouts = ${processedConsecutiveTimeouts})`
+      );
       resp.status(500).send({error: err.message});
     }
+    logger.info(`Finished saveHand endpoint game ${gameID} hand ${handNum}`);
   }
 
   public async saveHandBinary(req: any, resp: any) {
@@ -200,9 +217,10 @@ async function processConsecutiveActionTimeouts(
       const playerInGame: PlayerGameTracker | undefined =
         playersInGame[playerID];
       if (!playerInGame) {
-        throw new Error(
+        logger.warn(
           `Unable to find player tracker with game ID ${gameID} and player ID ${playerID} while processing consecutive action timeouts`
         );
+        continue;
       }
 
       const prevTimeouts: number = playerInGame.consecutiveActionTimeouts;
@@ -225,7 +243,7 @@ async function processConsecutiveActionTimeouts(
         newTimeouts = 0;
       }
 
-      if (newTimeouts != prevTimeouts) {
+      if (newTimeouts !== prevTimeouts) {
         await playersInGameRepo
           .createQueryBuilder()
           .update()

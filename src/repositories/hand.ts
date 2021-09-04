@@ -36,7 +36,7 @@ import * as lz from 'lzutf8';
 import {getAppSettings} from '@src/firebase';
 import {Repository} from 'typeorm';
 import {GameUpdatesRepository} from './gameupdates';
-const logger = getLogger('hand');
+const logger = getLogger('repositories::hand');
 
 const MAX_STARRED_HAND = 25;
 let totalHandsSaved = 0;
@@ -869,14 +869,23 @@ class HandRepositoryImpl {
     saveResult: any,
     transactionEntityManager: EntityManager
   ) {
+    logger.info(
+      `Starting RewardRepository.handleHighHand for game ${game.gameCode} hand ${result.handNum}`
+    );
     const highhandWinners = await RewardRepository.handleHighHand(
       game,
       result,
       timeEnded,
       transactionEntityManager
     );
+    logger.info(
+      `Finished RewardRepository.handleHighHand for game ${game.gameCode} hand ${result.handNum}`
+    );
 
     if (highhandWinners !== null && highhandWinners.rewardTrackingId !== 0) {
+      logger.error(
+        `SHOULD NOT BE HERE (highhandWinners !== null && highhandWinners.rewardTrackingId !== 0) game ${game.gameCode} hand ${result.handNum}`
+      );
       // new high hand winners
       // get the game codes associated with the reward tracking id
       const games = await getGameRepository(GameReward).find({
@@ -893,6 +902,9 @@ class HandRepositoryImpl {
     }
 
     if (highhandWinners !== null) {
+      logger.info(
+        `Sending high hand notification for game ${game.gameCode} hand ${result.handNum}`
+      );
       Nats.sendHighHandWinners(
         game,
         result.boardCards,

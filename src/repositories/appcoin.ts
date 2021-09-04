@@ -14,7 +14,7 @@ import {GameUpdatesRepository} from './gameupdates';
 const crypto = require('crypto');
 
 const COIN_PURCHASE_NOTIFICATION_TIME = 10;
-const logger = getLogger('appcoins');
+const logger = getLogger('repositories::appcoins');
 
 class AppCoinRepositoryImpl {
   public async purchaseCoins(

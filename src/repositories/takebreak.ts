@@ -11,7 +11,7 @@ import {Cache} from '@src/cache/index';
 import {getGameRepository} from '.';
 import {GameRepository} from './game';
 import {Nats} from '@src/nats';
-const logger = getLogger('takebreak');
+const logger = getLogger('repositories::takebreak');
 
 export class TakeBreak {
   private game: PokerGame;

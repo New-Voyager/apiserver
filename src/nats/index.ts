@@ -143,7 +143,7 @@ class NatsClass {
         },
       ],
     };
-    const subject = this.getPlayerHandChannel(game.gameCode, playerId);
+    const subject = this.getPlayerHandTextChannel(game.gameCode, playerId);
     const messageStr = JSON.stringify(message);
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
@@ -153,7 +153,7 @@ class NatsClass {
     openedSeat: number,
     playerId: number,
     playerUuid: string,
-    name: string,
+    playerName: string,
     expTime: Date,
     expSeconds: number
   ) {
@@ -178,7 +178,7 @@ class NatsClass {
       type: 'PLAYER_SEAT_CHANGE_PROMPT',
       gameCode: gameCode,
       openedSeat: openedSeat,
-      playerName: name,
+      playerName: playerName,
       playerId: playerId,
       playerUuid: playerUuid,
       expTime: expTime.toISOString(),
@@ -194,7 +194,7 @@ class NatsClass {
     gameCode: string,
     playerId: number,
     playerUuid: string,
-    name: string,
+    playerName: string,
     oldSeatNo: number,
     newSeatNo: number
   ) {
@@ -208,7 +208,7 @@ class NatsClass {
     const message: any = {
       type: 'PLAYER_SEAT_MOVE',
       gameCode: gameCode,
-      playerName: name,
+      playerName: playerName,
       playerId: playerId,
       playerUuid: playerUuid,
       oldSeatNo: oldSeatNo,
@@ -224,7 +224,7 @@ class NatsClass {
     gameCode: string,
     playerId: number,
     playerUuid: string,
-    name: string
+    playerName: string
   ) {
     if (this.client === null) {
       return;
@@ -236,7 +236,7 @@ class NatsClass {
     const message: any = {
       type: 'PLAYER_SEAT_CHANGE_DECLINED',
       gameCode: gameCode,
-      playerName: name,
+      playerName: playerName,
       playerId: playerId,
       playerUuid: playerUuid,
       requestId: messageId,
@@ -286,7 +286,7 @@ class NatsClass {
     gameCode: string,
     playerId: number,
     playerUuid: string,
-    name: string,
+    playerName: string,
     oldStack: number,
     newStack: number,
     reloadAmount: number
@@ -302,7 +302,7 @@ class NatsClass {
       type: 'STACK_RELOADED',
       subType: 'APPROVED',
       gameCode: gameCode,
-      playerName: name,
+      playerName: playerName,
       playerId: playerId,
       playerUuid: playerUuid,
       requestId: messageId,
@@ -333,7 +333,7 @@ class NatsClass {
       bigBlind: game.bigBlind,
       clubName: clubName,
       requestingPlayerId: requestingPlayer.id,
-      requestingPlayerName: requestingPlayer.name,
+      requestingname: requestingPlayer.name,
       requestingPlayerUuid: requestingPlayer.uuid,
       requestId: messageId,
     };
@@ -356,7 +356,7 @@ class NatsClass {
       type: 'RELOAD_REQUEST_WAIT_FOR_APPROVAL',
       gameCode: game.gameCode,
       requestingPlayerId: requestingPlayer.id,
-      requestingPlayerName: requestingPlayer.name,
+      requestingname: requestingPlayer.name,
       requestingPlayerUuid: requestingPlayer.uuid,
       waitTime: waitTime,
       requestId: messageId,
@@ -378,7 +378,7 @@ class NatsClass {
       type: 'RELOAD_TIMEOUT',
       gameCode: game.gameCode,
       requestingPlayerId: requestingPlayer.id,
-      requestingPlayerName: requestingPlayer.name,
+      requestingname: requestingPlayer.name,
       requestingPlayerUuid: requestingPlayer.uuid,
       requestId: messageId,
     };
@@ -426,7 +426,7 @@ class NatsClass {
       gameId: game.id,
       playerId: player.id,
       playerUuid: player.uuid,
-      name: player.name,
+      playerName: player.name,
       oldSeatNo: oldSeatNo,
       seatNo: playerGameInfo.seatNo,
       stack: playerGameInfo.stack,
@@ -458,7 +458,7 @@ class NatsClass {
       gameId: game.id,
       playerId: player.id,
       playerUuid: player.uuid,
-      name: player.name,
+      playerName: player.name,
       seatNo: seatNo,
     };
     const messageStr = JSON.stringify(message);
@@ -486,7 +486,7 @@ class NatsClass {
       gameId: game.id,
       playerId: player.id,
       playerUuid: player.uuid,
-      name: player.name,
+      playerName: player.name,
       seatNo: seatNo,
       stack: playerGameInfo.stack,
       status: PlayerStatus[playerGameInfo.status],
@@ -518,7 +518,7 @@ class NatsClass {
       gameId: game.id,
       playerId: player.id,
       playerUuid: player.uuid,
-      name: player.name,
+      playerName: player.name,
       seatNo: playerGameInfo.seatNo,
       stack: playerGameInfo.stack,
       status: PlayerStatus[playerGameInfo.status],
@@ -549,7 +549,7 @@ class NatsClass {
       gameId: game.id,
       playerId: player.id,
       playerUuid: player.uuid,
-      name: player.name,
+      playerName: player.name,
       seatNo: seatNo,
       status: PlayerStatus[PlayerStatus.KICKED_OUT],
       newUpdate: NewUpdate[NewUpdate.LEFT_THE_GAME],
@@ -582,7 +582,7 @@ class NatsClass {
       gameId: game.id,
       playerId: player.id,
       playerUuid: player.uuid,
-      name: player.name,
+      playerName: player.name,
       seatNo: seatNo,
       stack: stack,
       status: PlayerStatus[oldStatus],
@@ -666,7 +666,7 @@ class NatsClass {
       gameId: game.id,
       playerId: player.id,
       playerUuid: player.uuid,
-      name: player.name,
+      playerName: player.name,
       seatNo: seatNo,
       status: PlayerStatus[PlayerStatus.LEFT],
       newUpdate: NewUpdate[NewUpdate.LEFT_THE_GAME],
@@ -814,24 +814,51 @@ class NatsClass {
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
-  public getPlayerChannel(player: Player) {
+  public getPlayerChannel(player: Player): string {
     const subject = `player.${player.id}`;
     return subject;
   }
 
-  public getClubChannel(clubCode: string) {
+  public getClubChannel(clubCode: string): string {
     const subject = `club.${clubCode}`;
     return subject;
   }
 
-  public getGameChannel(gameCode: string) {
+  public getGameChannel(gameCode: string): string {
     const subject = `game.${gameCode}.player`;
     return subject;
   }
 
-  public getPlayerHandChannel(gameCode: string, playerId: number) {
+  public getPlayerToHandChannel(gameCode: string): string {
+    return `player.${gameCode}.hand`;
+  }
+
+  public getHandToAllChannel(gameCode: string): string {
+    // broadcast channel
+    //"hand.cgweebfa.player.all"
+    return `hand.${gameCode}.player.all`;
+  }
+
+  public getPlayerHandChannel(gameCode: string, playerId: number): string {
     //"hand.cgweebfa.player.694"
     return `hand.${gameCode}.player.${playerId}`;
+  }
+
+  public getPlayerHandTextChannel(gameCode: string, playerId: number): string {
+    //"hand.cgweebfa.player.694"
+    return `hand.${gameCode}.player.${playerId}.text`;
+  }
+
+  public getChatChannel(gameCode: string): string {
+    return `game.${gameCode}.chat`;
+  }
+
+  public getPingChannel(gameCode: string): string {
+    return `ping.${gameCode}`;
+  }
+
+  public getPongChannel(gameCode: string): string {
+    return `pong.${gameCode}`;
   }
 }
 

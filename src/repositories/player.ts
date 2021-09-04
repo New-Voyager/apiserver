@@ -2,7 +2,6 @@ import {EntityManager, Repository, In} from 'typeorm';
 import {v4 as uuidv4} from 'uuid';
 import {Player, PlayerNotes} from '@src/entity/player/player';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger('player');
 import {Cache} from '@src/cache/index';
 import {StatsRepository} from './stats';
 import {Firebase} from '@src/firebase';
@@ -14,6 +13,8 @@ import {UserRegistrationPayload} from '@src/types';
 import {sendRecoveryCode} from '@src/email';
 import {getRecoveryCode} from '@src/utils/uniqueid';
 import {AppCoinRepository} from './appcoin';
+
+const logger = getLogger('repositories::player');
 
 class PlayerRepositoryImpl {
   public async createPlayer(

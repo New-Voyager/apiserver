@@ -57,21 +57,6 @@ export class PokerGameUpdates {
   @Column({name: 'game_type', default: GameType.UNKNOWN})
   public gameType!: GameType;
 
-  /*
-  @Column({name: 'janus_session_id', nullable: true, default: ''})
-  public janusSessionId!: string;
-
-  @Column({name: 'janus_plugin_handle', nullable: true, default: ''})
-  public janusPluginHandle!: string;
-
-  // janus room id
-  @Column({name: 'janus_room_id', default: 0})
-  public janusRoomId!: number;
-
-  // janus room pin
-  @Column({name: 'janus_room_pin', default: ''})
-  public janusRoomPin!: string;
-  */
   @Column({name: 'coins_used', default: 0, type: 'int'})
   public coinsUsed!: number;
 
@@ -82,8 +67,8 @@ export class PokerGameUpdates {
   })
   public nextCoinConsumeTime!: Date;
 
-  @Column({type: 'int', name: 'bomb_pot_next_hand_num', default: 0}) // next bomb pot hand number
-  public bombPotNextHandNum!: number;
+  @Column({name: 'bomb_pot_this_hand', default: false}) // indicates bomb pot this hand
+  public bombPotThisHand!: boolean;
 
   @DbAwareColumn({
     name: 'last_bomb_pot_time',
@@ -117,38 +102,6 @@ export class PokerGameUpdates {
     default: 0,
   })
   public lastConsecutiveTimeoutProcessedHand!: number;
-
-  /*
-  @Column({name: 'seat1', type: 'int', default: SeatStatus.OPEN})
-  public seat1!: number;
-
-  @Column({name: 'seat2', type: 'int', default: SeatStatus.OPEN})
-  public seat2!: number;
-
-  @Column({name: 'seat3', type: 'int', default: SeatStatus.OPEN})
-  public seat3!: number;
-
-  @Column({name: 'seat4', type: 'int', default: SeatStatus.OPEN})
-  public seat4!: number;
-
-  @Column({name: 'seat5', type: 'int', default: SeatStatus.OPEN})
-  public seat5!: number;
-
-  @Column({name: 'seat6', type: 'int', default: SeatStatus.OPEN})
-  public seat6!: number;
-
-  @Column({name: 'seat7', type: 'int', default: SeatStatus.OPEN})
-  public seat7!: number;
-
-  @Column({name: 'seat8', type: 'int', default: SeatStatus.OPEN})
-  public seat8!: number;
-
-  @Column({name: 'seat9', type: 'int', default: SeatStatus.OPEN})
-  public seat9!: number;
-
-  @Column({name: 'seat10', type: 'int', default: SeatStatus.OPEN})
-  public seat10!: number;
-  */
 }
 
 @Entity({name: 'poker_game_seat_info'})

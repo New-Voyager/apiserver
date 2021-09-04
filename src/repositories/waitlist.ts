@@ -15,7 +15,7 @@ import {Nats} from '@src/nats';
 import {WaitlistSeatError} from '@src/errors';
 import {getGameConnection, getGameManager, getGameRepository} from '.';
 
-const logger = getLogger('waitlist');
+const logger = getLogger('repositories::waitlist');
 
 export async function occupiedSeats(gameId: number): Promise<number> {
   const query = fixQuery(

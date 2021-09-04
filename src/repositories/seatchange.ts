@@ -24,7 +24,7 @@ import {Cache} from '@src/cache/index';
 import {processPendingUpdates, switchSeatNextHand} from './pendingupdates';
 import {getGameConnection, getGameManager, getGameRepository} from '.';
 
-const logger = getLogger('seatchange');
+const logger = getLogger('repositories::seatchange');
 
 export class SeatChangeProcess {
   game: PokerGame;

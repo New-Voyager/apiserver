@@ -9,7 +9,8 @@ import {
   getHistoryManager,
   getUserManager,
 } from '@src/repositories';
-const logger = getLogger('reset');
+
+const logger = getLogger('resolvers::reset');
 
 const resolvers: any = {
   Mutation: {
@@ -47,6 +48,7 @@ export async function resetGames() {
     await deleteAll('next_hand_updates', transactionEntityManager);
     await deleteAll('player_game_tracker', transactionEntityManager);
     await deleteAll('poker_game_updates', transactionEntityManager);
+    await deleteAll('poker_game_seat_info', transactionEntityManager);
     await deleteAll('high_hand', transactionEntityManager);
     await deleteAll('game_reward', transactionEntityManager);
     await deleteAll('game_reward_tracking', transactionEntityManager);
@@ -96,8 +98,9 @@ export async function resetDB() {
       await deleteAll('game_reward_tracking', transactionEntityManager);
       await deleteAll('next_hand_updates', transactionEntityManager);
       await deleteAll('player_game_tracker', transactionEntityManager);
-      //await deleteAll('club_chips_transaction', transactionEntityManager);
+      await deleteAll('poker_game_seat_info', transactionEntityManager);
       await deleteAll('poker_game_updates', transactionEntityManager);
+      await deleteAll('poker_game', transactionEntityManager);
       if (!isGameServerEnabled()) {
         await deleteAll('game_server', transactionEntityManager);
       }

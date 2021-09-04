@@ -63,3 +63,12 @@ export function getLogger(name: string): winston.Logger {
     transports: [new winston.transports.Console()],
   });
 }
+
+export function errToLogString(e: Error): string {
+  if (!e) {
+    return 'error undefined';
+  }
+  return `Error(message: ${e.message}, name: ${
+    e.name
+  }, toString: ${e.toString()}, stack: ${e.stack})`;
+}

@@ -27,7 +27,7 @@ import {
 } from '.';
 import {ClubMemberStat} from '@src/entity/player/club';
 
-const logger = getLogger('club-repository');
+const logger = getLogger('repositories::club');
 
 export interface ClubCreateInput {
   ownerUuid: string;

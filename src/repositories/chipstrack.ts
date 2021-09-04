@@ -13,7 +13,7 @@ import {
 } from '.';
 import {ClubMemberStat} from '@src/entity/player/club';
 
-const logger = getLogger('chipstrack');
+const logger = getLogger('repositories::chipstrack');
 
 class ChipsTrackRepositoryImpl {
   public async settleClubBalances(game: PokerGame): Promise<boolean> {

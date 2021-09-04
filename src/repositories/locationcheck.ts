@@ -14,7 +14,7 @@ import {
 import {getAppSettings} from '@src/firebase';
 import _ from 'lodash';
 import {TakeBreak} from './takebreak';
-const logger = getLogger('takebreak');
+const logger = getLogger('repositories::locationcheck');
 
 export class LocationCheck {
   private game: PokerGame;

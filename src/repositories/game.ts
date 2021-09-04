@@ -71,7 +71,7 @@ import {GameSettingsRepository} from './gamesettings';
 import {PlayersInGameRepository} from './playersingame';
 import {GameUpdatesRepository} from './gameupdates';
 import {GameServerRepository} from './gameserver';
-const logger = getLogger('game');
+const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
   private notifyGameServer: boolean;
@@ -95,7 +95,7 @@ class GameRepositoryImpl {
     const gameType: GameType = GameType[gameTypeStr];
 
     // validate data
-    const minActionTime = 10;
+    const minActionTime = 2;
     if (!input.actionTime || input.actionTime < minActionTime) {
       throw new Error(`actionTime must be >= ${minActionTime}`);
     }
@@ -466,7 +466,6 @@ class GameRepositoryImpl {
           PlayerStatus.PLAYING,
           PlayerStatus.IN_BREAK,
           PlayerStatus.WAIT_FOR_BUYIN,
-          PlayerStatus.NEED_TO_POST_BLIND,
         ]),
       },
     });
@@ -503,7 +502,6 @@ class GameRepositoryImpl {
           PlayerStatus.PLAYING,
           PlayerStatus.IN_BREAK,
           PlayerStatus.WAIT_FOR_BUYIN,
-          PlayerStatus.NEED_TO_POST_BLIND,
         ]),
       },
     });
@@ -901,6 +899,7 @@ class GameRepositoryImpl {
       {
         status: playerInGame.status,
         breakTimeExpAt: undefined,
+        consecutiveActionTimeouts: 0,
       }
     );
 

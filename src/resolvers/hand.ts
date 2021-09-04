@@ -10,7 +10,8 @@ import _ from 'lodash';
 import * as lz from 'lzutf8';
 
 import {getGameRepository} from '@src/repositories';
-const logger = getLogger('hand-resolvers');
+
+const logger = getLogger('resolvers::hand');
 
 const resolvers: any = {
   Query: {
