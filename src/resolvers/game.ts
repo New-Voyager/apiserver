@@ -1125,7 +1125,7 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
       game.gameCode,
       player.id
     );
-    ret.handToPlayerChannel = Nats.getPlayerHandTextChannel(
+    ret.handToPlayerTextChannel = Nats.getPlayerHandTextChannel(
       game.gameCode,
       player.id
     );
