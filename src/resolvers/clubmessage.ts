@@ -11,7 +11,7 @@ import {
 import {PageOptions} from '@src/types';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
-const logger = getLogger('clubmessage');
+const logger = getLogger('resolvers::clubmessage');
 
 export async function getClubMsg(
   playerId: string,

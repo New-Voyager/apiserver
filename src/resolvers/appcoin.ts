@@ -19,7 +19,7 @@ const options = {
 };
 const googleVerifier = new Verifier(options);
 
-const logger = getLogger('appcoin - resolvers');
+const logger = getLogger('resolvers::appcoin');
 
 /*
 Google receipt

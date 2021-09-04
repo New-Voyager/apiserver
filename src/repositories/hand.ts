@@ -36,7 +36,7 @@ import * as lz from 'lzutf8';
 import {getAppSettings} from '@src/firebase';
 import {Repository} from 'typeorm';
 import {GameUpdatesRepository} from './gameupdates';
-const logger = getLogger('hand');
+const logger = getLogger('repositories::hand');
 
 const MAX_STARRED_HAND = 25;
 let totalHandsSaved = 0;

@@ -3,7 +3,7 @@ import {GameType} from '@src/entity/types';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
 
-const logger = getLogger('history');
+const logger = getLogger('resolvers::history');
 
 export async function gameHistory(playerId: string, gameCode: string) {
   if (!playerId) {

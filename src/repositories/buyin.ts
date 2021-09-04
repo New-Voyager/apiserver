@@ -34,7 +34,7 @@ import {
 import {Nats} from '@src/nats';
 import {PlayersInGameRepository} from './playersingame';
 
-const logger = getLogger('buyin');
+const logger = getLogger('repositories::buyin');
 
 export class BuyIn {
   private game: PokerGame;

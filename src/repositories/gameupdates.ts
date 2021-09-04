@@ -6,7 +6,7 @@ import {getLogger} from '@src/utils/log';
 import {getAppSettings} from '@src/firebase';
 import {GameType} from '@src/entity/types';
 
-const logger = getLogger('game_updates');
+const logger = getLogger('repositories::gameupdates');
 class GameUpdatesRepositoryImpl {
   public async create(
     gameId: number,

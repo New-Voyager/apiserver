@@ -8,7 +8,7 @@ export const JANUS_TOKEN = '';
 export const JANUS_SECRET = '';
 const JANUS_HTTP_URL = 'http://139.59.57.29:8088/janus';
 
-const logger = getLogger('Janus');
+const logger = getLogger('janus');
 
 export class JanusSession {
   private _id = '';

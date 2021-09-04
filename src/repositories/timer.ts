@@ -27,7 +27,7 @@ import {WaitListMgmt} from './waitlist';
 import {getGameRepository, getUserRepository} from '.';
 import {resumeGame} from '@src/gameserver';
 
-const logger = getLogger('timer');
+const logger = getLogger('repositories::timer');
 
 export async function timerCallback(req: any, resp: any) {
   const gameID = req.params.gameID;

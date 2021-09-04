@@ -11,7 +11,7 @@ import * as yaml from 'yaml';
 import {GameAPI} from './game';
 import {HandServerAPI} from './hand';
 
-const logger = getLogger('handlog');
+const logger = getLogger('internal::bots');
 
 const playerIdName = {
   1: 'yong',

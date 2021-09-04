@@ -29,7 +29,7 @@ import {
   HighHand,
 } from '@src/entity/game/reward';
 import {HighHandHistory} from '@src/entity/history/hand';
-const logger = getLogger('rewardRepo');
+const logger = getLogger('repositories::reward');
 
 class RewardRepositoryImpl {
   public async createReward(clubCode: string, reward: RewardInputFormat) {

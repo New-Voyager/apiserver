@@ -34,7 +34,7 @@ import {resumeGame} from '@src/gameserver';
 import {PlayersInGameRepository} from './playersingame';
 import {GameUpdatesRepository} from './gameupdates';
 
-const logger = getLogger('pending-updates');
+const logger = getLogger('repositories::pendingupdates');
 
 export async function markDealerChoiceNextHand(
   game: PokerGame,

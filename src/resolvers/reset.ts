@@ -9,7 +9,8 @@ import {
   getHistoryManager,
   getUserManager,
 } from '@src/repositories';
-const logger = getLogger('reset');
+
+const logger = getLogger('resolvers::reset');
 
 const resolvers: any = {
   Mutation: {

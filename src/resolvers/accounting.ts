@@ -3,7 +3,8 @@ import {getLogger} from '@src/utils/log';
 import {TransactionSubType} from '@src/entity/types';
 import {AccountingRepository} from '@src/repositories/accounting';
 import {ClubTransaction, PlayerTransaction} from '@src/types';
-const logger = getLogger('accounting - resolvers');
+
+const logger = getLogger('resolvers::accounting');
 
 export async function clubTransactions(
   hostId: string,

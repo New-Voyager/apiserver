@@ -46,7 +46,7 @@ import {GameUpdatesRepository} from '@src/repositories/gameupdates';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
-const logger = getLogger('game');
+const logger = getLogger('resolvers::game');
 
 export async function configureGame(
   playerId: string,

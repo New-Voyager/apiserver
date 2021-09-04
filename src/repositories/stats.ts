@@ -17,7 +17,7 @@ import {Cache} from '@src/cache';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {getHistoryConnection, getHistoryManager, getHistoryRepository} from '.';
 
-const logger = getLogger('Stats');
+const logger = getLogger('repositories::stats');
 
 // Ranking for higher cards
 /*

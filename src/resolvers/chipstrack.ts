@@ -4,7 +4,7 @@ import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
 import {GameUpdatesRepository} from '@src/repositories/gameupdates';
 
-const logger = getLogger('chipstrack-resolver');
+const logger = getLogger('resolvers::chipstrack');
 
 export async function getClubBalanceAmount(playerId: string, data: any) {
   const errors = new Array<string>();

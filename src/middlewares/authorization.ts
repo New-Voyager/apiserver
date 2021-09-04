@@ -2,7 +2,7 @@ import * as jwt from 'jsonwebtoken';
 import {getLogger} from '@src/utils/log';
 import {getJwtSecret} from '@src/auth';
 
-const logger = getLogger('chipstrack');
+const logger = getLogger('middleware::authorization');
 
 export async function authorize(req, res, next) {
   if (req.headers.authorization) {

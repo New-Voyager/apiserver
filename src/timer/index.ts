@@ -5,6 +5,7 @@ import {fixQuery} from '@src/utils';
 import {BUYIN_TIMEOUT, BREAK_TIMEOUT} from '@src/repositories/types';
 import {notifyGameServer} from '@src/gameserver';
 import {getGameConnection} from '@src/repositories';
+
 const logger = getLogger('timer');
 
 function getTimerUrl(): string {

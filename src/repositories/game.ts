@@ -71,7 +71,7 @@ import {GameSettingsRepository} from './gamesettings';
 import {PlayersInGameRepository} from './playersingame';
 import {GameUpdatesRepository} from './gameupdates';
 import {GameServerRepository} from './gameserver';
-const logger = getLogger('game');
+const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
   private notifyGameServer: boolean;

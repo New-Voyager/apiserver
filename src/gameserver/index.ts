@@ -9,7 +9,7 @@ import {NewUpdate} from '@src/repositories/types';
 import * as Constants from '../const';
 
 export let notifyGameServer = false;
-const logger = getLogger('gameServer');
+const logger = getLogger('gameserver');
 
 export function initializeGameServer() {
   if (process.env.NOTIFY_GAME_SERVER === '1') {

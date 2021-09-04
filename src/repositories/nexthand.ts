@@ -16,7 +16,7 @@ import {GameSettingsRepository} from './gamesettings';
 import {PlayersInGameRepository} from './playersingame';
 import {GameUpdatesRepository} from './gameupdates';
 
-const logger = getLogger('next_hand_process');
+const logger = getLogger('repositories::nexthand');
 
 export class NextHandProcess {
   private gameCode: string;

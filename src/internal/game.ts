@@ -13,7 +13,7 @@ import {NextHandProcess} from '@src/repositories/nexthand';
 import {GameSettingsRepository} from '@src/repositories/gamesettings';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
 
-const logger = getLogger('GameAPIs');
+const logger = getLogger('internal::game');
 
 /**
  * These APIs are only available for game server.

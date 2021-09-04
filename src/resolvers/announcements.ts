@@ -2,7 +2,7 @@ import {Cache} from '@src/cache';
 import {AnnouncementsRepository} from '@src/repositories/announcements';
 import {AnnouncementData} from '@src/types';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger('announcements - resolvers');
+const logger = getLogger('resolvers::announcements');
 
 export async function clubAnnouncements(
   playerId: string,

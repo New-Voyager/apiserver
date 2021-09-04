@@ -5,7 +5,7 @@ import {getGameRepository} from '.';
 import {getLogger} from '@src/utils/log';
 import {JanusSession} from '@src/janus';
 
-const logger = getLogger('game_settings');
+const logger = getLogger('repositories::gamesettings');
 class GameSettingsRepositoryImpl {
   public async create(
     gameId: number,

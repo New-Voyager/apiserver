@@ -13,7 +13,7 @@ import {Cache} from '@src/cache';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
-const logger = getLogger('clubresolvers');
+const logger = getLogger('resolvers::club');
 
 export async function getClubMembers(playerId: string, args: any) {
   if (!playerId) {

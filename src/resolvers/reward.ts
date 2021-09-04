@@ -2,7 +2,8 @@ import * as _ from 'lodash';
 import {RewardRepository} from '@src/repositories/reward';
 import {getLogger} from '@src/utils/log';
 import {RewardType, ScheduleType} from '@src/entity/types';
-const logger = getLogger('clubfreqmessage');
+
+const logger = getLogger('resolvers::reward');
 
 export async function saveReward(
   playerId: string,

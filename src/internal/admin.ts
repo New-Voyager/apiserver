@@ -1,7 +1,7 @@
 import {ClubRepository} from '@src/repositories/club';
 import {getLogger} from '@src/utils/log';
 
-const logger = getLogger('GameAPIs');
+const logger = getLogger('internal::admin');
 
 /**
  * These APIs are only available for testdriver.
