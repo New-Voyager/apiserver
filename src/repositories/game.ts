@@ -95,7 +95,7 @@ class GameRepositoryImpl {
     const gameType: GameType = GameType[gameTypeStr];
 
     // validate data
-    const minActionTime = 10;
+    const minActionTime = 2;
     if (!input.actionTime || input.actionTime < minActionTime) {
       throw new Error(`actionTime must be >= ${minActionTime}`);
     }

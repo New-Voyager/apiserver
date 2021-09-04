@@ -161,6 +161,7 @@ class MoveToNextHand {
             game: {id: this.game.id},
           },
           {
+            postedBlindNextHand: false,
             inHandNextHand: false,
           }
         );
