@@ -243,7 +243,7 @@ async function processConsecutiveActionTimeouts(
         newTimeouts = 0;
       }
 
-      if (newTimeouts != prevTimeouts) {
+      if (newTimeouts !== prevTimeouts) {
         await playersInGameRepo
           .createQueryBuilder()
           .update()

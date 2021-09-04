@@ -246,7 +246,7 @@ class MoveToNextHand {
       this.game.id
     );
     for (const player of playerInSeats) {
-      logger.info(
+      logger.debug(
         `Seat: ${player.seatNo} Player: ${player.playerName} inhand: ${
           player.inHandNextHand
         } status: ${player.status.toString()} missedBlind: ${
@@ -379,7 +379,11 @@ class MoveToNextHand {
       if (this.handNum === 1) {
         buttonPos = 1;
       } else {
+        const oldButtonPos = buttonPos;
         buttonPos = this.gameUpdate.sbPos;
+        if (oldButtonPos > buttonPos) {
+          this.buttonPassedDealer = true;
+        }
         const playerSeat = takenSeats[buttonPos];
         if (playerSeat) {
           if (playerSeat.missedBlind && !playerSeat.postedBlind) {
@@ -473,7 +477,7 @@ class MoveToNextHand {
 
     // determine new game type (ROE)
     if (this.game.gameType === GameType.ROE) {
-      if (this.gameUpdate.handNum !== 1) {
+      if (this.handNum !== 1) {
         if (this.buttonPassedDealer) {
           // button passed dealer
           const roeGames = this.game.roeGames.split(',');
@@ -490,7 +494,7 @@ class MoveToNextHand {
         this.nextGameType = GameType[roeGames[0]];
       }
     } else if (this.game.gameType === GameType.DEALER_CHOICE) {
-      if (this.gameUpdate.handNum === 1) {
+      if (this.handNum === 1) {
         const dealerChoiceGames = this.game.dealerChoiceGames.split(',');
         this.nextGameType = GameType[dealerChoiceGames[0]];
       }
