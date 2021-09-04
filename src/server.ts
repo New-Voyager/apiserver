@@ -271,7 +271,10 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     );
   }
 
-  await initializeNats();
+  if (process.env.NODE_ENV !== 'unit-test' && process.env.NODE_ENV !== 'test') {
+    await initializeNats();
+  }
+
   initializeGameServer();
   await Firebase.init();
 
