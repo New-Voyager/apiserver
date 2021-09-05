@@ -1010,6 +1010,34 @@ export async function gameSettings(playerUuid: string, gameCode: string) {
   }
 }
 
+export async function myGameSettings(playerUuid: string, gameCode: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    // const gameSettings = await GameSettingsRepository.get(gameCode);
+    // if (!gameSettings) {
+    //   throw new Error(`Game ${gameCode} is not found`);
+    // }
+    // return gameSettings;
+    return {
+      autoStraddle: false,
+      straddle: false,
+      buttonStraddle: false,
+      bombPotEnabled: false,
+      muckLosingHand: false,
+      runItTwiceEnabled: false,
+    }
+  } catch (err) {
+    logger.error(
+      `Error while getting game settings. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
+    throw new Error(`Getting game settings failed`);
+  }
+}
 export async function getGameInfo(playerUuid: string, gameCode: string) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
@@ -2347,6 +2375,9 @@ const resolvers: any = {
     gameSettings: async (parent, args, ctx, info) => {
       return await gameSettings(ctx.req.playerId, args.gameCode);
     },
+    myGameSettings: async (parent, args, ctx, info) => {
+      return await myGameSettings(ctx.req.playerId, args.gameCode);
+    },    
   },
   GameInfo: {
     seatInfo: async (parent, args, ctx, info) => {

@@ -592,6 +592,7 @@ type Query {
   gameById(gameCode: String!): gameId!
   gameInfo(gameCode: String!): GameInfo
   gameSettings(gameCode: String!): GameSettings!
+  myGameSettings(gameCode: String!): GamePlayerSettings!
   myGameState(gameCode: String!): PlayerGameState
   tableGameState(gameCode: String!): [PlayerGameState!]
   waitingList(gameCode: String!): [WaitingListPlayer!]
