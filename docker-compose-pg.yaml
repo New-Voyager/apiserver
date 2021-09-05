@@ -10,5 +10,10 @@ services:
       POSTGRES_USER: 'game'
       POSTGRES_PASSWORD: 'game'
 
+networks:
+  default:
+    external:
+      name: ${TEST_DOCKER_NET}
+
 volumes:
   db-data:
