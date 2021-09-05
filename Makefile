@@ -22,7 +22,10 @@ NATS_SERVER_IMAGE := $(REGISTRY)/nats:$(NATS_VERSION)
 REDIS_IMAGE := $(REGISTRY)/redis:$(REDIS_VERSION)
 POSTGRES_IMAGE := $(REGISTRY)/postgres:$(POSTGRES_VERSION)
 
-API_SERVER_URL = http://192.168.1.106:9501
+LOCAL_IP := $(POKER_LOCAL_IP)
+API_SERVER_URL := http://$(LOCAL_IP):9501
+LOCAL_NATS_URL := nats://$(LOCAL_IP):4222
+LOCAL_POSTGRES_HOST := $(LOCAL_IP)
 
 COMPOSE_PROJECT_NAME := apiserver
 COMPOSE := docker-compose -p $(COMPOSE_PROJECT_NAME)
@@ -95,6 +98,8 @@ up: create-network
 debug: watch-localhost-debug
 
 .PHONY: watch-localhost-debug
+watch-localhost-debug: export NATS_URL=$(LOCAL_NATS_URL)
+watch-localhost-debug: export POSTGRES_HOST=$(LOCAL_POSTGRES_HOST)
 watch-localhost-debug:
 	npx yarn watch-localhost-debug
 
@@ -233,7 +238,7 @@ stack-generate-env:
 
 .PHONY: stack-up
 stack-up: create-network login stack-generate-env
-		$(COMPOSE) up -d
+		cd docker && $(COMPOSE) up -d
 
 .PHONY: stack-logs
 stack-logs:

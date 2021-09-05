@@ -67,13 +67,18 @@ You can also run the linter manually.
 make lint
 ``
 ## Running API server in debugger
-Get your local ip address (e.g. 10.0.1.101). Update API_SERVER_URL in the Makefile.
-API_SERVER_URL = http://10.0.1.101:9501
-
-Run the apiserver in the vscode debugger or in the console (npm run watch-debug).
 Run the game backend stack using docker.
 ``
-make stack-up
+POKER_LOCAL_IP=<your ip> make stack-up
 ``
 
+Run the apiserver in the vscode debugger (Watch Localhost debug in launch.json) 
+or in the console (npm run watch-localhost-debug).
+Change the setting in launch.json (Watch Localhost debug)
+    "NATS_URL": "nats://192.168.0.106:4222",      -> your ip
+
+
 Open the browser and try http://localhost:9501/graphql. You should see the GraphQL playground.
+
+To bring down the stack.
+  make stack-down
