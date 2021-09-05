@@ -149,6 +149,7 @@ type SeatInfo {
   gameToken: String
   agoraToken: String
   isBot: Boolean
+  settings: GamePlayerSettings
 }
 
 type TableSeats {
@@ -268,6 +269,24 @@ type GameInfo {
   agoraAppId: String
 }
 
+type GamePlayerSettings {
+  autoStraddle: Boolean
+  straddle: Boolean
+  buttonStraddle: Boolean
+  bombPotEnabled: Boolean
+  muckLosingHand: Boolean
+  runItTwiceEnabled: Boolean
+}
+
+input GamePlayerSettingsUpdateInput {
+  autoStraddle: Boolean
+  straddle: Boolean
+  buttonStraddle: Boolean
+  bombPotEnabled: Boolean
+  muckLosingHand: Boolean
+  runItTwiceEnabled: Boolean
+}
+
 type GameSettings {
   buyInApproval: Boolean
   runItTwiceAllowed: Boolean
@@ -341,17 +360,6 @@ type PlayerRole {
   isHost: Boolean
   isOwner: Boolean
   isManager: Boolean
-}
-
-input GameUpdateInput {
-  status: GameStatus
-  muckLosingHand: Boolean
-  waitForBigBlind: Boolean
-  buyInMin: Float
-  buyInMax: Float
-  title: String
-  roeGames: [GameType!]
-  dealerChoiceGames: [GameType!]
 }
 
 type PlayerGameState {
@@ -485,11 +493,6 @@ input LocationInput {
 type Mutation {
   # Not implemented
   configureGameFromTemplate(clubCode: String!, templateId: Int!): GameInfo!
-  updateGame(
-    clubCode: String!
-    gameCode: String!
-    update: GameUpdateInput
-  ): GameInfo!
   saveGameTemplate(
     clubCode: String!
     templateName: String!
@@ -541,6 +544,9 @@ type Mutation {
 
   # update game settings
   updateGameSettings(gameCode: String!, settings: GameSettingsUpdateInput!): Boolean
+
+  # update settings for a player
+  updateGamePlayerSettings(gameCode: String!, settings: GamePlayerSettingsUpdateInput): Boolean
 }
 
 type gameId{

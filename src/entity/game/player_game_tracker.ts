@@ -168,6 +168,9 @@ export class PlayerGameTracker {
   @Column({name: 'bomb_pot_enabled', default: true})
   public bombPotEnabled!: boolean;
 
+  @Column({name: 'auto_straddle', default: false})
+  public autoStraddle!: boolean;
+
   @Column({name: 'posted_blind', default: false}) // this is set to true, player posted blind
   public postedBlind!: boolean;
 

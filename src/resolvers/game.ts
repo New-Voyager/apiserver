@@ -1908,6 +1908,66 @@ export async function postBlind(
     );
   }
 }
+
+export async function updateGameSettings(
+  playerId: string,
+  gameCode: string,
+  settings: any
+): Promise<boolean> {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    const game = await Cache.getGame(gameCode);
+    const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
+    if (!isAuthorized) {
+      logger.error(
+        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot end the game`
+      );
+      throw new Error(
+        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot end the game`
+      );
+    }
+
+    // update game settings
+
+    return true;
+  } catch (err) {
+    logger.error(
+      `Error while updating game settings. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
+    throw new Error(
+      `Failed updating game settings:  ${err.message}. Game code: ${gameCode}`
+    );
+  }
+}
+
+export async function updateGamePlayerSettings(
+  playerId: string,
+  gameCode: string,
+  settings: any
+): Promise<boolean> {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    const game = await Cache.getGame(gameCode);
+    // update player game settings
+
+    return true;
+  } catch (err) {
+    logger.error(
+      `Error while updating player settings. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
+    throw new Error(
+      `Failed while updating player settings:  ${err.message}. Game code: ${gameCode}`
+    );
+  }
+}
 export async function openSeats(playerId: string, gameCode: string) {
   if (!playerId) {
     throw new Error('Unauthorized');
@@ -2554,6 +2614,16 @@ const resolvers: any = {
     },
     postBlind: async (parent, args, ctx, info) => {
       return postBlind(ctx.req.playerId, args.gameCode);
+    },
+    updateGameSettings: async (parent, args, ctx, info) => {
+      return updateGameSettings(ctx.req.playerId, args.gameCode, args.settings);
+    },
+    updateGamePlayerSettings: async (parent, args, ctx, info) => {
+      return updateGamePlayerSettings(
+        ctx.req.playerId,
+        args.gameCode,
+        args.settings
+      );
     },
   },
 };
