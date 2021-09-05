@@ -234,7 +234,8 @@ stack-generate-env:
 		echo "POSTGRES_IMAGE=$(POSTGRES_IMAGE)" >> .env && \
 		echo "BOTRUNNER_IMAGE=$(BOTRUNNER_IMAGE)" >> .env && \
 		echo "TIMER_IMAGE=$(TIMER_IMAGE)" >> .env && \
-		echo "PROJECT_ROOT=$(PWD)" >> .env
+		echo "PROJECT_ROOT=$(PWD)" >> .env && \
+		echo "DOCKER_NET=$(DEFAULT_DOCKER_NET)" >> .env
 
 .PHONY: stack-up
 stack-up: create-network login stack-generate-env
@@ -261,7 +262,7 @@ botrunner:
 		BOTRUNNER_SCRIPT=$(BOTRUNNER_SCRIPT) \
 		./botrunner.sh
 
-.PHONY: simple-game reset-db
+.PHONY: simple-game
 simple-game:
 	BOTRUNNER_SCRIPT=botrunner_scripts/river-action-3-bots.yaml make botrunner
 

@@ -17,7 +17,7 @@ if [ -z "${BOTRUNNER_SCRIPT}" ]; then
     exit 1
 fi
 
-API_SERVER_URL=http://192.168.0.104:9501
+API_SERVER_URL="http://${POKER_LOCAL_IP}:9501"
 GAME_SERVER_URL=http://game-server:8080
 POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
