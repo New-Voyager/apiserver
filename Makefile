@@ -230,6 +230,9 @@ stack-logs:
 stack-down:
 	cd docker && $(COMPOSE) down
 
+.PHONY: clean-ci
+clean-ci: stop-nats stop-redis stop-pg
+
 #
 # Usage:
 #
