@@ -25,6 +25,12 @@ POSTGRES_IMAGE := $(REGISTRY)/postgres:12.5
 
 API_SERVER_URL = http://192.168.1.104:9501
 
+COMPOSE_PROJECT_NAME := apiserver
+COMPOSE := docker-compose -p $(COMPOSE_PROJECT_NAME)
+COMPOSE_REDIS := docker-compose -p $(COMPOSE_PROJECT_NAME) -f docker-compose-redis.yaml
+COMPOSE_NATS := docker-compose -p $(COMPOSE_PROJECT_NAME) -f docker-compose-nats.yaml
+COMPOSE_PG := docker-compose -p $(COMPOSE_PROJECT_NAME) -f docker-compose-pg.yaml
+
 ifeq ($(OS), Windows_NT)
 	BUILD_NO := $(file < build_number.txt)
 else
@@ -84,7 +90,7 @@ docker-build-test:
 
 .PHONY: up
 up: create-network
-	docker-compose up
+	$(COMPOSE) up
 
 .PHONY: debug
 debug: watch-localhost-debug
@@ -139,26 +145,26 @@ publish-3rdparty:
 
 .PHONY: run-pg
 run-pg: stop-pg
-	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-pg.yaml up -d
-
-run-redis: stop-redis
-	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-redis.yaml up -d
-
-.PHONY: stop-redis
-stop-redis:
-	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-redis.yaml down
-
-.PHONY: run-nats
-run-nats: stop-nats
-	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-nats.yaml up -d
-
-.PHONY: stop-nats
-stop-nats:
-	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-nats.yaml down
+	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} $(COMPOSE_PG) up -d
 
 .PHONY: stop-pg
 stop-pg:
-	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-pg.yaml down
+	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} $(COMPOSE_PG) down
+
+run-redis: stop-redis
+	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} $(COMPOSE_REDIS) up -d
+
+.PHONY: stop-redis
+stop-redis:
+	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} $(COMPOSE_REDIS) down
+
+.PHONY: run-nats
+run-nats: stop-nats
+	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} $(COMPOSE_NATS) up -d
+
+.PHONY: stop-nats
+stop-nats:
+	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} $(COMPOSE_NATS) down
 
 .PHONY: docker-unit-tests
 docker-unit-tests: create-network
@@ -214,15 +220,15 @@ stack-up: create-network do-login
 		echo "BOTRUNNER_IMAGE=$(BOTRUNNER_IMAGE)" >> .env && \
 		echo "TIMER_IMAGE=$(TIMER_IMAGE)" >> .env && \
 		echo "PROJECT_ROOT=$(PWD)" >> .env && \
-		docker-compose up -d
+		$(COMPOSE) up -d
 
 .PHONY: stack-logs
 stack-logs:
-	cd docker && docker-compose logs -f
+	cd docker && $(COMPOSE) logs -f
 
 .PHONY: stack-down
 stack-down:
-	cd docker && docker-compose down
+	cd docker && $(COMPOSE) down
 
 #
 # Usage:
