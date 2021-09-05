@@ -138,7 +138,7 @@ describe('Tests: Game APIs', () => {
     expect(startedGame.minPlayers).toEqual(3);
     expect(startedGame.maxPlayers).toEqual(9);
     expect(startedGame.gameLength).toEqual(60);
-    expect(startedGame.buyInApproval).toEqual(true);
+    expect(startedGame.buyInApproval).toEqual(false);
     expect(startedGame.breakLength).toEqual(20);
     expect(startedGame.autoKickAfterBreak).toEqual(true);
     expect(startedGame.waitForBigBlind).toEqual(true);
@@ -174,7 +174,7 @@ describe('Tests: Game APIs', () => {
     expect(startedGame.minPlayers).toEqual(3);
     expect(startedGame.maxPlayers).toEqual(9);
     expect(startedGame.gameLength).toEqual(60);
-    expect(startedGame.buyInApproval).toEqual(true);
+    expect(startedGame.buyInApproval).toEqual(false);
     expect(startedGame.breakLength).toEqual(20);
     expect(startedGame.autoKickAfterBreak).toEqual(true);
     expect(startedGame.waitForBigBlind).toEqual(true);

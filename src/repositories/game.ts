@@ -847,7 +847,7 @@ class GameRepositoryImpl {
     game: PokerGame,
     ip: string,
     location: any
-  ): Promise<boolean> {
+  ): Promise<PlayerStatus> {
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
     const rows = await playerGameTrackerRepository
@@ -924,7 +924,7 @@ class GameRepositoryImpl {
       await nextHandUpdatesRepository.delete({id: nextHandUpdate.id});
     }
     await this.restartGameIfNeeded(game, true, false);
-    return true;
+    return playerInGame.status;
   }
 
   public async restartGameIfNeeded(

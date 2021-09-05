@@ -2511,10 +2511,11 @@ const resolvers: any = {
         }
       }
 
-      return sitBack(ctx.req.playerId, args.gameCode, {
+      const ret = await sitBack(ctx.req.playerId, args.gameCode, {
         ip: ip,
         location: args.location,
       });
+      return PlayerStatus[ret];
     },
     leaveGame: async (parent, args, ctx, info) => {
       return leaveGame(ctx.req.playerId, args.gameCode);

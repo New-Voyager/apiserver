@@ -86,10 +86,6 @@ docker-build-test:
 up: create-network
 	docker-compose up
 
-# .PHONY: run-pg
-# run-pg:
-# 	npx yarn run-pg
-
 .PHONY: debug
 debug: watch-localhost-debug
 
@@ -141,6 +137,10 @@ publish-3rdparty:
 	docker tag postgres:${POSTGRES_VERSION} ${REGISTRY}/postgres:${POSTGRES_VERSION}
 	docker push ${REGISTRY}/postgres:${POSTGRES_VERSION}
 
+.PHONY: run-pg
+run-pg: 
+	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-pg.yaml up -d
+
 run-redis:
 	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-redis.yaml up -d
 
@@ -175,7 +175,7 @@ docker-script-tests: create-network run-redis
 		api-server-test sh -c "sh ./run_script_tests.sh"
 
 .PHONY: docker-tests
-docker-tests: create-network run-redis run-nats
+docker-tests: create-network run-redis run-nats run-pg
 	docker run -t --rm \
 		--name api-server-test \
 		--network $(DEFAULT_DOCKER_NET) \
@@ -187,11 +187,6 @@ docker-tests: create-network run-redis run-nats
 .PHONY: stop-pg
 stop-pg: 
 	docker rm -f apiserver_mydb_1 || true
-
-.PHONY: run-pg
-run-pg: 
-	docker rm -f apiserver_mydb_1 || true
-	docker-compose -f docker-compose-pg.yaml up --detach 
 
 .PHONY: run-all
 run-all: create-network run-pg run-nats run-redis
