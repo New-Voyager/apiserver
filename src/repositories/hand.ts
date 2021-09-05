@@ -715,25 +715,16 @@ class HandRepositoryImpl {
       let saveResult: any = {};
       saveResult = await getGameManager().transaction(
         async transactionEntityManager => {
-          const pokerGameUpdates = await GameUpdatesRepository.get(
-            game.gameCode
-          );
-
-          if (!pokerGameUpdates) {
-            throw new Error(
-              `Unable to entry in poker game updates repo with game ID ${gameID} while saving hand result`
-            );
-          }
-          if (pokerGameUpdates.lastResultProcessedHand >= handNum) {
+          if (gameUpdates.lastResultProcessedHand >= handNum) {
             // This is a rare condition that could be hit when game server crashes and
             // this function gets called more than once for the same hand.
             // We are just guarding against incrementing some stats multiple times when
             // that happens.
             logger.warn(
-              `Hand result was already processed for game ${gameID} hand ${pokerGameUpdates.lastResultProcessedHand}. Skipping the processing for hand ${handNum}`
+              `Hand result was already processed for game ${gameID} hand ${gameUpdates.lastResultProcessedHand}. Skipping the processing for hand ${handNum}`
             );
             const saveResult: SaveHandResult = {
-              gameCode: pokerGameUpdates.gameCode,
+              gameCode: gameUpdates.gameCode,
               handNum: handNum,
               success: true,
               skipped: true,
@@ -772,7 +763,6 @@ class HandRepositoryImpl {
               })
               .execute();
           }
-          await getHistoryRepository(HandHistory).save(handHistory);
           // update game rake and last hand number
           await GameUpdatesRepository.updateHandResult(
             game,
@@ -780,6 +770,9 @@ class HandRepositoryImpl {
             handRake,
             transactionEntityManager
           );
+
+          // goes to different database (history)
+          await getHistoryRepository(HandHistory).save(handHistory);
           const saveResult: SaveHandResult = {
             gameCode: game.gameCode,
             handNum: result.handNum,
@@ -888,9 +881,11 @@ class HandRepositoryImpl {
       );
       // new high hand winners
       // get the game codes associated with the reward tracking id
-      const games = await getGameRepository(GameReward).find({
-        rewardTrackingId: {id: highhandWinners.rewardTrackingId},
-      });
+      const games = await transactionEntityManager
+        .getRepository(GameReward)
+        .find({
+          rewardTrackingId: {id: highhandWinners.rewardTrackingId},
+        });
       const gameCodes = games.map(e => e.gameCode);
       saveResult.highHand = {
         gameCode: game.gameCode,
@@ -913,6 +908,7 @@ class HandRepositoryImpl {
       );
     }
   }
+
   private async getSummary2(
     noCards: number,
     playersInHand: any,

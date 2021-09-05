@@ -303,11 +303,15 @@ class RewardRepositoryImpl {
         let gameHighHandRank = game.highHandRank;
         if (gameHighHandRank === 0) {
           if (gameTracking) {
-            gameHighHandRank = await this.getGameHighHandWithoutReward(game);
+            gameHighHandRank = await this.getGameHighHandWithoutReward(
+              game,
+              transactionManager
+            );
           } else {
             gameHighHandRank = await this.getGameHighHand(
               game,
-              existingRewardTracking.reward.id
+              existingRewardTracking.reward.id,
+              transactionManager
             );
           }
         }
@@ -372,7 +376,8 @@ class RewardRepositoryImpl {
           highHandRank,
           handTime,
           winner,
-          existingRewardTracking?.reward
+          existingRewardTracking?.reward,
+          transactionManager
         );
         logger.debug(
           `In RewardRepository.handleHighHand (game ${gameInput.gameCode}) 2.3`
@@ -564,9 +569,16 @@ class RewardRepositoryImpl {
 
   public async getGameHighHand(
     game: PokerGame,
-    rewardId: number
+    rewardId: number,
+    transactionManager?: EntityManager
   ): Promise<number> {
-    const highHandRepo = getGameRepository(HighHand);
+    let highHandRepo: Repository<HighHand>;
+    if (transactionManager) {
+      highHandRepo = transactionManager.getRepository(HighHand);
+    } else {
+      highHandRepo = getGameRepository(HighHand);
+    }
+
     const gameHighHands = await highHandRepo.find({
       where: {gameId: game.id, rewardId: rewardId},
       order: {handTime: 'DESC'},
@@ -578,8 +590,17 @@ class RewardRepositoryImpl {
     return 0xffffffff;
   }
 
-  public async getGameHighHandWithoutReward(game: PokerGame): Promise<number> {
-    const highHandRepo = getGameRepository(HighHand);
+  public async getGameHighHandWithoutReward(
+    game: PokerGame,
+    transactionManager?: EntityManager
+  ): Promise<number> {
+    let highHandRepo: Repository<HighHand>;
+    if (transactionManager) {
+      highHandRepo = transactionManager.getRepository(HighHand);
+    } else {
+      highHandRepo = getGameRepository(HighHand);
+    }
+
     const gameHighHands = await highHandRepo.find({
       where: {gameId: game.id},
       order: {handTime: 'DESC'},

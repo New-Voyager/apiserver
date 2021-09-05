@@ -1,7 +1,7 @@
 version: '3'
 services:
   mydb:
-    image: postgres
+    image: ${POSTGRES_IMAGE}
     volumes:
       - db-data:/var/lib/postgresql/data
     ports:
@@ -9,6 +9,11 @@ services:
     environment:
       POSTGRES_USER: 'game'
       POSTGRES_PASSWORD: 'game'
+
+networks:
+  default:
+    external:
+      name: ${TEST_DOCKER_NET}
 
 volumes:
   db-data:

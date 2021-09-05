@@ -83,7 +83,7 @@ def setBuildStatus(String message, String state) {
 }
 
 def cleanUpBuild() {
-
+    sh 'make clean-ci'
 }
 
 /*

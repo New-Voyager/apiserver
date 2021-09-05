@@ -1,14 +1,13 @@
 DEFAULT_DOCKER_NET := game
 GCP_PROJECT_ID := voyager-01-285603
 DO_REGISTRY := registry.digitalocean.com/voyager
-GCP_REGISTRY := gcr.io/${GCP_PROJECT_ID}
+GCP_REGISTRY := gcr.io/$(GCP_PROJECT_ID)
 
 POSTGRES_VERSION := 12.5
-
-DOCKER_BUILDKIT ?= 1
-
 NATS_VERSION := 2.1.7-alpine3.11
 REDIS_VERSION := 6.0.9
+
+DOCKER_BUILDKIT ?= 1
 
 GCR_REGISTRY := gcr.io/voyager-01-285603
 DO_REGISTRY := registry.digitalocean.com/voyager
@@ -19,11 +18,17 @@ GAME_SERVER_IMAGE := $(REGISTRY)/game-server:0.6.24
 BOTRUNNER_IMAGE := $(REGISTRY)/botrunner:0.6.20
 TIMER_IMAGE := $(REGISTRY)/timer:0.5.6
 
-NATS_SERVER_IMAGE := $(REGISTRY)/nats:2.1.7-alpine3.11
-REDIS_IMAGE := $(REGISTRY)/redis:6.0.9
-POSTGRES_IMAGE := $(REGISTRY)/postgres:12.5
+NATS_SERVER_IMAGE := $(REGISTRY)/nats:$(NATS_VERSION)
+REDIS_IMAGE := $(REGISTRY)/redis:$(REDIS_VERSION)
+POSTGRES_IMAGE := $(REGISTRY)/postgres:$(POSTGRES_VERSION)
 
 API_SERVER_URL = http://192.168.1.104:9501
+
+COMPOSE_PROJECT_NAME := apiserver
+COMPOSE := docker-compose -p $(COMPOSE_PROJECT_NAME)
+COMPOSE_REDIS := docker-compose -p $(COMPOSE_PROJECT_NAME) -f docker-compose-redis.yaml
+COMPOSE_NATS := docker-compose -p $(COMPOSE_PROJECT_NAME) -f docker-compose-nats.yaml
+COMPOSE_PG := docker-compose -p $(COMPOSE_PROJECT_NAME) -f docker-compose-pg.yaml
 
 ifeq ($(OS), Windows_NT)
 	BUILD_NO := $(file < build_number.txt)
@@ -45,7 +50,7 @@ clean:
 	rm -rf node_modules
 
 .PHONY: tests
-tests: run-redis run-nats
+tests: run-redis run-nats run-pg
 	./run_system_tests.sh
 
 .PHONY: unit-tests
@@ -84,11 +89,7 @@ docker-build-test:
 
 .PHONY: up
 up: create-network
-	docker-compose up
-
-# .PHONY: run-pg
-# run-pg:
-# 	npx yarn run-pg
+	$(COMPOSE) up
 
 .PHONY: debug
 debug: watch-localhost-debug
@@ -97,8 +98,8 @@ debug: watch-localhost-debug
 watch-localhost-debug:
 	npx yarn watch-localhost-debug
 
-.PHONY: publish
-publish: gcp-publish
+.PHONY: login
+login: gcp-login
 
 .PHONY: do-login
 do-login:
@@ -108,20 +109,23 @@ do-login:
 gcp-login:
 	@cat gcp_dev_image_push.json | docker login -u _json_key --password-stdin https://gcr.io
 
+.PHONY: publish
+publish: gcp-publish
+
 .PHONY: do-publish
-do-publish: export REGISTRY=${DO_REGISTRY}
+do-publish: export REGISTRY=$(DO_REGISTRY)
 do-publish: do-login publish-apiserver
 
 .PHONY: do-publish-all
-do-publish-all: export REGISTRY=${DO_REGISTRY}
+do-publish-all: export REGISTRY=$(DO_REGISTRY)
 do-publish-all: do-login publish-all
 
 .PHONY: gcp-publish
-gcp-publish: export REGISTRY=${GCP_REGISTRY}
+gcp-publish: export REGISTRY=$(GCP_REGISTRY)
 gcp-publish: gcp-login publish-apiserver
 
 .PHONY: gcp-publish-all
-gcp-publish-all: export REGISTRY=${GCP_REGISTRY}
+gcp-publish-all: export REGISTRY=$(GCP_REGISTRY)
 gcp-publish-all: gcp-login publish-all
 
 .PHONY: publish-all
@@ -129,32 +133,51 @@ publish-all: publish-apiserver publish-3rdparty
 
 .PHONY: publish-apiserver
 publish-apiserver:
-	docker tag api-server ${REGISTRY}/api-server:$(BUILD_NO)
-	docker tag api-server ${REGISTRY}/api-server:latest
-	docker push ${REGISTRY}/api-server:$(BUILD_NO)
-	docker push ${REGISTRY}/api-server:latest
+	docker tag api-server $(REGISTRY)/api-server:$(BUILD_NO)
+	docker tag api-server $(REGISTRY)/api-server:latest
+	docker push $(REGISTRY)/api-server:$(BUILD_NO)
+	docker push $(REGISTRY)/api-server:latest
 
 .PHONY: publish-3rdparty
 publish-3rdparty:
 	# publish 3rd-party images so that we don't have to pull from the docker hub
-	docker pull postgres:${POSTGRES_VERSION}
-	docker tag postgres:${POSTGRES_VERSION} ${REGISTRY}/postgres:${POSTGRES_VERSION}
-	docker push ${REGISTRY}/postgres:${POSTGRES_VERSION}
+	docker pull postgres:$(POSTGRES_VERSION)
+	docker tag postgres:$(POSTGRES_VERSION) $(REGISTRY)/postgres:$(POSTGRES_VERSION)
+	docker push $(REGISTRY)/postgres:$(POSTGRES_VERSION)
 
-run-redis:
-	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-redis.yaml up -d
+.PHONY: generate-env
+generate-env:
+	> .env && \
+	echo "NATS_SERVER_IMAGE=$(NATS_SERVER_IMAGE)" >> .env && \
+	echo "REDIS_IMAGE=$(REDIS_IMAGE)" >> .env && \
+	echo "POSTGRES_IMAGE=$(POSTGRES_IMAGE)" >> .env && \
+	echo "PROJECT_ROOT=$(PWD)" >> .env
 
+.PHONY: run-pg
+run-pg: stop-pg generate-env
+	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_PG) up -d
+
+.PHONY: stop-pg
+stop-pg:
+	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_PG) down
+
+run-redis: stop-redis generate-env
+	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_REDIS) up -d
+
+.PHONY: stop-redis
 stop-redis:
-	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-redis.yaml down
+	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_REDIS) down
 
-run-nats:
-	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-nats.yaml up -d
+.PHONY: run-nats
+run-nats: stop-nats generate-env
+	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_NATS) up -d
 
+.PHONY: stop-nats
 stop-nats:
-	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-nats.yaml down
+	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_NATS) down
 
 .PHONY: docker-unit-tests
-docker-unit-tests: create-network run-redis
+docker-unit-tests: create-network
 	docker run -t --rm \
 		--name api-server \
 		--network $(DEFAULT_DOCKER_NET) \
@@ -175,23 +198,16 @@ docker-script-tests: create-network run-redis
 		api-server-test sh -c "sh ./run_script_tests.sh"
 
 .PHONY: docker-tests
-docker-tests: create-network run-redis run-nats
+docker-tests: create-network run-redis run-nats run-pg
 	docker run -t --rm \
 		--name api-server-test \
 		--network $(DEFAULT_DOCKER_NET) \
 		-e REDIS_HOST=redis \
 		-e REDIS_PORT=6379 \
 		-e REDIS_DB=0 \
+		-e NATS_URL=nats://nats:4222 \
+		-e POSTGRES_HOST=mydb \
 		api-server-test sh -c "sh ./run_system_tests.sh"
-
-.PHONY: stop-pg
-stop-pg: 
-	docker rm -f apiserver_mydb_1 || true
-
-.PHONY: run-pg
-run-pg: 
-	docker rm -f apiserver_mydb_1 || true
-	docker-compose -f docker-compose-pg.yaml up --detach 
 
 .PHONY: run-all
 run-all: create-network run-pg run-nats run-redis
@@ -201,11 +217,11 @@ run-all: create-network run-pg run-nats run-redis
 stop-all: stop-pg stop-nats stop-redis
 	echo 'All services are stopped'
 
-.PHONY: stack-up
-stack-up: create-network do-login
+.PHONY: stack-generate-env
+stack-generate-env:
 	cd docker && \
 		> .env && \
-		echo "API_SERVER_URL=${API_SERVER_URL}" >> .env && \
+		echo "API_SERVER_URL=$(API_SERVER_URL)" >> .env && \
 		echo "API_SERVER_IMAGE=$(API_SERVER_IMAGE)" >> .env && \
 		echo "GAME_SERVER_IMAGE=$(GAME_SERVER_IMAGE)" >> .env && \
 		echo "NATS_SERVER_IMAGE=$(NATS_SERVER_IMAGE)" >> .env && \
@@ -213,16 +229,19 @@ stack-up: create-network do-login
 		echo "POSTGRES_IMAGE=$(POSTGRES_IMAGE)" >> .env && \
 		echo "BOTRUNNER_IMAGE=$(BOTRUNNER_IMAGE)" >> .env && \
 		echo "TIMER_IMAGE=$(TIMER_IMAGE)" >> .env && \
-		echo "PROJECT_ROOT=$(PWD)" >> .env && \
-		docker-compose up -d
+		echo "PROJECT_ROOT=$(PWD)" >> .env
+
+.PHONY: stack-up
+stack-up: create-network login stack-generate-env
+		$(COMPOSE) up -d
 
 .PHONY: stack-logs
 stack-logs:
-	cd docker && docker-compose logs -f
+	cd docker && $(COMPOSE) logs -f
 
 .PHONY: stack-down
-stack-down:
-	cd docker && docker-compose down
+stack-down: create-network
+	cd docker && $(COMPOSE) down --remove-orphans
 
 #
 # Usage:
@@ -243,3 +262,6 @@ simple-game:
 
 reset-db:
 	curl -X POST -v  -H 'Content-Type: application/json' -d '{"query":"mutation {resetDB}"}' http://localhost:9501/graphql
+
+.PHONY: clean-ci
+clean-ci: stop-nats stop-redis stop-pg
