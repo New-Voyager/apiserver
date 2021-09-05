@@ -881,9 +881,11 @@ class HandRepositoryImpl {
       );
       // new high hand winners
       // get the game codes associated with the reward tracking id
-      const games = await getGameRepository(GameReward).find({
-        rewardTrackingId: {id: highhandWinners.rewardTrackingId},
-      });
+      const games = await transactionEntityManager
+        .getRepository(GameReward)
+        .find({
+          rewardTrackingId: {id: highhandWinners.rewardTrackingId},
+        });
       const gameCodes = games.map(e => e.gameCode);
       saveResult.highHand = {
         gameCode: game.gameCode,
@@ -906,6 +908,7 @@ class HandRepositoryImpl {
       );
     }
   }
+
   private async getSummary2(
     noCards: number,
     playersInHand: any,
