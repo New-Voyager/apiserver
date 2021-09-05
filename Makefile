@@ -154,7 +154,7 @@ stop-nats:
 	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-nats.yaml down
 
 .PHONY: docker-unit-tests
-docker-unit-tests: create-network run-redis
+docker-unit-tests: create-network 
 	docker run -t --rm \
 		--name api-server \
 		--network $(DEFAULT_DOCKER_NET) \
