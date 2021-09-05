@@ -82,3 +82,53 @@ Open the browser and try http://localhost:9501/graphql. You should see the Graph
 
 To bring down the stack.
   make stack-down
+
+
+Sample GQL queries
+```
+query games {
+  liveGames {
+    gameCode
+    gameType
+    clubName
+    buyInMin
+    buyInMax
+    smallBlind
+    bigBlind
+    maxPlayers
+    elapsedTime
+    waitlistCount
+    isTableFull
+  }
+  pastGames {
+    clubCode
+    clubName
+    gameCode
+    smallBlind
+    bigBlind
+    gameType
+    startedBy
+    startedAt
+    endedAt
+    endedBy
+    runTime
+    smallBlind
+    bigBlind
+    endedAt
+    startedAt
+    handsDealt
+    handsPlayed
+    sessionTime
+    stack
+    buyIn
+    balance
+  }
+}
+```
+
+Authorization Header
+```
+{
+  "Authorization": "Bearer c2dc2c3d-13da-46cc-8c66-caa0c77459de"
+}
+```
