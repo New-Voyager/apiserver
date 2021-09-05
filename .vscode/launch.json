@@ -42,6 +42,24 @@
       }
     },
     {
+      "name": "Watch Localhost debug",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "watch-localhost-debug"],
+      "port": 9235,
+      "outputCapture": "std",
+      "console": "internalConsole",
+      "env": {
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_USER": "game",
+        "POSTGRES_PASSWORD": "game",
+        "POSTGRES_DB": "game"
+      }
+    },
+    {
       "name": "Run prod",
       "type": "node",
       "request": "launch",
@@ -123,8 +141,9 @@
         "--inspect-brk",
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
+        "./tests",
         "--testNamePattern",
-        "approve buyIn for a club game"
+        "sit back after break"
       ],
       "env": {
         "NODE_ENV": "test",
@@ -144,7 +163,7 @@
         "--runInBand",
         "./unit-tests",
         "--testNamePattern",
-        "gamesettings: update game settings"
+        "AppCoin: host buys coins after warning"
       ],
       "env": {
         "NODE_ENV": "test",

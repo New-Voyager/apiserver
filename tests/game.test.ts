@@ -30,7 +30,7 @@ const holdemGameInput = {
   minPlayers: 3,
   maxPlayers: 9,
   gameLength: 60,
-  buyInApproval: true,
+  buyInApproval: false,
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,

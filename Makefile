@@ -45,7 +45,7 @@ clean:
 	rm -rf node_modules
 
 .PHONY: tests
-tests: run-redis run-nats
+tests: run-redis run-nats run-pg
 	./run_system_tests.sh
 
 .PHONY: unit-tests

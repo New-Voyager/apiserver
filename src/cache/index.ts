@@ -557,6 +557,7 @@ class GameCache {
       unitTestCache = {};
       return;
     }
+    initializeRedis();
     return new Promise(async (resolve, reject) => {
       client.flushall((err, succeeded) => {
         console.log(succeeded);
