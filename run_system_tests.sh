@@ -5,7 +5,7 @@ set -eo pipefail
 PORT_NUMBER=9501
 
 echo "Starting test server in background"
-npx yarn int-test-server &
+npx yarn int-server &
 TEST_SERVER_PID=$!
 
 echo "Test server PID: ${TEST_SERVER_PID}"
