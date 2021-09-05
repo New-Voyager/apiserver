@@ -138,23 +138,30 @@ publish-3rdparty:
 	docker push ${REGISTRY}/postgres:${POSTGRES_VERSION}
 
 .PHONY: run-pg
-run-pg: 
+run-pg: stop-pg
 	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-pg.yaml up -d
 
-run-redis:
+run-redis: stop-redis
 	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-redis.yaml up -d
 
+.PHONY: stop-redis
 stop-redis:
 	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-redis.yaml down
 
-run-nats:
+.PHONY: run-nats
+run-nats: stop-nats
 	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-nats.yaml up -d
 
+.PHONY: stop-nats
 stop-nats:
 	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-nats.yaml down
 
+.PHONY: stop-pg
+stop-pg:
+	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} docker-compose -f docker-compose-pg.yaml down
+
 .PHONY: docker-unit-tests
-docker-unit-tests: create-network 
+docker-unit-tests: create-network
 	docker run -t --rm \
 		--name api-server \
 		--network $(DEFAULT_DOCKER_NET) \
@@ -185,10 +192,6 @@ docker-tests: create-network run-redis run-nats run-pg
 		-e NATS_URL=nats://nats:4222 \
 		-e POSTGRES_HOST=mydb \
 		api-server-test sh -c "sh ./run_system_tests.sh"
-
-.PHONY: stop-pg
-stop-pg: 
-	docker rm -f apiserver_mydb_1 || true
 
 .PHONY: run-all
 run-all: create-network run-pg run-nats run-redis
