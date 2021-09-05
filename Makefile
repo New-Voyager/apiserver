@@ -99,8 +99,8 @@ debug: watch-localhost-debug
 watch-localhost-debug:
 	npx yarn watch-localhost-debug
 
-.PHONY: publish
-publish: gcp-publish
+.PHONY: login
+login: gcp-login
 
 .PHONY: do-login
 do-login:
@@ -109,6 +109,9 @@ do-login:
 .PHONY: gcp-login
 gcp-login:
 	@cat gcp_dev_image_push.json | docker login -u _json_key --password-stdin https://gcr.io
+
+.PHONY: publish
+publish: gcp-publish
 
 .PHONY: do-publish
 do-publish: export REGISTRY=$(DO_REGISTRY)
@@ -208,7 +211,7 @@ stop-all: stop-pg stop-nats stop-redis
 	echo 'All services are stopped'
 
 .PHONY: stack-up
-stack-up: create-network do-login
+stack-up: create-network login
 	cd docker && \
 		> .env && \
 		echo "API_SERVER_URL=$(API_SERVER_URL)" >> .env && \
@@ -227,7 +230,7 @@ stack-logs:
 	cd docker && $(COMPOSE) logs -f
 
 .PHONY: stack-down
-stack-down:
+stack-down: create-network
 	cd docker && $(COMPOSE) down
 
 .PHONY: clean-ci
