@@ -1,7 +1,7 @@
 DEFAULT_DOCKER_NET := game
 GCP_PROJECT_ID := voyager-01-285603
 DO_REGISTRY := registry.digitalocean.com/voyager
-GCP_REGISTRY := gcr.io/${GCP_PROJECT_ID}
+GCP_REGISTRY := gcr.io/$(GCP_PROJECT_ID)
 
 POSTGRES_VERSION := 12.5
 
@@ -111,19 +111,19 @@ gcp-login:
 	@cat gcp_dev_image_push.json | docker login -u _json_key --password-stdin https://gcr.io
 
 .PHONY: do-publish
-do-publish: export REGISTRY=${DO_REGISTRY}
+do-publish: export REGISTRY=$(DO_REGISTRY)
 do-publish: do-login publish-apiserver
 
 .PHONY: do-publish-all
-do-publish-all: export REGISTRY=${DO_REGISTRY}
+do-publish-all: export REGISTRY=$(DO_REGISTRY)
 do-publish-all: do-login publish-all
 
 .PHONY: gcp-publish
-gcp-publish: export REGISTRY=${GCP_REGISTRY}
+gcp-publish: export REGISTRY=$(GCP_REGISTRY)
 gcp-publish: gcp-login publish-apiserver
 
 .PHONY: gcp-publish-all
-gcp-publish-all: export REGISTRY=${GCP_REGISTRY}
+gcp-publish-all: export REGISTRY=$(GCP_REGISTRY)
 gcp-publish-all: gcp-login publish-all
 
 .PHONY: publish-all
@@ -131,40 +131,40 @@ publish-all: publish-apiserver publish-3rdparty
 
 .PHONY: publish-apiserver
 publish-apiserver:
-	docker tag api-server ${REGISTRY}/api-server:$(BUILD_NO)
-	docker tag api-server ${REGISTRY}/api-server:latest
-	docker push ${REGISTRY}/api-server:$(BUILD_NO)
-	docker push ${REGISTRY}/api-server:latest
+	docker tag api-server $(REGISTRY)/api-server:$(BUILD_NO)
+	docker tag api-server $(REGISTRY)/api-server:latest
+	docker push $(REGISTRY)/api-server:$(BUILD_NO)
+	docker push $(REGISTRY)/api-server:latest
 
 .PHONY: publish-3rdparty
 publish-3rdparty:
 	# publish 3rd-party images so that we don't have to pull from the docker hub
-	docker pull postgres:${POSTGRES_VERSION}
-	docker tag postgres:${POSTGRES_VERSION} ${REGISTRY}/postgres:${POSTGRES_VERSION}
-	docker push ${REGISTRY}/postgres:${POSTGRES_VERSION}
+	docker pull postgres:$(POSTGRES_VERSION)
+	docker tag postgres:$(POSTGRES_VERSION) $(REGISTRY)/postgres:$(POSTGRES_VERSION)
+	docker push $(REGISTRY)/postgres:$(POSTGRES_VERSION)
 
 .PHONY: run-pg
 run-pg: stop-pg
-	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} $(COMPOSE_PG) up -d
+	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_PG) up -d
 
 .PHONY: stop-pg
 stop-pg:
-	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} $(COMPOSE_PG) down
+	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_PG) down
 
 run-redis: stop-redis
-	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} $(COMPOSE_REDIS) up -d
+	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_REDIS) up -d
 
 .PHONY: stop-redis
 stop-redis:
-	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} $(COMPOSE_REDIS) down
+	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_REDIS) down
 
 .PHONY: run-nats
 run-nats: stop-nats
-	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} $(COMPOSE_NATS) up -d
+	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_NATS) up -d
 
 .PHONY: stop-nats
 stop-nats:
-	TEST_DOCKER_NET=${DEFAULT_DOCKER_NET} $(COMPOSE_NATS) down
+	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_NATS) down
 
 .PHONY: docker-unit-tests
 docker-unit-tests: create-network
@@ -211,7 +211,7 @@ stop-all: stop-pg stop-nats stop-redis
 stack-up: create-network do-login
 	cd docker && \
 		> .env && \
-		echo "API_SERVER_URL=${API_SERVER_URL}" >> .env && \
+		echo "API_SERVER_URL=$(API_SERVER_URL)" >> .env && \
 		echo "API_SERVER_IMAGE=$(API_SERVER_IMAGE)" >> .env && \
 		echo "GAME_SERVER_IMAGE=$(GAME_SERVER_IMAGE)" >> .env && \
 		echo "NATS_SERVER_IMAGE=$(NATS_SERVER_IMAGE)" >> .env && \
