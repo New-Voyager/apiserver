@@ -182,6 +182,8 @@ docker-tests: create-network run-redis run-nats run-pg
 		-e REDIS_HOST=redis \
 		-e REDIS_PORT=6379 \
 		-e REDIS_DB=0 \
+		-e NATS_URL=nats://nats:4222 \
+		-e POSTGRES_HOST=postgres \
 		api-server-test sh -c "sh ./run_system_tests.sh"
 
 .PHONY: stop-pg
