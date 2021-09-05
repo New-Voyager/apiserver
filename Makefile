@@ -4,11 +4,10 @@ DO_REGISTRY := registry.digitalocean.com/voyager
 GCP_REGISTRY := gcr.io/$(GCP_PROJECT_ID)
 
 POSTGRES_VERSION := 12.5
-
-DOCKER_BUILDKIT ?= 1
-
 NATS_VERSION := 2.1.7-alpine3.11
 REDIS_VERSION := 6.0.9
+
+DOCKER_BUILDKIT ?= 1
 
 GCR_REGISTRY := gcr.io/voyager-01-285603
 DO_REGISTRY := registry.digitalocean.com/voyager
@@ -19,9 +18,9 @@ GAME_SERVER_IMAGE := $(REGISTRY)/game-server:0.6.24
 BOTRUNNER_IMAGE := $(REGISTRY)/botrunner:0.6.20
 TIMER_IMAGE := $(REGISTRY)/timer:0.5.6
 
-NATS_SERVER_IMAGE := $(REGISTRY)/nats:2.1.7-alpine3.11
-REDIS_IMAGE := $(REGISTRY)/redis:6.0.9
-POSTGRES_IMAGE := $(REGISTRY)/postgres:12.5
+NATS_SERVER_IMAGE := $(REGISTRY)/nats:$(NATS_VERSION)
+REDIS_IMAGE := $(REGISTRY)/redis:$(REDIS_VERSION)
+POSTGRES_IMAGE := $(REGISTRY)/postgres:$(POSTGRES_VERSION)
 
 API_SERVER_URL = http://192.168.1.104:9501
 
@@ -146,15 +145,23 @@ publish-3rdparty:
 	docker tag postgres:$(POSTGRES_VERSION) $(REGISTRY)/postgres:$(POSTGRES_VERSION)
 	docker push $(REGISTRY)/postgres:$(POSTGRES_VERSION)
 
+.PHONY: generate-env
+generate-env:
+	> .env && \
+	echo "NATS_SERVER_IMAGE=$(NATS_SERVER_IMAGE)" >> .env && \
+	echo "REDIS_IMAGE=$(REDIS_IMAGE)" >> .env && \
+	echo "POSTGRES_IMAGE=$(POSTGRES_IMAGE)" >> .env && \
+	echo "PROJECT_ROOT=$(PWD)" >> .env
+
 .PHONY: run-pg
-run-pg: stop-pg
+run-pg: stop-pg generate-env
 	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_PG) up -d
 
 .PHONY: stop-pg
 stop-pg:
 	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_PG) down
 
-run-redis: stop-redis
+run-redis: stop-redis generate-env
 	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_REDIS) up -d
 
 .PHONY: stop-redis
@@ -162,7 +169,7 @@ stop-redis:
 	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_REDIS) down
 
 .PHONY: run-nats
-run-nats: stop-nats
+run-nats: stop-nats generate-env
 	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_NATS) up -d
 
 .PHONY: stop-nats
@@ -210,8 +217,8 @@ run-all: create-network run-pg run-nats run-redis
 stop-all: stop-pg stop-nats stop-redis
 	echo 'All services are stopped'
 
-.PHONY: stack-up
-stack-up: create-network login
+.PHONY: stack-generate-env
+stack-generate-env:
 	cd docker && \
 		> .env && \
 		echo "API_SERVER_URL=$(API_SERVER_URL)" >> .env && \
@@ -222,7 +229,10 @@ stack-up: create-network login
 		echo "POSTGRES_IMAGE=$(POSTGRES_IMAGE)" >> .env && \
 		echo "BOTRUNNER_IMAGE=$(BOTRUNNER_IMAGE)" >> .env && \
 		echo "TIMER_IMAGE=$(TIMER_IMAGE)" >> .env && \
-		echo "PROJECT_ROOT=$(PWD)" >> .env && \
+		echo "PROJECT_ROOT=$(PWD)" >> .env
+
+.PHONY: stack-up
+stack-up: create-network login stack-generate-env
 		$(COMPOSE) up -d
 
 .PHONY: stack-logs
@@ -231,10 +241,7 @@ stack-logs:
 
 .PHONY: stack-down
 stack-down: create-network
-	cd docker && $(COMPOSE) down
-
-.PHONY: clean-ci
-clean-ci: stop-nats stop-redis stop-pg
+	cd docker && $(COMPOSE) down --remove-orphans
 
 #
 # Usage:
@@ -255,3 +262,6 @@ simple-game:
 
 reset-db:
 	curl -X POST -v  -H 'Content-Type: application/json' -d '{"query":"mutation {resetDB}"}' http://localhost:9501/graphql
+
+.PHONY: clean-ci
+clean-ci: stop-nats stop-redis stop-pg
