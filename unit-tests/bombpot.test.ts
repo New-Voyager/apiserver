@@ -183,9 +183,9 @@ describe('Game APIs', () => {
       clubCode,
       playerUuids,
       100,
-      holdemGameInput,
+      holdemGameInput
     );
-    
+
     const game = await Cache.getGame(gameCode);
 
     // get next hand information
@@ -232,6 +232,6 @@ describe('Game APIs', () => {
     expect(ret.bombPot).toEqual(true);
     expect(ret.doubleBoardBombPot).toEqual(true);
     expect(ret.bombPotBet).toEqual(5);
-  });  
+  });
 });
 

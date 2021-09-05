@@ -85,7 +85,6 @@ class MoveToNextHand {
   private bombPotThisHand: boolean;
   private missedBlinds: Array<number>;
   private postedBlinds: Array<number>;
-  private lastBombPotTime: Date | null;
 
   constructor(game: PokerGame, handNum: number) {
     this.game = game;
@@ -102,7 +101,6 @@ class MoveToNextHand {
     this.bombPotThisHand = false;
     this.playersInSeats = {};
     this.postedBlinds = new Array<number>();
-    this.lastBombPotTime = null;
   }
 
   public getGameCode(): string {
@@ -214,7 +212,7 @@ class MoveToNextHand {
           calculateButtonPos: true, // calculate button position for next hand
         };
         if (this.bombPotThisHand) {
-          setProps['lastBombPotTime'] = this.lastBombPotTime;
+          setProps['lastBombPotTime'] = new Date();
         }
         const gameUpdatesRepo = transactionEntityManager.getRepository(
           PokerGameUpdates
@@ -512,19 +510,18 @@ class MoveToNextHand {
     if (!this.gameSettings.bombPotEnabled) {
       return;
     }
-    this.lastBombPotTime = new Date();
-    const now = new Date();
-    const intervalInMs = this.gameSettings.bombPotInterval * 1000;
-    const nextBombPotTime = new Date(
-      this.gameUpdate.lastBombPotTime.getTime() + intervalInMs
-    );
-    logger.debug(
-      `Next bomb time: ${nextBombPotTime.toISOString()} now: ${now.toISOString()}`
-    );
-
     if (this.handNum === 1) {
       this.bombPotThisHand = true;
+      this.gameUpdate.lastBombPotTime = new Date();
     } else {
+      const now = new Date();
+      const intervalInMs = this.gameSettings.bombPotInterval * 1000;
+      const nextBombPotTime = new Date(
+        this.gameUpdate.lastBombPotTime.getTime() + intervalInMs
+      );
+      logger.debug(
+        `Next bomb time: ${nextBombPotTime.toISOString()} now: ${now.toISOString()}`
+      );
       if (now.getTime() > nextBombPotTime.getTime()) {
         logger.debug(`Game: ${this.game.gameCode} Time for next bomb pot`);
         this.bombPotThisHand = true;

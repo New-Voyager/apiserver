@@ -57,6 +57,7 @@ import {createGameServer} from '../src/internal/gameserver';
 
 export async function initializeSqlLite() {
   process.env.DB_USED = 'sqllite';
+  process.env.UNIT_TEST = '1';
   await sqlliteConnection();
 }
 

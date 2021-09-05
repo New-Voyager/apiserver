@@ -209,7 +209,6 @@ describe('Game server APIs', () => {
     });
 
     const game = await configureGameByPlayer(player, holdemGameInput);
-    const server = await getParticularGameServer(game.gameCode);
     expect(game).not.toBeNull();
   });
 });

@@ -49,7 +49,7 @@ tests: run-redis run-nats
 	./run_system_tests.sh
 
 .PHONY: unit-tests
-unit-tests: run-redis
+unit-tests:
 	npx yarn unit-tests
 
 .PHONY: tests-local

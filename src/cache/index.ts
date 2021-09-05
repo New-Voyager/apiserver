@@ -7,35 +7,60 @@ import {
 import {Player} from '@src/entity/player/player';
 import {EntityManager, getRepository, Repository} from 'typeorm';
 import * as redis from 'redis';
-import {redisHost, redisPort, redisUser, redisPassword} from '@src/utils';
+import {
+  redisHost,
+  redisPort,
+  redisUser,
+  redisPassword,
+  isRunningUnitTest,
+} from '@src/utils';
 import {getGameRepository, getUserRepository} from '@src/repositories';
 import {PlayerLocation} from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
 
-interface CachedHighHandTracking {
-  rewardId: number;
-  trackingId: number;
-  gameCodes: Array<string>;
-}
 let client: any;
-
-if (redisUser() || redisPassword()) {
-  const url = `rediss://${redisHost()}:${redisPort()}`;
-  client = redis.createClient(url, {
-    user: redisUser(),
-    password: redisPassword(),
-  });
-  console.log('Successfully connected to redis');
-} else {
-  client = redis.createClient(redisPort(), redisHost());
+interface MemCache {
+  success: boolean;
+  data: string;
 }
-client.on('error', error => {
-  console.log(error);
-  process.exit(0);
-});
+let unitTestCache: {[key: string]: MemCache | undefined} = {};
+
+export function initializeRedis() {
+  if (client !== undefined) {
+    return;
+  }
+  if (isRunningUnitTest()) {
+    return;
+  }
+
+  if (redisUser() || redisPassword()) {
+    const url = `rediss://${redisHost()}:${redisPort()}`;
+    client = redis.createClient(url, {
+      user: redisUser(),
+      password: redisPassword(),
+    });
+    console.log('Successfully connected to redis');
+  } else {
+    client = redis.createClient(redisPort(), redisHost());
+  }
+  client.on('error', error => {
+    console.log(error);
+    throw new Error(error);
+  });
+}
 
 class GameCache {
   public async getCache(key: string) {
+    if (isRunningUnitTest()) {
+      if (!unitTestCache[key]) {
+        return {
+          success: false,
+          data: undefined,
+        };
+      }
+      return unitTestCache[key] as any;
+    }
+
     return new Promise<{success: boolean; data: string}>(
       async (resolve, reject) => {
         try {
@@ -52,6 +77,12 @@ class GameCache {
   }
 
   public async setCache(key: string, value: string) {
+    if (isRunningUnitTest()) {
+      const ret = {success: true, data: value};
+      unitTestCache[key] = ret;
+      return ret;
+    }
+
     return new Promise<{success: boolean}>(async (resolve, reject) => {
       try {
         client.set(key, value, (err: any, object: any) => {
@@ -66,6 +97,12 @@ class GameCache {
   }
 
   public async removeCache(key: string) {
+    if (isRunningUnitTest()) {
+      if (unitTestCache[key]) {
+        unitTestCache[key] = undefined;
+      }
+      return {success: true};
+    }
     return new Promise<{success: boolean}>(async (resolve, reject) => {
       try {
         client.del(key, (err: any, object: any) => {
@@ -82,6 +119,16 @@ class GameCache {
   }
 
   public async scanCache(pattern: string) {
+    if (isRunningUnitTest()) {
+      const keys = new Array<string>();
+      for (const key of Object.keys(unitTestCache)) {
+        if (key.match(pattern)) {
+          keys.push(key);
+        }
+      }
+      return {data: keys};
+    }
+
     return new Promise<{success: boolean; data: any}>(
       async (resolve, reject) => {
         try {
@@ -171,7 +218,7 @@ class GameCache {
   ): Promise<PokerGame> {
     const getResp = await this.getCache(`gameCache-${gameCode}`);
     if (getResp.success && getResp.data && !update) {
-      let ret = JSON.parse(getResp.data) as PokerGame;
+      const ret = JSON.parse(getResp.data) as PokerGame;
       return ret;
     } else {
       let repo: Repository<PokerGame>;
@@ -251,6 +298,13 @@ class GameCache {
           Date.parse(cacheRet.lastIpGpsCheckTime.toString())
         );
       }
+
+      if (cacheRet && cacheRet.lastBombPotTime) {
+        ret.lastBombPotTime = new Date(
+          Date.parse(cacheRet.lastBombPotTime.toString())
+        );
+      }
+
       return ret;
     } else {
       let repo: Repository<PokerGameUpdates>;
@@ -499,6 +553,10 @@ class GameCache {
   }
 
   public reset() {
+    if (isRunningUnitTest()) {
+      unitTestCache = {};
+      return;
+    }
     return new Promise(async (resolve, reject) => {
       client.flushall((err, succeeded) => {
         console.log(succeeded);
