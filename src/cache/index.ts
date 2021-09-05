@@ -17,6 +17,9 @@ import {
 import {getGameRepository, getUserRepository} from '@src/repositories';
 import {PlayerLocation} from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
+import {getLogger, errToLogString} from '@src/utils/log';
+
+const logger = getLogger('cache');
 
 let client: any;
 interface MemCache {
@@ -39,12 +42,12 @@ export function initializeRedis() {
       user: redisUser(),
       password: redisPassword(),
     });
-    console.log('Successfully connected to redis');
+    logger.info('Successfully connected to redis');
   } else {
     client = redis.createClient(redisPort(), redisHost());
   }
   client.on('error', error => {
-    console.log(error);
+    logger.error(`Redis client error: ${error.toString()}}`);
     throw new Error(error);
   });
 }
@@ -61,15 +64,34 @@ class GameCache {
       return unitTestCache[key] as any;
     }
 
+    if (!client) {
+      throw new Error(
+        `GameCache.getCache (key: ${key}) called when redis client is null or undefined`
+      );
+    }
+
     return new Promise<{success: boolean; data: string}>(
       async (resolve, reject) => {
         try {
           client.get(key, (err: any, value: any) => {
-            if (err) resolve({success: false, data: value});
-            resolve({success: true, data: value});
+            if (err) {
+              logger.error(
+                `Error from Redis client.get (key: ${key}): ${errToLogString(
+                  err,
+                  false
+                )}`
+              );
+              resolve({success: false, data: value});
+            } else {
+              resolve({success: true, data: value});
+            }
           });
         } catch (error) {
-          console.log('getCache Handle rejected promise (' + error + ') here.');
+          logger.error(
+            `Error while calling redis client.get (key: ${key}): ${errToLogString(
+              error
+            )}`
+          );
           reject({success: false, data: error});
         }
       }
@@ -83,14 +105,33 @@ class GameCache {
       return ret;
     }
 
+    if (!client) {
+      throw new Error(
+        `GameCache.setCache (key: ${key}) called when redis client is null or undefined`
+      );
+    }
+
     return new Promise<{success: boolean}>(async (resolve, reject) => {
       try {
         client.set(key, value, (err: any, object: any) => {
-          if (err) resolve({success: false});
-          resolve({success: true});
+          if (err) {
+            logger.error(
+              `Error from Redis client.set (key: ${key}): ${errToLogString(
+                err,
+                false
+              )}`
+            );
+            resolve({success: false});
+          } else {
+            resolve({success: true});
+          }
         });
       } catch (error) {
-        console.log('getCache Handle rejected promise (' + error + ') here.');
+        logger.error(
+          `Error while calling redis client.set (key: ${key}): ${errToLogString(
+            error
+          )}`
+        );
         reject({success: false});
       }
     });
@@ -103,15 +144,33 @@ class GameCache {
       }
       return {success: true};
     }
+
+    if (!client) {
+      throw new Error(
+        `GameCache.removeCache (key: ${key}) called when redis client is null or undefined`
+      );
+    }
+
     return new Promise<{success: boolean}>(async (resolve, reject) => {
       try {
         client.del(key, (err: any, object: any) => {
-          if (err) resolve({success: false});
-          resolve({success: true});
+          if (err) {
+            logger.error(
+              `Error from Redis client.del (key: ${key}): ${errToLogString(
+                err,
+                false
+              )}`
+            );
+            resolve({success: false});
+          } else {
+            resolve({success: true});
+          }
         });
       } catch (error) {
-        console.log(
-          'removeCache Handle rejected promise (' + error + ') here.'
+        logger.error(
+          `Error while calling Redis client.del (key: ${key}): ${errToLogString(
+            error
+          )}`
         );
         reject({success: false});
       }
@@ -129,16 +188,28 @@ class GameCache {
       return {data: keys};
     }
 
+    if (!client) {
+      throw new Error(
+        `GameCache.scanCache called when redis client is null or undefined`
+      );
+    }
+
     return new Promise<{success: boolean; data: any}>(
       async (resolve, reject) => {
         try {
           client.keys(pattern, (err: any, reply: any) => {
-            if (err) resolve({success: false, data: err});
-            resolve({success: true, data: reply});
+            if (err) {
+              logger.error(
+                `Error from Redis client.keys: ${errToLogString(err, false)}`
+              );
+              resolve({success: false, data: err});
+            } else {
+              resolve({success: true, data: reply});
+            }
           });
         } catch (error) {
-          console.log(
-            'scanCache Handle rejected promise (' + error + ') here.'
+          logger.error(
+            `Error while calling Redis client.keys: ${errToLogString(error)}`
           );
           reject({success: false, data: error});
         }
@@ -231,7 +302,9 @@ class GameCache {
         where: {gameCode: gameCode},
       });
       if (!game) {
-        throw new Error(`Cannot find with game code: ${gameCode}`);
+        throw new Error(
+          `Cannot find game code [${gameCode}] in poker game repo`
+        );
       }
       await this.updateGameIdGameCodeChange(game.id, game.gameCode);
 
@@ -267,7 +340,9 @@ class GameCache {
         where: {gameCode: gameCode},
       });
       if (!gameSettings) {
-        throw new Error(`Cannot find with game code: ${gameCode}`);
+        throw new Error(
+          `Cannot find with game code [${gameCode}] in poker game settings repo`
+        );
       }
 
       await this.setCache(
@@ -317,7 +392,9 @@ class GameCache {
         where: {gameCode: gameCode},
       });
       if (!gameUpdates) {
-        throw new Error(`Cannot find with game code: ${gameCode}`);
+        throw new Error(
+          `Cannot find with game code [${gameCode}] in poker game updates repo`
+        );
       }
 
       await this.setCache(
@@ -389,7 +466,7 @@ class GameCache {
         where: {clubCode: clubCode},
       });
       if (!club) {
-        throw new Error(`Cannot find with club code: ${clubCode}`);
+        throw new Error(`Cannot find club code [${clubCode}] in club repo`);
       }
 
       await this.setCache(`clubCache-${clubCode}`, JSON.stringify(club));
@@ -413,7 +490,9 @@ class GameCache {
         where: {uuid: playerUuid},
       });
       if (!player) {
-        throw new Error(`Cannot find player: ${playerUuid}`);
+        throw new Error(
+          `Cannot find player uuid [${playerUuid}] in player repo`
+        );
       }
 
       // update player location/ip
@@ -473,7 +552,7 @@ class GameCache {
         where: {id: id},
       });
       if (!player) {
-        throw new Error(`Cannot find player: ${id}`);
+        throw new Error(`Cannot find player id [${id}] in player repo`);
       }
       await this.setCache(`playerCache-${player.uuid}`, JSON.stringify(player));
       await this.setCache(`playerIdCache-${player.id}`, JSON.stringify(player));
@@ -559,9 +638,13 @@ class GameCache {
     }
     initializeRedis();
     return new Promise(async (resolve, reject) => {
-      client.flushall((err, succeeded) => {
-        console.log(succeeded);
-        resolve(true);
+      client.flushall((err: Error, succeeded) => {
+        if (err) {
+          logger.error(`Redis flushall error: ${errToLogString(err, false)}`);
+        } else {
+          logger.info(`Redis flushall succeeded. Result: ${succeeded}`);
+          resolve(true);
+        }
       });
     });
   }

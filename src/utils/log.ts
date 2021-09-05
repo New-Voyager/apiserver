@@ -64,11 +64,16 @@ export function getLogger(name: string): winston.Logger {
   });
 }
 
-export function errToLogString(e: Error): string {
+export function errToLogString(e: Error, includeStack = true): string {
   if (!e) {
-    return 'error undefined';
+    return 'Error object is undefined';
   }
-  return `Error(message: ${e.message}, name: ${
+  let errStr = `Error(message: ${e.message}, name: ${
     e.name
-  }, toString: ${e.toString()}, stack: ${e.stack})`;
+  }, toString: ${e.toString()})`;
+  if (includeStack) {
+    errStr = errStr += `\n${e.stack}`;
+  }
+
+  return errStr;
 }
