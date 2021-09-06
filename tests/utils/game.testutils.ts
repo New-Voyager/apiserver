@@ -384,7 +384,10 @@ export const takeBreakQuery = gql`
 
 export const sitBackQuery = gql`
   mutation($gameCode: String!) {
-    status: sitBack(gameCode: $gameCode)
+    sitBack(gameCode: $gameCode) {
+      status
+      missedBlind
+    }
   }
 `;
 
@@ -770,7 +773,7 @@ export async function sitBack(
   });
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
-  return resp.data.status;
+  return resp.data.status.status;
 }
 
 export async function leaveGame(
