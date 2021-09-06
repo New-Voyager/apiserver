@@ -265,9 +265,21 @@ export async function joinGame(
     logger.debug(
       `Player: ${player.name} isBot: ${player.bot} joined game: ${game.gameCode}`
     );
-    // player is good to go
-    const playerStatus = PlayerStatus[status];
-    return playerStatus;
+
+    const playerInGame = await PlayersInGameRepository.getPlayerInfo(
+      game,
+      player
+    );
+    let resp: any = {};
+    if (playerInGame) {
+      resp.missedBlind = playerInGame.missedBlind;
+      resp.status = PlayerStatus[playerInGame.status];
+      return resp;
+    }
+    return {
+      missedBlind: false,
+      status: PlayerStatus[PlayerStatus.NOT_PLAYING],
+    };
   } catch (err) {
     logger.error(
       `Error while joining game. playerUuid: ${playerUuid}, gameCode: ${gameCode}, seatNo: ${seatNo}, locationCheck: ${JSON.stringify(
@@ -492,9 +504,33 @@ export async function buyIn(
     const status = await buyin.request(amount);
 
     const timeTaken = new Date().getTime() - startTime;
-    logger.debug(`Buyin took ${timeTaken}ms`);
-    // player is good to go
-    return status;
+    logger.info(`Buyin took ${timeTaken}ms`);
+
+    /*
+    type BuyInResponse {
+      missedBlind: Boolean
+      status: PlayerGameStatus
+      approved: Boolean!
+      expireSeconds: Int
+    }*/
+    const playerInGame = await PlayersInGameRepository.getPlayerInfo(
+      game,
+      player
+    );
+    let resp: any = {};
+    if (playerInGame) {
+      resp.missedBlind = playerInGame.missedBlind;
+      resp.status = PlayerStatus[playerInGame.status];
+      resp.approved = status.approved;
+      resp.expireSeconds = status.expireSeconds;
+      return resp;
+    }
+    return {
+      missedBlind: false,
+      status: PlayerStatus[PlayerStatus.NOT_PLAYING],
+      approved: false,
+      expireSeconds: status.expireSeconds,
+    };
   } catch (err) {
     const timeTaken = new Date().getTime() - startTime;
     logger.error(
@@ -1366,8 +1402,21 @@ export async function sitBack(
       ip = locationCheck.ip;
       location = locationCheck.location;
     }
-    const status = await GameRepository.sitBack(player, game, ip, location);
-    return status;
+    await GameRepository.sitBack(player, game, ip, location);
+    const playerInGame = await PlayersInGameRepository.getPlayerInfo(
+      game,
+      player
+    );
+    let resp: any = {};
+    if (playerInGame) {
+      resp.missedBlind = playerInGame.missedBlind;
+      resp.status = PlayerStatus[playerInGame.status];
+      return resp;
+    }
+    return {
+      missedBlind: false,
+      status: PlayerStatus[PlayerStatus.NOT_PLAYING],
+    };
   } catch (err) {
     logger.error(
       `Error while sitting back. playerUuid: ${playerUuid}, gameCode: ${gameCode}, locationCheck: ${JSON.stringify(

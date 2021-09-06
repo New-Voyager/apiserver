@@ -38,7 +38,8 @@
     "stop-redis": "docker-compose -f docker-compose-redis.yaml down",
     "script-tests": "node build/script-tests/testdriver.js ./script-tests/script",
     "copy-files": "npm run copy-google-svc",
-    "copy-google-svc": "mkdir -p build/src/google-services/ && cp src/google-services/* build/src/google-services/"
+    "copy-google-svc": "mkdir -p build/src/google-services/ && cp src/google-services/* build/src/google-services/",
+    "codecov": "nyc --reporter=html --reporter=text NODE_ENV=dev NOTIFY_GAME_SERVER=0 NATS_URL=${NATS_URL:-'nats://localhost:4222'} POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} node -r ts-node/register -r source-map-support/register ./build/index.js"
   },
   "dependencies": {
     "@googleapis/docs": "^0.2.0",
@@ -117,6 +118,7 @@
       "**/apiserver/unit-tests/**",
       "**/apiserver/tests/**"
     ],
-    "all": true
+    "all": true,
+    "check-coverage": true
   }
 }

@@ -485,6 +485,23 @@ input LocationInput {
   long: Float!
 }
 
+type SitBackResponse {
+  missedBlind: Boolean
+  status: PlayerGameStatus
+}
+
+type JoinResponse {
+  missedBlind: Boolean
+  status: PlayerGameStatus
+}
+
+type BuyInResponse {
+  missedBlind: Boolean
+  status: PlayerGameStatus
+  approved: Boolean!
+  expireSeconds: Int
+}
+
 type Mutation {
   # Not implemented
   configureGameFromTemplate(clubCode: String!, templateId: Int!): GameInfo!
@@ -496,9 +513,9 @@ type Mutation {
   # implemented
   configureGame(clubCode: String!, game: GameCreateInput!): GameInfo!
   configureFriendsGame(game: GameCreateInput!): GameInfo!
-  joinGame(gameCode: String!, seatNo: Int!, location: LocationInput): PlayerGameStatus!
+  joinGame(gameCode: String!, seatNo: Int!, location: LocationInput): JoinResponse!
   takeSeat(gameCode: String!, seatNo: Int!, location: LocationInput): SeatInfo!
-  buyIn(gameCode: String!, amount: Float!): BuyInStatus!
+  buyIn(gameCode: String!, amount: Float!): BuyInResponse!
   reload(gameCode: String!, amount: Float!): BuyInStatus!
   approveRequest(
     gameCode: String!, 
@@ -508,7 +525,7 @@ type Mutation {
   ): Boolean!
   startGame(gameCode: String!): GameStatus!
   takeBreak(gameCode: String!): Boolean!
-  sitBack(gameCode: String!, location: LocationInput): PlayerGameStatus!
+  sitBack(gameCode: String!, location: LocationInput): SitBackResponse!
   leaveGame(gameCode: String!): Boolean!
   pauseGame(gameCode: String!): GameStatus!
   endGame(gameCode: String!): GameStatus!
