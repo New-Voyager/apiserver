@@ -1672,7 +1672,7 @@ class GameRepositoryImpl {
 
     const pokerGameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
     const gameSeatInfo = await pokerGameSeatInfoRepo.findOne({
-      gameCode: game.gameCode,
+      gameID: gameID,
     });
 
     const seatStatuses = new Array<SeatStatus>();

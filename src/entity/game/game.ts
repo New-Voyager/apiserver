@@ -109,7 +109,6 @@ export class PokerGameSeatInfo {
   @Column({primary: true, name: 'game_id'})
   public gameID!: number;
 
-  @Index()
   @Column({unique: true, name: 'game_code'})
   public gameCode!: string;
 

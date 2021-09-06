@@ -553,7 +553,7 @@ export async function switchSeatNextHand(
     );
     await gameSeatInfoRepo.update(
       {
-        gameCode: game.gameCode,
+        gameID: game.id,
       },
       gameSeatInfoProps
     );
@@ -570,7 +570,7 @@ export async function switchSeatNextHand(
       gameSeatInfoProps[`seat${seatNo}`] = SeatStatus.RESERVED;
       await gameSeatInfoRepo.update(
         {
-          gameCode: game.gameCode,
+          gameID: game.id,
         },
         gameSeatInfoProps
       );
