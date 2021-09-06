@@ -492,7 +492,7 @@ export async function buyIn(
     const status = await buyin.request(amount);
 
     const timeTaken = new Date().getTime() - startTime;
-    logger.debug(`Buyin took ${timeTaken}ms`);
+    logger.info(`Buyin took ${timeTaken}ms`);
     // player is good to go
     return status;
   } catch (err) {
