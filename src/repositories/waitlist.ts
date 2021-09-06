@@ -376,8 +376,7 @@ export class WaitListMgmt {
         await playerGameTrackerRepository.save(playerInGame);
       }
 
-      await transactionEntityManager
-        .getRepository(PlayerGameTracker)
+      await playerGameTrackerRepository
         .createQueryBuilder()
         .update()
         .set({

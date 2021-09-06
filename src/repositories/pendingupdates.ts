@@ -528,13 +528,14 @@ async function handleDealersChoice(
   await pendingUpdatesRepo.delete({id: update.id});
 }
 
+// YONG
 export async function switchSeatNextHand(
   game: PokerGame,
   player: Player,
   seatNo: number,
   transactionEntityManager?: EntityManager
 ) {
-  let nextHandUpdatesRepository;
+  let nextHandUpdatesRepository: Repository<NextHandUpdates>;
   const update = new NextHandUpdates();
   update.game = game;
   update.playerId = player.id;
