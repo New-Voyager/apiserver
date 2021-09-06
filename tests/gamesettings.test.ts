@@ -184,7 +184,7 @@ describe('Game/Player Settings', () => {
     expect(gameSettings.bombPotInterval).toEqual(30);
     expect(gameSettings.breakAllowed).toEqual(false);
     expect(gameSettings.breakLength).toEqual(20);
-    expect(gameSettings.buyInApproval).toEqual(true);
+    expect(gameSettings.buyInApproval).toEqual(false);
     expect(gameSettings.doubleBoardBombPot).toEqual(false);
     expect(gameSettings.doubleBoardEveryHand).toEqual(false);
     expect(gameSettings.gpsCheck).toEqual(false);
