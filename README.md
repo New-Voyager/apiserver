@@ -71,7 +71,7 @@ Run the game backend stack using docker.
 ``
 POKER_LOCAL_IP=<your ip> make stack-up
 ``
-
+POKER_LOCAL_IP=192.168.0.107 make stack-up
 Run the apiserver in the vscode debugger (Watch Localhost debug in launch.json) 
 or in the console (npm run watch-localhost-debug).
 Change the setting in launch.json (Watch Localhost debug)

@@ -480,11 +480,6 @@ input GameConfigChangeInput {
   runItTwicePrompt: Boolean
 }
 
-input PlayerGameConfigChangeInput {
-  muckLosingHand: Boolean
-  runItTwicePrompt: Boolean
-}
-
 input LocationInput {
   lat: Float!
   long: Float!
@@ -524,10 +519,7 @@ type Mutation {
   applyWaitlistOrder(gameCode: String!, playerUuid: [String!]): Boolean!
   declineWaitlistSeat(gameCode: String!): Boolean
   switchSeat(gameCode: String!, seatNo: Int!): PlayerGameStatus!
-
-  # player changes in live game
-  updatePlayerGameConfig(gameCode: String!, config: PlayerGameConfigChangeInput!): Boolean
-
+  
   # seat change APIs
   requestSeatChange(gameCode: String!, cancel: Boolean): DateTime!
   confirmSeatChange(gameCode: String!, seatNo: Int!): Boolean!

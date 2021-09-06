@@ -159,8 +159,8 @@ export class PlayerGameTracker {
   @Column({name: 'waitlist_num', type: 'int', default: 0})
   public waitlistNum!: number;
 
-  @Column({name: 'run_it_twice_prompt', default: false})
-  public runItTwicePrompt!: boolean;
+  @Column({name: 'run_it_twice_enabled', default: false})
+  public runItTwiceEnabled!: boolean;
 
   @Column({name: 'muck_losing_hand', default: false})
   public muckLosingHand!: boolean;
@@ -170,6 +170,9 @@ export class PlayerGameTracker {
 
   @Column({name: 'auto_straddle', default: false})
   public autoStraddle!: boolean;
+
+  @Column({name: 'button_straddle', default: false})
+  public buttonStraddle!: boolean;
 
   @Column({name: 'posted_blind', default: false}) // this is set to true, player posted blind
   public postedBlind!: boolean;

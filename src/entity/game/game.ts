@@ -222,7 +222,7 @@ export class PokerGameSettings {
   @Column({name: 'buyin_timeout', type: 'int', default: 60})
   public buyInTimeout!: number;
 
-  @Column({name: 'waitlist_sitting_timeout', type: 'int', default: 180})
+  @Column({name: 'waitlist_sitting_timeout', type: 'int', default: 180}) // in seconds
   public waitlistSittingTimeout!: number;
 
   @Column({name: 'run_it_twice_allowed', default: false})

@@ -324,6 +324,58 @@ export async function configureGame(
   return startedGame;
 }
 
+export async function getGameSettings(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+    },
+    mutation: gameSettingsQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  const startedGame = resp.data.settings;
+  expect(startedGame).not.toBeNull();
+  return startedGame;
+}
+
+export async function updateGameSettings(
+  playerId: string,
+  gameCode: string,
+  input: any,
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+      settings: input,
+    },
+    mutation: updateGameSettingsQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.ret;
+}
+
+export async function updatePlayerGameSettings(
+  playerId: string,
+  gameCode: string,
+  input: any,
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+      settings: input,
+    },
+    mutation: updatePlayerGameSettingsQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.ret;
+}
+ 
+ 
 export const takeBreakQuery = gql`
   mutation($gameCode: String!) {
     status: takeBreak(gameCode: $gameCode)
@@ -437,7 +489,51 @@ export const leaderboardQuery = gql`
   }
 `;
 
+export const updateGameSettingsQuery = gql`
+  mutation($gameCode: String!, $settings: GameSettingsUpdateInput!) {
+    ret: updateGameSettings(gameCode: $gameCode, settings: $settings)
+  }
+`;
 
+
+export const updatePlayerGameSettingsQuery = gql`
+  mutation($gameCode: String!, $settings: GamePlayerSettingsUpdateInput!) {
+    ret: updateGamePlayerSettings(gameCode: $gameCode, settings: $settings)
+  }
+`;
+
+export const gameSettingsQuery = gql`
+  query($gameCode: String!) {
+    settings: gameSettings(gameCode: $gameCode) {
+      buyInApproval
+      runItTwiceAllowed
+      allowRabbitHunt
+      showHandRank
+      doubleBoardEveryHand
+
+      bombPotEnabled
+      bombPotBet
+      doubleBoardBombPot
+      bombPotInterval
+      bombPotIntervalInSecs
+      bombPotEveryHand
+
+      seatChangeAllowed
+      seatChangeTimeout
+      waitlistAllowed
+      waitlistSittingTimeout
+
+      breakAllowed
+      breakLength
+
+      ipCheck
+      gpsCheck
+
+      roeGames
+      dealerChoiceGames
+    }
+  }
+`;
 
 export const switchSeatQuery = gql`
   mutation($gameCode: String!, $seatNo: Int!) {

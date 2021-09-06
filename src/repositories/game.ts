@@ -634,7 +634,7 @@ class GameRepositoryImpl {
           const randomBytes = Buffer.from(crypto.randomBytes(5));
           playerInGame.gameToken = randomBytes.toString('hex');
           playerInGame.status = PlayerStatus.NOT_PLAYING;
-          playerInGame.runItTwicePrompt = gameSettings.runItTwiceAllowed;
+          playerInGame.runItTwiceEnabled = gameSettings.runItTwiceAllowed;
           playerInGame.muckLosingHand = game.muckLosingHand;
           playerInGame.playerIp = ip;
           if (location) {

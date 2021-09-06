@@ -31,7 +31,11 @@ import {
   JANUS_SECRET,
   JANUS_TOKEN,
 } from '@src/janus';
-import {ClubUpdateType, NewUpdate} from '@src/repositories/types';
+import {
+  ClubUpdateType,
+  GamePlayerSettings,
+  NewUpdate,
+} from '@src/repositories/types';
 import {TakeBreak} from '@src/repositories/takebreak';
 import {Player} from '@src/entity/player/player';
 import {Nats} from '@src/nats';
@@ -321,7 +325,7 @@ export async function takeSeat(
     }
     let ip = '';
     let location: any = null;
-    if (locationCheck != null) {
+    if (locationCheck) {
       ip = locationCheck.ip;
       location = locationCheck.location;
     }
@@ -417,7 +421,7 @@ export async function startGame(
       while (!allFilled) {
         await new Promise(r => setTimeout(r, 1000));
         players = await PlayersInGameRepository.getPlayersInSeats(game.id);
-        if (players.length != game.maxPlayers) {
+        if (players.length !== game.maxPlayers) {
           logger.debug(
             `[${game.gameCode}] Waiting for bots to take empty seats`
           );
@@ -999,6 +1003,16 @@ export async function gameSettings(playerUuid: string, gameCode: string) {
     if (!gameSettings) {
       throw new Error(`Game ${gameCode} is not found`);
     }
+    if (gameSettings.bombPotInterval) {
+      gameSettings.bombPotInterval = Math.floor(
+        gameSettings.bombPotInterval / 60
+      );
+    }
+    if (gameSettings.waitlistSittingTimeout) {
+      gameSettings.waitlistSittingTimeout = Math.floor(
+        gameSettings.waitlistSittingTimeout / 60
+      );
+    }
     return gameSettings;
   } catch (err) {
     logger.error(
@@ -1028,7 +1042,7 @@ export async function myGameSettings(playerUuid: string, gameCode: string) {
       bombPotEnabled: false,
       muckLosingHand: false,
       runItTwiceEnabled: false,
-    }
+    };
   } catch (err) {
     logger.error(
       `Error while getting game settings. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
@@ -1118,7 +1132,7 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
       ret.gameToken = playerState.gameToken;
       ret.playerGameStatus = PlayerStatus[playerState.status];
       ret.playerMuckLosingHandConfig = playerState.muckLosingHand;
-      ret.playerRunItTwiceConfig = playerState.runItTwicePrompt;
+      ret.playerRunItTwiceConfig = playerState.runItTwiceEnabled;
 
       if (!playerState.audioToken) {
         ret.agoraToken = playerState.audioToken;
@@ -1852,42 +1866,6 @@ export async function denyBuyIn(
   }
 }
 
-export async function updatePlayerGameConfig(
-  playerId: string,
-  gameCode: string,
-  config: any
-) {
-  if (!playerId) {
-    throw new Error('Unauthorized');
-  }
-  const errors = new Array<string>();
-  if (errors.length > 0) {
-    throw new Error(errors.join('\n'));
-  }
-  try {
-    const game = await Cache.getGame(gameCode);
-    if (!game) {
-      throw new Error('Game is not found');
-    }
-    const player = await Cache.getPlayer(playerId);
-    if (!player) {
-      throw new Error('Player is not found');
-    }
-
-    await PlayersInGameRepository.updatePlayerGameConfig(player, game, config);
-    return true;
-  } catch (err) {
-    logger.error(
-      `Error while updating player game config. playerId: ${playerId}, gameCode: ${gameCode}, config: ${JSON.stringify(
-        config
-      )}: ${errToLogString(err)}`
-    );
-    throw new Error(
-      `Failed to update game config:  ${err.message}. Game code: ${gameCode}`
-    );
-  }
-}
-
 export async function dealerChoice(
   playerId: string,
   gameCode: string,
@@ -1958,7 +1936,7 @@ export async function updateGameSettings(
     }
 
     // update game settings
-
+    await GameSettingsRepository.update(gameCode, settings);
     return true;
   } catch (err) {
     logger.error(
@@ -1975,16 +1953,20 @@ export async function updateGameSettings(
 export async function updateGamePlayerSettings(
   playerId: string,
   gameCode: string,
-  settings: any
+  settings: GamePlayerSettings
 ): Promise<boolean> {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
   try {
     const game = await Cache.getGame(gameCode);
+    const player = await Cache.getPlayer(playerId);
     // update player game settings
-
-    return true;
+    return PlayersInGameRepository.updatePlayerGameSettings(
+      player,
+      game,
+      settings
+    );
   } catch (err) {
     logger.error(
       `Error while updating player settings. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
@@ -2377,7 +2359,7 @@ const resolvers: any = {
     },
     myGameSettings: async (parent, args, ctx, info) => {
       return await myGameSettings(ctx.req.playerId, args.gameCode);
-    },    
+    },
   },
   GameInfo: {
     seatInfo: async (parent, args, ctx, info) => {
@@ -2391,6 +2373,24 @@ const resolvers: any = {
         playerInSeat.name = player.playerName;
         playerInSeat.buyInExpTime = player.buyInExpAt;
         playerInSeat.breakExpTime = player.breakTimeExpAt;
+        /* settings */
+        /*
+          type GamePlayerSettings {
+            autoStraddle: Boolean
+            straddle: Boolean
+            buttonStraddle: Boolean
+            bombPotEnabled: Boolean
+            muckLosingHand: Boolean
+            runItTwiceEnabled: Boolean
+          }
+        */
+        playerInSeat.settings = {
+          autoStraddle: player.autoStraddle,
+          buttonStraddle: player.buttonStraddle,
+          bombPotEnabled: player.bombPotEnabled,
+          muckLosingHand: player.muckLosingHand,
+          runItTwiceEnabled: player.runItTwiceEnabled,
+        };
         playersInSeats.push(playerInSeat);
       }
 
@@ -2633,13 +2633,6 @@ const resolvers: any = {
     switchSeat: async (parent, args, ctx, info) => {
       return switchSeat(ctx.req.playerId, args.gameCode, args.seatNo);
     },
-    updatePlayerGameConfig: async (parent, args, ctx, info) => {
-      return await updatePlayerGameConfig(
-        ctx.req.playerId,
-        args.gameCode,
-        args.config
-      );
-    },
     dealerChoice: async (parent, args, ctx, info) => {
       return dealerChoice(ctx.req.playerId, args.gameCode, args.gameType);
     },
@@ -2653,7 +2646,7 @@ const resolvers: any = {
       return updateGamePlayerSettings(
         ctx.req.playerId,
         args.gameCode,
-        args.settings
+        args.settings as GamePlayerSettings
       );
     },
   },
