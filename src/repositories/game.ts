@@ -547,7 +547,11 @@ class GameRepositoryImpl {
             `Seat change is in progress for game: ${game.gameCode}`
           );
         }
-        const gameSettings = await GameSettingsRepository.get(game.gameCode);
+        const gameSettings = await GameSettingsRepository.get(
+          game.gameCode,
+          false,
+          transactionEntityManager
+        );
         if (!gameSettings) {
           logger.error(`Game settings is not found for game: ${game.gameCode}`);
           throw new Error(
@@ -557,7 +561,13 @@ class GameRepositoryImpl {
 
         if (gameSettings.gpsCheck || gameSettings.ipCheck) {
           const locationCheck = new LocationCheck(game, gameSettings);
-          await locationCheck.checkForOnePlayer(player, ip, location);
+          await locationCheck.checkForOnePlayer(
+            player,
+            ip,
+            location,
+            undefined,
+            transactionEntityManager
+          );
         }
 
         const playerGameTrackerRepository = transactionEntityManager.getRepository(
@@ -567,7 +577,11 @@ class GameRepositoryImpl {
         if (gameSeatInfo.waitlistSeatingInprogress) {
           // wait list seating in progress
           // only the player who is asked from the waiting list can sit here
-          await waitlistMgmt.seatPlayer(player, seatNo);
+          await waitlistMgmt.seatPlayer(
+            player,
+            seatNo,
+            transactionEntityManager
+          );
         }
 
         // player is taking a seat in the game
@@ -1473,9 +1487,7 @@ class GameRepositoryImpl {
           .delete({game: {id: game.id}});
 
         if (!includeGame) {
-          await transactionEntityManager
-            .getRepository(PokerGame)
-            .delete({id: game.id});
+          await gameRepo.delete({id: game.id});
         }
       } else {
         await transactionEntityManager

@@ -522,11 +522,11 @@ class StatsRepositoryImpl {
 
   public async newClubStats(
     club: Club,
-    transactionEntityManager?: EntityManager
+    historyTransactionManager?: EntityManager
   ) {
     let clubStatsRepo: Repository<ClubStats>;
-    if (transactionEntityManager) {
-      clubStatsRepo = transactionEntityManager.getRepository(ClubStats);
+    if (historyTransactionManager) {
+      clubStatsRepo = historyTransactionManager.getRepository(ClubStats);
     } else {
       clubStatsRepo = getHistoryRepository(ClubStats);
     }

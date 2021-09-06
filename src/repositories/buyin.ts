@@ -227,13 +227,17 @@ export class BuyIn {
     );
   }
 
+  // YONG
   public async buyInDenied(
     playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
   ) {
     // send a message to gameserver
     // get game server of this game
-    const gameServer = await GameRepository.getGameServer(this.game.id);
+    const gameServer = await GameRepository.getGameServer(
+      this.game.id,
+      transactionEntityManager
+    );
     await Nats.playerStatusChanged(
       this.game,
       this.player,
@@ -867,6 +871,7 @@ export class BuyIn {
    * a buyin timer.
    * @param game
    */
+  // YONG
   public static async startBuyInTimers(game: PokerGame) {
     await getGameManager().transaction(async transactionEntityManager => {
       const playerGameTrackerRepo = transactionEntityManager.getRepository(

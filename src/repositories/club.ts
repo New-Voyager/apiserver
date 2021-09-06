@@ -761,8 +761,9 @@ class ClubRepositoryImpl {
   public async getNextGameNum(clubId: number): Promise<number> {
     const nextGameNum = await getUserManager().transaction(
       async transactionEntityManager => {
-        await transactionEntityManager
-          .getRepository(Club)
+        const clubRepo = transactionEntityManager.getRepository(Club);
+
+        await clubRepo
           .createQueryBuilder()
           .update()
           .set({
@@ -773,8 +774,7 @@ class ClubRepositoryImpl {
           })
           .execute();
 
-        const repo = transactionEntityManager.getRepository(Club);
-        const club = await repo.findOne({id: clubId});
+        const club = await clubRepo.findOne({id: clubId});
         if (!club) {
           return 1;
         }

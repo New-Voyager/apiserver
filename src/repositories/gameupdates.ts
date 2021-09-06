@@ -8,6 +8,7 @@ import {GameType} from '@src/entity/types';
 
 const logger = getLogger('repositories::gameupdates');
 class GameUpdatesRepositoryImpl {
+  // YONG
   public async create(
     gameId: number,
     gameCode: string,

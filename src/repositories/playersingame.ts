@@ -148,17 +148,20 @@ class PlayersInGameRepositoryImpl {
     });
   }
 
+  // YONG
   public async getAudioToken(
     player: Player,
     game: PokerGame,
     transactionEntityManager?: EntityManager
   ): Promise<string> {
     logger.info(`getAudioToken is called`);
-    let playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+    let playerGameTrackerRepository: Repository<PlayerGameTracker>;
     if (transactionEntityManager) {
       playerGameTrackerRepository = transactionEntityManager.getRepository(
         PlayerGameTracker
       );
+    } else {
+      playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     }
     const rows = await playerGameTrackerRepository
       .createQueryBuilder()
@@ -287,6 +290,7 @@ class PlayersInGameRepositoryImpl {
     return settings;
   }
 
+  // YONG
   public async startBuyinTimer(
     game: PokerGame,
     playerId: number,
@@ -307,7 +311,14 @@ class PlayersInGameRepositoryImpl {
       playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     }
     // TODO: start a buy-in timer
-    const gameSettingsRepo = getGameRepository(PokerGameSettings);
+    let gameSettingsRepo: Repository<PokerGameSettings>;
+    if (transactionEntityManager) {
+      gameSettingsRepo = transactionEntityManager.getRepository(
+        PokerGameSettings
+      );
+    } else {
+      gameSettingsRepo = getGameRepository(PokerGameSettings);
+    }
     const gameSettings = await gameSettingsRepo.findOne({
       gameCode: game.gameCode,
     });
