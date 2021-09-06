@@ -185,7 +185,7 @@ class MoveToNextHand {
         const occupiedSeats = this.getOccupiedSeats(takenSeats);
 
         logger.debug(
-          `Previous hand: [${playerInSeatsInPrevHand.toString()}] Current hand: [${occupiedSeats.toString()}]`
+          `MoveToNextHand.move Previous hand: [${playerInSeatsInPrevHand.toString()}] Current hand: [${occupiedSeats.toString()}]`
         );
         // determine button position
         this.determineButtonPos(playerInSeatsInPrevHand, takenSeats);

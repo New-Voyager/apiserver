@@ -94,7 +94,9 @@ class PlayersInGameRepositoryImpl {
       const playerGameTrackerRepository = transactionEntityManager.getRepository(
         PlayerGameTracker
       );
-      logger.info('kickOutPlayer');
+      logger.info(
+        `Kick out player ${player?.id}/${player?.name} from game ${gameCode}`
+      );
       const playerInGame = await playerGameTrackerRepository.findOne({
         where: {
           game: {id: game.id},
@@ -239,7 +241,9 @@ class PlayersInGameRepositoryImpl {
       const playerGameTrackerRepo = transactionEntityManager.getRepository(
         PlayerGameTracker
       );
-      logger.info('updatePlayerGameConfig');
+      logger.info(
+        `Updating player game settings for player ${player?.id}/${player?.name} game ${game?.gameCode}`
+      );
 
       const row = await playerGameTrackerRepo.findOne({
         game: {id: game.id},
