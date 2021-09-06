@@ -81,6 +81,9 @@ Open the browser and try http://localhost:9501/graphql. You should see the Graph
 To bring down the stack.
   make stack-down
 
+To run a simple bot runner game
+
+POKER_LOCAL_IP=192.168.0.107 make simple-game
 
 Sample GQL queries
 ```
@@ -129,4 +132,10 @@ Authorization Header
 {
   "Authorization": "Bearer c2dc2c3d-13da-46cc-8c66-caa0c77459de"
 }
+```
+
+To reset database
+
+```
+make reset-db
 ```
