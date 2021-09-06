@@ -77,7 +77,7 @@ class PlayersInGameRepositoryImpl {
     }
     const resp = await playerGameTrackerRepo.findOne({
       game: {id: game.id},
-      player: {id: player.id},
+      playerId: player.id,
     });
     return resp;
   }
