@@ -6,6 +6,9 @@ pipeline {
         // The build time currently includes the time waiting for an available executor,
         // so we need to give it some extra time here.
         timeout(time: 120, unit: 'MINUTES')
+        
+        // Plugin used to resolve terminal color symbols in jenkins log.
+        ansiColor('xterm')
     }
     stages {
         stage('Setup') {

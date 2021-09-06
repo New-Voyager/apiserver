@@ -47,6 +47,7 @@ import {
   signup,
 } from './auth';
 import {DevRepository} from './repositories/dev';
+import {initializeRedis} from './cache';
 export enum RunProfile {
   DEV,
   TEST,
@@ -275,6 +276,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     await initializeNats();
   }
 
+  initializeRedis();
   initializeGameServer();
   await Firebase.init();
 
