@@ -502,7 +502,7 @@ class MoveToNextHand {
     }
   }
 
-  private async determineBombPotThisHand() {
+  private determineBombPotThisHand() {
     if (!this.gameUpdate || !this.gameSettings) {
       return;
     }
