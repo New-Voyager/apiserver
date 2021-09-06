@@ -24,6 +24,7 @@ POSTGRES_PORT=5432
 POSTGRES_USER=game
 POSTGRES_PASSWORD=game
 POSTGRES_DB=game
+RESET_DB=false
 
 docker run -t --rm \
     --name botrunner \
@@ -37,6 +38,7 @@ docker run -t --rm \
     -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
     -e POSTGRES_DB=${POSTGRES_DB} \
     -e ENABLE_ENCRYPTION=1 \
+    -e RESETDB=${RESET_DB} \
     -v ${PWD}/botrunner_scripts:/app/botrunner_scripts \
     ${BOTRUNNER_IMAGE} \
     sh -c "\
