@@ -63,6 +63,26 @@ class PlayersInGameRepositoryImpl {
     return resp;
   }
 
+  public async getPlayerInfo(
+    game: PokerGame,
+    player: Player,
+    transactionManager?: EntityManager
+  ): Promise<PlayerGameTracker> {
+    let playerGameTrackerRepo;
+    if (transactionManager) {
+      playerGameTrackerRepo = transactionManager.getRepository(
+        PlayerGameTracker
+      );
+    } else {
+      playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
+    }
+    const resp = await playerGameTrackerRepo.findOne({
+      game: {id: game.id},
+      playerId: player.id,
+    });
+    return resp;
+  }
+
   public async getGamePlayerState(
     game: PokerGame,
     player: Player

@@ -198,7 +198,10 @@ export interface GameInput {
 
 export const joinGameQuery = gql`
   mutation($gameCode: String!, $seatNo: Int!) {
-    status: joinGame(gameCode: $gameCode, seatNo: $seatNo)
+    status: joinGame(gameCode: $gameCode, seatNo: $seatNo) {
+      status
+      missedBlind
+    }
   }
 `;
 
@@ -384,7 +387,10 @@ export const takeBreakQuery = gql`
 
 export const sitBackQuery = gql`
   mutation($gameCode: String!) {
-    status: sitBack(gameCode: $gameCode)
+    sitBack(gameCode: $gameCode) {
+      status
+      missedBlind
+    }
   }
 `;
 
@@ -612,7 +618,7 @@ export async function joinGame(
   });
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
-  return resp.data.status;
+  return resp.data.status.status;
 }
 
 export async function buyin(
@@ -770,7 +776,7 @@ export async function sitBack(
   });
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
-  return resp.data.status;
+  return resp.data.status.status;
 }
 
 export async function leaveGame(
