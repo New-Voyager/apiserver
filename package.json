@@ -7,7 +7,7 @@
   "private": true,
   "scripts": {
     "watch-debug": "npm run copy-files && LOG_LEVEL=INFO DEBUG_WITH_STACK=1 NOTIFY_GAME_SERVER=1 BOTRUNNER_URL=http://botrunner:8081 TIMER_URL=http://timer:8082 NATS_URL=${NATS_URL:-'nats://nats:4222'} DEBUG_NATS_URL=${DEBUG_NATS_URL:-'nats://localhost:4222'} NATS_ENABLED=1 POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} NODE_ENV=dev tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
-    "watch-localhost-debug": "npm run copy-files && LOG_LEVEL=INFO DEBUG_WITH_STACK=1 NOTIFY_GAME_SERVER=1 COMPRESS_HAND_DATA=false BOTRUNNER_URL=http://localhost:8081 TIMER_URL=http://localhost:8082 NATS_URL=${NATS_URL:-'nats://localhost:4222'} NATS_ENABLED=1 POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} NODE_ENV=dev tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
+    "watch-localhost-debug": "npm run copy-files && LOG_LEVEL=INFO DEBUG_WITH_STACK=1 NOTIFY_GAME_SERVER=0 COMPRESS_HAND_DATA=false BOTRUNNER_URL=http://localhost:8081 TIMER_URL=http://localhost:8082 NATS_URL=${NATS_URL:-'nats://localhost:4222'} NATS_ENABLED=1 POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} NODE_ENV=dev tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
     "run-local": "NODE_ENV=dev NOTIFY_GAME_SERVER=0 NATS_URL=${NATS_URL:-'nats://localhost:4222'} POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} node -r ts-node/register -r source-map-support/register ./build/index.js",
     "run-docker": "NOTIFY_GAME_SERVER=1 NATS_URL=${NATS_URL:-'nats://nats:4222'} NATS_ENABLED=1 POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} NODE_ENV=dev node --inspect=0.0.0.0:9235 --nolazy ./build/index.js",
     "debug": "npm run copy-files && NODE_ENV=dev POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} node --inspect=0.0.0.0:9228 ./build/index.js",
@@ -39,7 +39,7 @@
     "script-tests": "node build/script-tests/testdriver.js ./script-tests/script",
     "copy-files": "npm run copy-google-svc",
     "copy-google-svc": "mkdir -p build/src/google-services/ && cp src/google-services/* build/src/google-services/",
-    "codecov": "nyc --reporter=html --reporter=text NODE_ENV=dev NOTIFY_GAME_SERVER=0 NATS_URL=${NATS_URL:-'nats://localhost:4222'} POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} node -r ts-node/register -r source-map-support/register ./build/index.js"
+    "codecov": "NODE_ENV=dev NOTIFY_GAME_SERVER=0 NATS_URL=${NATS_URL:-'nats://192.168.0.106:4222'} POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} nyc --reporter=html --reporter=text node -r ts-node/register -r source-map-support/register ./build/index.js"
   },
   "dependencies": {
     "@googleapis/docs": "^0.2.0",
@@ -118,7 +118,6 @@
       "**/apiserver/unit-tests/**",
       "**/apiserver/tests/**"
     ],
-    "all": true,
-    "check-coverage": true
+    "all": true    
   }
 }
