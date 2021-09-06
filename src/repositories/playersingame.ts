@@ -15,8 +15,9 @@ import {Nats} from '@src/nats';
 import {startTimer} from '@src/timer';
 import {utcTime} from '@src/utils';
 import _ from 'lodash';
-import {BUYIN_TIMEOUT} from './types';
+import {BUYIN_TIMEOUT, GamePlayerSettings} from './types';
 import {getAgoraToken} from '@src/3rdparty/agora';
+import {playersInGame} from '@src/resolvers/history';
 
 const logger = getLogger('players_in_game');
 
@@ -202,58 +203,87 @@ class PlayersInGameRepositoryImpl {
     return token;
   }
 
-  public async updatePlayerGameConfig(
+  public async updatePlayerGameSettings(
     player: Player,
     game: PokerGame,
-    config: any
-  ): Promise<void> {
+    config: GamePlayerSettings
+  ): Promise<boolean> {
     await getGameManager().transaction(async transactionEntityManager => {
       //logger.info(`updatePlayerConfig is called`);
-      const updates: any = {};
+      const updates: PlayerGameTracker = new PlayerGameTracker();
       if (config.muckLosingHand !== undefined) {
         updates.muckLosingHand = config.muckLosingHand;
       }
-      if (config.runItTwicePrompt !== undefined) {
-        updates.runItTwicePrompt = config.runItTwicePrompt;
+      if (config.runItTwiceEnabled !== undefined) {
+        updates.runItTwiceEnabled = config.runItTwiceEnabled;
+      }
+      if (config.autoStraddle !== undefined) {
+        updates.autoStraddle = config.autoStraddle;
+      }
+      if (config.buttonStraddle !== undefined) {
+        updates.buttonStraddle = config.buttonStraddle;
+      }
+      if (config.bombPotEnabled !== undefined) {
+        updates.bombPotEnabled = config.bombPotEnabled;
       }
 
-      // get game updates
       const playerGameTrackerRepo = transactionEntityManager.getRepository(
         PlayerGameTracker
       );
       logger.info('updatePlayerGameConfig');
 
-      let row = await playerGameTrackerRepo.findOne({
+      const row = await playerGameTrackerRepo.findOne({
         game: {id: game.id},
         playerId: player.id,
       });
+      const updatesObject: any = updates as any;
       if (row !== null) {
         await playerGameTrackerRepo.update(
           {
             game: {id: game.id},
             playerId: player.id,
           },
-          updates
+          updatesObject
         );
       } else {
         // create a row
-        const playerTrack = new PlayerGameTracker();
-        playerTrack.game = game;
-        playerTrack.playerId = player.id;
-        playerTrack.playerUuid = player.uuid;
-        playerTrack.playerName = player.name;
-        playerTrack.status = PlayerStatus.NOT_PLAYING;
-        playerTrack.buyIn = 0;
-        playerTrack.stack = 0;
-        if (config.muckLosingHand !== undefined) {
-          playerTrack.muckLosingHand = config.muckLosingHand;
-        }
-        if (config.runItTwicePrompt !== undefined) {
-          playerTrack.runItTwicePrompt = config.runItTwicePrompt;
-        }
-        await playerGameTrackerRepo.save(playerTrack);
+        updates.game = game;
+        updates.playerId = player.id;
+        updates.playerUuid = player.uuid;
+        updates.playerName = player.name;
+        updates.status = PlayerStatus.NOT_PLAYING;
+        updates.buyIn = 0;
+        updates.stack = 0;
+        await playerGameTrackerRepo.save(updates);
       }
     });
+    return true;
+  }
+
+  public async getPlayerGameSettings(
+    player: Player,
+    game: PokerGame
+  ): Promise<GamePlayerSettings> {
+    const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
+    console.log(`Player: ${player.deviceId} game: ${game.gameCode}`);
+    const playerInGame = await playerGameTrackerRepo.findOne({
+      game: {id: game.id},
+      playerId: player.id,
+    });
+    if (!playerInGame) {
+      throw new Error(
+        `Player ${player.name} is not found in game: ${game.gameCode}`
+      );
+    }
+
+    const settings: GamePlayerSettings = {
+      muckLosingHand: playerInGame.muckLosingHand,
+      autoStraddle: playerInGame.autoStraddle,
+      bombPotEnabled: playerInGame.bombPotEnabled,
+      runItTwiceEnabled: playerInGame.runItTwiceEnabled,
+      buttonStraddle: playerInGame.buttonStraddle,
+    };
+    return settings;
   }
 
   public async startBuyinTimer(

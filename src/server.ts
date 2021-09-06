@@ -1,53 +1,19 @@
 import {ApolloServer} from 'apollo-server-express';
 import {fileLoader, mergeTypes} from 'merge-graphql-schemas';
-import {create, merge} from 'lodash';
+import {merge} from 'lodash';
 import {authorize} from '@src/middlewares/authorization';
-import {
-  createConnection,
-  createConnections,
-  getConnectionOptions,
-} from 'typeorm';
-import {GameServerAPI} from './internal/gameserver';
-import {HandServerAPI} from './internal/hand';
-import {GameAPI} from './internal/game';
 import * as dotenv from 'dotenv';
 
 const bodyParser = require('body-parser');
 const GQL_PORT = 9501;
 import {getLogger} from '@src/utils/log';
-import {AdminAPI} from './internal/admin';
-import {Player} from './entity/player/player';
 import {initializeGameServer} from './gameserver';
-import {timerCallback} from './repositories/timer';
-import {seed} from './initdb';
-import {Firebase} from './firebase';
+import {initdb, seed} from './initdb';
+import {Firebase, getAppSettings} from './firebase';
 import {Nats} from './nats';
-import {
-  buyBotCoins,
-  generateBotScript,
-  generateBotScriptDebugHand,
-  resetServerSettings,
-  setServerSettings,
-  updateButtonPos,
-} from './internal/bot';
-import {restartTimers} from '@src/timer';
-import {
-  getGameConnection,
-  getHistoryConnection,
-  getUserConnection,
-  getUserRepository,
-} from './repositories';
-import {UserRegistrationPayload} from './types';
-import {PlayerRepository} from './repositories/player';
-import {
-  getRecoveryCode,
-  login,
-  loginUsingRecoveryCode,
-  newlogin,
-  signup,
-} from './auth';
-import {DevRepository} from './repositories/dev';
+
 import {initializeRedis} from './cache';
+import {addInternalRoutes} from './routes';
 export enum RunProfile {
   DEV,
   TEST,
@@ -119,159 +85,12 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
 
   logger.info(`Server is running ${RunProfile[runProfile].toString()} profile`);
 
-  if (process.env.NODE_ENV !== 'unit-test' && process.env.NODE_ENV !== 'test') {
-    logger.debug('Running in dev/prod mode');
-    const options = await getConnectionOptions('default');
-    const users = options['users'];
-    const livegames = options['livegames'];
-    const history = options['history'];
-    const default1 = options['default'];
-
-    // create databases
-    try {
-      const defaultObj = default1 as any;
-      const conn = await createConnection(defaultObj);
-      try {
-        logger.info('Enabling pg_stat_statements extension');
-        await conn.query('CREATE EXTENSION pg_stat_statements');
-        logger.info('Enabled pg_stat_statements extension');
-      } catch (err) {
-        logger.error(
-          `Enabling pg_stat_statements extension failed. Error: ${err.message}`
-        );
-      }
-      try {
-        await conn.query('CREATE DATABASE livegames');
-        await conn.query(
-          `GRANT ALL PRIVILEGES ON DATABASE livegames TO "${defaultObj.username}"`
-        );
-      } catch (err) {
-        const message: string = err.toString();
-        if (message.indexOf('already exists') === -1) {
-          throw err;
-        }
-      }
-      try {
-        await conn.query('CREATE DATABASE users');
-        await conn.query(
-          `GRANT ALL PRIVILEGES ON DATABASE users TO "${defaultObj.username}"`
-        );
-      } catch (err) {
-        const message: string = err.toString();
-        if (message.indexOf('already exists') === -1) {
-          throw err;
-        }
-      }
-      try {
-        await conn.query('CREATE DATABASE history');
-        await conn.query(
-          `GRANT ALL PRIVILEGES ON DATABASE history TO "${defaultObj.username}"`
-        );
-      } catch (err) {
-        const message: string = err.toString();
-        if (message.indexOf('already exists') === -1) {
-          throw err;
-        }
-      }
-    } catch (err) {
-      logger.error(
-        `Errors reported when creating the database ${err.toString()}`
-      );
-      throw err;
-    }
-
-    // override database name if specified in the environment variable
-    //if (process.env.DB_NAME) {
-    const liveGameObj = livegames as any;
-    const historyObj = history as any;
-    const userObj = users as any;
-    const debugObj = options['debug'] as any;
-    try {
-      await createConnections([
-        {
-          ...userObj,
-          name: 'users',
-        },
-        {
-          ...liveGameObj,
-          name: 'livegames',
-        },
-        {
-          ...historyObj,
-          name: 'history',
-        },
-        {
-          ...debugObj,
-          name: 'debug',
-        },
-      ]);
-    } catch (err) {
-      logger.error(`Error creating connections: ${err.toString()}`);
-      throw err;
-    }
-  } else {
-    logger.debug('Running in UNIT-TEST mode');
-    process.env.DB_USED = 'sqllite';
-
-    try {
-      const options = await getConnectionOptions('default');
-      const users = options['users'];
-      const livegames = options['livegames'];
-      const history = options['history'];
-
-      // override database name if specified in the environment variable
-      //if (process.env.DB_NAME) {
-      const liveGameObj = livegames as any;
-      const historyObj = history as any;
-      const userObj = users as any;
-
-      await createConnections([
-        {
-          ...userObj,
-          name: 'users',
-        },
-        {
-          ...liveGameObj,
-          name: 'livegames',
-        },
-        {
-          ...historyObj,
-          name: 'history',
-        },
-      ]);
-    } catch (err) {
-      logger.error(`Error creating connections: ${err.toString()}`);
-    }
+  getAppSettings().compressHandData = true;
+  if (process.env.COMPRESS_HAND_DATA === 'false') {
+    getAppSettings().compressHandData = false;
   }
 
-  try {
-    logger.info('Enabling pg_stat_statements extension in users db');
-    await getUserConnection().query('CREATE EXTENSION pg_stat_statements');
-    logger.info('Enabled pg_stat_statements extension in users db');
-  } catch (err) {
-    logger.error(
-      `Enabling pg_stat_statements in users db extension failed. Error: ${err.message}`
-    );
-  }
-  try {
-    logger.info('Enabling pg_stat_statements extension in users db');
-    await getGameConnection().query('CREATE EXTENSION pg_stat_statements');
-    logger.info('Enabled pg_stat_statements extension in users db');
-  } catch (err) {
-    logger.error(
-      `Enabling pg_stat_statements in users db extension failed. Error: ${err.message}`
-    );
-  }
-  try {
-    logger.info('Enabling pg_stat_statements extension in users db');
-    await getHistoryConnection().query('CREATE EXTENSION pg_stat_statements');
-    logger.info('Enabled pg_stat_statements extension in users db');
-  } catch (err) {
-    logger.error(
-      `Enabling pg_stat_statements in users db extension failed. Error: ${err.message}`
-    );
-  }
-
+  await initdb();
   if (process.env.NODE_ENV !== 'unit-test' && process.env.NODE_ENV !== 'test') {
     await initializeNats();
   }
@@ -313,114 +132,6 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
   // initialize db
   await seed();
   return [app, httpServer];
-}
-
-function addInternalRoutes(app: any) {
-  app.get('/internal/ready', readyCheck);
-  app.post('/internal/register-game-server', GameServerAPI.registerGameServer);
-  app.post('/internal/update-game-server', GameServerAPI.updateGameServer);
-  app.get('/internal/game-servers', GameServerAPI.getGameServers);
-  app.post(
-    '/internal/post-hand/gameId/:gameId/handNum/:handNum',
-    HandServerAPI.postHand
-  );
-  app.post(
-    '/internal/save-hand/gameId/:gameId/handNum/:handNum',
-    HandServerAPI.saveHand
-  );
-
-  // app.post(
-  //   '/internal/save-hand-binary/gameId/:gameId/handNum/:handNum',
-  //   HandServerAPI.saveHandBinary
-  // );
-  app.post('/internal/start-game', GameAPI.startGame);
-  app.post('/internal/delete-club-by-name/:clubName', AdminAPI.deleteClub);
-  app.post('/internal/update-player-game-state', GameAPI.updatePlayerGameState);
-  app.post('/internal/update-table-status', GameAPI.updateTableStatus);
-  app.get(
-    '/internal/any-pending-updates/gameId/:gameId',
-    GameAPI.anyPendingUpdates
-  );
-  app.post(
-    '/internal/process-pending-updates/gameId/:gameId',
-    GameAPI.processPendingUpdates
-  );
-  app.get(
-    '/internal/get-game-server/game_num/:gameCode',
-    GameServerAPI.getSpecificGameServer
-  );
-
-  app.get(
-    '/internal/get-game/club_id/:clubCode/game_num/:gameCode',
-    GameAPI.getGame
-  );
-
-  app.get('/internal/game-info/game_num/:gameCode', GameAPI.getGameInfo);
-
-  app.get(
-    '/internal/next-hand-info/game_num/:gameCode',
-    GameAPI.getNextHandInfo
-  );
-
-  app.post(
-    '/internal/move-to-next-hand/game_num/:gameCode/hand_num/:currentHandNum',
-    GameAPI.moveToNextHand
-  );
-
-  app.post(
-    '/internal/timer-callback/gameId/:gameID/playerId/:playerID/purpose/:purpose',
-    timerCallback
-  );
-
-  app.post('/internal/restart-games', GameServerAPI.restartGames);
-  app.post('/internal/restart-timers', restartTimers);
-
-  app.post('/auth/login', login);
-  app.post('/auth/new-login', newlogin);
-  app.post('/auth/signup', signup);
-  app.post('/auth/recovery-code', getRecoveryCode);
-  app.post('/auth/login-recovery-code', loginUsingRecoveryCode);
-
-  app.get('/nats-urls', natsUrls);
-  app.get('/assets', getAssets);
-
-  //app.get('/bot-script/game-code/:gameCode', generateBotScript);
-  app.get('/bot-script/game-code/:gameCode/hand/:handNum', generateBotScript);
-  app.get(
-    '/bot-script/debug/game-code/:gameCode/hand/:handNum',
-    generateBotScriptDebugHand
-  );
-
-  app.post(
-    '/bot-script/game-code/:gameCode/button-pos/:buttonPos',
-    updateButtonPos
-  );
-  app.post('/bot-script/server-settings', setServerSettings);
-  app.post('/bot-script/reset-server-settings', resetServerSettings);
-  app.post('/bot-script/buy-bot-coins', buyBotCoins);
-
-  // admin apis
-  app.get('/admin/feature-requests', DevRepository.featureRequests);
-  app.get('/admin/bug-reports', DevRepository.bugReports);
-}
-
-async function readyCheck(req: any, resp: any) {
-  resp.status(200).send(JSON.stringify({status: 'OK'}));
-}
-
-// returns nats urls
-async function natsUrls(req: any, resp: any) {
-  let natsUrl = process.env.NATS_URL;
-  if (process.env.DEBUG_NATS_URL) {
-    natsUrl = process.env.DEBUG_NATS_URL;
-  }
-  resp.status(200).send(JSON.stringify({urls: natsUrl}));
-}
-
-// returns all assets from the firebase
-async function getAssets(req: any, resp: any) {
-  const assets = await Firebase.getAllAssets();
-  resp.status(200).send(JSON.stringify({assets: assets}));
 }
 
 async function initializeNats() {

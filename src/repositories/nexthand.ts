@@ -516,13 +516,19 @@ class MoveToNextHand {
     } else {
       const now = new Date();
       const intervalInMs = this.gameSettings.bombPotInterval * 1000;
+      if (this.gameUpdate.lastBombPotTime === null) {
+        this.gameUpdate.lastBombPotTime = new Date();
+      }
       const nextBombPotTime = new Date(
         this.gameUpdate.lastBombPotTime.getTime() + intervalInMs
       );
       logger.debug(
         `Next bomb time: ${nextBombPotTime.toISOString()} now: ${now.toISOString()}`
       );
-      if (now.getTime() > nextBombPotTime.getTime()) {
+      if (
+        now.getTime() > nextBombPotTime.getTime() ||
+        this.gameSettings.bombPotEveryHand
+      ) {
         logger.debug(`Game: ${this.game.gameCode} Time for next bomb pot`);
         this.bombPotThisHand = true;
       }
@@ -547,7 +553,11 @@ class MoveToNextHand {
       let playersWithBombPotStack = 0;
       for (let seatNo = 1; seatNo <= this.game.maxPlayers; seatNo++) {
         const playerSeat = takenSeats[seatNo];
-        if (playerSeat && playerSeat.status === PlayerStatus.PLAYING) {
+        if (
+          playerSeat &&
+          playerSeat.status === PlayerStatus.PLAYING &&
+          playerSeat.bombPotEnabled
+        ) {
           if (playerSeat.stack >= minBetAmount) {
             playersWithBombPotStack++;
             playersInBombPot[playerSeat.seatNo] = playerSeat;
@@ -650,10 +660,12 @@ export class NextHandProcess {
           activeSeat: false,
           status: PlayerStatus.NOT_PLAYING,
           gameToken: '',
-          runItTwicePrompt: false,
+          runItTwice: false,
           muckLosingHand: false,
           postedBlind: false,
           missedBlind: false,
+          autoStraddle: false,
+          buttonStraddle: false,
         });
 
         for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
@@ -668,11 +680,13 @@ export class NextHandProcess {
               inhand: false,
               status: PlayerStatus.NOT_PLAYING,
               gameToken: '',
-              runItTwicePrompt: false,
+              runItTwice: false,
               muckLosingHand: false,
               activeSeat: false,
               postedBlind: false,
               missedBlind: false,
+              autoStraddle: false,
+              buttonStraddle: false,
             });
           } else {
             let inhand = false;
@@ -684,7 +698,7 @@ export class NextHandProcess {
             if (playerSeat.breakTimeExpAt) {
               breakTimeExp = playerSeat.breakTimeExpAt.toISOString();
             }
-            let activeSeat = true;
+            const activeSeat = true;
             if (playerSeat.status === PlayerStatus.PLAYING) {
               if (this.gameServerHandNum !== 1) {
                 missedBlind = playerSeat.missedBlind;
@@ -698,21 +712,25 @@ export class NextHandProcess {
               seatNo: seatNo,
               openSeat: false,
               inhand: inhand,
+              postedBlind: postedBlind,
+              missedBlind: missedBlind,
               activeSeat: activeSeat,
+
               playerId: playerSeat.playerId,
               playerUuid: playerSeat.playerUuid,
               name: playerSeat.playerName,
               stack: playerSeat.stack,
               buyIn: playerSeat.buyIn,
               status: playerSeat.status,
-              runItTwice: playerSeat.runItTwicePrompt,
               buyInTimeExpAt: buyInExpTime,
               breakTimeExpAt: breakTimeExp,
               gameToken: '',
-              runItTwicePrompt: playerSeat.runItTwicePrompt,
+
+              // player settings
+              runItTwice: playerSeat.runItTwiceEnabled,
+              autoStraddle: playerSeat.autoStraddle,
               muckLosingHand: playerSeat.muckLosingHand,
-              postedBlind: postedBlind,
-              missedBlind: missedBlind,
+              buttonStraddle: playerSeat.buttonStraddle,
             });
           }
         }

@@ -76,12 +76,13 @@ export interface PlayerInSeat {
   buyInTimeExpAt?: string; // date time when buyin time expires
   breakTimeExpAt?: string; // date time when break time expires
   gameToken: string;
-  runItTwicePrompt: boolean;
+  runItTwice: boolean;
   muckLosingHand: boolean;
   activeSeat: boolean;
   postedBlind: boolean;
-  runItTwice?: boolean;
   missedBlind: boolean;
+  autoStraddle: boolean;
+  buttonStraddle: boolean;
 }
 
 export interface NewHandInfo {
@@ -135,4 +136,13 @@ export enum ClubUpdateType {
   HOST_MESSAGE,
   ANNOUNCEMENT,
   MEW_GAME,
+}
+
+export interface GamePlayerSettings {
+  autoStraddle?: boolean;
+  straddle?: boolean;
+  buttonStraddle?: boolean;
+  bombPotEnabled?: boolean;
+  muckLosingHand?: boolean;
+  runItTwiceEnabled?: boolean;
 }

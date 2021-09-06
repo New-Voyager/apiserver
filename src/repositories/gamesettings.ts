@@ -90,8 +90,8 @@ class GameSettingsRepositoryImpl {
     if (input.bombPotEnabled !== undefined) {
       gameSettingsProps.bombPotEnabled = input.bombPotEnabled;
     }
-    if (input.doubleBoardEveryHand !== undefined) {
-      gameSettingsProps.doubleBoardEveryHand = input.doubleBoardEveryHand;
+    if (input.bombPotEveryHand !== undefined) {
+      gameSettingsProps.bombPotEveryHand = input.bombPotEveryHand;
     }
 
     if (input.doubleBoardBombPot !== undefined) {

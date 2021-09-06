@@ -666,10 +666,21 @@ class HandRepositoryImpl {
 
         playerIdsInHand.push(player.id);
       }
+
+      // extract player stats and store it in a column
+      const playerStats = {
+        playerStats: result.result.playerStats,
+        playerRound: playerRound,
+      };
+
+      handHistory.playersStats = JSON.stringify(playerStats);
+      // await StatsRepository.saveHandStats(game, playerStats, handNum);
+
+      result.result.playerStats = undefined;
+      result.result.timeoutStats = undefined;
+      result.playerRound = undefined;
+
       result.gameCode = game.gameCode;
-      const playerStats = handResult.playerStats;
-      // don't store player stats
-      delete result.playerStats;
       handHistory.playersStack = JSON.stringify(playerBalance);
       const data = JSON.stringify(result);
       const appSettings = getAppSettings();
@@ -708,9 +719,6 @@ class HandRepositoryImpl {
       );
       handHistory.summary = JSON.stringify(summary);
       handHistory.players = JSON.stringify(playerIdsInHand);
-
-      result.playerStats = playerStats;
-      result.playerRound = playerRound;
 
       let saveResult: any = {};
       saveResult = await getGameManager().transaction(

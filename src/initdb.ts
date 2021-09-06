@@ -1,3 +1,13 @@
+import {
+  createConnection,
+  createConnections,
+  getConnectionOptions,
+} from 'typeorm';
+import {
+  getGameConnection,
+  getHistoryConnection,
+  getUserConnection,
+} from './repositories';
 import {ChatTextRepository} from './repositories/chat';
 import {StatsRepository} from './repositories/stats';
 import {getLogger} from './utils/log';
@@ -28,5 +38,160 @@ export async function seed() {
   } catch (err) {
     logger.error(`Error when seeding database. ${err.toString()}`);
     throw err;
+  }
+}
+
+export async function initdb() {
+  if (process.env.NODE_ENV !== 'unit-test' && process.env.NODE_ENV !== 'test') {
+    logger.debug('Running in dev/prod mode');
+    const options = await getConnectionOptions('default');
+    const users = options['users'];
+    const livegames = options['livegames'];
+    const history = options['history'];
+    const default1 = options['default'];
+
+    // create databases
+    try {
+      const defaultObj = default1 as any;
+      const conn = await createConnection(defaultObj);
+      try {
+        logger.info('Enabling pg_stat_statements extension');
+        await conn.query('CREATE EXTENSION pg_stat_statements');
+        logger.info('Enabled pg_stat_statements extension');
+      } catch (err) {
+        logger.error(
+          `Enabling pg_stat_statements extension failed. Error: ${err.message}`
+        );
+      }
+      try {
+        await conn.query('CREATE DATABASE livegames');
+        await conn.query(
+          `GRANT ALL PRIVILEGES ON DATABASE livegames TO "${defaultObj.username}"`
+        );
+      } catch (err) {
+        const message: string = err.toString();
+        if (message.indexOf('already exists') === -1) {
+          throw err;
+        }
+      }
+      try {
+        await conn.query('CREATE DATABASE users');
+        await conn.query(
+          `GRANT ALL PRIVILEGES ON DATABASE users TO "${defaultObj.username}"`
+        );
+      } catch (err) {
+        const message: string = err.toString();
+        if (message.indexOf('already exists') === -1) {
+          throw err;
+        }
+      }
+      try {
+        await conn.query('CREATE DATABASE history');
+        await conn.query(
+          `GRANT ALL PRIVILEGES ON DATABASE history TO "${defaultObj.username}"`
+        );
+      } catch (err) {
+        const message: string = err.toString();
+        if (message.indexOf('already exists') === -1) {
+          throw err;
+        }
+      }
+    } catch (err) {
+      logger.error(
+        `Errors reported when creating the database ${err.toString()}`
+      );
+      throw err;
+    }
+
+    // override database name if specified in the environment variable
+    //if (process.env.DB_NAME) {
+    const liveGameObj = livegames as any;
+    const historyObj = history as any;
+    const userObj = users as any;
+    const debugObj = options['debug'] as any;
+    try {
+      await createConnections([
+        {
+          ...userObj,
+          name: 'users',
+        },
+        {
+          ...liveGameObj,
+          name: 'livegames',
+        },
+        {
+          ...historyObj,
+          name: 'history',
+        },
+        {
+          ...debugObj,
+          name: 'debug',
+        },
+      ]);
+    } catch (err) {
+      logger.error(`Error creating connections: ${err.toString()}`);
+      throw err;
+    }
+  } else {
+    logger.debug('Running in UNIT-TEST mode');
+    process.env.DB_USED = 'sqllite';
+
+    try {
+      const options = await getConnectionOptions('default');
+      const users = options['users'];
+      const livegames = options['livegames'];
+      const history = options['history'];
+
+      // override database name if specified in the environment variable
+      //if (process.env.DB_NAME) {
+      const liveGameObj = livegames as any;
+      const historyObj = history as any;
+      const userObj = users as any;
+
+      await createConnections([
+        {
+          ...userObj,
+          name: 'users',
+        },
+        {
+          ...liveGameObj,
+          name: 'livegames',
+        },
+        {
+          ...historyObj,
+          name: 'history',
+        },
+      ]);
+    } catch (err) {
+      logger.error(`Error creating connections: ${err.toString()}`);
+    }
+  }
+
+  try {
+    logger.info('Enabling pg_stat_statements extension in users db');
+    await getUserConnection().query('CREATE EXTENSION pg_stat_statements');
+    logger.info('Enabled pg_stat_statements extension in users db');
+  } catch (err) {
+    logger.error(
+      `Enabling pg_stat_statements in users db extension failed. Error: ${err.message}`
+    );
+  }
+  try {
+    logger.info('Enabling pg_stat_statements extension in users db');
+    await getGameConnection().query('CREATE EXTENSION pg_stat_statements');
+    logger.info('Enabled pg_stat_statements extension in users db');
+  } catch (err) {
+    logger.error(
+      `Enabling pg_stat_statements in users db extension failed. Error: ${err.message}`
+    );
+  }
+  try {
+    logger.info('Enabling pg_stat_statements extension in users db');
+    await getHistoryConnection().query('CREATE EXTENSION pg_stat_statements');
+    logger.info('Enabled pg_stat_statements extension in users db');
+  } catch (err) {
+    logger.error(
+      `Enabling pg_stat_statements in users db extension failed. Error: ${err.message}`
+    );
   }
 }

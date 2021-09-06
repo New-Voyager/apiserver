@@ -52,6 +52,7 @@
       "outputCapture": "std",
       "console": "internalConsole",
       "env": {
+        "NATS_URL": "nats://192.168.0.107:4222",
         "POSTGRES_HOST": "localhost",
         "POSTGRES_PORT": "5432",
         "POSTGRES_USER": "game",
@@ -160,9 +161,9 @@
         "--inspect-brk",
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
-        "./tests",
+        "./tests/gamesettings.test.ts",
         "--testNamePattern",
-        "sit back after break"
+        "update player settings"
       ],
       "env": {
         "NODE_ENV": "test",
@@ -179,10 +180,11 @@
       "runtimeArgs": [
         "--inspect-brk",
         "${workspaceRoot}/node_modules/.bin/jest",
+        "--verbose",
         "--runInBand",
-        "./unit-tests",
+        "./unit-tests/playersettings.test.ts",
         "--testNamePattern",
-        "AppCoin: host buys coins after warning"
+        "playergamesettings: get player settings"
       ],
       "env": {
         "NODE_ENV": "test",

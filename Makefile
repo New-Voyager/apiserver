@@ -13,16 +13,19 @@ GCR_REGISTRY := gcr.io/voyager-01-285603
 DO_REGISTRY := registry.digitalocean.com/voyager
 REGISTRY := $(GCP_REGISTRY)
 
-API_SERVER_IMAGE := $(REGISTRY)/api-server:0.6.29
-GAME_SERVER_IMAGE := $(REGISTRY)/game-server:0.6.24
-BOTRUNNER_IMAGE := $(REGISTRY)/botrunner:0.6.20
+API_SERVER_IMAGE := $(REGISTRY)/api-server:0.7.11
+GAME_SERVER_IMAGE := $(REGISTRY)/game-server:0.7.3
+BOTRUNNER_IMAGE := $(REGISTRY)/botrunner:0.7.2
 TIMER_IMAGE := $(REGISTRY)/timer:0.5.6
 
 NATS_SERVER_IMAGE := $(REGISTRY)/nats:$(NATS_VERSION)
 REDIS_IMAGE := $(REGISTRY)/redis:$(REDIS_VERSION)
 POSTGRES_IMAGE := $(REGISTRY)/postgres:$(POSTGRES_VERSION)
 
-API_SERVER_URL = http://192.168.1.104:9501
+LOCAL_IP := $(POKER_LOCAL_IP)
+API_SERVER_URL := http://$(LOCAL_IP):9501
+LOCAL_NATS_URL := nats://$(LOCAL_IP):4222
+LOCAL_POSTGRES_HOST := $(LOCAL_IP)
 
 COMPOSE_PROJECT_NAME := apiserver
 COMPOSE := docker-compose -p $(COMPOSE_PROJECT_NAME)
@@ -95,6 +98,8 @@ up: create-network
 debug: watch-localhost-debug
 
 .PHONY: watch-localhost-debug
+watch-localhost-debug: export NATS_URL=$(LOCAL_NATS_URL)
+watch-localhost-debug: export POSTGRES_HOST=$(LOCAL_POSTGRES_HOST)
 watch-localhost-debug:
 	npx yarn watch-localhost-debug
 
@@ -229,11 +234,12 @@ stack-generate-env:
 		echo "POSTGRES_IMAGE=$(POSTGRES_IMAGE)" >> .env && \
 		echo "BOTRUNNER_IMAGE=$(BOTRUNNER_IMAGE)" >> .env && \
 		echo "TIMER_IMAGE=$(TIMER_IMAGE)" >> .env && \
-		echo "PROJECT_ROOT=$(PWD)" >> .env
+		echo "PROJECT_ROOT=$(PWD)" >> .env && \
+		echo "DOCKER_NET=$(DEFAULT_DOCKER_NET)" >> .env
 
 .PHONY: stack-up
 stack-up: create-network login stack-generate-env
-		$(COMPOSE) up -d
+		cd docker && $(COMPOSE) up -d
 
 .PHONY: stack-logs
 stack-logs:
@@ -256,7 +262,7 @@ botrunner:
 		BOTRUNNER_SCRIPT=$(BOTRUNNER_SCRIPT) \
 		./botrunner.sh
 
-.PHONY: simple-game reset-db
+.PHONY: simple-game
 simple-game:
 	BOTRUNNER_SCRIPT=botrunner_scripts/river-action-3-bots.yaml make botrunner
 
