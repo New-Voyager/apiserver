@@ -220,6 +220,7 @@ class GameUpdatesRepositoryImpl {
       .execute();
   }
 
+  // YONG
   public async get(
     gameCode: string,
     update?: boolean,

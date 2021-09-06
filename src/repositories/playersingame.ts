@@ -22,6 +22,7 @@ import {playersInGame} from '@src/resolvers/history';
 const logger = getLogger('players_in_game');
 
 class PlayersInGameRepositoryImpl {
+  // YONG
   public async getPlayersInSeats(
     gameId: number,
     transactionManager?: EntityManager
