@@ -79,10 +79,15 @@ class PlayersInGameRepositoryImpl {
     return resp[0];
   }
 
+  // YONG
   public async kickOutPlayer(gameCode: string, player: Player) {
     await getGameManager().transaction(async transactionEntityManager => {
       // find game
-      const game = await Cache.getGame(gameCode);
+      const game = await Cache.getGame(
+        gameCode,
+        false,
+        transactionEntityManager
+      );
       if (!game) {
         throw new Error(`Game ${gameCode} is not found`);
       }

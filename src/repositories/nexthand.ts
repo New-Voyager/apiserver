@@ -622,6 +622,7 @@ export class NextHandProcess {
   // FUNCTION HAS A GUARD AGAINST EXECUTING MULTIPLE TIMES WHEN
   // CALLED FROM THE GAME SERVER.
   //
+  // YONG
   public async getNextHandInfo(): Promise<NewHandInfo> {
     const ret = await getGameManager().transaction(
       async transactionEntityManager => {
@@ -634,20 +635,29 @@ export class NextHandProcess {
           throw new Error(`Game code: ${this.gameCode} not found`);
         }
 
-        const gameSettings = await GameSettingsRepository.get(game.gameCode);
+        const gameSettings = await GameSettingsRepository.get(
+          game.gameCode,
+          false,
+          transactionEntityManager
+        );
         if (!gameSettings) {
           throw new Error(
             `Game ${this.gameCode} is not found in PokerGameSettings`
           );
         }
 
-        const gameUpdate = await GameUpdatesRepository.get(this.gameCode);
+        const gameUpdate = await GameUpdatesRepository.get(
+          this.gameCode,
+          false,
+          transactionEntityManager
+        );
         if (!gameUpdate) {
           throw new Error(`Game code: Game updates ${this.gameCode} not found`);
         }
 
         const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
-          game.id
+          game.id,
+          transactionEntityManager
         );
         const takenSeats = _.keyBy(playersInSeats, 'seatNo');
         const seats = new Array<PlayerInSeat>();

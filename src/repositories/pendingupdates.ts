@@ -36,6 +36,7 @@ import {GameUpdatesRepository} from './gameupdates';
 
 const logger = getLogger('repositories::pendingupdates');
 
+// YONG
 export async function markDealerChoiceNextHand(
   game: PokerGame,
   entityManager?: EntityManager

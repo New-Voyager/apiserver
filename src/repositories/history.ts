@@ -39,6 +39,7 @@ class HistoryRepositoryImpl {
     await gameHistoryRepo.save(gameHistory);
   }
 
+  // YONG
   public async gameEnded(game: PokerGame, handsDealt: number) {
     const values: any = {
       status: game.status,
@@ -86,7 +87,9 @@ class HistoryRepositoryImpl {
         await playersInGameRepo.save(playersInGame);
       }
 
-      const highHandHistoryRepo = getHistoryRepository(HighHandHistory);
+      const highHandHistoryRepo = transactionEntityManager.getRepository(
+        HighHandHistory
+      );
       const highHandRepo = getGameRepository(HighHand);
       const highHands = await highHandRepo.find({
         where: {
