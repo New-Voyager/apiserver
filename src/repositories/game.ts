@@ -444,6 +444,7 @@ class GameRepositoryImpl {
     return nextNumber;
   }
 
+  // YONG
   public async seatOccupied(
     game: PokerGame,
     seatNo: number,
@@ -927,6 +928,7 @@ class GameRepositoryImpl {
     return playerInGame.status;
   }
 
+  // YONG
   public async restartGameIfNeeded(
     game: PokerGame,
     processPendingUpdates: boolean,
@@ -955,7 +957,12 @@ class GameRepositoryImpl {
 
     if (playingCount >= 2) {
       try {
-        const gameRepo = getGameRepository(PokerGame);
+        let gameRepo: Repository<PokerGame>;
+        if (transactionEntityManager) {
+          gameRepo = transactionEntityManager.getRepository(PokerGame);
+        } else {
+          gameRepo = getGameRepository(PokerGame);
+        }
         const rows = await gameRepo
           .createQueryBuilder()
           .where({id: game.id})
@@ -970,8 +977,13 @@ class GameRepositoryImpl {
           if (prevTableStatus === TableStatus.NOT_ENOUGH_PLAYERS) {
             if (game.gameStarted) {
               newTableStatus = TableStatus.GAME_RUNNING;
-              await getGameConnection()
-                .createQueryBuilder()
+              let queryBuilder;
+              if (transactionEntityManager) {
+                queryBuilder = transactionEntityManager.createQueryBuilder();
+              } else {
+                queryBuilder = getGameConnection().createQueryBuilder();
+              }
+              await queryBuilder
                 .update(PokerGame)
                 .set({
                   tableStatus: newTableStatus,
@@ -979,7 +991,11 @@ class GameRepositoryImpl {
                 .where('id = :id', {id: game.id})
                 .execute();
 
-              game = await Cache.getGame(game.gameCode, true);
+              game = await Cache.getGame(
+                game.gameCode,
+                true,
+                transactionEntityManager
+              );
             }
           }
 
@@ -988,7 +1004,10 @@ class GameRepositoryImpl {
             row.status === GameStatus.ACTIVE &&
             newTableStatus === TableStatus.GAME_RUNNING
           ) {
-            await GameUpdatesRepository.updateAppcoinNextConsumeTime(game);
+            await GameUpdatesRepository.updateAppcoinNextConsumeTime(
+              game,
+              transactionEntityManager
+            );
 
             // update game status
             await gameRepo.update(
@@ -1004,9 +1023,13 @@ class GameRepositoryImpl {
               hostStartedGame
             ) {
               // refresh the cache
-              const gameUpdate = await Cache.getGame(game.gameCode, true);
+              const gameUpdate = await Cache.getGame(
+                game.gameCode,
+                true,
+                transactionEntityManager
+              );
               // resume the game
-              await resumeGame(gameUpdate.id);
+              await resumeGame(gameUpdate.id, transactionEntityManager);
             }
           }
         }
@@ -1015,6 +1038,7 @@ class GameRepositoryImpl {
       }
     }
   }
+
   public async updateBreakTime(playerId: number, gameId: number) {
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const rows = await playerGameTrackerRepository
@@ -1090,12 +1114,19 @@ class GameRepositoryImpl {
     return playerStatus;
   }
 
-  public async getGameServer(gameId: number): Promise<GameServer | null> {
-    const game = await Cache.getGameById(gameId);
+  // YONG
+  public async getGameServer(
+    gameId: number,
+    transactionManager?: EntityManager
+  ): Promise<GameServer | null> {
+    const game = await Cache.getGameById(gameId, transactionManager);
     if (!game) {
       throw new Error(`Game id ${gameId} not found`);
     }
-    const gameServer = await GameServerRepository.get(game.gameServerUrl);
+    const gameServer = await GameServerRepository.get(
+      game.gameServerUrl,
+      transactionManager
+    );
     return gameServer;
   }
 

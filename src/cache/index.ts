@@ -408,6 +408,7 @@ class GameCache {
     }
   }
 
+  // YONG
   public async getGameServer(
     url: string,
     update = false,
@@ -601,10 +602,20 @@ class GameCache {
     return true;
   }
 
-  public async getGameById(gameID: number): Promise<PokerGame | undefined> {
+  // YONG
+  public async getGameById(
+    gameID: number,
+    transactionManager?: EntityManager
+  ): Promise<PokerGame | undefined> {
     const gameCode = await this.gameCodeFromId(gameID);
     if (!gameCode) {
-      const game = await getGameRepository(PokerGame).findOne({
+      let gameRepo: Repository<PokerGame>;
+      if (transactionManager) {
+        gameRepo = transactionManager.getRepository(PokerGame);
+      } else {
+        gameRepo = getGameRepository(PokerGame);
+      }
+      const game = await gameRepo.findOne({
         where: {id: gameID},
       });
       if (!game) {
