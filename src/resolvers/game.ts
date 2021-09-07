@@ -35,6 +35,7 @@ import {
   ClubUpdateType,
   GamePlayerSettings,
   NewUpdate,
+  SitBackResponse,
 } from '@src/repositories/types';
 import {TakeBreak} from '@src/repositories/takebreak';
 import {Player} from '@src/entity/player/player';
@@ -1373,7 +1374,7 @@ export async function sitBack(
     ip: string;
     location: any;
   }
-) {
+): Promise<SitBackResponse> {
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }
@@ -2655,7 +2656,7 @@ const resolvers: any = {
         ip: ip,
         location: args.location,
       });
-      return PlayerStatus[ret];
+      return ret;
     },
     leaveGame: async (parent, args, ctx, info) => {
       return leaveGame(ctx.req.playerId, args.gameCode);
