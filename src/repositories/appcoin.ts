@@ -57,8 +57,8 @@ class AppCoinRepositoryImpl {
 
         coinTransactionRepo.save(coinTrans);
 
-        await this.addCoins(coinsPurchased,0,playerUuid);
-        
+        await this.addCoins(coinsPurchased, 0, playerUuid);
+
         return false;
       }
     );
