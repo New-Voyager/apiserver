@@ -862,84 +862,76 @@ class GameRepositoryImpl {
     game: PokerGame,
     ip: string,
     location: any
-  ): Promise<PlayerStatus> {
-    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
-    const nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
-    const rows = await playerGameTrackerRepository
-      .createQueryBuilder()
-      .where({
-        game: {id: game.id},
-        playerId: player.id,
-      })
-      .select('stack')
-      .select('status')
-      .select('seat_no', 'seatNo')
-      .execute();
-    if (!rows && rows.length === 0) {
-      throw new Error('Player is not found in the game');
-    }
-
-    const playerInGame = rows[0];
-    if (!playerInGame) {
-      logger.error(`Game: ${game.gameCode} not available`);
-      throw new Error(`Game: ${game.gameCode} not available`);
-    }
-    const gameSettings = await GameSettingsRepository.get(game.gameCode);
-    if (!gameSettings) {
-      throw new Error(
-        `Game: ${game.gameCode} is not found in PokerGameSettings`
+  ): Promise<void> {
+    await getGameManager().transaction(async transactionEntityManager => {
+      const playerGameTrackerRepository = transactionEntityManager.getRepository(
+        PlayerGameTracker
       );
-    }
-    if (gameSettings.gpsCheck || gameSettings.ipCheck) {
-      const locationCheck = new LocationCheck(game, gameSettings);
-      await locationCheck.checkForOnePlayer(player, ip, location);
-    }
-
-    cancelTimer(game.id, player.id, BREAK_TIMEOUT);
-
-    // if (playerInGame.status === PlayerStatus.IN_BREAK) {
-    //   if (game.status === GameStatus.ACTIVE) {
-    //     const update = new NextHandUpdates();
-    //     update.game = game;
-    //     update.player = player;
-    //     update.newUpdate = NextHandUpdate.BACK_FROM_BREAK;
-    //     await nextHandUpdatesRepository.save(update);
-    //   } else {
-    playerInGame.status = PlayerStatus.PLAYING;
-    playerGameTrackerRepository.update(
-      {
-        game: {id: game.id},
-        playerId: player.id,
-      },
-      {
-        status: playerInGame.status,
-        breakTimeExpAt: undefined,
-        consecutiveActionTimeouts: 0,
+      const nextHandUpdatesRepository = transactionEntityManager.getRepository(
+        NextHandUpdates
+      );
+      const rows = await playerGameTrackerRepository
+        .createQueryBuilder()
+        .where({
+          game: {id: game.id},
+          playerId: player.id,
+        })
+        .select('stack')
+        .select('status')
+        .select('seat_no', 'seatNo')
+        .execute();
+      if (!rows && rows.length === 0) {
+        throw new Error('Player is not found in the game');
       }
-    );
 
-    // update the clients with new status
-    await Nats.playerStatusChanged(
-      game,
-      player,
-      playerInGame.status,
-      NewUpdate.SIT_BACK,
-      playerInGame.stack,
-      playerInGame.seatNo
-    );
-    const nextHandUpdate = await nextHandUpdatesRepository.findOne({
-      where: {
-        game: {id: game.id},
-        playerId: player.id,
-        newUpdate: NextHandUpdate.TAKE_BREAK,
-      },
+      const playerInGame = rows[0];
+      if (!playerInGame) {
+        logger.error(`Game: ${game.gameCode} not available`);
+        throw new Error(`Game: ${game.gameCode} not available`);
+      }
+      const gameSettings = await GameSettingsRepository.get(game.gameCode);
+      if (!gameSettings) {
+        throw new Error(
+          `Game: ${game.gameCode} is not found in PokerGameSettings`
+        );
+      }
+      if (gameSettings.gpsCheck || gameSettings.ipCheck) {
+        const locationCheck = new LocationCheck(game, gameSettings);
+        await locationCheck.checkForOnePlayer(player, ip, location);
+      }
+
+      cancelTimer(game.id, player.id, BREAK_TIMEOUT);
+      playerInGame.status = PlayerStatus.PLAYING.valueOf();
+      const sitBackQuery = `UPDATE player_game_tracker 
+              SET status = ${playerInGame.status},
+                  break_time_started_at = NULL,
+                  break_time_exp_at = NULL, 
+                  consecutive_action_timeouts = 0
+              WHERE pgt_game_id = ${game.id} AND pgt_player_id = ${player.id}`;
+      await transactionEntityManager.query(sitBackQuery);
+
+      // update the clients with new status
+      await Nats.playerStatusChanged(
+        game,
+        player,
+        playerInGame.status,
+        NewUpdate.SIT_BACK,
+        playerInGame.stack,
+        playerInGame.seatNo
+      );
+      const nextHandUpdate = await nextHandUpdatesRepository.findOne({
+        where: {
+          game: {id: game.id},
+          playerId: player.id,
+          newUpdate: NextHandUpdate.TAKE_BREAK,
+        },
+      });
+
+      if (nextHandUpdate) {
+        await nextHandUpdatesRepository.delete({id: nextHandUpdate.id});
+      }
     });
-
-    if (nextHandUpdate) {
-      await nextHandUpdatesRepository.delete({id: nextHandUpdate.id});
-    }
     await this.restartGameIfNeeded(game, true, false);
-    return playerInGame.status;
   }
 
   // YONG

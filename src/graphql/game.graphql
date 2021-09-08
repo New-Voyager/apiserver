@@ -525,7 +525,7 @@ type Mutation {
   ): Boolean!
   startGame(gameCode: String!): GameStatus!
   takeBreak(gameCode: String!): Boolean!
-  sitBack(gameCode: String!, location: LocationInput): SitBackResponse!
+  sitBack(gameCode: String!, location: LocationInput): SitBackResponse
   leaveGame(gameCode: String!): Boolean!
   pauseGame(gameCode: String!): GameStatus!
   endGame(gameCode: String!): GameStatus!

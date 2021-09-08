@@ -146,3 +146,8 @@ export interface GamePlayerSettings {
   muckLosingHand?: boolean;
   runItTwiceEnabled?: boolean;
 }
+
+export interface SitBackResponse {
+  missedBlind: boolean;
+  status: string;
+}

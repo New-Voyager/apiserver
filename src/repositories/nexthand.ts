@@ -709,9 +709,9 @@ export class NextHandProcess {
               breakTimeExp = playerSeat.breakTimeExpAt.toISOString();
             }
             const activeSeat = true;
+            missedBlind = playerSeat.missedBlind;
             if (playerSeat.status === PlayerStatus.PLAYING) {
               if (this.gameServerHandNum !== 1) {
-                missedBlind = playerSeat.missedBlind;
                 inhand = playerSeat.inHandNextHand;
                 postedBlind = playerSeat.postedBlindNextHand;
               }

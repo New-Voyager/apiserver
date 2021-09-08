@@ -522,7 +522,12 @@ async function handleDealersChoice(
   }
   await GameUpdatesRepository.updateDealersChoiceSeat(game, playerId);
 
-  Nats.sendDealersChoiceMessage(game, playerId, timeout);
+  Nats.sendDealersChoiceMessage(
+    game,
+    playerId,
+    gameUpdate.handNum + 1,
+    timeout
+  );
 
   // delete this update
   await pendingUpdatesRepo.delete({id: update.id});
