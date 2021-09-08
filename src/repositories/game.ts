@@ -889,7 +889,11 @@ class GameRepositoryImpl {
         logger.error(`Game: ${game.gameCode} not available`);
         throw new Error(`Game: ${game.gameCode} not available`);
       }
-      const gameSettings = await GameSettingsRepository.get(game.gameCode);
+      const gameSettings = await GameSettingsRepository.get(
+        game.gameCode,
+        false,
+        transactionEntityManager
+      );
       if (!gameSettings) {
         throw new Error(
           `Game: ${game.gameCode} is not found in PokerGameSettings`
@@ -897,7 +901,13 @@ class GameRepositoryImpl {
       }
       if (gameSettings.gpsCheck || gameSettings.ipCheck) {
         const locationCheck = new LocationCheck(game, gameSettings);
-        await locationCheck.checkForOnePlayer(player, ip, location);
+        await locationCheck.checkForOnePlayer(
+          player,
+          ip,
+          location,
+          undefined,
+          transactionEntityManager
+        );
       }
 
       cancelTimer(game.id, player.id, BREAK_TIMEOUT);
