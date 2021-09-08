@@ -41,7 +41,7 @@ function setPgConversion() {
   });
 }
 
-export async function start(dbConnection?: any): Promise<[any, any]> {
+export async function start(initializeFirebase: boolean): Promise<[any, any, any]> {
   logger.debug('In start method');
 
   if (!process.env.NATS_URL) {
@@ -50,13 +50,23 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     );
   }
 
-  const typesArray = fileLoader(
-    __dirname + '/' + '../../src/graphql/*.graphql',
+  const typesArray1: Array<string> = fileLoader(
+    __dirname + '/' + './graphql/*.graphql',
     {recursive: true}
   );
-  const typeDefs1 = mergeTypes(typesArray, {all: true});
+  const typesArray2: Array<string> = fileLoader(
+    __dirname + '/' + '../../src/graphql/*.graphql',
+    {recursive: true}
+  );  
+  const allTypes = new Array<string>();
+  allTypes.push(...typesArray1);
+  allTypes.push(...typesArray2);
 
-  const resolversDir = __dirname + '/' + './resolvers/';
+  const typeDefs = mergeTypes(allTypes, {all: true});
+
+  // const resolversDir = __dirname + '/' + './resolvers/';
+  const resolversDir = __dirname + '/' + '../build/src/resolvers/';
+
   const resolversFiles = fileLoader(resolversDir, {
     recursive: true,
     extensions: ['.js'],
@@ -67,7 +77,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
   }
 
   const server = new ApolloServer({
-    typeDefs: typeDefs1,
+    typeDefs: typeDefs,
     resolvers,
     context: requestContext,
   });
@@ -97,7 +107,9 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
 
   initializeRedis();
   initializeGameServer();
-  await Firebase.init();
+  if (initializeFirebase) {
+    await Firebase.init();
+  }
 
   // get config vars
   dotenv.config();
@@ -131,7 +143,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
   addInternalRoutes(app);
   // initialize db
   await seed();
-  return [app, httpServer];
+  return [app, httpServer, server];
 }
 
 async function initializeNats() {

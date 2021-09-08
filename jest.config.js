@@ -6,4 +6,11 @@ module.exports = {
   moduleNameMapper: {
     '^@src/(.*)': '<rootDir>/src/$1',
   },
+  globalSetup: '<rootDir>/tests/testSetup.ts',
+  collectCoverage: true,
+  coverageDirectory: 'cov',
+  testPathIgnorePatterns: [
+    '/node_modules',
+    '/unit-tests'
+  ]
 };

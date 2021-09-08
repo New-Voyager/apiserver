@@ -1,4 +1,4 @@
-import {resetDatabase, getClient} from './utils';
+import {resetDatabase, getClient, signup} from './utils';
 import {gql} from 'apollo-boost';
 import {ClubMember} from '../../src/entity/player/club';
 
@@ -129,11 +129,12 @@ export async function createClub(
     },
   };
   const client = getClient();
-  let resp = await client.mutate({
-    variables: ownerInput,
-    mutation: createPlayerQuery,
-  });
-  const ownerId = resp.data.playerId;
+  // let resp = await client.mutate({
+  //   variables: ownerInput,
+  //   mutation: createPlayerQuery,
+  // });
+  let resp = await signup(owner, 'abc123');
+  const ownerId = resp['uuid'];
   const clubInput = {
     input: {
       name: club,
@@ -141,6 +142,11 @@ export async function createClub(
     },
   };
   const ownerClient = getClient(ownerId);
+
+  // get my clubs
+  const myClubs = await getMyClubs(ownerId);
+  console.log(`My clubs: ${JSON.stringify(myClubs)}`);
+
   // use the player in the auth header
   resp = await ownerClient.mutate({
     variables: clubInput,

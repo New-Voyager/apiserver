@@ -22,7 +22,7 @@
     "test-server-watch": "NODE_ENV=test NATS_URL=${NATS_URL:-'nats://localhost:4222'} DB_USED=sqllite tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
     "test-server": "NODE_ENV=test NATS_URL=${NATS_URL:-'nats://localhost:4222'} DB_USED=sqllite node build/index.js",
     "int-server": "npm run copy-files && NODE_ENV=dev NOTIFY_GAME_SERVER=0 NATS_URL=${NATS_URL:-'nats://nats:4222'} POSTGRES_HOST=${POSTGRES_HOST:-postgres} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} node ./build/index.js",
-    "int-test-specific": "NODE_ENV=dev jest --runInBand ./tests \"--testNamePattern\" \"get club leader board\"",
+    "int-test-specific": "NODE_ENV=dev jest --runInBand ./tests \"--testNamePattern\" \"get game settings\"",
     "run-server": "node build/index.js",
     "test-server-windows": "test-server.bat",
     "test-windows": "set NODE_ENV=test && jest --runInBand ./tests",
@@ -39,7 +39,8 @@
     "script-tests": "node build/script-tests/testdriver.js ./script-tests/script",
     "copy-files": "npm run copy-google-svc",
     "copy-google-svc": "mkdir -p build/src/google-services/ && cp src/google-services/* build/src/google-services/",
-    "codecov": "NODE_ENV=dev NOTIFY_GAME_SERVER=0 NATS_URL=${NATS_URL:-'nats://192.168.0.106:4222'} POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} nyc --reporter=html --reporter=text node -r ts-node/register -r source-map-support/register ./build/index.js"
+    "codecov": "NODE_ENV=dev NOTIFY_GAME_SERVER=0 NATS_URL=${NATS_URL:-'nats://192.168.0.106:4222'} POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} nyc --reporter=html --reporter=text node -r ts-node/register -r source-map-support/register ./build/index.js",
+    "codecov-spec": "NODE_ENV=dev NOTIFY_GAME_SERVER=0 NATS_URL=${NATS_URL:-'nats://192.168.0.106:4222'} POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} jest --coverage --runInBand ./tests \"--testNamePattern\" \"get game settings\""
   },
   "dependencies": {
     "@googleapis/docs": "^0.2.0",
@@ -91,6 +92,7 @@
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/node": "^14.0.13",
+    "apollo-server-integration-testing": "^3.0.0",
     "copyfiles": "^2.3.0",
     "gts": "^2.0.2",
     "istanbul": "^0.4.5",

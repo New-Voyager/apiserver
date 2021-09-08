@@ -1,4 +1,4 @@
-import {getNextHandInfo, moveToNextHand, PORT_NUMBER} from './utils/utils';
+import {getClubs, getNextHandInfo, moveToNextHand, PORT_NUMBER, sleep} from './utils/utils';
 import {default as axios} from 'axios';
 import {resetDatabase, getClient} from './utils/utils';
 import * as handutils from './utils/hand.testutils';
@@ -14,6 +14,8 @@ import {getRepository} from 'typeorm';
 import {response} from 'express';
 import { defaultHandData } from './utils/hand.testutils';
 import { getGameSettings, updateGameSettings, updatePlayerGameSettings } from './utils/game.testutils';
+import { getMyClubs } from './utils/club.testutils';
+import { createTestClient } from 'apollo-server-integration-testing';
 
 const holdemGameInput = {
   gameType: 'HOLDEM',
@@ -153,7 +155,7 @@ async function setupGameEnvironment(
 
 describe('Game/Player Settings', () => {
   beforeEach(async done => {
-    await resetDatabase();
+    //await resetDatabase();
     done();
   });
 
@@ -162,6 +164,11 @@ describe('Game/Player Settings', () => {
   });
 
   test('get game settings', async () => {
+    sleep(5000);
+    await getClubs('6ba1e19c-820f-47e3-90ba-42d7a04e29ef');
+    //const myClubs = await getMyClubs('6ba1e19c-820f-47e3-90ba-42d7a04e29ef');
+    //console.log(JSON.stringify(myClubs));
+
     const [
       owner,
       clubCode,
