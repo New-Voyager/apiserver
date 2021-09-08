@@ -6,18 +6,23 @@
   "author": "Voyager LLC",
   "private": true,
   "scripts": {
-    "watch-debug": "npm run copy-files && DEBUG_WITH_STACK=1 NOTIFY_GAME_SERVER=1 BOTRUNNER_URL=http://localhost:8081 TIMER_URL=http://localhost:8082 NATS_URL=${NATS_URL:-'nats://localhost:4222'} DEBUG_NATS_URL=${DEBUG_NATS_URL:-'nats://localhost:4222'} NATS_ENABLED=1 POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} NODE_ENV=dev tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
+    "watch-debug": "npm run copy-files && LOG_LEVEL=INFO DEBUG_WITH_STACK=1 NOTIFY_GAME_SERVER=1 BOTRUNNER_URL=http://botrunner:8081 TIMER_URL=http://timer:8082 NATS_URL=${NATS_URL:-'nats://nats:4222'} DEBUG_NATS_URL=${DEBUG_NATS_URL:-'nats://localhost:4222'} NATS_ENABLED=1 POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} NODE_ENV=dev tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
+    "watch-localhost-debug": "npm run copy-files && LOG_LEVEL=INFO DEBUG_WITH_STACK=1 NOTIFY_GAME_SERVER=1 COMPRESS_HAND_DATA=false BOTRUNNER_URL=http://localhost:8081 TIMER_URL=http://localhost:8082 NATS_URL=${NATS_URL:-'nats://localhost:4222'} NATS_ENABLED=1 POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} NODE_ENV=dev tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
+    "run-local": "NODE_ENV=dev NOTIFY_GAME_SERVER=0 NATS_URL=${NATS_URL:-'nats://localhost:4222'} POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} node -r ts-node/register -r source-map-support/register ./build/index.js",
     "run-docker": "NOTIFY_GAME_SERVER=1 NATS_URL=${NATS_URL:-'nats://nats:4222'} NATS_ENABLED=1 POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} NODE_ENV=dev node --inspect=0.0.0.0:9235 --nolazy ./build/index.js",
     "debug": "npm run copy-files && NODE_ENV=dev POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} node --inspect=0.0.0.0:9228 ./build/index.js",
     "debug-windows": "set NODE_ENV=dev && tsc-watch.bat",
     "debug-break": "node --nolazy --inspect-brk=9235 ./build/index.js",
     "test": "NODE_ENV=test jest --runInBand ./tests",
+    "int-test": "NODE_ENV=dev jest --runInBand ./tests",
     "test1": "NODE_ENV=test jest --runInBand ./tests \"--testNamePattern\" \"wait list seating\"",
     "unit-tests": "NODE_ENV=test DB_USED=sqllite npx jest --forceExit --runInBand ./unit-tests",
-    "unit-test-specific": "NODE_ENV=unit-test DB_USED=sqllite jest --forceExit --runInBand ./unit-tests \"--testNamePattern\" \"host does not buy coins\"",
-    "test-specific": "NODE_ENV=test jest --runInBand ./tests \"--testNamePattern\" \"get specific game server without club\"",
+    "unit-test-specific": "NODE_ENV=unit-test DB_USED=sqllite jest --forceExit --runInBand ./unit-tests/playersettings.test.ts \"--testNamePattern\" \"gameplayersettings: change game player setting\"",
+    "test-specific": "NODE_ENV=test jest --runInBand ./tests \"--testNamePattern\" \"buyIn for a club game\"",
     "test-server-watch": "NODE_ENV=test NATS_URL=${NATS_URL:-'nats://localhost:4222'} DB_USED=sqllite tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
-    "test-server": "NODE_ENV=test NATS_URL=${NATS_URL:-'nats://nats:4222'} DB_USED=sqllite node build/index.js",
+    "test-server": "NODE_ENV=test NATS_URL=${NATS_URL:-'nats://localhost:4222'} DB_USED=sqllite node build/index.js",
+    "int-server": "npm run copy-files && NODE_ENV=dev NOTIFY_GAME_SERVER=0 NATS_URL=${NATS_URL:-'nats://nats:4222'} POSTGRES_HOST=${POSTGRES_HOST:-postgres} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} node ./build/index.js",
+    "int-test-specific": "NODE_ENV=dev jest --runInBand ./tests \"--testNamePattern\" \"get club leader board\"",
     "run-server": "node build/index.js",
     "test-server-windows": "test-server.bat",
     "test-windows": "set NODE_ENV=test && jest --runInBand ./tests",
@@ -26,7 +31,6 @@
     "clean": "gts clean",
     "compile": "tsc && npm run copy-files",
     "fix": "gts fix",
-    "prepare": "npm run compile",
     "pretest-disabled": "npm run compile",
     "posttest-disabled": "npm run check",
     "run-pg": "docker-compose -f docker-compose-pg.yaml up",
@@ -34,7 +38,8 @@
     "stop-redis": "docker-compose -f docker-compose-redis.yaml down",
     "script-tests": "node build/script-tests/testdriver.js ./script-tests/script",
     "copy-files": "npm run copy-google-svc",
-    "copy-google-svc": "mkdir -p build/src/google-services/ && cp src/google-services/* build/src/google-services/"
+    "copy-google-svc": "mkdir -p build/src/google-services/ && cp src/google-services/* build/src/google-services/",
+    "codecov": "NODE_ENV=dev NOTIFY_GAME_SERVER=0 NATS_URL=${NATS_URL:-'nats://192.168.0.106:4222'} POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} nyc --reporter=html --reporter=text node -r ts-node/register -r source-map-support/register ./build/index.js"
   },
   "dependencies": {
     "@googleapis/docs": "^0.2.0",
@@ -72,8 +77,9 @@
     "nodemailer": "^6.6.3",
     "nodemailer-smtp-transport": "^2.7.4",
     "pg": "^8.2.1",
-    "redis": "^3.0.2",
+    "redis": "^3.1.2",
     "reflect-metadata": "^0.1.13",
+    "source-map-support": "^0.5.19",
     "tsc-watch": "^4.2.8",
     "typeorm": "^0.2.25",
     "uuid": "^8.1.0",
@@ -83,11 +89,14 @@
     "zipkin": "^0.22.0"
   },
   "devDependencies": {
+    "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/node": "^14.0.13",
     "copyfiles": "^2.3.0",
     "gts": "^2.0.2",
+    "istanbul": "^0.4.5",
     "jest": "^26.0.1",
     "node-fetch": "^2.6.0",
+    "nyc": "^15.1.0",
     "sqlite3": "^x",
     "supertest": "^4.0.2",
     "ts-jest": "^26.1.0",
@@ -98,5 +107,34 @@
     "@src": "./build/src/",
     "@test": "./build/test/",
     "@": "./"
+  },
+  "nyc": {
+    "_comment": "Purpose of this part: to do code coverage within Mocha/Chai using Istanbul",
+    "extends": "@istanbuljs/nyc-config-typescript",
+    "exclude": [
+      "**/node_modules/**",
+      "**/test/**",
+      "**/coverage/**",
+      "**/apiserver/unit-tests/**",
+      "**/apiserver/tests/**"
+    ],
+    "all": true,
+    "include": [
+      "src/**/*.ts",
+      "src/**/*.tsx"
+    ],
+    "extension": [
+      ".ts",
+      ".tsx"
+    ],
+    "require": [
+      "ts-node/register"
+    ],
+    "reporter": [
+      "text-summary",
+      "html"
+    ],
+    "sourceMap": true,
+    "instrument": true
   }
 }

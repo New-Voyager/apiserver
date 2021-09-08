@@ -98,7 +98,6 @@ export enum PlayerStatus {
   WAITLIST_SEATING,
   PENDING_UPDATES,
   WAIT_FOR_BUYIN_APPROVAL,
-  NEED_TO_POST_BLIND,
 }
 
 export enum PromotionType {
@@ -198,4 +197,16 @@ export enum SeatStatus {
   OPEN,
   OCCUPIED,
   RESERVED,
+}
+
+export interface PlayerLocation {
+  lat: number;
+  long: number;
+}
+
+export enum HandDataType {
+  JSON,
+  COMPRESSED_JSON,
+  COMPRESSED_JSON_BASE64,
+  PROTO_HAND_V1,
 }

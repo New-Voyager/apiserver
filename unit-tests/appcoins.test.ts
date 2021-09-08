@@ -19,13 +19,7 @@ import * as fs from 'fs';
 import * as glob from 'glob';
 import _ from 'lodash';
 import {getAppSettings} from '../src/firebase/index';
-import {
-  GameStatus,
-  GameType,
-  TableStatus,
-  NextHandUpdate,
-  SeatChangeProcessType,
-} from '../src/entity/types';
+import {GameStatus, TableStatus} from '../src/entity/types';
 
 const logger = getLogger('Hand server unit-test');
 
@@ -78,7 +72,7 @@ const holdemGameInput = {
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,
-  waitlistSupported: true,
+  waitlistAllowed: true,
   maxWaitList: 10,
   sitInApproval: true,
   rakePercentage: 5.0,
@@ -208,12 +202,84 @@ describe('Appcoin tests', () => {
   // free time: 15 seconds
   // after free time, we give extra free 15 seconds to let the host buy coins
   // in this case, the host does not buy any app coins
-  test('AppCoin: host does not buy coins', async () => {
+  test.skip('AppCoin: host does not buy coins', async () => {
     // setup server configuration
     const config = getAppSettings();
     config.freeTime = 15; // 15 seconds
     config.consumeTime = 15; // charge every 15 seconds
     config.newUserFreeCoins = 0;
+    let nextHandNum = 1;
+
+    const [
+      owner,
+      clubCode,
+      clubId,
+      playerUuids,
+      playerIds,
+    ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+    //const rewardId = await createReward(owner, clubCode);
+    const [gameCode, gameId] = await setupGameEnvironment(
+      owner,
+      clubCode,
+      playerUuids,
+      100
+    );
+
+    const dir = 'hand-results/app-coin';
+    const files = await glob.sync('**/*.json', {
+      onlyFiles: false,
+      cwd: dir,
+      deep: 1,
+    });
+    const firstFile = files[0];
+    const data = await defaultHandData(
+      dir + '/' + firstFile,
+      gameId,
+      //rewardTrackId,
+      playerIds
+    );
+    // we are going to post multiple hands
+    data.handNum = nextHandNum++;
+    let resp = await saveHand(gameId, data.handNum, data);
+    let pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
+    expect(pendingUpdates).toBeFalsy();
+    await sleep(10000);
+    data.handNum = nextHandNum++;
+    resp = await saveHand(gameId, data.handNum, data);
+    pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
+    expect(pendingUpdates).toBeFalsy();        
+    await sleep(10000);
+    data.handNum = nextHandNum++;
+    resp = await saveHand(gameId, data.handNum, data);
+    pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
+    expect(pendingUpdates).toBeFalsy();        
+    await sleep(10000);
+
+    data.handNum = nextHandNum++;
+    resp = await saveHand(gameId, data.handNum, data);
+    pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
+    expect(pendingUpdates).toBeTruthy();
+    // game should have ended here
+    await processPendingUpdates(gameId);
+
+    // get game status
+    const game = await GameRepository.getGameByCode(gameCode);
+    if (game) {
+      const gameStatus = game.status;
+      expect(gameStatus).toEqual(GameStatus.ENDED);
+    }
+    expect(game).not.toBeUndefined();
+    expect(game).not.toBeNull();
+  });
+
+  test.skip('AppCoin: host buys coins after warning', async () => {
+    // setup server configuration
+    const config = getAppSettings();
+    config.freeTime = 5; // 15 seconds
+    config.consumeTime = 5; // charge every 15 seconds
+    config.gameCoinsPerBlock = 3; // charge 3 coins per block of game time
+    config.notifyHostTimeWindow = 8; // notify host window after 5 seconds
+    let nextHandNum = 1;
 
     const [
       owner,
@@ -244,102 +310,37 @@ describe('Appcoin tests', () => {
       playerIds
     );
     // we are going to post multiple hands
+    data.handNum = nextHandNum++;
     let resp = await saveHand(gameId, data.handNum, data);
     let pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
     expect(pendingUpdates).toBeFalsy();
-    await sleep(10000);
+    await sleep(5000);
+    data.handNum = nextHandNum++;
     resp = await saveHand(gameId, data.handNum, data);
     pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
-    expect(pendingUpdates).toBeFalsy();        
-    await sleep(10000);
+    expect(pendingUpdates).toBeFalsy();
+    await sleep(5000);
+    await AppCoinRepository.buyCoins(owner, 10);
+    data.handNum = nextHandNum++;
     resp = await saveHand(gameId, data.handNum, data);
     pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
-    expect(pendingUpdates).toBeFalsy();        
-    await sleep(10000);
-
+    expect(pendingUpdates).toBeFalsy();
+    await sleep(5000);
     resp = await saveHand(gameId, data.handNum, data);
     pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
-    expect(pendingUpdates).toBeTruthy();
-    // game should have ended here
-    await processPendingUpdates(gameId);
-
     // get game status
     const game = await GameRepository.getGameByCode(gameCode);
-    if (game) {
-      const gameStatus = game.status;
-      expect(gameStatus).toEqual(GameStatus.ENDED);
-    }
     expect(game).not.toBeUndefined();
     expect(game).not.toBeNull();
-  });
-
-  test('AppCoin: host buys coins after warning', async () => {
-    try {
-
-      // setup server configuration
-      const config = getAppSettings();
-      config.freeTime = 15; // 15 seconds
-      config.consumeTime = 15; // charge every 15 seconds
-      config.gameCoinsPerBlock = 3; // charge 3 coins per block of game time
-
-      const [
-        owner,
-        clubCode,
-        clubId,
-        playerUuids,
-        playerIds,
-      ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
-      //const rewardId = await createReward(owner, clubCode);
-      const [gameCode, gameId] = await setupGameEnvironment(
-        owner,
-        clubCode,
-        playerUuids,
-        100
-      );
-      
-      const dir = 'hand-results/app-coin';
-      const files = await glob.sync('**/*.json', {
-        onlyFiles: false,
-        cwd: dir,
-        deep: 1,
-      });
-      const firstFile = files[0];
-      const data = await defaultHandData(
-        dir + '/' + firstFile,
-        gameId,
-        //rewardTrackId,
-        playerIds
-      );
-      // we are going to post multiple hands
-      let resp = await saveHand(gameId, data.handNum, data);
-      let pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
-      expect(pendingUpdates).toBeFalsy();
-      await sleep(10000);
-      resp = await saveHand(gameId, data.handNum, data);
-      pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
-      expect(pendingUpdates).toBeFalsy();
-      await sleep(10000);
-      await AppCoinRepository.buyCoins(owner, 10);
-      resp = await saveHand(gameId, data.handNum, data);
-      pendingUpdates = await GameRepository.anyPendingUpdates(gameId);
-      expect(pendingUpdates).toBeFalsy();
-      // get game status
-      const game = await GameRepository.getGameByCode(gameCode);
-      expect(game).not.toBeUndefined();
-      expect(game).not.toBeNull();
-      if (game) {
-        const gameStatus = game.status;
-        const tableStatus = game.tableStatus;
-        expect(gameStatus).toEqual(GameStatus.ACTIVE);
-        expect(tableStatus).toEqual(TableStatus.GAME_RUNNING);
-      }
-      const availableCoins = await AppCoinRepository.availableCoins(owner);
-      expect(availableCoins).toEqual(7);
-    } catch (err) {
-      logger.error(JSON.stringify(err));
-      expect(true).toBeFalsy();
+    if (game) {
+      const gameStatus = game.status;
+      const tableStatus = game.tableStatus;
+      expect(gameStatus).toEqual(GameStatus.ACTIVE);
+      expect(tableStatus).toEqual(TableStatus.GAME_RUNNING);
     }
-  });  
+    const availableCoins = await AppCoinRepository.availableCoins(owner);
+    expect(availableCoins).toEqual(7);
+  });
 });
 
 function sleep(ms: number) {

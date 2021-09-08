@@ -4,6 +4,7 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import {Club, ClubMember} from './club';
 import {DbAwareCreateDateColumn, DbAwareUpdateDateColumn} from '../dbaware';
@@ -21,6 +22,7 @@ export class ClubMessageInput {
   @Column({name: 'text', nullable: true})
   public text!: string;
 
+  @Index()
   @Column({name: 'club_code', nullable: false})
   public clubCode!: string;
 
@@ -66,10 +68,12 @@ export class ClubHostMessages {
   @Column({name: 'text'})
   public text!: string;
 
+  @Index()
   @ManyToOne(() => Club, club => club.id)
   @JoinColumn({name: 'club'})
   public club!: Club;
 
+  @Index()
   @ManyToOne(() => ClubMember, member => member.id)
   @JoinColumn({name: 'member'})
   public member!: ClubMember;

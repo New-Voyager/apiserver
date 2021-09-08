@@ -1,23 +1,19 @@
 import {GameStatus, GameType, TableStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
-import {
-  markDealerChoiceNextHand,
-  processPendingUpdates,
-} from '@src/repositories/pendingupdates';
+import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
-import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {PokerGame} from '@src/entity/game/game';
 import {PlayerStatus} from '@src/entity/types';
-import {getManager, getRepository} from 'typeorm';
-import {NewHandInfo, PlayerInSeat} from '@src/repositories/types';
 import _ from 'lodash';
 import {delay} from '@src/utils';
-import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {getGameManager} from '@src/repositories';
+import {getGameManager, getGameRepository} from '@src/repositories';
 import {GameReward} from '@src/entity/game/reward';
 import {NextHandProcess} from '@src/repositories/nexthand';
+import {GameSettingsRepository} from '@src/repositories/gamesettings';
+import {PlayersInGameRepository} from '@src/repositories/playersingame';
 
-const logger = getLogger('GameAPIs');
+const logger = getLogger('internal::game');
 
 /**
  * These APIs are only available for game server.
@@ -177,7 +173,12 @@ class GameAPIs {
             if (!game) {
               throw new Error(`Game ${gameCode} is not found`);
             }
-            const playersInSeats = await GameRepository.getPlayersInSeats(
+            const gameSettings = await GameSettingsRepository.get(
+              game.gameCode,
+              false,
+              transactionEntityManager
+            );
+            const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
               game.id,
               transactionEntityManager
             );
@@ -230,7 +231,7 @@ class GameAPIs {
               privateGame: game.privateGame,
               startedBy: game.hostName,
               startedByUuid: game.hostUuid,
-              breakLength: game.breakLength,
+              breakLength: gameSettings.breakLength,
               autoKickAfterBreak: game.autoKickAfterBreak,
               rewardTrackingIds: rewardTrackingIds,
               seatInfo: {
@@ -292,8 +293,8 @@ class GameAPIs {
     }
     const gameCode = req.params.gameCode;
     const gameServerHandNum = parseInt(req.params.currentHandNum, 10);
-    logger.info(
-      `moveToNextHand called for game: ${gameCode} current hand number: ${gameServerHandNum}`
+    logger.debug(
+      `moveToNextHand called for game: ${gameCode} game server current hand number: ${gameServerHandNum}`
     );
     if (gameServerHandNum < 0) {
       const res = {
@@ -332,7 +333,7 @@ class GameAPIs {
       resp.status(500).send(JSON.stringify(res));
       return;
     }
-    logger.info(`New hand info: ${gameCode}`);
+    logger.debug(`New hand info: ${gameCode}`);
 
     try {
       const nextHandProcess = new NextHandProcess(gameCode, -1);
@@ -341,30 +342,6 @@ class GameAPIs {
     } catch (err) {
       resp.status(500).send({error: err.message});
     }
-  }
-
-  public async updateButtonPos(gameCode: string, buttonPos: number) {
-    const game = await Cache.getGame(gameCode);
-    if (!game) {
-      throw new Error('Updating button position failed');
-    }
-
-    const ret = await getGameManager().transaction(
-      async transactionEntityManager => {
-        const pokerGameUpdates = transactionEntityManager.getRepository(
-          PokerGameUpdates
-        );
-        await pokerGameUpdates.update(
-          {
-            gameID: game.id,
-          },
-          {
-            buttonPos: buttonPos,
-            calculateButtonPos: false,
-          }
-        );
-      }
-    );
   }
 }
 

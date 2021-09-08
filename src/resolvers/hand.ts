@@ -10,7 +10,8 @@ import _ from 'lodash';
 import * as lz from 'lzutf8';
 
 import {getGameRepository} from '@src/repositories';
-const logger = getLogger('hand-resolvers');
+
+const logger = getLogger('resolvers::hand');
 
 const resolvers: any = {
   Query: {
@@ -100,13 +101,7 @@ async function generateHandHistoryData(
     if (!authorized) {
       ret.data = null;
     } else {
-      let data: string;
-      if (handHistory.compressed) {
-        data = lz.decompress(handHistory.data);
-      } else {
-        data = handHistory.data.toString();
-      }
-      ret.data = data;
+      ret.data = JSON.parse(HandRepository.getHandData(handHistory));
     }
   }
   return ret;

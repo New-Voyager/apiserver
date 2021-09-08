@@ -2,8 +2,9 @@ import {Cache} from '@src/cache/index';
 import {PokerGame} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {PlayerStatus} from '@src/entity/types';
-import {openSeat} from '@src/gameserver';
+// import {openSeat} from '@src/gameserver';
 import {GameRepository} from '@src/repositories/game';
+import {PlayersInGameRepository} from '@src/repositories/playersingame';
 import {
   hostSeatChangePlayers,
   SeatChangeProcess,
@@ -12,7 +13,7 @@ import {getLogger} from '@src/utils/log';
 import {argsToArgsConfig} from 'graphql/type/definition';
 import _ from 'lodash';
 import {isHostOrManagerOrOwner} from './util';
-const logger = getLogger('game');
+const logger = getLogger('resolvers::seatchange');
 
 const resolvers: any = {
   Query: {
@@ -258,7 +259,9 @@ export async function seatPositions(
       return playersInSeats;
     } else {
       // get seat positions from table
-      const playersInTable = await GameRepository.getPlayersInSeats(game.id);
+      const playersInTable = await PlayersInGameRepository.getPlayersInSeats(
+        game.id
+      );
       const players = new Array<any>();
       for (const playerInSeat of playersInTable) {
         const player = playerInSeat as any;

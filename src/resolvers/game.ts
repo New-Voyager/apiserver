@@ -11,7 +11,7 @@ import {
   ApprovalStatus,
   SeatStatus,
 } from '@src/entity/types';
-import {getLogger} from '@src/utils/log';
+import {getLogger, errToLogString} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
 import {WaitListMgmt} from '@src/repositories/waitlist';
 import {default as _} from 'lodash';
@@ -20,7 +20,7 @@ import {PokerGame} from '@src/entity/game/game';
 import {GameHistory} from '@src/entity/history/game';
 import {fillSeats} from '@src/botrunner';
 import {ClubRepository} from '@src/repositories/club';
-import {getCurrentHandLog, playerStatusChanged} from '@src/gameserver';
+import {getCurrentHandLog} from '@src/gameserver';
 import {isHostOrManagerOrOwner} from './util';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {pendingApprovalsForClubData} from '@src/types';
@@ -31,7 +31,12 @@ import {
   JANUS_SECRET,
   JANUS_TOKEN,
 } from '@src/janus';
-import {ClubUpdateType, NewUpdate} from '@src/repositories/types';
+import {
+  ClubUpdateType,
+  GamePlayerSettings,
+  NewUpdate,
+  SitBackResponse,
+} from '@src/repositories/types';
 import {TakeBreak} from '@src/repositories/takebreak';
 import {Player} from '@src/entity/player/player';
 import {Nats} from '@src/nats';
@@ -39,10 +44,14 @@ import {Reload} from '@src/repositories/reload';
 import {PlayersInGame} from '@src/entity/history/player';
 import {getAgoraAppId} from '@src/3rdparty/agora';
 import {SeatChangeProcess} from '@src/repositories/seatchange';
+import {analyticsreporting_v4} from 'googleapis';
+import {GameSettingsRepository} from '@src/repositories/gamesettings';
+import {PlayersInGameRepository} from '@src/repositories/playersingame';
+import {GameUpdatesRepository} from '@src/repositories/gameupdates';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
-const logger = getLogger('game');
+const logger = getLogger('resolvers::game');
 
 export async function configureGame(
   playerId: string,
@@ -79,12 +88,13 @@ export async function configureGame(
     ret.janusRoomId = gameInfo.id;
     if (game.audioConfEnabled) {
       audioConfCreateTime = new Date().getTime();
-      logger.info(`Joining Janus audio conference: ${game.id}`);
+      //logger.info(`Joining Janus audio conference: ${game.id}`);
       try {
         const session = await JanusSession.create(JANUS_APISECRET);
         await session.attachAudio();
         await session.createRoom(ret.janusRoomId, ret.janusRoomPin);
         await GameRepository.updateJanus(
+          gameInfo.gameCode,
           gameInfo.id,
           session.getId(),
           session.getHandleId(),
@@ -93,19 +103,18 @@ export async function configureGame(
         );
         audioConfCreateTime = new Date().getTime() - audioConfCreateTime;
         const endTime = new Date().getTime();
-        logger.info(
+        logger.debug(
           `Time taken to create a new game: ${ret.gameCode} ${
             endTime - startTime
           }ms  audioConfCreateTime: ${audioConfCreateTime} createGameTime: ${createGameTime}`
         );
-        logger.info(`Successfully joined Janus audio conference: ${game.id}`);
       } catch (err) {
-        logger.info(
+        logger.debug(
           `Failed to join Janus audio conference: ${
             game.id
           }. Error: ${err.toString()}`
         );
-        await GameRepository.updateAudioConfDisabled(gameInfo.id);
+        await GameRepository.updateAudioConfDisabled(gameInfo.gameCode);
         game.audioConfEnabled = false;
       }
     }
@@ -118,7 +127,11 @@ export async function configureGame(
     );
     return ret;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while configuring game. playerId: ${playerId}, clubCode: ${clubCode}, game: ${JSON.stringify(
+        game
+      )}: ${errToLogString(err)}`
+    );
     throw new Error(
       `Failed to create a new game. ${err.toString()} ${JSON.stringify(err)}`
     );
@@ -141,8 +154,14 @@ export async function configureGameByPlayer(playerId: string, game: any) {
     ret.gameType = GameType[gameInfo.gameType];
     return ret;
   } catch (err) {
-    logger.error(JSON.stringify(err));
-    throw new Error(`Failed to create a new game. ${JSON.stringify(err)}`);
+    logger.error(
+      `Error while configuring game by player. playerId: ${playerId}, game: ${JSON.stringify(
+        game
+      )}: ${errToLogString(err)}`
+    );
+    throw new Error(
+      `Failed to create a new game. ${err.toString()} ${JSON.stringify(err)}`
+    );
   }
 }
 
@@ -181,7 +200,11 @@ export async function endGame(playerId: string, gameCode: string) {
     }
     return GameStatus[game.status];
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while ending game. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to end the game. ' + err.message);
   }
 }
@@ -189,7 +212,11 @@ export async function endGame(playerId: string, gameCode: string) {
 export async function joinGame(
   playerUuid: string,
   gameCode: string,
-  seatNo: number
+  seatNo: number,
+  locationCheck?: {
+    location: any;
+    ip: string;
+  }
 ) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
@@ -197,10 +224,10 @@ export async function joinGame(
   let playerName = playerUuid;
   const startTime = new Date().getTime();
   try {
-    const player = await Cache.getPlayer(playerUuid);
+    let player: Player | null = await Cache.getPlayer(playerUuid);
     playerName = player.name;
 
-    logger.info(`Player ${playerName} is joining game ${gameCode}`);
+    logger.debug(`Player ${playerName} is joining game ${gameCode}`);
     // get game using game code
     const game = await Cache.getGame(gameCode);
     if (!game) {
@@ -218,17 +245,48 @@ export async function joinGame(
         );
       }
     }
+    let ip = '';
+    let location: any = null;
+    if (locationCheck) {
+      ip = locationCheck.ip;
+      location = locationCheck.location;
+    }
 
-    const status = await GameRepository.joinGame(player, game, seatNo);
-    logger.info(
+    player = await Cache.updatePlayerLocation(player.uuid, location, ip);
+    if (!player) {
+      throw new Error(`Player ${playerUuid} is not found`);
+    }
+    const status = await GameRepository.joinGame(
+      player,
+      game,
+      seatNo,
+      ip,
+      location
+    );
+    logger.debug(
       `Player: ${player.name} isBot: ${player.bot} joined game: ${game.gameCode}`
     );
-    // player is good to go
-    const playerStatus = PlayerStatus[status];
-    return playerStatus;
+
+    const playerInGame = await PlayersInGameRepository.getPlayerInfo(
+      game,
+      player
+    );
+    let resp: any = {};
+    if (playerInGame) {
+      resp.missedBlind = playerInGame.missedBlind;
+      resp.status = PlayerStatus[playerInGame.status];
+      return resp;
+    }
+    return {
+      missedBlind: false,
+      status: PlayerStatus[PlayerStatus.NOT_PLAYING],
+    };
   } catch (err) {
-    logger.error(JSON.stringify(err));
-    console.log(err);
+    logger.error(
+      `Error while joining game. playerUuid: ${playerUuid}, gameCode: ${gameCode}, seatNo: ${seatNo}, locationCheck: ${JSON.stringify(
+        locationCheck
+      )}: ${errToLogString(err)}`
+    );
     if (err instanceof ApolloError) {
       throw err;
     } else {
@@ -238,14 +296,18 @@ export async function joinGame(
     }
   } finally {
     const timeTaken = new Date().getTime() - startTime;
-    logger.info(`joinGame took ${timeTaken} ms`);
+    logger.debug(`joinGame took ${timeTaken} ms`);
   }
 }
 
 export async function takeSeat(
   playerUuid: string,
   gameCode: string,
-  seatNo: number
+  seatNo: number,
+  locationCheck?: {
+    ip: string;
+    location: any;
+  }
 ) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
@@ -256,7 +318,7 @@ export async function takeSeat(
     const player = await Cache.getPlayer(playerUuid);
     playerName = player.name;
 
-    logger.info(`Player ${playerName} is joining game ${gameCode}`);
+    logger.debug(`Player ${playerName} is joining game ${gameCode}`);
     // get game using game code
     const game = await Cache.getGame(gameCode);
     if (!game) {
@@ -274,15 +336,29 @@ export async function takeSeat(
         );
       }
     }
-
-    const status = await GameRepository.joinGame(player, game, seatNo);
-    logger.info(
+    let ip = '';
+    let location: any = null;
+    if (locationCheck) {
+      ip = locationCheck.ip;
+      location = locationCheck.location;
+    }
+    const status = await GameRepository.joinGame(
+      player,
+      game,
+      seatNo,
+      ip,
+      location
+    );
+    logger.debug(
       `Player: ${player.name} isBot: ${player.bot} joined game: ${game.gameCode}`
     );
 
-    const playerInSeat = await GameRepository.getSeatInfo(game.id, seatNo);
+    const playerInSeat = await PlayersInGameRepository.getSeatInfo(
+      game.id,
+      seatNo
+    );
 
-    if (game.useAgora) {
+    if (!playerInSeat.audioToken) {
       playerInSeat.agoraToken = playerInSeat.audioToken;
     }
 
@@ -292,8 +368,11 @@ export async function takeSeat(
     playerInSeat.breakExpTime = playerInSeat.breakTimeExpAt;
     return playerInSeat;
   } catch (err) {
-    logger.error(JSON.stringify(err));
-    console.log(err);
+    logger.error(
+      `Error while taking seat. playerUuid: ${playerUuid}, gameCode: ${gameCode}, seatNo: ${seatNo}, locationCheck: ${JSON.stringify(
+        locationCheck
+      )}: ${errToLogString(err)}`
+    );
     if (err instanceof ApolloError) {
       throw err;
     } else {
@@ -303,7 +382,7 @@ export async function takeSeat(
     }
   } finally {
     const timeTaken = new Date().getTime() - startTime;
-    logger.info(`joinGame took ${timeTaken} ms`);
+    logger.debug(`joinGame took ${timeTaken} ms`);
   }
 }
 
@@ -346,7 +425,7 @@ export async function startGame(
       gameNum = await ClubRepository.getNextGameNum(game.clubId);
     }
 
-    let players = await GameRepository.getPlayersInSeats(game.id);
+    let players = await PlayersInGameRepository.getPlayersInSeats(game.id);
     if (game.botGame && players.length < game.maxPlayers) {
       // fill the empty seats with bots
       await fillSeats(game.clubCode, game.gameCode);
@@ -354,9 +433,9 @@ export async function startGame(
       let allFilled = false;
       while (!allFilled) {
         await new Promise(r => setTimeout(r, 1000));
-        players = await GameRepository.getPlayersInSeats(game.id);
-        if (players.length != game.maxPlayers) {
-          logger.info(
+        players = await PlayersInGameRepository.getPlayersInSeats(game.id);
+        if (players.length !== game.maxPlayers) {
+          logger.debug(
             `[${game.gameCode}] Waiting for bots to take empty seats`
           );
         } else {
@@ -364,7 +443,7 @@ export async function startGame(
         }
       }
     }
-    players = await GameRepository.getPlayersInSeats(game.id);
+    players = await PlayersInGameRepository.getPlayersInSeats(game.id);
     // do we have enough players in the table
     // if (players.length <= 1) {
     //   throw new Error('We need more players to start the game');
@@ -384,7 +463,11 @@ export async function startGame(
     // game is started
     return GameStatus[status];
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while starting game. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to start the game. ${JSON.stringify(err)}`);
   }
 }
@@ -423,12 +506,40 @@ export async function buyIn(
 
     const timeTaken = new Date().getTime() - startTime;
     logger.info(`Buyin took ${timeTaken}ms`);
-    // player is good to go
-    return status;
+
+    /*
+    type BuyInResponse {
+      missedBlind: Boolean
+      status: PlayerGameStatus
+      approved: Boolean!
+      expireSeconds: Int
+    }*/
+    const playerInGame = await PlayersInGameRepository.getPlayerInfo(
+      game,
+      player
+    );
+    let resp: any = {};
+    if (playerInGame) {
+      resp.missedBlind = playerInGame.missedBlind;
+      resp.status = PlayerStatus[playerInGame.status];
+      resp.approved = status.approved;
+      resp.expireSeconds = status.expireSeconds;
+      return resp;
+    }
+    return {
+      missedBlind: false,
+      status: PlayerStatus[PlayerStatus.NOT_PLAYING],
+      approved: false,
+      expireSeconds: status.expireSeconds,
+    };
   } catch (err) {
     const timeTaken = new Date().getTime() - startTime;
-    logger.info(`Buyin took ${timeTaken}ms`);
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while buying in. playerUuid: ${playerUuid}, gameCode: ${gameCode}, amount: ${amount}: ${errToLogString(
+        err
+      )}`
+    );
+    logger.debug(`Buyin took ${timeTaken}ms`);
     throw new Error(`Failed to update buyin. ${err.toString()}`);
   }
 }
@@ -466,7 +577,11 @@ export async function reload(
     // player is good to go
     return status;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while reloading. playerUuid: ${playerUuid}, gameCode: ${gameCode}, amount: ${amount}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to update reload. ${JSON.stringify(err)}`);
   }
 }
@@ -505,7 +620,9 @@ export async function pendingApprovals(hostUuid: string) {
 
     return ret;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error in pendingApprovals. hostUuid: ${hostUuid}: ${errToLogString(err)}`
+    );
     throw new Error(
       `Failed to fetch approval requests. ${JSON.stringify(err)}`
     );
@@ -551,7 +668,11 @@ export async function pendingApprovalsForGame(
 
     return ret;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error in pendingApprovalsForGame. hostUuid: ${hostUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to get pending approvals list. ${JSON.stringify(err)}`
     );
@@ -590,7 +711,11 @@ export async function pendingApprovalsForClub(
 
     return ret;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error in pendingApprovalsForClub. hostUuid: ${hostUuid}, clubCode: ${clubCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to fetch approval requests. ${JSON.stringify(err)}`
     );
@@ -631,7 +756,11 @@ export async function completedGame(playerId: string, gameCode: string) {
     resp.gameType = GameType[resp.gameType];
     return resp;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting completed game. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to get game information. ${JSON.stringify(err)}`);
   }
 }
@@ -664,7 +793,11 @@ export async function getGameResultTable(gameCode: string) {
 
     return resp;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error in getting game result table. gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to get game result table. ${JSON.stringify(err)}`);
   }
 }
@@ -704,7 +837,11 @@ export async function downloadResult(playerId: string, gameCode: string) {
     const output = csvRows.join('\n');
     return output;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while downloading result. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to get game result table. ${JSON.stringify(err)}`);
   }
 }
@@ -714,7 +851,11 @@ export async function getGamePlayers(gameCode: string) {
     const resp = await GameRepository.getGamePlayers(gameCode);
     return resp;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting game players. gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to get game players information. ${JSON.stringify(err)}`
     );
@@ -783,7 +924,11 @@ export async function approveRequest(
     }
     return resp;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while approving request. hostUuid: ${hostUuid}, playerUuid: ${playerUuid}, gameCode: ${gameCode}, type: ${type}, status: ${status}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to approve buyin. ${JSON.stringify(err)}`);
   }
 }
@@ -826,7 +971,11 @@ export async function myGameState(playerUuid: string, gameCode: string) {
 
     return gameState;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error in myGameState. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to get game state. ${JSON.stringify(err)}`);
   }
 }
@@ -872,11 +1021,74 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
 
     return tableGameState;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting table game state. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to get game state. ${JSON.stringify(err)}`);
   }
 }
 
+export async function gameSettings(playerUuid: string, gameCode: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const gameSettings = await GameSettingsRepository.get(gameCode);
+    if (!gameSettings) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+    if (gameSettings.bombPotInterval) {
+      gameSettings.bombPotInterval = Math.floor(
+        gameSettings.bombPotInterval / 60
+      );
+    }
+    if (gameSettings.waitlistSittingTimeout) {
+      gameSettings.waitlistSittingTimeout = Math.floor(
+        gameSettings.waitlistSittingTimeout / 60
+      );
+    }
+    return gameSettings;
+  } catch (err) {
+    logger.error(
+      `Error while getting game settings. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
+    throw new Error(`Getting game settings failed`);
+  }
+}
+
+export async function myGameSettings(playerUuid: string, gameCode: string) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    // const gameSettings = await GameSettingsRepository.get(gameCode);
+    // if (!gameSettings) {
+    //   throw new Error(`Game ${gameCode} is not found`);
+    // }
+    // return gameSettings;
+    return {
+      autoStraddle: false,
+      straddle: false,
+      buttonStraddle: false,
+      bombPotEnabled: false,
+      muckLosingHand: false,
+      runItTwiceEnabled: false,
+    };
+  } catch (err) {
+    logger.error(
+      `Error while getting game settings. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
+    throw new Error(`Getting game settings failed`);
+  }
+}
 export async function getGameInfo(playerUuid: string, gameCode: string) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
@@ -912,7 +1124,7 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     const ret = _.cloneDeep(game) as any;
 
     if (ret.host) {
-      if (ret.host.uuid == playerUuid) {
+      if (ret.host.uuid === playerUuid) {
         isHost = true;
       }
     }
@@ -926,38 +1138,45 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.status = GameStatus[game.status];
     ret.gameID = game.id;
     ret.agoraAppId = getAgoraAppId();
-    ret.useAgora = game.useAgora;
 
-    const updates = await GameRepository.getGameUpdates(game.id);
-    if (updates) {
+    const updates = await GameUpdatesRepository.get(game.gameCode);
+    const settings = await GameSettingsRepository.get(game.gameCode);
+    if (updates && settings) {
+      ret.useAgora = settings.useAgora;
+      ret.audioConfEnabled = settings.audioConfEnabled;
       ret.rakeCollected = updates.rake;
       ret.handNum = updates.handNum;
-      ret.janusRoomId = updates.janusRoomId;
-      ret.janusRoomPin = updates.janusRoomPin;
+      ret.janusRoomId = settings.janusRoomId;
+      ret.janusRoomPin = settings.janusRoomPin;
 
-      ret.bombPotEnabled = updates.bombPotEnabled;
+      ret.bombPotEnabled = settings.bombPotEnabled;
       if (ret.bombPotEnabled) {
-        ret.bombPotBet = updates.bombPotBet;
-        ret.doubleBoardBombPot = updates.doubleBoardBombPot;
-        ret.bombPotInterval = Math.floor(updates.bombPotInterval / 60);
-        ret.bombPotIntervalInSecs = updates.bombPotInterval;
+        ret.bombPotBet = settings.bombPotBet;
+        ret.doubleBoardBombPot = settings.doubleBoardBombPot;
+        ret.bombPotInterval = Math.floor(settings.bombPotInterval / 60);
+        ret.bombPotIntervalInSecs = settings.bombPotInterval;
       }
+      ret.ipCheck = settings.ipCheck;
+      ret.gpsCheck = settings.gpsCheck;
     }
     const now = new Date().getTime();
     // get player's game state
-    const playerState = await GameRepository.getGamePlayerState(game, player);
+    const playerState = await PlayersInGameRepository.getGamePlayerState(
+      game,
+      player
+    );
     if (playerState) {
       ret.gameToken = playerState.gameToken;
       ret.playerGameStatus = PlayerStatus[playerState.status];
       ret.playerMuckLosingHandConfig = playerState.muckLosingHand;
-      ret.playerRunItTwiceConfig = playerState.runItTwicePrompt;
+      ret.playerRunItTwiceConfig = playerState.runItTwiceEnabled;
 
-      if (game.useAgora) {
+      if (!playerState.audioToken) {
         ret.agoraToken = playerState.audioToken;
       }
 
       ret.sessionTime = 0;
-      logger.info(
+      logger.debug(
         `Session time: ${playerState.sessionTime} satAt: ${playerState.satAt}`
       );
       if (
@@ -978,13 +1197,20 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     const runningTime = Math.round((now - game.startedAt.getTime()) / 1000);
     ret.runningTime = runningTime;
 
-    ret.gameToPlayerChannel = `game.${game.gameCode}.player`;
-    ret.playerToHandChannel = `player.${game.gameCode}.hand`;
-    ret.handToAllChannel = `hand.${game.gameCode}.player.all`;
-    ret.handToPlayerChannel = `hand.${game.gameCode}.player.${player.id}`;
-    ret.gameChatChannel = `game.${game.gameCode}.chat`;
-    ret.pingChannel = `ping.${game.gameCode}`;
-    ret.pongChannel = `pong.${game.gameCode}`;
+    ret.gameToPlayerChannel = Nats.getGameChannel(game.gameCode);
+    ret.playerToHandChannel = Nats.getPlayerToHandChannel(game.gameCode);
+    ret.handToAllChannel = Nats.getHandToAllChannel(game.gameCode);
+    ret.handToPlayerChannel = Nats.getPlayerHandChannel(
+      game.gameCode,
+      player.id
+    );
+    ret.handToPlayerTextChannel = Nats.getPlayerHandTextChannel(
+      game.gameCode,
+      player.id
+    );
+    ret.gameChatChannel = Nats.getChatChannel(game.gameCode);
+    ret.pingChannel = Nats.getPingChannel(game.gameCode);
+    ret.pongChannel = Nats.getPongChannel(game.gameCode);
 
     // player's role
     ret.isManager = isManager;
@@ -997,7 +1223,11 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.janusToken = JANUS_TOKEN;
     return ret;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting game info. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to get game information. Message: ${
         err.message
@@ -1050,7 +1280,11 @@ async function getPlayerRole(playerUuid: string, gameCode: string) {
 
     return ret;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting player role. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to get game information. Message: ${
         err.message
@@ -1086,7 +1320,11 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
     const status = await GameRepository.leaveGame(player, game);
     return status;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while leaving game. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to leave game. ${err.toString()} ${JSON.stringify(err)}`
     );
@@ -1120,12 +1358,23 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
     const status = await takeBreak.takeBreak();
     return status;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while taking break. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to take break. ${JSON.stringify(err)}`);
   }
 }
 
-export async function sitBack(playerUuid: string, gameCode: string) {
+export async function sitBack(
+  playerUuid: string,
+  gameCode: string,
+  locationCheck?: {
+    ip: string;
+    location: any;
+  }
+): Promise<SitBackResponse> {
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }
@@ -1148,10 +1397,33 @@ export async function sitBack(playerUuid: string, gameCode: string) {
       }
     }
     const player = await Cache.getPlayer(playerUuid);
-    const status = await GameRepository.sitBack(player, game);
-    return status;
+    let ip = '';
+    let location: any = null;
+    if (locationCheck != null) {
+      ip = locationCheck.ip;
+      location = locationCheck.location;
+    }
+    await GameRepository.sitBack(player, game, ip, location);
+    const playerInGame = await PlayersInGameRepository.getPlayerInfo(
+      game,
+      player
+    );
+    let resp: any = {};
+    if (playerInGame) {
+      resp.missedBlind = playerInGame.missedBlind;
+      resp.status = PlayerStatus[playerInGame.status];
+      return resp;
+    }
+    return {
+      missedBlind: false,
+      status: PlayerStatus[PlayerStatus.NOT_PLAYING],
+    };
   } catch (err) {
-    logger.error(err);
+    logger.error(
+      `Error while sitting back. playerUuid: ${playerUuid}, gameCode: ${gameCode}, locationCheck: ${JSON.stringify(
+        locationCheck
+      )}: ${errToLogString(err)}`
+    );
     throw new Error(`Failed to sit back in the seat. ${JSON.stringify(err)}`);
   }
 }
@@ -1188,10 +1460,10 @@ export async function kickOutPlayer(
         // did this user start the game?
         if (game.hostUuid !== requestUser) {
           logger.error(
-            `Player: ${requestUser} cannot kick out a player in ${gameCode}`
+            `Player: ${requestUser} cannot kick out a player in game ${gameCode}`
           );
           throw new Error(
-            `Player: ${requestUser} cannot kick out a player in ${gameCode}`
+            `Player: ${requestUser} cannot kick out a player in game ${gameCode}`
           );
         }
       }
@@ -1199,19 +1471,23 @@ export async function kickOutPlayer(
       // hosted by individual user
       if (game.hostUuid !== requestUser) {
         logger.error(
-          `Player: ${requestUser} cannot kick out a player in ${gameCode}`
+          `Player: ${requestUser} cannot kick out a player in game ${gameCode}`
         );
         throw new Error(
-          `Player: ${requestUser} cannot kick out a player in ${gameCode}`
+          `Player: ${requestUser} cannot kick out a player in game ${gameCode}`
         );
       }
     }
 
     const player = await Cache.getPlayer(kickedOutPlayer);
-    await GameRepository.kickOutPlayer(gameCode, player);
+    await PlayersInGameRepository.kickOutPlayer(gameCode, player);
     return true;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while kicking player out. requestUser: ${requestUser}, gameCode: ${gameCode}, kickedOutPlayer: ${kickedOutPlayer}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to kick out player');
   }
 }
@@ -1235,7 +1511,7 @@ export async function addToWaitingList(playerId: string, gameCode: string) {
           `Player: ${playerId} is not a club member in club ${game.clubName}`
         );
         throw new Error(
-          `Player: ${playerId} is not authorized to kick out a user`
+          `Player: ${playerId} is not authorized to update waiting list for club ${game.clubName} (addToWaitingList)`
         );
       }
     }
@@ -1243,7 +1519,11 @@ export async function addToWaitingList(playerId: string, gameCode: string) {
     await waitlistMgmt.addToWaitingList(playerId);
     return true;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while adding to waiting list. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to add player to waiting list');
   }
 }
@@ -1270,7 +1550,7 @@ export async function removeFromWaitingList(
           `Player: ${playerId} is not a club member in club ${game.clubName}`
         );
         throw new Error(
-          `Player: ${playerId} is not authorized to kick out a user`
+          `Player: ${playerId} is not authorized to update waiting list for club ${game.clubName} (removeFromWaitingList)`
         );
       }
     }
@@ -1278,7 +1558,11 @@ export async function removeFromWaitingList(
     await waitlistMgmt.removeFromWaitingList(playerId);
     return true;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while removing from waiting list. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to remove player from waiting list');
   }
 }
@@ -1305,14 +1589,18 @@ export async function waitingList(
           `Player: ${playerId} is not a club member in club ${game.clubName}`
         );
         throw new Error(
-          `Player: ${playerId} is not authorized to kick out a user`
+          `Player: ${playerId} is not authorized to get waiting list for club ${game.clubName}`
         );
       }
     }
     const waitlistMgmt = new WaitListMgmt(game);
     return waitlistMgmt.getWaitingListUsers();
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting waiting list. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to kick out player');
   }
 }
@@ -1340,7 +1628,7 @@ export async function applyWaitlistOrder(
           `Player: ${hostUuid} is not a club member in club ${game.clubName}`
         );
         throw new Error(
-          `Player: ${hostUuid} is not authorized to kick out a user`
+          `Player: ${hostUuid} is not authorized to change waitlist order`
         );
       }
 
@@ -1372,7 +1660,11 @@ export async function applyWaitlistOrder(
     await waitlistMgmt.applyWaitlistOrder(players);
     return true;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while applying waitlist order. hostUuid: ${hostUuid}, gameCode: ${gameCode}, players: ${JSON.stringify(
+        players
+      )}: ${errToLogString(err)}`
+    );
     throw new Error('Failed to change waitlist order');
   }
 }
@@ -1396,7 +1688,7 @@ export async function declineWaitlistSeat(playerId: string, gameCode: string) {
           `Player: ${playerId} is not a club member in club ${game.clubName}`
         );
         throw new Error(
-          `Player: ${playerId} is not authorized to kick out a user`
+          `Player: ${playerId} is not authorized to update waitlist seat for club ${game.clubName} (declineWaitlistSeat)`
         );
       }
     }
@@ -1405,7 +1697,11 @@ export async function declineWaitlistSeat(playerId: string, gameCode: string) {
     await waitlistMgmt.declineWaitlistSeat(player);
     return true;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while declining waitlist seat. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to add player to waiting list');
   }
 }
@@ -1446,7 +1742,11 @@ export async function pauseGame(playerId: string, gameCode: string) {
     }
     return GameStatus[game.status];
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while pausing game. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to pause the game. ' + err.message);
   }
 }
@@ -1483,7 +1783,11 @@ export async function resumeGame(playerId: string, gameCode: string) {
     }
     return GameStatus[game.status];
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while resuming game. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
     );
@@ -1520,15 +1824,18 @@ export async function switchSeat(
     const player = await Cache.getPlayer(playerUuid);
     const process = new SeatChangeProcess(game);
     const status = await process.switchSeat(player, seatNo);
-    logger.info(
+    logger.debug(
       `Player: ${player.name} isBot: ${player.bot} switched seat game: ${game.gameCode}`
     );
     // player is good to go
     const playerStatus = PlayerStatus[status];
     return playerStatus;
   } catch (err) {
-    logger.error(JSON.stringify(err));
-    console.log(err);
+    logger.error(
+      `Error while switching seat. playerUuid: ${playerUuid}, gameCode: ${gameCode}, seatNo: ${seatNo}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Player: ${playerUuid} Failed to join the game. ${JSON.stringify(err)}`
     );
@@ -1562,7 +1869,11 @@ export async function approveBuyIn(
 
     const player = await Cache.getPlayer(playerId);
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while approving buy-in. playerId: ${playerId}, gameCode: ${gameCode}, requestPlayerId: ${requestPlayerId}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
     );
@@ -1594,41 +1905,13 @@ export async function denyBuyIn(
       );
     }
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while denying buy-in. playerId: ${playerId}, gameCode: ${gameCode}, requestPlayerId: ${requestPlayerId}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
-    );
-  }
-}
-
-export async function updatePlayerGameConfig(
-  playerId: string,
-  gameCode: string,
-  config: any
-) {
-  if (!playerId) {
-    throw new Error('Unauthorized');
-  }
-  const errors = new Array<string>();
-  if (errors.length > 0) {
-    throw new Error(errors.join('\n'));
-  }
-  try {
-    const game = await Cache.getGame(gameCode);
-    if (!game) {
-      throw new Error('Game is not found');
-    }
-    const player = await Cache.getPlayer(playerId);
-    if (!player) {
-      throw new Error('Player is not found');
-    }
-
-    await GameRepository.updatePlayerGameConfig(player, game, config);
-    return true;
-  } catch (err) {
-    logger.error(err.message);
-    throw new Error(
-      `Failed to update game config:  ${err.message}. Game code: ${gameCode}`
     );
   }
 }
@@ -1647,7 +1930,11 @@ export async function dealerChoice(
     const player = await Cache.getPlayer(playerId);
     await GameRepository.updateDealerChoice(game, player, gameType);
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while updating dealer choice. playerId: ${playerId}, gameCode: ${gameCode}, gameTypeStr: ${gameTypeStr}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to update set dealer choice:  ${err.message}. Game code: ${gameCode}`
     );
@@ -1667,9 +1954,77 @@ export async function postBlind(
     await GameRepository.postBlind(game, player);
     return true;
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while posting blind. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to post blind:  ${err.message}. Game code: ${gameCode}`
+    );
+  }
+}
+
+export async function updateGameSettings(
+  playerId: string,
+  gameCode: string,
+  settings: any
+): Promise<boolean> {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    const game = await Cache.getGame(gameCode);
+    const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
+    if (!isAuthorized) {
+      logger.error(
+        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot end the game`
+      );
+      throw new Error(
+        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot end the game`
+      );
+    }
+
+    // update game settings
+    await GameSettingsRepository.update(gameCode, settings);
+    return true;
+  } catch (err) {
+    logger.error(
+      `Error while updating game settings. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
+    throw new Error(
+      `Failed updating game settings:  ${err.message}. Game code: ${gameCode}`
+    );
+  }
+}
+
+export async function updateGamePlayerSettings(
+  playerId: string,
+  gameCode: string,
+  settings: GamePlayerSettings
+): Promise<boolean> {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    const game = await Cache.getGame(gameCode);
+    const player = await Cache.getPlayer(playerId);
+    // update player game settings
+    return PlayersInGameRepository.updatePlayerGameSettings(
+      player,
+      game,
+      settings
+    );
+  } catch (err) {
+    logger.error(
+      `Error while updating player settings. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
+    throw new Error(
+      `Failed while updating player settings:  ${err.message}. Game code: ${gameCode}`
     );
   }
 }
@@ -1683,7 +2038,9 @@ export async function openSeats(playerId: string, gameCode: string) {
   }
   try {
     const game = await Cache.getGame(gameCode);
-    const playersInSeats = await GameRepository.getPlayersInSeats(game.id);
+    const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
+      game.id
+    );
     const takenSeats = playersInSeats.map(x => x.seatNo);
     const availableSeats: Array<number> = [];
     for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
@@ -1693,7 +2050,11 @@ export async function openSeats(playerId: string, gameCode: string) {
     }
     return availableSeats;
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while getting open seats. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
     );
@@ -1722,7 +2083,11 @@ export async function playerStackStat(playerId: string, gameCode: string) {
       */
     return stackStat;
   } catch (err) {
-    logger.error(err.message);
+    logger.error(
+      `Error while getting player stack stat. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(
       `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
     );
@@ -1778,7 +2143,11 @@ export async function gameHistoryById(playerId: string, gameCode: string) {
 
     return gameHistorydata;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting game history data. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to retreive game history data');
   }
 }
@@ -1806,7 +2175,7 @@ export async function gameDataById(playerId: string, gameCode: string) {
       }
     }
 
-    const updates = await GameRepository.getGameUpdatesById(game.id);
+    const updates = await GameUpdatesRepository.get(game.gameCode);
     if (!updates) {
       logger.error(
         `Updates not found for the game ${gameCode} in club ${game.clubName}`
@@ -1836,7 +2205,11 @@ export async function gameDataById(playerId: string, gameCode: string) {
 
     return gamedata;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting game data. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error('Failed to retreive game history data');
   }
 }
@@ -1891,7 +2264,11 @@ export async function playersInGameById(playerId: string, gameCode: string) {
     });
     return playersInGameData;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting players in game data. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to retreive players in game data - ${err}`);
   }
 }
@@ -1951,7 +2328,11 @@ export async function playersGameTrackerById(
     });
     return playerGameTrackerData;
   } catch (err) {
-    logger.error(JSON.stringify(err));
+    logger.error(
+      `Error while getting players game tracker data. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+        err
+      )}`
+    );
     throw new Error(`Failed to retreive players in game data - ${err}`);
   }
 }
@@ -2023,12 +2404,18 @@ const resolvers: any = {
     playersGameTrackerById: async (parent, args, ctx, info) => {
       return await playersGameTrackerById(ctx.req.playerId, args.gameCode);
     },
+    gameSettings: async (parent, args, ctx, info) => {
+      return await gameSettings(ctx.req.playerId, args.gameCode);
+    },
+    myGameSettings: async (parent, args, ctx, info) => {
+      return await myGameSettings(ctx.req.playerId, args.gameCode);
+    },
   },
   GameInfo: {
     seatInfo: async (parent, args, ctx, info) => {
       const game = await Cache.getGame(parent.gameCode);
       const seatStatuses = await GameRepository.getSeatStatus(game.id);
-      const players = await GameRepository.getPlayersInSeats(game.id);
+      const players = await PlayersInGameRepository.getPlayersInSeats(game.id);
       const playersInSeats = new Array<any>();
       for (const player of players) {
         const playerInSeat = player as any;
@@ -2036,6 +2423,24 @@ const resolvers: any = {
         playerInSeat.name = player.playerName;
         playerInSeat.buyInExpTime = player.buyInExpAt;
         playerInSeat.breakExpTime = player.breakTimeExpAt;
+        /* settings */
+        /*
+          type GamePlayerSettings {
+            autoStraddle: Boolean
+            straddle: Boolean
+            buttonStraddle: Boolean
+            bombPotEnabled: Boolean
+            muckLosingHand: Boolean
+            runItTwiceEnabled: Boolean
+          }
+        */
+        playerInSeat.settings = {
+          autoStraddle: player.autoStraddle,
+          buttonStraddle: player.buttonStraddle,
+          bombPotEnabled: player.bombPotEnabled,
+          muckLosingHand: player.muckLosingHand,
+          runItTwiceEnabled: player.runItTwiceEnabled,
+        };
         playersInSeats.push(playerInSeat);
       }
 
@@ -2114,7 +2519,10 @@ const resolvers: any = {
       if (!playerState) {
         const player = await Cache.getPlayer(ctx.req.playerId);
         // get player's game state
-        playerState = await GameRepository.getGamePlayerState(game, player);
+        playerState = await PlayersInGameRepository.getGamePlayerState(
+          game,
+          player
+        );
         ctx['playerState'] = playerState;
       }
       if (playerState) {
@@ -2128,7 +2536,10 @@ const resolvers: any = {
       if (!playerState) {
         const player = await Cache.getPlayer(ctx.req.playerId);
         // get player's game state
-        playerState = await GameRepository.getGamePlayerState(game, player);
+        playerState = await PlayersInGameRepository.getGamePlayerState(
+          game,
+          player
+        );
         ctx['playerState'] = playerState;
       }
       if (playerState) {
@@ -2167,10 +2578,24 @@ const resolvers: any = {
       return configureGameByPlayer(ctx.req.playerId, args.game);
     },
     joinGame: async (parent, args, ctx, info) => {
-      return joinGame(ctx.req.playerId, args.gameCode, args.seatNo);
+      let ip = '';
+      const gameSettings = await Cache.getGameSettings(args.gameCode);
+      if (gameSettings !== null) {
+        if (gameSettings.ipCheck) {
+          ip = ctx.req.userIp;
+        }
+      }
+
+      return joinGame(ctx.req.playerId, args.gameCode, args.seatNo, {
+        ip: ip,
+        location: args.location,
+      });
     },
     takeSeat: async (parent, args, ctx, info) => {
-      return takeSeat(ctx.req.playerId, args.gameCode, args.seatNo);
+      return takeSeat(ctx.req.playerId, args.gameCode, args.seatNo, {
+        ip: '',
+        location: args.location,
+      });
     },
     endGame: async (parent, args, ctx, info) => {
       return endGame(ctx.req.playerId, args.gameCode);
@@ -2219,7 +2644,19 @@ const resolvers: any = {
       return takeBreak(ctx.req.playerId, args.gameCode);
     },
     sitBack: async (parent, args, ctx, info) => {
-      return sitBack(ctx.req.playerId, args.gameCode);
+      let ip = '';
+      const gameSettings = await Cache.getGameSettings(args.gameCode);
+      if (gameSettings !== null) {
+        if (gameSettings.ipCheck) {
+          ip = ctx.req.userIp;
+        }
+      }
+
+      const ret = await sitBack(ctx.req.playerId, args.gameCode, {
+        ip: ip,
+        location: args.location,
+      });
+      return ret;
     },
     leaveGame: async (parent, args, ctx, info) => {
       return leaveGame(ctx.req.playerId, args.gameCode);
@@ -2246,18 +2683,21 @@ const resolvers: any = {
     switchSeat: async (parent, args, ctx, info) => {
       return switchSeat(ctx.req.playerId, args.gameCode, args.seatNo);
     },
-    updatePlayerGameConfig: async (parent, args, ctx, info) => {
-      return await updatePlayerGameConfig(
-        ctx.req.playerId,
-        args.gameCode,
-        args.config
-      );
-    },
     dealerChoice: async (parent, args, ctx, info) => {
       return dealerChoice(ctx.req.playerId, args.gameCode, args.gameType);
     },
     postBlind: async (parent, args, ctx, info) => {
       return postBlind(ctx.req.playerId, args.gameCode);
+    },
+    updateGameSettings: async (parent, args, ctx, info) => {
+      return updateGameSettings(ctx.req.playerId, args.gameCode, args.settings);
+    },
+    updateGamePlayerSettings: async (parent, args, ctx, info) => {
+      return updateGamePlayerSettings(
+        ctx.req.playerId,
+        args.gameCode,
+        args.settings as GamePlayerSettings
+      );
     },
   },
 };

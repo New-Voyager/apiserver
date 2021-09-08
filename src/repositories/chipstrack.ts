@@ -1,4 +1,4 @@
-import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {PokerGame} from '@src/entity/game/game';
 import {Club, ClubMember} from '@src/entity/player/club';
 import {UpdateResult} from 'typeorm';
 import {getLogger} from '@src/utils/log';
@@ -13,27 +13,11 @@ import {
 } from '.';
 import {ClubMemberStat} from '@src/entity/player/club';
 
-const logger = getLogger('chipstrack');
+const logger = getLogger('repositories::chipstrack');
 
 class ChipsTrackRepositoryImpl {
   public async settleClubBalances(game: PokerGame): Promise<boolean> {
     try {
-      // if (!game.clubCode) {
-      //   // we don't track balances of individual host games
-      //   return true;
-      // }
-
-      const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-
-      const gameId = game.id;
-      const gameUpdates = await gameUpdatesRepo.findOne({
-        gameID: gameId,
-      });
-      if (!gameUpdates) {
-        throw new Error(`Game Updates for ${gameId} is not found`);
-      }
-
-      //logger.info('****** STARTING TRANSACTION FOR RAKE CALCULATION');
       await getGameManager().transaction(async transactionEntityManager => {
         // update session time
         const playerGameRepo = transactionEntityManager.getRepository(
@@ -145,7 +129,7 @@ class ChipsTrackRepositoryImpl {
           const playerChips = await transactionEntityManager
             .getRepository(PlayerGameTracker)
             .find({
-              where: {game: {id: gameId}},
+              where: {game: {id: game.id}},
             });
 
           for (const playerChip of playerChips) {
@@ -231,24 +215,6 @@ class ChipsTrackRepositoryImpl {
       throw new Error('Error in retreiving data');
     }
     return clubPlayerBalance;
-  }
-
-  public async getRakeCollected(
-    playerId: string,
-    gameCode: string
-  ): Promise<number> {
-    // only club owner or game host can get the rake
-    // verify it here
-
-    const game = await Cache.getGame(gameCode);
-    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-    const gameUpdates = await gameUpdatesRepo.find({
-      where: {gameID: game.id},
-    });
-    if (!gameUpdates || gameUpdates.length === 0) {
-      return 0;
-    }
-    return gameUpdates[0].rake;
   }
 }
 

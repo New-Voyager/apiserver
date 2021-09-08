@@ -185,4 +185,6 @@ type Mutation {
   changeDisplayName(name: String!): Boolean
   updatePlayer(input: PlayerUpdateInput!): Boolean
   redeemPromotionCode(code: String!): RedeemPromotionResult!
+  updateLocation(location: LocationInput!): Boolean!
+  ipChanged: Boolean
 }

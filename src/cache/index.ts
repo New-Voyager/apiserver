@@ -1,34 +1,97 @@
 import {Club, ClubMember} from '@src/entity/player/club';
-import {PokerGame} from '@src/entity/game/game';
+import {
+  PokerGame,
+  PokerGameSettings,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {EntityManager, getRepository, Repository} from 'typeorm';
 import * as redis from 'redis';
-import {redisHost, redisPort} from '@src/utils';
+import {
+  redisHost,
+  redisPort,
+  redisUser,
+  redisPassword,
+  isRunningUnitTest,
+} from '@src/utils';
 import {getGameRepository, getUserRepository} from '@src/repositories';
+import {PlayerLocation} from '@src/entity/types';
+import {GameServer} from '@src/entity/game/gameserver';
+import {getLogger, errToLogString} from '@src/utils/log';
 
-interface CachedHighHandTracking {
-  rewardId: number;
-  trackingId: number;
-  gameCodes: Array<string>;
+const logger = getLogger('cache');
+
+let client: any;
+interface MemCache {
+  success: boolean;
+  data: string;
 }
+let unitTestCache: {[key: string]: MemCache | undefined} = {};
 
-const client = redis.createClient(redisPort(), redisHost());
-client.on('error', error => {
-  console.log(error);
-  process.exit(0);
-});
+export function initializeRedis() {
+  if (client !== undefined) {
+    return;
+  }
+  if (isRunningUnitTest()) {
+    return;
+  }
+
+  if (redisUser() || redisPassword()) {
+    const url = `rediss://${redisHost()}:${redisPort()}`;
+    client = redis.createClient(url, {
+      user: redisUser(),
+      password: redisPassword(),
+    });
+    logger.info('Successfully connected to redis');
+  } else {
+    client = redis.createClient(redisPort(), redisHost());
+  }
+  client.on('error', error => {
+    logger.error(`Redis client error: ${error.toString()}}`);
+    throw new Error(error);
+  });
+}
 
 class GameCache {
   public async getCache(key: string) {
+    if (isRunningUnitTest()) {
+      if (!unitTestCache[key]) {
+        return {
+          success: false,
+          data: undefined,
+        };
+      }
+      return unitTestCache[key] as any;
+    }
+
+    if (!client) {
+      throw new Error(
+        `GameCache.getCache (key: ${key}) called when redis client is null or undefined`
+      );
+    }
+
     return new Promise<{success: boolean; data: string}>(
       async (resolve, reject) => {
         try {
           client.get(key, (err: any, value: any) => {
-            if (err) resolve({success: false, data: value});
-            resolve({success: true, data: value});
+            if (err) {
+              logger.error(
+                `Error from Redis client.get (key: ${key}): ${errToLogString(
+                  err,
+                  false
+                )}`
+              );
+              resolve({success: false, data: value});
+            } else {
+              resolve({success: true, data: value});
+            }
           });
         } catch (error) {
-          console.log('getCache Handle rejected promise (' + error + ') here.');
+          logger.error(
+            `Error while calling redis client.get (key: ${key}): ${errToLogString(
+              error
+            )}`
+          );
           reject({success: false, data: error});
         }
       }
@@ -36,29 +99,78 @@ class GameCache {
   }
 
   public async setCache(key: string, value: string) {
+    if (isRunningUnitTest()) {
+      const ret = {success: true, data: value};
+      unitTestCache[key] = ret;
+      return ret;
+    }
+
+    if (!client) {
+      throw new Error(
+        `GameCache.setCache (key: ${key}) called when redis client is null or undefined`
+      );
+    }
+
     return new Promise<{success: boolean}>(async (resolve, reject) => {
       try {
         client.set(key, value, (err: any, object: any) => {
-          if (err) resolve({success: false});
-          resolve({success: true});
+          if (err) {
+            logger.error(
+              `Error from Redis client.set (key: ${key}): ${errToLogString(
+                err,
+                false
+              )}`
+            );
+            resolve({success: false});
+          } else {
+            resolve({success: true});
+          }
         });
       } catch (error) {
-        console.log('getCache Handle rejected promise (' + error + ') here.');
+        logger.error(
+          `Error while calling redis client.set (key: ${key}): ${errToLogString(
+            error
+          )}`
+        );
         reject({success: false});
       }
     });
   }
 
   public async removeCache(key: string) {
+    if (isRunningUnitTest()) {
+      if (unitTestCache[key]) {
+        unitTestCache[key] = undefined;
+      }
+      return {success: true};
+    }
+
+    if (!client) {
+      throw new Error(
+        `GameCache.removeCache (key: ${key}) called when redis client is null or undefined`
+      );
+    }
+
     return new Promise<{success: boolean}>(async (resolve, reject) => {
       try {
         client.del(key, (err: any, object: any) => {
-          if (err) resolve({success: false});
-          resolve({success: true});
+          if (err) {
+            logger.error(
+              `Error from Redis client.del (key: ${key}): ${errToLogString(
+                err,
+                false
+              )}`
+            );
+            resolve({success: false});
+          } else {
+            resolve({success: true});
+          }
         });
       } catch (error) {
-        console.log(
-          'removeCache Handle rejected promise (' + error + ') here.'
+        logger.error(
+          `Error while calling Redis client.del (key: ${key}): ${errToLogString(
+            error
+          )}`
         );
         reject({success: false});
       }
@@ -66,16 +178,38 @@ class GameCache {
   }
 
   public async scanCache(pattern: string) {
+    if (isRunningUnitTest()) {
+      const keys = new Array<string>();
+      for (const key of Object.keys(unitTestCache)) {
+        if (key.match(pattern)) {
+          keys.push(key);
+        }
+      }
+      return {data: keys};
+    }
+
+    if (!client) {
+      throw new Error(
+        `GameCache.scanCache called when redis client is null or undefined`
+      );
+    }
+
     return new Promise<{success: boolean; data: any}>(
       async (resolve, reject) => {
         try {
           client.keys(pattern, (err: any, reply: any) => {
-            if (err) resolve({success: false, data: err});
-            resolve({success: true, data: reply});
+            if (err) {
+              logger.error(
+                `Error from Redis client.keys: ${errToLogString(err, false)}`
+              );
+              resolve({success: false, data: err});
+            } else {
+              resolve({success: true, data: reply});
+            }
           });
         } catch (error) {
-          console.log(
-            'scanCache Handle rejected promise (' + error + ') here.'
+          logger.error(
+            `Error while calling Redis client.keys: ${errToLogString(error)}`
           );
           reject({success: false, data: error});
         }
@@ -107,23 +241,6 @@ class GameCache {
     if (getResp.success && getResp.data) {
       const game: PokerGame = JSON.parse(getResp.data) as PokerGame;
       game.pendingUpdates = pendingUpdates;
-      await this.setCache(`gameCache-${gameCode}`, JSON.stringify(game));
-    }
-  }
-
-  /**
-   * Update the cache with next coin consume time.
-   * @param gameCode
-   * @param nextCoinConsumeTime
-   */
-  public async updateGameCoinConsumeTime(
-    gameCode: string,
-    coinConsumeTime: Date
-  ) {
-    const getResp = await this.getCache(`gameCache-${gameCode}`);
-    if (getResp.success && getResp.data) {
-      const game: PokerGame = JSON.parse(getResp.data) as PokerGame;
-      game.nextCoinConsumeTime = coinConsumeTime;
       await this.setCache(`gameCache-${gameCode}`, JSON.stringify(game));
     }
   }
@@ -165,6 +282,7 @@ class GameCache {
     }
   }
 
+  // YONG: checked
   public async getGame(
     gameCode: string,
     update = false,
@@ -172,15 +290,7 @@ class GameCache {
   ): Promise<PokerGame> {
     const getResp = await this.getCache(`gameCache-${gameCode}`);
     if (getResp.success && getResp.data && !update) {
-      let ret = JSON.parse(getResp.data) as PokerGame;
-      let oldConsumeTime = ret.nextCoinConsumeTime;
-      if (!oldConsumeTime) {
-        ret.nextCoinConsumeTime = null;
-      } else {
-        ret.nextCoinConsumeTime = new Date(
-          Date.parse(oldConsumeTime.toString())
-        );
-      }
+      const ret = JSON.parse(getResp.data) as PokerGame;
       return ret;
     } else {
       let repo: Repository<PokerGame>;
@@ -193,7 +303,9 @@ class GameCache {
         where: {gameCode: gameCode},
       });
       if (!game) {
-        throw new Error(`Cannot find with game code: ${gameCode}`);
+        throw new Error(
+          `Cannot find game code [${gameCode}] in poker game repo`
+        );
       }
       await this.updateGameIdGameCodeChange(game.id, game.gameCode);
 
@@ -201,19 +313,127 @@ class GameCache {
         const oldGame = JSON.parse(getResp.data) as PokerGame;
         game.highHandRank = oldGame.highHandRank;
         game.pendingUpdates = oldGame.pendingUpdates;
-        let oldConsumeTime = oldGame.nextCoinConsumeTime;
-        if (!oldConsumeTime) {
-          game.nextCoinConsumeTime = null;
-        } else {
-          game.nextCoinConsumeTime = new Date(
-            Date.parse(oldConsumeTime.toString())
-          );
-        }
       }
 
       await this.setCache(`gameCache-${gameCode}`, JSON.stringify(game));
       await this.setCache(`gameIdCache-${game.id}`, JSON.stringify(game));
       return game;
+    }
+  }
+
+  // YONG
+  public async getGameSettings(
+    gameCode: string,
+    update = false,
+    transactionManager?: EntityManager
+  ): Promise<PokerGameSettings> {
+    const getResp = await this.getCache(`gameSettingsCache-${gameCode}`);
+    if (getResp.success && getResp.data && !update) {
+      const ret = JSON.parse(getResp.data) as PokerGameSettings;
+      return ret;
+    } else {
+      let repo: Repository<PokerGameSettings>;
+      if (transactionManager) {
+        repo = transactionManager.getRepository(PokerGameSettings);
+      } else {
+        repo = getGameRepository(PokerGameSettings);
+      }
+      const gameSettings = await repo.findOne({
+        where: {gameCode: gameCode},
+      });
+      if (!gameSettings) {
+        throw new Error(
+          `Cannot find with game code [${gameCode}] in poker game settings repo`
+        );
+      }
+
+      await this.setCache(
+        `gameSettingsCache-${gameCode}`,
+        JSON.stringify(gameSettings)
+      );
+      return gameSettings;
+    }
+  }
+
+  // YONG
+  public async getGameUpdates(
+    gameCode: string,
+    update = false,
+    transactionManager?: EntityManager
+  ): Promise<PokerGameUpdates> {
+    const getResp = await this.getCache(`gameUpdatesCache-${gameCode}`);
+    if (getResp.success && getResp.data && !update) {
+      const cacheRet = JSON.parse(getResp.data) as any;
+      const ret = cacheRet as PokerGameUpdates;
+      if (cacheRet && cacheRet.nextCoinConsumeTime) {
+        ret.nextCoinConsumeTime = new Date(
+          Date.parse(cacheRet.nextCoinConsumeTime.toString())
+        );
+      }
+
+      if (cacheRet && cacheRet.lastIpGpsCheckTime) {
+        ret.lastIpGpsCheckTime = new Date(
+          Date.parse(cacheRet.lastIpGpsCheckTime.toString())
+        );
+      }
+
+      if (cacheRet && cacheRet.lastBombPotTime) {
+        ret.lastBombPotTime = new Date(
+          Date.parse(cacheRet.lastBombPotTime.toString())
+        );
+      }
+
+      return ret;
+    } else {
+      let repo: Repository<PokerGameUpdates>;
+      if (transactionManager) {
+        repo = transactionManager.getRepository(PokerGameUpdates);
+      } else {
+        repo = getGameRepository(PokerGameUpdates);
+      }
+      const gameUpdates = await repo.findOne({
+        where: {gameCode: gameCode},
+      });
+      if (!gameUpdates) {
+        throw new Error(
+          `Cannot find with game code [${gameCode}] in poker game updates repo`
+        );
+      }
+
+      await this.setCache(
+        `gameUpdatesCache-${gameCode}`,
+        JSON.stringify(gameUpdates)
+      );
+      return gameUpdates;
+    }
+  }
+
+  // YONG
+  public async getGameServer(
+    url: string,
+    update = false,
+    transactionManager?: EntityManager
+  ): Promise<GameServer> {
+    const getResp = await this.getCache(`gameServerCache-${url}`);
+    if (getResp.success && getResp.data && !update) {
+      const ret = JSON.parse(getResp.data) as GameServer;
+      return ret;
+    } else {
+      let repo: Repository<GameServer>;
+      if (transactionManager) {
+        repo = transactionManager.getRepository(GameServer);
+      } else {
+        repo = getGameRepository(GameServer);
+      }
+      const gameServer = await repo.findOne({
+        where: {url: url},
+      });
+      if (!gameServer) {
+        throw new Error(`Cannot find game server with url: ${url}`);
+      }
+
+      await this.setCache(`gameServerCache-${url}`, JSON.stringify(gameServer));
+      return gameServer;
     }
   }
 
@@ -250,7 +470,7 @@ class GameCache {
         where: {clubCode: clubCode},
       });
       if (!club) {
-        throw new Error(`Cannot find with club code: ${clubCode}`);
+        throw new Error(`Cannot find club code [${clubCode}] in club repo`);
       }
 
       await this.setCache(`clubCache-${clubCode}`, JSON.stringify(club));
@@ -261,18 +481,70 @@ class GameCache {
   public async getPlayer(playerUuid: string, update = false): Promise<Player> {
     const getResp = await this.getCache(`playerCache-${playerUuid}`);
     if (getResp.success && getResp.data && !update) {
-      return JSON.parse(getResp.data) as Player;
+      const player = JSON.parse(getResp.data) as Player;
+      if (player.locationUpdatedAt) {
+        player.locationUpdatedAt = new Date(
+          Date.parse(player.locationUpdatedAt.toString())
+        );
+      }
+
+      return player;
     } else {
       const player = await getUserRepository(Player).findOne({
         where: {uuid: playerUuid},
       });
       if (!player) {
-        throw new Error(`Cannot find player: ${playerUuid}`);
+        throw new Error(
+          `Cannot find player uuid [${playerUuid}] in player repo`
+        );
+      }
+
+      // update player location/ip
+      if (getResp.success && getResp.data) {
+        let ret = JSON.parse(getResp.data) as Player;
+        player.ipAddress = ret.ipAddress;
+        player.location = ret.location;
+        if (!ret.locationUpdatedAt) {
+          ret.locationUpdatedAt = null;
+        } else {
+          ret.locationUpdatedAt = new Date(
+            Date.parse(ret.locationUpdatedAt.toString())
+          );
+        }
+        player.locationUpdatedAt = ret.locationUpdatedAt;
       }
       await this.setCache(`playerCache-${playerUuid}`, JSON.stringify(player));
       await this.setCache(`playerIdCache-${player.id}`, JSON.stringify(player));
       return player;
     }
+  }
+
+  /**
+   * Update the cache with next coin consume time.
+   * @param gameCode
+   * @param playerLocation
+   * @param ipAddress
+   */
+  public async updatePlayerLocation(
+    playerUuid: string,
+    playerLocation: PlayerLocation,
+    ipAddr: string
+  ): Promise<Player | null> {
+    const getResp = await this.getCache(`playerCache-${playerUuid}`);
+    if (getResp.success && getResp.data) {
+      const player = JSON.parse(getResp.data) as Player;
+      if (playerLocation) {
+        player.location = playerLocation;
+      }
+      if (ipAddr) {
+        player.ipAddress = ipAddr;
+      }
+      player.locationUpdatedAt = new Date();
+      await this.setCache(`playerCache-${playerUuid}`, JSON.stringify(player));
+      await this.setCache(`playerIdCache-${player.id}`, JSON.stringify(player));
+      return player;
+    }
+    return null;
   }
 
   public async getPlayerById(id: number, update = false): Promise<Player> {
@@ -284,7 +556,7 @@ class GameCache {
         where: {id: id},
       });
       if (!player) {
-        throw new Error(`Cannot find player: ${id}`);
+        throw new Error(`Cannot find player id [${id}] in player repo`);
       }
       await this.setCache(`playerCache-${player.uuid}`, JSON.stringify(player));
       await this.setCache(`playerIdCache-${player.id}`, JSON.stringify(player));
@@ -330,10 +602,20 @@ class GameCache {
     return true;
   }
 
-  public async getGameById(gameID: number): Promise<PokerGame | undefined> {
+  // YONG
+  public async getGameById(
+    gameID: number,
+    transactionManager?: EntityManager
+  ): Promise<PokerGame | undefined> {
     const gameCode = await this.gameCodeFromId(gameID);
     if (!gameCode) {
-      const game = await getGameRepository(PokerGame).findOne({
+      let gameRepo: Repository<PokerGame>;
+      if (transactionManager) {
+        gameRepo = transactionManager.getRepository(PokerGame);
+      } else {
+        gameRepo = getGameRepository(PokerGame);
+      }
+      const game = await gameRepo.findOne({
         where: {id: gameID},
       });
       if (!game) {
@@ -364,10 +646,19 @@ class GameCache {
   }
 
   public reset() {
+    if (isRunningUnitTest()) {
+      unitTestCache = {};
+      return;
+    }
+    initializeRedis();
     return new Promise(async (resolve, reject) => {
-      client.flushall((err, succeeded) => {
-        console.log(succeeded);
-        resolve(true);
+      client.flushall((err: Error, succeeded) => {
+        if (err) {
+          logger.error(`Redis flushall error: ${errToLogString(err, false)}`);
+        } else {
+          logger.info(`Redis flushall succeeded. Result: ${succeeded}`);
+          resolve(true);
+        }
       });
     });
   }

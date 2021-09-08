@@ -3,7 +3,7 @@ import {Club, ClubMember} from '@src/entity/player/club';
 import {HostMessageType} from '../entity/types';
 import {getLogger} from '@src/utils/log';
 import {getUserConnection, getUserRepository} from '.';
-const logger = getLogger('host-message');
+const logger = getLogger('repositories::hostmessage');
 
 class HostMessageRepositoryImpl {
   public async sendHostMessage(

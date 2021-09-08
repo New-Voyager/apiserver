@@ -42,6 +42,67 @@
       }
     },
     {
+      "name": "Watch Localhost debug",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "watch-localhost-debug"],
+      "port": 9235,
+      "outputCapture": "std",
+      "console": "internalConsole",
+      "env": {
+        "NATS_URL": "nats://192.168.0.107:4222",
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_USER": "game",
+        "POSTGRES_PASSWORD": "game",
+        "POSTGRES_DB": "game"
+      }
+    },
+    {
+      "name": "Integration Test Server Debug",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "int-server"],
+      "port": 9235,
+      "outputCapture": "std",
+      "console": "internalConsole",
+      "env": {
+        "NOTIFY_GAME_SERVER": "0",
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_USER": "game",
+        "POSTGRES_PASSWORD": "game",
+        "POSTGRES_DB": "game"
+      }
+    },    
+    {
+      "name": "Run prod",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "watch-debug"],
+      "port": 9235,
+      "outputCapture": "std",
+      "console": "internalConsole",
+      "env": {
+        "POSTGRES_HOST": "db-postgresql-nyc1-prod1-do-user-7667119-0.b.db.ondigitalocean.com",
+        "POSTGRES_PORT": "25060",
+        "POSTGRES_USER": "doadmin",
+        "POSTGRES_PASSWORD": "w3umlfs3bqu21tsi",
+        "POSTGRES_DB": "defaultdb",
+        "POSTGRES_SSL": "1",
+        "REDIS_HOST": "db-redis-nyc1-prod1-do-user-7667119-0.b.db.ondigitalocean.com",
+        "REDIS_PORT": "25061",
+        "REDIS_USER": "default",
+        "REDIS_PASSWORD": "fwk0hhx8306zmefl"
+      }
+    },    
+    {
       "name": "Test Server debug",
       "type": "node",
       "request": "launch",
@@ -100,8 +161,9 @@
         "--inspect-brk",
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
+        "./tests/gamesettings.test.ts",
         "--testNamePattern",
-        "start a new game"
+        "update player settings"
       ],
       "env": {
         "NODE_ENV": "test",
@@ -118,10 +180,11 @@
       "runtimeArgs": [
         "--inspect-brk",
         "${workspaceRoot}/node_modules/.bin/jest",
+        "--verbose",
         "--runInBand",
-        "./unit-tests",
+        "./unit-tests/playersettings.test.ts",
         "--testNamePattern",
-        "host does not buy coins"
+        "playergamesettings: get player settings"
       ],
       "env": {
         "NODE_ENV": "test",

@@ -2,6 +2,7 @@ import {HandHistory} from '@src/entity/history/hand';
 import {getAppSettings, resetAppSettings} from '@src/firebase';
 import {AppCoinRepository} from '@src/repositories/appcoin';
 import {DevRepository} from '@src/repositories/dev';
+import {GameUpdatesRepository} from '@src/repositories/gameupdates';
 import {HandRepository} from '@src/repositories/hand';
 import {getLogger} from '@src/utils/log';
 import * as fs from 'fs';
@@ -10,7 +11,7 @@ import * as yaml from 'yaml';
 import {GameAPI} from './game';
 import {HandServerAPI} from './hand';
 
-const logger = getLogger('handlog');
+const logger = getLogger('internal::bots');
 
 const playerIdName = {
   1: 'yong',
@@ -86,7 +87,6 @@ const cardMap: any = {
 };
 
 function getCards(cardsInt: Array<number> | number): Array<string> | string {
-  console.log(cardsInt.toString());
   if (typeof cardsInt === 'number') {
     return cardMap[cardsInt as number];
   } else {
@@ -181,8 +181,6 @@ function handActionSteps(actionSteps: Array<any>): any {
 }
 
 export async function updateButtonPos(req: any, resp: any) {
-  //resp.status(200).send(JSON.stringify({urls: process.env.NATS_URL}));
-  console.log(`current directory: ${__dirname}`);
   try {
     const gameCode = req.params.gameCode;
     if (!gameCode) {
@@ -197,7 +195,7 @@ export async function updateButtonPos(req: any, resp: any) {
       return;
     }
 
-    await GameAPI.updateButtonPos(gameCode, buttonPos);
+    await GameUpdatesRepository.updateButtonPos(gameCode, buttonPos);
     resp.status(200).send({status: 'OK'});
   } catch (e) {
     resp.status(500).send({errors: e.toString()});
@@ -205,11 +203,6 @@ export async function updateButtonPos(req: any, resp: any) {
 }
 
 function convertHandLogToYaml(handlog: any): string {
-  for (const seatNo in handlog['players']) {
-    const name = playerIdName[seatNo];
-    console.log(JSON.stringify(name));
-  }
-
   const club: any = {
     name: 'Bug Testing',
     description: 'testing',
@@ -250,7 +243,6 @@ function convertHandLogToYaml(handlog: any): string {
 
   // sort the seat number
   occupiedSeats.sort();
-  console.log(occupiedSeats);
 
   const log = handlog['handLog'];
   const gameType = handlog['gameType'];
@@ -323,8 +315,6 @@ function convertHandLogToYaml(handlog: any): string {
 }
 
 export async function generateBotScript(req: any, resp: any) {
-  //resp.status(200).send(JSON.stringify({urls: process.env.NATS_URL}));
-  console.log(`current directory: ${__dirname}`);
   try {
     const gameCode = req.params.gameCode;
     if (!gameCode) {
@@ -339,16 +329,11 @@ export async function generateBotScript(req: any, resp: any) {
       return;
     }
     const handlog = await HandRepository.getHandLog(gameCode, handNum);
-    // let rawdata = fs
-    //   .readFileSync(`${__dirname}/../bugs/handlog2.json`)
-    //   .toString();
-    // let handlog = JSON.parse(rawdata);
     if (handlog == null) {
       resp.status(404).send(JSON.stringify({error: 'Cannot find the hand'}));
       return;
     }
     const yamlScript = convertHandLogToYaml(handlog);
-    //console.log(handlog);
     resp.status(200).send(yamlScript);
   } catch (e) {
     resp.status(500).send({errors: e.toString()});
@@ -362,6 +347,7 @@ export async function setServerSettings(req: any, resp: any) {
   const gameCoinsPerBlock = payload['game-coins-per-block'];
   const freeTime = payload['free-time'];
   const newUserFreeCoins = payload['new-user-free-coins'];
+  const ipGpsCheckInterval = payload['ip-gps-check-interval'];
 
   const appSettings = getAppSettings();
   if (gameBlockTime) {
@@ -384,6 +370,10 @@ export async function setServerSettings(req: any, resp: any) {
     appSettings.newUserFreeCoins = newUserFreeCoins;
   }
 
+  if (ipGpsCheckInterval) {
+    appSettings.ipGpsCheckInterval = ipGpsCheckInterval;
+  }
+
   resp.status(200).send({status: 'OK'});
 }
 
@@ -394,8 +384,6 @@ export async function resetServerSettings(req: any, resp: any) {
 }
 
 export async function generateBotScriptDebugHand(req: any, resp: any) {
-  //resp.status(200).send(JSON.stringify({urls: process.env.NATS_URL}));
-  console.log(`current directory: ${__dirname}`);
   try {
     const gameCode = req.params.gameCode;
     if (!gameCode) {
@@ -419,7 +407,6 @@ export async function generateBotScriptDebugHand(req: any, resp: any) {
       return;
     }
     const yamlScript = convertHandLogToYaml(handlog);
-    //console.log(handlog);
     resp.status(200).send(yamlScript);
   } catch (e) {
     resp.status(500).send({errors: e.toString()});
@@ -427,8 +414,6 @@ export async function generateBotScriptDebugHand(req: any, resp: any) {
 }
 
 export async function buyBotCoins(req: any, resp: any) {
-  //resp.status(200).send(JSON.stringify({urls: process.env.NATS_URL}));
-  console.log(`current directory: ${__dirname}`);
   try {
     const payload = req.body;
     const playerUuid = payload['player-uuid'];

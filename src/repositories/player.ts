@@ -2,7 +2,6 @@ import {EntityManager, Repository, In} from 'typeorm';
 import {v4 as uuidv4} from 'uuid';
 import {Player, PlayerNotes} from '@src/entity/player/player';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger('player');
 import {Cache} from '@src/cache/index';
 import {StatsRepository} from './stats';
 import {Firebase} from '@src/firebase';
@@ -14,6 +13,8 @@ import {UserRegistrationPayload} from '@src/types';
 import {sendRecoveryCode} from '@src/email';
 import {getRecoveryCode} from '@src/utils/uniqueid';
 import {AppCoinRepository} from './appcoin';
+
+const logger = getLogger('repositories::player');
 
 class PlayerRepositoryImpl {
   public async createPlayer(
@@ -216,7 +217,6 @@ class PlayerRepositoryImpl {
         notes: notes,
       });
     }
-    logger.info(`Affected rows: ${affectedRows}`);
   }
 
   public async sendFcmMessage(player: Player, message: any) {
@@ -237,7 +237,6 @@ class PlayerRepositoryImpl {
         name: name,
       }
     );
-    logger.info(`Affected rows: ${affectedRows}`);
     if (affectedRows.affected != 0) {
       // member -> host message
       const clubMemberRepo = getUserRepository(ClubMember);
@@ -247,7 +246,6 @@ class PlayerRepositoryImpl {
           player: {id: player.id},
         },
       });
-      logger.info(`player Clubs: ${playerClubs}`);
       for await (const data of playerClubs) {
         await HostMessageRepository.sendHostMessage(
           data.club,

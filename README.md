@@ -1,7 +1,5 @@
 # apiserver
 
-[![CircleCI](https://circleci.com/gh/New-Voyager/apiserver.svg?style=svg&circle-token=332b6c164df3a333a6d6e14282ca317d0c52abe5)](https://app.circleci.com/pipelines/github/New-Voyager/apiserver)
-
 ## Build
 
 To build api server, run the following command.
@@ -67,13 +65,77 @@ You can also run the linter manually.
 make lint
 ``
 ## Running API server in debugger
-Get your local ip address (e.g. 10.0.1.101). Update API_SERVER_URL in the Makefile.
-API_SERVER_URL = http://10.0.1.101:9501
-
-Run the apiserver in the vscode debugger or in the console (npm run watch-debug).
 Run the game backend stack using docker.
 ``
-make stack-up
+POKER_LOCAL_IP=<your ip> make stack-up
 ``
+POKER_LOCAL_IP=192.168.0.107 make stack-up
+Run the apiserver in the vscode debugger (Watch Localhost debug in launch.json) 
+or in the console (npm run watch-localhost-debug).
+Change the setting in launch.json (Watch Localhost debug)
+    "NATS_URL": "nats://192.168.0.106:4222",      -> your ip
+
 
 Open the browser and try http://localhost:9501/graphql. You should see the GraphQL playground.
+
+To bring down the stack.
+  make stack-down
+
+To run a simple bot runner game
+
+POKER_LOCAL_IP=192.168.0.107 make simple-game
+
+Sample GQL queries
+```
+query games {
+  liveGames {
+    gameCode
+    gameType
+    clubName
+    buyInMin
+    buyInMax
+    smallBlind
+    bigBlind
+    maxPlayers
+    elapsedTime
+    waitlistCount
+    isTableFull
+  }
+  pastGames {
+    clubCode
+    clubName
+    gameCode
+    smallBlind
+    bigBlind
+    gameType
+    startedBy
+    startedAt
+    endedAt
+    endedBy
+    runTime
+    smallBlind
+    bigBlind
+    endedAt
+    startedAt
+    handsDealt
+    handsPlayed
+    sessionTime
+    stack
+    buyIn
+    balance
+  }
+}
+```
+
+Authorization Header
+```
+{
+  "Authorization": "Bearer c2dc2c3d-13da-46cc-8c66-caa0c77459de"
+}
+```
+
+To reset database
+
+```
+make reset-db
+```

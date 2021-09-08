@@ -12,19 +12,13 @@ import {getLogger} from '@src/utils/log';
 import {
   NextHandUpdates,
   PokerGame,
-  PokerGameUpdates,
+  PokerGameSeatInfo,
 } from '@src/entity/game/game';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {
-  pendingProcessDone,
-  playerBuyIn,
-  playerKickedOut,
-  playerLeftGame,
-} from '@src/gameserver';
 import {startTimer} from '@src/timer';
 import {occupiedSeats, WaitListMgmt} from './waitlist';
 import {SeatChangeProcess} from './seatchange';
-import {BUYIN_TIMEOUT, DEALER_CHOICE_TIMEOUT, NewUpdate} from './types';
+import {DEALER_CHOICE_TIMEOUT, NewUpdate} from './types';
 import _ from 'lodash';
 import {Nats} from '@src/nats';
 import {TakeBreak} from './takebreak';
@@ -34,9 +28,15 @@ import {reloadApprovalTimeoutExpired} from './timer';
 import {Reload} from './reload';
 import {getGameConnection, getGameManager, getGameRepository} from '.';
 import {Player} from '@src/entity/player/player';
+import {LocationCheck} from './locationcheck';
+import {GameSettingsRepository} from './gamesettings';
+import {resumeGame} from '@src/gameserver';
+import {PlayersInGameRepository} from './playersingame';
+import {GameUpdatesRepository} from './gameupdates';
 
-const logger = getLogger('pending-updates');
+const logger = getLogger('repositories::pendingupdates');
 
+// YONG
 export async function markDealerChoiceNextHand(
   game: PokerGame,
   entityManager?: EntityManager
@@ -66,14 +66,23 @@ export async function processPendingUpdates(gameId: number) {
   }
 
   await Cache.updateGamePendingUpdates(game?.gameCode, false);
-  const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-  const gameUpdate = await gameUpdatesRepo.findOne({gameID: game.id});
-  if (!gameUpdate) {
+
+  // start buy in timers for the player's whose stack is 0 and playing
+  await BuyIn.startBuyInTimers(game);
+
+  const gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
+  const gameSeatInfo = await gameSeatInfoRepo.findOne({gameID: game.id});
+  if (!gameSeatInfo) {
     return;
   }
 
-  logger.info(`Processing pending updates for game id: ${game.gameCode}`);
-  if (gameUpdate.seatChangeInProgress) {
+  const gameSettings = await GameSettingsRepository.get(game.gameCode);
+  if (!gameSettings) {
+    return;
+  }
+
+  logger.debug(`Processing pending updates for game id: ${game.gameCode}`);
+  if (gameSeatInfo.seatChangeInProgress) {
     logger.info(
       `Seat change is in progress for game id: ${game.gameCode}. No updates will be performed.`
     );
@@ -198,7 +207,7 @@ export async function processPendingUpdates(gameId: number) {
       }
     }
 
-    let seatChangeAllowed = game.seatChangeAllowed;
+    let seatChangeAllowed = gameSettings.seatChangeAllowed;
     const seats = await occupiedSeats(game.id);
     seatChangeAllowed = true; // debugging
     if (seatChangeAllowed && openedSeat) {
@@ -216,14 +225,16 @@ export async function processPendingUpdates(gameId: number) {
     }
   }
 
-  if (!seatChangeInProgress && game.waitlistAllowed) {
+  if (!seatChangeInProgress && gameSettings.waitlistAllowed) {
     const waitlistMgmt = new WaitListMgmt(game);
     await waitlistMgmt.runWaitList();
   }
 
   if (endPendingProcess) {
-    // start buy in timers for the player's whose stack is 0 and playing
-    await BuyIn.startBuyInTimers(game);
+    if (gameSettings.gpsCheck || gameSettings.ipCheck) {
+      const locationCheck = new LocationCheck(game, gameSettings);
+      await locationCheck.check();
+    }
 
     // if the game does not have more than 1 active player, then the game cannot continue
     const canContinue = await GameRepository.determineGameStatus(game.id);
@@ -231,11 +242,7 @@ export async function processPendingUpdates(gameId: number) {
       await handleDealersChoice(game, dealerChoiceUpdate, pendingUpdatesRepo);
     } else {
       const cachedGame = await Cache.getGame(game.gameCode);
-      await pendingProcessDone(
-        gameId,
-        cachedGame.status,
-        cachedGame.tableStatus
-      );
+      await resumeGame(gameId);
     }
   }
 }
@@ -279,9 +286,8 @@ async function kickoutPlayer(
   await GameRepository.seatOpened(game, playerInGame.seatNo);
 
   if (playerInGame) {
-    // notify game server, player is kicked out
     const player = await Cache.getPlayerById(update.playerId);
-    playerKickedOut(game, player, playerInGame.seatNo);
+    Nats.playerKickedOut(game, player, playerInGame.seatNo);
   }
   // delete this update
   pendingUpdatesRepo.delete({id: update.id});
@@ -391,7 +397,7 @@ async function leaveGame(
   if (playerInGame) {
     // notify game server, player is kicked out
     const player = await Cache.getPlayerById(update.playerId);
-    playerLeftGame(game, player, playerInGame.seatNo);
+    Nats.playerLeftGame(game, player, playerInGame.seatNo);
   }
   // delete this update
   pendingUpdatesRepo.delete({id: update.id});
@@ -438,7 +444,7 @@ async function buyinApproved(
   if (playerInGame) {
     const player = await Cache.getPlayerById(update.playerId);
     // notify game server, player has a new buyin
-    await playerBuyIn(game, player, playerInGame);
+    await Nats.playerBuyIn(game, player, playerInGame);
   }
   // delete this update
   await pendingUpdatesRepo.delete({id: update.id});
@@ -479,18 +485,11 @@ async function handleDealersChoice(
   await pendingUpdatesRepo.delete({id: update.id});
 
   // get next player and send the notification
-  const playersInSeats = await GameRepository.getPlayersInSeats(game.id);
+  const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
+    game.id
+  );
   const takenSeats = _.keyBy(playersInSeats, 'seatNo');
-
-  const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-  const gameUpdates = await gameUpdatesRepo.find({
-    gameID: game.id,
-  });
-  if (gameUpdates.length === 0) {
-    return;
-  }
-
-  const gameUpdate = gameUpdates[0];
+  const gameUpdate = await GameUpdatesRepository.get(game.gameCode, true);
   const occupiedSeats = new Array<number>();
   // dealer
   occupiedSeats.push(0);
@@ -521,29 +520,27 @@ async function handleDealersChoice(
     }
     maxPlayers--;
   }
+  await GameUpdatesRepository.updateDealersChoiceSeat(game, playerId);
 
-  await gameUpdatesRepo.update(
-    {
-      dealerChoiceSeat: playerId,
-    },
-    {
-      gameID: game.id,
-    }
+  Nats.sendDealersChoiceMessage(
+    game,
+    playerId,
+    gameUpdate.handNum + 1,
+    timeout
   );
-
-  Nats.sendDealersChoiceMessage(game, playerId, timeout);
 
   // delete this update
   await pendingUpdatesRepo.delete({id: update.id});
 }
 
+// YONG
 export async function switchSeatNextHand(
   game: PokerGame,
   player: Player,
   seatNo: number,
   transactionEntityManager?: EntityManager
 ) {
-  let nextHandUpdatesRepository;
+  let nextHandUpdatesRepository: Repository<NextHandUpdates>;
   const update = new NextHandUpdates();
   update.game = game;
   update.playerId = player.id;
@@ -556,16 +553,16 @@ export async function switchSeatNextHand(
       NextHandUpdates
     );
     await nextHandUpdatesRepository.save(update);
-    const gameUpdateProps: any = {};
-    gameUpdateProps[`seat${seatNo}`] = SeatStatus.RESERVED;
-    const gameUpdatesRepo = transactionEntityManager.getRepository(
-      PokerGameUpdates
+    const gameSeatInfoProps: any = {};
+    gameSeatInfoProps[`seat${seatNo}`] = SeatStatus.RESERVED;
+    const gameSeatInfoRepo = transactionEntityManager.getRepository(
+      PokerGameSeatInfo
     );
-    await gameUpdatesRepo.update(
+    await gameSeatInfoRepo.update(
       {
         gameID: game.id,
       },
-      gameUpdateProps
+      gameSeatInfoProps
     );
   } else {
     await getGameManager().transaction(async transactionEntityManager => {
@@ -573,16 +570,16 @@ export async function switchSeatNextHand(
         NextHandUpdates
       );
       await nextHandUpdatesRepository.save(update);
-      const gameUpdatesRepo = transactionEntityManager.getRepository(
-        PokerGameUpdates
+      const gameSeatInfoRepo = transactionEntityManager.getRepository(
+        PokerGameSeatInfo
       );
-      const gameUpdateProps: any = {};
-      gameUpdateProps[`seat${seatNo}`] = SeatStatus.RESERVED;
-      await gameUpdatesRepo.update(
+      const gameSeatInfoProps: any = {};
+      gameSeatInfoProps[`seat${seatNo}`] = SeatStatus.RESERVED;
+      await gameSeatInfoRepo.update(
         {
           gameID: game.id,
         },
-        gameUpdateProps
+        gameSeatInfoProps
       );
     });
   }

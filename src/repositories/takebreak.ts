@@ -2,17 +2,16 @@ import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {NextHandUpdates, PokerGame} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {GameStatus, NextHandUpdate, PlayerStatus} from '@src/entity/types';
-import {playerStatusChanged} from '@src/gameserver';
 import {startTimer} from '@src/timer';
 import {utcTime} from '@src/utils';
 import {getLogger} from '@src/utils/log';
-import {Repository} from 'typeorm';
+import {EntityManager, Repository} from 'typeorm';
 import {BREAK_TIMEOUT, NewUpdate} from './types';
 import {Cache} from '@src/cache/index';
 import {getGameRepository} from '.';
 import {GameRepository} from './game';
-
-const logger = getLogger('takebreak');
+import {Nats} from '@src/nats';
+const logger = getLogger('repositories::takebreak');
 
 export class TakeBreak {
   private game: PokerGame;
@@ -23,9 +22,21 @@ export class TakeBreak {
     this.player = player;
   }
 
-  public async takeBreak(): Promise<boolean> {
-    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
-    const nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
+  // YONG
+  public async takeBreak(transactionManager?: EntityManager): Promise<boolean> {
+    let playerGameTrackerRepository;
+    let nextHandUpdatesRepository;
+    if (transactionManager) {
+      playerGameTrackerRepository = transactionManager.getRepository(
+        PlayerGameTracker
+      );
+      nextHandUpdatesRepository = transactionManager.getRepository(
+        NextHandUpdates
+      );
+    } else {
+      playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+      nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
+    }
     const rows = await playerGameTrackerRepository.findOne({
       game: {id: this.game.id},
       playerId: this.player.id,
@@ -64,10 +75,10 @@ export class TakeBreak {
           status: playerInGame.status,
         }
       );
-      await this.startTimer(playerGameTrackerRepository);
+      await this.startTimer(playerGameTrackerRepository, transactionManager);
 
       // update the clients with new status
-      await playerStatusChanged(
+      await Nats.playerStatusChanged(
         this.game,
         this.player,
         playerInGame.status,
@@ -87,8 +98,8 @@ export class TakeBreak {
     return true;
   }
 
-  public async processPendingUpdate(update: NextHandUpdates) {
-    logger.info(`Player ${this.player.name} is taking a break`);
+  public async processPendingUpdate(update: NextHandUpdates | null) {
+    logger.debug(`Player ${this.player.name} is taking a break`);
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const rows = await playerGameTrackerRepository
       .createQueryBuilder()
@@ -105,12 +116,13 @@ export class TakeBreak {
     const playerInGame = rows[0];
 
     await this.startTimer(playerGameTrackerRepository);
-
-    const pendingUpdatesRepo = getGameRepository(NextHandUpdates);
-    pendingUpdatesRepo.delete({id: update.id});
+    if (update) {
+      const pendingUpdatesRepo = getGameRepository(NextHandUpdates);
+      pendingUpdatesRepo.delete({id: update.id});
+    }
 
     // update the clients with new status
-    await playerStatusChanged(
+    await Nats.playerStatusChanged(
       this.game,
       this.player,
       PlayerStatus.IN_BREAK,
@@ -120,17 +132,30 @@ export class TakeBreak {
     );
   }
 
+  // YONG
   private async startTimer(
-    playerGameTrackerRepository: Repository<PlayerGameTracker>
+    playerGameTrackerRepository: Repository<PlayerGameTracker>,
+    transactionManager?: EntityManager
   ) {
+    const gameSettings = await Cache.getGameSettings(
+      this.game.gameCode,
+      false,
+      transactionManager
+    );
+    if (!gameSettings) {
+      throw new Error(
+        `Game code: ${this.game.gameCode} is not found in PokerGameSettings`
+      );
+    }
+
     const now = utcTime(new Date());
     const breakTimeExpAt = new Date();
-    let timeoutInMins = this.game.breakLength;
+    let timeoutInMins = gameSettings.breakLength;
     timeoutInMins = 1;
     const timeoutInSeconds = timeoutInMins * 10 * 60;
     breakTimeExpAt.setSeconds(breakTimeExpAt.getSeconds() + timeoutInSeconds);
     const exp = utcTime(breakTimeExpAt);
-    logger.info(
+    logger.debug(
       `Player ${
         this.player.name
       } is taking a break. Now: ${now.toISOString()} Timer expires at ${exp.toISOString()}`
@@ -154,7 +179,7 @@ export class TakeBreak {
   public async timerExpired() {
     const now = new Date();
     const nowUtc = utcTime(now);
-    logger.info(
+    logger.debug(
       `Player ${
         this.player.name
       } break time expired. Current time: ${nowUtc.toISOString()}`
@@ -195,7 +220,7 @@ export class TakeBreak {
     if (!playerInGame) {
       logger.error(`Game: ${this.game.gameCode} not available`);
     } else {
-      await playerStatusChanged(
+      await Nats.playerStatusChanged(
         this.game,
         this.player,
         playerInGame.status,

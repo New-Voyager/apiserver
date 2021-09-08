@@ -29,7 +29,7 @@ const holdemGameInput = {
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,
-  waitlistSupported: true,
+  waitlistAllowed: true,
   maxWaitList: 10,
   sitInApproval: true,
   rakePercentage: 5.0,
@@ -313,6 +313,7 @@ describe('Hand Tests', () => {
 
   test('Get all hand history', async () => {
     try {
+      let nextHandNum = 1;
       const [
         owner,
         clubCode,
@@ -348,6 +349,7 @@ describe('Hand Tests', () => {
           //rewardTrackId,
           playerIds
         );
+        data.handNum = nextHandNum++;
         const resp = await axios.post(
           `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
           data

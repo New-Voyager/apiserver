@@ -20,7 +20,8 @@ import {HostMessageRepository} from '@src/repositories/hostmessage';
 import {HandRepository} from '@src/repositories/hand';
 import {HistoryRepository} from '@src/repositories/history';
 import {PromotionRepository} from '@src/repositories/promotion';
-const logger = getLogger('player');
+import {PlayersInGameRepository} from '@src/repositories/playersingame';
+const logger = getLogger('resolvers::player');
 
 async function getClubs(playerId: string): Promise<Array<any>> {
   const player = await PlayerRepository.getPlayerById(playerId);
@@ -185,6 +186,9 @@ const resolvers: any = {
     updateFirebaseToken: async (parent, args, ctx, info) => {
       return updateFirebaseToken(ctx.req.playerId, args.token);
     },
+    updateLocation: async (parent, args, ctx, info) => {
+      return updateLocation(ctx.req.playerId, '', args.location);
+    },
     setNotes: async (parent, args, ctx, info) => {
       const ret = await setNotes(
         ctx.req.playerId,
@@ -202,6 +206,13 @@ const resolvers: any = {
     },
     redeemPromotionCode: async (parent, args, ctx, info) => {
       return redeemPromotionCode(ctx.req.playerId, args.code);
+    },
+    ipChanged: async (parent, args, ctx, info) => {
+      const player = await Cache.getPlayer(ctx.req.playerId);
+      if (ctx.req.userIp !== player.ipAddress) {
+        return updateLocation(ctx.req.playerId, ctx.req.userIp, undefined);
+      }
+      return false;
     },
   },
   Player: {
@@ -523,7 +534,10 @@ async function getAudioToken(
     throw new Error(`Game ${gameCode} does not exist`);
   }
   // get audio token for the player
-  const token = await GameRepository.getAudioToken(playerInfo, gameExists);
+  const token = await PlayersInGameRepository.getAudioToken(
+    playerInfo,
+    gameExists
+  );
   logger.info(
     `Player: ${playerId} is using agora token ${token} for game ${gameCode}`
   );
@@ -593,7 +607,6 @@ export async function getPendingApprovalCount(
   playerId: string,
   clubCode: string
 ) {
-  //logger.info(`Get unread message count club: ${clubCode} player: ${playerId}`);
   const club = await Cache.getClub(clubCode);
   const player = await Cache.getPlayer(playerId);
   if (!club || !player) {
@@ -611,9 +624,6 @@ export async function getHostMessageUnreadCount(
   playerId: string,
   clubCode: string
 ) {
-  // logger.info(
-  //   `Get unread host message unread count club: ${clubCode} player: ${playerId}`
-  // );
   const club = await Cache.getClub(clubCode);
   const player = await Cache.getPlayer(playerId);
   if (!club || !player) {
@@ -627,9 +637,6 @@ export async function getHostMessageUnreadCount(
 }
 
 export async function getMemberUnreadCount(playerId: string, clubCode: string) {
-  // logger.info(
-  //   `Get unread host message unread count club: ${clubCode} player: ${playerId}`
-  // );
   const club = await Cache.getClub(clubCode);
   const player = await Cache.getPlayer(playerId);
   const clubMember = await Cache.getClubMember(playerId, clubCode);
@@ -643,9 +650,6 @@ export async function getMessageUnreadCount(
   playerId: string,
   clubCode: string
 ) {
-  // logger.info(
-  //   `Get unread club message unread count club: ${clubCode} player: ${playerId}`
-  // );
   const club = await Cache.getClub(clubCode);
   const player = await Cache.getPlayer(playerId);
   const clubMember = await Cache.getClubMember(playerId, clubCode);
@@ -662,7 +666,7 @@ export async function getMessageUnreadCount(
 }
 
 export async function getLiveGameCount(clubCode: string) {
-  logger.info(`Get live game count for club: ${clubCode}`);
+  logger.debug(`Get live game count for club: ${clubCode}`);
   const club = await Cache.getClub(clubCode);
   if (!club) {
     return 0;
@@ -702,4 +706,18 @@ export async function redeemPromotionCode(
     throw new Error('Unauthorized');
   }
   return await PromotionRepository.redeemPromotionCode(playerId, code);
+}
+
+export async function updateLocation(
+  playerUuid: string,
+  ip: string,
+  location: any
+) {
+  // update player location
+  const player = await Cache.getPlayer(playerUuid);
+  if (!player) {
+    throw new Error(`Player ${playerUuid} is not found`);
+  }
+  await Cache.updatePlayerLocation(playerUuid, location, ip);
+  return true;
 }

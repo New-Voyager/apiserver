@@ -1,7 +1,8 @@
 import {Cache} from '@src/cache/index';
 import {PokerGame} from '@src/entity/game/game';
 import {getLogger} from '@src/utils/log';
-const logger = getLogger('seatchange_resolver');
+
+const logger = getLogger('resolvers::util');
 
 export async function isHostOrManagerOrOwner(
   playerUuid: string,

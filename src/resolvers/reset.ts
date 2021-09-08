@@ -9,7 +9,8 @@ import {
   getHistoryManager,
   getUserManager,
 } from '@src/repositories';
-const logger = getLogger('reset');
+
+const logger = getLogger('resolvers::reset');
 
 const resolvers: any = {
   Mutation: {
@@ -43,12 +44,11 @@ const resolvers: any = {
 };
 
 export async function resetGames() {
-  //logger.info('****** STARTING TRANSACTION TO RESET tables');
   await getGameManager().transaction(async transactionEntityManager => {
     await deleteAll('next_hand_updates', transactionEntityManager);
     await deleteAll('player_game_tracker', transactionEntityManager);
-    await deleteAll('game_gameserver', transactionEntityManager);
     await deleteAll('poker_game_updates', transactionEntityManager);
+    await deleteAll('poker_game_seat_info', transactionEntityManager);
     await deleteAll('high_hand', transactionEntityManager);
     await deleteAll('game_reward', transactionEntityManager);
     await deleteAll('game_reward_tracking', transactionEntityManager);
@@ -61,7 +61,6 @@ export async function resetGames() {
     await deleteAll('high_hand_history', transactionEntityManager);
   });
   await Cache.reset();
-  //logger.info('****** ENDING TRANSACTION TO RESET tables');
   return true;
 }
 
@@ -76,7 +75,6 @@ export async function resetDB() {
       await deleteAll('player_hand_stats', transactionEntityManager);
       await deleteAll('hand_history', transactionEntityManager);
     });
-    //logger.info('****** STARTING TRANSACTION TO RESET tables');
     await getUserManager().transaction(async transactionEntityManager => {
       await deleteAll('player_notes', transactionEntityManager);
       await deleteAll('club_messages', transactionEntityManager);
@@ -102,9 +100,9 @@ export async function resetDB() {
       await deleteAll('game_reward_tracking', transactionEntityManager);
       await deleteAll('next_hand_updates', transactionEntityManager);
       await deleteAll('player_game_tracker', transactionEntityManager);
-      //await deleteAll('club_chips_transaction', transactionEntityManager);
-      await deleteAll('game_gameserver', transactionEntityManager);
+      await deleteAll('poker_game_seat_info', transactionEntityManager);
       await deleteAll('poker_game_updates', transactionEntityManager);
+      await deleteAll('poker_game', transactionEntityManager);
       if (!isGameServerEnabled()) {
         await deleteAll('game_server', transactionEntityManager);
       }
@@ -114,7 +112,6 @@ export async function resetDB() {
     throw new Error(`Failed to reset database. ${err.toString()}`);
   }
   await Cache.reset();
-  //logger.info('****** ENDING TRANSACTION TO RESET tables');
   return true;
 }
 

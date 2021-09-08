@@ -1,12 +1,8 @@
-import {EntityManager} from 'typeorm';
+import {EntityManager, Repository} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player/player';
-import {
-  NextHandUpdates,
-  PokerGame,
-  PokerGameUpdates,
-} from '@src/entity/game/game';
+import {NextHandUpdates, PokerGame} from '@src/entity/game/game';
 import {
   ApprovalStatus,
   GameStatus,
@@ -15,7 +11,6 @@ import {
 } from '@src/entity/types';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {GameRepository} from './game';
-import {playerStatusChanged} from '@src/gameserver';
 import {startTimer, cancelTimer} from '@src/timer';
 import {NewUpdate, RELOAD_APPROVAL_TIMEOUT, RELOAD_TIMEOUT} from './types';
 import {buyInRequest, pendingApprovalsForClubData} from '@src/types';
@@ -24,7 +19,7 @@ import {Nats} from '@src/nats';
 import {v4 as uuidv4} from 'uuid';
 import {getGameConnection, getGameManager, getGameRepository} from '.';
 
-const logger = getLogger('reload');
+const logger = getLogger('repositories::reload');
 
 /*
 reload(gameCode, buyIn)
@@ -81,6 +76,7 @@ export class Reload {
     this.player = player;
   }
 
+  // YONG
   public async request(amount: number): Promise<buyInRequest> {
     const timeout = 60;
 
@@ -92,6 +88,17 @@ export class Reload {
       async transactionEntityManager => {
         databaseTime = new Date().getTime();
         let approved: boolean;
+        const gameSettings = await Cache.getGameSettings(
+          this.game.gameCode,
+          false,
+          transactionEntityManager
+        );
+        if (!gameSettings) {
+          throw new Error(
+            `Game code: ${this.game.gameCode} is not found in PokerGameSettings`
+          );
+        }
+
         // player must be already in a seat or waiting list
         // if credit limit is set, make sure his buyin amount is within the credit limit
         // if auto approval is set, add the buyin
@@ -142,7 +149,7 @@ export class Reload {
           databaseTime = new Date().getTime() - databaseTime;
           if (!approved) {
             const reloadTimeExp = new Date();
-            const timeout = this.game.buyInTimeout;
+            const timeout = gameSettings.buyInTimeout;
             reloadTimeExp.setSeconds(reloadTimeExp.getSeconds() + timeout);
 
             // start reload expiry timeout
@@ -153,7 +160,7 @@ export class Reload {
               reloadTimeExp
             );
 
-            logger.info(
+            logger.debug(
               `************ [${this.game.gameCode}]: Player ${this.player.name} is waiting for approval`
             );
             // notify game host that the player is waiting for buyin
@@ -184,7 +191,7 @@ export class Reload {
               messageId
             );
           } else {
-            logger.info(
+            logger.debug(
               `************ [${this.game.gameCode}]: Player ${this.player.name} is approved`
             );
           }
@@ -193,7 +200,7 @@ export class Reload {
           throw new Error('Individual game is not implemented yet');
         }
         if (approved) {
-          logger.info(
+          logger.debug(
             `************ [${this.game.gameCode}]: Player ${this.player.name} bot: ${this.player.bot} buyin is approved`
           );
           buyInApprovedTime = new Date().getTime();
@@ -205,7 +212,7 @@ export class Reload {
       }
     );
     const timeTaken = new Date().getTime() - startTime;
-    logger.info(
+    logger.debug(
       `Reload process total time: ${timeTaken} reload: ${buyInApprovedTime} databaseTime: ${databaseTime}`
     );
 
@@ -215,6 +222,7 @@ export class Reload {
     };
   }
 
+  // YONG
   protected async approve(
     amount: number,
     playerInGame: PlayerGameTracker,
@@ -232,21 +240,36 @@ export class Reload {
         transactionEntityManager
       );
     } else {
-      await this.approvedAndUpdateStack(amount, playerInGame);
+      await this.approvedAndUpdateStack(
+        amount,
+        playerInGame,
+        transactionEntityManager
+      );
     }
     return playerInGame;
   }
 
+  // YONG
   public async approvedAndUpdateStack(
     amount: number,
-    playerInGame?: PlayerGameTracker
+    playerInGame?: PlayerGameTracker,
+    transactionManager?: EntityManager
   ) {
     let cancelTime = new Date().getTime();
     cancelTimer(this.game.id, this.player.id, RELOAD_APPROVAL_TIMEOUT);
     cancelTime = new Date().getTime() - cancelTime;
 
-    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+    let playerGameTrackerRepository: Repository<PlayerGameTracker>;
+    if (transactionManager) {
+      playerGameTrackerRepository = transactionManager.getRepository(
+        PlayerGameTracker
+      );
+    } else {
+      playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+    }
+
     if (!playerInGame) {
+      logger.info('approvedAndUpdateStack');
       playerInGame = await playerGameTrackerRepository.findOne({
         game: {id: this.game.id},
         playerId: this.player.id,
@@ -294,6 +317,7 @@ export class Reload {
     }
   }
 
+  // YONG
   protected async clubMemberAutoApproval(
     amount: number,
     playerInGame: PlayerGameTracker,
@@ -308,6 +332,17 @@ export class Reload {
       throw new Error(`The player ${this.player.uuid} is not in the club`);
     }
 
+    const gameSettings = await Cache.getGameSettings(
+      this.game.gameCode,
+      false,
+      transactionEntityManager
+    );
+    if (!gameSettings) {
+      throw new Error(
+        `Game code: ${this.game.gameCode} is not found in PokerGameSettings`
+      );
+    }
+
     let isHost = false;
     if (this.game.hostUuid === this.player.uuid) {
       isHost = true;
@@ -316,7 +351,7 @@ export class Reload {
       clubMember.isOwner ||
       clubMember.isManager ||
       clubMember.autoBuyinApproval ||
-      !this.game.buyInApproval ||
+      !gameSettings.buyInApproval ||
       isHost
     ) {
       approved = true;
@@ -326,7 +361,12 @@ export class Reload {
         this.player.id +
         ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
         GameStatus.ENDED;
-      const resp = await getGameConnection().query(query);
+      let resp: any;
+      if (transactionEntityManager) {
+        resp = await transactionEntityManager.query(query);
+      } else {
+        resp = await getGameConnection().query(query);
+      }
 
       const currentBuyin = resp[0]['current_buyin'];
 
@@ -334,13 +374,10 @@ export class Reload {
       if (currentBuyin) {
         outstandingBalance += currentBuyin;
       }
-      logger.info(`[${this.game.gameCode}] Player: ${this.player.name} reload request. 
+      logger.debug(`[${this.game.gameCode}] Player: ${this.player.name} reload request. 
             clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager} 
             Auto approval: ${clubMember.autoBuyinApproval} 
             isHost: {isHost}`);
-      logger.info(
-        `Game.buyInApproval: ${this.game.buyInApproval} creditLimit: ${clubMember.creditLimit} outstandingBalance: ${outstandingBalance}`
-      );
 
       let availableCredit = 0.0;
       if (clubMember.creditLimit >= 0) {
@@ -363,23 +400,25 @@ export class Reload {
     return approved;
   }
 
+  // YONG
   protected async denied(
     playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
   ) {
     // send a message to gameserver
     // get game server of this game
-    const gameServer = await GameRepository.getGameServer(this.game.id);
-    if (gameServer) {
-      await playerStatusChanged(
-        this.game,
-        this.player,
-        playerInGame.status,
-        NewUpdate.BUYIN_DENIED,
-        playerInGame.stack,
-        playerInGame.seatNo
-      );
-    }
+    const gameServer = await GameRepository.getGameServer(
+      this.game.id,
+      transactionEntityManager
+    );
+    await Nats.playerStatusChanged(
+      this.game,
+      this.player,
+      playerInGame.status,
+      NewUpdate.BUYIN_DENIED,
+      playerInGame.stack,
+      playerInGame.seatNo
+    );
   }
 
   public async approveDeny(status: ApprovalStatus): Promise<boolean> {
@@ -426,10 +465,10 @@ export class Reload {
             // game is just configured or table is paused
             this.approvedAndUpdateStack(
               reloadRequest.buyinAmount,
-              playerInGame
+              playerInGame,
+              transactionEntityManager
             );
           } else {
-            logger.info('Game is running. Update stack in the next hand');
             await this.addToNextHand(
               reloadRequest.buyinAmount,
               NextHandUpdate.RELOAD_APPROVED,
@@ -476,6 +515,7 @@ export class Reload {
     }
   }
 
+  // YONG
   private async addToNextHand(
     amount: number,
     status: NextHandUpdate,

@@ -19,7 +19,7 @@ const options = {
 };
 const googleVerifier = new Verifier(options);
 
-const logger = getLogger('appcoin - resolvers');
+const logger = getLogger('resolvers::appcoin');
 
 /*
 Google receipt
@@ -58,7 +58,6 @@ async function verifyAppleReceipt(receipt: string): Promise<Purchase> {
   // Promise version
   try {
     const products = await appleReceiptVerify.validate({receipt: receipt});
-    console.log(`products: ${products.toString()}`);
     const product = products[0];
     const purchaseDate = new Date(product['purchaseDate']);
     return {

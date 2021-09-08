@@ -77,7 +77,7 @@ class FirebaseClass {
     });
     this.serviceAccount = serviceAccount;
     this.serviceAccountFile = serviceAccountFile;
-    this.firebaseInitialized = true;
+    this.firebaseInitialized = false;
     logger.info('Firebase is initialized');
   }
 
@@ -182,7 +182,6 @@ class FirebaseClass {
           },
         });
         const respData = resp.data;
-        logger.info('${respData}');
         // return notification key
         return [groupName, respData['notification_key']];
       } catch (err) {
@@ -264,7 +263,6 @@ class FirebaseClass {
         const diff = now.getTime() - this.productsFetchTime.getTime();
         const diffInMins = diff / (60 * 1000);
         if (diffInMins > FETCH_INTERVAL) {
-          logger.info('Fetch iap products');
           fetch = true;
         }
       }
@@ -331,7 +329,7 @@ class FirebaseClass {
           updatedDate: updatedDate,
         });
 
-        logger.info(
+        logger.debug(
           `Name: ${name} Size: ${size} active: ${active} type: ${type} url: ${link}`
         );
       }
@@ -364,7 +362,7 @@ class FirebaseClass {
             coins: coins,
           });
         }
-        logger.info(`Coin: ${id} coin: ${coins} active: ${active}`);
+        logger.debug(`Coin: ${id} coin: ${coins} active: ${active}`);
       }
       this.iapProducts = iapProducts;
       return this.iapProducts;
@@ -453,6 +451,7 @@ export interface AppSettings {
   gameCoinsPerBlock: number;
   agoraCoinsPerBlock: number;
   compressHandData: boolean;
+  ipGpsCheckInterval: number;
 }
 
 // get from firebase and update periodically
@@ -465,7 +464,8 @@ let settings: AppSettings = {
   consumeTime: 15 * 60, // every 15 minutes
   gameCoinsPerBlock: 3, // 3 coins per 15 minutes
   agoraCoinsPerBlock: 3, // 3 coins per 15 minutes
-  compressHandData: false,
+  compressHandData: true,
+  ipGpsCheckInterval: 15 * 60, // ip/gps check interval in seconds
 };
 
 export function getAppSettings(): AppSettings {
@@ -482,7 +482,8 @@ export function resetAppSettings() {
     gameCoinsPerBlock: 3, // 3 coins per 15 minutes
     agoraCoinsPerBlock: 3, // 3 coins per 15 minutes
     notifyHostTimeWindow: 10 * 60,
-    compressHandData: false,
+    compressHandData: true,
+    ipGpsCheckInterval: 15 * 60,
   };
 }
 

@@ -61,7 +61,7 @@ const holdemGameInput = {
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,
-  waitlistSupported: true,
+  waitlistAllowed: true,
   maxWaitList: 10,
   sitInApproval: true,
   rakePercentage: 5.0,
@@ -183,9 +183,9 @@ describe('Game APIs', () => {
       clubCode,
       playerUuids,
       100,
-      holdemGameInput,
+      holdemGameInput
     );
-    
+
     const game = await Cache.getGame(gameCode);
 
     // get next hand information
@@ -216,14 +216,14 @@ describe('Game APIs', () => {
     await nextHandProcess.moveToNextHand();
     ret = await nextHandProcess.getNextHandInfo();
     expect(ret.bombPot).toEqual(false);
-    expect(ret.doubleBoardBombPot).toEqual(true);
+    expect(ret.doubleBoardBombPot).toEqual(false);
     expect(ret.bombPotBet).toEqual(5);
 
     nextHandProcess = new NextHandProcess(game.gameCode, 4);
     await nextHandProcess.moveToNextHand();
     ret = await nextHandProcess.getNextHandInfo();
     expect(ret.bombPot).toEqual(false);
-    expect(ret.doubleBoardBombPot).toEqual(true);
+    expect(ret.doubleBoardBombPot).toEqual(false);
     expect(ret.bombPotBet).toEqual(5);
     await sleep(11000);
     nextHandProcess = new NextHandProcess(game.gameCode, 5);
@@ -232,6 +232,6 @@ describe('Game APIs', () => {
     expect(ret.bombPot).toEqual(true);
     expect(ret.doubleBoardBombPot).toEqual(true);
     expect(ret.bombPotBet).toEqual(5);
-  });  
+  });
 });
 

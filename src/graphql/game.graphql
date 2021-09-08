@@ -50,6 +50,7 @@ enum PlayerGameStatus {
   WAITLIST_SEATING
   PENDING_UPDATES
   WAIT_FOR_BUYIN_APPROVAL
+  NEED_TO_POST_BLIND
 }
 
 enum BuyInApprovalStatus {
@@ -86,9 +87,7 @@ input GameCreateInput {
   maxPlayers: Int! # 2-9
   gameLength: Int! # in minutes
   buyInApproval: Boolean
-  breakLength: Int # in minutes (default 15 mins)
   autoKickAfterBreak: Boolean
-  waitlistSupported: Boolean
   sitInApproval: Boolean
   highHandTracked: Boolean
   maxWaitList: Int
@@ -99,25 +98,39 @@ input GameCreateInput {
   actionTime: Int! # default 20 secs
   muckLosingHand: Boolean
   waitForBigBlind: Boolean
-  waitlistSittingTimeout: Int
   rewardIds: [Int]
   pauseAfterShowdown: Int   # default 2 seconds
-  buyInTimeout: Int        # default 60 seconds
-  seatChangeAllowed: Boolean
+  buyInTimeout: Int         # default 60 seconds
   botGame: Boolean
-  runItTwiceAllowed: Boolean
-  roeGames: [GameType!]
-  dealerChoiceGames: [GameType!]
-  audioConfEnabled: Boolean
-  allowRabbitHunt: Boolean
   showHandRank: Boolean
-  useAgora: Boolean
   appCoinsNeeded: Boolean
+  doubleBoardEveryHand: Boolean
+
+  # coming from game updates (can be changed)
   bombPotEnabled: Boolean
   bombPotBet: Int
   doubleBoardBombPot: Boolean
   bombPotInterval: Int        
   bombPotIntervalInSecs: Int  # for tests
+  bombPotEveryHand: Boolean
+
+  ipCheck: Boolean
+  gpsCheck: Boolean
+
+  useAgora: Boolean
+  audioConfEnabled: Boolean
+
+  allowRabbitHunt: Boolean
+  roeGames: [GameType!]
+  dealerChoiceGames: [GameType!]
+  runItTwiceAllowed: Boolean
+  seatChangeAllowed: Boolean
+  seatChangeTimeout: Int    # default 10 seconds
+  waitlistAllowed: Boolean
+  waitlistSittingTimeout: Int
+
+  breakAllowed: Boolean
+  breakLength: Int # in minutes (default 15 mins)
 }
 
 type SeatInfo {
@@ -127,6 +140,7 @@ type SeatInfo {
   name: String
   buyIn: Float
   stack: Float
+  missedBlind: Boolean
   status: PlayerGameStatus
   seatStatus: SeatStatus
   buyInExpTime: DateTime
@@ -135,6 +149,7 @@ type SeatInfo {
   gameToken: String
   agoraToken: String
   isBot: Boolean
+  settings: GamePlayerSettings
 }
 
 type TableSeats {
@@ -164,9 +179,10 @@ type GameInfo {
   maxPlayers: Int
   gameLength: Int
   buyInApproval: Boolean
+  breakAllowed: Boolean
+  waitlistAllowed: Boolean
   breakLength: Int
   autoKickAfterBreak: Boolean
-  waitlistSupported: Boolean
   sitInApproval: Boolean
   highHandTracked: Boolean
   maxWaitList: Int
@@ -192,6 +208,7 @@ type GameInfo {
   runItTwiceAllowed: Boolean
   allowRabbitHunt: Boolean
   showHandRank: Boolean
+  doubleBoardEveryHand: Boolean
 
   # bomb pot (comes from PokerGameUpdates)
   bombPotEnabled: Boolean
@@ -199,6 +216,10 @@ type GameInfo {
   doubleBoardBombPot: Boolean
   bombPotInterval: Int        
   bombPotIntervalInSecs: Int 
+  bombPotEveryHand: Boolean
+  
+  ipCheck: Boolean
+  gpsCheck: Boolean
 
   roeGames: [GameType!]
   dealerChoiceGames: [GameType!]
@@ -209,6 +230,7 @@ type GameInfo {
   handToAllChannel: String
   playerToHandChannel: String
   handToPlayerChannel: String
+  handToPlayerTextChannel: String
   gameChatChannel: String
   pingChannel: String
   pongChannel: String
@@ -247,22 +269,97 @@ type GameInfo {
   agoraAppId: String
 }
 
+type GamePlayerSettings {
+  autoStraddle: Boolean
+  straddle: Boolean
+  buttonStraddle: Boolean
+  bombPotEnabled: Boolean
+  muckLosingHand: Boolean
+  runItTwiceEnabled: Boolean
+}
+
+input GamePlayerSettingsUpdateInput {
+  autoStraddle: Boolean
+  straddle: Boolean
+  buttonStraddle: Boolean
+  bombPotEnabled: Boolean
+  muckLosingHand: Boolean
+  runItTwiceEnabled: Boolean
+}
+
+type GameSettings {
+  buyInApproval: Boolean
+  runItTwiceAllowed: Boolean
+  allowRabbitHunt: Boolean
+  showHandRank: Boolean
+  doubleBoardEveryHand: Boolean
+
+  # bomb pot (comes from PokerGameUpdates)
+  bombPotEnabled: Boolean
+  bombPotBet: Int
+  doubleBoardBombPot: Boolean
+  bombPotInterval: Int        
+  bombPotIntervalInSecs: Int 
+  bombPotEveryHand: Boolean
+
+  seatChangeAllowed: Boolean
+  seatChangeTimeout: Int    # default 10 seconds
+  waitlistAllowed: Boolean
+  waitlistSittingTimeout: Int
+
+  breakAllowed: Boolean
+  breakLength: Int # in minutes (default 15 mins)
+
+  ipCheck: Boolean
+  gpsCheck: Boolean
+
+  roeGames: [GameType!]
+  dealerChoiceGames: [GameType!]
+}
+
+input GameSettingsUpdateInput {
+  buyInApproval: Boolean
+  runItTwiceAllowed: Boolean
+  allowRabbitHunt: Boolean
+  showHandRank: Boolean
+  doubleBoardEveryHand: Boolean
+
+  # bomb pot (comes from PokerGameUpdates)
+  bombPotEnabled: Boolean
+  bombPotBet: Int
+  doubleBoardBombPot: Boolean
+  bombPotInterval: Int        
+  bombPotIntervalInSecs: Int 
+  bombPotEveryHand: Boolean
+
+  seatChangeAllowed: Boolean
+  seatChangeTimeout: Int    # default 10 seconds
+  waitlistAllowed: Boolean
+  waitlistSittingTimeout: Int
+
+  breakAllowed: Boolean
+  breakLength: Int # in minutes (default 15 mins)
+
+  ipCheck: Boolean
+  gpsCheck: Boolean
+
+  roeGames: [GameType!]
+  dealerChoiceGames: [GameType!]
+}
+
+input GameConfigUpdateInput {
+  # coming from game updates (can be changed)
+  autoStraddle: Boolean
+  straddleOption: Boolean
+  participateBombPot: Boolean
+  muckLosingHand: Boolean
+}
+
 type PlayerRole {
     # player role
   isHost: Boolean
   isOwner: Boolean
   isManager: Boolean
-}
-
-input GameUpdateInput {
-  status: GameStatus
-  muckLosingHand: Boolean
-  waitForBigBlind: Boolean
-  buyInMin: Float
-  buyInMax: Float
-  title: String
-  roeGames: [GameType!]
-  dealerChoiceGames: [GameType!]
 }
 
 type PlayerGameState {
@@ -383,16 +480,31 @@ input GameConfigChangeInput {
   runItTwicePrompt: Boolean
 }
 
+input LocationInput {
+  lat: Float!
+  long: Float!
+}
 
+type SitBackResponse {
+  missedBlind: Boolean
+  status: PlayerGameStatus
+}
+
+type JoinResponse {
+  missedBlind: Boolean
+  status: PlayerGameStatus
+}
+
+type BuyInResponse {
+  missedBlind: Boolean
+  status: PlayerGameStatus
+  approved: Boolean!
+  expireSeconds: Int
+}
 
 type Mutation {
   # Not implemented
   configureGameFromTemplate(clubCode: String!, templateId: Int!): GameInfo!
-  updateGame(
-    clubCode: String!
-    gameCode: String!
-    update: GameUpdateInput
-  ): GameInfo!
   saveGameTemplate(
     clubCode: String!
     templateName: String!
@@ -401,9 +513,9 @@ type Mutation {
   # implemented
   configureGame(clubCode: String!, game: GameCreateInput!): GameInfo!
   configureFriendsGame(game: GameCreateInput!): GameInfo!
-  joinGame(gameCode: String!, seatNo: Int!): PlayerGameStatus!
-  takeSeat(gameCode: String!, seatNo: Int!): SeatInfo!
-  buyIn(gameCode: String!, amount: Float!): BuyInStatus!
+  joinGame(gameCode: String!, seatNo: Int!, location: LocationInput): JoinResponse!
+  takeSeat(gameCode: String!, seatNo: Int!, location: LocationInput): SeatInfo!
+  buyIn(gameCode: String!, amount: Float!): BuyInResponse!
   reload(gameCode: String!, amount: Float!): BuyInStatus!
   approveRequest(
     gameCode: String!, 
@@ -413,7 +525,7 @@ type Mutation {
   ): Boolean!
   startGame(gameCode: String!): GameStatus!
   takeBreak(gameCode: String!): Boolean!
-  sitBack(gameCode: String!): Boolean!
+  sitBack(gameCode: String!, location: LocationInput): SitBackResponse
   leaveGame(gameCode: String!): Boolean!
   pauseGame(gameCode: String!): GameStatus!
   endGame(gameCode: String!): GameStatus!
@@ -424,10 +536,7 @@ type Mutation {
   applyWaitlistOrder(gameCode: String!, playerUuid: [String!]): Boolean!
   declineWaitlistSeat(gameCode: String!): Boolean
   switchSeat(gameCode: String!, seatNo: Int!): PlayerGameStatus!
-
-  # player changes in live game
-  updatePlayerGameConfig(gameCode: String!, config: GameConfigChangeInput!): Boolean
-
+  
   # seat change APIs
   requestSeatChange(gameCode: String!, cancel: Boolean): DateTime!
   confirmSeatChange(gameCode: String!, seatNo: Int!): Boolean!
@@ -441,6 +550,12 @@ type Mutation {
 
   # post blind
   postBlind(gameCode: String!): Boolean
+
+  # update game settings
+  updateGameSettings(gameCode: String!, settings: GameSettingsUpdateInput!): Boolean
+
+  # update settings for a player
+  updateGamePlayerSettings(gameCode: String!, settings: GamePlayerSettingsUpdateInput): Boolean
 }
 
 type gameId{
@@ -485,6 +600,8 @@ type Query {
   # implemented
   gameById(gameCode: String!): gameId!
   gameInfo(gameCode: String!): GameInfo
+  gameSettings(gameCode: String!): GameSettings!
+  myGameSettings(gameCode: String!): GamePlayerSettings!
   myGameState(gameCode: String!): PlayerGameState
   tableGameState(gameCode: String!): [PlayerGameState!]
   waitingList(gameCode: String!): [WaitingListPlayer!]

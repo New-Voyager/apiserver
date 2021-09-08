@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import {PokerGame} from './game';
-import {DbAwareColumn, DbAwareUpdateDateColumn} from '../dbaware';
+import {DbAwareColumn} from '../dbaware';
 import {BuyInApprovalStatus, PlayerStatus} from '../types';
 
 @Entity({name: 'player_game_tracker'})
@@ -32,6 +32,7 @@ export class PlayerGameTracker {
   @Column({name: 'player_name'})
   public playerName!: string;
 
+  @Index()
   @Column({name: 'player_uuid'})
   public playerUuid!: string;
 
@@ -158,8 +159,8 @@ export class PlayerGameTracker {
   @Column({name: 'waitlist_num', type: 'int', default: 0})
   public waitlistNum!: number;
 
-  @Column({name: 'run_it_twice_prompt', default: false})
-  public runItTwicePrompt!: boolean;
+  @Column({name: 'run_it_twice_enabled', default: false})
+  public runItTwiceEnabled!: boolean;
 
   @Column({name: 'muck_losing_hand', default: false})
   public muckLosingHand!: boolean;
@@ -167,8 +168,11 @@ export class PlayerGameTracker {
   @Column({name: 'bomb_pot_enabled', default: true})
   public bombPotEnabled!: boolean;
 
-  @Column({name: 'missed_blind', default: false}) // this is set to true, if a player misses blind (in break)
-  public missedBlind!: boolean;
+  @Column({name: 'auto_straddle', default: false})
+  public autoStraddle!: boolean;
+
+  @Column({name: 'button_straddle', default: false})
+  public buttonStraddle!: boolean;
 
   @Column({name: 'posted_blind', default: false}) // this is set to true, player posted blind
   public postedBlind!: boolean;
@@ -183,4 +187,25 @@ export class PlayerGameTracker {
 
   @Column({name: 'consecutive_action_timeouts', type: 'int', default: 0})
   public consecutiveActionTimeouts!: number;
+
+  @Column({name: 'player_location', nullable: true})
+  public playerLocation!: string;
+
+  @Column({name: 'player_ip', nullable: true})
+  public playerIp!: string;
+
+  // the following fields are internal fields modified by the hand logic
+  // missed_blind: When a user misses a blind, we mark this flag to true
+  // posted_blind_next_hand: during next hand processing, if the user had posted the blind, this will
+  //   be set to true. This field is reset before processing next hand logic (moveToNextHand).
+  // in_hand_next_hand: This field set by next hand processing. This field indicates whether this
+  //   player should be included in the next hand or not.
+  @Column({name: 'posted_blind_next_hand', default: false})
+  public postedBlindNextHand!: boolean;
+
+  @Column({name: 'in_hand_next_hand', default: false})
+  public inHandNextHand!: boolean;
+
+  @Column({name: 'missed_blind', default: false}) // this is set to true, if a player misses blind (in break)
+  public missedBlind!: boolean;
 }

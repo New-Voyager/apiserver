@@ -11,7 +11,7 @@ import {ClubUpdateType} from './types';
 import {Cache} from '@src/cache/index';
 import {getUserConnection, getUserRepository} from '.';
 
-const logger = getLogger('clubmessage');
+const logger = getLogger('repositories::clubmessage');
 
 export interface ClubMessageInputFormat {
   messageType: ClubMessageType;

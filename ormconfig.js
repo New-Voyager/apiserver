@@ -3,6 +3,7 @@ pgPortKey = 'POSTGRES_PORT';
 pgUserKey = 'POSTGRES_USER';
 pgPasswordKey = 'POSTGRES_PASSWORD';
 pgDbNameKey = 'POSTGRES_DB';
+pgSSLKey = 'POSTGRES_SSL';
 
 pgDebugHostKey = 'POSTGRES_DEBUG_HOST';
 pgDebugPortKey = 'POSTGRES_DEBUG_PORT';
@@ -23,6 +24,13 @@ if (process.env[pgDebugHostKey]) {
 
 if (process.env[pgDebugPortKey]) {
   debugPort = process.env[pgDebugPortKey];
+}
+
+let ssl = false;
+if (process.env[pgSSLKey]) {
+  if(process.env[pgSSLKey] === '1' || process.env[pgSSLKey] === 'true') {
+    ssl = true;
+  }
 }
 
 if (process.env[pgDebugUserKey]) {
@@ -185,6 +193,27 @@ if (process.env.NODE_ENV === 'test') {
   if (errs.length > 0) {
     throw new Error(errs.join('\n'));
   }
+
+  // update ssl flag if specified
+  if (ssl) {
+    const extra = {
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    };
+    configs.default.ssl = true;
+    configs.default.extra = extra;
+
+    configs.livegames.ssl = true;
+    configs.livegames.extra = extra;
+
+    configs.users.ssl = true;
+    configs.users.extra = extra;
+
+    configs.history.ssl = true;
+    configs.history.extra = extra;
+  }
+
   module.exports = {
     livegames: configs.livegames,
     history: configs.history,

@@ -28,6 +28,7 @@ export enum NewUpdate {
   BUYIN_DENIED,
   NEWUPDATE_NOT_PLAYING,
   RESERVE_SEAT,
+  WAIT_FOR_BUYIN,
 }
 
 export interface HighHandWinnerResult {
@@ -57,6 +58,7 @@ export interface SaveHandResult {
   gameCode: string;
   handNum: number;
   success: boolean;
+  skipped: boolean;
   error?: string;
   highHand?: HighHandResult;
 }
@@ -74,13 +76,17 @@ export interface PlayerInSeat {
   buyInTimeExpAt?: string; // date time when buyin time expires
   breakTimeExpAt?: string; // date time when break time expires
   gameToken: string;
-  runItTwicePrompt: boolean;
+  runItTwice: boolean;
   muckLosingHand: boolean;
   activeSeat: boolean;
   postedBlind: boolean;
+  missedBlind: boolean;
+  autoStraddle: boolean;
+  buttonStraddle: boolean;
 }
 
 export interface NewHandInfo {
+  gameId: number;
   gameCode: string;
   gameType: GameType;
   maxPlayers: number;
@@ -88,15 +94,21 @@ export interface NewHandInfo {
   bigBlind: number;
   buttonPos: number;
   handNum: number;
+  actionTime: number;
+  straddleBet: number;
+  rakePercentage: number;
+  rakeCap: number;
   announceGameType: boolean;
   playersInSeats: Array<PlayerInSeat>;
   gameStatus: GameStatus;
   tableStatus: TableStatus;
   sbPos?: number;
   bbPos?: number;
+  resultPauseTime: number;
   bombPot: boolean;
   doubleBoardBombPot: boolean;
   bombPotBet: number;
+  bringIn: number;
 }
 
 export enum ReedeemPromotionError {
@@ -138,4 +150,18 @@ export enum ClubUpdateType {
   HOST_MESSAGE,
   ANNOUNCEMENT,
   MEW_GAME,
+}
+
+export interface GamePlayerSettings {
+  autoStraddle?: boolean;
+  straddle?: boolean;
+  buttonStraddle?: boolean;
+  bombPotEnabled?: boolean;
+  muckLosingHand?: boolean;
+  runItTwiceEnabled?: boolean;
+}
+
+export interface SitBackResponse {
+  missedBlind: boolean;
+  status: string;
 }

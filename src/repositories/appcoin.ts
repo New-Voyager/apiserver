@@ -5,19 +5,16 @@ import {
   StoreType,
 } from '@src/entity/player/appcoin';
 import {Cache} from '@src/cache';
-import {getGameRepository, getUserManager, getUserRepository} from '.';
-import {trimEnd} from 'lodash';
-import {PokerGameUpdates} from '@src/entity/game/game';
-import {loggers} from 'winston';
+import {getUserManager, getUserRepository} from '.';
 import {getLogger} from '@src/utils/log';
 import {Player} from '@src/entity/player/player';
 import {getAppSettings} from '@src/firebase';
 import {Nats} from '@src/nats';
-import {GameRepository} from './game';
+import {GameUpdatesRepository} from './gameupdates';
 const crypto = require('crypto');
 
 const COIN_PURCHASE_NOTIFICATION_TIME = 10;
-const logger = getLogger('appcoins');
+const logger = getLogger('repositories::appcoins');
 
 class AppCoinRepositoryImpl {
   public async purchaseCoins(
@@ -51,7 +48,7 @@ class AppCoinRepositoryImpl {
           const existingTran = await coinTransactionRepo.findOne({
             receiptHash: receiptHash,
           });
-          if (existingTran != null) {
+          if (existingTran !== null) {
             // entry already found
             return true;
           }
@@ -193,29 +190,27 @@ class AppCoinRepositoryImpl {
       return false;
     }
 
+    const gameUpdates = await GameUpdatesRepository.get(gameCode);
+    if (gameUpdates === null || gameUpdates === undefined) {
+      return false;
+    }
+
     const settings = getAppSettings();
     // we may support public games in the future
-    if (!game.nextCoinConsumeTime) {
+    if (!gameUpdates.nextCoinConsumeTime) {
       if (game.appCoinsNeeded) {
-        await GameRepository.updateAppcoinNextConsumeTime(game);
+        await GameUpdatesRepository.updateAppcoinNextConsumeTime(game);
       }
       return true;
     }
 
     const now = new Date();
-    const diff = game.nextCoinConsumeTime.getTime() - now.getTime();
+    const diff = gameUpdates.nextCoinConsumeTime.getTime() - now.getTime();
     const diffInSecs = Math.ceil(diff / 1000);
 
     if (diffInSecs > 0 && diffInSecs < settings.notifyHostTimeWindow) {
       //logger.info(`[${game.gameCode}] app coin consumption time has not reached. Time remaining: ${diffInSecs} seconds`);
       return true;
-    }
-    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-    const gameUpdates = await gameUpdatesRepo.findOne({
-      gameID: game.id,
-    });
-    if (!gameUpdates) {
-      return false;
     }
     if (diffInSecs > 0 && diffInSecs <= settings.notifyHostTimeWindow) {
       if (gameUpdates.appCoinHostNotified) {
@@ -271,14 +266,10 @@ class AppCoinRepositoryImpl {
           const nextCoinConsumeTime = new Date(
             now.getTime() + settings.notifyHostTimeWindow * 1000
           );
-          await gameUpdatesRepo.update(
-            {
-              gameID: game.id,
-            },
-            {
-              nextCoinConsumeTime: nextCoinConsumeTime,
-              appCoinHostNotified: true,
-            }
+          await GameUpdatesRepository.updateCoinNextTime(
+            game,
+            nextCoinConsumeTime,
+            true
           );
           logger.info(
             `[${game.gameCode}] Host is notified to make coin purchase`
@@ -305,18 +296,7 @@ class AppCoinRepositoryImpl {
       const nextCoinConsumeTime = new Date(
         now.getTime() + appSettings.consumeTime * 1000
       );
-      await gameUpdatesRepo
-        .createQueryBuilder()
-        .update()
-        .set({
-          coinsUsed: () => `coins_used + ${gameUpdates.appcoinPerBlock}`,
-          nextCoinConsumeTime: nextCoinConsumeTime,
-        })
-        .where({
-          gameID: game.id,
-        })
-        .execute();
-      await Cache.updateGameCoinConsumeTime(game.gameCode, nextCoinConsumeTime);
+      await GameUpdatesRepository.updateCoinsUsed(game, nextCoinConsumeTime);
       // subtract from user account
       await coinRepo
         .createQueryBuilder()

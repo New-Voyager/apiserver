@@ -29,7 +29,7 @@ import {
   HighHand,
 } from '@src/entity/game/reward';
 import {HighHandHistory} from '@src/entity/history/hand';
-const logger = getLogger('rewardRepo');
+const logger = getLogger('repositories::reward');
 
 class RewardRepositoryImpl {
   public async createReward(clubCode: string, reward: RewardInputFormat) {
@@ -97,6 +97,7 @@ class RewardRepositoryImpl {
     return await this.handleHighHand(game, input, handTime);
   }
 
+  // YONG
   public async handleHighHand(
     gameInput: PokerGame,
     input: any,
@@ -234,11 +235,15 @@ class RewardRepositoryImpl {
         let gameHighHandRank = game.highHandRank;
         if (gameHighHandRank === 0) {
           if (gameTracking) {
-            gameHighHandRank = await this.getGameHighHandWithoutReward(game);
+            gameHighHandRank = await this.getGameHighHandWithoutReward(
+              game,
+              transactionManager
+            );
           } else {
             gameHighHandRank = await this.getGameHighHand(
               game,
-              existingRewardTracking.reward.id
+              existingRewardTracking.reward.id,
+              transactionManager
             );
           }
         }
@@ -291,7 +296,8 @@ class RewardRepositoryImpl {
           highHandRank,
           handTime,
           winner,
-          existingRewardTracking?.reward
+          existingRewardTracking?.reward,
+          transactionManager
         );
         Cache.updateGameHighHand(game.gameCode, highHandRank);
       }
@@ -474,9 +480,16 @@ class RewardRepositoryImpl {
 
   public async getGameHighHand(
     game: PokerGame,
-    rewardId: number
+    rewardId: number,
+    transactionManager?: EntityManager
   ): Promise<number> {
-    const highHandRepo = getGameRepository(HighHand);
+    let highHandRepo: Repository<HighHand>;
+    if (transactionManager) {
+      highHandRepo = transactionManager.getRepository(HighHand);
+    } else {
+      highHandRepo = getGameRepository(HighHand);
+    }
+
     const gameHighHands = await highHandRepo.find({
       where: {gameId: game.id, rewardId: rewardId},
       order: {handTime: 'DESC'},
@@ -488,8 +501,17 @@ class RewardRepositoryImpl {
     return 0xffffffff;
   }
 
-  public async getGameHighHandWithoutReward(game: PokerGame): Promise<number> {
-    const highHandRepo = getGameRepository(HighHand);
+  public async getGameHighHandWithoutReward(
+    game: PokerGame,
+    transactionManager?: EntityManager
+  ): Promise<number> {
+    let highHandRepo: Repository<HighHand>;
+    if (transactionManager) {
+      highHandRepo = transactionManager.getRepository(HighHand);
+    } else {
+      highHandRepo = getGameRepository(HighHand);
+    }
+
     const gameHighHands = await highHandRepo.find({
       where: {gameId: game.id},
       order: {handTime: 'DESC'},

@@ -1,9 +1,5 @@
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {
-  NextHandUpdates,
-  PokerGame,
-  PokerGameUpdates,
-} from '@src/entity/game/game';
+import {PokerGame, PokerGameSeatInfo} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {
   GameStatus,
@@ -15,11 +11,6 @@ import {
 import {getLogger} from '@src/utils/log';
 import {EntityManager, IsNull, Not, Repository} from 'typeorm';
 import * as _ from 'lodash';
-import {
-  hostSeatChangeProcessEnded,
-  hostSeatChangeProcessStarted,
-  hostSeatChangeSeatMove,
-} from '@src/gameserver';
 import {cancelTimer, startTimer} from '@src/timer';
 import {PLAYER_SEATCHANGE_PROMPT} from './types';
 import {
@@ -33,7 +24,7 @@ import {Cache} from '@src/cache/index';
 import {processPendingUpdates, switchSeatNextHand} from './pendingupdates';
 import {getGameConnection, getGameManager, getGameRepository} from '.';
 
-const logger = getLogger('seatchange');
+const logger = getLogger('repositories::seatchange');
 
 export class SeatChangeProcess {
   game: PokerGame;
@@ -67,8 +58,8 @@ export class SeatChangeProcess {
       await playerSeatChangeRepo.save(playerSeatChange);
     }
 
-    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-    gameUpdatesRepo.update(
+    const gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
+    await gameSeatInfoRepo.update(
       {
         gameID: this.game.id,
       },
@@ -108,7 +99,7 @@ export class SeatChangeProcess {
       where: {game: {id: this.game.id}, status: PlayerStatus.PLAYING},
     });
 
-    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
+    const gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
     if (
       seatChangeRequestedPlayers.length === 0 ||
       count === this.game.maxPlayers
@@ -117,7 +108,7 @@ export class SeatChangeProcess {
         `[${this.game.gameCode}] Seat change process is done. Resuming the game`
       );
       Nats.sendPlayerSeatChangeDone(this.game.gameCode);
-      await gameUpdatesRepo.update(
+      await gameSeatInfoRepo.update(
         {
           gameID: this.game.id,
         },
@@ -132,14 +123,14 @@ export class SeatChangeProcess {
     }
     // get the open seat
     if (openedSeat === 0) {
-      const gameUpdate = await gameUpdatesRepo.findOne({
+      const gameUpdate = await gameSeatInfoRepo.findOne({
         gameID: this.game.id,
       });
       if (
         gameUpdate === undefined ||
         gameUpdate.seatChangeOpenSeat === undefined
       ) {
-        await gameUpdatesRepo.update(
+        await gameSeatInfoRepo.update(
           {
             gameID: this.game.id,
           },
@@ -369,8 +360,8 @@ export class SeatChangeProcess {
           seatNo: 0,
         }
       );
-      const gameUpdatesRepo = tran.getRepository(PokerGameUpdates);
-      gameUpdatesRepo.update(
+      const gameSeatInfoRepo = tran.getRepository(PokerGameSeatInfo);
+      await gameSeatInfoRepo.update(
         {
           gameID: this.game.id,
         },
@@ -438,7 +429,11 @@ export class SeatChangeProcess {
           tableStatus: TableStatus.HOST_SEATCHANGE_IN_PROGRESS,
         }
       );
-      await Cache.getGame(this.game.gameCode, true /** update */);
+      await Cache.getGame(
+        this.game.gameCode,
+        true /** update */,
+        transactionEntityManager
+      );
 
       // copy current seated players in the seats to the seat change process table
       const playersInSeats = await playerGameTrackerRepo.find({
@@ -473,7 +468,7 @@ export class SeatChangeProcess {
       }
 
       // notify the players seat change process has begun
-      await hostSeatChangeProcessStarted(this.game, host.id);
+      await Nats.hostSeatChangeProcessStarted(this.game, host.id);
     });
   }
 
@@ -559,7 +554,7 @@ export class SeatChangeProcess {
       );
 
       // notify the players seat change process has ended
-      await hostSeatChangeSeatMove(this.game, seatMoves);
+      await Nats.hostSeatChangeSeatMove(this.game, seatMoves);
     });
 
     return true;
@@ -609,7 +604,11 @@ export class SeatChangeProcess {
         transactionEntityManager
       );
       // notify the players seat change process has ended
-      await hostSeatChangeProcessEnded(this.game, currentSeatStatus, host.id);
+      await Nats.hostSeatChangeProcessEnded(
+        this.game,
+        currentSeatStatus,
+        host.id
+      );
     });
   }
 
@@ -626,15 +625,15 @@ export class SeatChangeProcess {
     const [playerInGame, newPlayer] = await getGameManager().transaction(
       async transactionEntityManager => {
         // get game updates
-        const gameUpdateRepo = transactionEntityManager.getRepository(
-          PokerGameUpdates
+        const gameSeatInfoRepo = transactionEntityManager.getRepository(
+          PokerGameSeatInfo
         );
-        const gameUpdate = await gameUpdateRepo.findOne({
+        const gameSeatInfo = await gameSeatInfoRepo.findOne({
           where: {
             gameID: this.game.id,
           },
         });
-        if (!gameUpdate) {
+        if (!gameSeatInfo) {
           logger.error(
             `Game status is not found for game: ${this.game.gameCode}`
           );
@@ -643,8 +642,8 @@ export class SeatChangeProcess {
           );
         }
         if (
-          gameUpdate.waitlistSeatingInprogress ||
-          gameUpdate.seatChangeInProgress
+          gameSeatInfo.waitlistSeatingInprogress ||
+          gameSeatInfo.seatChangeInProgress
         ) {
           throw new Error(
             `Seat change is in progress for game: ${this.game.gameCode}`
@@ -666,7 +665,7 @@ export class SeatChangeProcess {
         // if there is a player in the seat, return an error
 
         // if the current player in seat tried to sit in the same seat, do nothing
-        if (playerInSeat != null) {
+        if (playerInSeat) {
           throw new Error('A player is in the seat');
         }
 
@@ -719,7 +718,12 @@ export class SeatChangeProcess {
         }
 
         // send an update message
-        Nats.notifyPlayerSwitchSeat(this.game, player, playerInSeat, oldSeatNo);
+        await Nats.notifyPlayerSwitchSeat(
+          this.game,
+          player,
+          playerInSeat,
+          oldSeatNo
+        );
 
         logger.info(
           `[${this.game.gameCode}] Player: ${player.name} switched to seat: ${seatNo}`

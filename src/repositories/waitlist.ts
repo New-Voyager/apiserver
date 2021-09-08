@@ -1,13 +1,13 @@
 import {Cache} from '@src/cache';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {PokerGame, PokerGameSeatInfo} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {GameType, PlayerStatus} from '@src/entity/types';
-import {waitlistSeating} from '@src/gameserver';
+// import {waitlistSeating} from '@src/gameserver';
 import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery} from '@src/utils';
 import {getLogger} from '@src/utils/log';
-import {Equal, IsNull, Not} from 'typeorm';
+import {EntityManager, Equal, IsNull, Not, Repository} from 'typeorm';
 import {WAITLIST_SEATING} from './types';
 import * as crypto from 'crypto';
 import {v4 as uuidv4} from 'uuid';
@@ -15,7 +15,7 @@ import {Nats} from '@src/nats';
 import {WaitlistSeatError} from '@src/errors';
 import {getGameConnection, getGameManager, getGameRepository} from '.';
 
-const logger = getLogger('waitlist');
+const logger = getLogger('repositories::waitlist');
 
 export async function occupiedSeats(gameId: number): Promise<number> {
   const query = fixQuery(
@@ -33,9 +33,23 @@ export class WaitListMgmt {
     this.game = game;
   }
 
-  public async seatPlayer(player: Player, seatNo: number) {
-    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
-    const gameUpdateRepo = getGameRepository(PokerGameUpdates);
+  // YONG
+  public async seatPlayer(
+    player: Player,
+    seatNo: number,
+    transactionManager?: EntityManager
+  ) {
+    let playerGameTrackerRepository: Repository<PlayerGameTracker>;
+    let gameSeatInfoRepo: Repository<PokerGameSeatInfo>;
+    if (transactionManager) {
+      playerGameTrackerRepository = transactionManager.getRepository(
+        PlayerGameTracker
+      );
+      gameSeatInfoRepo = transactionManager.getRepository(PokerGameSeatInfo);
+    } else {
+      playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+      gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
+    }
 
     // join game waitlist seating in progress flag
     // if set to true, only the player with WAITLIST_SEATING is allowed to sit
@@ -49,7 +63,7 @@ export class WaitListMgmt {
     });
     if (!playerAskedToSit) {
       // no-one from the waiting list asked to be sit, something happened
-      gameUpdateRepo.update(
+      gameSeatInfoRepo.update(
         {
           gameID: this.game.id,
         },
@@ -71,7 +85,7 @@ export class WaitListMgmt {
           status: PlayerStatus.IN_QUEUE,
         },
       });
-      await gameUpdateRepo.update(
+      await gameSeatInfoRepo.update(
         {
           gameID: this.game.id,
         },
@@ -85,8 +99,8 @@ export class WaitListMgmt {
 
   public async declineWaitlistSeat(player: Player) {
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
-    const gameUpdateRepo = getGameRepository(PokerGameUpdates);
-    logger.info(
+    const gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
+    logger.debug(
       `Player [${player.name}: ${player.id}] declined to join the game. ${this.game.gameCode}`
     );
 
@@ -122,7 +136,7 @@ export class WaitListMgmt {
         status: PlayerStatus.IN_QUEUE,
       },
     });
-    await gameUpdateRepo.update(
+    await gameSeatInfoRepo.update(
       {
         gameID: this.game.id,
       },
@@ -166,7 +180,7 @@ export class WaitListMgmt {
     const gameId = this.game.id;
     const seatsTaken = await occupiedSeats(gameId);
     if (seatsTaken === this.game.maxPlayers) {
-      logger.info(`No open seats in game: ${this.game.gameCode}`);
+      logger.debug(`No open seats in game: ${this.game.gameCode}`);
       return;
     }
     await this.resetExistingWaitingList();
@@ -227,7 +241,7 @@ export class WaitListMgmt {
       break;
     }
 
-    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
+    const gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
 
     if (!nextPlayer) {
       const count = await playerGameTrackerRepository.count({
@@ -236,7 +250,7 @@ export class WaitListMgmt {
           status: PlayerStatus.IN_QUEUE,
         },
       });
-      await gameUpdatesRepo.update(
+      await gameSeatInfoRepo.update(
         {
           gameID: gameId,
         },
@@ -250,9 +264,15 @@ export class WaitListMgmt {
       // notify all the users waiting list process is complete
       return;
     }
+    const gameSettings = await Cache.getGameSettings(this.game.gameCode);
+    if (!gameSettings) {
+      throw new Error(
+        `Game code: ${this.game.gameCode} is not found in PokerGameSettings`
+      );
+    }
 
     const waitingListTimeExp = new Date();
-    const timeout = this.game.waitlistSittingTimeout;
+    const timeout = gameSettings.waitlistSittingTimeout;
     waitingListTimeExp.setSeconds(waitingListTimeExp.getSeconds() + timeout);
     await playerGameTrackerRepository.update(
       {
@@ -271,7 +291,7 @@ export class WaitListMgmt {
       },
     });
 
-    await gameUpdatesRepo.update(
+    await gameSeatInfoRepo.update(
       {gameID: gameId},
       {
         waitlistSeatingInprogress: true,
@@ -289,12 +309,12 @@ export class WaitListMgmt {
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
     }
-    logger.info(
+    logger.debug(
       `Game: [${game.gameCode}], Player: ${nextPlayer.playerName}:${nextPlayer.playerUuid} is requested to take open seat`
     );
     // we will send a notification which player is coming to the table
     const player = await Cache.getPlayer(nextPlayer.playerUuid);
-    waitlistSeating(nextPlayer.game, player, timeout);
+    // await waitlistSeating(nextPlayer.game, player, timeout);
     let clubName = '';
     if (game.clubName !== null) {
       clubName = game.clubName;
@@ -316,7 +336,7 @@ export class WaitListMgmt {
   }
 
   public async addToWaitingList(playerUuid: string) {
-    logger.info('****** STARTING TRANSACTION TO ADD a player to waitlist');
+    logger.debug('****** STARTING TRANSACTION TO ADD a player to waitlist');
     const player = await Cache.getPlayer(playerUuid);
     let playerInGame = await getGameRepository(PlayerGameTracker).findOne({
       where: {
@@ -356,8 +376,7 @@ export class WaitListMgmt {
         await playerGameTrackerRepository.save(playerInGame);
       }
 
-      await transactionEntityManager
-        .getRepository(PlayerGameTracker)
+      await playerGameTrackerRepository
         .createQueryBuilder()
         .update()
         .set({
@@ -377,10 +396,10 @@ export class WaitListMgmt {
         },
       });
 
-      const gameUpdatesRepo = transactionEntityManager.getRepository(
-        PokerGameUpdates
+      const gameSeatInfoRepo = transactionEntityManager.getRepository(
+        PokerGameSeatInfo
       );
-      await gameUpdatesRepo.update(
+      await gameSeatInfoRepo.update(
         {
           gameID: this.game.id,
         },
@@ -399,7 +418,7 @@ export class WaitListMgmt {
         playerId: player.id,
       })
       .execute();
-    logger.info('****** ENDING TRANSACTION TO ADD a player to waitlist');
+    logger.debug('****** ENDING TRANSACTION TO ADD a player to waitlist');
   }
 
   public async removeFromWaitingList(playerUuid: string) {
@@ -444,10 +463,10 @@ export class WaitListMgmt {
         },
       });
 
-      const gameUpdatesRepo = transactionEntityManager.getRepository(
-        PokerGameUpdates
+      const gameSeatInfoRepo = transactionEntityManager.getRepository(
+        PokerGameSeatInfo
       );
-      await gameUpdatesRepo.update(
+      await gameSeatInfoRepo.update(
         {
           gameID: this.game.id,
         },
@@ -495,7 +514,7 @@ export class WaitListMgmt {
         },
       });
       if (count !== players.length) {
-        logger.info(
+        logger.debug(
           `Waiting list count: Expected - ${count} but received - ${players.length}`
         );
         throw new Error(

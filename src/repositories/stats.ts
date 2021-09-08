@@ -7,7 +7,7 @@ import {
   PlayerHandStats,
   SystemStats,
 } from '@src/entity/history/stats';
-import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
+import {PokerGame} from '@src/entity/game/game';
 import {isArray} from 'lodash';
 import {loggers} from 'winston';
 import {getLogger} from '@src/utils/log';
@@ -17,7 +17,7 @@ import {Cache} from '@src/cache';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {getHistoryConnection, getHistoryManager, getHistoryRepository} from '.';
 
-const logger = getLogger('Stats');
+const logger = getLogger('repositories::stats');
 
 // Ranking for higher cards
 /*
@@ -522,11 +522,11 @@ class StatsRepositoryImpl {
 
   public async newClubStats(
     club: Club,
-    transactionEntityManager?: EntityManager
+    historyTransactionManager?: EntityManager
   ) {
     let clubStatsRepo: Repository<ClubStats>;
-    if (transactionEntityManager) {
-      clubStatsRepo = transactionEntityManager.getRepository(ClubStats);
+    if (historyTransactionManager) {
+      clubStatsRepo = historyTransactionManager.getRepository(ClubStats);
     } else {
       clubStatsRepo = getHistoryRepository(ClubStats);
     }

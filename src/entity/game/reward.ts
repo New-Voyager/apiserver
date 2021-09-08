@@ -19,9 +19,11 @@ export class GameRewardTracking {
   @Column({name: 'hh_rank', nullable: true})
   public hhRank!: number;
 
+  @Index()
   @Column({name: 'game_id', nullable: true})
   public gameId!: number;
 
+  @Index()
   @Column({name: 'reward_id', type: 'int'})
   public rewardId!: number;
 
@@ -61,9 +63,11 @@ export class GameReward {
   @PrimaryGeneratedColumn()
   public id!: number;
 
+  @Index()
   @Column({name: 'game_id', nullable: false})
   public gameId!: number;
 
+  @Index()
   @Column({name: 'game_code', nullable: false})
   public gameCode!: string;
 
@@ -84,6 +88,7 @@ export class HighHand {
   @PrimaryGeneratedColumn()
   public id!: number;
 
+  @Index()
   @Column({name: 'game_id', nullable: false, type: 'int'})
   public gameId!: number;
 
@@ -93,6 +98,7 @@ export class HighHand {
   @Column({name: 'reward_id', type: 'int', nullable: true})
   public rewardId!: number;
 
+  @Index()
   @ManyToOne(
     () => GameRewardTracking,
     rewardTrackingId => rewardTrackingId.id,

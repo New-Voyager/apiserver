@@ -1,26 +1,15 @@
 import {ApolloServer} from 'apollo-server-express';
 import {fileLoader, mergeTypes} from 'merge-graphql-schemas';
-import {create, merge} from 'lodash';
+import {merge} from 'lodash';
 import {authorize} from '@src/middlewares/authorization';
-import {
-  createConnection,
-  createConnections,
-  getConnectionOptions,
-} from 'typeorm';
-import {GameServerAPI} from './internal/gameserver';
-import {HandServerAPI} from './internal/hand';
-import {GameAPI} from './internal/game';
 import * as dotenv from 'dotenv';
 
 const bodyParser = require('body-parser');
 const GQL_PORT = 9501;
 import {getLogger} from '@src/utils/log';
-import {AdminAPI} from './internal/admin';
-import {Player} from './entity/player/player';
 import {initializeGameServer} from './gameserver';
-import {timerCallback} from './repositories/timer';
-import {seed} from './initdb';
-import {Firebase} from './firebase';
+import {initdb, seed} from './initdb';
+import {Firebase, getAppSettings} from './firebase';
 import {Nats} from './nats';
 import {
   buyBotCoins,
@@ -43,6 +32,8 @@ import {
 } from './auth';
 import {DevRepository} from './repositories/dev';
 import {createPromotion, deleteAll, getAllPromotion} from './admin';
+import {initializeRedis} from './cache';
+import {addInternalRoutes} from './routes';
 export enum RunProfile {
   DEV,
   TEST,
@@ -114,162 +105,17 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
 
   logger.info(`Server is running ${RunProfile[runProfile].toString()} profile`);
 
-  if (process.env.NODE_ENV !== 'unit-test' && process.env.NODE_ENV !== 'test') {
-    logger.debug('Running in dev/prod mode');
-    const options = await getConnectionOptions('default');
-    const users = options['users'];
-    const livegames = options['livegames'];
-    const history = options['history'];
-    const default1 = options['default'];
-
-    // create databases
-    try {
-      const defaultObj = default1 as any;
-      const conn = await createConnection({
-        type: defaultObj.type,
-        host: defaultObj.host,
-        port: defaultObj.port,
-        username: defaultObj.username,
-        password: defaultObj.password,
-        database: process.env.DB_NAME,
-        cache: defaultObj.cache,
-        synchronize: defaultObj.synchronize,
-        bigNumberStrings: defaultObj.bigNumberStrings,
-        entities: defaultObj.entities,
-        name: 'default',
-      });
-      try {
-        await conn.query('CREATE DATABASE livegames');
-        await conn.query(
-          `GRANT ALL PRIVILEGES ON DATABASE livegames TO "${defaultObj.username}"`
-        );
-      } catch (err) {
-        const message: string = err.toString();
-        if (message.indexOf('already exists') === -1) {
-          throw err;
-        }
-      }
-      try {
-        await conn.query('CREATE DATABASE users');
-        await conn.query(
-          `GRANT ALL PRIVILEGES ON DATABASE users TO "${defaultObj.username}"`
-        );
-      } catch (err) {
-        const message: string = err.toString();
-        if (message.indexOf('already exists') === -1) {
-          throw err;
-        }
-      }
-      try {
-        await conn.query('CREATE DATABASE history');
-        await conn.query(
-          `GRANT ALL PRIVILEGES ON DATABASE history TO "${defaultObj.username}"`
-        );
-      } catch (err) {
-        const message: string = err.toString();
-        if (message.indexOf('already exists') === -1) {
-          throw err;
-        }
-      }
-    } catch (err) {
-      logger.error(
-        `Errors reported when creating the database ${err.toString()}`
-      );
-      throw err;
-    }
-
-    // override database name if specified in the environment variable
-    //if (process.env.DB_NAME) {
-    const liveGameObj = livegames as any;
-    const historyObj = history as any;
-    const userObj = users as any;
-    const debugObj = options['debug'] as any;
-    try {
-      await createConnections([
-        {
-          type: userObj.type,
-          host: userObj.host,
-          port: userObj.port,
-          username: userObj.username,
-          password: userObj.password,
-          database: 'users', //process.env.DB_NAME,
-          cache: userObj.cache,
-          synchronize: userObj.synchronize,
-          bigNumberStrings: userObj.bigNumberStrings,
-          entities: userObj.entities,
-          name: 'users',
-        },
-        {
-          type: liveGameObj.type,
-          host: liveGameObj.host,
-          port: liveGameObj.port,
-          username: liveGameObj.username,
-          password: liveGameObj.password,
-          database: 'livegames', //process.env.DB_NAME,
-          cache: liveGameObj.cache,
-          synchronize: liveGameObj.synchronize,
-          bigNumberStrings: liveGameObj.bigNumberStrings,
-          entities: liveGameObj.entities,
-          name: 'livegames',
-        },
-        {
-          type: historyObj.type,
-          host: historyObj.host,
-          port: historyObj.port,
-          username: historyObj.username,
-          password: historyObj.password,
-          database: 'history',
-          cache: historyObj.cache,
-          synchronize: historyObj.synchronize,
-          bigNumberStrings: historyObj.bigNumberStrings,
-          entities: historyObj.entities,
-          name: 'history',
-        },
-        {
-          ...debugObj,
-          name: 'debug',
-        },
-      ]);
-    } catch (err) {
-      logger.error(`Error creating connections: ${err.toString()}`);
-      throw err;
-    }
-  } else {
-    logger.debug('Running in UNIT-TEST mode');
-    process.env.DB_USED = 'sqllite';
-
-    try {
-      const options = await getConnectionOptions('default');
-      const users = options['users'];
-      const livegames = options['livegames'];
-      const history = options['history'];
-
-      // override database name if specified in the environment variable
-      //if (process.env.DB_NAME) {
-      const liveGameObj = livegames as any;
-      const historyObj = history as any;
-      const userObj = users as any;
-
-      await createConnections([
-        {
-          ...userObj,
-          name: 'users',
-        },
-        {
-          ...liveGameObj,
-          name: 'livegames',
-        },
-        {
-          ...historyObj,
-          name: 'history',
-        },
-      ]);
-    } catch (err) {
-      logger.error(`Error creating connections: ${err.toString()}`);
-    }
+  getAppSettings().compressHandData = true;
+  if (process.env.COMPRESS_HAND_DATA === 'false') {
+    getAppSettings().compressHandData = false;
   }
 
-  await initializeNats();
+  await initdb();
+  if (process.env.NODE_ENV !== 'unit-test' && process.env.NODE_ENV !== 'test') {
+    await initializeNats();
+  }
+
+  initializeRedis();
   initializeGameServer();
   await Firebase.init();
 
@@ -279,8 +125,18 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const express = require('express');
   app = express();
+  // const getRawBody = require('raw-body');
+  // app.use(async (req, res, next) => {
+  //   if (req.headers['content-type'] === 'application/octet-stream') {
+  //     req.rawBody = await getRawBody(req);
+  //   }
+  //   next();
+  // });
+
   app.use(authorize);
   app.use(bodyParser.json());
+  //app.use(bodyParser.raw({ inflate: false, limit: '100kb', type: 'application/octet-stream' }));
+
   server.applyMiddleware({app});
 
   const httpServer = app.listen(

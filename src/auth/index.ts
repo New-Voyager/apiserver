@@ -111,11 +111,12 @@ export async function login(req: any, resp: any) {
       resp.status(200).send(JSON.stringify({jwt: jwt}));
       return;
     } catch (err) {
-      logger.error(err.toString());
+      logger.error(`Failed to generate JWT token. ${err.toString()}`);
       resp.status(500).send({errors: ['JWT cannot be generated']});
       return;
     }
   } catch (err) {
+    logger.error(`Failed to authenticate user. ${err.toString()}`);
     resp.status(500).send({error: err.message});
   }
 }
@@ -171,7 +172,7 @@ export async function signup(req: any, resp: any) {
   try {
     player = await PlayerRepository.registerUser(regPayload);
   } catch (err) {
-    logger.error(err.toString());
+    logger.error(`Failed to register user. ${err.toString()}`);
     resp.status(500).send({errors: [err.toString()]});
     return;
   }
@@ -195,7 +196,7 @@ export async function signup(req: any, resp: any) {
     resp.contentType('application/json');
     resp.status(200).send(JSON.stringify(response));
   } catch (err) {
-    logger.error(err.toString());
+    logger.error(`Failed to register user. ${err.toString()}`);
     resp.status(500).send({errors: ['JWT cannot be generated']});
   }
 }
@@ -251,7 +252,7 @@ export async function newlogin(req: any, resp: any) {
       return;
     }
   } catch (err) {
-    logger.error(err.toString());
+    logger.error(`Failed to login user ${deviceId}. ${err.toString()}`);
     resp.status(500).send({errors: ['Unexpected error']});
     return;
   }
@@ -274,7 +275,7 @@ export async function newlogin(req: any, resp: any) {
     resp.contentType('application/json');
     resp.status(200).send(JSON.stringify(response));
   } catch (err) {
-    logger.error(err.toString());
+    logger.error(`Failed to login user ${deviceId}. ${err.toString()}`);
     resp.status(500).send({errors: ['JWT cannot be generated']});
   }
 }
@@ -339,7 +340,9 @@ export async function loginUsingRecoveryCode(req: any, resp: any) {
       return;
     }
   } catch (err) {
-    logger.error(err.toString());
+    logger.error(
+      `Failed to send recovery code for user ${deviceId}. ${err.toString()}`
+    );
     resp.status(400).send({error: err.message});
     return;
   }
@@ -362,7 +365,9 @@ export async function loginUsingRecoveryCode(req: any, resp: any) {
     };
     resp.status(200).send(JSON.stringify(response));
   } catch (err) {
-    logger.error(err.toString());
+    logger.error(
+      `Failed to login user using recovery code ${deviceId}. ${err.toString()}`
+    );
     resp.status(500).send({errors: ['JWT cannot be generated']});
   }
 }
@@ -403,7 +408,9 @@ export async function getRecoveryCode(req: any, resp: any) {
     }
     resp.status(200).send({status: 'OK'});
   } catch (err) {
-    logger.error(err.toString());
+    logger.error(
+      `Failed to send recovery code for user ${email}. ${err.toString()}`
+    );
     resp.status(500).send({status: 'FAIL', error: err.message});
     return;
   }
