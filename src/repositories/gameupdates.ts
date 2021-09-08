@@ -1,5 +1,5 @@
 import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
-import {EntityManager} from 'typeorm';
+import {EntityManager, Repository} from 'typeorm';
 import {Cache} from '@src/cache/index';
 import {getGameManager, getGameRepository} from '.';
 import {getLogger} from '@src/utils/log';
@@ -8,6 +8,7 @@ import {GameType} from '@src/entity/types';
 
 const logger = getLogger('repositories::gameupdates');
 class GameUpdatesRepositoryImpl {
+  // YONG
   public async create(
     gameId: number,
     gameCode: string,
@@ -36,14 +37,23 @@ class GameUpdatesRepositoryImpl {
     await gameUpdatesRepo.save(gameUpdates);
   }
 
-  public async updateAppcoinNextConsumeTime(game: PokerGame) {
+  // YONG
+  public async updateAppcoinNextConsumeTime(
+    game: PokerGame,
+    transactionManager?: EntityManager
+  ) {
     if (!game.appCoinsNeeded) {
       return;
     }
 
     try {
       // update next consume time
-      const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
+      let gameUpdatesRepo: Repository<PokerGameUpdates>;
+      if (transactionManager) {
+        gameUpdatesRepo = transactionManager.getRepository(PokerGameUpdates);
+      } else {
+        gameUpdatesRepo = getGameRepository(PokerGameUpdates);
+      }
       const gameUpdateRow = await gameUpdatesRepo.findOne({
         gameCode: game.gameCode,
       });
@@ -64,7 +74,7 @@ class GameUpdatesRepositoryImpl {
         );
         gameUpdateRow.nextCoinConsumeTime = nextConsumeTime;
       }
-      await this.get(game.gameCode, true);
+      await this.get(game.gameCode, true, transactionManager);
       logger.info(
         `[${
           game.gameCode
@@ -220,6 +230,7 @@ class GameUpdatesRepositoryImpl {
       .execute();
   }
 
+  // YONG
   public async get(
     gameCode: string,
     update?: boolean,

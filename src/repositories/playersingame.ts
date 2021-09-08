@@ -22,6 +22,7 @@ import {playersInGame} from '@src/resolvers/history';
 const logger = getLogger('players_in_game');
 
 class PlayersInGameRepositoryImpl {
+  // YONG
   public async getPlayersInSeats(
     gameId: number,
     transactionManager?: EntityManager
@@ -98,17 +99,24 @@ class PlayersInGameRepositoryImpl {
     return resp[0];
   }
 
+  // YONG
   public async kickOutPlayer(gameCode: string, player: Player) {
     await getGameManager().transaction(async transactionEntityManager => {
       // find game
-      const game = await Cache.getGame(gameCode);
+      const game = await Cache.getGame(
+        gameCode,
+        false,
+        transactionEntityManager
+      );
       if (!game) {
         throw new Error(`Game ${gameCode} is not found`);
       }
       const playerGameTrackerRepository = transactionEntityManager.getRepository(
         PlayerGameTracker
       );
-      logger.info('kickOutPlayer');
+      logger.info(
+        `Kick out player ${player?.id}/${player?.name} from game ${gameCode}`
+      );
       const playerInGame = await playerGameTrackerRepository.findOne({
         where: {
           game: {id: game.id},
@@ -167,17 +175,20 @@ class PlayersInGameRepositoryImpl {
     });
   }
 
+  // YONG
   public async getAudioToken(
     player: Player,
     game: PokerGame,
     transactionEntityManager?: EntityManager
   ): Promise<string> {
     logger.info(`getAudioToken is called`);
-    let playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+    let playerGameTrackerRepository: Repository<PlayerGameTracker>;
     if (transactionEntityManager) {
       playerGameTrackerRepository = transactionEntityManager.getRepository(
         PlayerGameTracker
       );
+    } else {
+      playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     }
     const rows = await playerGameTrackerRepository
       .createQueryBuilder()
@@ -250,7 +261,9 @@ class PlayersInGameRepositoryImpl {
       const playerGameTrackerRepo = transactionEntityManager.getRepository(
         PlayerGameTracker
       );
-      logger.info('updatePlayerGameConfig');
+      logger.info(
+        `Updating player game settings for player ${player?.id}/${player?.name} game ${game?.gameCode}`
+      );
 
       const row = await playerGameTrackerRepo.findOne({
         game: {id: game.id},
@@ -306,6 +319,7 @@ class PlayersInGameRepositoryImpl {
     return settings;
   }
 
+  // YONG
   public async startBuyinTimer(
     game: PokerGame,
     playerId: number,
@@ -326,7 +340,14 @@ class PlayersInGameRepositoryImpl {
       playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     }
     // TODO: start a buy-in timer
-    const gameSettingsRepo = getGameRepository(PokerGameSettings);
+    let gameSettingsRepo: Repository<PokerGameSettings>;
+    if (transactionEntityManager) {
+      gameSettingsRepo = transactionEntityManager.getRepository(
+        PokerGameSettings
+      );
+    } else {
+      gameSettingsRepo = getGameRepository(PokerGameSettings);
+    }
     const gameSettings = await gameSettingsRepo.findOne({
       gameCode: game.gameCode,
     });

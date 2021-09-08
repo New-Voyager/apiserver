@@ -863,6 +863,7 @@ class HandRepositoryImpl {
     }
   }
 
+  // YONG
   private async handleHighHand(
     game: PokerGame,
     result: any,
@@ -870,17 +871,11 @@ class HandRepositoryImpl {
     saveResult: any,
     transactionEntityManager: EntityManager
   ) {
-    logger.info(
-      `Starting RewardRepository.handleHighHand for game ${game.gameCode} hand ${result.handNum}`
-    );
     const highhandWinners = await RewardRepository.handleHighHand(
       game,
       result,
       timeEnded,
       transactionEntityManager
-    );
-    logger.info(
-      `Finished RewardRepository.handleHighHand for game ${game.gameCode} hand ${result.handNum}`
     );
 
     if (highhandWinners !== null && highhandWinners.rewardTrackingId !== 0) {
@@ -905,9 +900,6 @@ class HandRepositoryImpl {
     }
 
     if (highhandWinners !== null) {
-      logger.info(
-        `Sending high hand notification for game ${game.gameCode} hand ${result.handNum}`
-      );
       Nats.sendHighHandWinners(
         game,
         result.boardCards,

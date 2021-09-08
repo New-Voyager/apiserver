@@ -3,7 +3,7 @@ import {PokerGame, PokerGameSettings} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {getDistanceInMeters, utcTime} from '@src/utils';
 import {getLogger} from '@src/utils/log';
-import {IsNull, Not} from 'typeorm';
+import {EntityManager, IsNull, Not, Repository} from 'typeorm';
 import {Cache} from '@src/cache/index';
 import {getGameRepository} from '.';
 import {
@@ -190,11 +190,19 @@ export class LocationCheck {
     player: Player,
     ip: string,
     location: any,
-    playersInSeats?: Array<PlayerGameTracker>
+    playersInSeats?: Array<PlayerGameTracker>,
+    transactionEntityManager?: EntityManager
   ) {
     if (!playersInSeats) {
       // get active players in the game
-      const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
+      let playerGameTrackerRepo: Repository<PlayerGameTracker>;
+      if (transactionEntityManager) {
+        playerGameTrackerRepo = transactionEntityManager.getRepository(
+          PlayerGameTracker
+        );
+      } else {
+        playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
+      }
       playersInSeats = await playerGameTrackerRepo.find({
         game: {id: this.game.id},
         seatNo: Not(IsNull()),

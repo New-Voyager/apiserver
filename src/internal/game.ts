@@ -174,7 +174,9 @@ class GameAPIs {
               throw new Error(`Game ${gameCode} is not found`);
             }
             const gameSettings = await GameSettingsRepository.get(
-              game.gameCode
+              game.gameCode,
+              false,
+              transactionEntityManager
             );
             const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
               game.id,

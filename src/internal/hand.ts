@@ -184,7 +184,11 @@ async function processConsecutiveActionTimeouts(
     );
   }
   await getGameConnection().transaction(async transactionEntityManager => {
-    const pokerGameUpdates = await GameUpdatesRepository.get(gameCode);
+    const pokerGameUpdates = await GameUpdatesRepository.get(
+      gameCode,
+      false,
+      transactionEntityManager
+    );
     if (!pokerGameUpdates) {
       throw new Error(
         `Unable to entry in poker game updates repo with game ID ${gameID} while processing consecutive action timeouts`
@@ -275,6 +279,7 @@ async function processConsecutiveActionTimeouts(
       await Cache.updateGamePendingUpdates(game.gameCode, true);
     }
   });
+
   await GameUpdatesRepository.get(game.gameCode, true);
 }
 

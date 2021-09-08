@@ -36,6 +36,7 @@ import {GameUpdatesRepository} from './gameupdates';
 
 const logger = getLogger('repositories::pendingupdates');
 
+// YONG
 export async function markDealerChoiceNextHand(
   game: PokerGame,
   entityManager?: EntityManager
@@ -532,13 +533,14 @@ async function handleDealersChoice(
   await pendingUpdatesRepo.delete({id: update.id});
 }
 
+// YONG
 export async function switchSeatNextHand(
   game: PokerGame,
   player: Player,
   seatNo: number,
   transactionEntityManager?: EntityManager
 ) {
-  let nextHandUpdatesRepository;
+  let nextHandUpdatesRepository: Repository<NextHandUpdates>;
   const update = new NextHandUpdates();
   update.game = game;
   update.playerId = player.id;
@@ -558,7 +560,7 @@ export async function switchSeatNextHand(
     );
     await gameSeatInfoRepo.update(
       {
-        gameCode: game.gameCode,
+        gameID: game.id,
       },
       gameSeatInfoProps
     );
@@ -575,7 +577,7 @@ export async function switchSeatNextHand(
       gameSeatInfoProps[`seat${seatNo}`] = SeatStatus.RESERVED;
       await gameSeatInfoRepo.update(
         {
-          gameCode: game.gameCode,
+          gameID: game.id,
         },
         gameSeatInfoProps
       );

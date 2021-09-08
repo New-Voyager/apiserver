@@ -45,6 +45,7 @@ export class BuyIn {
     this.player = player;
   }
 
+  // YONG
   protected async approveBuyInRequest(
     amount: number,
     playerInGame: PlayerGameTracker,
@@ -81,6 +82,7 @@ export class BuyIn {
     return playerInGame;
   }
 
+  // YONG
   protected async clubMemberBuyInApproval(
     amount: number,
     playerInGame: PlayerGameTracker,
@@ -95,7 +97,11 @@ export class BuyIn {
       throw new Error(`The player ${this.player.uuid} is not in the club`);
     }
 
-    const gameSettings = await Cache.getGameSettings(this.game.gameCode);
+    const gameSettings = await Cache.getGameSettings(
+      this.game.gameCode,
+      false,
+      transactionEntityManager
+    );
 
     let playerStatus: PlayerStatus = PlayerStatus.WAIT_FOR_BUYIN;
     let updatedPlayerInGame: PlayerGameTracker;
@@ -131,7 +137,7 @@ export class BuyIn {
         this.player.id +
         ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
         GameStatus.ENDED;
-      const resp = await getGameConnection().query(query);
+      const resp = await transactionEntityManager.query(query);
 
       const currentBuyin = resp[0]['current_buyin'];
 
@@ -174,6 +180,7 @@ export class BuyIn {
     return [playerStatus, approved];
   }
 
+  // YONG
   public async buyInApproved(
     playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
@@ -205,7 +212,10 @@ export class BuyIn {
     let gameServerTime = new Date().getTime();
     // send a message to gameserver
     // get game server of this game
-    const gameServer = await GameRepository.getGameServer(this.game.id);
+    const gameServer = await GameRepository.getGameServer(
+      this.game.id,
+      transactionEntityManager
+    );
     Nats.playerBuyIn(this.game, this.player, playerInGame);
     gameServerTime = new Date().getTime() - gameServerTime;
 
@@ -217,13 +227,17 @@ export class BuyIn {
     );
   }
 
+  // YONG
   public async buyInDenied(
     playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
   ) {
     // send a message to gameserver
     // get game server of this game
-    const gameServer = await GameRepository.getGameServer(this.game.id);
+    const gameServer = await GameRepository.getGameServer(
+      this.game.id,
+      transactionEntityManager
+    );
     await Nats.playerStatusChanged(
       this.game,
       this.player,
@@ -234,6 +248,7 @@ export class BuyIn {
     );
   }
 
+  // YONG
   public async request(amount: number): Promise<buyInRequest> {
     const timeout = 60;
 
@@ -770,6 +785,7 @@ export class BuyIn {
       .execute();
   }
 
+  // YONG
   private async addBuyInToNextHand(
     amount: number,
     status: NextHandUpdate,
@@ -855,6 +871,7 @@ export class BuyIn {
    * a buyin timer.
    * @param game
    */
+  // YONG
   public static async startBuyInTimers(game: PokerGame) {
     await getGameManager().transaction(async transactionEntityManager => {
       const playerGameTrackerRepo = transactionEntityManager.getRepository(
