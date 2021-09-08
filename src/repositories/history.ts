@@ -39,7 +39,6 @@ class HistoryRepositoryImpl {
     await gameHistoryRepo.save(gameHistory);
   }
 
-  // YONG
   public async gameEnded(game: PokerGame, handsDealt: number) {
     const values: any = {
       status: game.status,

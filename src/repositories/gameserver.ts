@@ -21,7 +21,6 @@ class GameServerRepositoryImpl {
     return gameServers[0];
   }
 
-  // YONG
   public async get(
     url: string,
     transactionManager?: EntityManager

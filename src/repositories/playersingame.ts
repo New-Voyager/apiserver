@@ -22,7 +22,6 @@ import {playersInGame} from '@src/resolvers/history';
 const logger = getLogger('players_in_game');
 
 class PlayersInGameRepositoryImpl {
-  // YONG
   public async getPlayersInSeats(
     gameId: number,
     transactionManager?: EntityManager
@@ -99,7 +98,6 @@ class PlayersInGameRepositoryImpl {
     return resp[0];
   }
 
-  // YONG
   public async kickOutPlayer(gameCode: string, player: Player) {
     await getGameManager().transaction(async transactionEntityManager => {
       // find game
@@ -175,7 +173,6 @@ class PlayersInGameRepositoryImpl {
     });
   }
 
-  // YONG
   public async getAudioToken(
     player: Player,
     game: PokerGame,
@@ -319,7 +316,6 @@ class PlayersInGameRepositoryImpl {
     return settings;
   }
 
-  // YONG
   public async startBuyinTimer(
     game: PokerGame,
     playerId: number,

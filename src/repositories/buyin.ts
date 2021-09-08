@@ -45,7 +45,6 @@ export class BuyIn {
     this.player = player;
   }
 
-  // YONG
   protected async approveBuyInRequest(
     amount: number,
     playerInGame: PlayerGameTracker,
@@ -82,7 +81,6 @@ export class BuyIn {
     return playerInGame;
   }
 
-  // YONG
   protected async clubMemberBuyInApproval(
     amount: number,
     playerInGame: PlayerGameTracker,
@@ -180,7 +178,6 @@ export class BuyIn {
     return [playerStatus, approved];
   }
 
-  // YONG
   public async buyInApproved(
     playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
@@ -227,7 +224,6 @@ export class BuyIn {
     );
   }
 
-  // YONG
   public async buyInDenied(
     playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
@@ -248,7 +244,6 @@ export class BuyIn {
     );
   }
 
-  // YONG
   public async request(amount: number): Promise<buyInRequest> {
     const timeout = 60;
 
@@ -785,7 +780,6 @@ export class BuyIn {
       .execute();
   }
 
-  // YONG
   private async addBuyInToNextHand(
     amount: number,
     status: NextHandUpdate,
@@ -871,7 +865,6 @@ export class BuyIn {
    * a buyin timer.
    * @param game
    */
-  // YONG
   public static async startBuyInTimers(game: PokerGame) {
     await getGameManager().transaction(async transactionEntityManager => {
       const playerGameTrackerRepo = transactionEntityManager.getRepository(
