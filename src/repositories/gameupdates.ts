@@ -8,7 +8,6 @@ import {GameType} from '@src/entity/types';
 
 const logger = getLogger('repositories::gameupdates');
 class GameUpdatesRepositoryImpl {
-  // YONG
   public async create(
     gameId: number,
     gameCode: string,
@@ -37,7 +36,6 @@ class GameUpdatesRepositoryImpl {
     await gameUpdatesRepo.save(gameUpdates);
   }
 
-  // YONG
   public async updateAppcoinNextConsumeTime(
     game: PokerGame,
     transactionManager?: EntityManager
@@ -230,7 +228,6 @@ class GameUpdatesRepositoryImpl {
       .execute();
   }
 
-  // YONG
   public async get(
     gameCode: string,
     update?: boolean,

@@ -7,7 +7,6 @@ import {JanusSession} from '@src/janus';
 
 const logger = getLogger('repositories::gamesettings');
 class GameSettingsRepositoryImpl {
-  // YONG
   public async create(
     gameId: number,
     gameCode: string,
@@ -144,7 +143,6 @@ class GameSettingsRepositoryImpl {
     await Cache.getGameSettings(gameCode, true);
   }
 
-  // YONG
   public async get(
     gameCode: string,
     update?: boolean,

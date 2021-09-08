@@ -22,7 +22,6 @@ export class TakeBreak {
     this.player = player;
   }
 
-  // YONG
   public async takeBreak(transactionManager?: EntityManager): Promise<boolean> {
     let playerGameTrackerRepository;
     let nextHandUpdatesRepository;
@@ -132,7 +131,6 @@ export class TakeBreak {
     );
   }
 
-  // YONG
   private async startTimer(
     playerGameTrackerRepository: Repository<PlayerGameTracker>,
     transactionManager?: EntityManager

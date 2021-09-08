@@ -33,7 +33,6 @@ export class WaitListMgmt {
     this.game = game;
   }
 
-  // YONG
   public async seatPlayer(
     player: Player,
     seatNo: number,

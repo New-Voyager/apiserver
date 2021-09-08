@@ -27,7 +27,6 @@ export function isGameServerEnabled() {
   return notifyGameServer;
 }
 
-// YONG
 async function getGameServerUrl(
   gameId: number,
   transactionManager?: EntityManager
@@ -99,7 +98,6 @@ export async function publishNewGame(
 //   }
 // }
 
-// YONG
 export async function resumeGame(
   gameId: number,
   transactionManager?: EntityManager

@@ -282,7 +282,6 @@ class GameCache {
     }
   }
 
-  // YONG: checked
   public async getGame(
     gameCode: string,
     update = false,
@@ -321,7 +320,6 @@ class GameCache {
     }
   }
 
-  // YONG
   public async getGameSettings(
     gameCode: string,
     update = false,
@@ -355,7 +353,6 @@ class GameCache {
     }
   }
 
-  // YONG
   public async getGameUpdates(
     gameCode: string,
     update = false,
@@ -408,7 +405,6 @@ class GameCache {
     }
   }
 
-  // YONG
   public async getGameServer(
     url: string,
     update = false,
@@ -602,7 +598,6 @@ class GameCache {
     return true;
   }
 
-  // YONG
   public async getGameById(
     gameID: number,
     transactionManager?: EntityManager

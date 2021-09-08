@@ -444,7 +444,6 @@ class GameRepositoryImpl {
     return nextNumber;
   }
 
-  // YONG
   public async seatOccupied(
     game: PokerGame,
     seatNo: number,
@@ -944,7 +943,6 @@ class GameRepositoryImpl {
     await this.restartGameIfNeeded(game, true, false);
   }
 
-  // YONG
   public async restartGameIfNeeded(
     game: PokerGame,
     processPendingUpdates: boolean,
@@ -1130,7 +1128,6 @@ class GameRepositoryImpl {
     return playerStatus;
   }
 
-  // YONG
   public async getGameServer(
     gameId: number,
     transactionManager?: EntityManager

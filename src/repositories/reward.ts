@@ -97,7 +97,6 @@ class RewardRepositoryImpl {
     return await this.handleHighHand(game, input, handTime);
   }
 
-  // YONG
   public async handleHighHand(
     gameInput: PokerGame,
     input: any,

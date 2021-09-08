@@ -622,7 +622,6 @@ export class NextHandProcess {
   // FUNCTION HAS A GUARD AGAINST EXECUTING MULTIPLE TIMES WHEN
   // CALLED FROM THE GAME SERVER.
   //
-  // YONG
   public async getNextHandInfo(): Promise<NewHandInfo> {
     const ret = await getGameManager().transaction(
       async transactionEntityManager => {
