@@ -120,6 +120,7 @@ class NatsClass {
   public sendDealersChoiceMessage(
     game: PokerGame,
     playerId: number,
+    handNum: number,
     timeout: number
   ) {
     if (this.client === null) {
@@ -129,19 +130,15 @@ class NatsClass {
     const message: any = {
       version: '1.0',
       gameCode: game.gameCode,
-      playerId: playerId.toString(),
+      playerId: playerId,
       gameToken: '',
       messageId: `DEALERCHOICE:${tick}`,
-      messages: [
-        {
-          messageType: 'DEALER_CHOICE',
-          dealerChoice: {
-            playerId: playerId.toString(),
-            games: game.dealerChoiceGames.split(',').map(e => GameType[e]),
-            timeout: timeout,
-          },
-        },
-      ],
+      messageType: 'DEALER_CHOICE',
+      handNum: handNum,
+      dealerChoiceGames: game.dealerChoiceGames
+        .split(',')
+        .map(e => GameType[e]),
+      timeout: timeout,
     };
     const subject = this.getPlayerHandTextChannel(game.gameCode, playerId);
     const messageStr = JSON.stringify(message);
