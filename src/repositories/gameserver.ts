@@ -5,6 +5,7 @@ import {getGameConnection, getGameRepository} from '.';
 import {Cache} from '@src/cache/index';
 import {fixQuery} from '@src/utils';
 import {GameStatus} from '@src/entity/types';
+import {EntityManager} from 'typeorm';
 
 const logger = getLogger('repositories::gameserver');
 
@@ -20,8 +21,15 @@ class GameServerRepositoryImpl {
     return gameServers[0];
   }
 
-  public async get(url: string): Promise<GameServer | null> {
-    const gameServer = await Cache.getGameServer(url);
+  public async get(
+    url: string,
+    transactionManager?: EntityManager
+  ): Promise<GameServer | null> {
+    const gameServer = await Cache.getGameServer(
+      url,
+      false,
+      transactionManager
+    );
     return gameServer;
   }
 

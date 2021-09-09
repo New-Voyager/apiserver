@@ -74,7 +74,7 @@ export class TakeBreak {
           status: playerInGame.status,
         }
       );
-      await this.startTimer(playerGameTrackerRepository);
+      await this.startTimer(playerGameTrackerRepository, transactionManager);
 
       // update the clients with new status
       await Nats.playerStatusChanged(
@@ -132,9 +132,14 @@ export class TakeBreak {
   }
 
   private async startTimer(
-    playerGameTrackerRepository: Repository<PlayerGameTracker>
+    playerGameTrackerRepository: Repository<PlayerGameTracker>,
+    transactionManager?: EntityManager
   ) {
-    const gameSettings = await Cache.getGameSettings(this.game.gameCode);
+    const gameSettings = await Cache.getGameSettings(
+      this.game.gameCode,
+      false,
+      transactionManager
+    );
     if (!gameSettings) {
       throw new Error(
         `Game code: ${this.game.gameCode} is not found in PokerGameSettings`

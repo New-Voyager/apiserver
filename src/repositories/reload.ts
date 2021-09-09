@@ -1,4 +1,4 @@
-import {EntityManager} from 'typeorm';
+import {EntityManager, Repository} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player/player';
@@ -87,13 +87,16 @@ export class Reload {
       async transactionEntityManager => {
         databaseTime = new Date().getTime();
         let approved: boolean;
-        const gameSettings = await Cache.getGameSettings(this.game.gameCode);
+        const gameSettings = await Cache.getGameSettings(
+          this.game.gameCode,
+          false,
+          transactionEntityManager
+        );
         if (!gameSettings) {
           throw new Error(
             `Game code: ${this.game.gameCode} is not found in PokerGameSettings`
           );
         }
-        logger.info('reload');
 
         // player must be already in a seat or waiting list
         // if credit limit is set, make sure his buyin amount is within the credit limit
@@ -126,8 +129,6 @@ export class Reload {
         }
 
         if (this.game.clubCode) {
-          logger.info('reload2');
-
           const prevStatus = await playerGameTrackerRepository.findOne({
             game: {id: this.game.id},
             playerId: this.player.id,
@@ -237,20 +238,33 @@ export class Reload {
         transactionEntityManager
       );
     } else {
-      await this.approvedAndUpdateStack(amount, playerInGame);
+      await this.approvedAndUpdateStack(
+        amount,
+        playerInGame,
+        transactionEntityManager
+      );
     }
     return playerInGame;
   }
 
   public async approvedAndUpdateStack(
     amount: number,
-    playerInGame?: PlayerGameTracker
+    playerInGame?: PlayerGameTracker,
+    transactionManager?: EntityManager
   ) {
     let cancelTime = new Date().getTime();
     cancelTimer(this.game.id, this.player.id, RELOAD_APPROVAL_TIMEOUT);
     cancelTime = new Date().getTime() - cancelTime;
 
-    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+    let playerGameTrackerRepository: Repository<PlayerGameTracker>;
+    if (transactionManager) {
+      playerGameTrackerRepository = transactionManager.getRepository(
+        PlayerGameTracker
+      );
+    } else {
+      playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+    }
+
     if (!playerInGame) {
       logger.info('approvedAndUpdateStack');
       playerInGame = await playerGameTrackerRepository.findOne({
@@ -314,7 +328,11 @@ export class Reload {
       throw new Error(`The player ${this.player.uuid} is not in the club`);
     }
 
-    const gameSettings = await Cache.getGameSettings(this.game.gameCode);
+    const gameSettings = await Cache.getGameSettings(
+      this.game.gameCode,
+      false,
+      transactionEntityManager
+    );
     if (!gameSettings) {
       throw new Error(
         `Game code: ${this.game.gameCode} is not found in PokerGameSettings`
@@ -339,7 +357,12 @@ export class Reload {
         this.player.id +
         ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
         GameStatus.ENDED;
-      const resp = await getGameConnection().query(query);
+      let resp: any;
+      if (transactionEntityManager) {
+        resp = await transactionEntityManager.query(query);
+      } else {
+        resp = await getGameConnection().query(query);
+      }
 
       const currentBuyin = resp[0]['current_buyin'];
 
@@ -379,7 +402,10 @@ export class Reload {
   ) {
     // send a message to gameserver
     // get game server of this game
-    const gameServer = await GameRepository.getGameServer(this.game.id);
+    const gameServer = await GameRepository.getGameServer(
+      this.game.id,
+      transactionEntityManager
+    );
     await Nats.playerStatusChanged(
       this.game,
       this.player,
@@ -434,7 +460,8 @@ export class Reload {
             // game is just configured or table is paused
             this.approvedAndUpdateStack(
               reloadRequest.buyinAmount,
-              playerInGame
+              playerInGame,
+              transactionEntityManager
             );
           } else {
             await this.addToNextHand(

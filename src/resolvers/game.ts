@@ -1460,10 +1460,10 @@ export async function kickOutPlayer(
         // did this user start the game?
         if (game.hostUuid !== requestUser) {
           logger.error(
-            `Player: ${requestUser} cannot kick out a player in ${gameCode}`
+            `Player: ${requestUser} cannot kick out a player in game ${gameCode}`
           );
           throw new Error(
-            `Player: ${requestUser} cannot kick out a player in ${gameCode}`
+            `Player: ${requestUser} cannot kick out a player in game ${gameCode}`
           );
         }
       }
@@ -1471,10 +1471,10 @@ export async function kickOutPlayer(
       // hosted by individual user
       if (game.hostUuid !== requestUser) {
         logger.error(
-          `Player: ${requestUser} cannot kick out a player in ${gameCode}`
+          `Player: ${requestUser} cannot kick out a player in game ${gameCode}`
         );
         throw new Error(
-          `Player: ${requestUser} cannot kick out a player in ${gameCode}`
+          `Player: ${requestUser} cannot kick out a player in game ${gameCode}`
         );
       }
     }

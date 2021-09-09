@@ -1,5 +1,5 @@
 import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
-import {EntityManager} from 'typeorm';
+import {EntityManager, Repository} from 'typeorm';
 import {Cache} from '@src/cache/index';
 import {getGameManager, getGameRepository} from '.';
 import {getLogger} from '@src/utils/log';
@@ -36,14 +36,22 @@ class GameUpdatesRepositoryImpl {
     await gameUpdatesRepo.save(gameUpdates);
   }
 
-  public async updateAppcoinNextConsumeTime(game: PokerGame) {
+  public async updateAppcoinNextConsumeTime(
+    game: PokerGame,
+    transactionManager?: EntityManager
+  ) {
     if (!game.appCoinsNeeded) {
       return;
     }
 
     try {
       // update next consume time
-      const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
+      let gameUpdatesRepo: Repository<PokerGameUpdates>;
+      if (transactionManager) {
+        gameUpdatesRepo = transactionManager.getRepository(PokerGameUpdates);
+      } else {
+        gameUpdatesRepo = getGameRepository(PokerGameUpdates);
+      }
       const gameUpdateRow = await gameUpdatesRepo.findOne({
         gameCode: game.gameCode,
       });
@@ -64,7 +72,7 @@ class GameUpdatesRepositoryImpl {
         );
         gameUpdateRow.nextCoinConsumeTime = nextConsumeTime;
       }
-      await this.get(game.gameCode, true);
+      await this.get(game.gameCode, true, transactionManager);
       logger.info(
         `[${
           game.gameCode

@@ -7,6 +7,7 @@ import {GameStatus, PlayerStatus, TableStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {NewUpdate} from '@src/repositories/types';
 import * as Constants from '../const';
+import {EntityManager} from 'typeorm';
 
 export let notifyGameServer = false;
 const logger = getLogger('gameserver');
@@ -26,9 +27,15 @@ export function isGameServerEnabled() {
   return notifyGameServer;
 }
 
-async function getGameServerUrl(gameId: number): Promise<string> {
+async function getGameServerUrl(
+  gameId: number,
+  transactionManager?: EntityManager
+): Promise<string> {
   // get game server of this game
-  const gameServer = await GameRepository.getGameServer(gameId);
+  const gameServer = await GameRepository.getGameServer(
+    gameId,
+    transactionManager
+  );
   if (!gameServer) {
     return '';
   }
@@ -91,12 +98,15 @@ export async function publishNewGame(
 //   }
 // }
 
-export async function resumeGame(gameId: number) {
+export async function resumeGame(
+  gameId: number,
+  transactionManager?: EntityManager
+) {
   logger.info(`Starting resumeGame game: ${gameId}`);
   if (!notifyGameServer) {
     return;
   }
-  const gameServerUrl = await getGameServerUrl(gameId);
+  const gameServerUrl = await getGameServerUrl(gameId, transactionManager);
   const url = `${gameServerUrl}/resume-game?game-id=${gameId}`;
   try {
     const resp = await axios.post(url);

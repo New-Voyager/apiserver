@@ -598,10 +598,19 @@ class GameCache {
     return true;
   }
 
-  public async getGameById(gameID: number): Promise<PokerGame | undefined> {
+  public async getGameById(
+    gameID: number,
+    transactionManager?: EntityManager
+  ): Promise<PokerGame | undefined> {
     const gameCode = await this.gameCodeFromId(gameID);
     if (!gameCode) {
-      const game = await getGameRepository(PokerGame).findOne({
+      let gameRepo: Repository<PokerGame>;
+      if (transactionManager) {
+        gameRepo = transactionManager.getRepository(PokerGame);
+      } else {
+        gameRepo = getGameRepository(PokerGame);
+      }
+      const game = await gameRepo.findOne({
         where: {id: gameID},
       });
       if (!game) {

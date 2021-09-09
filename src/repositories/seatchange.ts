@@ -429,7 +429,11 @@ export class SeatChangeProcess {
           tableStatus: TableStatus.HOST_SEATCHANGE_IN_PROGRESS,
         }
       );
-      await Cache.getGame(this.game.gameCode, true /** update */);
+      await Cache.getGame(
+        this.game.gameCode,
+        true /** update */,
+        transactionEntityManager
+      );
 
       // copy current seated players in the seats to the seat change process table
       const playersInSeats = await playerGameTrackerRepo.find({

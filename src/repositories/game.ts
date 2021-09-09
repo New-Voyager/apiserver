@@ -546,7 +546,11 @@ class GameRepositoryImpl {
             `Seat change is in progress for game: ${game.gameCode}`
           );
         }
-        const gameSettings = await GameSettingsRepository.get(game.gameCode);
+        const gameSettings = await GameSettingsRepository.get(
+          game.gameCode,
+          false,
+          transactionEntityManager
+        );
         if (!gameSettings) {
           logger.error(`Game settings is not found for game: ${game.gameCode}`);
           throw new Error(
@@ -556,7 +560,13 @@ class GameRepositoryImpl {
 
         if (gameSettings.gpsCheck || gameSettings.ipCheck) {
           const locationCheck = new LocationCheck(game, gameSettings);
-          await locationCheck.checkForOnePlayer(player, ip, location);
+          await locationCheck.checkForOnePlayer(
+            player,
+            ip,
+            location,
+            undefined,
+            transactionEntityManager
+          );
         }
 
         const playerGameTrackerRepository = transactionEntityManager.getRepository(
@@ -566,7 +576,11 @@ class GameRepositoryImpl {
         if (gameSeatInfo.waitlistSeatingInprogress) {
           // wait list seating in progress
           // only the player who is asked from the waiting list can sit here
-          await waitlistMgmt.seatPlayer(player, seatNo);
+          await waitlistMgmt.seatPlayer(
+            player,
+            seatNo,
+            transactionEntityManager
+          );
         }
 
         // player is taking a seat in the game
@@ -874,7 +888,11 @@ class GameRepositoryImpl {
         logger.error(`Game: ${game.gameCode} not available`);
         throw new Error(`Game: ${game.gameCode} not available`);
       }
-      const gameSettings = await GameSettingsRepository.get(game.gameCode);
+      const gameSettings = await GameSettingsRepository.get(
+        game.gameCode,
+        false,
+        transactionEntityManager
+      );
       if (!gameSettings) {
         throw new Error(
           `Game: ${game.gameCode} is not found in PokerGameSettings`
@@ -882,7 +900,13 @@ class GameRepositoryImpl {
       }
       if (gameSettings.gpsCheck || gameSettings.ipCheck) {
         const locationCheck = new LocationCheck(game, gameSettings);
-        await locationCheck.checkForOnePlayer(player, ip, location);
+        await locationCheck.checkForOnePlayer(
+          player,
+          ip,
+          location,
+          undefined,
+          transactionEntityManager
+        );
       }
 
       cancelTimer(game.id, player.id, BREAK_TIMEOUT);
@@ -947,7 +971,12 @@ class GameRepositoryImpl {
 
     if (playingCount >= 2) {
       try {
-        const gameRepo = getGameRepository(PokerGame);
+        let gameRepo: Repository<PokerGame>;
+        if (transactionEntityManager) {
+          gameRepo = transactionEntityManager.getRepository(PokerGame);
+        } else {
+          gameRepo = getGameRepository(PokerGame);
+        }
         const rows = await gameRepo
           .createQueryBuilder()
           .where({id: game.id})
@@ -962,8 +991,13 @@ class GameRepositoryImpl {
           if (prevTableStatus === TableStatus.NOT_ENOUGH_PLAYERS) {
             if (game.gameStarted) {
               newTableStatus = TableStatus.GAME_RUNNING;
-              await getGameConnection()
-                .createQueryBuilder()
+              let queryBuilder;
+              if (transactionEntityManager) {
+                queryBuilder = transactionEntityManager.createQueryBuilder();
+              } else {
+                queryBuilder = getGameConnection().createQueryBuilder();
+              }
+              await queryBuilder
                 .update(PokerGame)
                 .set({
                   tableStatus: newTableStatus,
@@ -971,7 +1005,11 @@ class GameRepositoryImpl {
                 .where('id = :id', {id: game.id})
                 .execute();
 
-              game = await Cache.getGame(game.gameCode, true);
+              game = await Cache.getGame(
+                game.gameCode,
+                true,
+                transactionEntityManager
+              );
             }
           }
 
@@ -980,7 +1018,10 @@ class GameRepositoryImpl {
             row.status === GameStatus.ACTIVE &&
             newTableStatus === TableStatus.GAME_RUNNING
           ) {
-            await GameUpdatesRepository.updateAppcoinNextConsumeTime(game);
+            await GameUpdatesRepository.updateAppcoinNextConsumeTime(
+              game,
+              transactionEntityManager
+            );
 
             // update game status
             await gameRepo.update(
@@ -996,9 +1037,13 @@ class GameRepositoryImpl {
               hostStartedGame
             ) {
               // refresh the cache
-              const gameUpdate = await Cache.getGame(game.gameCode, true);
+              const gameUpdate = await Cache.getGame(
+                game.gameCode,
+                true,
+                transactionEntityManager
+              );
               // resume the game
-              await resumeGame(gameUpdate.id);
+              await resumeGame(gameUpdate.id, transactionEntityManager);
             }
           }
         }
@@ -1007,6 +1052,7 @@ class GameRepositoryImpl {
       }
     }
   }
+
   public async updateBreakTime(playerId: number, gameId: number) {
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const rows = await playerGameTrackerRepository
@@ -1082,12 +1128,18 @@ class GameRepositoryImpl {
     return playerStatus;
   }
 
-  public async getGameServer(gameId: number): Promise<GameServer | null> {
-    const game = await Cache.getGameById(gameId);
+  public async getGameServer(
+    gameId: number,
+    transactionManager?: EntityManager
+  ): Promise<GameServer | null> {
+    const game = await Cache.getGameById(gameId, transactionManager);
     if (!game) {
       throw new Error(`Game id ${gameId} not found`);
     }
-    const gameServer = await GameServerRepository.get(game.gameServerUrl);
+    const gameServer = await GameServerRepository.get(
+      game.gameServerUrl,
+      transactionManager
+    );
     return gameServer;
   }
 
@@ -1434,9 +1486,7 @@ class GameRepositoryImpl {
           .delete({game: {id: game.id}});
 
         if (!includeGame) {
-          await transactionEntityManager
-            .getRepository(PokerGame)
-            .delete({id: game.id});
+          await gameRepo.delete({id: game.id});
         }
       } else {
         await transactionEntityManager
@@ -1664,7 +1714,7 @@ class GameRepositoryImpl {
 
     const pokerGameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
     const gameSeatInfo = await pokerGameSeatInfoRepo.findOne({
-      gameCode: game.gameCode,
+      gameID: gameID,
     });
 
     const seatStatuses = new Array<SeatStatus>();

@@ -86,7 +86,9 @@ class HistoryRepositoryImpl {
         await playersInGameRepo.save(playersInGame);
       }
 
-      const highHandHistoryRepo = getHistoryRepository(HighHandHistory);
+      const highHandHistoryRepo = transactionEntityManager.getRepository(
+        HighHandHistory
+      );
       const highHandRepo = getGameRepository(HighHand);
       const highHands = await highHandRepo.find({
         where: {

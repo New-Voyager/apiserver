@@ -7,7 +7,7 @@ import {GameType, PlayerStatus} from '@src/entity/types';
 import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery} from '@src/utils';
 import {getLogger} from '@src/utils/log';
-import {Equal, IsNull, Not} from 'typeorm';
+import {EntityManager, Equal, IsNull, Not, Repository} from 'typeorm';
 import {WAITLIST_SEATING} from './types';
 import * as crypto from 'crypto';
 import {v4 as uuidv4} from 'uuid';
@@ -33,9 +33,22 @@ export class WaitListMgmt {
     this.game = game;
   }
 
-  public async seatPlayer(player: Player, seatNo: number) {
-    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
-    const gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
+  public async seatPlayer(
+    player: Player,
+    seatNo: number,
+    transactionManager?: EntityManager
+  ) {
+    let playerGameTrackerRepository: Repository<PlayerGameTracker>;
+    let gameSeatInfoRepo: Repository<PokerGameSeatInfo>;
+    if (transactionManager) {
+      playerGameTrackerRepository = transactionManager.getRepository(
+        PlayerGameTracker
+      );
+      gameSeatInfoRepo = transactionManager.getRepository(PokerGameSeatInfo);
+    } else {
+      playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+      gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
+    }
 
     // join game waitlist seating in progress flag
     // if set to true, only the player with WAITLIST_SEATING is allowed to sit
@@ -362,8 +375,7 @@ export class WaitListMgmt {
         await playerGameTrackerRepository.save(playerInGame);
       }
 
-      await transactionEntityManager
-        .getRepository(PlayerGameTracker)
+      await playerGameTrackerRepository
         .createQueryBuilder()
         .update()
         .set({
