@@ -10,7 +10,7 @@ import {DbAwareCreateDateColumn, DbAwareUpdateDateColumn} from '../dbaware';
 import {Player} from './player';
 import {Promotion} from './promotion';
 
-@Entity()
+@Entity({name: 'promotion_consumed'})
 @Unique(['player', 'promotion'])
 export class PromotionConsumed {
   @PrimaryGeneratedColumn()
