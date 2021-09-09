@@ -16,6 +16,7 @@ import { defaultHandData } from './utils/hand.testutils';
 import { getGameSettings, updateGameSettings, updatePlayerGameSettings } from './utils/game.testutils';
 import { getMyClubs } from './utils/club.testutils';
 import { createTestClient } from 'apollo-server-integration-testing';
+import { gql } from 'apollo-server-express';
 
 const holdemGameInput = {
   gameType: 'HOLDEM',
@@ -163,9 +164,10 @@ describe('Game/Player Settings', () => {
     done();
   });
 
+
   test('get game settings', async () => {
     sleep(5000);
-    await getClubs('6ba1e19c-820f-47e3-90ba-42d7a04e29ef');
+    //await getClubs('6ba1e19c-820f-47e3-90ba-42d7a04e29ef');
     //const myClubs = await getMyClubs('6ba1e19c-820f-47e3-90ba-42d7a04e29ef');
     //console.log(JSON.stringify(myClubs));
 
@@ -202,6 +204,7 @@ describe('Game/Player Settings', () => {
     expect(gameSettings.showHandRank).toEqual(false);
     expect(gameSettings.waitlistAllowed).toEqual(true);
     expect(gameSettings.waitlistSittingTimeout).toEqual(3);
+    */
   });
 
 

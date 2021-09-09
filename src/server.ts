@@ -18,6 +18,7 @@ export enum RunProfile {
   DEV,
   TEST,
   PROD,
+  INT_TEST,
 }
 
 const logger = getLogger('server');
@@ -30,6 +31,7 @@ const requestContext = async ({req}) => {
 
 let app: any = null;
 let runProfile: RunProfile = RunProfile.DEV;
+let apolloServer: any = null;
 
 function setPgConversion() {
   const types = require('pg').types;
@@ -41,15 +43,7 @@ function setPgConversion() {
   });
 }
 
-export async function start(initializeFirebase: boolean): Promise<[any, any, any]> {
-  logger.debug('In start method');
-
-  if (!process.env.NATS_URL) {
-    throw new Error(
-      'NATS_URL should be specified in the environment variable.'
-    );
-  }
-
+export function getApolloServer(): ApolloServer {
   const typesArray1: Array<string> = fileLoader(
     __dirname + '/' + './graphql/*.graphql',
     {recursive: true}
@@ -81,6 +75,17 @@ export async function start(initializeFirebase: boolean): Promise<[any, any, any
     resolvers,
     context: requestContext,
   });
+  return server;
+}
+
+export async function start(initializeFirebase: boolean): Promise<[any, any, any]> {
+  logger.debug('In start method');
+
+  if (!process.env.NATS_URL) {
+    throw new Error(
+      'NATS_URL should be specified in the environment variable.'
+    );
+  }
 
   if (process.env.NODE_ENV) {
     const profile = process.env.NODE_ENV.toLowerCase();
@@ -88,13 +93,15 @@ export async function start(initializeFirebase: boolean): Promise<[any, any, any
       runProfile = RunProfile.PROD;
     } else if (profile === 'test') {
       runProfile = RunProfile.TEST;
+    } else if (profile === 'int-test') {
+      runProfile = RunProfile.INT_TEST;
     } else {
       runProfile = RunProfile.DEV;
     }
   }
-
   logger.info(`Server is running ${RunProfile[runProfile].toString()} profile`);
 
+  apolloServer = getApolloServer();
   getAppSettings().compressHandData = true;
   if (process.env.COMPRESS_HAND_DATA === 'false') {
     getAppSettings().compressHandData = false;
@@ -127,23 +134,28 @@ export async function start(initializeFirebase: boolean): Promise<[any, any, any
 
   app.use(authorize);
   app.use(bodyParser.json());
+  await apolloServer.start();
   //app.use(bodyParser.raw({ inflate: false, limit: '100kb', type: 'application/octet-stream' }));
+  apolloServer.applyMiddleware({app});
 
-  server.applyMiddleware({app});
+  let httpServer;
+  if (getRunProfile() == RunProfile.INT_TEST) {
 
-  const httpServer = app.listen(
-    {
-      port: GQL_PORT,
-    },
-    async () => {
-      logger.info(`🚀 Server ready at http://0.0.0.0:${GQL_PORT}/graphql}`);
-    }
-  );
+  } else {
+    httpServer = app.listen(
+      {
+        port: GQL_PORT,
+      },
+      async () => {
+        logger.info(`🚀 Server ready at http://0.0.0.0:${GQL_PORT}/graphql}`);
+      }
+    );
+  }
   setPgConversion();
   addInternalRoutes(app);
   // initialize db
   await seed();
-  return [app, httpServer, server];
+  return [app, httpServer, apolloServer];
 }
 
 async function initializeNats() {
@@ -166,5 +178,11 @@ export function getRunProfileStr(): string {
       return 'prod';
     case RunProfile.TEST:
       return 'test';
-  }
+    case RunProfile.INT_TEST:
+        return 'int-test';
+    }
+}
+
+export function getApolloServerInstance() {
+  return apolloServer;
 }
