@@ -21,6 +21,7 @@ import {
 } from './auth';
 import {DevRepository} from './repositories/dev';
 import {Firebase} from './firebase';
+import { AdminRepository } from './repositories/admin';
 
 export function addInternalRoutes(app: any) {
   app.get('/internal/ready', readyCheck);
@@ -109,6 +110,7 @@ export function addInternalRoutes(app: any) {
   // admin apis
   app.get('/admin/feature-requests', DevRepository.featureRequests);
   app.get('/admin/bug-reports', DevRepository.bugReports);
+  app.get('/admin/post-process-games',AdminRepository.postProcessGames);
 }
 
 // returns nats urls
