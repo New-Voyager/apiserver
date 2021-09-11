@@ -6,6 +6,7 @@ import {
   NextHandUpdate,
   PlayerStatus,
   SeatStatus,
+  TableStatus,
 } from '@src/entity/types';
 import {GameRepository} from './game';
 import {getLogger} from '@src/utils/log';
@@ -237,7 +238,16 @@ export async function processPendingUpdates(gameId: number) {
 
     // if the game does not have more than 1 active player, then the game cannot continue
     const canContinue = await GameRepository.determineGameStatus(game.id);
-    if (canContinue && dealerChoiceUpdate) {
+    if (!canContinue) {
+      // Broadcast not enough players.
+      await Nats.changeGameStatus(
+        game,
+        game.status,
+        TableStatus.NOT_ENOUGH_PLAYERS
+      );
+      return;
+    }
+    if (dealerChoiceUpdate) {
       await handleDealersChoice(game, dealerChoiceUpdate, pendingUpdatesRepo);
     } else {
       const cachedGame = await Cache.getGame(game.gameCode);
