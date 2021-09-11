@@ -1,7 +1,7 @@
 import {getHistoryConnection, getHistoryManager, getHistoryRepository} from '.';
 import {GameHistory} from '@src/entity/history/game';
-import { PlayerGameStats } from '@src/entity/history/stats';
-import { HandHistory } from '@src/entity/history/hand';
+import {PlayerGameStats} from '@src/entity/history/stats';
+import {HandHistory} from '@src/entity/history/hand';
 
 class AdminRepositoryImpl {
   constructor() {}
