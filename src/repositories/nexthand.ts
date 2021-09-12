@@ -606,6 +606,8 @@ export class NextHandProcess {
     return {
       gameCode: moveToNextHand.getGameCode(),
       handNum: moveToNextHand.getHandNum(),
+      gameStatus: game.status,
+      tableStatus: game.tableStatus,
     };
   }
 

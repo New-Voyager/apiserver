@@ -16,7 +16,7 @@ const resolvers: any = {
   Mutation: {
     resetDB: async (parent, args, ctx, info) => {
       if (ctx.req.playerId !== 'TEST_USER') {
-       throw new Error('Unauthorized');
+        throw new Error('Unauthorized');
       }
       // delete all the entries
       const resp = await resetDB();
