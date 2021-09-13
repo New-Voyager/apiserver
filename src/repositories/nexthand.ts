@@ -199,7 +199,7 @@ class MoveToNextHand {
         await this.updateThisHand(transactionEntityManager);
 
         // determine next game type
-        this.determineNextGameType();
+        await this.determineNextGameType();
 
         const setProps: any = {
           gameType: this.nextGameType,
@@ -466,20 +466,21 @@ class MoveToNextHand {
     return missedBlinds;
   }
 
-  private determineNextGameType() {
+  private async determineNextGameType() {
     if (!this.gameUpdate) {
       throw new Error(`Game code: ${this.game.gameCode} not found`);
     }
     if (!this.game) {
       throw new Error(`Game code: ${this.gameUpdate.gameCode} not found`);
     }
+    const gameSettings = await Cache.getGameSettings(this.game.gameCode);
 
     // determine new game type (ROE)
     if (this.game.gameType === GameType.ROE) {
+      // button passed dealer
+      let roeGames = gameSettings.roeGames.split(',');
       if (this.handNum !== 1) {
         if (this.buttonPassedDealer) {
-          // button passed dealer
-          const roeGames = this.game.roeGames.split(',');
           const gameTypeStr = GameType[this.gameUpdate.gameType];
           let index = roeGames.indexOf(gameTypeStr.toString());
           index++;
@@ -489,12 +490,12 @@ class MoveToNextHand {
           this.nextGameType = GameType[roeGames[index]];
         }
       } else {
-        const roeGames = this.game.roeGames.split(',');
+        roeGames = gameSettings.roeGames.split(',');
         this.nextGameType = GameType[roeGames[0]];
       }
     } else if (this.game.gameType === GameType.DEALER_CHOICE) {
       if (this.handNum === 1) {
-        const dealerChoiceGames = this.game.dealerChoiceGames.split(',');
+        const dealerChoiceGames = gameSettings.dealerChoiceGames.split(',');
         this.nextGameType = GameType[dealerChoiceGames[0]];
       }
     } else {
@@ -778,7 +779,7 @@ export class NextHandProcess {
           tableStatus: game.tableStatus,
           sbPos: gameUpdate.sbPos,
           bbPos: gameUpdate.bbPos,
-          resultPauseTime: 5000,
+          resultPauseTime: gameSettings.resultPauseTime * 1000,
           bombPot: gameUpdate.bombPotThisHand,
           doubleBoardBombPot: doubleBoard,
           bombPotBet: gameSettings.bombPotBet,

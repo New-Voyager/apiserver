@@ -48,6 +48,7 @@ import {analyticsreporting_v4} from 'googleapis';
 import {GameSettingsRepository} from '@src/repositories/gamesettings';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
 import {GameUpdatesRepository} from '@src/repositories/gameupdates';
+import {NextHandUpdatesRepository} from '@src/repositories/nexthand_update';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -192,7 +193,7 @@ export async function endGame(playerId: string, gameCode: string) {
       game.tableStatus === TableStatus.GAME_RUNNING
     ) {
       // the game will be stopped in the next hand
-      GameRepository.endGameNextHand(player, game.id);
+      NextHandUpdatesRepository.endGameNextHand(player, game.id);
     } else {
       await Cache.removeAllObservers(game.gameCode);
       const status = await GameRepository.markGameEnded(game.id);
@@ -1050,7 +1051,19 @@ export async function gameSettings(playerUuid: string, gameCode: string) {
         gameSettings.waitlistSittingTimeout / 60
       );
     }
-    return gameSettings;
+    const roeGames = gameSettings.roeGames;
+    const dealerChoiceGames = gameSettings.dealerChoiceGames;
+    const gameSettingsRet = gameSettings as any;
+    gameSettingsRet.roeGames = [];
+    gameSettingsRet.dealerChoiceGames = [];
+    if (roeGames) {
+      gameSettingsRet.roeGames = roeGames.split(',');
+    }
+    if (dealerChoiceGames) {
+      gameSettingsRet.dealerChoiceGames = dealerChoiceGames.split(',');
+    }
+
+    return gameSettingsRet;
   } catch (err) {
     logger.error(
       `Error while getting game settings. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
@@ -1317,7 +1330,7 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
       }
     }
     const player = await Cache.getPlayer(playerUuid);
-    const status = await GameRepository.leaveGame(player, game);
+    const status = await NextHandUpdatesRepository.leaveGame(player, game);
     return status;
   } catch (err) {
     logger.error(
@@ -1403,7 +1416,7 @@ export async function sitBack(
       ip = locationCheck.ip;
       location = locationCheck.location;
     }
-    await GameRepository.sitBack(player, game, ip, location);
+    await NextHandUpdatesRepository.sitBack(player, game, ip, location);
     const playerInGame = await PlayersInGameRepository.getPlayerInfo(
       game,
       player
@@ -1732,7 +1745,7 @@ export async function pauseGame(playerId: string, gameCode: string) {
       game.tableStatus === TableStatus.GAME_RUNNING
     ) {
       // the game will be stopped in the next hand
-      GameRepository.pauseGameNextHand(game.id);
+      NextHandUpdatesRepository.pauseGameNextHand(game.id);
     } else {
       const status = await GameRepository.markGameStatus(
         game.id,
@@ -1981,7 +1994,7 @@ export async function updateGameSettings(
         `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot end the game`
       );
       throw new Error(
-        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot end the game`
+        `Player: ${playerId} is not a own9er or a manager ${game.clubName}. Cannot end the game`
       );
     }
 
@@ -2091,126 +2104,6 @@ export async function playerStackStat(playerId: string, gameCode: string) {
     throw new Error(
       `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
     );
-  }
-}
-
-export async function gameHistoryById(playerId: string, gameCode: string) {
-  if (!playerId) {
-    throw new Error('Unauthorized');
-  }
-  try {
-    // get game using game code
-    const game = await Cache.getGame(gameCode);
-    if (!game) {
-      throw new Error(`Game ${gameCode} is not found`);
-    }
-
-    if (game.clubCode) {
-      const clubMember = await Cache.getClubMember(playerId, game.clubCode);
-      if (!clubMember) {
-        logger.error(
-          `Player: ${playerId} is not authorized to start the game ${gameCode} in club ${game.clubName}`
-        );
-        throw new Error(
-          `Player: ${playerId} is not authorized to start the game ${gameCode}`
-        );
-      }
-    }
-    const gameHistory = await GameRepository.getGameHistoryById(game.id);
-    if (!gameHistory) {
-      logger.error(`No game history found for gameId ${game.id}`);
-      throw new Error(`No game history found for gameId ${game.id}`);
-    }
-
-    const gameHistorydata = {
-      gameId: gameHistory.gameId,
-      gameCode: gameHistory.gameCode,
-      clubId: gameHistory.clubId,
-      hostId: gameHistory.hostId,
-      hostName: gameHistory.hostName,
-      hostUuid: gameHistory.hostUuid,
-      gameType: GameType[gameHistory.gameType],
-      smallBlind: gameHistory.smallBlind,
-      bigBlind: gameHistory.bigBlind,
-      handsDealt: gameHistory.handsDealt,
-      roeGames: gameHistory.roeGames,
-      dealerChoiceGames: gameHistory.dealerChoiceGames,
-      startedAt: gameHistory.startedAt,
-      endedAt: gameHistory.endedAt,
-      endedBy: gameHistory.endedBy,
-      endedByName: gameHistory.endedByName,
-    };
-
-    return gameHistorydata;
-  } catch (err) {
-    logger.error(
-      `Error while getting game history data. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
-        err
-      )}`
-    );
-    throw new Error('Failed to retreive game history data');
-  }
-}
-
-export async function gameDataById(playerId: string, gameCode: string) {
-  if (!playerId) {
-    throw new Error('Unauthorized');
-  }
-  try {
-    // get game using game code
-    const game = await Cache.getGame(gameCode);
-    if (!game) {
-      throw new Error(`Game ${gameCode} is not found`);
-    }
-
-    if (game.clubCode) {
-      const clubMember = await Cache.getClubMember(playerId, game.clubCode);
-      if (!clubMember) {
-        logger.error(
-          `Player: ${playerId} is not authorized to start the game ${gameCode} in club ${game.clubName}`
-        );
-        throw new Error(
-          `Player: ${playerId} is not authorized to start the game ${gameCode}`
-        );
-      }
-    }
-
-    const updates = await GameUpdatesRepository.get(game.gameCode);
-    if (!updates) {
-      logger.error(
-        `Updates not found for the game ${gameCode} in club ${game.clubName}`
-      );
-      throw new Error(
-        `Updates not found for the game ${gameCode} in club ${game.clubName}`
-      );
-    }
-    const gamedata = {
-      gameId: game.id,
-      gameCode: game.gameCode,
-      clubId: game.clubId,
-      hostId: game.hostId,
-      hostName: game.hostName,
-      handsDealt: updates?.handNum,
-      hostUuid: game.hostUuid,
-      gameType: GameType[game.gameType],
-      smallBlind: game.smallBlind,
-      bigBlind: game.bigBlind,
-      roeGames: game.roeGames,
-      dealerChoiceGames: game.dealerChoiceGames,
-      startedAt: game.startedAt,
-      endedAt: game.endedAt,
-      endedBy: game.endedBy,
-      endedByName: game.endedByName,
-    };
-
-    return gamedata;
-  } catch (err) {
-    logger.error(
-      `Error while getting game data. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
-        err
-      )}`
-    );
-    throw new Error('Failed to retreive game history data');
   }
 }
 
@@ -2391,12 +2284,6 @@ const resolvers: any = {
     },
     playerStackStat: async (parent, args, ctx, info) => {
       return playerStackStat(ctx.req.playerId, args.gameCode);
-    },
-    gameHistoryById: async (parent, args, ctx, info) => {
-      return await gameHistoryById(ctx.req.playerId, args.gameCode);
-    },
-    gameDataById: async (parent, args, ctx, info) => {
-      return await gameDataById(ctx.req.playerId, args.gameCode);
     },
     playersInGameById: async (parent, args, ctx, info) => {
       return await playersInGameById(ctx.req.playerId, args.gameCode);

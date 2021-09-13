@@ -19,7 +19,6 @@ class HistoryRepositoryImpl {
     gameHistory.gameId = game.id;
     gameHistory.gameCode = game.gameCode;
     gameHistory.clubId = game.clubId;
-    gameHistory.dealerChoiceGames = game.dealerChoiceGames;
     gameHistory.smallBlind = game.smallBlind;
     gameHistory.bigBlind = game.bigBlind;
     gameHistory.gameCode = game.gameCode;
@@ -27,7 +26,6 @@ class HistoryRepositoryImpl {
     gameHistory.hostId = game.hostId;
     gameHistory.hostName = game.hostName;
     gameHistory.hostUuid = game.hostUuid;
-    gameHistory.roeGames = game.roeGames;
     gameHistory.startedAt = game.startedAt;
     gameHistory.maxPlayers = game.maxPlayers;
     gameHistory.highHandTracked = game.highHandTracked;

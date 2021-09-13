@@ -260,6 +260,15 @@ export class PokerGameSettings {
   // janus room pin
   @Column({name: 'janus_room_pin', default: ''})
   public janusRoomPin!: string;
+
+  @Column({name: 'roe_games', nullable: true, default: ''})
+  public roeGames!: string; // comma separated list of round of each games
+
+  @Column({name: 'dealer_choice_games', nullable: true, default: ''})
+  public dealerChoiceGames!: string; // comma separated list of round of each games
+
+  @Column({name: 'result_pause_time', type: 'int', default: 5})
+  public resultPauseTime!: number;
 }
 
 @Entity({name: 'poker_game'})
@@ -405,12 +414,6 @@ export class PokerGame {
 
   @Column({name: 'wait_for_bigblind', default: true})
   public waitForBigBlind!: boolean;
-
-  @Column({name: 'roe_games', nullable: true, default: ''})
-  public roeGames!: string; // comma separated list of round of each games
-
-  @Column({name: 'dealer_choice_games', nullable: true, default: ''})
-  public dealerChoiceGames!: string; // comma separated list of round of each games
 
   @DbAwareColumn({
     name: 'started_at',

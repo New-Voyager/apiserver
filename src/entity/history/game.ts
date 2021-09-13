@@ -54,12 +54,6 @@ export class GameHistory {
   @Column({name: 'game_num', type: 'int', default: 0})
   public gameNum!: number;
 
-  @Column({name: 'roe_games', nullable: true, default: ''})
-  public roeGames!: string; // comma separated list of round of each games
-
-  @Column({name: 'dealer_choice_games', nullable: true, default: ''})
-  public dealerChoiceGames!: string; // comma separated list of round of each games
-
   @DbAwareColumn({
     name: 'started_at',
     type: 'timestamp',

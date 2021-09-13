@@ -1,4 +1,4 @@
-import {PokerGame} from '@src/entity/game/game';
+import {PokerGame, PokerGameSettings} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {
   GameStatus,
@@ -119,6 +119,7 @@ class NatsClass {
 
   public sendDealersChoiceMessage(
     game: PokerGame,
+    gameSettings: PokerGameSettings,
     playerId: number,
     handNum: number,
     timeout: number
@@ -135,7 +136,7 @@ class NatsClass {
       messageId: `DEALERCHOICE:${tick}`,
       messageType: 'DEALER_CHOICE',
       handNum: handNum,
-      dealerChoiceGames: game.dealerChoiceGames
+      dealerChoiceGames: gameSettings.dealerChoiceGames
         .split(',')
         .map(e => GameType[e]),
       timeout: timeout,
@@ -542,7 +543,7 @@ class NatsClass {
     }
 
     const message = {
-      type: 'PlayerUpdate',
+      type: 'PLAYER_UPDATE',
       gameId: game.id,
       playerId: player.id,
       playerUuid: player.uuid,
@@ -659,7 +660,7 @@ class NatsClass {
     }
 
     const message = {
-      type: 'PlayerUpdate',
+      type: 'PLAYER_UPDATE',
       gameId: game.id,
       playerId: player.id,
       playerUuid: player.uuid,
