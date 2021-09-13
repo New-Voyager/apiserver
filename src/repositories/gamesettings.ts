@@ -66,12 +66,17 @@ class GameSettingsRepositoryImpl {
     gameSettings.buyInTimeout = input.buyInTimeout;
     gameSettings.ipCheck = input.ipCheck;
     gameSettings.gpsCheck = input.gpsCheck;
+    gameSettings.roeGames = input.roeGames;
+    gameSettings.dealerChoiceGames = input.dealerChoiceGames;
 
     await gameSettingsRepo.save(gameSettings);
   }
 
   public async update(gameCode: string, input: any) {
     const gameSettingsProps: any = {};
+    if (input.resultPauseTime !== undefined) {
+      gameSettingsProps.resultPauseTime = input.resultPauseTime;
+    }
     if (input.buyInApproval !== undefined) {
       gameSettingsProps.buyInApproval = input.buyInApproval;
     }
@@ -127,11 +132,14 @@ class GameSettingsRepositoryImpl {
     if (input.gpsCheck !== undefined) {
       gameSettingsProps.gpsCheck = input.gpsCheck;
     }
-    if (input.roeGames !== undefined) {
-      gameSettingsProps.roeGames = input.roeGames;
+    if (input.roeGames !== undefined && Array.isArray(input.roeGames)) {
+      gameSettingsProps.roeGames = input.roeGames.join(',');
     }
-    if (input.dealerChoiceGames !== undefined) {
-      gameSettingsProps.dealerChoiceGames = input.dealerChoiceGames;
+    if (
+      input.dealerChoiceGames !== undefined &&
+      Array.isArray(input.roeGames)
+    ) {
+      gameSettingsProps.dealerChoiceGames = input.dealerChoiceGames.join(',');
     }
     const gameSettingsRepo = getGameRepository(PokerGameSettings);
     await gameSettingsRepo.update(
@@ -140,7 +148,8 @@ class GameSettingsRepositoryImpl {
       },
       gameSettingsProps
     );
-    await Cache.getGameSettings(gameCode, true);
+    const gameSettingsUpdated = await Cache.getGameSettings(gameCode, true);
+    logger.info(JSON.stringify(gameSettingsUpdated));
   }
 
   public async get(

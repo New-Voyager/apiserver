@@ -385,20 +385,20 @@ async function leaveGame(
     const currentSessionTime = new Date().getTime() - satAt.getTime();
     const roundSeconds = Math.round(currentSessionTime / 1000);
     sessionTime = sessionTime + roundSeconds;
-
-    await playerGameTrackerRepository.update(
-      {
-        game: {id: game.id},
-        playerId: update.playerId,
-      },
-      {
-        satAt: undefined,
-        sessionTime: sessionTime,
-        status: PlayerStatus.LEFT,
-        seatNo: 0,
-      }
-    );
   }
+
+  await playerGameTrackerRepository.update(
+    {
+      game: {id: game.id},
+      playerId: update.playerId,
+    },
+    {
+      satAt: undefined,
+      sessionTime: sessionTime,
+      status: PlayerStatus.LEFT,
+      seatNo: 0,
+    }
+  );
 
   // do updates that are necessary
   await GameRepository.seatOpened(game, openedSeat);
@@ -530,9 +530,10 @@ async function handleDealersChoice(
     maxPlayers--;
   }
   await GameUpdatesRepository.updateDealersChoiceSeat(game, playerId);
-
+  const settings = await Cache.getGameSettings(game.gameCode);
   Nats.sendDealersChoiceMessage(
     game,
+    settings,
     playerId,
     gameUpdate.handNum + 1,
     timeout

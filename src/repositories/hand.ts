@@ -36,6 +36,7 @@ import * as lz from 'lzutf8';
 import {getAppSettings} from '@src/firebase';
 import {Repository} from 'typeorm';
 import {GameUpdatesRepository} from './gameupdates';
+import {NextHandUpdatesRepository} from './nexthand_update';
 const logger = getLogger('repositories::hand');
 
 const MAX_STARRED_HAND = 25;
@@ -831,7 +832,7 @@ class HandRepositoryImpl {
             // set pending updates true
             await Cache.updateGamePendingUpdates(game.gameCode, true);
             const player = await Cache.getPlayer(game.hostUuid);
-            GameRepository.endGameNextHand(player, game.id);
+            NextHandUpdatesRepository.endGameNextHand(player, game.id);
             pendingUpdates = true;
           }
         }

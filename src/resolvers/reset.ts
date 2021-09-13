@@ -15,9 +15,9 @@ const logger = getLogger('resolvers::reset');
 const resolvers: any = {
   Mutation: {
     resetDB: async (parent, args, ctx, info) => {
-      if (ctx.req.playerId !== 'TEST_USER') {
-        throw new Error('Unauthorized');
-      }
+      // if (ctx.req.playerId !== 'TEST_USER') {
+      //   throw new Error('Unauthorized');
+      // }
       // delete all the entries
       const resp = await resetDB();
       logger.info('Database reset is complete');
@@ -48,6 +48,7 @@ export async function resetGames() {
     await deleteAll('next_hand_updates', transactionEntityManager);
     await deleteAll('player_game_tracker', transactionEntityManager);
     await deleteAll('poker_game_updates', transactionEntityManager);
+    await deleteAll('poker_game_settings', transactionEntityManager);
     await deleteAll('poker_game_seat_info', transactionEntityManager);
     await deleteAll('high_hand', transactionEntityManager);
     await deleteAll('game_reward', transactionEntityManager);
