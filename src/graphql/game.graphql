@@ -466,12 +466,15 @@ type CompletedGame {
 }
 
 type GameResultTableRow {
+  playerId: Int!
+  playerUuid: String!
   playerName: String!
   sessionTime: Int!
   sessionTimeStr: String!
   handsPlayed: Int!
   buyIn: Float!
   profit: Float!
+  stack: Float!
   rakePaid: Float!
 }
 
