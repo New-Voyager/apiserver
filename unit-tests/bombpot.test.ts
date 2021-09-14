@@ -209,28 +209,28 @@ describe('Game APIs', () => {
     await nextHandProcess.moveToNextHand();
     ret = await nextHandProcess.getNextHandInfo();
     expect(ret.bombPot).toEqual(true);
-    expect(ret.doubleBoardBombPot).toEqual(true);
+    expect(ret.doubleBoard).toEqual(true);
     expect(ret.bombPotBet).toEqual(5);
 
     nextHandProcess = new NextHandProcess(game.gameCode, 3);
     await nextHandProcess.moveToNextHand();
     ret = await nextHandProcess.getNextHandInfo();
     expect(ret.bombPot).toEqual(false);
-    expect(ret.doubleBoardBombPot).toEqual(false);
+    expect(ret.doubleBoard).toEqual(false);
     expect(ret.bombPotBet).toEqual(5);
 
     nextHandProcess = new NextHandProcess(game.gameCode, 4);
     await nextHandProcess.moveToNextHand();
     ret = await nextHandProcess.getNextHandInfo();
     expect(ret.bombPot).toEqual(false);
-    expect(ret.doubleBoardBombPot).toEqual(false);
+    expect(ret.doubleBoard).toEqual(false);
     expect(ret.bombPotBet).toEqual(5);
     await sleep(11000);
     nextHandProcess = new NextHandProcess(game.gameCode, 5);
     await nextHandProcess.moveToNextHand();
     ret = await nextHandProcess.getNextHandInfo();
     expect(ret.bombPot).toEqual(true);
-    expect(ret.doubleBoardBombPot).toEqual(true);
+    expect(ret.doubleBoard).toEqual(true);
     expect(ret.bombPotBet).toEqual(5);
   });
 });
