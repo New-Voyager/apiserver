@@ -191,7 +191,7 @@ describe('Game APIs', () => {
       showHandRank: true,
       allowRabbitHunt: true,
     };
-    await GameSettingsRepository.update(gameCode, updateGameSettings);
+    await GameSettingsRepository.update(game, gameCode, updateGameSettings);
     gameSettings = await GameSettingsRepository.get(gameCode);
     expect(gameSettings.buyInApproval).toEqual(true);
     expect(gameSettings.breakLength).toEqual(20);
