@@ -756,7 +756,7 @@ export class NextHandProcess {
         if (game.gameType === GameType.DEALER_CHOICE) {
           announceGameType = true;
         }
-        let doubleBoard = false;
+        let doubleBoard = gameSettings.doubleBoardEveryHand;
         if (gameUpdate.bombPotThisHand) {
           doubleBoard = gameSettings.doubleBoardBombPot;
         }
@@ -780,8 +780,8 @@ export class NextHandProcess {
           sbPos: gameUpdate.sbPos,
           bbPos: gameUpdate.bbPos,
           resultPauseTime: gameSettings.resultPauseTime * 1000,
+          doubleBoard: doubleBoard,
           bombPot: gameUpdate.bombPotThisHand,
-          doubleBoardBombPot: doubleBoard,
           bombPotBet: gameSettings.bombPotBet,
           // Not implemented yet (do we need it?)
           bringIn: 0,

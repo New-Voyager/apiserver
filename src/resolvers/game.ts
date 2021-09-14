@@ -1999,7 +1999,7 @@ export async function updateGameSettings(
     }
 
     // update game settings
-    await GameSettingsRepository.update(gameCode, settings);
+    await GameSettingsRepository.update(game, gameCode, settings);
     return true;
   } catch (err) {
     logger.error(
@@ -2299,6 +2299,10 @@ const resolvers: any = {
     },
   },
   GameInfo: {
+    settings: async (parent, args, ctx, info) => {
+      const settings = await gameSettings(ctx.req.playerId, args.gameCode);
+      return settings;
+    },
     seatInfo: async (parent, args, ctx, info) => {
       const game = await Cache.getGame(parent.gameCode);
       const seatStatuses = await GameRepository.getSeatStatus(game.id);

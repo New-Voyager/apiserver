@@ -699,6 +699,25 @@ class NatsClass {
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
+  public async gameSettingsChanged(game: PokerGame, messageId?: string) {
+    if (this.client === null) {
+      return;
+    }
+
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message = {
+      type: 'GAME_SETTINGS_CHANGED',
+      gameId: game.id,
+      gameCode: game.gameCode,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getGameChannel(game.gameCode);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
+  }
+
   // indicate the players that host has started to make seat change
   public async hostSeatChangeProcessStarted(
     game: PokerGame,
