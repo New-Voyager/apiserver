@@ -4,6 +4,7 @@ import {Cache} from '@src/cache/index';
 import {getGameRepository} from '.';
 import {getLogger} from '@src/utils/log';
 import {JanusSession} from '@src/janus';
+import {Nats} from '@src/nats';
 
 const logger = getLogger('repositories::gamesettings');
 class GameSettingsRepositoryImpl {
@@ -72,7 +73,7 @@ class GameSettingsRepositoryImpl {
     await gameSettingsRepo.save(gameSettings);
   }
 
-  public async update(gameCode: string, input: any) {
+  public async update(game: PokerGame, gameCode: string, input: any) {
     const gameSettingsProps: any = {};
     if (input.resultPauseTime !== undefined) {
       gameSettingsProps.resultPauseTime = input.resultPauseTime;
@@ -149,6 +150,7 @@ class GameSettingsRepositoryImpl {
       gameSettingsProps
     );
     const gameSettingsUpdated = await Cache.getGameSettings(gameCode, true);
+    Nats.gameSettingsChanged(game);
     logger.info(JSON.stringify(gameSettingsUpdated));
   }
 

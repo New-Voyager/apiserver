@@ -267,6 +267,8 @@ type GameInfo {
   useAgora: Boolean
   agoraToken: String
   agoraAppId: String
+
+  settings: GameSettings
 }
 
 type GamePlayerSettings {
