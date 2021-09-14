@@ -196,7 +196,7 @@ class MoveToNextHand {
         this.determineBombPotThisHand();
 
         // update players for the current hand
-        await this.updateThisHand(transactionEntityManager);
+        await this.updateThisHand(occupiedSeats, transactionEntityManager);
 
         // determine next game type
         await this.determineNextGameType();
@@ -260,24 +260,32 @@ class MoveToNextHand {
     );
   }
 
-  private async updateThisHand(entityManager: EntityManager) {
+  private async updateThisHand(
+    occupiedSeats: Array<number>,
+    entityManager: EntityManager
+  ) {
     // update the players who have posted blinds or posted due to natural blind position
     const playerGameTrackerRepo = entityManager.getRepository(
       PlayerGameTracker
     );
 
-    if (this.missedBlinds.length > 0) {
-      logger.info(`Players missed blinds: ${this.missedBlinds.toString()}`);
-      for (const seatNo of this.missedBlinds) {
-        await playerGameTrackerRepo.update(
-          {
-            game: {id: this.game.id},
-            seatNo: seatNo,
-          },
-          {
-            missedBlind: true,
-          }
-        );
+    // if only two players are playing, then don't worry about missed blind
+    // and a dealer seat
+    if (occupiedSeats.length > 3) {
+      if (this.missedBlinds.length > 0) {
+        logger.info(`Players missed blinds: ${this.missedBlinds.toString()}`);
+        for (const seatNo of this.missedBlinds) {
+          await playerGameTrackerRepo.update(
+            {
+              game: {id: this.game.id},
+              seatNo: seatNo,
+            },
+            {
+              missedBlind: true,
+            }
+          );
+        }
+      } else {
       }
     }
 
@@ -718,7 +726,10 @@ export class NextHandProcess {
                 postedBlind = playerSeat.postedBlindNextHand;
               }
             }
-
+            let runItTwiceEnabled = gameSettings.runItTwiceAllowed;
+            if (runItTwiceEnabled) {
+              runItTwiceEnabled = playerSeat.runItTwiceEnabled;
+            }
             // player is in a seat
             seats.push({
               seatNo: seatNo,
@@ -739,7 +750,7 @@ export class NextHandProcess {
               gameToken: '',
 
               // player settings
-              runItTwice: playerSeat.runItTwiceEnabled,
+              runItTwice: runItTwiceEnabled,
               autoStraddle: playerSeat.autoStraddle,
               muckLosingHand: playerSeat.muckLosingHand,
               buttonStraddle: playerSeat.buttonStraddle,
@@ -782,7 +793,7 @@ export class NextHandProcess {
           resultPauseTime: gameSettings.resultPauseTime * 1000,
           doubleBoard: doubleBoard,
           bombPot: gameUpdate.bombPotThisHand,
-          bombPotBet: gameSettings.bombPotBet,
+          bombPotBet: gameSettings.bombPotBet * game.bigBlind,
           // Not implemented yet (do we need it?)
           bringIn: 0,
         };

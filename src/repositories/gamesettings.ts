@@ -109,6 +109,9 @@ class GameSettingsRepositoryImpl {
     if (input.bombPotIntervalInSecs !== undefined) {
       gameSettingsProps.bombPotIntervalInSecs = input.bombPotIntervalInSecs;
     }
+    if (input.bombPotBet !== undefined) {
+      gameSettingsProps.bombPotBet = input.bombPotBet;
+    }
     if (input.seatChangeAllowed !== undefined) {
       gameSettingsProps.seatChangeAllowed = input.seatChangeAllowed;
     }
