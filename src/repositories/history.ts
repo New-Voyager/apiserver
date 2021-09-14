@@ -318,7 +318,9 @@ class HistoryRepositoryImpl {
         buyIn: player.buyIn,
         rakePaid: player.rakePaid,
         profit: player.stack - player.buyIn,
+        stack: player.stack,
         playerName: player.playerName,
+        playerId: player.id,
         playerUuid: player.playerUuid,
       };
       gameResults.push(gameResult);

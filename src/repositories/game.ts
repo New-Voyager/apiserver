@@ -1236,10 +1236,12 @@ class GameRepositoryImpl {
         pgt.no_hands_played AS "handsPlayed",
         pgt.buy_in AS "buyIn",
         pgt.stack - pgt.buy_in AS "profit",
+        pgt.stack AS "stack",
         pgt.rake_paid AS "rakePaid",
         pgt.sat_at AS "satAt",
         pgt.player_name AS "playerName",
-        pgt.player_uuid AS "playerId"
+        pgt.player_uuid AS "playerUuid",
+        pgt.pgt_player_id AS "playerId"
       FROM player_game_tracker pgt
       INNER JOIN poker_game pg ON pgt.pgt_game_id = pg.id
       WHERE pg.game_code = ?
