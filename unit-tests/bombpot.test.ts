@@ -193,7 +193,7 @@ describe('Game APIs', () => {
     await nextHandProcess.moveToNextHand();
     let ret = await nextHandProcess.getNextHandInfo();
     expect(ret.bombPot).toEqual(true);
-    expect(ret.doubleBoardBombPot).toEqual(true);
+    expect(ret.doubleBoard).toEqual(true);
     expect(ret.bombPotBet).toEqual(5);
 
     // move to next hand
