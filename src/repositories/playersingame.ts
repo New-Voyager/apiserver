@@ -354,9 +354,13 @@ class PlayersInGameRepositoryImpl {
       playerId: player.id,
     });
     if (!playerInGame) {
-      throw new Error(
-        `Player ${player.name} is not found in game: ${game.gameCode}`
-      );
+      return {
+        muckLosingHand: false,
+        autoStraddle: false,
+        bombPotEnabled: true,
+        runItTwiceEnabled: true,
+        buttonStraddle: false,
+      };
     }
 
     const settings: GamePlayerSettings = {

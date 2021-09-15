@@ -1085,14 +1085,13 @@ export async function myGameSettings(playerUuid: string, gameCode: string) {
     //   throw new Error(`Game ${gameCode} is not found`);
     // }
     // return gameSettings;
-    return {
-      autoStraddle: false,
-      straddle: false,
-      buttonStraddle: false,
-      bombPotEnabled: false,
-      muckLosingHand: false,
-      runItTwiceEnabled: false,
-    };
+    const game = await Cache.getGame(gameCode);
+    const player = await Cache.getPlayer(playerUuid);
+    const playerSettings = await PlayersInGameRepository.getPlayerGameSettings(
+      player,
+      game
+    );
+    return playerSettings;
   } catch (err) {
     logger.error(
       `Error while getting game settings. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
@@ -1161,7 +1160,7 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
       ret.handNum = updates.handNum;
       ret.janusRoomId = settings.janusRoomId;
       ret.janusRoomPin = settings.janusRoomPin;
-
+      ret.runItTwiceAllowed = settings.runItTwiceAllowed;
       ret.bombPotEnabled = settings.bombPotEnabled;
       if (ret.bombPotEnabled) {
         ret.bombPotBet = settings.bombPotBet;
@@ -2357,6 +2356,8 @@ const resolvers: any = {
         playerInSeat.name = player.playerName;
         playerInSeat.buyInExpTime = player.buyInExpAt;
         playerInSeat.breakExpTime = player.breakTimeExpAt;
+        const playerInfo = await Cache.getPlayer(player.playerUuid);
+        playerInSeat.isBot = playerInfo.bot;
         /* settings */
         /*
           type GamePlayerSettings {

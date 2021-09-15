@@ -794,6 +794,7 @@ export class NextHandProcess {
           doubleBoard: doubleBoard,
           bombPot: gameUpdate.bombPotThisHand,
           bombPotBet: gameSettings.bombPotBet * game.bigBlind,
+          runItTwiceTimeout: gameSettings.runItTwiceTimeout,
           // Not implemented yet (do we need it?)
           bringIn: 0,
         };

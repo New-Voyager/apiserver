@@ -28,7 +28,7 @@ class PlayerRepositoryImpl {
     let player: Player | undefined;
     if (email) {
       player = await repository.findOne({where: {email: email}});
-      if (player) {
+      if (player && !isBot) {
         throw new Error(`Another device is registered with this email address`);
       }
     } else {
