@@ -557,6 +557,30 @@ class NatsClass {
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
+  public async hostChanged(
+    game: PokerGame,
+    newHostPlayer: Player,
+    messageId?: string
+  ) {
+    if (this.client === null) {
+      return;
+    }
+
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message = {
+      type: 'HOST_CHANGED',
+      gameId: game.id,
+      playerId: newHostPlayer.id,
+      playerUuid: newHostPlayer.uuid,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getGameChannel(game.gameCode);
+    this.client.publish(subject, this.stringCodec.encode(messageStr));
+  }
+
   public async playerStatusChanged(
     game: PokerGame,
     player: any,

@@ -68,9 +68,22 @@ export function errToLogString(e: Error, includeStack = true): string {
   if (!e) {
     return 'Error object is undefined';
   }
-  let errStr = `Error(message: ${e.message}, name: ${
-    e.name
-  }, toString: ${e.toString()})`;
+  let errStr = `Error(`;
+
+  let name: string | undefined;
+  if (e.name !== 'Error') {
+    name = e.name;
+  }
+  if (name) {
+    errStr = errStr + `name: ${name}, `;
+  }
+
+  if (e.message) {
+    errStr = errStr + `message: ${e.message})`;
+  } else {
+    errStr = errStr + `toString: ${e.toString()})`;
+  }
+
   if (includeStack) {
     errStr = errStr += `\n${e.stack}`;
   }

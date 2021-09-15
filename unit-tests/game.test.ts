@@ -181,6 +181,12 @@ describe.skip('Game APIs', () => {
       expect(startedGame.buyInMax).toEqual(600);
       expect(startedGame.actionTime).toEqual(30);
       expect(startedGame.muckLosingHand).toEqual(true);
+      expect(startedGame.hostId).toBeGreaterThan(0);
+      expect(startedGame.hostName).toEqual('player_name');
+      expect(startedGame.hostUuid).toEqual('abc123');
+      expect(startedGame.startedAt).toBeTruthy();
+      expect(startedGame.startedBy).toEqual(startedGame.hostId);
+      expect(startedGame.startedByName).toEqual(startedGame.hostName);
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();
@@ -219,6 +225,12 @@ describe.skip('Game APIs', () => {
       expect(startedGame.buyInMax).toEqual(600);
       expect(startedGame.actionTime).toEqual(30);
       expect(startedGame.muckLosingHand).toEqual(true);
+      expect(startedGame.hostId).toBeGreaterThan(0);
+      expect(startedGame.hostName).toEqual('player_name');
+      expect(startedGame.hostUuid).toEqual('abc123');
+      expect(startedGame.startedAt).toBeTruthy();
+      expect(startedGame.startedBy).toEqual(startedGame.hostId);
+      expect(startedGame.startedByName).toEqual(startedGame.hostName);
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();

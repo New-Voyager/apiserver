@@ -733,7 +733,7 @@ class ClubRepositoryImpl {
         pgt.no_hands_played as "handsPlayed", 
         pgt.no_hands_won as "handsWon",
         pg.game_type as "gameType", 
-        pg.started_at as "startedAt", pg.host_name as "startedBy",
+        pg.started_at as "startedAt", pg.started_by_name as "startedBy",
         pg.ended_at as "endedAt", pg.ended_by_name as "endedBy", 
         pg.started_at as "startedAt", pgt.session_time as "sessionTime", 
         (pgt.stack - pgt.buy_in) as balance 

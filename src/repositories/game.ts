@@ -134,6 +134,8 @@ class GameRepositoryImpl {
     game.privateGame = true;
 
     game.startedAt = new Date();
+    game.startedBy = player.id;
+    game.startedByName = player.name;
     game.hostId = player.id;
     game.hostName = player.name;
     game.hostUuid = player.uuid;

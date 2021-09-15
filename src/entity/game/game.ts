@@ -429,6 +429,12 @@ export class PokerGame {
   })
   public endedAt!: Date;
 
+  @Column({name: 'started_by_player_id', type: 'int'})
+  public startedBy!: number;
+
+  @Column({name: 'started_by_name'})
+  public startedByName!: string;
+
   @Column({name: 'ended_by_player_id', nullable: true, type: 'int'})
   public endedBy!: number;
 
