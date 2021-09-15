@@ -1505,6 +1505,49 @@ export async function kickOutPlayer(
   }
 }
 
+export async function assignHost(
+  requestUser: string,
+  gameCode: string,
+  newHostPlayerUuid: string
+): Promise<boolean> {
+  if (!requestUser) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    if (requestUser === newHostPlayerUuid) {
+      throw new Error('Cannot assign oneself to game host');
+    }
+
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.hostUuid !== requestUser) {
+      throw new Error(
+        `Player: ${requestUser} cannot assign game host in game ${gameCode}. Only the current host (${game.hostUuid}) can assign new game host.`
+      );
+    }
+
+    const oldHostPlayer = await Cache.getPlayer(requestUser);
+    const newHostPlayer = await Cache.getPlayer(newHostPlayerUuid);
+    await PlayersInGameRepository.assignNewHost(
+      gameCode,
+      oldHostPlayer,
+      newHostPlayer
+    );
+    return true;
+  } catch (err) {
+    logger.error(
+      `Error while assigning game host. requestUser: ${requestUser}, gameCode: ${gameCode}, new host player: ${newHostPlayerUuid}: ${errToLogString(
+        err
+      )}`
+    );
+    throw new Error('Failed to assign game host');
+  }
+}
+
 export async function addToWaitingList(playerId: string, gameCode: string) {
   if (!playerId) {
     throw new Error('Unauthorized');
@@ -2573,6 +2616,9 @@ const resolvers: any = {
     },
     switchSeat: async (parent, args, ctx, info) => {
       return switchSeat(ctx.req.playerId, args.gameCode, args.seatNo);
+    },
+    assignHost: async (parent, args, ctx, info) => {
+      return assignHost(ctx.req.playerId, args.gameCode, args.playerUuid);
     },
     dealerChoice: async (parent, args, ctx, info) => {
       return dealerChoice(ctx.req.playerId, args.gameCode, args.gameType);
