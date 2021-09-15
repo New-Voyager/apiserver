@@ -1161,7 +1161,7 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
       ret.handNum = updates.handNum;
       ret.janusRoomId = settings.janusRoomId;
       ret.janusRoomPin = settings.janusRoomPin;
-
+      ret.runItTwiceAllowed = settings.runItTwiceAllowed;
       ret.bombPotEnabled = settings.bombPotEnabled;
       if (ret.bombPotEnabled) {
         ret.bombPotBet = settings.bombPotBet;
@@ -2357,6 +2357,8 @@ const resolvers: any = {
         playerInSeat.name = player.playerName;
         playerInSeat.buyInExpTime = player.buyInExpAt;
         playerInSeat.breakExpTime = player.breakTimeExpAt;
+        const playerInfo = await Cache.getPlayer(player.playerUuid);
+        playerInSeat.isBot = playerInfo.bot;
         /* settings */
         /*
           type GamePlayerSettings {

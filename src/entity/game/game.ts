@@ -233,6 +233,9 @@ export class PokerGameSettings {
   @Column({name: 'run_it_twice_allowed', default: false})
   public runItTwiceAllowed!: boolean;
 
+  @Column({type: 'int', name: 'run_it_twice_timeout', default: 10})
+  public runItTwiceTimeout!: number;
+
   @Column({name: 'allow_rabbit_hunt', default: true})
   public allowRabbitHunt!: boolean;
 
