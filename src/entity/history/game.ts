@@ -20,15 +20,6 @@ export class GameHistory {
   @Column({name: 'title'})
   public title!: string;
 
-  @Column({name: 'host_id'})
-  public hostId!: number;
-
-  @Column({name: 'host_name'})
-  public hostName!: string;
-
-  @Column({name: 'host_uuid'})
-  public hostUuid!: string;
-
   @Column({name: 'game_type'})
   public gameType!: GameType;
 
@@ -67,6 +58,12 @@ export class GameHistory {
     nullable: true,
   })
   public endedAt!: Date;
+
+  @Column({name: 'started_by_player_id', type: 'int'})
+  public startedBy!: number;
+
+  @Column({name: 'started_by_name'})
+  public startedByName!: string;
 
   @Column({name: 'ended_by_player_id', nullable: true, type: 'int'})
   public endedBy!: number;
