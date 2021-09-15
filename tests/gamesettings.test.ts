@@ -191,7 +191,7 @@ describe('Game/Player Settings', () => {
     expect(gameSettings.ipCheck).toEqual(false);
     expect(gameSettings.runItTwiceAllowed).toEqual(false);
     expect(gameSettings.seatChangeAllowed).toEqual(true);
-    expect(gameSettings.seatChangeTimeout).toEqual(30);
+    expect(gameSettings.seatChangeTimeout).toEqual(10);
     expect(gameSettings.showHandRank).toEqual(false);
     expect(gameSettings.waitlistAllowed).toEqual(true);
     expect(gameSettings.waitlistSittingTimeout).toEqual(3);
@@ -230,7 +230,7 @@ describe('Game/Player Settings', () => {
     await moveToNextHand(gameId, gameCode, 0);
     const nextHand = await getNextHandInfo(gameCode);
     expect(nextHand.bombPot).toBeTruthy();
-    expect(nextHand.bombPotBet).toEqual(5);
+    expect(nextHand.bombPotBet).toEqual(10);
     expect(nextHand.buttonPos).toEqual(1);
     expect(nextHand.sbPos).toEqual(2);
     expect(nextHand.bbPos).toEqual(3);
@@ -296,7 +296,7 @@ describe('Game/Player Settings', () => {
     await moveToNextHand(gameId, gameCode, 0);
     let nextHand = await getNextHandInfo(gameCode);
     expect(nextHand.bombPot).toBeTruthy();
-    expect(nextHand.bombPotBet).toEqual(5);
+    expect(nextHand.bombPotBet).toEqual(10);
 
     let playersInSeats = _.filter(
       nextHand.playersInSeats,
@@ -339,7 +339,6 @@ describe('Game/Player Settings', () => {
     await moveToNextHand(gameId, gameCode, 1);
     nextHand = await getNextHandInfo(gameCode);
     expect(nextHand.bombPot).toBeTruthy();
-    expect(nextHand.bombPotBet).toEqual(5);
 
     playersInSeats = _.filter(
       nextHand.playersInSeats,
