@@ -11,19 +11,13 @@ import {
   GameStatus,
   PlayerStatus,
   TableStatus,
-  NextHandUpdate,
   SeatStatus,
 } from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
 import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
-import {
-  publishNewGame,
-  playerConfigUpdate,
-  resumeGame,
-  endGame,
-} from '@src/gameserver';
+import {publishNewGame, resumeGame, endGame} from '@src/gameserver';
 import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery, getDistanceInMeters} from '@src/utils';
 import {WaitListMgmt} from './waitlist';
@@ -140,6 +134,8 @@ class GameRepositoryImpl {
     game.privateGame = true;
 
     game.startedAt = new Date();
+    game.startedBy = player.id;
+    game.startedByName = player.name;
     game.hostId = player.id;
     game.hostName = player.name;
     game.hostUuid = player.uuid;
@@ -709,6 +705,7 @@ class GameRepositoryImpl {
             status: playerInGame.status,
             waitingFrom: null,
             waitlistNum: 0,
+            satAt: new Date(),
           }
         );
         await this.seatOccupied(game, seatNo, transactionEntityManager);
@@ -791,164 +788,17 @@ class GameRepositoryImpl {
     return playerInGame;
   }
 
-  public async leaveGame(player: Player, game: PokerGame): Promise<boolean> {
-    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
-    const nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
-    const rows = await playerGameTrackerRepository
-      .createQueryBuilder()
-      .where({
-        game: {id: game.id},
-        playerId: player.id,
-      })
-      .select('status')
-      .addSelect('session_time', 'sessionTime')
-      .addSelect('sat_at', 'satAt')
-      .addSelect('seat_no', 'seatNo')
-      .execute();
-    if (!rows && rows.length === 0) {
-      throw new Error('Player is not found in the game');
-    }
-
-    const playerInGame = rows[0];
-
-    if (
-      game.status === GameStatus.ACTIVE &&
-      playerInGame.status === PlayerStatus.PLAYING
-    ) {
-      const update = new NextHandUpdates();
-      update.game = game;
-      update.playerId = player.id;
-      update.playerUuid = player.uuid;
-      update.playerName = player.name;
-      update.newUpdate = NextHandUpdate.LEAVE;
-      await nextHandUpdatesRepository.save(update);
-    } else {
-      playerInGame.status = PlayerStatus.NOT_PLAYING;
-      const seatNo = playerInGame.seatNo;
-      playerInGame.seatNo = 0;
-      const setProps: any = {
-        status: PlayerStatus.NOT_PLAYING,
-        seatNo: 0,
-      };
-
-      if (playerInGame.satAt) {
-        const satAt = new Date(Date.parse(playerInGame.satAt.toString()));
-        // calculate session time
-        let sessionTime = playerInGame.sessionTime;
-        const currentSessionTime = new Date().getTime() - satAt.getTime();
-        const roundSeconds = Math.round(currentSessionTime / 1000);
-        sessionTime = sessionTime + roundSeconds;
-        setProps.satAt = undefined;
-        setProps.sessionTime = sessionTime;
-      }
-      await playerGameTrackerRepository.update(
-        {
-          game: {id: game.id},
-          playerId: player.id,
-        },
-        setProps
-      );
-
-      await GameRepository.seatOpened(game, seatNo);
-
-      // playerLeftGame(game, player, seatNo);
-    }
-    return true;
-  }
-
-  public async sitBack(
-    player: Player,
-    game: PokerGame,
-    ip: string,
-    location: any
-  ): Promise<void> {
-    await getGameManager().transaction(async transactionEntityManager => {
-      const playerGameTrackerRepository = transactionEntityManager.getRepository(
-        PlayerGameTracker
-      );
-      const nextHandUpdatesRepository = transactionEntityManager.getRepository(
-        NextHandUpdates
-      );
-      const rows = await playerGameTrackerRepository
-        .createQueryBuilder()
-        .where({
-          game: {id: game.id},
-          playerId: player.id,
-        })
-        .select('stack')
-        .select('status')
-        .select('seat_no', 'seatNo')
-        .execute();
-      if (!rows && rows.length === 0) {
-        throw new Error('Player is not found in the game');
-      }
-
-      const playerInGame = rows[0];
-      if (!playerInGame) {
-        logger.error(`Game: ${game.gameCode} not available`);
-        throw new Error(`Game: ${game.gameCode} not available`);
-      }
-      const gameSettings = await GameSettingsRepository.get(
-        game.gameCode,
-        false,
-        transactionEntityManager
-      );
-      if (!gameSettings) {
-        throw new Error(
-          `Game: ${game.gameCode} is not found in PokerGameSettings`
-        );
-      }
-      if (gameSettings.gpsCheck || gameSettings.ipCheck) {
-        const locationCheck = new LocationCheck(game, gameSettings);
-        await locationCheck.checkForOnePlayer(
-          player,
-          ip,
-          location,
-          undefined,
-          transactionEntityManager
-        );
-      }
-
-      cancelTimer(game.id, player.id, BREAK_TIMEOUT);
-      playerInGame.status = PlayerStatus.PLAYING.valueOf();
-      const sitBackQuery = `UPDATE player_game_tracker 
-              SET status = ${playerInGame.status},
-                  break_time_started_at = NULL,
-                  break_time_exp_at = NULL, 
-                  consecutive_action_timeouts = 0
-              WHERE pgt_game_id = ${game.id} AND pgt_player_id = ${player.id}`;
-      await transactionEntityManager.query(sitBackQuery);
-
-      // update the clients with new status
-      await Nats.playerStatusChanged(
-        game,
-        player,
-        playerInGame.status,
-        NewUpdate.SIT_BACK,
-        playerInGame.stack,
-        playerInGame.seatNo
-      );
-      const nextHandUpdate = await nextHandUpdatesRepository.findOne({
-        where: {
-          game: {id: game.id},
-          playerId: player.id,
-          newUpdate: NextHandUpdate.TAKE_BREAK,
-        },
-      });
-
-      if (nextHandUpdate) {
-        await nextHandUpdatesRepository.delete({id: nextHandUpdate.id});
-      }
-    });
-    await this.restartGameIfNeeded(game, true, false);
-  }
-
   public async restartGameIfNeeded(
     game: PokerGame,
     processPendingUpdates: boolean,
     hostStartedGame: boolean,
     transactionEntityManager?: EntityManager
   ): Promise<void> {
+    logger.info(
+      `[${
+        game.gameCode
+      }] Restarting game. Game status: ${game.status.toString()}`
+    );
     if (game.status !== GameStatus.ACTIVE) {
       return;
     }
@@ -1032,19 +882,15 @@ class GameRepositoryImpl {
                 tableStatus: newTableStatus,
               }
             );
-            if (
-              (processPendingUpdates && newTableStatus !== prevTableStatus) ||
-              hostStartedGame
-            ) {
-              // refresh the cache
-              const gameUpdate = await Cache.getGame(
-                game.gameCode,
-                true,
-                transactionEntityManager
-              );
-              // resume the game
-              await resumeGame(gameUpdate.id, transactionEntityManager);
-            }
+            // refresh the cache
+            const gameUpdate = await Cache.getGame(
+              game.gameCode,
+              true,
+              transactionEntityManager
+            );
+            logger.info(`[${game.gameCode}] Resuming game`);
+            // resume the game
+            await resumeGame(gameUpdate.id, transactionEntityManager);
           }
         }
       } catch (err) {
@@ -1229,53 +1075,6 @@ class GameRepositoryImpl {
     return false;
   }
 
-  public async endGameNextHand(player: Player, gameId: number) {
-    // check to see if the game is already marked to be ended
-    const repository = getGameRepository(NextHandUpdates);
-    const query = fixQuery(
-      'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ? AND new_update = ?'
-    );
-    const resp = await getGameConnection().query(query, [
-      gameId,
-      NextHandUpdate.END_GAME,
-    ]);
-    if (resp[0]['updates'] === 0) {
-      const nextHandUpdate = new NextHandUpdates();
-      const game = new PokerGame();
-      game.id = gameId;
-      nextHandUpdate.game = game;
-      nextHandUpdate.playerId = player.id;
-      nextHandUpdate.playerName = player.name;
-      nextHandUpdate.playerUuid = player.uuid;
-      nextHandUpdate.newUpdate = NextHandUpdate.END_GAME;
-      repository.save(nextHandUpdate);
-
-      // notify users that the game will end in the next hand
-    }
-  }
-
-  public async pauseGameNextHand(gameId: number) {
-    // check to see if the game is already marked to be ended
-    const repository = getGameRepository(NextHandUpdates);
-    const query = fixQuery(
-      'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ? AND new_update = ?'
-    );
-    const resp = await getGameConnection().query(query, [
-      gameId,
-      NextHandUpdate.PAUSE_GAME,
-    ]);
-    if (resp[0]['updates'] === 0) {
-      const nextHandUpdate = new NextHandUpdates();
-      const game = new PokerGame();
-      game.id = gameId;
-      nextHandUpdate.game = game;
-      nextHandUpdate.newUpdate = NextHandUpdate.PAUSE_GAME;
-      repository.save(nextHandUpdate);
-
-      // notify users that the game will pause in the next hand
-    }
-  }
-
   public async markGameStatus(
     gameId: number,
     status: GameStatus,
@@ -1440,10 +1239,12 @@ class GameRepositoryImpl {
         pgt.no_hands_played AS "handsPlayed",
         pgt.buy_in AS "buyIn",
         pgt.stack - pgt.buy_in AS "profit",
+        pgt.stack AS "stack",
         pgt.rake_paid AS "rakePaid",
         pgt.sat_at AS "satAt",
         pgt.player_name AS "playerName",
-        pgt.player_uuid AS "playerId"
+        pgt.player_uuid AS "playerUuid",
+        pgt.pgt_player_id AS "playerId"
       FROM player_game_tracker pgt
       INNER JOIN poker_game pg ON pgt.pgt_game_id = pg.id
       WHERE pg.game_code = ?
@@ -1703,6 +1504,11 @@ class GameRepositoryImpl {
           postedBlind: true,
         }
       );
+    }
+    const gameDB = await Cache.getGame(game.gameCode, true);
+    if (gameDB && gameDB.tableStatus === TableStatus.NOT_ENOUGH_PLAYERS) {
+      // resume game
+      await this.restartGameIfNeeded(game, false, false);
     }
   }
 

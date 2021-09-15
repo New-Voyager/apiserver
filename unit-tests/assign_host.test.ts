@@ -5,6 +5,8 @@ import {resetDB} from '../src/resolvers/reset';
 import {Cache} from '../src/cache/index';
 import _ from 'lodash';
 import { GameSettingsRepository } from '../src/repositories/gamesettings';
+import { assignHost, startGame } from '../src/resolvers/game';
+import { PokerGame } from '../src/entity/game/game';
 
 
 // default player, game and club inputs
@@ -105,7 +107,7 @@ afterAll(async done => {
   done();
 });
 
-describe('Game APIs', () => {
+describe('Assign Game Host API', () => {
   beforeEach(async done => {
     await resetDB();
     done();
@@ -115,7 +117,7 @@ describe('Game APIs', () => {
     done();
   });
 
-  test('gamesettings: get game settings', async () => {
+  test('assign_host: assign new game host', async () => {
     await createGameServer(gameServer1);
     const playersInClub: Array<any> = new Array<any>();
     playersInClub.push(...playersInput);
@@ -139,69 +141,27 @@ describe('Game APIs', () => {
     );
     
     const game = await Cache.getGame(gameCode);
-    const gameSettings = await GameSettingsRepository.get(gameCode);
-
-    expect(gameSettings.buyInApproval).toEqual(false);
-    expect(gameSettings.breakLength).toEqual(20);
-    expect(gameSettings.breakAllowed).toEqual(true);
-    expect(gameSettings.waitlistAllowed).toEqual(true);
-    expect(gameSettings.ipCheck).toEqual(false);
-    expect(gameSettings.gpsCheck).toEqual(true);
-    expect(gameSettings.showHandRank).toEqual(false);
-    expect(gameSettings.allowRabbitHunt).toEqual(false);
-  });
-
-  test('gamesettings: update game settings', async () => {
-    await createGameServer(gameServer1);
-    const playersInClub: Array<any> = new Array<any>();
-    playersInClub.push(...playersInput);
-    const [
-      owner,
-      clubCode,
-      clubId,
-      playerUuids,
-      playerIds,
-    ] = await createClubWithMembers(ownerInput, clubInput, playersInClub);
-
-    const playersInfo = _.keyBy(playersInput, 'deviceId')
-    //const rewardId = await createReward(owner, clubCode);
-    const [gameCode, gameId] = await setupGameEnvironment(
-      owner,
-      clubCode,
-      playerUuids,
-      100,
-      holdemGameInput,
-      playersInfo,
-    );
     
-    const game = await Cache.getGame(gameCode);
-    let gameSettings = await GameSettingsRepository.get(gameCode);
+    expect(game.hostId).toBeGreaterThan(0);
+    expect(game.hostName).toEqual(ownerInput.name);
+    expect(game.hostUuid).toEqual(ownerInput.deviceId);
 
-    expect(gameSettings.buyInApproval).toEqual(false);
-    expect(gameSettings.breakLength).toEqual(20);
-    expect(gameSettings.breakAllowed).toEqual(true);
-    expect(gameSettings.waitlistAllowed).toEqual(true);
-    expect(gameSettings.ipCheck).toEqual(false);
-    expect(gameSettings.gpsCheck).toEqual(true);
-    expect(gameSettings.showHandRank).toEqual(false);
-    expect(gameSettings.allowRabbitHunt).toEqual(false);
+    const originalHostId = game.hostId;
+    await assignHost(owner, game.gameCode, playersInput[0].deviceId);
+    const gameData: PokerGame = await Cache.getGame(game.gameCode);
+    expect(gameData.hostId).not.toEqual(originalHostId);
+    expect(gameData.hostUuid).toEqual(playersInput[0].deviceId);
 
-    const updateGameSettings: any = {
-      buyInApproval: true,
-      showHandRank: true,
-      allowRabbitHunt: true,
+    // The owner is no longer the host. Therefore, he should not be able to assign another host.
+    const t = async () => {
+      await assignHost(owner, game.gameCode, playersInput[0].deviceId);
     };
-    await GameSettingsRepository.update(game, gameCode, updateGameSettings);
-    gameSettings = await GameSettingsRepository.get(gameCode);
-    expect(gameSettings.buyInApproval).toEqual(true);
-    expect(gameSettings.breakLength).toEqual(20);
-    expect(gameSettings.breakAllowed).toEqual(true);
-    expect(gameSettings.waitlistAllowed).toEqual(true);
-    expect(gameSettings.ipCheck).toEqual(false);
-    expect(gameSettings.gpsCheck).toEqual(true);
-    expect(gameSettings.showHandRank).toEqual(true);
-    expect(gameSettings.allowRabbitHunt).toEqual(true);
-  });
+    await expect(t).rejects.toThrowError();
 
+    // The new host (playersInput[0]) should be able to assign another host.
+    await assignHost(playersInput[0].deviceId, game.gameCode, playersInput[1].deviceId);
+    const gameData2: PokerGame = await Cache.getGame(game.gameCode);
+    expect(gameData2.hostUuid).toEqual(playersInput[1].deviceId);
+  });
 });
 

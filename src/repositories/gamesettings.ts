@@ -4,6 +4,7 @@ import {Cache} from '@src/cache/index';
 import {getGameRepository} from '.';
 import {getLogger} from '@src/utils/log';
 import {JanusSession} from '@src/janus';
+import {Nats} from '@src/nats';
 
 const logger = getLogger('repositories::gamesettings');
 class GameSettingsRepositoryImpl {
@@ -66,14 +67,28 @@ class GameSettingsRepositoryImpl {
     gameSettings.buyInTimeout = input.buyInTimeout;
     gameSettings.ipCheck = input.ipCheck;
     gameSettings.gpsCheck = input.gpsCheck;
+    gameSettings.roeGames = input.roeGames;
+    gameSettings.dealerChoiceGames = input.dealerChoiceGames;
+    gameSettings.funAnimations = input.funAnimations;
+    gameSettings.chat = input.chat;
+    gameSettings.runItTwiceAllowed = input.runItTwiceAllowed;
 
     await gameSettingsRepo.save(gameSettings);
   }
 
-  public async update(gameCode: string, input: any) {
+  public async update(game: PokerGame, gameCode: string, input: any) {
     const gameSettingsProps: any = {};
+    if (input.resultPauseTime !== undefined) {
+      gameSettingsProps.resultPauseTime = input.resultPauseTime;
+    }
     if (input.buyInApproval !== undefined) {
       gameSettingsProps.buyInApproval = input.buyInApproval;
+    }
+    if (input.funAnimations !== undefined) {
+      gameSettingsProps.funAnimations = input.funAnimations;
+    }
+    if (input.chat !== undefined) {
+      gameSettingsProps.chat = input.chat;
     }
     if (input.runItTwiceAllowed !== undefined) {
       gameSettingsProps.runItTwiceAllowed = input.runItTwiceAllowed;
@@ -103,6 +118,9 @@ class GameSettingsRepositoryImpl {
     if (input.bombPotIntervalInSecs !== undefined) {
       gameSettingsProps.bombPotIntervalInSecs = input.bombPotIntervalInSecs;
     }
+    if (input.bombPotBet !== undefined) {
+      gameSettingsProps.bombPotBet = input.bombPotBet;
+    }
     if (input.seatChangeAllowed !== undefined) {
       gameSettingsProps.seatChangeAllowed = input.seatChangeAllowed;
     }
@@ -127,11 +145,14 @@ class GameSettingsRepositoryImpl {
     if (input.gpsCheck !== undefined) {
       gameSettingsProps.gpsCheck = input.gpsCheck;
     }
-    if (input.roeGames !== undefined) {
-      gameSettingsProps.roeGames = input.roeGames;
+    if (input.roeGames !== undefined && Array.isArray(input.roeGames)) {
+      gameSettingsProps.roeGames = input.roeGames.join(',');
     }
-    if (input.dealerChoiceGames !== undefined) {
-      gameSettingsProps.dealerChoiceGames = input.dealerChoiceGames;
+    if (
+      input.dealerChoiceGames !== undefined &&
+      Array.isArray(input.roeGames)
+    ) {
+      gameSettingsProps.dealerChoiceGames = input.dealerChoiceGames.join(',');
     }
     const gameSettingsRepo = getGameRepository(PokerGameSettings);
     await gameSettingsRepo.update(
@@ -140,7 +161,9 @@ class GameSettingsRepositoryImpl {
       },
       gameSettingsProps
     );
-    await Cache.getGameSettings(gameCode, true);
+    const gameSettingsUpdated = await Cache.getGameSettings(gameCode, true);
+    Nats.gameSettingsChanged(game);
+    logger.info(JSON.stringify(gameSettingsUpdated));
   }
 
   public async get(

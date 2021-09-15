@@ -19,15 +19,12 @@ class HistoryRepositoryImpl {
     gameHistory.gameId = game.id;
     gameHistory.gameCode = game.gameCode;
     gameHistory.clubId = game.clubId;
-    gameHistory.dealerChoiceGames = game.dealerChoiceGames;
     gameHistory.smallBlind = game.smallBlind;
     gameHistory.bigBlind = game.bigBlind;
     gameHistory.gameCode = game.gameCode;
     gameHistory.gameType = game.gameType;
-    gameHistory.hostId = game.hostId;
-    gameHistory.hostName = game.hostName;
-    gameHistory.hostUuid = game.hostUuid;
-    gameHistory.roeGames = game.roeGames;
+    gameHistory.startedBy = game.startedBy;
+    gameHistory.startedByName = game.startedByName;
     gameHistory.startedAt = game.startedAt;
     gameHistory.maxPlayers = game.maxPlayers;
     gameHistory.highHandTracked = game.highHandTracked;
@@ -123,14 +120,14 @@ class HistoryRepositoryImpl {
   }
 
   public async getGameHistory(
-    hostId: string,
+    startedByPlayerId: string,
     clubId: number | null
   ): Promise<GameHistory[]> {
     const gameHistory = await getHistoryRepository(GameHistory)
       .createQueryBuilder()
-      .where('club_id = :clubId OR host_id = :hostId', {
+      .where('club_id = :clubId OR started_by_player_id = :startedByPlayerId', {
         clubId: clubId,
-        hostId: hostId,
+        startedByPlayerId: startedByPlayerId,
       })
       .getMany();
     return gameHistory;
@@ -166,14 +163,14 @@ class HistoryRepositoryImpl {
         highHandTracked: game.highHandTracked,
         gameType: game.gameType,
         startedAt: game.startedAt,
-        startedBy: game.hostName,
+        startedBy: game.startedByName,
         endedAt: game.endedAt,
         endedBy: game.endedByName,
         handsDealt: game.handsDealt,
       };
       gameData.isHost = false;
       if (cachedPlayer) {
-        if (game.hostUuid === cachedPlayer.uuid) {
+        if (game.startedBy === cachedPlayer.id) {
           gameData.isHost = true;
         }
         if (game.clubCode) {
@@ -218,7 +215,7 @@ class HistoryRepositoryImpl {
             showdownHands: gameStat.wentToShowDown,
             gameType: game.gameType,
             startedAt: game.startedAt,
-            startedBy: game.hostName,
+            startedBy: game.startedByName,
             endedAt: game.endedAt,
             endedBy: game.endedByName,
             stack: player.stack,
@@ -276,7 +273,7 @@ class HistoryRepositoryImpl {
           gameType: game.gameType,
           gameTime: gameTime,
           runTime: gameTime,
-          startedBy: game.hostName,
+          startedBy: game.startedByName,
           startedAt: game.startedAt,
           endedBy: game.endedByName,
           endedAt: game.endedAt,
@@ -320,7 +317,9 @@ class HistoryRepositoryImpl {
         buyIn: player.buyIn,
         rakePaid: player.rakePaid,
         profit: player.stack - player.buyIn,
+        stack: player.stack,
         playerName: player.playerName,
+        playerId: player.id,
         playerUuid: player.playerUuid,
       };
       gameResults.push(gameResult);

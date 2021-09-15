@@ -106,9 +106,10 @@ export interface NewHandInfo {
   bbPos?: number;
   resultPauseTime: number;
   bombPot: boolean;
-  doubleBoardBombPot: boolean;
+  doubleBoard: boolean;
   bombPotBet: number;
   bringIn: number;
+  runItTwiceTimeout: number;
 }
 
 export const WAITLIST_SEATING = 'WAITLIST_SEATING';

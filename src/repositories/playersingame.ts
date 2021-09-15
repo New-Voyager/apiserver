@@ -173,6 +173,59 @@ class PlayersInGameRepositoryImpl {
     });
   }
 
+  public async assignNewHost(
+    gameCode: string,
+    oldHostPlayer: Player,
+    newHostPlayer: Player
+  ) {
+    await getGameManager().transaction(async transactionEntityManager => {
+      // find game
+      const game = await Cache.getGame(
+        gameCode,
+        false,
+        transactionEntityManager
+      );
+      if (!game) {
+        throw new Error(`Game ${gameCode} is not found`);
+      }
+
+      // Only one of the seated players can be assigned as the new host.
+      const playersInSeats: Array<PlayerGameTracker> = await this.getPlayersInSeats(
+        game.id,
+        transactionEntityManager
+      );
+      let isPlayerInSeat: boolean = false;
+      for (const p of playersInSeats) {
+        if (p.playerId === newHostPlayer.id) {
+          isPlayerInSeat = true;
+        }
+      }
+      if (!isPlayerInSeat) {
+        throw new Error(
+          `Player ${newHostPlayer.uuid} is not in seat in game ${gameCode}`
+        );
+      }
+
+      const gameRepo = transactionEntityManager.getRepository(PokerGame);
+      await gameRepo.update(
+        {
+          gameCode: gameCode,
+        },
+        {
+          hostId: newHostPlayer.id,
+          hostUuid: newHostPlayer.uuid,
+          hostName: newHostPlayer.name,
+        }
+      );
+      await Cache.getGame(
+        gameCode,
+        true /** update */,
+        transactionEntityManager
+      );
+      Nats.hostChanged(game, newHostPlayer);
+    });
+  }
+
   public async getAudioToken(
     player: Player,
     game: PokerGame,
@@ -301,9 +354,13 @@ class PlayersInGameRepositoryImpl {
       playerId: player.id,
     });
     if (!playerInGame) {
-      throw new Error(
-        `Player ${player.name} is not found in game: ${game.gameCode}`
-      );
+      return {
+        muckLosingHand: false,
+        autoStraddle: false,
+        bombPotEnabled: true,
+        runItTwiceEnabled: true,
+        buttonStraddle: false,
+      };
     }
 
     const settings: GamePlayerSettings = {

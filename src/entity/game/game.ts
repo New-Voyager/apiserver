@@ -212,7 +212,7 @@ export class PokerGameSettings {
   @Column({name: 'max_waitlist', type: 'int', default: 20})
   public maxWaitlist!: number;
 
-  @Column({name: 'seatchange_timeout', type: 'int', default: 30})
+  @Column({name: 'seatchange_timeout', type: 'int', default: 10})
   public seatChangeTimeout!: number;
 
   @Column({name: 'buy_in_approval', default: false})
@@ -224,8 +224,17 @@ export class PokerGameSettings {
   @Column({name: 'waitlist_sitting_timeout', type: 'int', default: 180}) // in seconds
   public waitlistSittingTimeout!: number;
 
+  @Column({name: 'fun_animations', default: true})
+  public funAnimations!: boolean;
+
+  @Column({name: 'chat', default: true})
+  public chat!: boolean;
+
   @Column({name: 'run_it_twice_allowed', default: false})
   public runItTwiceAllowed!: boolean;
+
+  @Column({type: 'int', name: 'run_it_twice_timeout', default: 10})
+  public runItTwiceTimeout!: number;
 
   @Column({name: 'allow_rabbit_hunt', default: true})
   public allowRabbitHunt!: boolean;
@@ -260,6 +269,15 @@ export class PokerGameSettings {
   // janus room pin
   @Column({name: 'janus_room_pin', default: ''})
   public janusRoomPin!: string;
+
+  @Column({name: 'roe_games', nullable: true, default: ''})
+  public roeGames!: string; // comma separated list of round of each games
+
+  @Column({name: 'dealer_choice_games', nullable: true, default: ''})
+  public dealerChoiceGames!: string; // comma separated list of round of each games
+
+  @Column({name: 'result_pause_time', type: 'int', default: 5})
+  public resultPauseTime!: number;
 }
 
 @Entity({name: 'poker_game'})
@@ -328,10 +346,10 @@ export class PokerGame {
   })
   public straddleBet!: number;
 
-  @Column({name: 'utg_straddle', nullable: true})
+  @Column({name: 'utg_straddle', nullable: true, default: true})
   public utgStraddleAllowed!: boolean;
 
-  @Column({name: 'button_straddle', nullable: true})
+  @Column({name: 'button_straddle', nullable: true, default: false})
   public buttonStraddleAllowed!: boolean;
 
   @Column({name: 'max_players', type: 'int'})
@@ -406,12 +424,6 @@ export class PokerGame {
   @Column({name: 'wait_for_bigblind', default: true})
   public waitForBigBlind!: boolean;
 
-  @Column({name: 'roe_games', nullable: true, default: ''})
-  public roeGames!: string; // comma separated list of round of each games
-
-  @Column({name: 'dealer_choice_games', nullable: true, default: ''})
-  public dealerChoiceGames!: string; // comma separated list of round of each games
-
   @DbAwareColumn({
     name: 'started_at',
     type: 'timestamp',
@@ -425,6 +437,12 @@ export class PokerGame {
     nullable: true,
   })
   public endedAt!: Date;
+
+  @Column({name: 'started_by_player_id', type: 'int'})
+  public startedBy!: number;
+
+  @Column({name: 'started_by_name'})
+  public startedByName!: string;
 
   @Column({name: 'ended_by_player_id', nullable: true, type: 'int'})
   public endedBy!: number;
