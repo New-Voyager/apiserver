@@ -69,6 +69,8 @@ class GameSettingsRepositoryImpl {
     gameSettings.gpsCheck = input.gpsCheck;
     gameSettings.roeGames = input.roeGames;
     gameSettings.dealerChoiceGames = input.dealerChoiceGames;
+    gameSettings.funAnimations = input.funAnimations;
+    gameSettings.chat = input.chat;
 
     await gameSettingsRepo.save(gameSettings);
   }
@@ -80,6 +82,12 @@ class GameSettingsRepositoryImpl {
     }
     if (input.buyInApproval !== undefined) {
       gameSettingsProps.buyInApproval = input.buyInApproval;
+    }
+    if (input.funAnimations !== undefined) {
+      gameSettingsProps.funAnimations = input.funAnimations;
+    }
+    if (input.chat !== undefined) {
+      gameSettingsProps.chat = input.chat;
     }
     if (input.runItTwiceAllowed !== undefined) {
       gameSettingsProps.runItTwiceAllowed = input.runItTwiceAllowed;
