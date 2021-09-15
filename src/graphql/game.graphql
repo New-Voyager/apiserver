@@ -294,6 +294,8 @@ type GameSettings {
     
   buyInApproval: Boolean
   runItTwiceAllowed: Boolean
+  funAnimations: Boolean
+  chat: Boolean
   allowRabbitHunt: Boolean
   showHandRank: Boolean
   doubleBoardEveryHand: Boolean
@@ -329,6 +331,8 @@ input GameSettingsUpdateInput {
   allowRabbitHunt: Boolean
   showHandRank: Boolean
   doubleBoardEveryHand: Boolean
+  funAnimations: Boolean
+  chat: Boolean
 
   # bomb pot (comes from PokerGameUpdates)
   bombPotEnabled: Boolean

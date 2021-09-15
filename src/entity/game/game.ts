@@ -212,7 +212,7 @@ export class PokerGameSettings {
   @Column({name: 'max_waitlist', type: 'int', default: 20})
   public maxWaitlist!: number;
 
-  @Column({name: 'seatchange_timeout', type: 'int', default: 30})
+  @Column({name: 'seatchange_timeout', type: 'int', default: 10})
   public seatChangeTimeout!: number;
 
   @Column({name: 'buy_in_approval', default: false})
@@ -223,6 +223,12 @@ export class PokerGameSettings {
 
   @Column({name: 'waitlist_sitting_timeout', type: 'int', default: 180}) // in seconds
   public waitlistSittingTimeout!: number;
+
+  @Column({name: 'fun_animations', default: true})
+  public funAnimations!: boolean;
+
+  @Column({name: 'chat', default: true})
+  public chat!: boolean;
 
   @Column({name: 'run_it_twice_allowed', default: false})
   public runItTwiceAllowed!: boolean;

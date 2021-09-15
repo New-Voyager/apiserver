@@ -154,7 +154,11 @@ export class SeatChangeProcess {
     );
 
     const expTime = new Date();
-    const promptTime = 30;
+    const gameSettings = await Cache.getGameSettings(this.game.gameCode);
+    let promptTime = gameSettings.seatChangeTimeout;
+    if (!promptTime) {
+      promptTime = 10;
+    }
     expTime.setSeconds(expTime.getSeconds() + promptTime);
     const exp = utcTime(expTime);
 

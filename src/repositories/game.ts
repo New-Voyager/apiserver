@@ -794,6 +794,11 @@ class GameRepositoryImpl {
     hostStartedGame: boolean,
     transactionEntityManager?: EntityManager
   ): Promise<void> {
+    logger.info(
+      `[${
+        game.gameCode
+      }] Restarting game. Game status: ${game.status.toString()}`
+    );
     if (game.status !== GameStatus.ACTIVE) {
       return;
     }
@@ -877,19 +882,15 @@ class GameRepositoryImpl {
                 tableStatus: newTableStatus,
               }
             );
-            if (
-              (processPendingUpdates && newTableStatus !== prevTableStatus) ||
-              hostStartedGame
-            ) {
-              // refresh the cache
-              const gameUpdate = await Cache.getGame(
-                game.gameCode,
-                true,
-                transactionEntityManager
-              );
-              // resume the game
-              await resumeGame(gameUpdate.id, transactionEntityManager);
-            }
+            // refresh the cache
+            const gameUpdate = await Cache.getGame(
+              game.gameCode,
+              true,
+              transactionEntityManager
+            );
+            logger.info(`[${game.gameCode}] Resuming game`);
+            // resume the game
+            await resumeGame(gameUpdate.id, transactionEntityManager);
           }
         }
       } catch (err) {
@@ -1503,6 +1504,11 @@ class GameRepositoryImpl {
           postedBlind: true,
         }
       );
+    }
+    const gameDB = await Cache.getGame(game.gameCode, true);
+    if (gameDB && gameDB.tableStatus === TableStatus.NOT_ENOUGH_PLAYERS) {
+      // resume game
+      await this.restartGameIfNeeded(game, false, false);
     }
   }
 

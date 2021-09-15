@@ -69,6 +69,9 @@ class GameSettingsRepositoryImpl {
     gameSettings.gpsCheck = input.gpsCheck;
     gameSettings.roeGames = input.roeGames;
     gameSettings.dealerChoiceGames = input.dealerChoiceGames;
+    gameSettings.funAnimations = input.funAnimations;
+    gameSettings.chat = input.chat;
+    gameSettings.runItTwiceAllowed = input.runItTwiceAllowed;
 
     await gameSettingsRepo.save(gameSettings);
   }
@@ -80,6 +83,12 @@ class GameSettingsRepositoryImpl {
     }
     if (input.buyInApproval !== undefined) {
       gameSettingsProps.buyInApproval = input.buyInApproval;
+    }
+    if (input.funAnimations !== undefined) {
+      gameSettingsProps.funAnimations = input.funAnimations;
+    }
+    if (input.chat !== undefined) {
+      gameSettingsProps.chat = input.chat;
     }
     if (input.runItTwiceAllowed !== undefined) {
       gameSettingsProps.runItTwiceAllowed = input.runItTwiceAllowed;
@@ -108,6 +117,9 @@ class GameSettingsRepositoryImpl {
     }
     if (input.bombPotIntervalInSecs !== undefined) {
       gameSettingsProps.bombPotIntervalInSecs = input.bombPotIntervalInSecs;
+    }
+    if (input.bombPotBet !== undefined) {
+      gameSettingsProps.bombPotBet = input.bombPotBet;
     }
     if (input.seatChangeAllowed !== undefined) {
       gameSettingsProps.seatChangeAllowed = input.seatChangeAllowed;

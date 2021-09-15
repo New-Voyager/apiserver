@@ -203,14 +203,14 @@ export async function processPendingUpdates(gameId: number) {
       } else if (update.newUpdate === NextHandUpdate.TAKE_BREAK) {
         const player = await Cache.getPlayerById(update.playerId);
         const takeBreak = new TakeBreak(game, player);
-        takeBreak.processPendingUpdate(update);
+        await takeBreak.processPendingUpdate(update);
       }
     }
 
     let seatChangeAllowed = gameSettings.seatChangeAllowed;
-    const seats = await occupiedSeats(game.id);
     seatChangeAllowed = true; // debugging
     if (seatChangeAllowed && openedSeat) {
+      const seats = await occupiedSeats(game.id);
       if (newOpenSeat && seats <= game.maxPlayers - 1) {
         logger.info(`[${game.gameCode}] Seat Change is in Progress`);
         // open seat

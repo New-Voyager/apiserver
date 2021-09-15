@@ -194,7 +194,7 @@ describe('Game APIs', () => {
     let ret = await nextHandProcess.getNextHandInfo();
     expect(ret.bombPot).toEqual(true);
     expect(ret.doubleBoard).toEqual(true);
-    expect(ret.bombPotBet).toEqual(5);
+    expect(ret.bombPotBet).toEqual(10);
 
     // move to next hand
     nextHandProcess = new NextHandProcess(game.gameCode, 1);
@@ -210,28 +210,28 @@ describe('Game APIs', () => {
     ret = await nextHandProcess.getNextHandInfo();
     expect(ret.bombPot).toEqual(true);
     expect(ret.doubleBoard).toEqual(true);
-    expect(ret.bombPotBet).toEqual(5);
+    expect(ret.bombPotBet).toEqual(10);
 
     nextHandProcess = new NextHandProcess(game.gameCode, 3);
     await nextHandProcess.moveToNextHand();
     ret = await nextHandProcess.getNextHandInfo();
     expect(ret.bombPot).toEqual(false);
     expect(ret.doubleBoard).toEqual(false);
-    expect(ret.bombPotBet).toEqual(5);
+    expect(ret.bombPotBet).toEqual(10);
 
     nextHandProcess = new NextHandProcess(game.gameCode, 4);
     await nextHandProcess.moveToNextHand();
     ret = await nextHandProcess.getNextHandInfo();
     expect(ret.bombPot).toEqual(false);
     expect(ret.doubleBoard).toEqual(false);
-    expect(ret.bombPotBet).toEqual(5);
+    expect(ret.bombPotBet).toEqual(10);
     await sleep(11000);
     nextHandProcess = new NextHandProcess(game.gameCode, 5);
     await nextHandProcess.moveToNextHand();
     ret = await nextHandProcess.getNextHandInfo();
     expect(ret.bombPot).toEqual(true);
     expect(ret.doubleBoard).toEqual(true);
-    expect(ret.bombPotBet).toEqual(5);
+    expect(ret.bombPotBet).toEqual(10);
   });
 });
 

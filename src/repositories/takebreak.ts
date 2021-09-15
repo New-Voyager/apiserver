@@ -1,7 +1,16 @@
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {NextHandUpdates, PokerGame} from '@src/entity/game/game';
+import {
+  NextHandUpdates,
+  PokerGame,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
-import {GameStatus, NextHandUpdate, PlayerStatus} from '@src/entity/types';
+import {
+  GameStatus,
+  NextHandUpdate,
+  PlayerStatus,
+  TableStatus,
+} from '@src/entity/types';
 import {startTimer} from '@src/timer';
 import {utcTime} from '@src/utils';
 import {getLogger} from '@src/utils/log';
@@ -11,6 +20,7 @@ import {Cache} from '@src/cache/index';
 import {getGameRepository} from '.';
 import {GameRepository} from './game';
 import {Nats} from '@src/nats';
+import {GameUpdatesRepository} from './gameupdates';
 const logger = getLogger('repositories::takebreak');
 
 export class TakeBreak {
@@ -129,6 +139,28 @@ export class TakeBreak {
       playerInGame.stack,
       playerInGame.seatNo
     );
+
+    // if active player count is 1, then mark the game not enough players
+    const playingCount = await playerGameTrackerRepository
+      .createQueryBuilder()
+      .where({
+        game: {id: this.game.id},
+        status: PlayerStatus.PLAYING,
+      })
+      .getCount();
+
+    if (playingCount <= 1) {
+      const gameRepo = getGameRepository(PokerGame);
+      await gameRepo.update(
+        {
+          gameCode: this.game.gameCode,
+        },
+        {
+          tableStatus: TableStatus.NOT_ENOUGH_PLAYERS,
+        }
+      );
+      await Cache.getGame(this.game.gameCode, true);
+    }
   }
 
   private async startTimer(
@@ -149,8 +181,7 @@ export class TakeBreak {
     const now = utcTime(new Date());
     const breakTimeExpAt = new Date();
     let timeoutInMins = gameSettings.breakLength;
-    timeoutInMins = 1;
-    const timeoutInSeconds = timeoutInMins * 10 * 60;
+    const timeoutInSeconds = timeoutInMins * 60;
     breakTimeExpAt.setSeconds(breakTimeExpAt.getSeconds() + timeoutInSeconds);
     const exp = utcTime(breakTimeExpAt);
     logger.debug(
