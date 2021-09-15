@@ -71,6 +71,7 @@ class GameSettingsRepositoryImpl {
     gameSettings.dealerChoiceGames = input.dealerChoiceGames;
     gameSettings.funAnimations = input.funAnimations;
     gameSettings.chat = input.chat;
+    gameSettings.runItTwiceAllowed = input.runItTwiceAllowed;
 
     await gameSettingsRepo.save(gameSettings);
   }

@@ -267,6 +267,9 @@ describe('Game/Player Settings', () => {
       bombPotEveryHand: true,
     };
     await updateGameSettings(owner, gameCode, gameSettings);
+    const gameSettingsUpdated = await getGameSettings(owner, gameCode);
+    expect(gameSettingsUpdated).not.toBeNull();
+    expect(gameSettingsUpdated.runItTwiceAllowed).toEqual(true);
 
     // disable bombpot and run it twice for the player
     let johnSettings: any = {
