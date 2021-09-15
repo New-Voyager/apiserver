@@ -346,10 +346,10 @@ export class PokerGame {
   })
   public straddleBet!: number;
 
-  @Column({name: 'utg_straddle', nullable: true})
+  @Column({name: 'utg_straddle', nullable: true, default: true})
   public utgStraddleAllowed!: boolean;
 
-  @Column({name: 'button_straddle', nullable: true})
+  @Column({name: 'button_straddle', nullable: true, default: false})
   public buttonStraddleAllowed!: boolean;
 
   @Column({name: 'max_players', type: 'int'})
