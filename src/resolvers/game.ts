@@ -1085,14 +1085,13 @@ export async function myGameSettings(playerUuid: string, gameCode: string) {
     //   throw new Error(`Game ${gameCode} is not found`);
     // }
     // return gameSettings;
-    return {
-      autoStraddle: false,
-      straddle: false,
-      buttonStraddle: false,
-      bombPotEnabled: false,
-      muckLosingHand: false,
-      runItTwiceEnabled: false,
-    };
+    const game = await Cache.getGame(gameCode);
+    const player = await Cache.getPlayer(playerUuid);
+    const playerSettings = await PlayersInGameRepository.getPlayerGameSettings(
+      player,
+      game
+    );
+    return playerSettings;
   } catch (err) {
     logger.error(
       `Error while getting game settings. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
