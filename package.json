@@ -14,7 +14,7 @@
     "debug-windows": "set NODE_ENV=dev && tsc-watch.bat",
     "debug-break": "node --nolazy --inspect-brk=9235 ./build/index.js",
     "test": "NODE_ENV=test jest --runInBand ./tests",
-    "int-test": "NODE_ENV=dev jest --runInBand ./tests",
+    "int-test": "NODE_ENV=dev jest --config jest-int.config.js --runInBand ./tests",
     "test1": "NODE_ENV=test jest --runInBand ./tests \"--testNamePattern\" \"wait list seating\"",
     "unit-tests": "NODE_ENV=test DB_USED=sqllite npx jest --forceExit --runInBand ./unit-tests",
     "unit-test-specific": "NODE_ENV=unit-test DB_USED=sqllite jest --forceExit --runInBand ./unit-tests/playersettings.test.ts \"--testNamePattern\" \"gameplayersettings: change game player setting\"",
