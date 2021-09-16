@@ -70,6 +70,7 @@ export interface PlayerInSeat {
   playerId?: number;
   playerUuid?: string;
   name?: string;
+  encryptionKey?: string;
   buyIn?: number;
   stack?: number;
   status?: number; // PlayerStatus

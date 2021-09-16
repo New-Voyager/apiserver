@@ -665,7 +665,7 @@ export class NextHandProcess {
           throw new Error(`Game code: Game updates ${this.gameCode} not found`);
         }
 
-        const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
+        const playersInSeats: Array<PlayerGameTracker> = await PlayersInGameRepository.getPlayersInSeats(
           game.id,
           transactionEntityManager
         );
@@ -692,7 +692,6 @@ export class NextHandProcess {
           let postedBlind = false;
           let missedBlind = false;
           const playerSeat = takenSeats[seatNo];
-
           if (!playerSeat) {
             seats.push({
               seatNo: seatNo,
@@ -709,6 +708,13 @@ export class NextHandProcess {
               buttonStraddle: false,
             });
           } else {
+            const player = await Cache.getPlayer(playerSeat.playerUuid);
+            if (!player) {
+              throw new Error(
+                `Could not find Player object for uuid ${playerSeat.playerUuid}`
+              );
+            }
+
             let inhand = false;
             let buyInExpTime = '';
             let breakTimeExp = '';
@@ -748,6 +754,7 @@ export class NextHandProcess {
               buyInTimeExpAt: buyInExpTime,
               breakTimeExpAt: breakTimeExp,
               gameToken: '',
+              encryptionKey: player.encryptionKey,
 
               // player settings
               runItTwice: runItTwiceEnabled,
