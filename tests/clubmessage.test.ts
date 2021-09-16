@@ -1,23 +1,25 @@
-import {resetDatabase, getClient} from './utils/utils';
+import {resetDatabase, getClient, startGqlServer} from './utils/utils';
 import * as clubmessageutils from './utils/clubmessage.testutils';
 import * as clubutils from './utils/club.testutils';
 import {getLogger} from '../src/utils/log';
 const logger = getLogger('clubmessage');
 
-beforeAll(async done => {
-  //server = new TestServer();
-  //await server.start();
-  await resetDatabase();
-  //  client = getClient();
-  done();
-});
+describe('Club Message APIs', () => {
+  let stop, graphql;
 
-afterAll(async done => {
-  //await server.stop();
-  done();
-});
-
-describe('Club APIs', () => {
+  beforeAll(async done => {
+    const testServer = await startGqlServer();
+    stop = testServer.stop;
+    graphql = testServer.graphql;
+    await resetDatabase();
+    done();
+  });
+  
+  afterAll(async done => {
+     stop();
+     done();
+  });
+  
   test('send a text message', async () => {
     const [clubCode] = await clubutils.createClub();
     const playerId = await clubutils.createPlayer('adam', '1243ABC');

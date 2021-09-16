@@ -161,13 +161,18 @@
         "--inspect-brk",
         "${workspaceRoot}/node_modules/.bin/jest",
         "--runInBand",
-        "./tests/gamesettings.test.ts",
+        "./tests/helloworld.test.ts",
         "--testNamePattern",
-        "update player settings"
+        "get my clubs"
       ],
       "env": {
-        "NODE_ENV": "test",
-        "DB_USED": "sqllite"
+        "NODE_ENV": "int-test",
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_USER": "game",
+        "POSTGRES_PASSWORD": "game",
+        "POSTGRES_DB": "game",
+        "NATS_URL": "nats://localhost:4222"        
       },
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",

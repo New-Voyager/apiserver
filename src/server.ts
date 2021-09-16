@@ -3,6 +3,7 @@ import {fileLoader, mergeTypes} from 'merge-graphql-schemas';
 import {merge} from 'lodash';
 import {authorize} from '@src/middlewares/authorization';
 import * as dotenv from 'dotenv';
+import * as fs from 'fs';
 
 const bodyParser = require('body-parser');
 const GQL_PORT = 9501;
@@ -18,6 +19,7 @@ export enum RunProfile {
   DEV,
   TEST,
   PROD,
+  INT_TEST,
 }
 
 const logger = getLogger('server');
@@ -30,6 +32,7 @@ const requestContext = async ({req}) => {
 
 let app: any = null;
 let runProfile: RunProfile = RunProfile.DEV;
+let apolloServer: any = null;
 
 function setPgConversion() {
   const types = require('pg').types;
@@ -41,7 +44,68 @@ function setPgConversion() {
   });
 }
 
-export async function start(dbConnection?: any): Promise<[any, any]> {
+export function getApolloServer(options?: {intTest?: boolean}): ApolloServer {
+  const typesArray1: Array<string> = fileLoader(
+    __dirname + '/' + './graphql/*.graphql',
+    {recursive: true}
+  );
+  const typesArray2: Array<string> = fileLoader(
+    __dirname + '/' + '../../src/graphql/*.graphql',
+    {recursive: true}
+  );
+  const allTypes = new Array<string>();
+  allTypes.push(...typesArray1);
+  allTypes.push(...typesArray2);
+
+  const typeDefs = mergeTypes(allTypes, {all: true});
+  let resolverFiles: any;
+  let resolvers = {};
+  let extensions = ['.js'];
+  if ((runProfile = RunProfile.INT_TEST)) {
+    extensions = ['.js', '.ts'];
+  }
+  try {
+    const resolversDir2 = __dirname + '/' + '../build/src/resolvers/';
+    if (fs.existsSync(resolversDir2)) {
+      resolverFiles = fileLoader(resolversDir2, {
+        recursive: true,
+        extensions: extensions,
+      });
+      for (const resolverFile of resolverFiles) {
+        resolvers = merge(resolvers, resolverFile.getResolvers());
+      }
+    }
+  } catch (err) {
+    console.error(err);
+  }
+
+  try {
+    const resolversDir = __dirname + '/' + './resolvers/';
+    if (fs.existsSync(resolversDir)) {
+      resolverFiles = fileLoader(resolversDir, {
+        recursive: true,
+        extensions: extensions,
+      });
+      for (const resolverFile of resolverFiles) {
+        resolvers = merge(resolvers, resolverFile.getResolvers());
+      }
+    }
+  } catch (err) {
+    console.error(err);
+  }
+
+  const server = new ApolloServer({
+    typeDefs: typeDefs,
+    resolvers,
+    context: requestContext,
+  });
+  return server;
+}
+
+export async function start(
+  initializeFirebase: boolean,
+  options?: {intTest?: boolean}
+): Promise<[any, any, any]> {
   logger.debug('In start method');
 
   if (!process.env.NATS_URL) {
@@ -50,41 +114,21 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
     );
   }
 
-  const typesArray = fileLoader(
-    __dirname + '/' + '../../src/graphql/*.graphql',
-    {recursive: true}
-  );
-  const typeDefs1 = mergeTypes(typesArray, {all: true});
-
-  const resolversDir = __dirname + '/' + './resolvers/';
-  const resolversFiles = fileLoader(resolversDir, {
-    recursive: true,
-    extensions: ['.js'],
-  });
-  let resolvers = {};
-  for (const resolverFile of resolversFiles) {
-    resolvers = merge(resolvers, resolverFile.getResolvers());
-  }
-
-  const server = new ApolloServer({
-    typeDefs: typeDefs1,
-    resolvers,
-    context: requestContext,
-  });
-
   if (process.env.NODE_ENV) {
     const profile = process.env.NODE_ENV.toLowerCase();
     if (profile === 'prod') {
       runProfile = RunProfile.PROD;
     } else if (profile === 'test') {
       runProfile = RunProfile.TEST;
+    } else if (profile === 'int-test') {
+      runProfile = RunProfile.INT_TEST;
     } else {
       runProfile = RunProfile.DEV;
     }
   }
-
   logger.info(`Server is running ${RunProfile[runProfile].toString()} profile`);
 
+  apolloServer = getApolloServer(options);
   getAppSettings().compressHandData = true;
   if (process.env.COMPRESS_HAND_DATA === 'false') {
     getAppSettings().compressHandData = false;
@@ -97,7 +141,9 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
 
   initializeRedis();
   initializeGameServer();
-  await Firebase.init();
+  if (initializeFirebase && runProfile != RunProfile.INT_TEST) {
+    await Firebase.init();
+  }
 
   // get config vars
   dotenv.config();
@@ -115,11 +161,15 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
 
   app.use(authorize);
   app.use(bodyParser.json());
+  if (runProfile === RunProfile.INT_TEST) {
+    await apolloServer.start();
+  }
+
   //app.use(bodyParser.raw({ inflate: false, limit: '100kb', type: 'application/octet-stream' }));
+  apolloServer.applyMiddleware({app});
 
-  server.applyMiddleware({app});
-
-  const httpServer = app.listen(
+  let httpServer;
+  httpServer = app.listen(
     {
       port: GQL_PORT,
     },
@@ -131,7 +181,7 @@ export async function start(dbConnection?: any): Promise<[any, any]> {
   addInternalRoutes(app);
   // initialize db
   await seed();
-  return [app, httpServer];
+  return [app, httpServer, apolloServer];
 }
 
 async function initializeNats() {
@@ -154,5 +204,11 @@ export function getRunProfileStr(): string {
       return 'prod';
     case RunProfile.TEST:
       return 'test';
+    case RunProfile.INT_TEST:
+      return 'int-test';
   }
+}
+
+export function getApolloServerInstance() {
+  return apolloServer;
 }

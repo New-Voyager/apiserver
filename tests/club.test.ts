@@ -1,22 +1,24 @@
-import {resetDatabase, getClient} from './utils/utils';
+import {resetDatabase, getClient, startGqlServer} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import {getLogger} from '../src/utils/log';
 const logger = getLogger('club');
 
-beforeAll(async done => {
-  //server = new TestServer();
-  //await server.start();
-  await resetDatabase();
-  //  client = getClient();
-  done();
-});
-
-afterAll(async done => {
-  //await server.stop();
-  done();
-});
-
 describe('Club APIs', () => {
+  let stop, graphql;
+
+  beforeAll(async done => {
+    const testServer = await startGqlServer();
+    stop = testServer.stop;
+    graphql = testServer.graphql;
+    await resetDatabase();
+    done();
+  });
+  
+  afterAll(async done => {
+     stop();
+     done();
+  });
+  
   test('create a club', async () => {
     const ownerId = await clubutils.createPlayer('owner', 'abc123');
     const player1Id = await clubutils.createPlayer('player1', 'test123');

@@ -1,4 +1,4 @@
-import {PORT_NUMBER} from './utils/utils';
+import {PORT_NUMBER, startGqlServer} from './utils/utils';
 import {default as axios} from 'axios';
 import {resetDatabase, getClient} from './utils/utils';
 import * as handutils from './utils/hand.testutils';
@@ -145,6 +145,22 @@ async function setupGameEnvironment(
 
 
 describe('Hand Tests', () => {
+
+  let stop, graphql;
+
+  beforeAll(async done => {
+    const testServer = await startGqlServer();
+    stop = testServer.stop;
+    graphql = testServer.graphql;
+    await resetDatabase();
+    done();
+  });
+  
+  afterAll(async done => {
+     stop();
+     done();
+  });
+
   beforeEach(async done => {
     await resetDatabase();
     done();

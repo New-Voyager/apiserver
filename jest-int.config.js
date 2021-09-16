@@ -7,14 +7,14 @@ module.exports = {
     '^@src/(.*)': '<rootDir>/src/$1',
   },
   // globalSetup: '<rootDir>/tests/testSetup.ts',
-  // collectCoverageFrom: [
-  //   'src/**/*.{js,jsx,ts,tsx}',
-  //   '!<rootDir>/node_modules/"',
-  //   ],
-  //collectCoverage: true,
-  //coverageDirectory: 'cov',
+  collectCoverageFrom: [
+    'src/**/*.{js,jsx,ts,tsx}',
+    '!<rootDir>/node_modules/"',
+    ],
+  collectCoverage: true,
+  // coverageDirectory: 'cov',
   testPathIgnorePatterns: [
     '/node_modules',
-    '/tests'
+    '/unit-tests'
   ]
 };

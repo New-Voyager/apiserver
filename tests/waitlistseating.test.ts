@@ -1,4 +1,4 @@
-import {resetDatabase, getClient, PORT_NUMBER} from './utils/utils';
+import {resetDatabase, getClient, PORT_NUMBER, startGqlServer} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
 import * as handutils from './utils/hand.testutils';
@@ -6,16 +6,6 @@ import * as rewardutils from './utils/reward.testutils';
 import {default as axios} from 'axios';
 import {getLogger} from '../src/utils/log';
 const logger = getLogger('game');
-
-beforeAll(async done => {
-  await resetDatabase();
-  done();
-});
-
-afterAll(async done => {
-  //await server.stop();
-  done();
-});
 
 const holdemGameInput = {
   gameType: 'HOLDEM',
@@ -109,16 +99,22 @@ function sleep(ms: number) {
 const GAMESERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
 describe('Tests: waitlist seating APIs', () => {
-  beforeEach(async done => {
+  let stop, graphql;
+
+  beforeAll(async done => {
+    const testServer = await startGqlServer();
+    stop = testServer.stop;
+    graphql = testServer.graphql;
     await resetDatabase();
     done();
   });
-
-  afterEach(async done => {
-    done();
+  
+  afterAll(async done => {
+     stop();
+     done();
   });
 
-  test('wait list seating APIs', async () => {
+  test.skip('wait list seating APIs', async () => {
     // Create club and owner
     const [ownerId, clubCode, players] = await createClubWithMembers([
       {

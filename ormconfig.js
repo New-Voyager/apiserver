@@ -44,6 +44,30 @@ if (process.env[pgDebugPasswordKey]) {
 if (process.env[pgDebugDbNameKey]) {
   debugDB = process.env[pgDebugDbNameKey];
 }
+let profile = '';
+if (process.env.NODE_ENV) {
+  profile = process.env.NODE_ENV.toLowerCase();
+}
+
+let playerEntities = ['build/src/entity/player/**/*.js'];
+if (profile === 'int-test') {
+  playerEntities = ['build/src/entity/player/**/*.js', 'src/entity/player/**/*.ts'];
+}
+
+let gameEntities = ['build/src/entity/game/**/*.js'];
+if (profile === 'int-test') {
+  gameEntities = ['build/src/entity/game/**/*.js', 'src/entity/game/**/*.ts'];
+}
+
+let historyEntities = ['build/src/entity/history/**/*.js'];
+if (profile === 'int-test') {
+  historyEntities = ['build/src/entity/history/**/*.js', 'src/entity/history/**/*.ts'];
+}
+
+let debugEntities = ['build/src/entity/debug/**/*.js'];
+if (profile === 'int-test') {
+  debugEntities = ['build/src/entity/debug/**/*.js', 'src/entity/debug/**/*.ts'];
+}
 
 configs = {
   default: {
@@ -72,7 +96,7 @@ configs = {
     cache: true,
     synchronize: true,
     bigNumberStrings: false,
-    entities: ['build/src/entity/player/**/*.js'],
+    entities: playerEntities,
   },
   livegames: {
     name: 'livegames',
@@ -86,7 +110,7 @@ configs = {
     cache: true,
     synchronize: true,
     bigNumberStrings: false,
-    entities: ['build/src/entity/game/**/*.js'],
+    entities: gameEntities,
   },
   history: {
     name: 'history',
@@ -100,7 +124,7 @@ configs = {
     cache: true,
     synchronize: true,
     bigNumberStrings: false,
-    entities: ['build/src/entity/history/**/*.js'],
+    entities: historyEntities,
   },
   debug: {
     name: 'debug',
@@ -120,7 +144,7 @@ configs = {
         rejectUnauthorized: false,
       },
     },
-    entities: ['build/src/entity/debug/**/*.js'],
+    entities: debugEntities,
   },
   // test: {
   //   name: 'default',

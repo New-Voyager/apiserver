@@ -26,7 +26,8 @@ async function sendTestEmail(playerId: string) {
 const resolvers: any = {
   Query: {
     hello: async (parent, args, ctx, info) => {
-      await Firebase.getAvailableProducts();
+      //await Firebase.getAvailableProducts();
+      console.log('hello resolver is called');
       return 'World';
     },
   },
