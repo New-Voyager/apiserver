@@ -1,4 +1,4 @@
-import {resetDatabase, getClient, PORT_NUMBER} from './utils/utils';
+import {resetDatabase, getClient, PORT_NUMBER, startGqlServer} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
 import * as handutils from './utils/hand.testutils';
@@ -7,16 +7,6 @@ import {default as axios} from 'axios';
 import {getLogger} from '../src/utils/log';
 import { SeatStatus } from '../src/entity/types';
 const logger = getLogger('game');
-
-beforeAll(async done => {
-  await resetDatabase();
-  done();
-});
-
-afterAll(async done => {
-  //await server.stop();
-  done();
-});
 
 const holdemGameInput = {
   gameType: 'HOLDEM',
@@ -110,14 +100,21 @@ function sleep(ms: number) {
 const GAMESERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
 
 describe('Tests: seat change APIs', () => {
-  beforeEach(async done => {
+  let stop, graphql;
+
+  beforeAll(async done => {
+    const testServer = await startGqlServer();
+    stop = testServer.stop;
+    graphql = testServer.graphql;
     await resetDatabase();
     done();
   });
-
-  afterEach(async done => {
-    done();
+  
+  afterAll(async done => {
+     stop();
+     done();
   });
+
 
   test('seat change functionality', async () => {
     // Create club and owner

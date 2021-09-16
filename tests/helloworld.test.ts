@@ -1,8 +1,9 @@
-import {resetDatabase, getClient, sleep, getClubs} from './utils/utils';
-import {gql} from 'apollo-boost';
+import {resetDatabase, getClient, sleep, getClubs, startGqlServer} from './utils/utils';
+import {gql, toPromise} from 'apollo-boost';
 import * as clubutils from './utils/club.testutils';
 import * as handutils from './utils/hand.testutils';
 import { getApolloServer } from '../src/server';
+import { createClub2 } from './utils/club.testutils';
 //import { getApolloServer } from './testSetup';
 //import { getApolloServerInstance } from '../src/server';
 
@@ -33,39 +34,6 @@ const playersInput = [
   },
 ];
 
-async function createClubWithMembers(
-  ownerInput: any,
-  clubInput: any,
-  players: Array<any>
-): Promise<[string, string, number, Array<string>, Array<number>]> {
-  const [clubCode, ownerUuid] = await clubutils.createClub('brady', 'yatzee');
-  const clubId = await clubutils.getClubById(clubCode);
-  const playerUuids = new Array<string>();
-  const playerIds = new Array<number>();
-  for (const playerInput of players) {
-    const playerUuid = await clubutils.createPlayer(
-      playerInput.name,
-      playerInput.deviceId
-    );
-    const playerId = await handutils.getPlayerById(playerUuid);
-    await clubutils.playerJoinsClub(clubCode, playerUuid);
-    await clubutils.approvePlayer(clubCode, ownerUuid, playerUuid);
-    playerUuids.push(playerUuid);
-    playerIds.push(playerId);
-  }
-  return [ownerUuid, clubCode, clubId, playerUuids, playerIds];
-}
-
-beforeAll(async done => {
-  //await resetDatabase();
-  done();
-});
-
-afterAll(async done => {
-  done();
-});
-
-
 
 const createPlayerQuery = `
   mutation($input: PlayerCreateInput!) {
@@ -73,40 +41,33 @@ const createPlayerQuery = `
   }
 `;
 
-async function createPlayerTest(name: string, deviceId: string) {
+async function createPlayerTest(graphql: any, name: string, deviceId: string) {
   const variables = {
     input: {
       name: name,
       deviceId: deviceId,
     },
   };
-  // const client = getClient();
-  // const resp = await client.mutate({
-  //   variables: variables,
-  //   mutation: createPlayerQuery,
-  // });
-  
-  // return resp.data.playerId;
-  const server = getApolloServer();
-  const resp = await server.executeOperation({query: createPlayerQuery, variables: variables});
+  const resp = await toPromise(graphql({query: createPlayerQuery, variables: variables})) as any;
   console.log(`response: ${JSON.stringify(resp)}`);
   return resp.data.playerId;
 }
 
 describe('Test APIs', () => {
+  let stop, graphql;
 
-  test('get my clubs', async () => {
-    //sleep(5000);
-    const playerUuid = await createPlayerTest(
-      'eugene',
-      '123456'
-    );
-    // const [
-    //   owner,
-    //   clubCode,
-    //   clubId,
-    //   playerUuids,
-    //   playerIds,
-    // ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
+  beforeAll(async () => {
+    const testServer = await startGqlServer();
+    stop = testServer.stop;
+    graphql = testServer.graphql;
+  });
+
+  afterAll(() => {
+     stop();
+  });
+
+  test('create player', async () => {
+    await createClub2(graphql, 'test', 'test123');
+    console.log('successful');
   })
 });

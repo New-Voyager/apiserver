@@ -40,7 +40,7 @@
     "copy-files": "npm run copy-google-svc",
     "copy-google-svc": "mkdir -p build/src/google-services/ && cp src/google-services/* build/src/google-services/",
     "codecov": "NODE_ENV=dev NOTIFY_GAME_SERVER=0 NATS_URL=${NATS_URL:-'nats://192.168.0.106:4222'} POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} nyc --reporter=html --reporter=text node -r ts-node/register -r source-map-support/register ./build/index.js",
-    "codecov-spec": "NODE_ENV=dev NOTIFY_GAME_SERVER=0 NATS_URL=${NATS_URL:-'nats://192.168.0.106:4222'} POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} jest --coverage --runInBand ./tests \"--testNamePattern\" \"get game settings\""
+    "codecov-spec": "NODE_ENV=dev NOTIFY_GAME_SERVER=0 NATS_URL=${NATS_URL:-'nats://192.168.0.102:4222'} POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} jest --coverage --runInBand"
   },
   "dependencies": {
     "@googleapis/docs": "^0.2.0",

@@ -3,6 +3,7 @@ import {fileLoader, mergeTypes} from 'merge-graphql-schemas';
 import {merge} from 'lodash';
 import {authorize} from '@src/middlewares/authorization';
 import * as dotenv from 'dotenv';
+import * as fs from 'fs';
 
 const bodyParser = require('body-parser');
 const GQL_PORT = 9501;
@@ -43,7 +44,7 @@ function setPgConversion() {
   });
 }
 
-export function getApolloServer(): ApolloServer {
+export function getApolloServer(options?: {intTest?: boolean}): ApolloServer {
   const typesArray1: Array<string> = fileLoader(
     __dirname + '/' + './graphql/*.graphql',
     {recursive: true}
@@ -51,23 +52,57 @@ export function getApolloServer(): ApolloServer {
   const typesArray2: Array<string> = fileLoader(
     __dirname + '/' + '../../src/graphql/*.graphql',
     {recursive: true}
-  );  
+  );
   const allTypes = new Array<string>();
   allTypes.push(...typesArray1);
   allTypes.push(...typesArray2);
 
   const typeDefs = mergeTypes(allTypes, {all: true});
 
-  // const resolversDir = __dirname + '/' + './resolvers/';
-  const resolversDir = __dirname + '/' + '../build/src/resolvers/';
+  // // const resolversDir = __dirname + '/' + './resolvers/';
+  // const resolversDir = __dirname + '/' + '../build/src/resolvers/';
 
-  const resolversFiles = fileLoader(resolversDir, {
-    recursive: true,
-    extensions: ['.js'],
-  });
+  // const resolversFiles = fileLoader(resolversDir, {
+  //   recursive: true,
+  //   extensions: ['.js'],
+  // });
+  // let resolvers = {};
+  // for (const resolverFile of resolversFiles) {
+  //   resolvers = merge(resolvers, resolverFile.getResolvers());
+  // }
+
+  let resolverFiles: any;
   let resolvers = {};
-  for (const resolverFile of resolversFiles) {
-    resolvers = merge(resolvers, resolverFile.getResolvers());
+  let extensions = ['.js'];
+
+  try {
+    const resolversDir2 = __dirname + '/' + '../build/src/resolvers/';
+    if (fs.existsSync(resolversDir2)) {
+      resolverFiles = fileLoader(resolversDir2, {
+        recursive: true,
+        extensions: extensions,
+      });
+      for (const resolverFile of resolverFiles) {
+        resolvers = merge(resolvers, resolverFile.getResolvers());
+      }
+    }
+  } catch (err) {
+    console.error(err);
+  }
+
+  try {
+    const resolversDir = __dirname + '/' + './resolvers/';
+    if (fs.existsSync(resolversDir)) {
+      resolverFiles = fileLoader(resolversDir, {
+        recursive: true,
+        extensions: extensions,
+      });
+      for (const resolverFile of resolverFiles) {
+        resolvers = merge(resolvers, resolverFile.getResolvers());
+      }
+    }
+  } catch (err) {
+    console.error(err);
   }
 
   const server = new ApolloServer({
@@ -78,7 +113,10 @@ export function getApolloServer(): ApolloServer {
   return server;
 }
 
-export async function start(initializeFirebase: boolean): Promise<[any, any, any]> {
+export async function start(
+  initializeFirebase: boolean,
+  options?: {intTest?: boolean}
+): Promise<[any, any, any]> {
   logger.debug('In start method');
 
   if (!process.env.NATS_URL) {
@@ -101,7 +139,7 @@ export async function start(initializeFirebase: boolean): Promise<[any, any, any
   }
   logger.info(`Server is running ${RunProfile[runProfile].toString()} profile`);
 
-  apolloServer = getApolloServer();
+  apolloServer = getApolloServer(options);
   getAppSettings().compressHandData = true;
   if (process.env.COMPRESS_HAND_DATA === 'false') {
     getAppSettings().compressHandData = false;
@@ -134,23 +172,19 @@ export async function start(initializeFirebase: boolean): Promise<[any, any, any
 
   app.use(authorize);
   app.use(bodyParser.json());
-  await apolloServer.start();
+  //await apolloServer.start();
   //app.use(bodyParser.raw({ inflate: false, limit: '100kb', type: 'application/octet-stream' }));
   apolloServer.applyMiddleware({app});
 
   let httpServer;
-  if (getRunProfile() == RunProfile.INT_TEST) {
-
-  } else {
-    httpServer = app.listen(
-      {
-        port: GQL_PORT,
-      },
-      async () => {
-        logger.info(`🚀 Server ready at http://0.0.0.0:${GQL_PORT}/graphql}`);
-      }
-    );
-  }
+  httpServer = app.listen(
+    {
+      port: GQL_PORT,
+    },
+    async () => {
+      logger.info(`🚀 Server ready at http://0.0.0.0:${GQL_PORT}/graphql}`);
+    }
+  );
   setPgConversion();
   addInternalRoutes(app);
   // initialize db
@@ -179,8 +213,8 @@ export function getRunProfileStr(): string {
     case RunProfile.TEST:
       return 'test';
     case RunProfile.INT_TEST:
-        return 'int-test';
-    }
+      return 'int-test';
+  }
 }
 
 export function getApolloServerInstance() {

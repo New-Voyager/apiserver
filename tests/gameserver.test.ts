@@ -1,4 +1,4 @@
-import {PORT_NUMBER, getClient} from './utils/utils';
+import {PORT_NUMBER, getClient, startGqlServer} from './utils/utils';
 import {default as axios} from 'axios';
 import {resetDatabase} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
@@ -58,6 +58,22 @@ async function saveReward(playerId, clubCode) {
 }
 
 describe('Game server APIs', () => {
+
+  let stop, graphql;
+
+  beforeAll(async done => {
+    const testServer = await startGqlServer();
+    stop = testServer.stop;
+    graphql = testServer.graphql;
+    await resetDatabase();
+    done();
+  });
+  
+  afterAll(async done => {
+     stop();
+     done();
+  });
+
   beforeEach(async done => {
     await resetDatabase();
     done();

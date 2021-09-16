@@ -6,7 +6,7 @@ module.exports = {
   moduleNameMapper: {
     '^@src/(.*)': '<rootDir>/src/$1',
   },
-  globalSetup: '<rootDir>/tests/testSetup.ts',
+  // globalSetup: '<rootDir>/tests/testSetup.ts',
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!<rootDir>/node_modules/"',
