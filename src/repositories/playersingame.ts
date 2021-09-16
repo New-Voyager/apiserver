@@ -26,7 +26,7 @@ class PlayersInGameRepositoryImpl {
     gameId: number,
     transactionManager?: EntityManager
   ): Promise<Array<PlayerGameTracker>> {
-    let playerGameTrackerRepo;
+    let playerGameTrackerRepo: Repository<PlayerGameTracker>;
     if (transactionManager) {
       playerGameTrackerRepo = transactionManager.getRepository(
         PlayerGameTracker
