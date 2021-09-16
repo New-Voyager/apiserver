@@ -61,7 +61,7 @@ export function getApolloServer(options?: {intTest?: boolean}): ApolloServer {
   let resolverFiles: any;
   let resolvers = {};
   let extensions = ['.js'];
-  if(runProfile = RunProfile.INT_TEST) {
+  if ((runProfile = RunProfile.INT_TEST)) {
     extensions = ['.js', '.ts'];
   }
   try {
