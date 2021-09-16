@@ -12,7 +12,7 @@ module.exports = {
     '!<rootDir>/node_modules/"',
     ],
   collectCoverage: true,
-  coverageDirectory: 'cov',
+  // coverageDirectory: 'cov',
   testPathIgnorePatterns: [
     '/node_modules',
     '/unit-tests'
