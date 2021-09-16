@@ -58,23 +58,12 @@ export function getApolloServer(options?: {intTest?: boolean}): ApolloServer {
   allTypes.push(...typesArray2);
 
   const typeDefs = mergeTypes(allTypes, {all: true});
-
-  // // const resolversDir = __dirname + '/' + './resolvers/';
-  // const resolversDir = __dirname + '/' + '../build/src/resolvers/';
-
-  // const resolversFiles = fileLoader(resolversDir, {
-  //   recursive: true,
-  //   extensions: ['.js'],
-  // });
-  // let resolvers = {};
-  // for (const resolverFile of resolversFiles) {
-  //   resolvers = merge(resolvers, resolverFile.getResolvers());
-  // }
-
   let resolverFiles: any;
   let resolvers = {};
   let extensions = ['.js'];
-
+  if(runProfile = RunProfile.INT_TEST) {
+    extensions = ['.js', '.ts'];
+  }
   try {
     const resolversDir2 = __dirname + '/' + '../build/src/resolvers/';
     if (fs.existsSync(resolversDir2)) {
