@@ -114,7 +114,7 @@ describe('Tests: waitlist seating APIs', () => {
      done();
   });
 
-  test('wait list seating APIs', async () => {
+  test.skip('wait list seating APIs', async () => {
     // Create club and owner
     const [ownerId, clubCode, players] = await createClubWithMembers([
       {
