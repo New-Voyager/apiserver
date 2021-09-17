@@ -10,11 +10,8 @@ module.exports = {
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!<rootDir>/node_modules/"',
-    ],
+  ],
   collectCoverage: true,
   // coverageDirectory: 'cov',
-  testPathIgnorePatterns: [
-    '/node_modules',
-    '/unit-tests'
-  ]
+  testPathIgnorePatterns: ['/node_modules', '/unit-tests'],
 };

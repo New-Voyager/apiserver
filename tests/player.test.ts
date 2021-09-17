@@ -3,7 +3,6 @@ import {gql} from 'apollo-boost';
 import * as clubutils from './utils/club.testutils';
 
 describe('Player APIs', () => {
-
   let stop, graphql;
 
   beforeAll(async done => {
@@ -13,10 +12,10 @@ describe('Player APIs', () => {
     await resetDatabase();
     done();
   });
-  
+
   afterAll(async done => {
-     stop();
-     done();
+    stop();
+    done();
   });
 
   test('create a player', async () => {

@@ -1,11 +1,16 @@
-import {resetDatabase, getClient, PORT_NUMBER, startGqlServer} from './utils/utils';
+import {
+  resetDatabase,
+  getClient,
+  PORT_NUMBER,
+  startGqlServer,
+} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
 import * as handutils from './utils/hand.testutils';
 import * as rewardutils from './utils/reward.testutils';
 import {default as axios} from 'axios';
 import {getLogger} from '../src/utils/log';
-import { SeatStatus } from '../src/entity/types';
+import {SeatStatus} from '../src/entity/types';
 const logger = getLogger('game');
 
 const holdemGameInput = {
@@ -109,12 +114,11 @@ describe('Tests: seat change APIs', () => {
     await resetDatabase();
     done();
   });
-  
-  afterAll(async done => {
-     stop();
-     done();
-  });
 
+  afterAll(async done => {
+    stop();
+    done();
+  });
 
   test('seat change functionality', async () => {
     // Create club and owner
@@ -262,5 +266,4 @@ describe('Tests: seat change APIs', () => {
     expect(seats[2].seatNo).toEqual(3);
     expect(seats[2].seatStatus).toEqual(SeatStatus[SeatStatus.OCCUPIED]);
   });
-
 });

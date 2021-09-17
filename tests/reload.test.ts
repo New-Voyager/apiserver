@@ -1,4 +1,9 @@
-import {resetDatabase, getClient, PORT_NUMBER, startGqlServer} from './utils/utils';
+import {
+  resetDatabase,
+  getClient,
+  PORT_NUMBER,
+  startGqlServer,
+} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
 import * as handutils from './utils/hand.testutils';
@@ -108,10 +113,10 @@ describe('Tests: Reload API', () => {
     await resetDatabase();
     done();
   });
-  
+
   afterAll(async done => {
-     stop();
-     done();
+    stop();
+    done();
   });
 
   beforeEach(async done => {

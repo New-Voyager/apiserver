@@ -1,12 +1,17 @@
-import {resetDatabase, getClient, sleep, getClubs, startGqlServer} from './utils/utils';
+import {
+  resetDatabase,
+  getClient,
+  sleep,
+  getClubs,
+  startGqlServer,
+} from './utils/utils';
 import {gql, toPromise} from 'apollo-boost';
 import * as clubutils from './utils/club.testutils';
 import * as handutils from './utils/hand.testutils';
-import { getApolloServer } from '../src/server';
-import { createClub2 } from './utils/club.testutils';
+import {getApolloServer} from '../src/server';
+import {createClub2} from './utils/club.testutils';
 //import { getApolloServer } from './testSetup';
 //import { getApolloServerInstance } from '../src/server';
-
 
 // default player, game and club inputs
 const ownerInput = {
@@ -34,7 +39,6 @@ const playersInput = [
   },
 ];
 
-
 const createPlayerQuery = `
   mutation($input: PlayerCreateInput!) {
     playerId: createPlayer(player: $input)
@@ -48,7 +52,9 @@ async function createPlayerTest(graphql: any, name: string, deviceId: string) {
       deviceId: deviceId,
     },
   };
-  const resp = await toPromise(graphql({query: createPlayerQuery, variables: variables})) as any;
+  const resp = (await toPromise(
+    graphql({query: createPlayerQuery, variables: variables})
+  )) as any;
   console.log(`response: ${JSON.stringify(resp)}`);
   return resp.data.playerId;
 }
@@ -63,11 +69,11 @@ describe('Test APIs', () => {
   });
 
   afterAll(() => {
-     stop();
+    stop();
   });
 
   test('create player', async () => {
     await createClub2(graphql, 'test', 'test123');
     console.log('successful');
-  })
+  });
 });

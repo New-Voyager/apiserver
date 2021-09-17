@@ -347,7 +347,7 @@ export async function getGameSettings(
 export async function updateGameSettings(
   playerId: string,
   gameCode: string,
-  input: any,
+  input: any
 ): Promise<any> {
   const resp = await getClient(playerId).mutate({
     variables: {
@@ -364,7 +364,7 @@ export async function updateGameSettings(
 export async function updatePlayerGameSettings(
   playerId: string,
   gameCode: string,
-  input: any,
+  input: any
 ): Promise<any> {
   const resp = await getClient(playerId).mutate({
     variables: {
@@ -377,8 +377,7 @@ export async function updatePlayerGameSettings(
   expect(resp.data).not.toBeNull();
   return resp.data.ret;
 }
- 
- 
+
 export const takeBreakQuery = gql`
   mutation($gameCode: String!) {
     status: takeBreak(gameCode: $gameCode)
@@ -500,7 +499,6 @@ export const updateGameSettingsQuery = gql`
     ret: updateGameSettings(gameCode: $gameCode, settings: $settings)
   }
 `;
-
 
 export const updatePlayerGameSettingsQuery = gql`
   mutation($gameCode: String!, $settings: GamePlayerSettingsUpdateInput!) {
@@ -990,7 +988,6 @@ export async function leaderboardData(
   expect(resp.data).not.toBeNull();
   return resp.data.status;
 }
-
 
 export async function switchSeat(
   playerId: string,

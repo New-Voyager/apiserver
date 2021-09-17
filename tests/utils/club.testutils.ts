@@ -1,4 +1,4 @@
-import {resetDatabase, getClient, signup} from './utils';
+import {getClient, signup} from './utils';
 import {gql} from 'apollo-boost';
 import {ClubMember} from '../../src/entity/player/club';
 
@@ -278,13 +278,11 @@ export async function updateClubMember(
   return resp.data;
 }
 
-
-
 /**
  * Creates a club and returns clubId and owner id
  */
- export async function createClub2(
-   graphql: any,
+export async function createClub2(
+  graphql: any,
   owner?: string,
   club?: string
 ): Promise<[string, string]> {

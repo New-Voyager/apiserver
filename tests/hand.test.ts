@@ -12,7 +12,7 @@ import * as glob from 'glob';
 import _ from 'lodash';
 import {getRepository} from 'typeorm';
 import {response} from 'express';
-import { defaultHandData } from './utils/hand.testutils';
+import {defaultHandData} from './utils/hand.testutils';
 
 const holdemGameInput = {
   gameType: 'HOLDEM',
@@ -143,9 +143,7 @@ async function setupGameEnvironment(
   return [game.gameCode, gameId];
 }
 
-
 describe('Hand Tests', () => {
-
   let stop, graphql;
 
   beforeAll(async done => {
@@ -155,10 +153,10 @@ describe('Hand Tests', () => {
     await resetDatabase();
     done();
   });
-  
+
   afterAll(async done => {
-     stop();
-     done();
+    stop();
+    done();
   });
 
   beforeEach(async done => {
@@ -199,7 +197,7 @@ describe('Hand Tests', () => {
       });
 
       for await (const file of files) {
-        const filename = directory + "/" + file;
+        const filename = directory + '/' + file;
         const data = await defaultHandData(
           filename,
           gameId,
@@ -247,7 +245,7 @@ describe('Hand Tests', () => {
     });
 
     for await (const file of files) {
-      const filename = directory + "/" + file;
+      const filename = directory + '/' + file;
       const data = await defaultHandData(
         filename,
         gameId,
@@ -304,7 +302,7 @@ describe('Hand Tests', () => {
     });
 
     for await (const file of files) {
-      const filename = directory + "/" + file;
+      const filename = directory + '/' + file;
       const data = await defaultHandData(
         filename,
         gameId,
@@ -356,9 +354,9 @@ describe('Hand Tests', () => {
         cwd: 'hand-results/app-coin',
         deep: 5,
       });
-  
+
       for await (const file of files) {
-        const filename = directory + "/" + file;
+        const filename = directory + '/' + file;
         const data = await defaultHandData(
           filename,
           gameId,
@@ -413,9 +411,9 @@ describe('Hand Tests', () => {
         cwd: 'hand-results/app-coin',
         deep: 5,
       });
-  
+
       for await (const file of files) {
-        const filename = directory + "/" + file;
+        const filename = directory + '/' + file;
         const data = await defaultHandData(
           filename,
           gameId,
@@ -474,36 +472,35 @@ describe('Hand Tests', () => {
       //   rewardId.toString()
       // );
 
-    let noOfWinningPlayer2 = 0;
+      let noOfWinningPlayer2 = 0;
 
+      const directory = 'hand-results/app-coin';
+      const files = await glob.sync('**/*.json', {
+        onlyFiles: false,
+        cwd: 'hand-results/app-coin',
+        deep: 5,
+      });
 
-    const directory = 'hand-results/app-coin';
-    const files = await glob.sync('**/*.json', {
-      onlyFiles: false,
-      cwd: 'hand-results/app-coin',
-      deep: 5,
-    });
+      for await (const file of files) {
+        const filename = directory + '/' + file;
+        const data = await defaultHandData(
+          filename,
+          gameId,
+          //rewardTrackId,
+          playerIds
+        );
 
-    for await (const file of files) {
-      const filename = directory + "/" + file;
-      const data = await defaultHandData(
-        filename,
-        gameId,
-        //rewardTrackId,
-        playerIds
-      );
-      
-      const resp = await axios.post(
+        const resp = await axios.post(
           `${SERVER_API}/save-hand/gameId/${gameId}/handNum/${data.handNum}`,
           data
         );
         expect(resp.status).toBe(200);
         for await (const hiWinner of data.handLog.potWinners[0].hiWinners) {
-          if (data.players[hiWinner.seatNo].id == playerIds[1])
+          if (data.players[hiWinner.seatNo].id === playerIds[1])
             noOfWinningPlayer2 += 1;
         }
         for await (const loWinner of data.handLog.potWinners[0].lowWinners) {
-          if (data.players[loWinner.seatNo].id == playerIds[1])
+          if (data.players[loWinner.seatNo].id === playerIds[1])
             noOfWinningPlayer2 += 1;
         }
       }
@@ -565,11 +562,11 @@ describe('Hand Tests', () => {
         );
         expect(resp).toBe(true);
         for await (const hiWinner of data.handLog.potWinners[0].hiWinners) {
-          if (data.players[hiWinner.seatNo].id == playerIds[1])
+          if (data.players[hiWinner.seatNo].id === playerIds[1])
             noOfWinningPlayer2 += 1;
         }
         for await (const loWinner of data.handLog.potWinners[0].lowWinners) {
-          if (data.players[loWinner.seatNo].id == playerIds[1])
+          if (data.players[loWinner.seatNo].id === playerIds[1])
             noOfWinningPlayer2 += 1;
         }
       }
@@ -626,9 +623,9 @@ describe('Hand Tests', () => {
         cwd: 'hand-results/app-coin',
         deep: 5,
       });
-  
+
       for await (const file of files) {
-        const filename = directory + "/" + file;
+        const filename = directory + '/' + file;
         const data = await defaultHandData(
           filename,
           gameId,

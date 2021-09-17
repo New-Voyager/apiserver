@@ -1,4 +1,9 @@
-import {resetDatabase, getClient, PORT_NUMBER, startGqlServer} from './utils/utils';
+import {
+  resetDatabase,
+  getClient,
+  PORT_NUMBER,
+  startGqlServer,
+} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
 import * as handutils from './utils/hand.testutils';
@@ -6,9 +11,7 @@ import * as rewardutils from './utils/reward.testutils';
 import {default as axios} from 'axios';
 import {getLogger} from '../src/utils/log';
 import {GameStatus} from '../src/entity/types';
-import exp from 'constants';
 const logger = getLogger('game');
-
 
 const holdemGameInput = {
   gameType: 'HOLDEM',
@@ -104,12 +107,12 @@ describe('Tests: Game APIs', () => {
     await resetDatabase();
     done();
   });
-  
+
   afterAll(async done => {
-     stop();
-     done();
+    stop();
+    done();
   });
-  
+
   beforeEach(async done => {
     await resetDatabase();
     done();

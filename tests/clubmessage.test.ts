@@ -14,12 +14,12 @@ describe('Club Message APIs', () => {
     await resetDatabase();
     done();
   });
-  
+
   afterAll(async done => {
-     stop();
-     done();
+    stop();
+    done();
   });
-  
+
   test('send a text message', async () => {
     const [clubCode] = await clubutils.createClub();
     const playerId = await clubutils.createPlayer('adam', '1243ABC');

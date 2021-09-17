@@ -4,21 +4,20 @@ import {getLogger} from '../src/utils/log';
 const logger = getLogger('club');
 
 describe('Club APIs', () => {
-  let stop, graphql;
+  let stop;
 
   beforeAll(async done => {
     const testServer = await startGqlServer();
     stop = testServer.stop;
-    graphql = testServer.graphql;
     await resetDatabase();
     done();
   });
-  
+
   afterAll(async done => {
-     stop();
-     done();
+    stop();
+    done();
   });
-  
+
   test('create a club', async () => {
     const ownerId = await clubutils.createPlayer('owner', 'abc123');
     const player1Id = await clubutils.createPlayer('player1', 'test123');

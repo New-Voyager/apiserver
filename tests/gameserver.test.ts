@@ -58,7 +58,6 @@ async function saveReward(playerId, clubCode) {
 }
 
 describe('Game server APIs', () => {
-
   let stop, graphql;
 
   beforeAll(async done => {
@@ -68,10 +67,10 @@ describe('Game server APIs', () => {
     await resetDatabase();
     done();
   });
-  
+
   afterAll(async done => {
-     stop();
-     done();
+    stop();
+    done();
   });
 
   beforeEach(async done => {
