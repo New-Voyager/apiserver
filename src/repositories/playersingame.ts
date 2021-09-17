@@ -173,6 +173,47 @@ class PlayersInGameRepositoryImpl {
     });
   }
 
+  public async setBuyInLimit(gameCode: string, player: Player, limit: number) {
+    await getGameManager().transaction(async transactionEntityManager => {
+      // find game
+      const game = await Cache.getGame(
+        gameCode,
+        false,
+        transactionEntityManager
+      );
+      if (!game) {
+        throw new Error(`Game ${gameCode} is not found`);
+      }
+      const playerGameTrackerRepository = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
+      logger.info(
+        `Setting buy-in limit to ${limit} for player ${player?.id}/${player?.name} in game ${gameCode}`
+      );
+      const playerInGame = await playerGameTrackerRepository.findOne({
+        where: {
+          game: {id: game.id},
+          playerId: player.id,
+        },
+      });
+
+      if (!playerInGame) {
+        // player is not in game
+        throw new Error(`Player ${player.name} is not in the game`);
+      }
+
+      await playerGameTrackerRepository.update(
+        {
+          game: {id: game.id},
+          playerId: player.id,
+        },
+        {
+          buyInAutoApprovalLimit: limit,
+        }
+      );
+    });
+  }
+
   public async assignNewHost(
     gameCode: string,
     oldHostPlayer: Player,

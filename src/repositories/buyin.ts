@@ -116,7 +116,8 @@ export class BuyIn {
       clubMember.autoBuyinApproval ||
       !gameSettings.buyInApproval ||
       this.player.bot ||
-      isHost
+      isHost ||
+      playerInGame.buyIn + amount <= playerInGame.buyInAutoApprovalLimit
     ) {
       logger.debug(`***** [${this.game.gameCode}] Player: ${this.player.name} buyin approved.
             clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager}
@@ -356,6 +357,11 @@ export class BuyIn {
           // individual game
           if (this.player.id === this.game.hostId || this.player.bot) {
             // approved
+            approved = true;
+          } else if (
+            playerInGame.buyIn + amount <=
+            playerInGame.buyInAutoApprovalLimit
+          ) {
             approved = true;
           } else {
             approved = false;
