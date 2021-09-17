@@ -709,6 +709,11 @@ export async function updateLocation(
   if (!player) {
     throw new Error(`Player ${playerUuid} is not found`);
   }
+  logger.info(
+    `Location Update: Player: ${player.name} location: ${JSON.stringify(
+      location
+    )}`
+  );
   await Cache.updatePlayerLocation(playerUuid, location, ip);
   return true;
 }

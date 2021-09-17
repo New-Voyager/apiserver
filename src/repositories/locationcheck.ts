@@ -26,7 +26,7 @@ export class LocationCheck {
   }
 
   public async check() {
-    logger.debug(
+    logger.info(
       `Location Check: Running location check on game  ${this.game.gameCode}`
     );
 
@@ -79,8 +79,12 @@ export class LocationCheck {
           if (!longestPlayer) {
             longestPlayer = playerInSeat;
           } else {
-            if (playerInSeat.satAt.getTime() < longestPlayer.satAt.getTime()) {
-              longestPlayer = playerInSeat;
+            if (playerInSeat.satAt && longestPlayer.satAt) {
+              if (
+                playerInSeat.satAt.getTime() < longestPlayer.satAt.getTime()
+              ) {
+                longestPlayer = playerInSeat;
+              }
             }
           }
         }
@@ -140,9 +144,9 @@ export class LocationCheck {
           }
 
           // when was this player's location updated (should be recent)
-          const diff = Math.ceil(
-            (now.getTime() - player2.locationUpdatedAt.getTime()) / 1000
-          );
+          // const diff = Math.ceil(
+          //   (now.getTime() - player2.locationUpdatedAt.getTime()) / 1000
+          // );
           // if (diff > 2 * appSettings.ipGpsCheckInterval) {
           //   // stale location
           //   continue;
@@ -263,6 +267,12 @@ export class LocationCheck {
               playerInSeat.location.lat,
               playerInSeat.location.long
             );
+            logger.info(`Location Update: Player: ${
+              player2.playerName
+            } Location: ${JSON.stringify(location)} 
+                Player2: ${playerInSeat.displayName} Location: ${JSON.stringify(
+              location
+            )} Distance: ${distance}`);
             if (distance <= this.gameSettings.gpsAllowedDistance) {
               throw new LocationPromixityError(playerInSeat.name, player.name);
             }

@@ -258,6 +258,7 @@ export class TakeBreak {
         seatNo
       );
     }
+    await Cache.updateGamePendingUpdates(this.game.gameCode, true);
   }
 }
 

@@ -171,8 +171,8 @@ export async function start(
   //   next();
   // });
 
-  app.use(authorize);
   app.use(bodyParser.json());
+  app.use(authorize);
   if (runProfile === RunProfile.INT_TEST) {
     await apolloServer.start();
   }
