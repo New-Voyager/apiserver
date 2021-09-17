@@ -1509,6 +1509,44 @@ export async function kickOutPlayer(
   }
 }
 
+export async function setBuyInLimit(
+  requestUser: string,
+  gameCode: string,
+  targetPlayerUuid: string,
+  limit: number
+): Promise<boolean> {
+  if (!requestUser) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.hostUuid !== requestUser) {
+      logger.error(
+        `Player: ${requestUser} cannot set buy-in limit for game ${gameCode}`
+      );
+      throw new Error(
+        `Player: ${requestUser} cannot set buy-in limit for game ${gameCode}`
+      );
+    }
+
+    const player = await Cache.getPlayer(targetPlayerUuid);
+    await PlayersInGameRepository.setBuyInLimit(gameCode, player, limit);
+    return true;
+  } catch (err) {
+    logger.error(
+      `Error while setting buy-in limit. requestUser: ${requestUser}, gameCode: ${gameCode}, targetPlayer: ${targetPlayerUuid}: ${errToLogString(
+        err
+      )}`
+    );
+    throw new Error('Failed to set buy-in limit');
+  }
+}
+
 export async function assignHost(
   requestUser: string,
   gameCode: string,
@@ -2603,6 +2641,14 @@ const resolvers: any = {
     },
     kickOut: async (parent, args, ctx, info) => {
       return kickOutPlayer(ctx.req.playerId, args.gameCode, args.playerUuid);
+    },
+    setBuyInLimit: async (parent, args, ctx, info) => {
+      return setBuyInLimit(
+        ctx.req.playerId,
+        args.gameCode,
+        args.playerUuid,
+        args.limit
+      );
     },
     addToWaitingList: async (parent, args, ctx, info) => {
       return addToWaitingList(ctx.req.playerId, args.gameCode);
