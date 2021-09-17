@@ -80,9 +80,7 @@ export class LocationCheck {
             longestPlayer = playerInSeat;
           } else {
             if (playerInSeat.satAt && longestPlayer.satAt) {
-              if (
-                playerInSeat.satAt.getTime() < longestPlayer.satAt.getTime()
-              ) {
+              if (playerInSeat.satAt.getTime() < longestPlayer.satAt.getTime()) {
                 longestPlayer = playerInSeat;
               }
             }
@@ -211,6 +209,7 @@ export class LocationCheck {
         game: {id: this.game.id},
         seatNo: Not(IsNull()),
       });
+      playersInSeats = _.filter(playersInSeats, (e) => e.seatNo != 0);
     }
 
     // check whether this player can sit in this game
@@ -267,12 +266,8 @@ export class LocationCheck {
               playerInSeat.location.lat,
               playerInSeat.location.long
             );
-            logger.info(`Location Update: Player: ${
-              player2.playerName
-            } Location: ${JSON.stringify(location)} 
-                Player2: ${playerInSeat.displayName} Location: ${JSON.stringify(
-              location
-            )} Distance: ${distance}`);
+            logger.info(`Location Update: Player: ${player2.playerName} Location: ${JSON.stringify(location)} 
+                Player2: ${playerInSeat.displayName} Location: ${JSON.stringify(location)} Distance: ${distance}`);
             if (distance <= this.gameSettings.gpsAllowedDistance) {
               throw new LocationPromixityError(playerInSeat.name, player.name);
             }
