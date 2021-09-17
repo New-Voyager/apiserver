@@ -342,6 +342,9 @@ export async function takeSeat(
     if (locationCheck) {
       ip = locationCheck.ip;
       location = locationCheck.location;
+      logger.info(
+        `[${game.gameCode}] Player IP: Player: [${player.name}] IP: ${ip}`
+      );
       await Cache.updatePlayerLocation(player.uuid, location, ip);
     }
 
@@ -1438,7 +1441,7 @@ export async function sitBack(
         locationCheck
       )}: ${errToLogString(err)}`
     );
-    throw new Error(`Failed to sit back in the seat. ${JSON.stringify(err)}`);
+    throw err;
   }
 }
 
@@ -2568,7 +2571,7 @@ const resolvers: any = {
     },
     takeSeat: async (parent, args, ctx, info) => {
       return takeSeat(ctx.req.playerId, args.gameCode, args.seatNo, {
-        ip: '',
+        ip: ctx.req.userIp,
         location: args.location,
       });
     },
