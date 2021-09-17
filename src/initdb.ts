@@ -42,7 +42,7 @@ export async function seed() {
 }
 
 export async function initdb() {
-  if (process.env.NODE_ENV !== 'unit-test' && process.env.NODE_ENV !== 'test') {
+  if (process.env.NODE_ENV !== 'unit-test') {
     logger.debug('Running in dev/prod mode');
     const options = await getConnectionOptions('default');
     const users = options['users'];

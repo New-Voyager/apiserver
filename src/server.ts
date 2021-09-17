@@ -135,6 +135,18 @@ export async function start(
   }
 
   await initdb();
+  if (process.env.NODE_ENV) {
+    const profile = process.env.NODE_ENV.toLowerCase();
+    if (profile === 'prod') {
+      runProfile = RunProfile.PROD;
+    } else if (profile === 'test') {
+      runProfile = RunProfile.TEST;
+    } else if (profile === 'int-test') {
+      runProfile = RunProfile.INT_TEST;
+    } else {
+      runProfile = RunProfile.DEV;
+    }
+  }
   if (process.env.NODE_ENV !== 'unit-test' && process.env.NODE_ENV !== 'test') {
     await initializeNats();
   }

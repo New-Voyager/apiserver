@@ -342,7 +342,9 @@ export async function takeSeat(
     if (locationCheck) {
       ip = locationCheck.ip;
       location = locationCheck.location;
+      await Cache.updatePlayerLocation(player.uuid, location, ip);
     }
+
     const status = await GameRepository.joinGame(
       player,
       game,
