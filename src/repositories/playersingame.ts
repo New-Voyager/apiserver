@@ -38,7 +38,7 @@ class PlayersInGameRepositoryImpl {
       game: {id: gameId},
       seatNo: Not(IsNull()),
     });
-    resp = _.filter(resp, (e) => e.seatNo != 0);
+    resp = _.filter(resp, e => e.seatNo != 0);
     return resp;
   }
 
