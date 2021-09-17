@@ -1,4 +1,4 @@
-import {EntityManager, Not, Repository} from 'typeorm';
+import {EntityManager, IsNull, Not, Repository} from 'typeorm';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {getGameManager, getGameRepository} from '.';
 import {getLogger} from '@src/utils/log';
@@ -34,10 +34,11 @@ class PlayersInGameRepositoryImpl {
     } else {
       playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     }
-    const resp = await playerGameTrackerRepo.find({
+    let resp = await playerGameTrackerRepo.find({
       game: {id: gameId},
-      seatNo: Not(0),
+      seatNo: Not(IsNull()),
     });
+    resp = _.filter(resp, e => e.seatNo != 0);
     return resp;
   }
 

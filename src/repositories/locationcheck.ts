@@ -211,6 +211,7 @@ export class LocationCheck {
         game: {id: this.game.id},
         seatNo: Not(IsNull()),
       });
+      playersInSeats = _.filter(playersInSeats, e => e.seatNo != 0);
     }
 
     // check whether this player can sit in this game
