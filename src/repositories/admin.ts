@@ -68,13 +68,15 @@ class AdminRepositoryImpl {
               });
               counter++;
             }
-            await getHistoryRepository(PlayerGameStats).update(
-              {
-                gameId: value.gameId,
-                playerId: parseInt(key),
-              },
-              playerMap[key]
-            );
+            await transactionalEntityManager
+              .getRepository(PlayerGameStats)
+              .update(
+                {
+                  gameId: value.gameId,
+                  playerId: parseInt(key),
+                },
+                playerMap[key]
+              );
           }
           repo.update(
             {
