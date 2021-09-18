@@ -23,6 +23,31 @@ import {DevRepository} from './repositories/dev';
 import {Firebase} from './firebase';
 import {AdminRepository} from './repositories/admin';
 
+export function addExternalRoutes(app: any) {
+  app.post('/auth/login', login);
+  app.post('/auth/new-login', newlogin);
+  app.post('/auth/signup', signup);
+  app.post('/auth/recovery-code', getRecoveryCode);
+  app.post('/auth/login-recovery-code', loginUsingRecoveryCode);
+
+  app.get('/nats-urls', natsUrls);
+  app.get('/assets', getAssets);
+
+  app.get('/bot-script/game-code/:gameCode/hand/:handNum', generateBotScript);
+  app.get(
+    '/bot-script/debug/game-code/:gameCode/hand/:handNum',
+    generateBotScriptDebugHand
+  );
+
+  app.post(
+    '/bot-script/game-code/:gameCode/button-pos/:buttonPos',
+    updateButtonPos
+  );
+  app.post('/bot-script/server-settings', setServerSettings);
+  app.post('/bot-script/reset-server-settings', resetServerSettings);
+  app.post('/bot-script/buy-bot-coins', buyBotCoins);
+}
+
 export function addInternalRoutes(app: any) {
   app.get('/internal/ready', readyCheck);
   app.post('/internal/register-game-server', GameServerAPI.registerGameServer);
@@ -82,30 +107,6 @@ export function addInternalRoutes(app: any) {
 
   app.post('/internal/restart-games', GameServerAPI.restartGames);
   app.post('/internal/restart-timers', restartTimers);
-
-  app.post('/auth/login', login);
-  app.post('/auth/new-login', newlogin);
-  app.post('/auth/signup', signup);
-  app.post('/auth/recovery-code', getRecoveryCode);
-  app.post('/auth/login-recovery-code', loginUsingRecoveryCode);
-
-  app.get('/nats-urls', natsUrls);
-  app.get('/assets', getAssets);
-
-  //app.get('/bot-script/game-code/:gameCode', generateBotScript);
-  app.get('/bot-script/game-code/:gameCode/hand/:handNum', generateBotScript);
-  app.get(
-    '/bot-script/debug/game-code/:gameCode/hand/:handNum',
-    generateBotScriptDebugHand
-  );
-
-  app.post(
-    '/bot-script/game-code/:gameCode/button-pos/:buttonPos',
-    updateButtonPos
-  );
-  app.post('/bot-script/server-settings', setServerSettings);
-  app.post('/bot-script/reset-server-settings', resetServerSettings);
-  app.post('/bot-script/buy-bot-coins', buyBotCoins);
 
   // admin apis
   app.get('/admin/feature-requests', DevRepository.featureRequests);

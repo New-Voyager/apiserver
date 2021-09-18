@@ -1,4 +1,4 @@
-import {resetDatabase, getClient, PORT_NUMBER, startGqlServer} from './utils/utils';
+import {resetDatabase, getClient, INTERNAL_PORT, startGqlServer} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
 import * as handutils from './utils/hand.testutils';
@@ -96,7 +96,7 @@ function sleep(ms: number) {
   });
 }
 
-const GAMESERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
+const GAMESERVER_API = `http://localhost:${INTERNAL_PORT}/internal`;
 
 describe('Tests: Reload API', () => {
   let stop, graphql;

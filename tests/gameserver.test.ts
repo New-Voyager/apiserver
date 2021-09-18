@@ -1,4 +1,4 @@
-import {PORT_NUMBER, getClient, startGqlServer} from './utils/utils';
+import {INTERNAL_PORT, getClient, startGqlServer} from './utils/utils';
 import {default as axios} from 'axios';
 import {resetDatabase} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
@@ -7,7 +7,7 @@ import * as rewardutils from './utils/reward.testutils';
 import {getLogger} from '../src/utils/log';
 const logger = getLogger('gameserver');
 
-const GAMESERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
+const GAMESERVER_API = `http://localhost:${INTERNAL_PORT}/internal`;
 
 const holdemGameInput = {
   gameType: 'HOLDEM',

@@ -10,6 +10,7 @@ const {
 
 const bodyParser = require('body-parser');
 const GQL_PORT = 9501;
+const INTERNAL_PORT = 9502;
 import {getLogger} from '@src/utils/log';
 import {initializeGameServer} from './gameserver';
 import {initdb, seed} from './initdb';
@@ -17,7 +18,7 @@ import {Firebase, getAppSettings} from './firebase';
 import {Nats} from './nats';
 
 import {initializeRedis} from './cache';
-import {addInternalRoutes} from './routes';
+import {addExternalRoutes, addInternalRoutes} from './routes';
 export enum RunProfile {
   DEV,
   TEST,
@@ -33,7 +34,8 @@ const requestContext = async ({req}) => {
   return ctx;
 };
 
-let app: any = null;
+let externalApp: any = null;
+let internalApp: any = null;
 let runProfile: RunProfile = RunProfile.DEV;
 let apolloServer: any = null;
 
@@ -116,9 +118,19 @@ export async function start(
 ): Promise<[any, any, any]> {
   logger.debug('In start method');
 
+  logger.info(`NATS_URL: ${process.env.NATS_URL}`);
+  logger.info(`EXTERNAL_NATS_URL: ${process.env.EXTERNAL_NATS_URL}`);
   if (!process.env.NATS_URL) {
     throw new Error(
       'NATS_URL should be specified in the environment variable.'
+    );
+  }
+
+  logger.info(`INTERNAL_ENDPOINTS: ${process.env.INTERNAL_ENDPOINTS}`);
+  logger.info(`EXTERNAL_ENDPOINTS: ${process.env.EXTERNAL_ENDPOINTS}`);
+  if (!shouldExposeExternalEndpoints() && !shouldExposeInternalEndpoints()) {
+    throw new Error(
+      'Either EXTERNAL_ENDPOINTS or INTERNAL_ENDPOINTS must be set to 1'
     );
   }
 
@@ -168,37 +180,60 @@ export async function start(
   // get config vars
   dotenv.config();
 
+  setPgConversion();
+
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const express = require('express');
-  app = express();
-  // const getRawBody = require('raw-body');
-  // app.use(async (req, res, next) => {
-  //   if (req.headers['content-type'] === 'application/octet-stream') {
-  //     req.rawBody = await getRawBody(req);
-  //   }
-  //   next();
-  // });
+  let externalServer: any;
+  let internalServer: any;
+  if (shouldExposeExternalEndpoints()) {
+    externalApp = express();
+    // const getRawBody = require('raw-body');
+    // app.use(async (req, res, next) => {
+    //   if (req.headers['content-type'] === 'application/octet-stream') {
+    //     req.rawBody = await getRawBody(req);
+    //   }
+    //   next();
+    // });
 
-  app.use(bodyParser.json());
-  app.use(authorize);
-  await apolloServer.start();
-  //app.use(bodyParser.raw({ inflate: false, limit: '100kb', type: 'application/octet-stream' }));
-  apolloServer.applyMiddleware({app});
+    externalApp.use(bodyParser.json());
+    externalApp.use(authorize);
+    //app.use(bodyParser.raw({ inflate: false, limit: '100kb', type: 'application/octet-stream' }));
 
-  let httpServer;
-  httpServer = app.listen(
-    {
-      port: GQL_PORT,
-    },
-    async () => {
-      logger.info(`🚀 Server ready at http://0.0.0.0:${GQL_PORT}/graphql}`);
-    }
-  );
-  setPgConversion();
-  addInternalRoutes(app);
+    await apolloServer.start();
+    apolloServer.applyMiddleware({app: externalApp});
+
+    addExternalRoutes(externalApp);
+    externalServer = externalApp.listen(
+      {
+        port: GQL_PORT,
+      },
+      async () => {
+        logger.info(`🚀 Server ready at http://0.0.0.0:${GQL_PORT}`);
+      }
+    );
+  }
+
+  if (shouldExposeInternalEndpoints()) {
+    internalApp = express();
+    internalApp.use(bodyParser.json());
+    internalApp.use(authorize);
+    addInternalRoutes(internalApp);
+    internalServer = internalApp.listen(
+      {
+        port: INTERNAL_PORT,
+      },
+      async () => {
+        logger.info(
+          `🚀 Server ready at http://0.0.0.0:${INTERNAL_PORT} (internal)`
+        );
+      }
+    );
+  }
+
   // initialize db
   await seed();
-  return [app, httpServer, apolloServer];
+  return [externalServer, internalServer, apolloServer];
 }
 
 async function initializeNats() {
@@ -228,6 +263,20 @@ export function getRunProfileStr(): string {
 
 export function getApolloServerInstance() {
   return apolloServer;
+}
+
+export function shouldExposeInternalEndpoints(): boolean {
+  return (
+    process.env.INTERNAL_ENDPOINTS === '1' ||
+    process.env.INTERNAL_ENDPOINTS === 'true'
+  );
+}
+
+export function shouldExposeExternalEndpoints(): boolean {
+  return (
+    process.env.EXTERNAL_ENDPOINTS === '1' ||
+    process.env.EXTERNAL_ENDPOINTS === 'true'
+  );
 }
 
 export function notifyScheduler(): boolean {
