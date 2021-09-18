@@ -16,6 +16,8 @@ import {GameType} from '@src/entity/types';
 import {Cache} from '@src/cache';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {getHistoryConnection, getHistoryManager, getHistoryRepository} from '.';
+import {PlayersInGame} from '@src/entity/history/player';
+import {GameHistory} from '@src/entity/history/game';
 
 const logger = getLogger('repositories::stats');
 
@@ -394,12 +396,19 @@ class StatsRepositoryImpl {
     }
   }
 
-  public async rollupStats(game: PokerGame) {
+  public async rollupStats(
+    gameId: number,
+    transactionalEntityManager: EntityManager
+  ) {
     try {
-      const playerStatsRepo = getHistoryRepository(PlayerHandStats);
-      const gameStatsRepo = getHistoryRepository(PlayerGameStats);
+      const playerStatsRepo = transactionalEntityManager.getRepository(
+        PlayerHandStats
+      );
+      const gameStatsRepo = transactionalEntityManager.getRepository(
+        PlayerGameStats
+      );
       const rows = await gameStatsRepo.find({
-        gameId: game.id,
+        gameId: gameId,
       });
       const updates = new Array<any>();
       for (const row of rows) {
@@ -612,64 +621,64 @@ class StatsRepositoryImpl {
     return playerStatHand;
   }
 
-  public async gameEnded(game: PokerGame, players: Array<PlayerGameTracker>) {
-    await getHistoryManager().transaction(async transactionEntityManager => {
-      const playerStatsRepo = transactionEntityManager.getRepository(
-        PlayerHandStats
-      );
-      // get the date
-      const date = `${game.startedAt.getFullYear()}-${game.startedAt.getMonth()}-${game.startedAt.getDay()}`;
-      for (const player of players) {
-        const playerStat = await playerStatsRepo.findOne({
-          playerId: player.playerId,
-        });
-        if (playerStat) {
-          // get recent performance data
-          const recentDataJson = playerStat.recentPerformance;
-          let recentPerformance = new Array<any>();
-          try {
-            recentPerformance = JSON.parse(recentDataJson);
-          } catch {}
-          let found = false;
-          const profit = player.stack - player.buyIn;
-          for (const perf of recentPerformance) {
-            if (perf['date'] == date) {
-              if (perf['profit']) {
-                perf['profit'] = perf['profit'] + profit;
-              } else {
-                perf['profit'] = profit;
-              }
-              found = true;
-              break;
+  public async gameEnded(
+    game: GameHistory,
+    players: Array<PlayersInGame>,
+    transManager
+  ) {
+    const playerStatsRepo = transManager.getRepository(PlayerHandStats);
+    // get the date
+    const date = `${game.startedAt.getFullYear()}-${game.startedAt.getMonth()}-${game.startedAt.getDay()}`;
+    for (const player of players) {
+      const playerStat = await playerStatsRepo.findOne({
+        playerId: player.playerId,
+      });
+      if (playerStat) {
+        // get recent performance data
+        const recentDataJson = playerStat.recentPerformance;
+        let recentPerformance = new Array<any>();
+        try {
+          recentPerformance = JSON.parse(recentDataJson);
+        } catch {}
+        let found = false;
+        const profit = player.stack - player.buyIn;
+        for (const perf of recentPerformance) {
+          if (perf['date'] == date) {
+            if (perf['profit']) {
+              perf['profit'] = perf['profit'] + profit;
+            } else {
+              perf['profit'] = profit;
             }
+            found = true;
+            break;
           }
-
-          if (!found) {
-            const perf = {
-              date: date,
-              profit: profit,
-            };
-            recentPerformance.push(perf);
-
-            // if there are more than 20 items, remove the first item
-            if (recentPerformance.length > 20) {
-              const removeItems = recentPerformance.length - 20;
-              recentPerformance = recentPerformance.splice(0, removeItems);
-            }
-          }
-
-          const perfStr = JSON.stringify(recentPerformance);
-          await playerStatsRepo.update(
-            {
-              playerId: player.playerId,
-            },
-            {
-              recentPerformance: perfStr,
-            }
-          );
         }
+
+        if (!found) {
+          const perf = {
+            date: date,
+            profit: profit,
+          };
+          recentPerformance.push(perf);
+
+          // if there are more than 20 items, remove the first item
+          if (recentPerformance.length > 20) {
+            const removeItems = recentPerformance.length - 20;
+            recentPerformance = recentPerformance.splice(0, removeItems);
+          }
+        }
+
+        const perfStr = JSON.stringify(recentPerformance);
+        await playerStatsRepo.update(
+          {
+            playerId: player.playerId,
+          },
+          {
+            recentPerformance: perfStr,
+          }
+        );
       }
-    });
+    }
   }
 
   public async getPlayerRecentPerformance(player: Player): Promise<string> {

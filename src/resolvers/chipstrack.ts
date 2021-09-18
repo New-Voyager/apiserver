@@ -17,7 +17,8 @@ export async function getClubBalanceAmount(playerId: string, data: any) {
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
   }
-  return await ChipsTrackRepository.getClubBalance(data.clubCode);
+  return 0;
+  //return await ChipsTrackRepository.getClubBalance(data.clubCode);
 }
 
 export async function getPlayerBalanceAmount(playerId: string, data: any) {
@@ -43,11 +44,11 @@ export async function getPlayerBalanceAmount(playerId: string, data: any) {
       `Player ${queryPlayerId} is not a club member ${data.clubCode}`
     );
   }
-
-  return await ChipsTrackRepository.getPlayerBalance(
-    queryPlayerId,
-    data.clubCode
-  );
+  return 0;
+  // return await ChipsTrackRepository.getPlayerBalance(
+  //   queryPlayerId,
+  //   data.clubCode
+  // );
 }
 
 export async function getRakeCollected(playerId: string, gameCode: string) {

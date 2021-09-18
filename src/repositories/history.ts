@@ -12,6 +12,7 @@ import {ClubRepository} from './club';
 import {In} from 'typeorm';
 import _ from 'lodash';
 import {Player} from '@src/entity/player/player';
+import {GameStatus} from '@src/entity/types';
 
 class HistoryRepositoryImpl {
   constructor() {}
@@ -51,7 +52,7 @@ class HistoryRepositoryImpl {
 
   public async gameEnded(game: PokerGame, handsDealt: number) {
     const values: any = {
-      status: game.status,
+      status: GameStatus.ENDED,
       startedAt: game.startedAt,
       endedAt: game.endedAt,
       endedBy: game.endedBy,

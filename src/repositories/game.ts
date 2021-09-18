@@ -22,50 +22,33 @@ import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery, getDistanceInMeters} from '@src/utils';
 import {WaitListMgmt} from './waitlist';
 import {Reward} from '@src/entity/player/reward';
-import {ChipsTrackRepository} from './chipstrack';
-import {
-  BREAK_TIMEOUT,
-  BUYIN_TIMEOUT,
-  DEALER_CHOICE_TIMEOUT,
-  NewUpdate,
-} from './types';
+import {DEALER_CHOICE_TIMEOUT} from './types';
 import {Cache} from '@src/cache/index';
 import {StatsRepository} from './stats';
-import {getAgoraToken} from '@src/3rdparty/agora';
 import {utcTime} from '@src/utils';
 import _ from 'lodash';
-import {JanusSession} from '@src/janus';
 import {HandHistory} from '@src/entity/history/hand';
 import {Player} from '@src/entity/player/player';
 import {Club} from '@src/entity/player/club';
 import {PlayerGameStats} from '@src/entity/history/stats';
 import {HistoryRepository} from './history';
 import {GameHistory} from '@src/entity/history/game';
-import {PlayersInGame} from '@src/entity/history/player';
 import {
   getGameConnection,
   getGameManager,
   getGameRepository,
-  getHistoryConnection,
   getHistoryRepository,
-  getUserConnection,
   getUserRepository,
 } from '.';
 import {GameReward, GameRewardTracking} from '@src/entity/game/reward';
 import {ClubRepository} from './club';
-import {getAppSettings} from '@src/firebase';
-import {
-  IpAddressMissingError,
-  LocationPromixityError,
-  SameIpAddressError,
-} from '@src/errors';
 import {LocationCheck} from './locationcheck';
 import {Nats} from '@src/nats';
 import {GameSettingsRepository} from './gamesettings';
 import {PlayersInGameRepository} from './playersingame';
 import {GameUpdatesRepository} from './gameupdates';
 import {GameServerRepository} from './gameserver';
-import {response} from 'express';
+import {PlayersInGame} from '@src/entity/history/player';
 const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
@@ -1027,7 +1010,7 @@ class GameRepositoryImpl {
         // calculate session time
         let sessionTime: number = playerInGame.sessionTime;
         if (!sessionTime) {
-          sessionTime = 0;
+          sessionTime = 1;
         }
         const currentSessionTime = new Date().getTime() - satAt.getTime();
         const roundSeconds = Math.round(currentSessionTime / 1000);
@@ -1045,21 +1028,15 @@ class GameRepositoryImpl {
       }
     }
     const updatedGame = await Cache.getGame(game.gameCode, true);
+    let updates = await GameUpdatesRepository.get(game.gameCode);
 
-    // complete books
-    await ChipsTrackRepository.settleClubBalances(updatedGame);
-
-    // roll up stats
-    await StatsRepository.rollupStats(updatedGame);
-
-    // update player performance
-    await StatsRepository.gameEnded(updatedGame, players);
-
+    // complete books (accounting is in next release)
+    // await ChipsTrackRepository.settleClubBalances(updatedGame);
+    await PlayersInGameRepository.gameEnded(game);
+    await HistoryRepository.gameEnded(game, updates.handNum);
     const ret = this.markGameStatus(gameId, GameStatus.ENDED);
     game.status = GameStatus.ENDED;
-    const updates = await GameUpdatesRepository.get(game.gameCode);
-    // update history tables
-    await HistoryRepository.gameEnded(game, updates.handNum);
+    updates = await GameUpdatesRepository.get(game.gameCode, true);
     return ret;
   }
 
