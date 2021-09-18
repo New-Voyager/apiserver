@@ -65,6 +65,7 @@ import {GameSettingsRepository} from './gamesettings';
 import {PlayersInGameRepository} from './playersingame';
 import {GameUpdatesRepository} from './gameupdates';
 import {GameServerRepository} from './gameserver';
+import {response} from 'express';
 const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
@@ -1002,7 +1003,10 @@ class GameRepositoryImpl {
     gameId: number,
     gameNum?: number
   ): Promise<GameStatus> {
-    return this.markGameStatus(gameId, GameStatus.ACTIVE, gameNum);
+    const resp = this.markGameStatus(gameId, GameStatus.ACTIVE, gameNum);
+    // update game history
+    await HistoryRepository.updateGameNum(gameId, gameNum);
+    return resp;
   }
 
   public async markGameEnded(gameId: number): Promise<GameStatus> {
