@@ -110,6 +110,16 @@ services:
     environment:
       API_SERVER_URL: http://api-server:9501
 
+  scheduler:
+    image: ${SCHEDULER_IMAGE}
+    tty: true
+    restart: always
+    ports:
+      - 8083:8083
+    environment:
+      API_SERVER_URL: http://api-server:9501
+      LOG_LEVEL: debug
+
 volumes:
   db-data:
       
