@@ -114,6 +114,14 @@ class AggregationImpl {
                 playersStats: undefined,
               }
             );
+            if (handHistory.highRank) {
+              const highRankJson = JSON.parse(handHistory.highRank);
+              await StatsRepository.updateClubStats(
+                game,
+                highRankJson,
+                transactionalEntityManager
+              );
+            }
           }
           const gameStatsRepo = getHistoryRepository(PlayerGameStats);
           // update player game stats
@@ -122,6 +130,9 @@ class AggregationImpl {
               playerStatsMap[player.playerId].headsupDetails
             );
             delete playerStatsMap[player.playerId].headsupDetails;
+            if (!playerStatsMap[player.playerId].headsupHandDetails) {
+              playerStatsMap[player.playerId].headsupHandDetails = '[]';
+            }
             await gameStatsRepo.update(
               {
                 gameId: game.gameId,

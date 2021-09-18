@@ -20,6 +20,8 @@ import {PlayersInGame} from '@src/entity/history/player';
 import {GameHistory} from '@src/entity/history/game';
 
 const logger = getLogger('repositories::stats');
+// Odds
+// http://people.math.sfu.ca/~alspach/art8.pdf
 
 // Ranking for higher cards
 /*
@@ -109,119 +111,9 @@ class StatsRepositoryImpl {
     repository.save(playerStats);
   }
 
-  public async saveHandStats(
-    game: PokerGame,
-    handResult: any,
-    handNum: number,
-    transactionManager?: EntityManager
-  ) {
-    let repository: Repository<PlayerGameStats>;
-    if (transactionManager) {
-      repository = transactionManager.getRepository(PlayerGameStats);
-    } else {
-      repository = getHistoryRepository(PlayerGameStats);
-    }
-
-    const playerStats = handResult.playerStats;
-    if (!playerStats) {
-      return;
-    }
-    const updates = new Array<any>();
-
-    for (const key of Object.keys(playerStats)) {
-      const playerId = parseInt(key);
-      const playerStat = playerStats[key];
-      const round = handResult.playerRound[playerId];
-      if (!round) {
-        // This seems to be the case when the player is put in break.
-        continue;
-      }
-      let headsupRecord;
-      if (playerStat.headsup) {
-        // treat headsup special, get the existing record and add the count
-        const col = await repository
-          .createQueryBuilder()
-          .where({
-            playerId: playerId,
-            gameId: game.id,
-          })
-          .select('headsup_hand_details')
-          .execute();
-        if (!headsupRecord) {
-          headsupRecord = [];
-        }
-        if (
-          !col ||
-          col.length === 0 ||
-          col[0]['headsup_hand_details'] === '[]'
-        ) {
-          headsupRecord = new Array<any>();
-        } else {
-          headsupRecord = JSON.parse(col[0]['headsup_hand_details']);
-        }
-
-        headsupRecord.push({
-          handNum: handNum,
-          otherPlayer: parseInt(playerStat.headsupPlayer),
-          won: playerStat.wonHeadsup,
-        });
-      }
-
-      updates.push(
-        repository
-          .createQueryBuilder()
-          .update()
-          .set({
-            preflopRaise: () =>
-              `preflop_raise + ${playerStat.preflopRaise ? 1 : 0}`,
-            postflopRaise: () =>
-              `postflop_raise + ${playerStat.postflopRaise ? 1 : 0}`,
-            threeBet: () => `three_bet + ${playerStat.threeBet ? 1 : 0}`,
-            contBet: () => `cont_bet + ${playerStat.contBet ? 1 : 0}`,
-            vpipCount: () => `vpip_count + ${playerStat.vpip ? 1 : 0}`,
-            allInCount: () => `allin_count + ${playerStat.allin ? 1 : 0}`,
-            wentToShowDown: () =>
-              `went_to_showdown + ${playerStat.wentToShowdown ? 1 : 0}`,
-            wonAtShowDown: () =>
-              `won_at_showdown + ${playerStat.wonChipsAtShowdown ? 1 : 0}`,
-            wonHeadsupHands: () =>
-              `won_headsup_hands + ${playerStat.wonHeadsup ? 1 : 0}`,
-            inPreflop: () => `in_preflop + ${round.preflop ? 1 : 0}`,
-            inFlop: () => `in_flop + ${round.flop ? 1 : 0}`,
-            inTurn: () => `in_turn + ${round.turn ? 1 : 0}`,
-            inRiver: () => `in_river + ${round.river ? 1 : 0}`,
-            headsupHands: () => `headsup_hands + ${playerStat.headsup ? 1 : 0}`,
-            totalHands: () => 'total_hands + 1',
-          })
-          .where({
-            playerId: playerId,
-            gameId: game.id,
-          })
-          .execute()
-      );
-      if (headsupRecord) {
-        updates.push(
-          repository
-            .createQueryBuilder()
-            .update()
-            .set({
-              headsupHandDetails: JSON.stringify(headsupRecord),
-            })
-            .where({
-              playerId: playerId,
-              gameId: game.id,
-            })
-            .execute()
-        );
-      }
-    }
-    updates.push(this.updateClubStats(game, handResult, transactionManager));
-    await Promise.all(updates);
-  }
-
-  private async updateClubStats(
-    game: PokerGame,
-    result: any,
+  public async updateClubStats(
+    game: GameHistory,
+    highRank: any,
     entityManager: EntityManager | undefined
   ) {
     if (game.clubId === null || entityManager === undefined) {
@@ -261,14 +153,8 @@ class StatsRepositoryImpl {
         gameType: gameType,
       })
       .execute();
-
-    for await (const seatNo of Object.keys(result.players)) {
-      const player = result.players[seatNo];
-      const playerId = parseInt(player.id);
-      if (player.playedUntil !== 'SHOW_DOWN') {
-        continue;
-      }
-      const rank = player.rank;
+    for await (const seatNo of Object.keys(highRank)) {
+      const rank = highRank[seatNo];
       if (rank > 166) {
         continue;
       }
