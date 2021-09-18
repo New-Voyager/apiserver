@@ -12,6 +12,7 @@ import {GameReward} from '@src/entity/game/reward';
 import {NextHandProcess} from '@src/repositories/nexthand';
 import {GameSettingsRepository} from '@src/repositories/gamesettings';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
+import {Aggregation} from '@src/repositories/aggregate';
 
 const logger = getLogger('internal::game');
 
@@ -338,6 +339,15 @@ class GameAPIs {
     try {
       const nextHandProcess = new NextHandProcess(gameCode, -1);
       const ret = await nextHandProcess.getNextHandInfo();
+      resp.status(200).send(JSON.stringify(ret));
+    } catch (err) {
+      resp.status(500).send({error: err.message});
+    }
+  }
+
+  public async aggregateGameData(req: any, resp: any) {
+    try {
+      const ret = await Aggregation.postProcessGames();
       resp.status(200).send(JSON.stringify(ret));
     } catch (err) {
       resp.status(500).send({error: err.message});

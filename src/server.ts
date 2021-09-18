@@ -229,3 +229,14 @@ export function getRunProfileStr(): string {
 export function getApolloServerInstance() {
   return apolloServer;
 }
+
+export function notifyScheduler(): boolean {
+  if (!process.env.NOTIFY_SCHEDULER) {
+    return true;
+  }
+
+  if (process.env.NOTIFY_SCHEDULER === '0') {
+    return false;
+  }
+  return true;
+}
