@@ -4,6 +4,7 @@ import {merge} from 'lodash';
 import {authorize} from '@src/middlewares/authorization';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
+const { ApolloServerPluginLandingPageGraphQLPlayground } = require('apollo-server-core');
 
 const bodyParser = require('body-parser');
 const GQL_PORT = 9501;
@@ -98,6 +99,11 @@ export function getApolloServer(options?: {intTest?: boolean}): ApolloServer {
     typeDefs: typeDefs,
     resolvers,
     context: requestContext,
+    plugins: [
+      ApolloServerPluginLandingPageGraphQLPlayground({
+        // options
+      })
+    ]    
   });
   return server;
 }
