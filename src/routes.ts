@@ -116,8 +116,8 @@ export function addInternalRoutes(app: any) {
 // returns nats urls
 async function natsUrls(req: any, resp: any) {
   let natsUrl = process.env.NATS_URL;
-  if (process.env.DEBUG_NATS_URL) {
-    natsUrl = process.env.DEBUG_NATS_URL;
+  if (process.env.EXTERNAL_NATS_URL) {
+    natsUrl = process.env.EXTERNAL_NATS_URL;
   }
   resp.status(200).send(JSON.stringify({urls: natsUrl}));
 }
