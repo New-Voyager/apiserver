@@ -119,6 +119,7 @@ services:
     environment:
       API_SERVER_URL: http://api-server:9501
       LOG_LEVEL: debug
+      POST_PROCESSING_TIMEOUT_SEC: 120
 
 volumes:
   db-data:
