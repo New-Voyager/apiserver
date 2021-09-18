@@ -133,19 +133,6 @@ class HistoryRepositoryImpl {
     });
   }
 
-  // public async getGameHistory(
-  //   startedByPlayerId: string,
-  //   clubId: number | null
-  // ): Promise<GameHistory[]> {
-  //   const gameHistory = await getHistoryRepository(GameHistory)
-  //     .createQueryBuilder()
-  //     .where('club_id = :clubId OR started_by_player_id = :startedByPlayerId', {
-  //       clubId: clubId,
-  //       startedByPlayerId: startedByPlayerId,
-  //     })
-  //     .getMany();
-  //   return gameHistory;
-  // }
   public async getGameHistoryByGameCode(
     playerUuid: string,
     gameCode: string
