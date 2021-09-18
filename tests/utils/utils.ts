@@ -3,12 +3,13 @@ import axios from 'axios';
 import { execute, gql, HttpLink, toPromise } from "apollo-boost";
 import { start } from "../../src/server";
 const fetch = require('node-fetch');
-export const PORT_NUMBER = 9501;
+export const EXTERNAL_PORT = 9501;
+export const INTERNAL_PORT = 9502;
 
 export function getClient(token?: string, test?: string): any {
   return new ApolloClient({
     fetch: fetch,
-    uri: `http://localhost:${PORT_NUMBER}/graphql`,
+    uri: `http://localhost:${EXTERNAL_PORT}/graphql`,
     request: operation => {
       if (token) {
         operation.setContext({
@@ -42,7 +43,7 @@ export async function moveToNextHand(
   gameCode: string,
   handNum: number
 ) {
-  const url = `http://localhost:${PORT_NUMBER}/internal/move-to-next-hand/game_num/${gameCode}/hand_num/${handNum}`;
+  const url = `http://localhost:${INTERNAL_PORT}/internal/move-to-next-hand/game_num/${gameCode}/hand_num/${handNum}`;
   try {
     await axios.post(url);
   } catch (err) {
@@ -52,7 +53,7 @@ export async function moveToNextHand(
 }
 
 export async function getNextHandInfo(gameCode: string) {
-  const url = `http://localhost:${PORT_NUMBER}/internal/next-hand-info/game_num/${gameCode}`;
+  const url = `http://localhost:${INTERNAL_PORT}/internal/next-hand-info/game_num/${gameCode}`;
   try {
     const resp = await axios.get(url);
     return resp.data;
@@ -63,7 +64,7 @@ export async function getNextHandInfo(gameCode: string) {
 }
 
 export async function signup(name: string, playerId: string): Promise<any> {
-  const url = `http://localhost:${PORT_NUMBER}/auth/signup`;
+  const url = `http://localhost:${EXTERNAL_PORT}/auth/signup`;
   try {
     const payload = {
       'screen-name': name,
@@ -103,10 +104,10 @@ export async function getClubs(playerId: string) {
 
 export const startGqlServer = async () => {
 
-  const [express, http, apollo]= await start(false, {intTest: true});
+  const [externalServer, internalServer, apollo]= await start(false, {intTest: true});
 
   const link = new HttpLink({
-    uri: 'http://localhost:9501/graphql',
+    uri: `http://localhost:${EXTERNAL_PORT}/graphql`,
     fetch,
   });
 
@@ -115,7 +116,10 @@ export const startGqlServer = async () => {
 
   return {
     link,
-    stop: () => (http.close()),
+    stop: () => {
+      externalServer.close();
+      internalServer.close();
+    },
     graphql: executeOperation,
   };
 };
