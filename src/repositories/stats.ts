@@ -16,8 +16,12 @@ import {GameType} from '@src/entity/types';
 import {Cache} from '@src/cache';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {getHistoryConnection, getHistoryManager, getHistoryRepository} from '.';
+import {PlayersInGame} from '@src/entity/history/player';
+import {GameHistory} from '@src/entity/history/game';
 
 const logger = getLogger('repositories::stats');
+// Odds
+// http://people.math.sfu.ca/~alspach/art8.pdf
 
 // Ranking for higher cards
 /*
@@ -107,119 +111,9 @@ class StatsRepositoryImpl {
     repository.save(playerStats);
   }
 
-  public async saveHandStats(
-    game: PokerGame,
-    handResult: any,
-    handNum: number,
-    transactionManager?: EntityManager
-  ) {
-    let repository: Repository<PlayerGameStats>;
-    if (transactionManager) {
-      repository = transactionManager.getRepository(PlayerGameStats);
-    } else {
-      repository = getHistoryRepository(PlayerGameStats);
-    }
-
-    const playerStats = handResult.playerStats;
-    if (!playerStats) {
-      return;
-    }
-    const updates = new Array<any>();
-
-    for (const key of Object.keys(playerStats)) {
-      const playerId = parseInt(key);
-      const playerStat = playerStats[key];
-      const round = handResult.playerRound[playerId];
-      if (!round) {
-        // This seems to be the case when the player is put in break.
-        continue;
-      }
-      let headsupRecord;
-      if (playerStat.headsup) {
-        // treat headsup special, get the existing record and add the count
-        const col = await repository
-          .createQueryBuilder()
-          .where({
-            playerId: playerId,
-            gameId: game.id,
-          })
-          .select('headsup_hand_details')
-          .execute();
-        if (!headsupRecord) {
-          headsupRecord = [];
-        }
-        if (
-          !col ||
-          col.length === 0 ||
-          col[0]['headsup_hand_details'] === '[]'
-        ) {
-          headsupRecord = new Array<any>();
-        } else {
-          headsupRecord = JSON.parse(col[0]['headsup_hand_details']);
-        }
-
-        headsupRecord.push({
-          handNum: handNum,
-          otherPlayer: parseInt(playerStat.headsupPlayer),
-          won: playerStat.wonHeadsup,
-        });
-      }
-
-      updates.push(
-        repository
-          .createQueryBuilder()
-          .update()
-          .set({
-            preflopRaise: () =>
-              `preflop_raise + ${playerStat.preflopRaise ? 1 : 0}`,
-            postflopRaise: () =>
-              `postflop_raise + ${playerStat.postflopRaise ? 1 : 0}`,
-            threeBet: () => `three_bet + ${playerStat.threeBet ? 1 : 0}`,
-            contBet: () => `cont_bet + ${playerStat.contBet ? 1 : 0}`,
-            vpipCount: () => `vpip_count + ${playerStat.vpip ? 1 : 0}`,
-            allInCount: () => `allin_count + ${playerStat.allin ? 1 : 0}`,
-            wentToShowDown: () =>
-              `went_to_showdown + ${playerStat.wentToShowdown ? 1 : 0}`,
-            wonAtShowDown: () =>
-              `won_at_showdown + ${playerStat.wonChipsAtShowdown ? 1 : 0}`,
-            wonHeadsupHands: () =>
-              `won_headsup_hands + ${playerStat.wonHeadsup ? 1 : 0}`,
-            inPreflop: () => `in_preflop + ${round.preflop ? 1 : 0}`,
-            inFlop: () => `in_flop + ${round.flop ? 1 : 0}`,
-            inTurn: () => `in_turn + ${round.turn ? 1 : 0}`,
-            inRiver: () => `in_river + ${round.river ? 1 : 0}`,
-            headsupHands: () => `headsup_hands + ${playerStat.headsup ? 1 : 0}`,
-            totalHands: () => 'total_hands + 1',
-          })
-          .where({
-            playerId: playerId,
-            gameId: game.id,
-          })
-          .execute()
-      );
-      if (headsupRecord) {
-        updates.push(
-          repository
-            .createQueryBuilder()
-            .update()
-            .set({
-              headsupHandDetails: JSON.stringify(headsupRecord),
-            })
-            .where({
-              playerId: playerId,
-              gameId: game.id,
-            })
-            .execute()
-        );
-      }
-    }
-    updates.push(this.updateClubStats(game, handResult, transactionManager));
-    await Promise.all(updates);
-  }
-
-  private async updateClubStats(
-    game: PokerGame,
-    result: any,
+  public async updateClubStats(
+    game: GameHistory,
+    highRank: any,
     entityManager: EntityManager | undefined
   ) {
     if (game.clubId === null || entityManager === undefined) {
@@ -259,14 +153,8 @@ class StatsRepositoryImpl {
         gameType: gameType,
       })
       .execute();
-
-    for await (const seatNo of Object.keys(result.players)) {
-      const player = result.players[seatNo];
-      const playerId = parseInt(player.id);
-      if (player.playedUntil !== 'SHOW_DOWN') {
-        continue;
-      }
-      const rank = player.rank;
+    for await (const seatNo of Object.keys(highRank)) {
+      const rank = highRank[seatNo];
       if (rank > 166) {
         continue;
       }
@@ -394,12 +282,19 @@ class StatsRepositoryImpl {
     }
   }
 
-  public async rollupStats(game: PokerGame) {
+  public async rollupStats(
+    gameId: number,
+    transactionalEntityManager: EntityManager
+  ) {
     try {
-      const playerStatsRepo = getHistoryRepository(PlayerHandStats);
-      const gameStatsRepo = getHistoryRepository(PlayerGameStats);
+      const playerStatsRepo = transactionalEntityManager.getRepository(
+        PlayerHandStats
+      );
+      const gameStatsRepo = transactionalEntityManager.getRepository(
+        PlayerGameStats
+      );
       const rows = await gameStatsRepo.find({
-        gameId: game.id,
+        gameId: gameId,
       });
       const updates = new Array<any>();
       for (const row of rows) {
@@ -612,64 +507,64 @@ class StatsRepositoryImpl {
     return playerStatHand;
   }
 
-  public async gameEnded(game: PokerGame, players: Array<PlayerGameTracker>) {
-    await getHistoryManager().transaction(async transactionEntityManager => {
-      const playerStatsRepo = transactionEntityManager.getRepository(
-        PlayerHandStats
-      );
-      // get the date
-      const date = `${game.startedAt.getFullYear()}-${game.startedAt.getMonth()}-${game.startedAt.getDay()}`;
-      for (const player of players) {
-        const playerStat = await playerStatsRepo.findOne({
-          playerId: player.playerId,
-        });
-        if (playerStat) {
-          // get recent performance data
-          const recentDataJson = playerStat.recentPerformance;
-          let recentPerformance = new Array<any>();
-          try {
-            recentPerformance = JSON.parse(recentDataJson);
-          } catch {}
-          let found = false;
-          const profit = player.stack - player.buyIn;
-          for (const perf of recentPerformance) {
-            if (perf['date'] == date) {
-              if (perf['profit']) {
-                perf['profit'] = perf['profit'] + profit;
-              } else {
-                perf['profit'] = profit;
-              }
-              found = true;
-              break;
+  public async gameEnded(
+    game: GameHistory,
+    players: Array<PlayersInGame>,
+    transManager
+  ) {
+    const playerStatsRepo = transManager.getRepository(PlayerHandStats);
+    // get the date
+    const date = `${game.startedAt.getFullYear()}-${game.startedAt.getMonth()}-${game.startedAt.getDay()}`;
+    for (const player of players) {
+      const playerStat = await playerStatsRepo.findOne({
+        playerId: player.playerId,
+      });
+      if (playerStat) {
+        // get recent performance data
+        const recentDataJson = playerStat.recentPerformance;
+        let recentPerformance = new Array<any>();
+        try {
+          recentPerformance = JSON.parse(recentDataJson);
+        } catch {}
+        let found = false;
+        const profit = player.stack - player.buyIn;
+        for (const perf of recentPerformance) {
+          if (perf['date'] == date) {
+            if (perf['profit']) {
+              perf['profit'] = perf['profit'] + profit;
+            } else {
+              perf['profit'] = profit;
             }
+            found = true;
+            break;
           }
-
-          if (!found) {
-            const perf = {
-              date: date,
-              profit: profit,
-            };
-            recentPerformance.push(perf);
-
-            // if there are more than 20 items, remove the first item
-            if (recentPerformance.length > 20) {
-              const removeItems = recentPerformance.length - 20;
-              recentPerformance = recentPerformance.splice(0, removeItems);
-            }
-          }
-
-          const perfStr = JSON.stringify(recentPerformance);
-          await playerStatsRepo.update(
-            {
-              playerId: player.playerId,
-            },
-            {
-              recentPerformance: perfStr,
-            }
-          );
         }
+
+        if (!found) {
+          const perf = {
+            date: date,
+            profit: profit,
+          };
+          recentPerformance.push(perf);
+
+          // if there are more than 20 items, remove the first item
+          if (recentPerformance.length > 20) {
+            const removeItems = recentPerformance.length - 20;
+            recentPerformance = recentPerformance.splice(0, removeItems);
+          }
+        }
+
+        const perfStr = JSON.stringify(recentPerformance);
+        await playerStatsRepo.update(
+          {
+            playerId: player.playerId,
+          },
+          {
+            recentPerformance: perfStr,
+          }
+        );
       }
-    });
+    }
   }
 
   public async getPlayerRecentPerformance(player: Player): Promise<string> {

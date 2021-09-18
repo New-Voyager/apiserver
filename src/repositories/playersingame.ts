@@ -1,6 +1,11 @@
-import {EntityManager, IsNull, Not, Repository} from 'typeorm';
+import {EntityManager, IsNull, Not, Repository, UpdateResult} from 'typeorm';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {getGameManager, getGameRepository} from '.';
+import {
+  getGameManager,
+  getGameRepository,
+  getHistoryRepository,
+  getUserRepository,
+} from '.';
 import {getLogger} from '@src/utils/log';
 import {
   NextHandUpdates,
@@ -18,6 +23,8 @@ import _ from 'lodash';
 import {BUYIN_TIMEOUT, GamePlayerSettings} from './types';
 import {getAgoraToken} from '@src/3rdparty/agora';
 import {playersInGame} from '@src/resolvers/history';
+import {HandHistory} from '@src/entity/history/hand';
+import {ClubMemberStat} from '@src/entity/player/club';
 
 const logger = getLogger('players_in_game');
 
@@ -483,6 +490,116 @@ class PlayersInGameRepositoryImpl {
         game: {id: game.id},
       }
     );
+  }
+
+  public async gameEnded(
+    game: PokerGame,
+    transactionEntityManager?: EntityManager
+  ) {
+    try {
+      let playerGameRepo: Repository<PlayerGameTracker>;
+      if (transactionEntityManager) {
+        playerGameRepo = transactionEntityManager.getRepository(
+          PlayerGameTracker
+        );
+      } else {
+        playerGameRepo = getGameRepository(PlayerGameTracker);
+      }
+      // update session time
+      const playerInGame = await playerGameRepo.find({
+        game: {id: game.id},
+      });
+      // walk through the hand history and collect big win hands for each player
+      const playerBigWinLoss = {};
+      const hands = await getHistoryRepository(HandHistory).find({
+        where: {gameId: game.id},
+        order: {handNum: 'ASC'},
+      });
+
+      // determine big win/loss hands
+      for (const hand of hands) {
+        const playerStacks = JSON.parse(hand.playersStack);
+        for (const playerId of Object.keys(playerStacks)) {
+          const playerStack = playerStacks[playerId];
+          const diff = playerStack.after - playerStack.before;
+          if (!playerBigWinLoss[playerId]) {
+            playerBigWinLoss[playerId] = {
+              playerId: playerId,
+              bigWin: 0,
+              bigLoss: 0,
+              bigWinHand: 0,
+              bigLossHand: 0,
+              playerStack: [],
+            };
+          }
+
+          if (diff > 0 && diff > playerBigWinLoss[playerId].bigWin) {
+            playerBigWinLoss[playerId].bigWin = diff;
+            playerBigWinLoss[playerId].bigWinHand = hand.handNum;
+          }
+
+          if (diff < 0 && diff < playerBigWinLoss[playerId].bigLoss) {
+            playerBigWinLoss[playerId].bigLoss = diff;
+            playerBigWinLoss[playerId].bigLossHand = hand.handNum;
+          }
+          // gather player stack from each hand
+          playerBigWinLoss[playerId].playerStack.push({
+            hand: hand.handNum,
+            playerStack,
+          });
+        }
+      }
+
+      const chipUpdates = new Array<Promise<UpdateResult>>();
+      for (const playerIdStr of Object.keys(playerBigWinLoss)) {
+        const playerId = parseInt(playerIdStr);
+        const result = await playerGameRepo.update(
+          {
+            playerId: playerId,
+            game: {id: game.id},
+          },
+          {
+            bigWin: playerBigWinLoss[playerIdStr].bigWin,
+            bigWinHand: playerBigWinLoss[playerIdStr].bigWinHand,
+            bigLoss: playerBigWinLoss[playerIdStr].bigLoss,
+            bigLossHand: playerBigWinLoss[playerIdStr].bigLossHand,
+            handStack: JSON.stringify(
+              playerBigWinLoss[playerIdStr].playerStack
+            ),
+          }
+        );
+        //logger.info(JSON.stringify(result));
+      }
+
+      if (game.clubCode) {
+        // update club member balance
+        const playerChips = await playerGameRepo.find({
+          where: {game: {id: game.id}},
+        });
+
+        for (const playerChip of playerChips) {
+          const clubPlayerStats = getUserRepository(ClubMemberStat)
+            .createQueryBuilder()
+            .update()
+            .set({
+              totalBuyins: () => `total_buyins + ${playerChip.buyIn}`,
+              totalWinnings: () => `total_winnings + ${playerChip.stack}`,
+              rakePaid: () => `rake_paid + ${playerChip.rakePaid}`,
+              totalGames: () => 'total_games + 1',
+              totalHands: () => `total_hands + ${playerChip.noHandsPlayed}`,
+            })
+            .where({
+              playerId: playerChip.playerId,
+              clubId: game.clubId,
+            })
+            .execute();
+          chipUpdates.push(clubPlayerStats);
+        }
+      }
+      await Promise.all(chipUpdates);
+    } catch (err) {
+      logger.error(`[${game.gameCode}] Failed to update players in game stats`);
+    }
   }
 }
 

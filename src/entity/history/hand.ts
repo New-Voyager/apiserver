@@ -76,6 +76,9 @@ export class HandHistory {
   @DbAwareColumn({name: 'players_stats', type: 'text', nullable: true})
   public playersStats!: string;
 
+  @DbAwareColumn({name: 'high_rank', type: 'text', nullable: true})
+  public highRank!: string;
+
   // summary is used for showing in the hand history view
   @DbAwareColumn({name: 'summary', type: 'text', nullable: true})
   public summary!: string;

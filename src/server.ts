@@ -278,3 +278,14 @@ export function shouldExposeExternalEndpoints(): boolean {
     process.env.EXTERNAL_ENDPOINTS === 'true'
   );
 }
+
+export function notifyScheduler(): boolean {
+  if (!process.env.NOTIFY_SCHEDULER) {
+    return true;
+  }
+
+  if (process.env.NOTIFY_SCHEDULER === '0') {
+    return false;
+  }
+  return true;
+}
