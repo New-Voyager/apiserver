@@ -20,6 +20,7 @@ API_SERVER_IMAGE := $(REGISTRY)/$(IMAGE_NAME):0.7.14
 GAME_SERVER_IMAGE := $(REGISTRY)/game-server:0.7.5
 BOTRUNNER_IMAGE := $(REGISTRY)/botrunner:0.7.5
 TIMER_IMAGE := $(REGISTRY)/timer:0.5.6
+SCHEDULER_IMAGE := $(REGISTRY)/scheduler:0.1.1
 
 NATS_SERVER_IMAGE := $(REGISTRY)/nats:$(NATS_VERSION)
 REDIS_IMAGE := $(REGISTRY)/redis:$(REDIS_VERSION)
@@ -237,6 +238,7 @@ stack-generate-env:
 		echo "POSTGRES_IMAGE=$(POSTGRES_IMAGE)" >> .env && \
 		echo "BOTRUNNER_IMAGE=$(BOTRUNNER_IMAGE)" >> .env && \
 		echo "TIMER_IMAGE=$(TIMER_IMAGE)" >> .env && \
+		echo "SCHEDULER_IMAGE=$(SCHEDULER_IMAGE)" >> .env && \
 		echo "PROJECT_ROOT=$(PWD)" >> .env && \
 		echo "DOCKER_NET=$(DEFAULT_DOCKER_NET)" >> .env
 
