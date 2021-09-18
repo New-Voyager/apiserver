@@ -50,6 +50,7 @@ import {GameUpdatesRepository} from './gameupdates';
 import {GameServerRepository} from './gameserver';
 import {PlayersInGame} from '@src/entity/history/player';
 import {schedulePostProcessing} from '@src/scheduler';
+import {notifyScheduler} from '@src/server';
 const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
@@ -1042,10 +1043,12 @@ class GameRepositoryImpl {
     await HistoryRepository.gameEnded(game, updates.handNum);
 
     // Schedule post processing.
-    logger.info(
-      `Scheduling post processing for game ${game.id}/${game.gameCode}`
-    );
-    schedulePostProcessing(game.id);
+    if (notifyScheduler()) {
+      logger.info(
+        `Scheduling post processing for game ${game.id}/${game.gameCode}`
+      );
+      schedulePostProcessing(game.id);
+    }
     return ret;
   }
 
