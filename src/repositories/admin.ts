@@ -2,13 +2,20 @@ import {getHistoryConnection, getHistoryManager, getHistoryRepository} from '.';
 import {GameHistory} from '@src/entity/history/game';
 import {PlayerGameStats} from '@src/entity/history/stats';
 import {HandHistory} from '@src/entity/history/hand';
+import {getLogger} from '@src/utils/log';
+
+const logger = getLogger('repositories::admin');
 
 class AdminRepositoryImpl {
   constructor() {}
 
   public async postProcessGames(req: any, resp: any) {
+    logger.info('Starting post processing');
+    const startTime = performance.now();
+
     const repo = getHistoryRepository(GameHistory);
     const allGames = await repo.find({status: 4, dataAggregated: false});
+    const processedGameIds: Array<number> = [];
     allGames.map(async value => {
       await getHistoryManager().transaction(
         async transactionalEntityManager => {
@@ -68,13 +75,15 @@ class AdminRepositoryImpl {
               });
               counter++;
             }
-            await getHistoryRepository(PlayerGameStats).update(
-              {
-                gameId: value.gameId,
-                playerId: parseInt(key),
-              },
-              playerMap[key]
-            );
+            await transactionalEntityManager
+              .getRepository(PlayerGameStats)
+              .update(
+                {
+                  gameId: value.gameId,
+                  playerId: parseInt(key),
+                },
+                playerMap[key]
+              );
           }
           repo.update(
             {
@@ -86,9 +95,18 @@ class AdminRepositoryImpl {
           );
         }
       );
+      processedGameIds.push(value.gameId);
     });
 
-    resp.status(200).send({requests: allGames});
+    const endTime = performance.now();
+    logger.info(
+      `Post processing of ${processedGameIds.length} games took ${
+        endTime - startTime
+      } ms. Processed game IDs - [${processedGameIds}]`
+    );
+    resp.status(200).send({
+      processedGameIds: processedGameIds,
+    });
   }
 }
 

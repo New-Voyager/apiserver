@@ -110,7 +110,7 @@ export function addInternalRoutes(app: any) {
   // admin apis
   app.get('/admin/feature-requests', DevRepository.featureRequests);
   app.get('/admin/bug-reports', DevRepository.bugReports);
-  app.get('/admin/post-process-games', AdminRepository.postProcessGames);
+  app.post('/admin/post-process-games', AdminRepository.postProcessGames);
 }
 
 // returns nats urls

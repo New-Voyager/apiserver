@@ -65,6 +65,7 @@ import {GameSettingsRepository} from './gamesettings';
 import {PlayersInGameRepository} from './playersingame';
 import {GameUpdatesRepository} from './gameupdates';
 import {GameServerRepository} from './gameserver';
+import {schedulePostProcessing} from '@src/scheduler';
 const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
@@ -1056,6 +1057,12 @@ class GameRepositoryImpl {
     const updates = await GameUpdatesRepository.get(game.gameCode);
     // update history tables
     await HistoryRepository.gameEnded(game, updates.handNum);
+
+    // Schedule post processing.
+    logger.info(
+      `Scheduling post processing for game ${game.id}/${game.gameCode}`
+    );
+    await schedulePostProcessing(game.id);
     return ret;
   }
 
