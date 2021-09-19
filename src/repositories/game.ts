@@ -1039,8 +1039,6 @@ class GameRepositoryImpl {
     const ret = this.markGameStatus(gameId, GameStatus.ENDED);
     game.status = GameStatus.ENDED;
     updates = await GameUpdatesRepository.get(game.gameCode, true);
-    // update history tables
-    await HistoryRepository.gameEnded(game, updates.handNum);
 
     // Schedule post processing.
     if (notifyScheduler()) {
