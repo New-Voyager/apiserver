@@ -11,7 +11,7 @@ import {
 import {LessThan, MoreThan, getManager, EntityManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {PokerGame} from '@src/entity/game/game';
-import {getLogger} from '@src/utils/log';
+import {errToLogString, getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {Cache} from '@src/cache';
 import {RewardRepository} from './reward';
@@ -839,7 +839,10 @@ class HandRepositoryImpl {
             pendingUpdates = true;
           }
         }
-      } catch (err) {}
+        // } catch (err) {}
+      } catch (err) {
+        logger.error(errToLogString(err));
+      }
 
       if (!pendingUpdates) {
         if (gameUpdates.lastIpGpsCheckTime) {
