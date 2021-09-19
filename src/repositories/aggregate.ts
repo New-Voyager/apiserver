@@ -63,6 +63,7 @@ class AggregationImpl {
     if (processCount > BATCH_SIZE) {
       processCount--;
     }
+    let processedGameIds: Array<number> = [];
     for (let gameIdx = 0; gameIdx < processCount; gameIdx++) {
       const game = allGames[gameIdx];
       logger.info(
@@ -123,7 +124,9 @@ class AggregationImpl {
               );
             }
           }
-          const gameStatsRepo = getHistoryRepository(PlayerGameStats);
+          const gameStatsRepo = transactionalEntityManager.getRepository(
+            PlayerGameStats
+          );
           // update player game stats
           for (const player of playersInGame) {
             playerStatsMap[player.playerId].headsupHandDetails = JSON.stringify(
@@ -156,7 +159,7 @@ class AggregationImpl {
           );
 
           // data is aggregated for this game
-          await repo.update(
+          await transactionalEntityManager.getRepository(GameHistory).update(
             {
               gameId: game.gameId,
             },
@@ -164,6 +167,7 @@ class AggregationImpl {
               dataAggregated: true,
             }
           );
+          processedGameIds.push(game.gameId);
         }
       );
       logger.info(
@@ -174,7 +178,7 @@ class AggregationImpl {
 
     return {
       more: more,
-      aggregated: allGames.map(e => e.gameId),
+      aggregated: processedGameIds,
     };
   }
 }
