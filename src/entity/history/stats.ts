@@ -1,12 +1,4 @@
-import {
-  Entity,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  OneToOne,
-  PrimaryGeneratedColumn,
-  Index,
-} from 'typeorm';
+import {Entity, Column, PrimaryGeneratedColumn, Index} from 'typeorm';
 import {GameType} from '../types';
 
 @Entity({name: 'player_game_stats'})
@@ -14,10 +6,10 @@ export class PlayerGameStats {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @Column({name: 'game_id', type: 'int'})
+  @Column({type: 'bigint', name: 'game_id'})
   public gameId!: number;
 
-  @Column({name: 'player_id', type: 'int'})
+  @Column({type: 'bigint', name: 'player_id'})
   public playerId!: number;
 
   @Column({name: 'in_preflop', default: 0})
@@ -143,11 +135,14 @@ export class ClubStats {
   @Column({name: 'game_type'})
   public gameType!: GameType;
 
-  @Column({name: 'total_hands', default: 0})
+  @Column({type: 'bigint', name: 'total_hands', default: 0})
   public totalHands!: number;
 
-  @Column({name: 'total_games', default: 0})
+  @Column({type: 'bigint', name: 'total_games', default: 0})
   public totalGames!: number;
+
+  @Column({type: 'bigint', name: 'total_players_in_hand', default: 0})
+  public totalPlayersInHand!: number;
 
   @Column({name: 'straight5_flush', default: 0})
   public straight5Flush!: number;
@@ -227,78 +222,81 @@ export class SystemStats {
   @Column({name: 'game_type'})
   public gameType!: GameType;
 
-  @Column({name: 'total_hands', default: 0})
+  @Column({type: 'bigint', name: 'total_hands', default: 0})
   public totalHands!: number;
 
-  @Column({name: 'total_games', default: 0})
+  @Column({type: 'bigint', name: 'total_games', default: 0})
   public totalGames!: number;
 
-  @Column({name: 'straight5_flush', default: 0})
+  @Column({type: 'bigint', name: 'total_players_in_hand', default: 0})
+  public totalPlayersInHand!: number;
+
+  @Column({type: 'bigint', name: 'straight5_flush', default: 0})
   public straight5Flush!: number;
 
-  @Column({name: 'straight6_flush', default: 0})
+  @Column({type: 'bigint', name: 'straight6_flush', default: 0})
   public straight6Flush!: number;
 
-  @Column({name: 'straight7_flush', default: 0})
+  @Column({type: 'bigint', name: 'straight7_flush', default: 0})
   public straight7Flush!: number;
 
-  @Column({name: 'straight8_flush', default: 0})
+  @Column({type: 'bigint', name: 'straight8_flush', default: 0})
   public straight8Flush!: number;
 
-  @Column({name: 'straight9_flush', default: 0})
+  @Column({type: 'bigint', name: 'straight9_flush', default: 0})
   public straight9Flush!: number;
 
-  @Column({name: 'straightt_flush', default: 0})
+  @Column({type: 'bigint', name: 'straightt_flush', default: 0})
   public straightTFlush!: number;
 
-  @Column({name: 'straightj_flush', default: 0})
+  @Column({type: 'bigint', name: 'straightj_flush', default: 0})
   public straightJFlush!: number;
 
-  @Column({name: 'straightq_flush', default: 0})
+  @Column({type: 'bigint', name: 'straightq_flush', default: 0})
   public straightQFlush!: number;
 
-  @Column({name: 'straightk_flush', default: 0})
+  @Column({type: 'bigint', name: 'straightk_flush', default: 0})
   public straightKFlush!: number;
 
-  @Column({name: 'straighta_flush', default: 0})
+  @Column({type: 'bigint', name: 'straighta_flush', default: 0})
   public straightAFlush!: number;
 
-  @Column({name: 'four_aaaa', default: 0})
+  @Column({type: 'bigint', name: 'four_aaaa', default: 0})
   public fourAAAA!: number;
 
-  @Column({name: 'four_kkkk', default: 0})
+  @Column({type: 'bigint', name: 'four_kkkk', default: 0})
   public fourKKKK!: number;
 
-  @Column({name: 'four_qqqq', default: 0})
+  @Column({type: 'bigint', name: 'four_qqqq', default: 0})
   public fourQQQQ!: number;
 
-  @Column({name: 'four_jjjj', default: 0})
+  @Column({type: 'bigint', name: 'four_jjjj', default: 0})
   public fourJJJJ!: number;
 
-  @Column({name: 'four_tttt', default: 0})
+  @Column({type: 'bigint', name: 'four_tttt', default: 0})
   public fourTTTT!: number;
 
-  @Column({name: 'four_9999', default: 0})
+  @Column({type: 'bigint', name: 'four_9999', default: 0})
   public four9999!: number;
 
-  @Column({name: 'four_8888', default: 0})
+  @Column({type: 'bigint', name: 'four_8888', default: 0})
   public four8888!: number;
 
-  @Column({name: 'four_7777', default: 0})
+  @Column({type: 'bigint', name: 'four_7777', default: 0})
   public four7777!: number;
 
-  @Column({name: 'four_6666', default: 0})
+  @Column({type: 'bigint', name: 'four_6666', default: 0})
   public four6666!: number;
 
-  @Column({name: 'four_5555', default: 0})
+  @Column({type: 'bigint', name: 'four_5555', default: 0})
   public four5555!: number;
 
-  @Column({name: 'four_4444', default: 0})
+  @Column({type: 'bigint', name: 'four_4444', default: 0})
   public four4444!: number;
 
-  @Column({name: 'four_3333', default: 0})
+  @Column({type: 'bigint', name: 'four_3333', default: 0})
   public four3333!: number;
 
-  @Column({name: 'four_2222', default: 0})
+  @Column({type: 'bigint', name: 'four_2222', default: 0})
   public four2222!: number;
 }

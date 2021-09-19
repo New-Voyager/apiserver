@@ -26,10 +26,12 @@ class AggregationImpl {
       playerStats[key].inFlop += rounds[key].flop;
       playerStats[key].inTurn += rounds[key].turn;
       playerStats[key].inRiver += rounds[key].river;
+      playerStats[key].totalHands++;
     }
     for (const key in playersHandStats.playerStats) {
       const stats = playersHandStats.playerStats;
       playerStats[key].wentToShowDown += stats[key].wentToShowdown ? 1 : 0;
+      playerStats[key].wonAtShowDown += stats[key].wonChipsAtShowdown ? 1 : 0;
       playerStats[key].headsupHands += stats[key].headsup ? 1 : 0;
       playerStats[key].wonHeadsupHands += stats[key].wonHeadsup ? 1 : 0;
       playerStats[key].preflopRaise += stats[key].preflopRaise ? 1 : 0;
@@ -71,6 +73,10 @@ class AggregationImpl {
       );
       await getHistoryManager().transaction(
         async transactionalEntityManager => {
+          const gameHistoryRepo = transactionalEntityManager.getRepository(
+            GameHistory
+          );
+
           const handHistoryRepo = transactionalEntityManager.getRepository(
             HandHistory
           );
@@ -100,12 +106,16 @@ class AggregationImpl {
               contBet: 0,
               vpipCount: 0,
               allInCount: 0,
+              totalHands: 0,
               headsupDetails: [],
             };
           }
           // iteratre through hand history and aggregate counters
+          let totalPlayersInHand = 0;
           for (const handHistory of handHistoryData) {
             this.aggregateHandStats(handHistory, playerStatsMap);
+            const playersInHand = JSON.parse(handHistory.players).length;
+            totalPlayersInHand += playersInHand;
             await handHistoryRepo.update(
               {
                 gameId: game.gameId,
@@ -115,27 +125,49 @@ class AggregationImpl {
                 playersStats: undefined,
               }
             );
+            let highRankJson = {};
             if (handHistory.highRank) {
-              const highRankJson = JSON.parse(handHistory.highRank);
-              await StatsRepository.updateClubStats(
-                game,
-                highRankJson,
-                transactionalEntityManager
-              );
+              highRankJson = JSON.parse(handHistory.highRank);
             }
+            await StatsRepository.updateClubStats(
+              game,
+              highRankJson,
+              playersInHand,
+              transactionalEntityManager
+            );
+            await StatsRepository.updateSystemStats(
+              game,
+              highRankJson,
+              playersInHand,
+              transactionalEntityManager
+            );
           }
           const gameStatsRepo = transactionalEntityManager.getRepository(
             PlayerGameStats
           );
+          console.log(
+            `game: ${game.gameCode} Update players stats: ${playersInGame.length}`
+          );
           // update player game stats
           for (const player of playersInGame) {
-            playerStatsMap[player.playerId].headsupHandDetails = JSON.stringify(
-              playerStatsMap[player.playerId].headsupDetails
-            );
-            delete playerStatsMap[player.playerId].headsupDetails;
-            if (!playerStatsMap[player.playerId].headsupHandDetails) {
-              playerStatsMap[player.playerId].headsupHandDetails = '[]';
+            let headsupHandDetails = '[]';
+            if (
+              playerStatsMap[player.playerId].headsupDetails &&
+              playerStatsMap[player.playerId].headsupDetails.length > 0
+            ) {
+              headsupHandDetails = JSON.stringify(
+                playerStatsMap[player.playerId].headsupDetails
+              );
             }
+            playerStatsMap[
+              player.playerId
+            ].headsupHandDetails = headsupHandDetails;
+            delete playerStatsMap[player.playerId].headsupDetails;
+            console.log(
+              `game: ${game.gameCode} player: ${
+                player.playerName
+              } ${JSON.stringify(playerStatsMap[player.playerId])}`
+            );
             await gameStatsRepo.update(
               {
                 gameId: game.gameId,
@@ -159,7 +191,7 @@ class AggregationImpl {
           );
 
           // data is aggregated for this game
-          await transactionalEntityManager.getRepository(GameHistory).update(
+          await gameHistoryRepo.update(
             {
               gameId: game.gameId,
             },

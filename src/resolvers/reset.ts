@@ -60,6 +60,9 @@ export async function resetGames() {
     await deleteAll('players_in_game', transactionEntityManager);
     await deleteAll('game_history', transactionEntityManager);
     await deleteAll('high_hand_history', transactionEntityManager);
+    await deleteAll('club_stats', transactionEntityManager);
+    await deleteAll('player_game_stats', transactionEntityManager);
+    await deleteAll('player_hand_stats', transactionEntityManager);
   });
   await Cache.reset();
   return true;
@@ -106,6 +109,7 @@ export async function resetDB() {
         await deleteAll('game_server', transactionEntityManager);
       }
     });
+    await Cache.reset();
   } catch (err) {
     logger.error(`Failed to reset database. ${err.toString()}`);
     throw new Error(`Failed to reset database. ${err.toString()}`);
