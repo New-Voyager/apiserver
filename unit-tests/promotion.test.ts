@@ -48,7 +48,7 @@ afterAll(async done => {
   done();
 });
 
-describe('History APIs', () => {
+describe('Promotion APIs', () => {
   beforeEach(async done => {
     await resetDB();
     done();
