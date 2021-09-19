@@ -65,6 +65,7 @@ class AggregationImpl {
     if (processCount > BATCH_SIZE) {
       processCount--;
     }
+    let processedGameIds: Array<number> = [];
     for (let gameIdx = 0; gameIdx < processCount; gameIdx++) {
       const game = allGames[gameIdx];
       logger.info(
@@ -198,6 +199,7 @@ class AggregationImpl {
               dataAggregated: true,
             }
           );
+          processedGameIds.push(game.gameId);
         }
       );
       logger.info(
@@ -208,7 +210,7 @@ class AggregationImpl {
 
     return {
       more: more,
-      aggregated: allGames.map(e => e.gameId),
+      aggregated: processedGameIds,
     };
   }
 }
