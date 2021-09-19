@@ -12,7 +12,7 @@ const resolvers: any = {
       return getClubStats(ctx.req.playerId, args.gameType, args.clubCode);
     },
     systemStats: async (parent, args, ctx, info) => {
-      return getSystemStats();
+      return getSystemStats(args.gameType);
     },
     playerHandStats: async (parent, args, ctx, info) => {
       return getPlayerHandStats(ctx.req.playerId);
@@ -36,8 +36,10 @@ async function getClubStats(
   return stats;
 }
 
-async function getSystemStats() {
-  return null;
+async function getSystemStats(gameTypeStr: string) {
+  const gameType: GameType = GameType[gameTypeStr];
+  const stats = await StatsRepository.getSystemStats(gameType);
+  return stats;
 }
 
 async function getPlayerHandStats(playerId: string) {

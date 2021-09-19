@@ -611,6 +611,14 @@ class StatsRepositoryImpl {
     return stats;
   }
 
+  public async getSystemStats(gameType: GameType): Promise<any> {
+    const systemStatsRepo = getHistoryRepository(SystemStats);
+    const stats = await systemStatsRepo.findOne({
+      gameType: gameType,
+    });
+    return stats;
+  }
+
   public async getPlayerHandStats(playerId: string): Promise<any> {
     const playerHandsRepo = getHistoryRepository(PlayerHandStats);
     const player = await Cache.getPlayer(playerId);
