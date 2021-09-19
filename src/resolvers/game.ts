@@ -192,7 +192,7 @@ export async function endGame(playerId: string, gameCode: string) {
       game.tableStatus === TableStatus.GAME_RUNNING
     ) {
       // the game will be stopped in the next hand
-      NextHandUpdatesRepository.endGameNextHand(player, game.id);
+      await NextHandUpdatesRepository.endGameNextHand(player, game.id);
     } else {
       await Cache.removeAllObservers(game.gameCode);
       const status = await GameRepository.markGameEnded(game.id);

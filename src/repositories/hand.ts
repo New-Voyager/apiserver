@@ -835,7 +835,7 @@ class HandRepositoryImpl {
             // set pending updates true
             await Cache.updateGamePendingUpdates(game.gameCode, true);
             const player = await Cache.getPlayer(game.hostUuid);
-            NextHandUpdatesRepository.endGameNextHand(player, game.id);
+            await NextHandUpdatesRepository.endGameNextHand(player, game.id);
             pendingUpdates = true;
           }
         }
