@@ -64,7 +64,7 @@ export function getLogger(name: string): winston.Logger {
   });
 }
 
-export function errToLogString(e: Error, includeStack = true): string {
+export function errToLogString(e: any, includeStack = true): string {
   if (!e) {
     return 'Error object is undefined';
   }

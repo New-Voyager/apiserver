@@ -24,7 +24,6 @@ export async function schedulePostProcessing(gameId: number) {
   const url = `${baseUrl}/schedule-game-post-process?game-id=${gameId}`;
   const resp = await axios.post(url, {timeout: 3000});
   if (resp.status !== 200) {
-    logger.error(`Received http status ${resp.status} from ${url}`);
-    throw new Error(`Failed to schedule post processing for game ${gameId}`);
+    throw new Error(`Received http status ${resp.status} from ${url}`);
   }
 }

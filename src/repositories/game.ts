@@ -14,7 +14,7 @@ import {
   SeatStatus,
 } from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
-import {getLogger} from '@src/utils/log';
+import {errToLogString, getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
 import {publishNewGame, resumeGame, endGame} from '@src/gameserver';
@@ -1045,7 +1045,15 @@ class GameRepositoryImpl {
       logger.info(
         `Scheduling post processing for game ${game.id}/${game.gameCode}`
       );
-      schedulePostProcessing(game.id);
+      try {
+        await schedulePostProcessing(game.id);
+      } catch (err) {
+        logger.error(
+          `Could not schedule post processing for game ${game.id}/${
+            game.gameCode
+          }: ${errToLogString(err)}`
+        );
+      }
     }
     return ret;
   }
