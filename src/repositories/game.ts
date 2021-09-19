@@ -1045,15 +1045,7 @@ class GameRepositoryImpl {
       logger.info(
         `Scheduling post processing for game ${game.id}/${game.gameCode}`
       );
-      try {
-        await schedulePostProcessing(game.id);
-      } catch (err) {
-        logger.error(
-          `Could not schedule post processing for game ${game.id}/${
-            game.gameCode
-          }: ${errToLogString(err)}`
-        );
-      }
+      schedulePostProcessing(game.id, game.gameCode);
     }
     return ret;
   }
