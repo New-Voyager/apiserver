@@ -1,4 +1,4 @@
-import {PORT_NUMBER} from './utils/utils';
+import {INTERNAL_PORT, startGqlServer} from './utils/utils';
 import {default as axios} from 'axios';
 import {resetDatabase, getClient} from './utils/utils';
 import * as handutils from './utils/hand.testutils';
@@ -89,7 +89,7 @@ async function createReward1(playerId, clubCode) {
   return rewardId.data.rewardId;
 }
 
-const SERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
+const SERVER_API = `http://localhost:${INTERNAL_PORT}/internal`;
 
 async function createClubWithMembers(
   ownerInput: any,
@@ -145,6 +145,22 @@ async function setupGameEnvironment(
 
 
 describe('Hand Tests', () => {
+
+  let stop, graphql;
+
+  beforeAll(async done => {
+    const testServer = await startGqlServer();
+    stop = testServer.stop;
+    graphql = testServer.graphql;
+    await resetDatabase();
+    done();
+  });
+  
+  afterAll(async done => {
+     stop();
+     done();
+  });
+
   beforeEach(async done => {
     await resetDatabase();
     done();

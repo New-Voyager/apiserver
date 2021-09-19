@@ -13,10 +13,14 @@ GCR_REGISTRY := gcr.io/voyager-01-285603
 DO_REGISTRY := registry.digitalocean.com/voyager
 REGISTRY := $(GCP_REGISTRY)
 
-API_SERVER_IMAGE := $(REGISTRY)/api-server:0.7.14
-GAME_SERVER_IMAGE := $(REGISTRY)/game-server:0.7.5
-BOTRUNNER_IMAGE := $(REGISTRY)/botrunner:0.7.5
-TIMER_IMAGE := $(REGISTRY)/timer:0.5.6
+IMAGE_NAME := api-server
+TEST_IMAGE_NAME := api-server-test
+
+API_SERVER_IMAGE := $(REGISTRY)/$(IMAGE_NAME):0.7.35
+GAME_SERVER_IMAGE := $(REGISTRY)/game-server:0.7.14
+BOTRUNNER_IMAGE := $(REGISTRY)/botrunner:0.7.17
+TIMER_IMAGE := $(REGISTRY)/timer:0.5.9
+SCHEDULER_IMAGE := $(REGISTRY)/scheduler:0.1.4
 
 NATS_SERVER_IMAGE := $(REGISTRY)/nats:$(NATS_VERSION)
 REDIS_IMAGE := $(REGISTRY)/redis:$(REDIS_VERSION)
@@ -24,6 +28,7 @@ POSTGRES_IMAGE := $(REGISTRY)/postgres:$(POSTGRES_VERSION)
 
 LOCAL_IP := $(POKER_LOCAL_IP)
 API_SERVER_URL := http://$(LOCAL_IP):9501
+API_SERVER_INTERNAL_URL := http://$(LOCAL_IP):9502
 LOCAL_NATS_URL := nats://$(LOCAL_IP):4222
 LOCAL_POSTGRES_HOST := $(LOCAL_IP)
 
@@ -84,11 +89,11 @@ create-network:
 
 .PHONY: docker-build
 docker-build:
-	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build -f docker/Dockerfile.apiserver . -t api-server
+	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build -f docker/Dockerfile.apiserver . -t $(IMAGE_NAME)
 
 .PHONY: docker-build-test
 docker-build-test:
-	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build -f docker/Dockerfile.test . -t api-server-test
+	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build -f docker/Dockerfile.test . -t $(TEST_IMAGE_NAME)
 
 .PHONY: up
 up: create-network
@@ -138,10 +143,10 @@ publish-all: publish-apiserver publish-3rdparty
 
 .PHONY: publish-apiserver
 publish-apiserver:
-	docker tag api-server $(REGISTRY)/api-server:$(BUILD_NO)
-	docker tag api-server $(REGISTRY)/api-server:latest
-	docker push $(REGISTRY)/api-server:$(BUILD_NO)
-	docker push $(REGISTRY)/api-server:latest
+	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME):$(BUILD_NO)
+	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME):latest
+	docker push $(REGISTRY)/$(IMAGE_NAME):$(BUILD_NO)
+	docker push $(REGISTRY)/$(IMAGE_NAME):latest
 
 .PHONY: publish-3rdparty
 publish-3rdparty:
@@ -184,35 +189,35 @@ stop-nats:
 .PHONY: docker-unit-tests
 docker-unit-tests: create-network
 	docker run -t --rm \
-		--name api-server \
+		--name $(IMAGE_NAME) \
 		--network $(DEFAULT_DOCKER_NET) \
 		-e REDIS_HOST=redis \
 		-e REDIS_PORT=6379 \
 		-e REDIS_DB=0 \
-		api-server-test sh -c "yarn unit-tests"
+		$(TEST_IMAGE_NAME) sh -c "yarn unit-tests"
 
 
 .PHONY: docker-script-tests
 docker-script-tests: create-network run-redis
 	docker run -t --rm \
-		--name api-server-test \
+		--name $(TEST_IMAGE_NAME) \
 		--network $(DEFAULT_DOCKER_NET) \
 		-e REDIS_HOST=redis \
 		-e REDIS_PORT=6379 \
 		-e REDIS_DB=0 \
-		api-server-test sh -c "sh ./run_script_tests.sh"
+		$(TEST_IMAGE_NAME) sh -c "sh ./run_script_tests.sh"
 
 .PHONY: docker-tests
 docker-tests: create-network run-redis run-nats run-pg
 	docker run -t --rm \
-		--name api-server-test \
+		--name $(TEST_IMAGE_NAME) \
 		--network $(DEFAULT_DOCKER_NET) \
 		-e REDIS_HOST=redis \
 		-e REDIS_PORT=6379 \
 		-e REDIS_DB=0 \
 		-e NATS_URL=nats://nats:4222 \
 		-e POSTGRES_HOST=mydb \
-		api-server-test sh -c "sh ./run_system_tests.sh"
+		$(TEST_IMAGE_NAME) sh -c "sh ./run_system_tests.sh"
 
 .PHONY: run-all
 run-all: create-network run-pg run-nats run-redis
@@ -227,6 +232,7 @@ stack-generate-env:
 	cd docker && \
 		> .env && \
 		echo "API_SERVER_URL=$(API_SERVER_URL)" >> .env && \
+		echo "API_SERVER_INTERNAL_URL=$(API_SERVER_INTERNAL_URL)" >> .env && \
 		echo "API_SERVER_IMAGE=$(API_SERVER_IMAGE)" >> .env && \
 		echo "GAME_SERVER_IMAGE=$(GAME_SERVER_IMAGE)" >> .env && \
 		echo "NATS_SERVER_IMAGE=$(NATS_SERVER_IMAGE)" >> .env && \
@@ -234,6 +240,7 @@ stack-generate-env:
 		echo "POSTGRES_IMAGE=$(POSTGRES_IMAGE)" >> .env && \
 		echo "BOTRUNNER_IMAGE=$(BOTRUNNER_IMAGE)" >> .env && \
 		echo "TIMER_IMAGE=$(TIMER_IMAGE)" >> .env && \
+		echo "SCHEDULER_IMAGE=$(SCHEDULER_IMAGE)" >> .env && \
 		echo "PROJECT_ROOT=$(PWD)" >> .env && \
 		echo "DOCKER_NET=$(DEFAULT_DOCKER_NET)" >> .env
 
@@ -271,3 +278,8 @@ reset-db:
 
 .PHONY: clean-ci
 clean-ci: stop-nats stop-redis stop-pg
+	docker image rm -f \
+		$(IMAGE_NAME) \
+		$(TEST_IMAGE_NAME) \
+		$(REGISTRY)/$(IMAGE_NAME):$(BUILD_NO) \
+		$(REGISTRY)/$(IMAGE_NAME):latest

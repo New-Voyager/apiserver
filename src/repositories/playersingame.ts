@@ -1,6 +1,11 @@
-import {EntityManager, Not, Repository} from 'typeorm';
+import {EntityManager, IsNull, Not, Repository, UpdateResult} from 'typeorm';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {getGameManager, getGameRepository} from '.';
+import {
+  getGameManager,
+  getGameRepository,
+  getHistoryRepository,
+  getUserRepository,
+} from '.';
 import {getLogger} from '@src/utils/log';
 import {
   NextHandUpdates,
@@ -18,16 +23,17 @@ import _ from 'lodash';
 import {BUYIN_TIMEOUT, GamePlayerSettings} from './types';
 import {getAgoraToken} from '@src/3rdparty/agora';
 import {playersInGame} from '@src/resolvers/history';
+import {HandHistory} from '@src/entity/history/hand';
+import {ClubMemberStat} from '@src/entity/player/club';
 
 const logger = getLogger('players_in_game');
 
 class PlayersInGameRepositoryImpl {
-  // YONG
   public async getPlayersInSeats(
     gameId: number,
     transactionManager?: EntityManager
   ): Promise<Array<PlayerGameTracker>> {
-    let playerGameTrackerRepo;
+    let playerGameTrackerRepo: Repository<PlayerGameTracker>;
     if (transactionManager) {
       playerGameTrackerRepo = transactionManager.getRepository(
         PlayerGameTracker
@@ -35,10 +41,11 @@ class PlayersInGameRepositoryImpl {
     } else {
       playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     }
-    const resp = await playerGameTrackerRepo.find({
+    let resp = await playerGameTrackerRepo.find({
       game: {id: gameId},
-      seatNo: Not(0),
+      seatNo: Not(IsNull()),
     });
+    resp = _.filter(resp, e => e.seatNo != 0);
     return resp;
   }
 
@@ -99,7 +106,6 @@ class PlayersInGameRepositoryImpl {
     return resp[0];
   }
 
-  // YONG
   public async kickOutPlayer(gameCode: string, player: Player) {
     await getGameManager().transaction(async transactionEntityManager => {
       // find game
@@ -175,7 +181,100 @@ class PlayersInGameRepositoryImpl {
     });
   }
 
-  // YONG
+  public async setBuyInLimit(gameCode: string, player: Player, limit: number) {
+    await getGameManager().transaction(async transactionEntityManager => {
+      // find game
+      const game = await Cache.getGame(
+        gameCode,
+        false,
+        transactionEntityManager
+      );
+      if (!game) {
+        throw new Error(`Game ${gameCode} is not found`);
+      }
+      const playerGameTrackerRepository = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
+      logger.info(
+        `Setting buy-in limit to ${limit} for player ${player?.id}/${player?.name} in game ${gameCode}`
+      );
+      const playerInGame = await playerGameTrackerRepository.findOne({
+        where: {
+          game: {id: game.id},
+          playerId: player.id,
+        },
+      });
+
+      if (!playerInGame) {
+        // player is not in game
+        throw new Error(`Player ${player.name} is not in the game`);
+      }
+
+      await playerGameTrackerRepository.update(
+        {
+          game: {id: game.id},
+          playerId: player.id,
+        },
+        {
+          buyInAutoApprovalLimit: limit,
+        }
+      );
+    });
+  }
+
+  public async assignNewHost(
+    gameCode: string,
+    oldHostPlayer: Player,
+    newHostPlayer: Player
+  ) {
+    await getGameManager().transaction(async transactionEntityManager => {
+      // find game
+      const game = await Cache.getGame(
+        gameCode,
+        false,
+        transactionEntityManager
+      );
+      if (!game) {
+        throw new Error(`Game ${gameCode} is not found`);
+      }
+
+      // Only one of the seated players can be assigned as the new host.
+      const playersInSeats: Array<PlayerGameTracker> = await this.getPlayersInSeats(
+        game.id,
+        transactionEntityManager
+      );
+      let isPlayerInSeat: boolean = false;
+      for (const p of playersInSeats) {
+        if (p.playerId === newHostPlayer.id) {
+          isPlayerInSeat = true;
+        }
+      }
+      if (!isPlayerInSeat) {
+        throw new Error(
+          `Player ${newHostPlayer.uuid} is not in seat in game ${gameCode}`
+        );
+      }
+
+      const gameRepo = transactionEntityManager.getRepository(PokerGame);
+      await gameRepo.update(
+        {
+          gameCode: gameCode,
+        },
+        {
+          hostId: newHostPlayer.id,
+          hostUuid: newHostPlayer.uuid,
+          hostName: newHostPlayer.name,
+        }
+      );
+      await Cache.getGame(
+        gameCode,
+        true /** update */,
+        transactionEntityManager
+      );
+      Nats.hostChanged(game, newHostPlayer);
+    });
+  }
+
   public async getAudioToken(
     player: Player,
     game: PokerGame,
@@ -304,9 +403,13 @@ class PlayersInGameRepositoryImpl {
       playerId: player.id,
     });
     if (!playerInGame) {
-      throw new Error(
-        `Player ${player.name} is not found in game: ${game.gameCode}`
-      );
+      return {
+        muckLosingHand: false,
+        autoStraddle: false,
+        bombPotEnabled: true,
+        runItTwiceEnabled: true,
+        buttonStraddle: false,
+      };
     }
 
     const settings: GamePlayerSettings = {
@@ -319,7 +422,6 @@ class PlayersInGameRepositoryImpl {
     return settings;
   }
 
-  // YONG
   public async startBuyinTimer(
     game: PokerGame,
     playerId: number,
@@ -388,6 +490,116 @@ class PlayersInGameRepositoryImpl {
         game: {id: game.id},
       }
     );
+  }
+
+  public async gameEnded(
+    game: PokerGame,
+    transactionEntityManager?: EntityManager
+  ) {
+    try {
+      let playerGameRepo: Repository<PlayerGameTracker>;
+      if (transactionEntityManager) {
+        playerGameRepo = transactionEntityManager.getRepository(
+          PlayerGameTracker
+        );
+      } else {
+        playerGameRepo = getGameRepository(PlayerGameTracker);
+      }
+      // update session time
+      const playerInGame = await playerGameRepo.find({
+        game: {id: game.id},
+      });
+      // walk through the hand history and collect big win hands for each player
+      const playerBigWinLoss = {};
+      const hands = await getHistoryRepository(HandHistory).find({
+        where: {gameId: game.id},
+        order: {handNum: 'ASC'},
+      });
+
+      // determine big win/loss hands
+      for (const hand of hands) {
+        const playerStacks = JSON.parse(hand.playersStack);
+        for (const playerId of Object.keys(playerStacks)) {
+          const playerStack = playerStacks[playerId];
+          const diff = playerStack.after - playerStack.before;
+          if (!playerBigWinLoss[playerId]) {
+            playerBigWinLoss[playerId] = {
+              playerId: playerId,
+              bigWin: 0,
+              bigLoss: 0,
+              bigWinHand: 0,
+              bigLossHand: 0,
+              playerStack: [],
+            };
+          }
+
+          if (diff > 0 && diff > playerBigWinLoss[playerId].bigWin) {
+            playerBigWinLoss[playerId].bigWin = diff;
+            playerBigWinLoss[playerId].bigWinHand = hand.handNum;
+          }
+
+          if (diff < 0 && diff < playerBigWinLoss[playerId].bigLoss) {
+            playerBigWinLoss[playerId].bigLoss = diff;
+            playerBigWinLoss[playerId].bigLossHand = hand.handNum;
+          }
+          // gather player stack from each hand
+          playerBigWinLoss[playerId].playerStack.push({
+            hand: hand.handNum,
+            playerStack,
+          });
+        }
+      }
+
+      const chipUpdates = new Array<Promise<UpdateResult>>();
+      for (const playerIdStr of Object.keys(playerBigWinLoss)) {
+        const playerId = parseInt(playerIdStr);
+        const result = await playerGameRepo.update(
+          {
+            playerId: playerId,
+            game: {id: game.id},
+          },
+          {
+            bigWin: playerBigWinLoss[playerIdStr].bigWin,
+            bigWinHand: playerBigWinLoss[playerIdStr].bigWinHand,
+            bigLoss: playerBigWinLoss[playerIdStr].bigLoss,
+            bigLossHand: playerBigWinLoss[playerIdStr].bigLossHand,
+            handStack: JSON.stringify(
+              playerBigWinLoss[playerIdStr].playerStack
+            ),
+          }
+        );
+        //logger.info(JSON.stringify(result));
+      }
+
+      if (game.clubCode) {
+        // update club member balance
+        const playerChips = await playerGameRepo.find({
+          where: {game: {id: game.id}},
+        });
+
+        for (const playerChip of playerChips) {
+          const clubPlayerStats = getUserRepository(ClubMemberStat)
+            .createQueryBuilder()
+            .update()
+            .set({
+              totalBuyins: () => `total_buyins + ${playerChip.buyIn}`,
+              totalWinnings: () => `total_winnings + ${playerChip.stack}`,
+              rakePaid: () => `rake_paid + ${playerChip.rakePaid}`,
+              totalGames: () => 'total_games + 1',
+              totalHands: () => `total_hands + ${playerChip.noHandsPlayed}`,
+            })
+            .where({
+              playerId: playerChip.playerId,
+              clubId: game.clubId,
+            })
+            .execute();
+          chipUpdates.push(clubPlayerStats);
+        }
+      }
+      await Promise.all(chipUpdates);
+    } catch (err) {
+      logger.error(`[${game.gameCode}] Failed to update players in game stats`);
+    }
   }
 }
 

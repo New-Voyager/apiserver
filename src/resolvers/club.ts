@@ -424,7 +424,10 @@ const resolvers: any = {
   },
   Mutation: {
     createClub: async (parent, args, ctx, info) => {
-      return createClub(ctx.req.playerId, args.club);
+      logger.info(`Create club is called. Args: ${JSON.stringify(args)}`);
+      const ret = await createClub(ctx.req.playerId, args.club);
+      logger.info(`Create club returns ${JSON.stringify(ret)}`);
+      return ret;
     },
     deleteClub: async (parent, args, ctx, info) => {
       return deleteClub(ctx.req.playerId, args.clubCode);

@@ -4,3 +4,11 @@ coverage/
 .VSCodeCounter/
 *.log
 .env
+botrunner_scripts/.DS_Store
+deadcode/.DS_Store
+docs/.DS_Store
+hand-results/.DS_Store
+script-tests/.DS_Store
+src/.DS_Store
+.DS_Store
+DS_Store

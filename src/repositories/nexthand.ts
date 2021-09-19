@@ -196,10 +196,10 @@ class MoveToNextHand {
         this.determineBombPotThisHand();
 
         // update players for the current hand
-        await this.updateThisHand(transactionEntityManager);
+        await this.updateThisHand(occupiedSeats, transactionEntityManager);
 
         // determine next game type
-        this.determineNextGameType();
+        await this.determineNextGameType();
 
         const setProps: any = {
           gameType: this.nextGameType,
@@ -260,24 +260,32 @@ class MoveToNextHand {
     );
   }
 
-  private async updateThisHand(entityManager: EntityManager) {
+  private async updateThisHand(
+    occupiedSeats: Array<number>,
+    entityManager: EntityManager
+  ) {
     // update the players who have posted blinds or posted due to natural blind position
     const playerGameTrackerRepo = entityManager.getRepository(
       PlayerGameTracker
     );
 
-    if (this.missedBlinds.length > 0) {
-      logger.info(`Players missed blinds: ${this.missedBlinds.toString()}`);
-      for (const seatNo of this.missedBlinds) {
-        await playerGameTrackerRepo.update(
-          {
-            game: {id: this.game.id},
-            seatNo: seatNo,
-          },
-          {
-            missedBlind: true,
-          }
-        );
+    // if only two players are playing, then don't worry about missed blind
+    // and a dealer seat
+    if (occupiedSeats.length > 3) {
+      if (this.missedBlinds.length > 0) {
+        logger.info(`Players missed blinds: ${this.missedBlinds.toString()}`);
+        for (const seatNo of this.missedBlinds) {
+          await playerGameTrackerRepo.update(
+            {
+              game: {id: this.game.id},
+              seatNo: seatNo,
+            },
+            {
+              missedBlind: true,
+            }
+          );
+        }
+      } else {
       }
     }
 
@@ -466,20 +474,21 @@ class MoveToNextHand {
     return missedBlinds;
   }
 
-  private determineNextGameType() {
+  private async determineNextGameType() {
     if (!this.gameUpdate) {
       throw new Error(`Game code: ${this.game.gameCode} not found`);
     }
     if (!this.game) {
       throw new Error(`Game code: ${this.gameUpdate.gameCode} not found`);
     }
+    const gameSettings = await Cache.getGameSettings(this.game.gameCode);
 
     // determine new game type (ROE)
     if (this.game.gameType === GameType.ROE) {
+      // button passed dealer
+      let roeGames = gameSettings.roeGames.split(',');
       if (this.handNum !== 1) {
         if (this.buttonPassedDealer) {
-          // button passed dealer
-          const roeGames = this.game.roeGames.split(',');
           const gameTypeStr = GameType[this.gameUpdate.gameType];
           let index = roeGames.indexOf(gameTypeStr.toString());
           index++;
@@ -489,12 +498,12 @@ class MoveToNextHand {
           this.nextGameType = GameType[roeGames[index]];
         }
       } else {
-        const roeGames = this.game.roeGames.split(',');
+        roeGames = gameSettings.roeGames.split(',');
         this.nextGameType = GameType[roeGames[0]];
       }
     } else if (this.game.gameType === GameType.DEALER_CHOICE) {
       if (this.handNum === 1) {
-        const dealerChoiceGames = this.game.dealerChoiceGames.split(',');
+        const dealerChoiceGames = gameSettings.dealerChoiceGames.split(',');
         this.nextGameType = GameType[dealerChoiceGames[0]];
       }
     } else {
@@ -606,6 +615,8 @@ export class NextHandProcess {
     return {
       gameCode: moveToNextHand.getGameCode(),
       handNum: moveToNextHand.getHandNum(),
+      gameStatus: game.status,
+      tableStatus: game.tableStatus,
     };
   }
 
@@ -622,7 +633,6 @@ export class NextHandProcess {
   // FUNCTION HAS A GUARD AGAINST EXECUTING MULTIPLE TIMES WHEN
   // CALLED FROM THE GAME SERVER.
   //
-  // YONG
   public async getNextHandInfo(): Promise<NewHandInfo> {
     const ret = await getGameManager().transaction(
       async transactionEntityManager => {
@@ -655,7 +665,7 @@ export class NextHandProcess {
           throw new Error(`Game code: Game updates ${this.gameCode} not found`);
         }
 
-        const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
+        const playersInSeats: Array<PlayerGameTracker> = await PlayersInGameRepository.getPlayersInSeats(
           game.id,
           transactionEntityManager
         );
@@ -682,7 +692,6 @@ export class NextHandProcess {
           let postedBlind = false;
           let missedBlind = false;
           const playerSeat = takenSeats[seatNo];
-
           if (!playerSeat) {
             seats.push({
               seatNo: seatNo,
@@ -699,6 +708,13 @@ export class NextHandProcess {
               buttonStraddle: false,
             });
           } else {
+            const player = await Cache.getPlayer(playerSeat.playerUuid);
+            if (!player) {
+              throw new Error(
+                `Could not find Player object for uuid ${playerSeat.playerUuid}`
+              );
+            }
+
             let inhand = false;
             let buyInExpTime = '';
             let breakTimeExp = '';
@@ -716,7 +732,10 @@ export class NextHandProcess {
                 postedBlind = playerSeat.postedBlindNextHand;
               }
             }
-
+            let runItTwiceEnabled = gameSettings.runItTwiceAllowed;
+            if (runItTwiceEnabled) {
+              runItTwiceEnabled = playerSeat.runItTwiceEnabled;
+            }
             // player is in a seat
             seats.push({
               seatNo: seatNo,
@@ -735,9 +754,10 @@ export class NextHandProcess {
               buyInTimeExpAt: buyInExpTime,
               breakTimeExpAt: breakTimeExp,
               gameToken: '',
+              encryptionKey: player.encryptionKey,
 
               // player settings
-              runItTwice: playerSeat.runItTwiceEnabled,
+              runItTwice: runItTwiceEnabled,
               autoStraddle: playerSeat.autoStraddle,
               muckLosingHand: playerSeat.muckLosingHand,
               buttonStraddle: playerSeat.buttonStraddle,
@@ -754,7 +774,7 @@ export class NextHandProcess {
         if (game.gameType === GameType.DEALER_CHOICE) {
           announceGameType = true;
         }
-        let doubleBoard = false;
+        let doubleBoard = gameSettings.doubleBoardEveryHand;
         if (gameUpdate.bombPotThisHand) {
           doubleBoard = gameSettings.doubleBoardBombPot;
         }
@@ -777,10 +797,11 @@ export class NextHandProcess {
           tableStatus: game.tableStatus,
           sbPos: gameUpdate.sbPos,
           bbPos: gameUpdate.bbPos,
-          resultPauseTime: 5000,
+          resultPauseTime: gameSettings.resultPauseTime * 1000,
+          doubleBoard: doubleBoard,
           bombPot: gameUpdate.bombPotThisHand,
-          doubleBoardBombPot: doubleBoard,
-          bombPotBet: gameSettings.bombPotBet,
+          bombPotBet: gameSettings.bombPotBet * game.bigBlind,
+          runItTwiceTimeout: gameSettings.runItTwiceTimeout,
           // Not implemented yet (do we need it?)
           bringIn: 0,
         };

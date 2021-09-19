@@ -1,17 +1,24 @@
-import {resetDatabase, getClient} from './utils/utils';
+import {resetDatabase, getClient, startGqlServer} from './utils/utils';
 import {gql} from 'apollo-boost';
 import * as clubutils from './utils/club.testutils';
 
-beforeAll(async done => {
-  await resetDatabase();
-  done();
-});
-
-afterAll(async done => {
-  done();
-});
-
 describe('Player APIs', () => {
+
+  let stop, graphql;
+
+  beforeAll(async done => {
+    const testServer = await startGqlServer();
+    stop = testServer.stop;
+    graphql = testServer.graphql;
+    await resetDatabase();
+    done();
+  });
+  
+  afterAll(async done => {
+     stop();
+     done();
+  });
+
   test('create a player', async () => {
     const createPlayer = gql`
       mutation($input: PlayerCreateInput!) {

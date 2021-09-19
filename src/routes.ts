@@ -21,7 +21,36 @@ import {
 } from './auth';
 import {DevRepository} from './repositories/dev';
 import {Firebase} from './firebase';
+<<<<<<< HEAD
 import {createPromotion, deleteAll, getAllPromotion} from './admin';
+=======
+import {AdminRepository} from './repositories/admin';
+
+export function addExternalRoutes(app: any) {
+  app.post('/auth/login', login);
+  app.post('/auth/new-login', newlogin);
+  app.post('/auth/signup', signup);
+  app.post('/auth/recovery-code', getRecoveryCode);
+  app.post('/auth/login-recovery-code', loginUsingRecoveryCode);
+
+  app.get('/nats-urls', natsUrls);
+  app.get('/assets', getAssets);
+
+  app.get('/bot-script/game-code/:gameCode/hand/:handNum', generateBotScript);
+  app.get(
+    '/bot-script/debug/game-code/:gameCode/hand/:handNum',
+    generateBotScriptDebugHand
+  );
+
+  app.post(
+    '/bot-script/game-code/:gameCode/button-pos/:buttonPos',
+    updateButtonPos
+  );
+  app.post('/bot-script/server-settings', setServerSettings);
+  app.post('/bot-script/reset-server-settings', resetServerSettings);
+  app.post('/bot-script/buy-bot-coins', buyBotCoins);
+}
+>>>>>>> master
 
 export function addInternalRoutes(app: any) {
   app.get('/internal/ready', readyCheck);
@@ -83,43 +112,20 @@ export function addInternalRoutes(app: any) {
   app.post('/internal/restart-games', GameServerAPI.restartGames);
   app.post('/internal/restart-timers', restartTimers);
 
-  app.post('/auth/login', login);
-  app.post('/auth/new-login', newlogin);
-  app.post('/auth/signup', signup);
-  app.post('/auth/recovery-code', getRecoveryCode);
-  app.post('/auth/login-recovery-code', loginUsingRecoveryCode);
-
-  app.get('/nats-urls', natsUrls);
-  app.get('/assets', getAssets);
-
-  //app.get('/bot-script/game-code/:gameCode', generateBotScript);
-  app.get('/bot-script/game-code/:gameCode/hand/:handNum', generateBotScript);
-  app.get(
-    '/bot-script/debug/game-code/:gameCode/hand/:handNum',
-    generateBotScriptDebugHand
-  );
-
-  app.post(
-    '/bot-script/game-code/:gameCode/button-pos/:buttonPos',
-    updateButtonPos
-  );
-  app.post('/bot-script/server-settings', setServerSettings);
-  app.post('/bot-script/reset-server-settings', resetServerSettings);
-  app.post('/bot-script/buy-bot-coins', buyBotCoins);
-
   // admin apis
   app.get('/admin/feature-requests', DevRepository.featureRequests);
   app.get('/admin/bug-reports', DevRepository.bugReports);
   app.post('/admin/promotion', createPromotion);
   app.get('/admin/promotion', getAllPromotion);
   app.get('/admin/delete', deleteAll);
+  app.post('/admin/post-process-games', GameAPI.aggregateGameData);
 }
 
 // returns nats urls
 async function natsUrls(req: any, resp: any) {
   let natsUrl = process.env.NATS_URL;
-  if (process.env.DEBUG_NATS_URL) {
-    natsUrl = process.env.DEBUG_NATS_URL;
+  if (process.env.EXTERNAL_NATS_URL) {
+    natsUrl = process.env.EXTERNAL_NATS_URL;
   }
   resp.status(200).send(JSON.stringify({urls: natsUrl}));
 }

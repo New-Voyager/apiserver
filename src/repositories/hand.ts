@@ -36,13 +36,14 @@ import * as lz from 'lzutf8';
 import {getAppSettings} from '@src/firebase';
 import {Repository} from 'typeorm';
 import {GameUpdatesRepository} from './gameupdates';
+import {NextHandUpdatesRepository} from './nexthand_update';
 const logger = getLogger('repositories::hand');
 
 const MAX_STARRED_HAND = 25;
 let totalHandsSaved = 0;
 let totalHandsDataLen = 0;
 let totalHandsCompressedDataLen = 0;
-
+const HIGH_RANK = 166;
 class HandRepositoryImpl {
   private async getSummary(result: any): Promise<any> {
     // returns hand summary information
@@ -712,11 +713,14 @@ class HandRepositoryImpl {
         handHistory.data = Buffer.from(data);
         handHistory.compressed = false;
       }
-      const summary = await this.getSummary2(
+      const [summary, playerHiRank] = await this.getSummary2(
         result.noCards,
         playersInHand,
         handResult
       );
+      if (playerHiRank) {
+        handHistory.highRank = JSON.stringify(playerHiRank);
+      }
       handHistory.summary = JSON.stringify(summary);
       handHistory.players = JSON.stringify(playerIdsInHand);
 
@@ -831,7 +835,7 @@ class HandRepositoryImpl {
             // set pending updates true
             await Cache.updateGamePendingUpdates(game.gameCode, true);
             const player = await Cache.getPlayer(game.hostUuid);
-            GameRepository.endGameNextHand(player, game.id);
+            NextHandUpdatesRepository.endGameNextHand(player, game.id);
             pendingUpdates = true;
           }
         }
@@ -863,7 +867,6 @@ class HandRepositoryImpl {
     }
   }
 
-  // YONG
   private async handleHighHand(
     game: PokerGame,
     result: any,
@@ -913,9 +916,11 @@ class HandRepositoryImpl {
     noCards: number,
     playersInHand: any,
     handResult: any
-  ): Promise<any> {
+  ): Promise<[any, any]> {
     // returns hand summary information
     const summary: any = {};
+    let playerHiRank: {[key: number]: number} | undefined = {};
+
     summary.boardCards = new Array<any>();
 
     if (handResult.boards) {
@@ -931,12 +936,20 @@ class HandRepositoryImpl {
     for (const pot of handResult.potWinners) {
       // we only do main pot here
       for (const board of pot.boardWinners) {
-        let playerRank: any = {};
-        for (const boardPlayerRank of handResult.boards) {
-          if (boardPlayerRank.boardNo == board.boardNo) {
-            playerRank = boardPlayerRank.playerRank;
-            break;
+        for (const resultBoard of handResult.boards) {
+          for (const playerId of Object.keys(resultBoard.playerRank)) {
+            const boardRank = resultBoard.playerRank[playerId].hiRank;
+            if (boardRank <= HIGH_RANK) {
+              if (playerHiRank[playerId]) {
+                if (playerHiRank[playerId] < boardRank) {
+                  playerHiRank[playerId] = boardRank;
+                }
+              } else {
+                playerHiRank[playerId] = boardRank;
+              }
+            }
           }
+          break;
         }
         for (const seatNo of Object.keys(playersInHand)) {
           const player = playersInHand[seatNo];
@@ -979,7 +992,10 @@ class HandRepositoryImpl {
     if (summary.lowWinners && summary.lowWinners.length === 0) {
       delete summary.lowWinners;
     }
-    return summary;
+    if (Object.keys(playerHiRank).length === 0) {
+      playerHiRank = undefined;
+    }
+    return [summary, playerHiRank];
   }
 }
 

@@ -1,4 +1,4 @@
-import {resetDatabase, getClient, PORT_NUMBER} from './utils/utils';
+import {resetDatabase, getClient, INTERNAL_PORT, startGqlServer} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
 import * as handutils from './utils/hand.testutils';
@@ -9,15 +9,6 @@ import {GameStatus} from '../src/entity/types';
 import exp from 'constants';
 const logger = getLogger('game');
 
-beforeAll(async done => {
-  await resetDatabase();
-  done();
-});
-
-afterAll(async done => {
-  //await server.stop();
-  done();
-});
 
 const holdemGameInput = {
   gameType: 'HOLDEM',
@@ -101,9 +92,24 @@ async function createClubWithMembers(
   return [ownerUuid, clubCode, playerUuids];
 }
 
-const GAMESERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
+const GAMESERVER_API = `http://localhost:${INTERNAL_PORT}/internal`;
 
 describe('Tests: Game APIs', () => {
+  let stop, graphql;
+
+  beforeAll(async done => {
+    const testServer = await startGqlServer();
+    stop = testServer.stop;
+    graphql = testServer.graphql;
+    await resetDatabase();
+    done();
+  });
+  
+  afterAll(async done => {
+     stop();
+     done();
+  });
+  
   beforeEach(async done => {
     await resetDatabase();
     done();

@@ -76,7 +76,6 @@ export class Reload {
     this.player = player;
   }
 
-  // YONG
   public async request(amount: number): Promise<buyInRequest> {
     const timeout = 60;
 
@@ -222,7 +221,6 @@ export class Reload {
     };
   }
 
-  // YONG
   protected async approve(
     amount: number,
     playerInGame: PlayerGameTracker,
@@ -249,7 +247,6 @@ export class Reload {
     return playerInGame;
   }
 
-  // YONG
   public async approvedAndUpdateStack(
     amount: number,
     playerInGame?: PlayerGameTracker,
@@ -317,7 +314,6 @@ export class Reload {
     }
   }
 
-  // YONG
   protected async clubMemberAutoApproval(
     amount: number,
     playerInGame: PlayerGameTracker,
@@ -400,7 +396,6 @@ export class Reload {
     return approved;
   }
 
-  // YONG
   protected async denied(
     playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
@@ -515,7 +510,6 @@ export class Reload {
     }
   }
 
-  // YONG
   private async addToNextHand(
     amount: number,
     status: NextHandUpdate,

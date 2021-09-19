@@ -70,6 +70,7 @@ export interface PlayerInSeat {
   playerId?: number;
   playerUuid?: string;
   name?: string;
+  encryptionKey?: string;
   buyIn?: number;
   stack?: number;
   status?: number; // PlayerStatus
@@ -106,9 +107,10 @@ export interface NewHandInfo {
   bbPos?: number;
   resultPauseTime: number;
   bombPot: boolean;
-  doubleBoardBombPot: boolean;
+  doubleBoard: boolean;
   bombPotBet: number;
   bringIn: number;
+  runItTwiceTimeout: number;
 }
 
 export enum ReedeemPromotionError {

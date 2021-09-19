@@ -45,7 +45,6 @@ export class BuyIn {
     this.player = player;
   }
 
-  // YONG
   protected async approveBuyInRequest(
     amount: number,
     playerInGame: PlayerGameTracker,
@@ -82,7 +81,6 @@ export class BuyIn {
     return playerInGame;
   }
 
-  // YONG
   protected async clubMemberBuyInApproval(
     amount: number,
     playerInGame: PlayerGameTracker,
@@ -118,7 +116,8 @@ export class BuyIn {
       clubMember.autoBuyinApproval ||
       !gameSettings.buyInApproval ||
       this.player.bot ||
-      isHost
+      isHost ||
+      playerInGame.buyIn + amount <= playerInGame.buyInAutoApprovalLimit
     ) {
       logger.debug(`***** [${this.game.gameCode}] Player: ${this.player.name} buyin approved.
             clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager}
@@ -180,7 +179,6 @@ export class BuyIn {
     return [playerStatus, approved];
   }
 
-  // YONG
   public async buyInApproved(
     playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
@@ -227,7 +225,6 @@ export class BuyIn {
     );
   }
 
-  // YONG
   public async buyInDenied(
     playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
@@ -248,7 +245,6 @@ export class BuyIn {
     );
   }
 
-  // YONG
   public async request(amount: number): Promise<buyInRequest> {
     const timeout = 60;
 
@@ -361,6 +357,11 @@ export class BuyIn {
           // individual game
           if (this.player.id === this.game.hostId || this.player.bot) {
             // approved
+            approved = true;
+          } else if (
+            playerInGame.buyIn + amount <=
+            playerInGame.buyInAutoApprovalLimit
+          ) {
             approved = true;
           } else {
             approved = false;
@@ -785,7 +786,6 @@ export class BuyIn {
       .execute();
   }
 
-  // YONG
   private async addBuyInToNextHand(
     amount: number,
     status: NextHandUpdate,
@@ -871,7 +871,6 @@ export class BuyIn {
    * a buyin timer.
    * @param game
    */
-  // YONG
   public static async startBuyInTimers(game: PokerGame) {
     await getGameManager().transaction(async transactionEntityManager => {
       const playerGameTrackerRepo = transactionEntityManager.getRepository(

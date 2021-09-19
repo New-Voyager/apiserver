@@ -1,4 +1,4 @@
-import {PORT_NUMBER} from './utils/utils';
+import {INTERNAL_PORT} from './utils/utils';
 import {default as axios} from 'axios';
 import {resetDatabase, getClient} from './utils/utils';
 import * as handutils from './utils/hand.testutils';
@@ -61,7 +61,7 @@ async function saveReward(playerId, clubCode) {
   rewardId = rewardId.data.rewardId;
 }
 
-const SERVER_API = `http://localhost:${PORT_NUMBER}/internal`;
+const SERVER_API = `http://localhost:${INTERNAL_PORT}/internal`;
 
 async function createClubWithMembers(
   ownerInput: any,

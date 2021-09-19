@@ -11,10 +11,10 @@ module.exports = {
   //   'src/**/*.{js,jsx,ts,tsx}',
   //   '!<rootDir>/node_modules/"',
   //   ],
-  //collectCoverage: true,
-  //coverageDirectory: 'cov',
+  // collectCoverage: true,
+  // coverageDirectory: 'cov',
   testPathIgnorePatterns: [
     '/node_modules',
-    '/tests'
+    '/unit-tests'
   ]
 };

@@ -6,6 +6,7 @@ import {
   NextHandUpdate,
   PlayerStatus,
   SeatStatus,
+  TableStatus,
 } from '@src/entity/types';
 import {GameRepository} from './game';
 import {getLogger} from '@src/utils/log';
@@ -36,7 +37,6 @@ import {GameUpdatesRepository} from './gameupdates';
 
 const logger = getLogger('repositories::pendingupdates');
 
-// YONG
 export async function markDealerChoiceNextHand(
   game: PokerGame,
   entityManager?: EntityManager
@@ -203,14 +203,14 @@ export async function processPendingUpdates(gameId: number) {
       } else if (update.newUpdate === NextHandUpdate.TAKE_BREAK) {
         const player = await Cache.getPlayerById(update.playerId);
         const takeBreak = new TakeBreak(game, player);
-        takeBreak.processPendingUpdate(update);
+        await takeBreak.processPendingUpdate(update);
       }
     }
 
     let seatChangeAllowed = gameSettings.seatChangeAllowed;
-    const seats = await occupiedSeats(game.id);
     seatChangeAllowed = true; // debugging
     if (seatChangeAllowed && openedSeat) {
+      const seats = await occupiedSeats(game.id);
       if (newOpenSeat && seats <= game.maxPlayers - 1) {
         logger.info(`[${game.gameCode}] Seat Change is in Progress`);
         // open seat
@@ -238,7 +238,16 @@ export async function processPendingUpdates(gameId: number) {
 
     // if the game does not have more than 1 active player, then the game cannot continue
     const canContinue = await GameRepository.determineGameStatus(game.id);
-    if (canContinue && dealerChoiceUpdate) {
+    if (!canContinue) {
+      // Broadcast not enough players.
+      await Nats.changeGameStatus(
+        game,
+        game.status,
+        TableStatus.NOT_ENOUGH_PLAYERS
+      );
+      return;
+    }
+    if (dealerChoiceUpdate) {
       await handleDealersChoice(game, dealerChoiceUpdate, pendingUpdatesRepo);
     } else {
       const cachedGame = await Cache.getGame(game.gameCode);
@@ -376,20 +385,20 @@ async function leaveGame(
     const currentSessionTime = new Date().getTime() - satAt.getTime();
     const roundSeconds = Math.round(currentSessionTime / 1000);
     sessionTime = sessionTime + roundSeconds;
-
-    await playerGameTrackerRepository.update(
-      {
-        game: {id: game.id},
-        playerId: update.playerId,
-      },
-      {
-        satAt: undefined,
-        sessionTime: sessionTime,
-        status: PlayerStatus.LEFT,
-        seatNo: 0,
-      }
-    );
   }
+
+  await playerGameTrackerRepository.update(
+    {
+      game: {id: game.id},
+      playerId: update.playerId,
+    },
+    {
+      satAt: undefined,
+      sessionTime: sessionTime,
+      status: PlayerStatus.LEFT,
+      seatNo: 0,
+    }
+  );
 
   // do updates that are necessary
   await GameRepository.seatOpened(game, openedSeat);
@@ -521,9 +530,10 @@ async function handleDealersChoice(
     maxPlayers--;
   }
   await GameUpdatesRepository.updateDealersChoiceSeat(game, playerId);
-
+  const settings = await Cache.getGameSettings(game.gameCode);
   Nats.sendDealersChoiceMessage(
     game,
+    settings,
     playerId,
     gameUpdate.handNum + 1,
     timeout
@@ -533,7 +543,6 @@ async function handleDealersChoice(
   await pendingUpdatesRepo.delete({id: update.id});
 }
 
-// YONG
 export async function switchSeatNextHand(
   game: PokerGame,
   player: Player,

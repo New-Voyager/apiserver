@@ -14,7 +14,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_DB: 0
-      API_SERVER_URL: ${API_SERVER_URL} #http://api-server:9501
+      API_SERVER_INTERNAL_URL: ${API_SERVER_INTERNAL_URL}
       POSTGRES_HOST: 'postgres'
       POSTGRES_PORT: '5432'
       POSTGRES_USER: 'game'
@@ -58,6 +58,8 @@ services:
   #     - "-c"
   #     - "sleep 5 && yarn run-docker"
   #   environment:
+  #     EXTERNAL_ENDPOINTS: 1,
+  #     INTERNAL_ENDPOINTS: 1,
   #     NATS_URL: nats://nats:4222
   #     BOTRUNNER_URL: http://botrunner:8081
   #     TIMER_URL: http://timer:8082
@@ -88,6 +90,7 @@ services:
       - 8081:8081
     environment:
       API_SERVER_URL: ${API_SERVER_URL} #http://api-server:9501
+      API_SERVER_INTERNAL_URL: ${API_SERVER_INTERNAL_URL}
       PERSIST_METHOD: redis
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -108,7 +111,18 @@ services:
     ports:
       - 8082:8082
     environment:
-      API_SERVER_URL: http://api-server:9501
+      API_SERVER_INTERNAL_URL: ${API_SERVER_INTERNAL_URL}
+
+  scheduler:
+    image: ${SCHEDULER_IMAGE}
+    tty: true
+    restart: always
+    ports:
+      - 8083:8083
+    environment:
+      API_SERVER_INTERNAL_URL: ${API_SERVER_INTERNAL_URL}
+      LOG_LEVEL: debug
+      POST_PROCESSING_TIMEOUT_SEC: 120
 
 volumes:
   db-data:

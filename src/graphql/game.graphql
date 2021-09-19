@@ -56,7 +56,7 @@ enum PlayerGameStatus {
 enum BuyInApprovalStatus {
   WAITING_FOR_APPROVAL
   APPROVED
-  DENIED    
+  DENIED
 }
 
 enum NextHandUpdate {
@@ -267,6 +267,8 @@ type GameInfo {
   useAgora: Boolean
   agoraToken: String
   agoraAppId: String
+
+  settings: GameSettings
 }
 
 type GamePlayerSettings {
@@ -288,8 +290,12 @@ input GamePlayerSettingsUpdateInput {
 }
 
 type GameSettings {
+  resultPauseTime: Int
+    
   buyInApproval: Boolean
   runItTwiceAllowed: Boolean
+  funAnimations: Boolean
+  chat: Boolean
   allowRabbitHunt: Boolean
   showHandRank: Boolean
   doubleBoardEveryHand: Boolean
@@ -318,11 +324,15 @@ type GameSettings {
 }
 
 input GameSettingsUpdateInput {
+  resultPauseTime: Int
+
   buyInApproval: Boolean
   runItTwiceAllowed: Boolean
   allowRabbitHunt: Boolean
   showHandRank: Boolean
   doubleBoardEveryHand: Boolean
+  funAnimations: Boolean
+  chat: Boolean
 
   # bomb pot (comes from PokerGameUpdates)
   bombPotEnabled: Boolean
@@ -445,19 +455,10 @@ type CompletedGame {
   sessionTimeStr: String
   handsDealt: Int
   handsPlayed: Int
-  handsWon: Int
-  balance: Int 
-  bigWin: Float
-  bigWinHand: Int 
-  bigLoss: Float
-  bigLossHand: Float
-  preflopHands: Int
-  flopHands: Int
-  turnHands: Int
-  riverHands: Int
-  showdownHands: Int
+  dataAggregated: Boolean
   buyIn: Float
   profit: Float
+  stack: Float
   highHandTracked: Boolean
   stackStat: [GameStackStat!]
   isHost: Boolean
@@ -466,12 +467,15 @@ type CompletedGame {
 }
 
 type GameResultTableRow {
+  playerId: Int!
+  playerUuid: String!
   playerName: String!
   sessionTime: Int!
   sessionTimeStr: String!
   handsPlayed: Int!
   buyIn: Float!
   profit: Float!
+  stack: Float!
   rakePaid: Float!
 }
 
@@ -531,11 +535,13 @@ type Mutation {
   endGame(gameCode: String!): GameStatus!
   resumeGame(gameCode: String!): GameStatus!
   kickOut(gameCode: String!, playerUuid: String!): Boolean!
+  setBuyInLimit(gameCode: String!, playerUuid: String!, limit: Float!): Boolean!
   addToWaitingList(gameCode: String!): Boolean!
   removeFromWaitingList(gameCode: String!, playerUuid: String): Boolean!
   applyWaitlistOrder(gameCode: String!, playerUuid: [String!]): Boolean!
   declineWaitlistSeat(gameCode: String!): Boolean
   switchSeat(gameCode: String!, seatNo: Int!): PlayerGameStatus!
+  assignHost(gameCode: String!, playerUuid: String!): Boolean!
   
   # seat change APIs
   requestSeatChange(gameCode: String!, cancel: Boolean): DateTime!
@@ -560,25 +566,6 @@ type Mutation {
 
 type gameId{
   id: Int!
-}
-
-type GameData{
-  gameId: Int!
-  gameCode: String!
-  clubId: Int!
-  hostId: Int!
-  hostName: String!
-  hostUuid: String!
-  gameType: String!
-  smallBlind: Int!
-  bigBlind: Int!
-  handsDealt: Int!
-  roeGames: String!
-  dealerChoiceGames: String!
-  startedAt: DateTime!
-  endedAt: DateTime
-  endedBy: Int
-  endedByName: String
 }
 
 type PlayerData{
@@ -607,19 +594,19 @@ type Query {
   waitingList(gameCode: String!): [WaitingListPlayer!]
   pendingApprovalsForClub(clubCode: String!): [PendingApproval!]
   pendingApprovalsForGame(gameCode: String!): [PendingApproval!]
-  completedGame(gameCode: String!): CompletedGame
   currentHandLog(gameCode: String!): Json
   gameResultTable(gameCode: String!): [GameResultTableRow!]
   gamePlayers(gameCode: String!): [PlayerInfo!]
   pendingApprovals: [PendingApproval!]
   downloadResult(gameCode: String!): String!
-  gameHistoryById(gameCode: String!): GameData!
-  gameDataById(gameCode: String!): GameData!
   playersInGameById(gameCode: String!): [PlayerData!]
   playersGameTrackerById(gameCode: String!): [PlayerData!]
   # player stats from live game
   playerStackStat(gameCode: String!): [GameStackStat!]
 
+  # game history (club code is optional)
+  gameHistory(clubCode: String): [CompletedGame!]
+  completedGame(gameCode: String!): CompletedGame
 
   # open seats. Returns open seat numbers
   openSeats(gameCode: String!): [Int!]
