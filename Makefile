@@ -278,6 +278,7 @@ reset-db:
 
 .PHONY: clean-ci
 clean-ci: stop-nats stop-redis stop-pg
+	docker rm -f $(IMAGE_NAME) $(TEST_IMAGE_NAME)
 	docker image rm -f \
 		$(IMAGE_NAME) \
 		$(TEST_IMAGE_NAME) \
