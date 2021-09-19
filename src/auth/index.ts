@@ -193,6 +193,7 @@ export async function signup(req: any, resp: any) {
       uuid: player.uuid,
       id: player.id,
     };
+    resp.contentType('application/json');
     resp.status(200).send(JSON.stringify(response));
   } catch (err) {
     logger.error(`Failed to register user. ${err.toString()}`);
@@ -271,6 +272,7 @@ export async function newlogin(req: any, resp: any) {
       uuid: player.uuid,
       id: player.id,
     };
+    resp.contentType('application/json');
     resp.status(200).send(JSON.stringify(response));
   } catch (err) {
     logger.error(`Failed to login user ${deviceId}. ${err.toString()}`);

@@ -84,16 +84,18 @@ export async function resetDB() {
       await deleteAll('club_messages', transactionEntityManager);
       await deleteAll('saved_hands', transactionEntityManager);
       await deleteAll('announcement', transactionEntityManager);
-      await deleteAll('club_token_transactions', transactionEntityManager);
+      //await deleteAll('club_token_transactions', transactionEntityManager);
       await deleteAll('club_host_messages', transactionEntityManager);
       await deleteAll('reward', transactionEntityManager);
       await deleteAll('ClubMember', transactionEntityManager);
       await deleteAll('Club', transactionEntityManager);
-      await deleteAll('Player', transactionEntityManager);
       await deleteAll('club_member_stat', transactionEntityManager);
       await deleteAll('coin_purchase_transactions', transactionEntityManager);
       await deleteAll('player_coins', transactionEntityManager);
       await deleteAll('coin_consume_transactions', transactionEntityManager);
+      await deleteAll('promotion_consumed', transactionEntityManager);
+      await deleteAll('promotion', transactionEntityManager);
+      await deleteAll('Player', transactionEntityManager);
     });
     await getGameManager().transaction(async transactionEntityManager => {
       await deleteAll('host_seat_change_process', transactionEntityManager);

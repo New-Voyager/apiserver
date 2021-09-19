@@ -38,7 +38,6 @@ type PlayerClub {
   liveGameCount: Int
 }
 
-
 type LiveGame {
   clubCode: String
   clubName: String
@@ -54,8 +53,8 @@ type LiveGame {
   status: GameStatus!
   isTableFull: Boolean!
   maxPlayers: Int!
-  waitlistCount: Int!   # number of players in waiting list
-  tableCount: Int!      # number of players playing
+  waitlistCount: Int! # number of players in waiting list
+  tableCount: Int! # number of players playing
   playerStatus: PlayerGameStatus!
   handsDealt: Int!
   highHands: [HighHand!]
@@ -97,7 +96,7 @@ type PlayerInfo {
   id: Int!
   name: String!
   email: String
-  lastActiveTime: DateTime 
+  lastActiveTime: DateTime
   channel: String
   privileges: Privileges
 }
@@ -109,7 +108,7 @@ type Privileges {
 }
 
 type ClubInfo {
-  name: String!   # name of the club
+  name: String! # name of the club
   myBalance: Float!
   joinedAt: DateTime
   status: ClubMemberStatus
@@ -124,7 +123,7 @@ type ClubInfo {
 }
 
 type SearchClubResult {
-  name: String!         # name of the club
+  name: String! # name of the club
   ownerName: String!
   status: ClubStatus
 }
@@ -141,20 +140,34 @@ type IapReceipt {
   duplicate: Boolean
 }
 
+enum RedeemPromotionError {
+  PROMOTION_INVALID
+  PROMOTION_CONSUMED
+  PROMOTION_EXPIRED
+  PROMOTION_MAX_LIMIT_REACHED
+  PROMOTION_UNAUTHORIZED
+}
+
+type RedeemPromotionResult {
+  success: Boolean!
+  availableCoins:Int!
+  error: RedeemPromotionError
+}
+
 type Query {
   myClubs: [PlayerClub!]
   allPlayers: [Player!]
   playerById: PlayerId!
   encryptionKey: String!
-  liveGames (clubCode: String): [LiveGame!]
+  liveGames(clubCode: String): [LiveGame!]
   pastGames: [PastGame!]
-  myInfo (getPrivs: Boolean): PlayerInfo!
-  clubInfo (clubCode: String!): ClubInfo!
-  searchClub (clubCode: String!): SearchClubResult
+  myInfo(getPrivs: Boolean): PlayerInfo!
+  clubInfo(clubCode: String!): ClubInfo!
+  searchClub(clubCode: String!): SearchClubResult
   liveAudioToken(gameCode: String!): String!
   idsToPlayersInfo(ids: [Int!]): [PlayerInfo]
   availableAppCoins: Int!
-  notes(playerId: String playerUuid: String): String
+  notes(playerId: String, playerUuid: String): String
 }
 
 type Mutation {
@@ -162,11 +175,16 @@ type Mutation {
   authenticatePlayer(name: String!, uuid: String!, deviceId: String!): Boolean
   leaveClub(clubCode: String!): ClubMemberStatus
   updateFirebaseToken(token: String!): Boolean
-  appCoinPurchase(storeType: StoreType!, coinsPurchased: Int, receipt: String!): IapReceipt!
-  setNotes(playerId: String playerUuid: String, notes: String): Boolean
+  appCoinPurchase(
+    storeType: StoreType!
+    coinsPurchased: Int
+    receipt: String!
+  ): IapReceipt!
+  setNotes(playerId: String, playerUuid: String, notes: String): Boolean
   sendPlayerFcmMessage(message: Json!): Boolean
   changeDisplayName(name: String!): Boolean
   updatePlayer(input: PlayerUpdateInput!): Boolean
+  redeemPromotionCode(code: String!): RedeemPromotionResult!
   updateLocation(location: LocationInput!): Boolean!
   ipChanged: Boolean
 }

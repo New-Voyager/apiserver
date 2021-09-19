@@ -113,6 +113,20 @@ export interface NewHandInfo {
   runItTwiceTimeout: number;
 }
 
+export enum ReedeemPromotionError {
+  PROMOTION_EXPIRED = 'PROMOTION_EXPIRED',
+  PROMOTION_INVALID = 'PROMOTION_INVALID',
+  PROMOTION_CONSUMED = 'PROMOTION_CONSUMED',
+  PROMOTION_MAX_LIMIT_REACHED = 'PROMOTION_MAX_LIMIT_REACHED',
+  PROMOTION_UNAUTHORIZED = 'PROMOTION_UNAUTHORIZED',
+}
+
+export interface RedeemPromotionResult {
+  success: boolean;
+  availableCoins: number;
+  error?: string;
+}
+
 export const WAITLIST_SEATING = 'WAITLIST_SEATING';
 export const SEATCHANGE_PROGRSS = 'SEATCHANGE_INPROGRESS';
 export const PLAYER_SEATCHANGE_PROMPT = 'PLAYER_SEATCHANGE_PROMPT';

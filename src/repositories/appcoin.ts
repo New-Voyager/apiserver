@@ -57,36 +57,54 @@ class AppCoinRepositoryImpl {
 
         coinTransactionRepo.save(coinTrans);
 
-        const playerCoinRepo = transactionEntityManager.getRepository(
-          PlayerCoin
-        );
-        const existingRow = await playerCoinRepo.findOne({
-          playerUuid: playerUuid,
-        });
-        if (existingRow == null) {
-          const playerCoin = new PlayerCoin();
-          playerCoin.playerUuid = playerUuid;
-          playerCoin.totalCoinsAvailable = coinsPurchased;
-          playerCoin.totalCoinsPurchased = coinsPurchased;
-          await playerCoinRepo.save(playerCoin);
-        } else {
-          await playerCoinRepo
-            .createQueryBuilder()
-            .update()
-            .set({
-              totalCoinsAvailable: () =>
-                `total_coins_available + ${coinsPurchased}`,
-              totalCoinsPurchased: () =>
-                `total_coins_purchased + ${coinsPurchased}`,
-            })
-            .where({
-              playerUuid: playerUuid,
-            })
-            .execute();
-        }
+        await this.addCoins(coinsPurchased, 0, playerUuid);
+
         return false;
       }
     );
+  }
+
+  public async addCoins(
+    coinsPurchased: number,
+    coinsRewarded: number,
+    playerId: string
+  ): Promise<number> {
+    const repository = getUserRepository(PlayerCoin);
+    const existingRow = await repository.findOne({
+      where: {
+        playerUuid: playerId,
+      },
+    });
+    if (!existingRow) {
+      const playerCoin: PlayerCoin = new PlayerCoin();
+      playerCoin.playerUuid = playerId;
+      playerCoin.totalCoinsAvailable = coinsPurchased + coinsRewarded;
+      playerCoin.totalCoinsPurchased = coinsPurchased;
+      await repository.save(playerCoin);
+    } else {
+      await repository
+        .createQueryBuilder()
+        .update()
+        .set({
+          totalCoinsAvailable: () =>
+            `total_coins_available + ${coinsPurchased + coinsRewarded}`,
+          totalCoinsPurchased: () =>
+            `total_coins_purchased + ${coinsPurchased}`,
+        })
+        .where({
+          playerUuid: playerId,
+        })
+        .execute();
+    }
+    const saved = await repository.findOne({
+      where: {
+        playerUuid: playerId,
+      },
+    });
+    if (!saved) {
+      throw new Error('Player coin not updated');
+    }
+    return saved.totalCoinsAvailable;
   }
 
   public async newUser(player: Player) {
