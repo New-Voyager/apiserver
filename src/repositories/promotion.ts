@@ -10,7 +10,7 @@ import {PromotionConsumedRepository} from './promotion_consumed';
 import {PlayerRepository} from './player';
 import {PromotionConsumed} from '@src/entity/player/promotion_consumed';
 
-const logger = getLogger('admin_promotion');
+const logger = getLogger('repository::promotion');
 
 class PromotionRepositoryImpl {
   public async findAll() {
@@ -31,7 +31,7 @@ class PromotionRepositoryImpl {
     coins: number,
     playerId: string,
     maxCount: number,
-    expiresAt: Date
+    expiresAt: Date | null
   ): Promise<Promotion> {
     const repository = getUserRepository(Promotion);
     const promotion = new Promotion();
@@ -90,7 +90,7 @@ class PromotionRepositoryImpl {
     }
 
     //promotion has max limit & reached
-    if (promotion.maxCount && promotion.usedCount > promotion.maxCount) {
+    if (promotion.maxCount && promotion.usedCount >= promotion.maxCount) {
       return {
         success: false,
         availableCoins: availableCoins,
@@ -136,39 +136,3 @@ class PromotionRepositoryImpl {
 }
 
 export const PromotionRepository = new PromotionRepositoryImpl();
-/**
- * 
-    //if promotion has a player id
-    if( promotion.player){
-      if(playerId !== promotion.player.uuid){ // it is not matching the authorized playerId
-        return {
-          success: false,
-          availableCoins:availableCoins,
-          error : ReedeemPromotionError.PROMOTION_INVALID
-        };
-      
-      }else{
-        const updatedCoins = await AppCoinRepository.addCoins(0,promotion.coins,playerId);
-        PromotionConsumedRepository.createPromotionConsumed(promotion, player);
-        promotion.usedCount = promotion.usedCount + 1;
-        repository.save(promotion);
-
-        return {
-          success: true,
-          availableCoins: updatedCoins,
-        };
-      }
-    }else if (promotion.maxCount){  //if promotion has a max count
-      return {
-        success: false,
-        availableCoins:availableCoins,
-        error : ReedeemPromotionError.PROMOTION_INVALID
-      }
-    }else{
-      return {
-        success: false,
-        availableCoins:availableCoins,
-        error : ReedeemPromotionError.PROMOTION_INVALID
-      }
-    }
- */

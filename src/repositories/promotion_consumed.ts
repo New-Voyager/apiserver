@@ -4,7 +4,7 @@ import {PromotionConsumed} from '@src/entity/player/promotion_consumed';
 import {getLogger} from '@src/utils/log';
 import {getUserRepository} from '.';
 
-const logger = getLogger('promotion');
+const logger = getLogger('repository::promotion');
 class PromotionConsumedRepositoryImpl {
   public async isAlreadyConsumed(
     player: Player,

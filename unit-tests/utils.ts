@@ -35,7 +35,7 @@ import {
 } from '../src/entity/game/reward';
 
 import {Announcement} from '../src/entity/player/announcements';
-import {ClubTokenTransactions} from '../src/entity/player/accounting';
+// import {ClubTokenTransactions} from '../src/entity/player/accounting';
 import {
   CoinPurchaseTransaction,
   PlayerCoin,
@@ -80,7 +80,6 @@ export async function sqlliteConnection() {
           SavedHands,
           ClubHostMessages,
           Announcement,
-          ClubTokenTransactions,
           PlayerNotes,
           ClubMemberStat,
           CoinPurchaseTransaction,

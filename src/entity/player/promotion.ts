@@ -31,7 +31,7 @@ export class Promotion {
     type: 'timestamp',
     nullable: true,
   })
-  public expiresAt!: Date;
+  public expiresAt!: Date | null;
 
   @Column({name: 'max_count', nullable: true})
   public maxCount!: number;

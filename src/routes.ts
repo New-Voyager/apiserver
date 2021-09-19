@@ -21,9 +21,7 @@ import {
 } from './auth';
 import {DevRepository} from './repositories/dev';
 import {Firebase} from './firebase';
-<<<<<<< HEAD
 import {createPromotion, deleteAll, getAllPromotion} from './admin';
-=======
 import {AdminRepository} from './repositories/admin';
 
 export function addExternalRoutes(app: any) {
@@ -50,7 +48,6 @@ export function addExternalRoutes(app: any) {
   app.post('/bot-script/reset-server-settings', resetServerSettings);
   app.post('/bot-script/buy-bot-coins', buyBotCoins);
 }
->>>>>>> master
 
 export function addInternalRoutes(app: any) {
   app.get('/internal/ready', readyCheck);
