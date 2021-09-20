@@ -3,7 +3,7 @@ import {GameServer} from '@src/entity/game/gameserver';
 import {GameServerStatus, GameStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {fixQuery} from '@src/utils';
-import {getLogger} from '@src/utils/log';
+import {errToLogString, getLogger} from '@src/utils/log';
 import {PokerGame} from '@src/entity/game/game';
 import {publishNewGame} from '@src/gameserver';
 import {getGameConnection, getGameRepository} from '@src/repositories';
@@ -168,6 +168,60 @@ class GameServerAPIs {
       return;
     }
     resp.status(200).send(JSON.stringify({status: 'OK'}));
+  }
+
+  /*
+  curl -i -X POST 'http://localhost:9502/admin/set-max-games' \
+    -H 'content-type: application/json' \
+    -d'{"gameServerId": 1, "numGames": 2}'
+  */
+  public async setMaxGames(req: any, resp: any) {
+    const payload = req.body;
+    if (!payload) {
+      logger.error(`setMaxGames could not get request payload`);
+      const response = {
+        error: 'Could not get request payload',
+      };
+      resp.status(500).send(JSON.stringify(response));
+      return;
+    }
+    const gameServerId: number = payload.gameServerId;
+    const numGames: number = payload.numGames;
+    if (!gameServerId || numGames === undefined || numGames === null) {
+      logger.error(`setMaxGames invalid payload: ${JSON.stringify(payload)}`);
+      const response = {
+        error: 'gameServerId and numGames must be provided',
+      };
+      resp.status(500).send(JSON.stringify(response));
+      return;
+    }
+
+    try {
+      const result = await getGameRepository(GameServer).update(
+        {
+          id: gameServerId,
+        },
+        {
+          maxGames: numGames,
+        }
+      );
+      if (result.affected === 0) {
+        const msg = `No game server found with ID ${gameServerId}. Affected rows: ${result.affected}`;
+        logger.error(msg);
+        resp.status(500).send(JSON.stringify({error: msg}));
+        return;
+      }
+      logger.info(
+        `Updated max games for game server ID ${gameServerId} to ${numGames}`
+      );
+      resp.status(200).send(JSON.stringify({status: 'OK'}));
+    } catch (err) {
+      const msg = `Could not set max games for game server ID ${gameServerId}: `;
+      logger.error(msg + errToLogString(err));
+      resp
+        .status(500)
+        .send(JSON.stringify({error: msg + errToLogString(err, false)}));
+    }
   }
 }
 
