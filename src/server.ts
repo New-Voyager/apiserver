@@ -173,9 +173,7 @@ export async function start(
 
   app.use(authorize);
   app.use(bodyParser.json());
-  if (runProfile === RunProfile.INT_TEST) {
-    await apolloServer.start();
-  }
+  await apolloServer.start();
 
   //app.use(bodyParser.raw({ inflate: false, limit: '100kb', type: 'application/octet-stream' }));
   apolloServer.applyMiddleware({app});
