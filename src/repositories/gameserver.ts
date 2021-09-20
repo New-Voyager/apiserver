@@ -53,8 +53,15 @@ class GameServerRepositoryImpl {
       gameServerRepo = getGameRepository(GameServer);
     }
 
-    await gameServerRepo.increment({url: gameServerUrl}, 'noActiveGames', 1);
-    await gameServerRepo.increment({url: gameServerUrl}, 'noGamesHandled', 1);
+    await gameServerRepo
+      .createQueryBuilder()
+      .update()
+      .set({
+        noActiveGames: () => 'no_active_games + 1',
+        noGamesHandled: () => 'no_games_handled + 1',
+      })
+      .where({url: gameServerUrl})
+      .execute();
   }
 
   public async gameRemoved(
