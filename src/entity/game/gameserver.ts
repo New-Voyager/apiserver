@@ -37,6 +37,9 @@ export class GameServer {
   @Column()
   public status!: GameServerStatus;
 
+  @Column({name: 'max_games', type: 'int', default: 500})
+  public maxGames!: number;
+
   @Column({name: 'no_games_handled', type: 'int'})
   public noGamesHandled!: number;
 

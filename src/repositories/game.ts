@@ -125,7 +125,7 @@ class GameRepositoryImpl {
     game.hostId = player.id;
     game.hostName = player.name;
     game.hostUuid = player.uuid;
-    let gameServer: GameServer | null;
+    let gameServer: GameServer;
 
     let saveTime, saveUpdateTime, publishNewTime;
     try {
@@ -147,6 +147,10 @@ class GameRepositoryImpl {
           .getRepository(PokerGame)
           .save(game);
         game.id = savedGame.id;
+        await GameServerRepository.gameAdded(
+          gameServerUrl,
+          transactionEntityManager
+        );
 
         saveTime = new Date().getTime() - saveTime;
         if (!game.isTemplate) {
@@ -1037,6 +1041,7 @@ class GameRepositoryImpl {
     await PlayersInGameRepository.gameEnded(game);
     await HistoryRepository.gameEnded(game, updates.handNum);
     const ret = this.markGameStatus(gameId, GameStatus.ENDED);
+    await GameServerRepository.gameRemoved(game.gameServerUrl);
     game.status = GameStatus.ENDED;
     updates = await GameUpdatesRepository.get(game.gameCode, true);
 

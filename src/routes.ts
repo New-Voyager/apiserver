@@ -116,6 +116,7 @@ export function addInternalRoutes(app: any) {
   app.get('/admin/promotion', getAllPromotion);
   app.get('/admin/delete', deleteAll);
   app.post('/admin/post-process-games', GameAPI.aggregateGameData);
+  app.post('/admin/set-max-games', GameServerAPI.setMaxGames);
 }
 
 // returns nats urls
