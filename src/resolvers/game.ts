@@ -17,7 +17,6 @@ import {WaitListMgmt} from '@src/repositories/waitlist';
 import {default as _} from 'lodash';
 import {BuyIn} from '@src/repositories/buyin';
 import {PokerGame} from '@src/entity/game/game';
-import {GameHistory} from '@src/entity/history/game';
 import {fillSeats} from '@src/botrunner';
 import {ClubRepository} from '@src/repositories/club';
 import {getCurrentHandLog} from '@src/gameserver';
@@ -193,7 +192,7 @@ export async function endGame(playerId: string, gameCode: string) {
       game.tableStatus === TableStatus.GAME_RUNNING
     ) {
       // the game will be stopped in the next hand
-      NextHandUpdatesRepository.endGameNextHand(player, game.id);
+      await NextHandUpdatesRepository.endGameNextHand(player, game.id);
     } else {
       await Cache.removeAllObservers(game.gameCode);
       const status = await GameRepository.markGameEnded(game.id);
@@ -342,6 +341,9 @@ export async function takeSeat(
     if (locationCheck) {
       ip = locationCheck.ip;
       location = locationCheck.location;
+      logger.info(
+        `[${game.gameCode}] Player IP: Player: [${player.name}] IP: ${ip}`
+      );
       await Cache.updatePlayerLocation(player.uuid, location, ip);
     }
 
@@ -722,49 +724,6 @@ export async function pendingApprovalsForClub(
     throw new Error(
       `Failed to fetch approval requests. ${JSON.stringify(err)}`
     );
-  }
-}
-
-export async function completedGame(playerId: string, gameCode: string) {
-  if (!playerId) {
-    throw new Error('Unauthorized');
-  }
-  try {
-    // get game using game code
-    const game = await Cache.getGame(gameCode);
-    if (!game) {
-      throw new Error(`Game ${gameCode} is not found`);
-    }
-
-    const player = await Cache.getPlayer(playerId);
-
-    const resp = await HistoryRepository.getCompletedGame(gameCode, player.id);
-    if (game.endedAt) {
-      const runTime = resp.endedAt - resp.startedAt;
-      resp.runTime = Math.ceil(runTime / (60 * 1000));
-      resp.runTimeStr = humanizeDuration(runTime, {round: true});
-    }
-
-    if (resp.sessionTime) {
-      resp.sessionTime = Math.ceil(resp.sessionTime / (60 * 1000));
-      resp.sessionTimeStr = humanizeDuration(resp.sessionTime * 1000, {
-        round: true,
-      });
-    }
-    if (!resp.endedBy) {
-      resp.endedBy = '';
-    }
-
-    resp.status = GameStatus[resp.status];
-    resp.gameType = GameType[resp.gameType];
-    return resp;
-  } catch (err) {
-    logger.error(
-      `Error while getting completed game. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
-        err
-      )}`
-    );
-    throw new Error(`Failed to get game information. ${JSON.stringify(err)}`);
   }
 }
 
@@ -1438,7 +1397,7 @@ export async function sitBack(
         locationCheck
       )}: ${errToLogString(err)}`
     );
-    throw new Error(`Failed to sit back in the seat. ${JSON.stringify(err)}`);
+    throw err;
   }
 }
 
@@ -2344,9 +2303,9 @@ const resolvers: any = {
     pendingApprovals: async (parent, args, ctx, info) => {
       return await pendingApprovals(ctx.req.playerId);
     },
-    completedGame: async (parent, args, ctx, info) => {
-      return await completedGame(ctx.req.playerId, args.gameCode);
-    },
+    // completedGames: async (parent, args, ctx, info) => {
+    //   return await completedGame(ctx.req.playerId, args.gameCode);
+    // },
     currentHandLog: async (parent, args, ctx, info) => {
       const game = await Cache.getGame(args.gameCode);
       logger.info(`Getting current hand log for ${args.gameCode}`);
@@ -2529,22 +2488,6 @@ const resolvers: any = {
       return allPlayersInGame;
     },
   },
-  CompletedGame: {
-    stackStat: async (parent, args, ctx, info) => {
-      if (parent.handStack) {
-        const stack = JSON.parse(parent.handStack);
-        return stack.map(x => {
-          return {
-            handNum: x.hand,
-            before: x.playerStack.b,
-            after: x.playerStack.a,
-          };
-        });
-      } else {
-        return [];
-      }
-    },
-  },
   Mutation: {
     configureGame: async (parent, args, ctx, info) => {
       return configureGame(ctx.req.playerId, args.clubCode, args.game);
@@ -2568,7 +2511,7 @@ const resolvers: any = {
     },
     takeSeat: async (parent, args, ctx, info) => {
       return takeSeat(ctx.req.playerId, args.gameCode, args.seatNo, {
-        ip: '',
+        ip: ctx.req.userIp,
         location: args.location,
       });
     },

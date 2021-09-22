@@ -2,8 +2,8 @@ import {initializeSqlLite} from './utils';
 import {createGameServer} from '@src/internal/gameserver';
 import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/resolvers/reset';
-import {createPlayer, getPlayerById} from '@src/resolvers/player';
-import {createClub, updateClubMember, joinClub} from '@src/resolvers/club';
+import {createPlayer} from '@src/resolvers/player';
+import {createClub, joinClub} from '@src/resolvers/club';
 import {
   configureGame,
   joinGame,
@@ -11,11 +11,9 @@ import {
   buyIn,
   endGame,
 } from '@src/resolvers/game';
-import {gameHistory, playersInGame} from '../src/resolvers/history';
-import {Cache} from '@src/cache/index';
+import {gameHistory, playersInGame, completedGame} from '../src/resolvers/history';
 import {saveReward} from '../src/resolvers/reward';
 import {approveMember, clubLeaderBoard} from '../src/resolvers/club';
-import exp from 'constants';
 
 const logger = getLogger('game unit-test');
 const holdemGameInput = {
@@ -192,7 +190,7 @@ describe('History APIs', () => {
 
     await endGame(owner, game.gameCode);
 
-    const resp = await gameHistory(owner, game.gameCode);
+    const resp = await gameHistory(owner, club);
     resp.forEach(data => {
       expect(data.smallBlind).toBe(holdemGameInput.smallBlind);
       expect(data.bigBlind).toBe(holdemGameInput.bigBlind);

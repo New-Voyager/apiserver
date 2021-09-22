@@ -60,6 +60,9 @@ export async function resetGames() {
     await deleteAll('players_in_game', transactionEntityManager);
     await deleteAll('game_history', transactionEntityManager);
     await deleteAll('high_hand_history', transactionEntityManager);
+    await deleteAll('club_stats', transactionEntityManager);
+    await deleteAll('player_game_stats', transactionEntityManager);
+    await deleteAll('player_hand_stats', transactionEntityManager);
   });
   await Cache.reset();
   return true;
@@ -81,16 +84,18 @@ export async function resetDB() {
       await deleteAll('club_messages', transactionEntityManager);
       await deleteAll('saved_hands', transactionEntityManager);
       await deleteAll('announcement', transactionEntityManager);
-      await deleteAll('club_token_transactions', transactionEntityManager);
+      //await deleteAll('club_token_transactions', transactionEntityManager);
       await deleteAll('club_host_messages', transactionEntityManager);
       await deleteAll('reward', transactionEntityManager);
       await deleteAll('ClubMember', transactionEntityManager);
       await deleteAll('Club', transactionEntityManager);
-      await deleteAll('Player', transactionEntityManager);
       await deleteAll('club_member_stat', transactionEntityManager);
       await deleteAll('coin_purchase_transactions', transactionEntityManager);
       await deleteAll('player_coins', transactionEntityManager);
       await deleteAll('coin_consume_transactions', transactionEntityManager);
+      await deleteAll('promotion_consumed', transactionEntityManager);
+      await deleteAll('promotion', transactionEntityManager);
+      await deleteAll('Player', transactionEntityManager);
     });
     await getGameManager().transaction(async transactionEntityManager => {
       await deleteAll('host_seat_change_process', transactionEntityManager);
@@ -106,6 +111,7 @@ export async function resetDB() {
         await deleteAll('game_server', transactionEntityManager);
       }
     });
+    await Cache.reset();
   } catch (err) {
     logger.error(`Failed to reset database. ${err.toString()}`);
     throw new Error(`Failed to reset database. ${err.toString()}`);

@@ -25,6 +25,9 @@ import {GameHistory} from '../src/entity/history/game';
 import {HighHandHistory} from '../src/entity/history/hand';
 import {PlayersInGame} from '../src/entity/history/player';
 import {Reward} from '../src/entity/player/reward';
+import { Promotion } from '../src/entity/player/promotion';
+import { PromotionConsumed } from '../src/entity/player/promotion_consumed';
+
 import {
   GameReward,
   GameRewardTracking,
@@ -32,7 +35,7 @@ import {
 } from '../src/entity/game/reward';
 
 import {Announcement} from '../src/entity/player/announcements';
-import {ClubTokenTransactions} from '../src/entity/player/accounting';
+// import {ClubTokenTransactions} from '../src/entity/player/accounting';
 import {
   CoinPurchaseTransaction,
   PlayerCoin,
@@ -77,12 +80,13 @@ export async function sqlliteConnection() {
           SavedHands,
           ClubHostMessages,
           Announcement,
-          ClubTokenTransactions,
           PlayerNotes,
           ClubMemberStat,
           CoinPurchaseTransaction,
           CoinConsumeTransaction,
           PlayerCoin,
+          Promotion,
+          PromotionConsumed,
         ],
         dropSchema: true,
         synchronize: true,

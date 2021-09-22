@@ -16,10 +16,11 @@ REGISTRY := $(GCP_REGISTRY)
 IMAGE_NAME := api-server
 TEST_IMAGE_NAME := api-server-test
 
-API_SERVER_IMAGE := $(REGISTRY)/$(IMAGE_NAME):0.7.14
-GAME_SERVER_IMAGE := $(REGISTRY)/game-server:0.7.5
-BOTRUNNER_IMAGE := $(REGISTRY)/botrunner:0.7.5
-TIMER_IMAGE := $(REGISTRY)/timer:0.5.6
+API_SERVER_IMAGE := $(REGISTRY)/$(IMAGE_NAME):0.7.35
+GAME_SERVER_IMAGE := $(REGISTRY)/game-server:0.7.14
+BOTRUNNER_IMAGE := $(REGISTRY)/botrunner:0.7.17
+TIMER_IMAGE := $(REGISTRY)/timer:0.5.9
+SCHEDULER_IMAGE := $(REGISTRY)/scheduler:0.1.4
 
 NATS_SERVER_IMAGE := $(REGISTRY)/nats:$(NATS_VERSION)
 REDIS_IMAGE := $(REGISTRY)/redis:$(REDIS_VERSION)
@@ -27,6 +28,7 @@ POSTGRES_IMAGE := $(REGISTRY)/postgres:$(POSTGRES_VERSION)
 
 LOCAL_IP := $(POKER_LOCAL_IP)
 API_SERVER_URL := http://$(LOCAL_IP):9501
+API_SERVER_INTERNAL_URL := http://$(LOCAL_IP):9502
 LOCAL_NATS_URL := nats://$(LOCAL_IP):4222
 LOCAL_POSTGRES_HOST := $(LOCAL_IP)
 
@@ -230,6 +232,7 @@ stack-generate-env:
 	cd docker && \
 		> .env && \
 		echo "API_SERVER_URL=$(API_SERVER_URL)" >> .env && \
+		echo "API_SERVER_INTERNAL_URL=$(API_SERVER_INTERNAL_URL)" >> .env && \
 		echo "API_SERVER_IMAGE=$(API_SERVER_IMAGE)" >> .env && \
 		echo "GAME_SERVER_IMAGE=$(GAME_SERVER_IMAGE)" >> .env && \
 		echo "NATS_SERVER_IMAGE=$(NATS_SERVER_IMAGE)" >> .env && \
@@ -237,6 +240,7 @@ stack-generate-env:
 		echo "POSTGRES_IMAGE=$(POSTGRES_IMAGE)" >> .env && \
 		echo "BOTRUNNER_IMAGE=$(BOTRUNNER_IMAGE)" >> .env && \
 		echo "TIMER_IMAGE=$(TIMER_IMAGE)" >> .env && \
+		echo "SCHEDULER_IMAGE=$(SCHEDULER_IMAGE)" >> .env && \
 		echo "PROJECT_ROOT=$(PWD)" >> .env && \
 		echo "DOCKER_NET=$(DEFAULT_DOCKER_NET)" >> .env
 
@@ -274,6 +278,7 @@ reset-db:
 
 .PHONY: clean-ci
 clean-ci: stop-nats stop-redis stop-pg
+	docker rm -f $(IMAGE_NAME) $(TEST_IMAGE_NAME)
 	docker image rm -f \
 		$(IMAGE_NAME) \
 		$(TEST_IMAGE_NAME) \

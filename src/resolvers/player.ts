@@ -19,6 +19,7 @@ import {ClubMessageRepository} from '@src/repositories/clubmessage';
 import {HostMessageRepository} from '@src/repositories/hostmessage';
 import {HandRepository} from '@src/repositories/hand';
 import {HistoryRepository} from '@src/repositories/history';
+import {PromotionRepository} from '@src/repositories/promotion';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
 const logger = getLogger('resolvers::player');
 
@@ -203,6 +204,9 @@ const resolvers: any = {
     },
     changeDisplayName: async (parent, args, ctx, info) => {
       return changeDisplayName(ctx.req.playerId, args.name);
+    },
+    redeemPromotionCode: async (parent, args, ctx, info) => {
+      return redeemPromotionCode(ctx.req.playerId, args.code);
     },
     ipChanged: async (parent, args, ctx, info) => {
       const player = await Cache.getPlayer(ctx.req.playerId);
@@ -699,6 +703,16 @@ export async function changeDisplayName(
   return await PlayerRepository.changeDisplayName(playerId, name);
 }
 
+export async function redeemPromotionCode(
+  playerId: string,
+  code: string
+): Promise<any> {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  return await PromotionRepository.redeemPromotionCode(playerId, code);
+}
+
 export async function updateLocation(
   playerUuid: string,
   ip: string,
@@ -709,6 +723,11 @@ export async function updateLocation(
   if (!player) {
     throw new Error(`Player ${playerUuid} is not found`);
   }
+  logger.info(
+    `Location Update: Player: ${player.name} location: ${JSON.stringify(
+      location
+    )}`
+  );
   await Cache.updatePlayerLocation(playerUuid, location, ip);
   return true;
 }

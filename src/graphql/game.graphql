@@ -455,19 +455,10 @@ type CompletedGame {
   sessionTimeStr: String
   handsDealt: Int
   handsPlayed: Int
-  handsWon: Int
-  balance: Int 
-  bigWin: Float
-  bigWinHand: Int 
-  bigLoss: Float
-  bigLossHand: Float
-  preflopHands: Int
-  flopHands: Int
-  turnHands: Int
-  riverHands: Int
-  showdownHands: Int
+  dataAggregated: Boolean
   buyIn: Float
   profit: Float
+  stack: Float
   highHandTracked: Boolean
   stackStat: [GameStackStat!]
   isHost: Boolean
@@ -603,7 +594,6 @@ type Query {
   waitingList(gameCode: String!): [WaitingListPlayer!]
   pendingApprovalsForClub(clubCode: String!): [PendingApproval!]
   pendingApprovalsForGame(gameCode: String!): [PendingApproval!]
-  completedGame(gameCode: String!): CompletedGame
   currentHandLog(gameCode: String!): Json
   gameResultTable(gameCode: String!): [GameResultTableRow!]
   gamePlayers(gameCode: String!): [PlayerInfo!]
@@ -614,6 +604,9 @@ type Query {
   # player stats from live game
   playerStackStat(gameCode: String!): [GameStackStat!]
 
+  # game history (club code is optional)
+  gameHistory(clubCode: String): [CompletedGame!]
+  completedGame(gameCode: String!): CompletedGame
 
   # open seats. Returns open seat numbers
   openSeats(gameCode: String!): [Int!]

@@ -14,7 +14,7 @@ import {
   SeatStatus,
 } from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
-import {getLogger} from '@src/utils/log';
+import {errToLogString, getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
 import {publishNewGame, resumeGame, endGame} from '@src/gameserver';
@@ -22,49 +22,35 @@ import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery, getDistanceInMeters} from '@src/utils';
 import {WaitListMgmt} from './waitlist';
 import {Reward} from '@src/entity/player/reward';
-import {ChipsTrackRepository} from './chipstrack';
-import {
-  BREAK_TIMEOUT,
-  BUYIN_TIMEOUT,
-  DEALER_CHOICE_TIMEOUT,
-  NewUpdate,
-} from './types';
+import {DEALER_CHOICE_TIMEOUT} from './types';
 import {Cache} from '@src/cache/index';
 import {StatsRepository} from './stats';
-import {getAgoraToken} from '@src/3rdparty/agora';
 import {utcTime} from '@src/utils';
 import _ from 'lodash';
-import {JanusSession} from '@src/janus';
 import {HandHistory} from '@src/entity/history/hand';
 import {Player} from '@src/entity/player/player';
 import {Club} from '@src/entity/player/club';
 import {PlayerGameStats} from '@src/entity/history/stats';
 import {HistoryRepository} from './history';
 import {GameHistory} from '@src/entity/history/game';
-import {PlayersInGame} from '@src/entity/history/player';
 import {
   getGameConnection,
   getGameManager,
   getGameRepository,
-  getHistoryConnection,
   getHistoryRepository,
-  getUserConnection,
   getUserRepository,
 } from '.';
 import {GameReward, GameRewardTracking} from '@src/entity/game/reward';
 import {ClubRepository} from './club';
-import {getAppSettings} from '@src/firebase';
-import {
-  IpAddressMissingError,
-  LocationPromixityError,
-  SameIpAddressError,
-} from '@src/errors';
 import {LocationCheck} from './locationcheck';
 import {Nats} from '@src/nats';
 import {GameSettingsRepository} from './gamesettings';
 import {PlayersInGameRepository} from './playersingame';
 import {GameUpdatesRepository} from './gameupdates';
 import {GameServerRepository} from './gameserver';
+import {PlayersInGame} from '@src/entity/history/player';
+import {schedulePostProcessing} from '@src/scheduler';
+import {notifyScheduler} from '@src/server';
 const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
@@ -139,7 +125,7 @@ class GameRepositoryImpl {
     game.hostId = player.id;
     game.hostName = player.name;
     game.hostUuid = player.uuid;
-    let gameServer: GameServer | null;
+    let gameServer: GameServer;
 
     let saveTime, saveUpdateTime, publishNewTime;
     try {
@@ -161,6 +147,10 @@ class GameRepositoryImpl {
           .getRepository(PokerGame)
           .save(game);
         game.id = savedGame.id;
+        await GameServerRepository.gameAdded(
+          gameServerUrl,
+          transactionEntityManager
+        );
 
         saveTime = new Date().getTime() - saveTime;
         if (!game.isTemplate) {
@@ -1002,7 +992,10 @@ class GameRepositoryImpl {
     gameId: number,
     gameNum?: number
   ): Promise<GameStatus> {
-    return this.markGameStatus(gameId, GameStatus.ACTIVE, gameNum);
+    const resp = this.markGameStatus(gameId, GameStatus.ACTIVE, gameNum);
+    // update game history
+    await HistoryRepository.updateGameNum(gameId, gameNum);
+    return resp;
   }
 
   public async markGameEnded(gameId: number): Promise<GameStatus> {
@@ -1023,7 +1016,7 @@ class GameRepositoryImpl {
         // calculate session time
         let sessionTime: number = playerInGame.sessionTime;
         if (!sessionTime) {
-          sessionTime = 0;
+          sessionTime = 1;
         }
         const currentSessionTime = new Date().getTime() - satAt.getTime();
         const roundSeconds = Math.round(currentSessionTime / 1000);
@@ -1041,21 +1034,24 @@ class GameRepositoryImpl {
       }
     }
     const updatedGame = await Cache.getGame(game.gameCode, true);
+    let updates = await GameUpdatesRepository.get(game.gameCode);
 
-    // complete books
-    await ChipsTrackRepository.settleClubBalances(updatedGame);
-
-    // roll up stats
-    await StatsRepository.rollupStats(updatedGame);
-
-    // update player performance
-    await StatsRepository.gameEnded(updatedGame, players);
-
-    const ret = this.markGameStatus(gameId, GameStatus.ENDED);
-    game.status = GameStatus.ENDED;
-    const updates = await GameUpdatesRepository.get(game.gameCode);
-    // update history tables
+    // complete books (accounting is in next release)
+    // await ChipsTrackRepository.settleClubBalances(updatedGame);
+    await PlayersInGameRepository.gameEnded(game);
     await HistoryRepository.gameEnded(game, updates.handNum);
+    const ret = this.markGameStatus(gameId, GameStatus.ENDED);
+    await GameServerRepository.gameRemoved(game.gameServerUrl);
+    game.status = GameStatus.ENDED;
+    updates = await GameUpdatesRepository.get(game.gameCode, true);
+
+    // Schedule post processing.
+    if (notifyScheduler()) {
+      logger.info(
+        `Scheduling post processing for game ${game.id}/${game.gameCode}`
+      );
+      schedulePostProcessing(game.id, game.gameCode);
+    }
     return ret;
   }
 

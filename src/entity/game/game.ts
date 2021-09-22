@@ -253,7 +253,7 @@ export class PokerGameSettings {
   @Column({name: 'gps_check', default: false})
   public gpsCheck!: boolean;
 
-  @Column({name: 'gps_allowed_distance', default: 30})
+  @Column({name: 'gps_allowed_distance', default: 25})
   public gpsAllowedDistance!: number;
 
   @Column({name: 'janus_session_id', nullable: true, default: ''})

@@ -27,6 +27,7 @@ type Stats {
 
   totalHands: Int
   totalGames: Int
+  totalPlayersInHand: Int
 }
 
 type PlayerGameStats {
@@ -72,7 +73,7 @@ type PlayerHandStats {
 
 type Query {
   clubStats(gameType: GameType!, clubCode: String!): Stats
-  systemStats: Stats
+  systemStats(gameType: GameType!): Stats
   playerHandStats: PlayerHandStats!
   playerGameStats(gameCode: String!): PlayerGameStats
   playerRecentPerformance: [Json!]

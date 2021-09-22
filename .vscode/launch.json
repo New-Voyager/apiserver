@@ -16,6 +16,8 @@
         "${workspaceFolder}/**/*.js"
       ],
       "env": {
+        "EXTERNAL_ENDPOINTS": "1",
+        "INTERNAL_ENDPOINTS": "1",
         "POSTGRES_HOST": "localhost",
         "POSTGRES_PORT": "5432",
         "POSTGRES_USER": "game",
@@ -34,6 +36,8 @@
       "outputCapture": "std",
       "console": "internalConsole",
       "env": {
+        "EXTERNAL_ENDPOINTS": "1",
+        "INTERNAL_ENDPOINTS": "1",
         "POSTGRES_HOST": "localhost",
         "POSTGRES_PORT": "5432",
         "POSTGRES_USER": "game",
@@ -53,6 +57,8 @@
       "console": "internalConsole",
       "env": {
         "NATS_URL": "nats://192.168.0.107:4222",
+        "EXTERNAL_ENDPOINTS": "1",
+        "INTERNAL_ENDPOINTS": "1",
         "POSTGRES_HOST": "localhost",
         "POSTGRES_PORT": "5432",
         "POSTGRES_USER": "game",
@@ -71,6 +77,8 @@
       "outputCapture": "std",
       "console": "internalConsole",
       "env": {
+        "EXTERNAL_ENDPOINTS": "1",
+        "INTERNAL_ENDPOINTS": "1",
         "NOTIFY_GAME_SERVER": "0",
         "POSTGRES_HOST": "localhost",
         "POSTGRES_PORT": "5432",
@@ -90,6 +98,8 @@
       "outputCapture": "std",
       "console": "internalConsole",
       "env": {
+        "EXTERNAL_ENDPOINTS": "1",
+        "INTERNAL_ENDPOINTS": "1",
         "POSTGRES_HOST": "db-postgresql-nyc1-prod1-do-user-7667119-0.b.db.ondigitalocean.com",
         "POSTGRES_PORT": "25060",
         "POSTGRES_USER": "doadmin",
@@ -113,6 +123,8 @@
       "outputCapture": "std",
       "console": "internalConsole",
       "env": {
+        "EXTERNAL_ENDPOINTS": "1",
+        "INTERNAL_ENDPOINTS": "1",
         "NODE_ENV": "test",
         "DB_USED": "sqllite"
       }
@@ -126,6 +138,8 @@
       "runtimeArgs": ["run-script", "debug-windows"],
       "port": 9235,
       "env": {
+        "EXTERNAL_ENDPOINTS": "1",
+        "INTERNAL_ENDPOINTS": "1",
         "POSTGRES_HOST": "localhost",
         "POSTGRES_PORT": "5432",
         "POSTGRES_USER": "game",
@@ -146,6 +160,8 @@
       "internalConsoleOptions": "neverOpen",
       "port": 9229,
       "env": {
+        "EXTERNAL_ENDPOINTS": "1",
+        "INTERNAL_ENDPOINTS": "1",
         "POSTGRES_HOST": "localhost",
         "POSTGRES_PORT": "5432",
         "POSTGRES_USER": "game",
@@ -166,6 +182,8 @@
         "get my clubs"
       ],
       "env": {
+        "EXTERNAL_ENDPOINTS": "1",
+        "INTERNAL_ENDPOINTS": "1",
         "NODE_ENV": "int-test",
         "POSTGRES_HOST": "localhost",
         "POSTGRES_PORT": "5432",
@@ -192,6 +210,8 @@
         "playergamesettings: get player settings"
       ],
       "env": {
+        "EXTERNAL_ENDPOINTS": "1",
+        "INTERNAL_ENDPOINTS": "1",
         "NODE_ENV": "test",
         "DB_USED": "sqllite"
       },
@@ -215,6 +235,8 @@
         "${workspaceFolder}/**/*.js"
       ],
       "env": {
+        "EXTERNAL_ENDPOINTS": "1",
+        "INTERNAL_ENDPOINTS": "1",
         "POSTGRES_HOST": "localhost",
         "POSTGRES_PORT": "5432",
         "POSTGRES_USER": "game",

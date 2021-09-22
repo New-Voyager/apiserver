@@ -29,6 +29,13 @@ export async function authorize(req, res, next) {
 
   if (req.headers['x-realip']) {
     req.userIp = req.headers['x-realip'];
+  } else {
+    const ip = req.ip.replace('::ffff:', '');
+    req.userIp = ip;
+    // logger.info(`IP: ${req.userIp}`);
+    // if (req.body) {
+    //   logger.info(`body: ${JSON.stringify(req.body)}`);
+    // }
   }
   next();
 }
