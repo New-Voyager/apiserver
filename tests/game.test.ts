@@ -1,4 +1,9 @@
-import {resetDatabase, getClient, INTERNAL_PORT, startGqlServer} from './utils/utils';
+import {
+  resetDatabase,
+  getClient,
+  INTERNAL_PORT,
+  startGqlServer,
+} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
 import * as handutils from './utils/hand.testutils';
@@ -57,7 +62,7 @@ async function saveReward(playerId, clubCode) {
   holdemGameInput.rewardIds.push(rewardId.data.rewardId);
 }
 
-async function createGameServer(ipAddress: string) {
+export async function createGameServer(ipAddress: string) {
   const gameServer1 = {
     ipAddress: ipAddress,
     currentMemory: 100,

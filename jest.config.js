@@ -13,8 +13,5 @@ module.exports = {
   //   ],
   //collectCoverage: true,
   //coverageDirectory: 'cov',
-  testPathIgnorePatterns: [
-    '/node_modules',
-    '/tests'
-  ]
+  testPathIgnorePatterns: ['/node_modules', '/tests'],
 };

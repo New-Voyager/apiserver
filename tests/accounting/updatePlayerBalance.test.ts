@@ -1,12 +1,10 @@
 import {Cache} from '../../src/cache';
 
-import {resetDatabase, getClient, startGqlServer} from '../utils/utils';
+import {resetDatabase, startGqlServer} from '../utils/utils';
 import * as clubutils from '../utils/club.testutils';
-import {getLogger} from '../../src/utils/log';
-import {settlePlayerToPlayer} from './utils';
-const logger = getLogger('club');
+import {updatePlayerBalance} from './utils';
 
-describe('SettlePlayerToPlayer APIs', () => {
+describe('updatePlayerBalance APIs', () => {
   let stop;
 
   beforeAll(async done => {
@@ -20,8 +18,7 @@ describe('SettlePlayerToPlayer APIs', () => {
     stop();
     done();
   });
-
-  test('settlePlayerToPlayer', async () => {
+  test('updatePlayerBalance', async () => {
     const [clubCode, ownerId] = await clubutils.createClub();
     const playerId = await clubutils.createPlayer('adam', '1243ABC');
     const playerId2 = await clubutils.createPlayer('adam2', '1243ABCs');
@@ -29,50 +26,20 @@ describe('SettlePlayerToPlayer APIs', () => {
     await clubutils.playerJoinsClub(clubCode, playerId);
     await clubutils.playerJoinsClub(clubCode, playerId2);
 
-    const data = await settlePlayerToPlayer({
+    const data = await updatePlayerBalance({
       clubCode,
       ownerId,
-      fromPlayerId: playerId,
-      toPlayerId: playerId2,
+      playerId,
       amount: 1,
       notes: 'test',
     });
-    expect(data.settlePlayerToPlayer).toEqual(true);
+    expect(data.updatePlayerBalance).toEqual(true);
 
     try {
-      await settlePlayerToPlayer({
-        clubCode,
-        ownerId,
-        fromPlayerId: 'test',
-        toPlayerId: playerId2,
-        amount: 1,
-        notes: 'test',
-      });
-    } catch (error) {
-      const expectedError = 'Cannot find player uuid [test] in player repo';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
-    }
-
-    try {
-      await settlePlayerToPlayer({
-        clubCode,
-        ownerId,
-        fromPlayerId: playerId,
-        toPlayerId: 'test',
-        amount: 1,
-        notes: 'test',
-      });
-    } catch (error) {
-      const expectedError = 'Cannot find player uuid [test] in player repo';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
-    }
-
-    try {
-      await settlePlayerToPlayer({
+      await updatePlayerBalance({
         clubCode,
         ownerId: 'test',
-        fromPlayerId: playerId,
-        toPlayerId: playerId2,
+        playerId,
         amount: 1,
         notes: 'test',
       });
@@ -80,12 +47,38 @@ describe('SettlePlayerToPlayer APIs', () => {
       const expectedError = 'Cannot find player uuid [test] in player repo';
       expect(error.graphQLErrors[0].message).toEqual(expectedError);
     }
+
     try {
-      await settlePlayerToPlayer({
+      await updatePlayerBalance({
+        clubCode,
+        ownerId,
+        playerId: 'test',
+        amount: 1,
+        notes: 'test',
+      });
+    } catch (error) {
+      const expectedError = 'Cannot find player uuid [test] in player repo';
+      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+    }
+
+    try {
+      await updatePlayerBalance({
+        clubCode: 'test',
+        ownerId,
+        playerId,
+        amount: 1,
+        notes: 'test',
+      });
+    } catch (error) {
+      const expectedError = 'Cannot find club code [test] in club repo';
+      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+    }
+
+    try {
+      await updatePlayerBalance({
         clubCode,
         ownerId: playerId,
-        fromPlayerId: playerId,
-        toPlayerId: playerId2,
+        playerId,
         amount: 1,
         notes: 'test',
       });
@@ -95,11 +88,10 @@ describe('SettlePlayerToPlayer APIs', () => {
     }
 
     try {
-      await settlePlayerToPlayer({
+      await updatePlayerBalance({
         clubCode,
         ownerId,
-        fromPlayerId: playerId3,
-        toPlayerId: playerId2,
+        playerId: playerId3,
         amount: 1,
         notes: 'test',
       });
@@ -107,27 +99,14 @@ describe('SettlePlayerToPlayer APIs', () => {
       const expectedError = 'Player: 1243ABCss is not a member in club bbc';
       expect(error.graphQLErrors[0].message).toEqual(expectedError);
     }
-    try {
-      await settlePlayerToPlayer({
-        clubCode,
-        ownerId,
-        fromPlayerId: playerId,
-        toPlayerId: playerId3,
-        amount: 1,
-        notes: 'test',
-      });
-    } catch (error) {
-      const expectedError = 'Player: 1243ABCss is not a member in club bbc';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
-    }
+
     await Cache.setCache(`playerCache-test`, 'null');
 
     try {
-      await settlePlayerToPlayer({
+      await updatePlayerBalance({
         clubCode,
         ownerId: 'test',
-        fromPlayerId: playerId,
-        toPlayerId: playerId2,
+        playerId,
         amount: 1,
         notes: 'test',
       });
@@ -137,11 +116,10 @@ describe('SettlePlayerToPlayer APIs', () => {
     }
 
     try {
-      await settlePlayerToPlayer({
+      await updatePlayerBalance({
         clubCode,
         ownerId,
-        fromPlayerId: 'test',
-        toPlayerId: playerId2,
+        playerId: 'test',
         amount: 1,
         notes: 'test',
       });
@@ -150,27 +128,13 @@ describe('SettlePlayerToPlayer APIs', () => {
       expect(error.graphQLErrors[0].message).toEqual(expectedError);
     }
 
-    try {
-      await settlePlayerToPlayer({
-        clubCode,
-        ownerId,
-        fromPlayerId: playerId,
-        toPlayerId: 'test',
-        amount: 1,
-        notes: 'test',
-      });
-    } catch (error) {
-      const expectedError = 'Player test is not found';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
-    }
     await Cache.setCache(`clubCache-test`, 'null');
 
     try {
-      await settlePlayerToPlayer({
+      await updatePlayerBalance({
         clubCode: 'test',
         ownerId,
-        fromPlayerId: playerId,
-        toPlayerId: playerId2,
+        playerId,
         amount: 1,
         notes: 'test',
       });

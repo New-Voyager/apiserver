@@ -478,7 +478,7 @@ class GameCache {
     const getResp = await this.getCache(`playerCache-${playerUuid}`);
     if (getResp.success && getResp.data && !update) {
       const player = JSON.parse(getResp.data) as Player;
-      if (player.locationUpdatedAt) {
+      if (player && player.locationUpdatedAt) {
         player.locationUpdatedAt = new Date(
           Date.parse(player.locationUpdatedAt.toString())
         );
