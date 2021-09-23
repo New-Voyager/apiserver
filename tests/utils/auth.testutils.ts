@@ -1,12 +1,15 @@
 import axios from 'axios';
-import {PORT_NUMBER} from './utils';
+import {EXTERNAL_PORT} from './utils';
 
 export const signUp = async ({screenName, deviceId, email}: any) => {
-  const data = await axios.post(`http://localhost:${PORT_NUMBER}/auth/signup`, {
-    email,
-    'screen-name': screenName,
-    'device-id': deviceId,
-  });
+  const data = await axios.post(
+    `http://localhost:${EXTERNAL_PORT}/auth/signup`,
+    {
+      email,
+      'screen-name': screenName,
+      'device-id': deviceId,
+    }
+  );
 
   return data;
 };

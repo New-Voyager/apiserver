@@ -254,7 +254,7 @@ class ClubRepositoryImpl {
     // we won't delete the club
     // we will simply defunct the club
     club.status = ClubStatus.DEFUNCT;
-    clubRepository.save(club);
+    await clubRepository.save(club);
   }
 
   // This is an internal API

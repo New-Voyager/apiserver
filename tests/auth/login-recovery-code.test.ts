@@ -1,7 +1,7 @@
 import axios from 'axios';
 import {signUp} from '../utils/auth.testutils';
 
-import {PORT_NUMBER, resetDatabase, startGqlServer} from '../utils/utils';
+import {EXTERNAL_PORT, resetDatabase, startGqlServer} from '../utils/utils';
 
 describe('Login recovery code APIs', () => {
   let stop;
@@ -21,7 +21,7 @@ describe('Login recovery code APIs', () => {
   test('Login recovery code without email', async () => {
     try {
       await axios.post(
-        `http://localhost:${PORT_NUMBER}/auth/login-recovery-code`
+        `http://localhost:${EXTERNAL_PORT}/auth/login-recovery-code`
       );
     } catch (error) {
       const expectedError = 'Email address is required';
@@ -34,7 +34,7 @@ describe('Login recovery code APIs', () => {
     const email = 'test@example.com';
     try {
       await axios.post(
-        `http://localhost:${PORT_NUMBER}/auth/login-recovery-code`,
+        `http://localhost:${EXTERNAL_PORT}/auth/login-recovery-code`,
         {
           email,
         }
@@ -51,7 +51,7 @@ describe('Login recovery code APIs', () => {
     const code = 'test';
     try {
       await axios.post(
-        `http://localhost:${PORT_NUMBER}/auth/login-recovery-code`,
+        `http://localhost:${EXTERNAL_PORT}/auth/login-recovery-code`,
         {
           email,
           code,
@@ -70,7 +70,7 @@ describe('Login recovery code APIs', () => {
     const deviceId = 'Test';
     try {
       await axios.post(
-        `http://localhost:${PORT_NUMBER}/auth/login-recovery-code`,
+        `http://localhost:${EXTERNAL_PORT}/auth/login-recovery-code`,
         {
           email,
           code,
@@ -93,7 +93,7 @@ describe('Login recovery code APIs', () => {
     await signUp({screenName, deviceId, email});
     try {
       await axios.post(
-        `http://localhost:${PORT_NUMBER}/auth/login-recovery-code`,
+        `http://localhost:${EXTERNAL_PORT}/auth/login-recovery-code`,
         {
           email,
           code,

@@ -5,8 +5,6 @@ import {signUp} from '../utils/auth.testutils';
 
 import {resetDatabase, startGqlServer} from '../utils/utils';
 
-const PORT_NUMBER = 9501;
-
 describe('Auth APIs', () => {
   let stop;
 

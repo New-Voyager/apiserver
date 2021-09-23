@@ -2,6 +2,33 @@ import {getClient, signup} from './utils';
 import {gql} from 'apollo-boost';
 import {ClubMember} from '../../src/entity/player/club';
 
+export const leaderboardQuery = gql`
+  query($clubCode: String!) {
+    status: clubLeaderBoard(clubCode: $clubCode) {
+      playerName
+      playerId
+      playerUuid
+      gamesPlayed
+      handsPlayed
+      buyin
+      profit
+      rakePaid
+    }
+  }
+`;
+
+export const sendClubFcmMessageQuery = gql`
+  mutation($clubCode: String!, $message: Json!) {
+    success: sendClubFcmMessage(clubCode: $clubCode, message: $message)
+  }
+`;
+
+export const deleteClubQuery = gql`
+  mutation($clubCode: String!) {
+    success: deleteClub(clubCode: $clubCode)
+  }
+`;
+
 export const createPlayerQuery = gql`
   mutation($input: PlayerCreateInput!) {
     playerId: createPlayer(player: $input)
@@ -321,3 +348,66 @@ export async function createClub2(
 
   return [clubCode, ownerId];
 }
+
+export const kickMember = async ({clubCode, ownerId, playerUuid}) => {
+  const ownerClient = getClient(ownerId);
+  const variables = {
+    clubCode,
+    playerUuid,
+  };
+  const resp = await ownerClient.mutate({
+    variables,
+    mutation: kickedClubQuery,
+  });
+  return resp.data;
+};
+
+export const rejectMember = async ({clubCode, ownerId, playerUuid}) => {
+  const ownerClient = getClient(ownerId);
+  const variables = {
+    clubCode,
+    playerUuid,
+  };
+  const resp = await ownerClient.mutate({
+    variables,
+    mutation: rejectClubQuery,
+  });
+  return resp.data;
+};
+
+export const deleteClub = async ({clubCode, ownerId}) => {
+  const ownerClient = getClient(ownerId);
+  const variables = {
+    clubCode,
+  };
+  const resp = await ownerClient.mutate({
+    variables,
+    mutation: deleteClubQuery,
+  });
+  return resp.data;
+};
+
+export const sendClubFcmMessage = async ({ownerId, clubCode, message}) => {
+  const ownerClient = getClient(ownerId);
+  const variables = {
+    clubCode,
+    message,
+  };
+  const resp = await ownerClient.mutate({
+    variables,
+    mutation: sendClubFcmMessageQuery,
+  });
+  return resp.data;
+};
+
+export const leaderboard = async ({ownerId, clubCode}) => {
+  const ownerClient = getClient(ownerId);
+  const variables = {
+    clubCode,
+  };
+  const resp = await ownerClient.mutate({
+    variables,
+    mutation: leaderboardQuery,
+  });
+  return resp.data;
+};

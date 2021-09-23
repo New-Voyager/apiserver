@@ -1,7 +1,7 @@
 import axios from 'axios';
 import {signUp} from '../utils/auth.testutils';
 
-import {PORT_NUMBER, resetDatabase, startGqlServer} from '../utils/utils';
+import {EXTERNAL_PORT, resetDatabase, startGqlServer} from '../utils/utils';
 
 describe('Recovery code APIs', () => {
   let stop;
@@ -20,7 +20,7 @@ describe('Recovery code APIs', () => {
 
   test('get recovery code without email', async () => {
     try {
-      await axios.post(`http://localhost:${PORT_NUMBER}/auth/recovery-code`);
+      await axios.post(`http://localhost:${EXTERNAL_PORT}/auth/recovery-code`);
     } catch (error) {
       const expectedError = 'Email address is not found';
       expect(error.response.data.error).toEqual(expectedError);
@@ -31,7 +31,7 @@ describe('Recovery code APIs', () => {
   test('get recovery code with invalid email', async () => {
     const email = 'test@example.com';
     try {
-      await axios.post(`http://localhost:${PORT_NUMBER}/auth/recovery-code`, {
+      await axios.post(`http://localhost:${EXTERNAL_PORT}/auth/recovery-code`, {
         email,
       });
     } catch (error) {
@@ -49,7 +49,7 @@ describe('Recovery code APIs', () => {
     await signUp({screenName, deviceId, email});
 
     const data = await axios.post(
-      `http://localhost:${PORT_NUMBER}/auth/recovery-code`,
+      `http://localhost:${EXTERNAL_PORT}/auth/recovery-code`,
       {
         email,
       }

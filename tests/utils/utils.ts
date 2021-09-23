@@ -19,9 +19,6 @@ export function getClient(token?: string, test?: string): any {
         });
       }
     },
-    onError: e => {
-      console.log(e);
-    },
   });
 }
 
