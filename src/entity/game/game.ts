@@ -278,6 +278,12 @@ export class PokerGameSettings {
 
   @Column({name: 'result_pause_time', type: 'int', default: 5})
   public resultPauseTime!: number;
+
+  @Column({name: 'ion_sfu_url', default: ''})
+  public ionSfuUrl!: string;
+
+  @Column({name: 'ion_room', default: ''})
+  public ionRoom!: string;
 }
 
 @Entity({name: 'poker_game'})

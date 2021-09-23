@@ -464,6 +464,13 @@ type CompletedGame {
   isHost: Boolean
   isOwner: Boolean
   isManager: Boolean
+
+  # other stats
+  preflopHands: Int
+  flopHands: Int
+  turnHands: Int
+  riverHands: Int
+  showdownHands: Int
 }
 
 type GameResultTableRow {

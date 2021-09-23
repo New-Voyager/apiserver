@@ -631,7 +631,7 @@ class StatsRepositoryImpl {
   public async getPlayerGameStats(
     playerId: string,
     gameCode: string
-  ): Promise<any> {
+  ): Promise<PlayerGameStats | undefined> {
     const playerGameRepo = getHistoryRepository(PlayerGameStats);
     const player = await Cache.getPlayer(playerId);
     const game = await Cache.getGame(gameCode);
@@ -650,55 +650,60 @@ class StatsRepositoryImpl {
     const playerStatsRepo = transManager.getRepository(PlayerHandStats);
     // get the date
     const date = `${game.startedAt.getFullYear()}-${game.startedAt.getMonth()}-${game.startedAt.getDay()}`;
-    for (const player of players) {
-      const playerStat = await playerStatsRepo.findOne({
-        playerId: player.playerId,
-      });
-      if (playerStat) {
-        // get recent performance data
-        const recentDataJson = playerStat.recentPerformance;
-        let recentPerformance = new Array<any>();
-        try {
-          recentPerformance = JSON.parse(recentDataJson);
-        } catch {}
-        let found = false;
-        const profit = player.stack - player.buyIn;
-        for (const perf of recentPerformance) {
-          if (perf['date'] == date) {
-            if (perf['profit']) {
-              perf['profit'] = perf['profit'] + profit;
-            } else {
-              perf['profit'] = profit;
+    try {
+      for (const player of players) {
+        const playerStat = await playerStatsRepo.findOne({
+          playerId: player.playerId,
+        });
+        if (playerStat) {
+          // get recent performance data
+          const recentDataJson = playerStat.recentPerformance;
+          let recentPerformance = new Array<any>();
+          try {
+            recentPerformance = JSON.parse(recentDataJson);
+          } catch {}
+          let found = false;
+          const profit = player.stack - player.buyIn;
+          for (const perf of recentPerformance) {
+            if (perf['date'] == date) {
+              if (perf['profit']) {
+                perf['profit'] = perf['profit'] + profit;
+              } else {
+                perf['profit'] = profit;
+              }
+              found = true;
+              break;
             }
-            found = true;
-            break;
           }
+
+          if (!found) {
+            const perf = {
+              date: date,
+              profit: profit,
+            };
+            recentPerformance.push(perf);
+
+            // if there are more than 20 items, remove the first item
+            if (recentPerformance.length > 20) {
+              const removeItems = recentPerformance.length - 20;
+              recentPerformance = recentPerformance.splice(0, removeItems);
+            }
+          }
+
+          const perfStr = JSON.stringify(recentPerformance);
+          await playerStatsRepo.update(
+            {
+              playerId: player.playerId,
+            },
+            {
+              recentPerformance: perfStr,
+            }
+          );
         }
-
-        if (!found) {
-          const perf = {
-            date: date,
-            profit: profit,
-          };
-          recentPerformance.push(perf);
-
-          // if there are more than 20 items, remove the first item
-          if (recentPerformance.length > 20) {
-            const removeItems = recentPerformance.length - 20;
-            recentPerformance = recentPerformance.splice(0, removeItems);
-          }
-        }
-
-        const perfStr = JSON.stringify(recentPerformance);
-        await playerStatsRepo.update(
-          {
-            playerId: player.playerId,
-          },
-          {
-            recentPerformance: perfStr,
-          }
-        );
       }
+    } catch (err) {
+      logger.error(`Error when player hand stats data. Error: ${err.message}`);
+      throw err;
     }
   }
 

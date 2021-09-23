@@ -53,7 +53,9 @@ async function getPlayerHandStats(playerId: string) {
 async function getPlayerGameStats(playerId: string, gameCode: string) {
   const stats = await StatsRepository.getPlayerGameStats(playerId, gameCode);
   try {
-    stats.headsupHandDetails = JSON.parse(stats.headsupHandDetails);
+    if (stats) {
+      stats.headsupHandDetails = JSON.parse(stats.headsupHandDetails);
+    }
   } catch (err) {}
   return stats;
 }

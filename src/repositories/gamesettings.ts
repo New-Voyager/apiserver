@@ -73,6 +73,12 @@ class GameSettingsRepositoryImpl {
     gameSettings.chat = input.chat;
     gameSettings.runItTwiceAllowed = input.runItTwiceAllowed;
 
+    // ion sfu url (TODO: needs to be changed to handle multiple servers pion1, pion2, pion3)
+    if (process.env.ION_SFU_URL) {
+      gameSettings.ionSfuUrl = process.env.ION_SFU_URL;
+    }
+    gameSettings.ionRoom = gameCode;
+
     await gameSettingsRepo.save(gameSettings);
   }
 
