@@ -19,6 +19,7 @@ describe('getPlayerBalance APIs', () => {
   test('getPlayerBalance', async () => {
     const [clubCode, ownerId] = await clubutils.createClub();
     const playerId = await clubutils.createPlayer('adam', '1243ABC');
+    const playerId2 = await clubutils.createPlayer('adam', '1243ABCs');
     await clubutils.playerJoinsClub(clubCode, playerId);
 
     try {
@@ -30,6 +31,28 @@ describe('getPlayerBalance APIs', () => {
       expect(data.playerBalance).toEqual(true);
     } catch (error) {
       expect(true).toBeTruthy();
+    }
+
+    try {
+      await getPlayerBalance({
+        ownerId,
+        clubCode: '',
+        playerId,
+      });
+    } catch (error) {
+      const expectedError = 'ClubCode is mandatory field';
+      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+    }
+
+    try {
+      await getPlayerBalance({
+        ownerId: playerId2,
+        clubCode,
+        playerId,
+      });
+    } catch (error) {
+      const expectedError = `Player 1243ABCs is not a club member ${clubCode}`;
+      expect(error.graphQLErrors[0].message).toEqual(expectedError);
     }
   });
 });

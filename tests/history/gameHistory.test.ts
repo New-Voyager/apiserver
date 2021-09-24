@@ -1,8 +1,8 @@
 import {resetDatabase, startGqlServer} from '../utils/utils';
 import * as clubutils from '../utils/club.testutils';
-import {getRakeCollected} from './utils';
+import {gameHistory} from './utils';
 
-describe('getRakeCollected APIs', () => {
+describe('gameHistory APIs', () => {
   let stop;
 
   beforeAll(async done => {
@@ -16,31 +16,19 @@ describe('getRakeCollected APIs', () => {
     stop();
     done();
   });
-  test('getRakeCollected', async () => {
+  test('gameHistory', async () => {
     const [clubCode, ownerId] = await clubutils.createClub();
     const playerId = await clubutils.createPlayer('adam', '1243ABC');
     await clubutils.playerJoinsClub(clubCode, playerId);
 
+    // need to check resolver
     try {
-      await getRakeCollected({
+      const data = await gameHistory({
         ownerId,
         clubCode,
-        gameCode: 'test',
       });
     } catch (error) {
-      const expectedError = 'Cannot find game code [test] in poker game repo';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
-    }
-
-    try {
-      await getRakeCollected({
-        ownerId: undefined,
-        clubCode,
-        gameCode: 'test',
-      });
-    } catch (error) {
-      const expectedError = 'Unauthorized';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect(error).not.toBeNull();
     }
   });
 });
