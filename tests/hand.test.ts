@@ -13,6 +13,7 @@ import _ from 'lodash';
 import {getRepository} from 'typeorm';
 import {response} from 'express';
 import {defaultHandData} from './utils/hand.testutils';
+import {startGame} from './game/utils';
 
 const holdemGameInput = {
   gameType: 'HOLDEM',
@@ -138,7 +139,9 @@ async function setupGameEnvironment(
     //  await chipstrackutils.buyIn(player, game.gameCode, buyin);
     i++;
   }
-  await gameutils.startGame(owner, game.gameCode);
+
+  await startGame({ownerId: owner, gameCode: game.gameCode});
+
   const gameId = await gameutils.getGameById(game.gameCode);
   return [game.gameCode, gameId];
 }

@@ -205,43 +205,12 @@ export const joinGameQuery = gql`
   }
 `;
 
-export const startGameQuery = gql`
-  mutation($gameCode: String!) {
-    status: startGame(gameCode: $gameCode)
-  }
-`;
-
-export const buyinQuery = gql`
-  mutation($gameCode: String!, $amount: Float!) {
-    status: buyIn(gameCode: $gameCode, amount: $amount) {
-      expireSeconds
-      approved
-    }
-  }
-`;
-
 export const reloadQuery = gql`
   mutation($gameCode: String!, $amount: Float!) {
     status: reload(gameCode: $gameCode, amount: $amount) {
       expireSeconds
       approved
     }
-  }
-`;
-
-export const approveQuery = gql`
-  mutation(
-    $gameCode: String!
-    $playerUuid: String!
-    $type: ApprovalType!
-    $status: ApprovalStatus!
-  ) {
-    status: approveRequest(
-      gameCode: $gameCode
-      playerUuid: $playerUuid
-      type: $type
-      status: $status
-    )
   }
 `;
 
@@ -619,40 +588,6 @@ export async function joinGame(
   return resp.data.status.status;
 }
 
-export async function buyin(
-  playerId: string,
-  gameCode: string,
-  amount: number
-): Promise<any> {
-  const resp = await getClient(playerId).mutate({
-    variables: {
-      gameCode: gameCode,
-      amount: amount,
-    },
-    mutation: buyinQuery,
-  });
-  expect(resp.errors).toBeUndefined();
-  expect(resp.data).not.toBeNull();
-  return resp.data.status;
-}
-
-export async function reload(
-  playerId: string,
-  gameCode: string,
-  amount: number
-): Promise<any> {
-  const resp = await getClient(playerId).mutate({
-    variables: {
-      gameCode: gameCode,
-      amount: amount,
-    },
-    mutation: reloadQuery,
-  });
-  expect(resp.errors).toBeUndefined();
-  expect(resp.data).not.toBeNull();
-  return resp.data.status;
-}
-
 export async function pendingApprovalsForClub(
   playerId: string,
   clubCode: string
@@ -698,27 +633,6 @@ export async function pendingApprovalsForGame(
   const resp = await getClient(playerId).query({
     variables: variables,
     query: pendingApprovalsForGameQuery,
-  });
-  expect(resp.errors).toBeUndefined();
-  expect(resp.data).not.toBeNull();
-  return resp.data.status;
-}
-
-export async function approveRequest(
-  hostId: string,
-  playerId: string,
-  gameCode: string,
-  type: string,
-  status: string
-): Promise<any> {
-  const resp = await getClient(hostId).mutate({
-    variables: {
-      gameCode: gameCode,
-      playerUuid: playerId,
-      type: type,
-      status: status,
-    },
-    mutation: approveQuery,
   });
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
@@ -837,21 +751,6 @@ export async function requestSeatChange(
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
   return resp.data.date;
-}
-
-export async function startGame(
-  playerId: string,
-  gameCode: string
-): Promise<any> {
-  const resp = await getClient(playerId).mutate({
-    variables: {
-      gameCode: gameCode,
-    },
-    mutation: startGameQuery,
-  });
-  expect(resp.errors).toBeUndefined();
-  expect(resp.data).not.toBeNull();
-  return resp.data.status;
 }
 
 export async function addToWaitingList(

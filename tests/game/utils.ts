@@ -2,6 +2,15 @@ import {gql} from 'apollo-server-express';
 import axios from 'axios';
 import {getClient, INTERNAL_PORT} from '../utils/utils';
 
+const buyinQuery = gql`
+  mutation($gameCode: String!, $amount: Float!) {
+    status: buyIn(gameCode: $gameCode, amount: $amount) {
+      expireSeconds
+      approved
+    }
+  }
+`;
+
 export const configureGameQuery = gql`
   mutation($clubCode: String!, $gameInput: GameCreateInput!) {
     configuredGame: configureGame(clubCode: $clubCode, game: $gameInput) {
@@ -63,6 +72,165 @@ const resumeGameMutation = gql`
     resumeGame(gameCode: $gameCode)
   }
 `;
+
+const reloadQuery = gql`
+  mutation($gameCode: String!, $amount: Float!) {
+    status: reload(gameCode: $gameCode, amount: $amount) {
+      expireSeconds
+      approved
+    }
+  }
+`;
+
+const approveQuery = gql`
+  mutation(
+    $gameCode: String!
+    $playerUuid: String!
+    $type: ApprovalType!
+    $status: ApprovalStatus!
+  ) {
+    status: approveRequest(
+      gameCode: $gameCode
+      playerUuid: $playerUuid
+      type: $type
+      status: $status
+    )
+  }
+`;
+
+const startGameQuery = gql`
+  mutation($gameCode: String!) {
+    status: startGame(gameCode: $gameCode)
+  }
+`;
+
+const kickOutMutation = gql`
+  mutation($gameCode: String!, $playerUuid: String!) {
+    kickOut(gameCode: $gameCode, playerUuid: $playerUuid)
+  }
+`;
+
+const setBuyInLimitMutation = gql`
+  mutation($gameCode: String!, $playerUuid: String!, $limit: Float!) {
+    setBuyInLimit(gameCode: $gameCode, playerUuid: $playerUuid, limit: $limit)
+  }
+`;
+
+const applyWaitlistOrderMutation = gql`
+  mutation($gameCode: String!, $playerUuid: [String!]) {
+    applyWaitlistOrder(gameCode: $gameCode, playerUuid: $playerUuid)
+  }
+`;
+
+const declineWaitlistSeatMutation = gql`
+  mutation($gameCode: String!) {
+    declineWaitlistSeat(gameCode: $gameCode)
+  }
+`;
+
+export const declineWaitlistSeat = async ({ownerId, gameCode}: any) => {
+  const resp = await getClient(ownerId).mutate({
+    variables: {
+      gameCode: gameCode,
+    },
+    mutation: declineWaitlistSeatMutation,
+  });
+
+  return resp.data;
+};
+
+export const applyWaitlistOrder = async ({
+  ownerId,
+  gameCode,
+  playerIds,
+}: any) => {
+  const resp = await getClient(ownerId).mutate({
+    variables: {
+      gameCode: gameCode,
+      playerUuid: playerIds,
+    },
+    mutation: applyWaitlistOrderMutation,
+  });
+
+  return resp.data;
+};
+
+export const setBuyInLimit = async ({ownerId, gameCode, playerId, limit}) => {
+  const resp = await getClient(ownerId).mutate({
+    variables: {
+      limit,
+      gameCode: gameCode,
+      playerUuid: playerId,
+    },
+    mutation: setBuyInLimitMutation,
+  });
+
+  return resp.data;
+};
+
+export const kickOut = async ({ownerId, gameCode, playerId}) => {
+  const resp = await getClient(ownerId).mutate({
+    variables: {
+      gameCode: gameCode,
+      playerUuid: playerId,
+    },
+    mutation: kickOutMutation,
+  });
+
+  return resp.data;
+};
+
+export const startGame = async ({ownerId, gameCode}): Promise<any> => {
+  const resp = await getClient(ownerId).mutate({
+    variables: {
+      gameCode: gameCode,
+    },
+    mutation: startGameQuery,
+  });
+
+  return resp.data;
+};
+
+export const approveRequest = async ({
+  ownerId,
+  playerId,
+  gameCode,
+  type,
+  status,
+}): Promise<any> => {
+  const resp = await getClient(ownerId).mutate({
+    variables: {
+      gameCode: gameCode,
+      playerUuid: playerId,
+      type: type,
+      status: status,
+    },
+    mutation: approveQuery,
+  });
+  return resp.data;
+};
+
+export async function reload({playerId, gameCode, amount}): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+      amount: amount,
+    },
+    mutation: reloadQuery,
+  });
+  return resp.data;
+}
+
+export const buyIn = async ({ownerId, gameCode, amount}): Promise<any> => {
+  const resp = await getClient(ownerId).mutate({
+    variables: {
+      gameCode: gameCode,
+      amount: amount,
+    },
+    mutation: buyinQuery,
+  });
+  return resp.data;
+};
 
 export const resumeGame = async ({ownerId, gameCode}) => {
   const variables = {

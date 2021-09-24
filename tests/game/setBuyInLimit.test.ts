@@ -1,9 +1,13 @@
 import {resetDatabase, startGqlServer} from '../utils/utils';
 import * as clubutils from '../utils/club.testutils';
-import {configureGame, createGameServer, joinGame} from './utils';
-import {endGame} from '../utils/game.testutils';
+import {
+  configureGame,
+  createGameServer,
+  joinGame,
+  setBuyInLimit,
+} from './utils';
 
-describe('endGame APIs', () => {
+describe('setBuyInLimit APIs', () => {
   let stop;
 
   beforeAll(async done => {
@@ -17,13 +21,15 @@ describe('endGame APIs', () => {
     stop();
     done();
   });
-  test('endGame', async () => {
+  test('setBuyInLimit', async () => {
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
+    const playerId2 = await clubutils.createPlayer('adam', '1243ABC');
+    await clubutils.playerJoinsClub(clubCode, playerId2);
     await createGameServer('1.99.0.1');
     const resp = await configureGame({clubCode, playerId});
 
-    const data = await joinGame({
-      ownerId: playerId,
+    await joinGame({
+      ownerId: playerId2,
       gameCode: resp.data.configuredGame.gameCode,
       seatNo: 1,
       location: {
@@ -31,7 +37,14 @@ describe('endGame APIs', () => {
         long: 100,
       },
     });
-    const status = await endGame(playerId, resp.data.configuredGame.gameCode);
-    expect(status).toEqual('ENDED');
+
+    const data = await setBuyInLimit({
+      ownerId: playerId,
+      gameCode: resp.data.configuredGame.gameCode,
+      limit: 100,
+      playerId: playerId2,
+    });
+
+    expect(data.setBuyInLimit).toEqual(true);
   });
 });

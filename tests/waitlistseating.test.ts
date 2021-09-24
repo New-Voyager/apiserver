@@ -1,10 +1,16 @@
-import {resetDatabase, getClient, INTERNAL_PORT, startGqlServer} from './utils/utils';
+import {
+  resetDatabase,
+  getClient,
+  INTERNAL_PORT,
+  startGqlServer,
+} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
 import * as handutils from './utils/hand.testutils';
 import * as rewardutils from './utils/reward.testutils';
 import {default as axios} from 'axios';
 import {getLogger} from '../src/utils/log';
+import {startGame, buyIn} from './game/utils';
 const logger = getLogger('game');
 
 const holdemGameInput = {
@@ -108,10 +114,10 @@ describe('Tests: waitlist seating APIs', () => {
     await resetDatabase();
     done();
   });
-  
+
   afterAll(async done => {
-     stop();
-     done();
+    stop();
+    done();
   });
 
   test.skip('wait list seating APIs', async () => {
@@ -144,7 +150,7 @@ describe('Tests: waitlist seating APIs', () => {
     gameInput.maxPlayers = 3;
     gameInput.minPlayers = 2;
     const game = await gameutils.configureGame(ownerId, clubCode, gameInput);
-    await gameutils.startGame(ownerId, game.gameCode);
+    await startGame({ownerId, gameCode: game.gameCode});
 
     // join a game
     await gameutils.joinGame(players[0], game.gameCode, 1);
@@ -152,9 +158,9 @@ describe('Tests: waitlist seating APIs', () => {
     await gameutils.joinGame(players[2], game.gameCode, 3);
 
     // buyin
-    await gameutils.buyin(players[0], game.gameCode, 100);
-    await gameutils.buyin(players[1], game.gameCode, 100);
-    await gameutils.buyin(players[2], game.gameCode, 100);
+    await buyIn({ownerId: players[0], gameCode: game.gameCode, amount: 100});
+    await buyIn({ownerId: players[1], gameCode: game.gameCode, amount: 100});
+    await buyIn({ownerId: players[2], gameCode: game.gameCode, amount: 100});
 
     // add player 4&5 to waitlist
     const resp1 = await gameutils.addToWaitingList(players[3], game.gameCode);
@@ -212,17 +218,16 @@ describe('Tests: waitlist seating APIs', () => {
     gameInput.maxPlayers = 3;
     gameInput.minPlayers = 2;
     const game = await gameutils.configureGame(ownerId, clubCode, gameInput);
-    await gameutils.startGame(ownerId, game.gameCode);
-
+    await startGame({ownerId, gameCode: game.gameCode});
     // join a game
     await gameutils.joinGame(players[0], game.gameCode, 1);
     await gameutils.joinGame(players[1], game.gameCode, 2);
     await gameutils.joinGame(players[2], game.gameCode, 3);
 
     // buyin
-    await gameutils.buyin(players[0], game.gameCode, 100);
-    await gameutils.buyin(players[1], game.gameCode, 100);
-    await gameutils.buyin(players[2], game.gameCode, 100);
+    await buyIn({ownerId: players[0], gameCode: game.gameCode, amount: 100});
+    await buyIn({ownerId: players[1], gameCode: game.gameCode, amount: 100});
+    await buyIn({ownerId: players[2], gameCode: game.gameCode, amount: 100});
 
     // add player 4&5 to waitlist
     const resp1 = await gameutils.addToWaitingList(players[3], game.gameCode);
@@ -302,17 +307,16 @@ describe('Tests: waitlist seating APIs', () => {
     gameInput.maxPlayers = 3;
     gameInput.minPlayers = 2;
     const game = await gameutils.configureGame(ownerId, clubCode, gameInput);
-    await gameutils.startGame(ownerId, game.gameCode);
-
+    await startGame({ownerId, gameCode: game.gameCode});
     // join a game
     await gameutils.joinGame(players[0], game.gameCode, 1);
     await gameutils.joinGame(players[1], game.gameCode, 2);
     await gameutils.joinGame(players[2], game.gameCode, 3);
 
     // buyin
-    await gameutils.buyin(players[0], game.gameCode, 100);
-    await gameutils.buyin(players[1], game.gameCode, 100);
-    await gameutils.buyin(players[2], game.gameCode, 100);
+    await buyIn({ownerId: players[0], gameCode: game.gameCode, amount: 100});
+    await buyIn({ownerId: players[1], gameCode: game.gameCode, amount: 100});
+    await buyIn({ownerId: players[2], gameCode: game.gameCode, amount: 100});
 
     // add player 4&5 to waitlist
     const resp1 = await gameutils.addToWaitingList(players[3], game.gameCode);
