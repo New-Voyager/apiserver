@@ -13,6 +13,8 @@ import {In} from 'typeorm';
 import _ from 'lodash';
 import {Player} from '@src/entity/player/player';
 import {GameStatus} from '@src/entity/types';
+import {stat, Stats} from 'fs';
+import {StatsRepository} from './stats';
 
 class HistoryRepositoryImpl {
   constructor() {}
@@ -155,7 +157,8 @@ class HistoryRepositoryImpl {
     const completedGames = await this.completeData(
       cachedPlayer,
       [gameHistory],
-      clubMember
+      clubMember,
+      true
     );
     return completedGames[0];
   }
@@ -196,7 +199,8 @@ class HistoryRepositoryImpl {
     const completedGames = await this.completeData(
       cachedPlayer,
       gameHistory,
-      clubMember
+      clubMember,
+      false
     );
     return completedGames;
   }
@@ -204,10 +208,11 @@ class HistoryRepositoryImpl {
   private async completeData(
     cachedPlayer: Player,
     gameHistory: Array<GameHistory>,
-    clubMember: ClubMember | null
+    clubMember: ClubMember | null,
+    includeStats: boolean
   ) {
     const playerRepo = getHistoryRepository(PlayersInGame);
-
+    let dataAggregated = false;
     let completedGames: Array<any> = new Array<any>();
     for (const game of gameHistory) {
       let completedGame: any;
@@ -227,6 +232,7 @@ class HistoryRepositoryImpl {
         handsDealt: game.handsDealt,
         dataAggregated: game.dataAggregated,
       };
+      dataAggregated = game.dataAggregated;
       gameData.isHost = false;
       if (cachedPlayer) {
         if (game.startedBy === cachedPlayer.id) {
@@ -237,18 +243,38 @@ class HistoryRepositoryImpl {
         gameData.isOwner = clubMember.isOwner;
         gameData.isManager = clubMember.isManager;
       }
+      if (includeStats && dataAggregated) {
+        const stats = await StatsRepository.getPlayerGameStats(
+          cachedPlayer.uuid,
+          game.gameCode
+        );
+        if (stats) {
+          gameData.preflopHands = stats.inPreflop;
+          gameData.flopHands = stats.inFlop;
+          gameData.turnHands = stats.inTurn;
+          gameData.riverHands = stats.inRiver;
+          gameData.showdownHands = stats.wentToShowDown;
+        }
+      }
+      let runTime = 0;
+      if (gameData.startedAt && gameData.endedAt) {
+        const runTimeDiff =
+          gameData.endedAt.getTime() - gameData.startedAt.getTime();
+        runTime = Math.ceil(runTimeDiff / 1000);
+      }
+      gameData.runTime = runTime;
       completedGame = gameData;
       completedGames.push(completedGame);
     }
     const gamesById = _.keyBy(completedGames, 'gameId');
     const gameIds = Object.keys(gamesById);
-    const resp = await playerRepo.find({
+    const playerInGame = await playerRepo.findOne({
       where: {
         gameId: In(gameIds),
         playerId: cachedPlayer.id,
       },
     });
-    for (const playerInGame of resp) {
+    if (playerInGame) {
       if (playerInGame.stack && playerInGame.buyIn) {
         if (gamesById[playerInGame.gameId]) {
           const game = gamesById[playerInGame.gameId];

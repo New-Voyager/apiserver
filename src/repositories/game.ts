@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import {In, Repository, EntityManager} from 'typeorm';
+import {In, Repository, EntityManager, Not} from 'typeorm';
 import {
   NextHandUpdates,
   PokerGame,
@@ -28,7 +28,7 @@ import {StatsRepository} from './stats';
 import {utcTime} from '@src/utils';
 import _ from 'lodash';
 import {HandHistory} from '@src/entity/history/hand';
-import {Player} from '@src/entity/player/player';
+import {Player, PlayerNotes} from '@src/entity/player/player';
 import {Club} from '@src/entity/player/club';
 import {PlayerGameStats} from '@src/entity/history/stats';
 import {HistoryRepository} from './history';
@@ -51,6 +51,7 @@ import {GameServerRepository} from './gameserver';
 import {PlayersInGame} from '@src/entity/history/player';
 import {schedulePostProcessing} from '@src/scheduler';
 import {notifyScheduler} from '@src/server';
+import {NextHandUpdatesRepository} from './nexthand_update';
 const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
@@ -430,6 +431,38 @@ class GameRepositoryImpl {
     return nextNumber;
   }
 
+  public async endExpireGames(): Promise<any> {
+    const games: Array<PokerGame> = await getGameRepository(PokerGame).find({
+      where: {
+        status: Not(GameStatus.ENDED),
+      },
+    });
+    let numExpired = 0;
+    for (const game of games) {
+      // Game length is in minutes.
+      const shouldExpireAt = new Date(
+        game.startedAt.getTime() + 1000 * 60 * game.gameLength
+      );
+      if (shouldExpireAt.getTime() > Date.now()) {
+        continue;
+      }
+      logger.info(
+        `Scheduling to end expired game ${game.title} (${game.id}/${game.gameCode})`
+      );
+      if (
+        game.status === GameStatus.ACTIVE &&
+        game.tableStatus === TableStatus.GAME_RUNNING
+      ) {
+        // the game will be stopped in the next hand
+        await NextHandUpdatesRepository.expireGameNextHand(game.id);
+      } else {
+        await Cache.removeAllObservers(game.gameCode);
+        await GameRepository.markGameEnded(game.id);
+      }
+      numExpired++;
+    }
+    return {numExpired: numExpired};
+  }
   public async seatOccupied(
     game: PokerGame,
     seatNo: number,
@@ -1528,6 +1561,45 @@ class GameRepositoryImpl {
       }
     }
     return seatStatuses;
+  }
+
+  // Updates firebase token for the player
+  public async getPlayersWithNotes(
+    playerId: string,
+    gameCode: string
+  ): Promise<Array<any>> {
+    const player = await Cache.getPlayer(playerId);
+    const game = await Cache.getGame(gameCode);
+    // get players in the game
+    const playersInGame = await PlayersInGameRepository.getPlayersInSeats(
+      game.id
+    );
+    const playerIds = _.map(playersInGame, e => e.playerId);
+
+    const notesRepo = getUserRepository(PlayerNotes);
+    const notes = await notesRepo.find({
+      relations: ['player', 'notesToPlayer'],
+      where: {
+        player: {id: player.id},
+        notesToPlayer: {id: In(playerIds)},
+      },
+    });
+    if (!notes) {
+      return [];
+    }
+    const retNotes = new Array<any>();
+    for (const notesPlayer of notes) {
+      let notes = '';
+      if (notesPlayer.notes) {
+        notes = notesPlayer.notes;
+      }
+      retNotes.push({
+        playerId: notesPlayer.notesToPlayer.id,
+        playerUuid: notesPlayer.notesToPlayer.uuid,
+        notes: notes,
+      });
+    }
+    return retNotes;
   }
 }
 

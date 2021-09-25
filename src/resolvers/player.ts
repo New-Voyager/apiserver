@@ -107,6 +107,10 @@ const resolvers: any = {
       );
       return ret;
     },
+    notesForPlayers: async (parent, args, ctx, info) => {
+      const ret = await getNotesForPlayers(ctx.req.playerId, args.playerIds);
+      return ret;
+    },
   },
   PlayerClub: {
     pendingMemberCount: async (parent, args, ctx, info) => {
@@ -558,6 +562,16 @@ async function getNotes(
     throw new Error('Unauthorized');
   }
   return PlayerRepository.getNotes(playerId, notesPlayerId, notesPlayerUuid);
+}
+
+async function getNotesForPlayers(
+  playerId: string,
+  playerIds: Array<number>
+): Promise<Array<any>> {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  return PlayerRepository.getNotesForPlayers(playerId, playerIds);
 }
 
 async function setNotes(

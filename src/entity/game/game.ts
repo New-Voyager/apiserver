@@ -278,6 +278,12 @@ export class PokerGameSettings {
 
   @Column({name: 'result_pause_time', type: 'int', default: 5})
   public resultPauseTime!: number;
+
+  @Column({name: 'ion_sfu_url', default: ''})
+  public ionSfuUrl!: string;
+
+  @Column({name: 'ion_room', default: ''})
+  public ionRoom!: string;
 }
 
 @Entity({name: 'poker_game'})
@@ -358,6 +364,7 @@ export class PokerGame {
   @Column({name: 'is_active', nullable: true})
   public isActive!: boolean;
 
+  @Index()
   @Column({name: 'game_status', nullable: true, default: GameStatus.UNKNOWN})
   public status!: GameStatus;
 
@@ -367,6 +374,7 @@ export class PokerGame {
   @Column({name: 'game_started', default: false})
   public gameStarted!: boolean;
 
+  // In minutes.
   @Column({name: 'game_length', type: 'int'})
   public gameLength!: number;
 

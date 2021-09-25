@@ -1,7 +1,7 @@
 import {GameStatus, GameType, TableStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
-import {getLogger} from '@src/utils/log';
+import {errToLogString, getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
 import {PokerGame} from '@src/entity/game/game';
 import {PlayerStatus} from '@src/entity/types';
@@ -351,6 +351,19 @@ class GameAPIs {
       resp.status(200).send(JSON.stringify(ret));
     } catch (err) {
       resp.status(500).send({error: err.message});
+    }
+  }
+
+  public async endExpiredGames(req: any, resp: any) {
+    try {
+      const res = await GameRepository.endExpireGames();
+      resp.status(200).send(JSON.stringify({expired: res.numExpired}));
+    } catch (err) {
+      logger.error(`Unable to end all expired games: ${errToLogString(err)}`);
+      const response = {
+        error: err.message,
+      };
+      resp.status(500).send(JSON.stringify(response));
     }
   }
 }

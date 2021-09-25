@@ -183,6 +183,38 @@ class PlayerRepositoryImpl {
     return notes.notes;
   }
 
+  // Updates firebase token for the player
+  public async getNotesForPlayers(
+    playerId: string,
+    playerIds: Array<number>
+  ): Promise<Array<any>> {
+    const player = await Cache.getPlayer(playerId);
+    const notesRepo = getUserRepository(PlayerNotes);
+    const notes = await notesRepo.find({
+      relations: ['player', 'notesToPlayer'],
+      where: {
+        player: {id: player.id},
+        notesToPlayer: {id: In(playerIds)},
+      },
+    });
+    if (!notes) {
+      return [];
+    }
+    const retNotes = new Array<any>();
+    for (const notesPlayer of notes) {
+      let notes = '';
+      if (notesPlayer.notes) {
+        notes = notesPlayer.notes;
+      }
+      retNotes.push({
+        playerId: notesPlayer.notesToPlayer.id,
+        playerUuid: notesPlayer.notesToPlayer.uuid,
+        notes: notes,
+      });
+    }
+    return retNotes;
+  }
+
   public async updateNotes(
     playerId: string,
     notesPlayerId: number,

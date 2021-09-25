@@ -152,6 +152,7 @@ export enum ClubUpdateType {
   HOST_MESSAGE,
   ANNOUNCEMENT,
   MEW_GAME,
+  MEMBER_LEFT,
 }
 
 export interface GamePlayerSettings {

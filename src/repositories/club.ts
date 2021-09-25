@@ -26,6 +26,7 @@ import {
   getUserRepository,
 } from '.';
 import {ClubMemberStat} from '@src/entity/player/club';
+import {ClubMessageRepository} from './clubmessage';
 
 const logger = getLogger('repositories::club');
 
@@ -347,6 +348,7 @@ class ClubRepositoryImpl {
         // This is for the botrunner to start an app game with a club created by a human.
         clubMember.isManager = true;
       }
+      await ClubMessageRepository.playerJoined(club, player);
     }
 
     const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
@@ -421,13 +423,18 @@ class ClubRepositoryImpl {
 
     const messageId = uuidv4();
     try {
+      const player = await Cache.getPlayer(playerId);
+
+      // add a message in the chat
+      await ClubMessageRepository.playerJoined(club, player);
+
       // TODO: send firebase notification
-      Nats.sendClubUpdate(
-        clubCode,
-        club.name,
-        ClubUpdateType[ClubUpdateType.MEMBER_APPROVED],
-        messageId
-      );
+      // Nats.sendClubUpdate(
+      //   clubCode,
+      //   club.name,
+      //   ClubUpdateType[ClubUpdateType.MEMBER_APPROVED],
+      //   messageId
+      // );
     } catch (err) {
       logger.error(`Failed to send NATS message. Error: ${err.toString()}`);
     }
@@ -500,9 +507,9 @@ class ClubRepositoryImpl {
       }
     }
 
-    if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
-      return clubMember.status;
-    }
+    // if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
+    //   return clubMember.status;
+    // }
 
     const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
     await clubMemberRepository
@@ -519,13 +526,10 @@ class ClubRepositoryImpl {
 
     const messageId = uuidv4();
     try {
-      // TODO: send firebase notification
-      Nats.sendClubUpdate(
-        clubCode,
-        club.name,
-        ClubUpdateType[ClubUpdateType.MEMBER_DENIED],
-        messageId
-      );
+      const player = await Cache.getPlayer(playerId);
+
+      // add a message in the chat
+      await ClubMessageRepository.playerKickedout(club, player);
     } catch (err) {
       logger.error(`Failed to send NATS message. Error: ${err.toString()}`);
     }
@@ -685,33 +689,30 @@ class ClubRepositoryImpl {
     clubCode: string,
     playerId: string
   ): Promise<ClubMemberStatus> {
+    const player = await Cache.getPlayer(playerId);
     const clubMember = await Cache.getClubMember(playerId, clubCode);
     if (!clubMember) {
       throw new Error('The player is not in the club');
     }
-
-    const club = await Cache.getClub(clubCode);
-    const owner: Player | undefined = await Promise.resolve(club.owner);
-    if (!owner) {
-      throw new Error('Unexpected. There is no owner for the club');
-    }
-
     if (clubMember.status === ClubMemberStatus.LEFT) {
       return clubMember.status;
     }
 
+    const club = await Cache.getClub(clubCode);
     if (clubMember.isOwner) {
       throw new Error('Player is the owner. Owner cannot leave the club');
     }
 
     const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
-    await clubMemberRepository
-      .createQueryBuilder()
-      .update()
-      .set({
+    await clubMemberRepository.update(
+      {
+        id: clubMember.id,
+      },
+      {
         status: ClubMemberStatus.LEFT,
-      })
-      .execute();
+      }
+    );
+    ClubMessageRepository.playerLeft(club, player);
     return ClubMemberStatus.LEFT;
   }
 
