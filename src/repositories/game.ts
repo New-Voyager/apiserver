@@ -1,4 +1,5 @@
 import * as crypto from 'crypto';
+import {v4 as uuidv4} from 'uuid';
 import {In, Repository, EntityManager, Not} from 'typeorm';
 import {
   NextHandUpdates,
@@ -455,6 +456,8 @@ class GameRepositoryImpl {
       ) {
         // the game will be stopped in the next hand
         await NextHandUpdatesRepository.expireGameNextHand(game.id);
+        const messageId = uuidv4();
+        Nats.sendGameEndingMessage(game.gameCode, messageId);
       } else {
         await Cache.removeAllObservers(game.gameCode);
         await GameRepository.markGameEnded(game.id);
