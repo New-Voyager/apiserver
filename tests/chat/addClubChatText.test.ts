@@ -13,7 +13,7 @@ describe('addClubChatText APIs', () => {
   });
 
   afterAll(async done => {
-    stop();
+    //stop();
     done();
   });
   test('addClubChatText', async () => {

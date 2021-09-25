@@ -1,3 +1,4 @@
+import { getConnections } from '../ormconfig';
 import {
   createConnection,
   createConnections,
@@ -44,7 +45,8 @@ export async function seed() {
 export async function initdb() {
   if (process.env.NODE_ENV !== 'unit-test') {
     logger.debug('Running in dev/prod mode');
-    const options = await getConnectionOptions('default');
+    //const options = await getConnectionOptions('default');
+    const options = getConnections();
     const users = options['users'];
     const livegames = options['livegames'];
     const history = options['history'];

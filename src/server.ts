@@ -16,27 +16,6 @@ import {initializeGameServer} from './gameserver';
 import {initdb, seed} from './initdb';
 import {Firebase, getAppSettings} from './firebase';
 import {Nats} from './nats';
-import {
-  buyBotCoins,
-  generateBotScript,
-  generateBotScriptDebugHand,
-  resetServerSettings,
-  setServerSettings,
-  updateButtonPos,
-} from './internal/bot';
-import {restartTimers} from '@src/timer';
-import {getUserRepository} from './repositories';
-import {UserRegistrationPayload} from './types';
-import {PlayerRepository} from './repositories/player';
-import {
-  getRecoveryCode,
-  login,
-  loginUsingRecoveryCode,
-  newlogin,
-  signup,
-} from './auth';
-import {DevRepository} from './repositories/dev';
-import {createPromotion, deleteAll, getAllPromotion} from './admin';
 import {initializeRedis} from './cache';
 import {addExternalRoutes, addInternalRoutes} from './routes';
 export enum RunProfile {
