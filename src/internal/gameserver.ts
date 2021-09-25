@@ -278,6 +278,7 @@ export async function createGameServer(
     return [null, err];
   }
 }
+
 async function restartGameServerGames(
   gameServer: any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

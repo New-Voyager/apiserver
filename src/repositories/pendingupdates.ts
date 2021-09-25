@@ -1,4 +1,4 @@
-import {Not, EntityManager, Repository, getRepository} from 'typeorm';
+import {Not, EntityManager, Repository, getRepository, In} from 'typeorm';
 import {fixQuery} from '@src/utils';
 import {
   ApprovalStatus,

@@ -109,6 +109,8 @@ export function addInternalRoutes(app: any) {
   app.post('/internal/restart-games', GameServerAPI.restartGames);
   app.post('/internal/restart-timers', restartTimers);
 
+  app.post('/internal/end-expired-games', GameAPI.endExpiredGames);
+
   // admin apis
   app.get('/admin/feature-requests', DevRepository.featureRequests);
   app.get('/admin/bug-reports', DevRepository.bugReports);

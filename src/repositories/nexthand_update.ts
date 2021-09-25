@@ -202,6 +202,26 @@ class NextHandUpdatesRepositoryImpl {
     }
   }
 
+  public async expireGameNextHand(gameId: number) {
+    // check to see if the game is already marked to be ended
+    const repository = getGameRepository(NextHandUpdates);
+    const query = fixQuery(
+      'SELECT COUNT(*) as updates FROM next_hand_updates WHERE game_id = ? AND new_update = ?'
+    );
+    const resp = await getGameConnection().query(query, [
+      gameId,
+      NextHandUpdate.END_GAME,
+    ]);
+    if (resp[0]['updates'] === 0) {
+      const nextHandUpdate = new NextHandUpdates();
+      const game = new PokerGame();
+      game.id = gameId;
+      nextHandUpdate.game = game;
+      nextHandUpdate.newUpdate = NextHandUpdate.END_GAME;
+      repository.save(nextHandUpdate);
+    }
+  }
+
   public async pauseGameNextHand(gameId: number) {
     // check to see if the game is already marked to be ended
     const repository = getGameRepository(NextHandUpdates);
