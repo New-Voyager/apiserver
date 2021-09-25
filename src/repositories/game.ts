@@ -28,7 +28,7 @@ import {StatsRepository} from './stats';
 import {utcTime} from '@src/utils';
 import _ from 'lodash';
 import {HandHistory} from '@src/entity/history/hand';
-import {Player} from '@src/entity/player/player';
+import {Player, PlayerNotes} from '@src/entity/player/player';
 import {Club} from '@src/entity/player/club';
 import {PlayerGameStats} from '@src/entity/history/stats';
 import {HistoryRepository} from './history';
@@ -1561,6 +1561,45 @@ class GameRepositoryImpl {
       }
     }
     return seatStatuses;
+  }
+
+  // Updates firebase token for the player
+  public async getPlayersWithNotes(
+    playerId: string,
+    gameCode: string
+  ): Promise<Array<any>> {
+    const player = await Cache.getPlayer(playerId);
+    const game = await Cache.getGame(gameCode);
+    // get players in the game
+    const playersInGame = await PlayersInGameRepository.getPlayersInSeats(
+      game.id
+    );
+    const playerIds = _.map(playersInGame, e => e.playerId);
+
+    const notesRepo = getUserRepository(PlayerNotes);
+    const notes = await notesRepo.find({
+      relations: ['player', 'notesToPlayer'],
+      where: {
+        player: {id: player.id},
+        notesToPlayer: {id: In(playerIds)},
+      },
+    });
+    if (!notes) {
+      return [];
+    }
+    const retNotes = new Array<any>();
+    for (const notesPlayer of notes) {
+      let notes = '';
+      if (notesPlayer.notes) {
+        notes = notesPlayer.notes;
+      }
+      retNotes.push({
+        playerId: notesPlayer.notesToPlayer.id,
+        playerUuid: notesPlayer.notesToPlayer.uuid,
+        notes: notes,
+      });
+    }
+    return retNotes;
   }
 }
 
