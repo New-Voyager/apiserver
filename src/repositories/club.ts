@@ -706,10 +706,10 @@ class ClubRepositoryImpl {
     const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
     await clubMemberRepository.update(
       {
-        player: {id: player.id},
+        id: clubMember.id,
       },
       {
-        id: clubMember.id,
+        status: ClubMemberStatus.LEFT,
       }
     );
     ClubMessageRepository.playerLeft(club, player);
