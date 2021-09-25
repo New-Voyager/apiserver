@@ -15,6 +15,7 @@ services:
       REDIS_PORT: 6379
       REDIS_DB: 0
       API_SERVER_INTERNAL_URL: ${API_SERVER_INTERNAL_URL}
+      NATS_URL: nats://nats:4222
       POSTGRES_HOST: 'postgres'
       POSTGRES_PORT: '5432'
       POSTGRES_USER: 'game'
@@ -91,6 +92,7 @@ services:
     environment:
       API_SERVER_URL: ${API_SERVER_URL} #http://api-server:9501
       API_SERVER_INTERNAL_URL: ${API_SERVER_INTERNAL_URL}
+      NATS_URL: nats://nats:4222
       PERSIST_METHOD: redis
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -121,8 +123,10 @@ services:
       - 8083:8083
     environment:
       API_SERVER_INTERNAL_URL: ${API_SERVER_INTERNAL_URL}
-      LOG_LEVEL: debug
+      LOG_LEVEL: info
       POST_PROCESSING_TIMEOUT_SEC: 120
+      EXPIRE_GAMES_INTERVAL_SEC: 120
+      EXPIRE_GAMES_TIMEOUT_SEC: 60
 
 volumes:
   db-data:

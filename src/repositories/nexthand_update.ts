@@ -83,7 +83,9 @@ class NextHandUpdatesRepositoryImpl {
         setProps
       );
 
-      await GameRepository.seatOpened(game, seatNo);
+      if (seatNo !== 0) {
+        await GameRepository.seatOpened(game, seatNo);
+      }
 
       // playerLeftGame(game, player, seatNo);
     }
