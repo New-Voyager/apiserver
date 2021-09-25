@@ -4,6 +4,7 @@ import {
   getConnectionOptions,
 } from 'typeorm';
 import {Player, PlayerNotes} from '../src/entity/player/player';
+import {ChatText} from '../src/entity/player/chat';
 import {Club, ClubMember, ClubMemberStat} from '../src/entity/player/club';
 import {SavedHands} from '../src/entity/player/player';
 import {
@@ -87,6 +88,7 @@ export async function sqlliteConnection() {
           PlayerCoin,
           Promotion,
           PromotionConsumed,
+          ChatText,
         ],
         dropSchema: true,
         synchronize: true,
