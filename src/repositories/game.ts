@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import {In, Repository, EntityManager} from 'typeorm';
+import {In, Repository, EntityManager, Not} from 'typeorm';
 import {
   NextHandUpdates,
   PokerGame,
@@ -51,6 +51,7 @@ import {GameServerRepository} from './gameserver';
 import {PlayersInGame} from '@src/entity/history/player';
 import {schedulePostProcessing} from '@src/scheduler';
 import {notifyScheduler} from '@src/server';
+import {NextHandUpdatesRepository} from './nexthand_update';
 const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
@@ -430,6 +431,38 @@ class GameRepositoryImpl {
     return nextNumber;
   }
 
+  public async endExpireGames(): Promise<any> {
+    const games: Array<PokerGame> = await getGameRepository(PokerGame).find({
+      where: {
+        status: Not(GameStatus.ENDED),
+      },
+    });
+    let numExpired = 0;
+    for (const game of games) {
+      // Game length is in minutes.
+      const shouldExpireAt = new Date(
+        game.startedAt.getTime() + 1000 * 60 * game.gameLength
+      );
+      if (shouldExpireAt.getTime() > Date.now()) {
+        continue;
+      }
+      logger.info(
+        `Scheduling to end expired game ${game.title} (${game.id}/${game.gameCode})`
+      );
+      if (
+        game.status === GameStatus.ACTIVE &&
+        game.tableStatus === TableStatus.GAME_RUNNING
+      ) {
+        // the game will be stopped in the next hand
+        await NextHandUpdatesRepository.expireGameNextHand(game.id);
+      } else {
+        await Cache.removeAllObservers(game.gameCode);
+        await GameRepository.markGameEnded(game.id);
+      }
+      numExpired++;
+    }
+    return {numExpired: numExpired};
+  }
   public async seatOccupied(
     game: PokerGame,
     seatNo: number,
