@@ -1,17 +1,8 @@
 import {initializeSqlLite} from './utils';
 import {
-  getClubMembers,
   createClub,
-  updateClub,
   joinClub,
-  getMemberStatus,
   approveMember,
-  rejectMember,
-  kickMember,
-  leaveClub,
-  getClubGames,
-  getClubById,
-  updateClubMember,
 } from '../src/resolvers/club';
 import {createPlayer} from '../src/resolvers/player';
 import {

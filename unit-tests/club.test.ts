@@ -8,12 +8,11 @@ import {
   approveMember,
   rejectMember,
   kickMember,
-  leaveClub,
   getClubGames,
   getClubById,
   updateClubMember,
 } from '../src/resolvers/club';
-import {createPlayer} from '../src/resolvers/player';
+import {createPlayer, leaveClub} from '../src/resolvers/player';
 import {configureGame} from '../src/resolvers/game';
 import {saveReward} from '../src/resolvers/reward';
 import {createGameServer} from '../src/internal/gameserver';
@@ -336,13 +335,13 @@ describe('Club APIs', () => {
     // make sure the owner cannot leave the club
 
     try {
-      await leaveClub(playerId, clubCode);
+      await leaveClub(playerId, {clubCode: clubCode});
       expect(false).toBeTruthy();
     } catch (error) {
       expect(error.toString()).toContain('Owner cannot leave the club');
     }
 
-    await leaveClub(player1Id, clubCode);
+    await leaveClub(player1Id, {clubCode: clubCode});
 
     // get club members and ensure player 1 is not in the club
     const members = await getClubMembers(playerId, {clubCode: clubCode});
