@@ -74,6 +74,84 @@ class ClubMessageRepositoryImpl {
     }
   }
 
+  public async playerJoined(club: Club, player: Player) {
+    const sendMessage = new ClubMessageInput();
+    const msg: any = {
+      name: player.name,
+      id: player.id,
+      uuid: player.uuid,
+    };
+    sendMessage.text = JSON.stringify(msg);
+    sendMessage.messageType = ClubMessageType.JOIN_CLUB;
+    sendMessage.clubCode = club.clubCode;
+    sendMessage.player = player;
+    const repository = getUserRepository(ClubMessageInput);
+    const response = await repository.save(sendMessage);
+    const messageId = uuidv4();
+    // TODO: send firebase notification
+    // we need to send this message to all the club members
+    Nats.sendClubUpdate(
+      club.clubCode,
+      club.name,
+      ClubUpdateType[ClubUpdateType.NEW_MEMBER],
+      messageId
+    );
+
+    return response.id;
+  }
+
+  public async playerKickedout(club: Club, player: Player) {
+    const sendMessage = new ClubMessageInput();
+    const msg: any = {
+      name: player.name,
+      id: player.id,
+      uuid: player.uuid,
+    };
+    sendMessage.text = JSON.stringify(msg);
+    sendMessage.messageType = ClubMessageType.KICKED_OUT;
+    sendMessage.clubCode = club.clubCode;
+    sendMessage.player = player;
+    const repository = getUserRepository(ClubMessageInput);
+    const response = await repository.save(sendMessage);
+    const messageId = uuidv4();
+    // TODO: send firebase notification
+    // we need to send this message to all the club members
+    Nats.sendClubUpdate(
+      club.clubCode,
+      club.name,
+      ClubUpdateType[ClubUpdateType.MEMBER_LEFT],
+      messageId
+    );
+
+    return response.id;
+  }
+
+  public async playerLeft(club: Club, player: Player) {
+    const sendMessage = new ClubMessageInput();
+    const msg: any = {
+      name: player.name,
+      id: player.id,
+      uuid: player.uuid,
+    };
+    sendMessage.text = JSON.stringify(msg);
+    sendMessage.messageType = ClubMessageType.LEAVE_CLUB;
+    sendMessage.clubCode = club.clubCode;
+    sendMessage.player = player;
+    const repository = getUserRepository(ClubMessageInput);
+    const response = await repository.save(sendMessage);
+    const messageId = uuidv4();
+    // TODO: send firebase notification
+    // we need to send this message to all the club members
+    Nats.sendClubUpdate(
+      club.clubCode,
+      club.name,
+      ClubUpdateType[ClubUpdateType.MEMBER_LEFT],
+      messageId
+    );
+
+    return response.id;
+  }
+
   public async saveMessage(
     messageType: number,
     club: Club,

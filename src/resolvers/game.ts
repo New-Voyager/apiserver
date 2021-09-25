@@ -2271,6 +2271,16 @@ export async function playersGameTrackerById(
   }
 }
 
+async function playersWithNotes(
+  playerId: string,
+  gameCode: string
+): Promise<Array<any>> {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  return GameRepository.getPlayersWithNotes(playerId, gameCode);
+}
+
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -2302,6 +2312,9 @@ const resolvers: any = {
     },
     pendingApprovals: async (parent, args, ctx, info) => {
       return await pendingApprovals(ctx.req.playerId);
+    },
+    playersWithNotes: async (parent, args, ctx, info) => {
+      return await playersWithNotes(ctx.req.playerId, args.gameCode);
     },
     // completedGames: async (parent, args, ctx, info) => {
     //   return await completedGame(ctx.req.playerId, args.gameCode);

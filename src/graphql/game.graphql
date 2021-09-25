@@ -624,4 +624,6 @@ type Query {
 
   # returns player role in a game
   playerRole(gameCode: String!): PlayerRole
+
+  playersWithNotes(gameCode: String!): [PlayerNotes!]
 }

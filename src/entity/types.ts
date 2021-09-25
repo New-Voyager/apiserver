@@ -68,6 +68,9 @@ export enum ClubMessageType {
   TEXT,
   HAND,
   GIPHY,
+  JOIN_CLUB,
+  LEAVE_CLUB,
+  KICKED_OUT,
 }
 
 export enum ClubMemberStatus {

@@ -2,6 +2,9 @@ enum ClubMessageType {
   TEXT,
   HAND,
   GIPHY,
+  JOIN_CLUB,
+  LEAVE_CLUB,
+  KICKED_OUT,
 }
 
 enum HostMessageType {
@@ -33,7 +36,7 @@ type ClubMessage {
   id: Int!               
   messageType: ClubMessageType!
   clubCode: String!
-  text: String
+  text: String            # json for JOIN_CLUB, LEAVE_CLUB, KICKED_OUT
   gameNum: Int
   handNum: Int
   giphyLink: String
