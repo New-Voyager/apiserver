@@ -1,4 +1,4 @@
-import { getConnections } from '../ormconfig';
+import { getConnections } from './ormconfig';
 import {
   createConnection,
   createConnections,
