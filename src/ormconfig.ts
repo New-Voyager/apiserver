@@ -31,7 +31,7 @@ if (process.env[pgDebugPortKey]) {
 
 let ssl = false;
 if (process.env[pgSSLKey]) {
-  if(process.env[pgSSLKey] === '1' || process.env[pgSSLKey] === 'true') {
+  if (process.env[pgSSLKey] === '1' || process.env[pgSSLKey] === 'true') {
     ssl = true;
   }
 }
@@ -54,7 +54,10 @@ if (process.env.NODE_ENV) {
 
 let playerEntities = ['build/src/entity/player/**/*.js'];
 if (profile === 'int-test') {
-  playerEntities = ['build/src/entity/player/**/*.js', 'src/entity/player/**/*.ts'];
+  playerEntities = [
+    'build/src/entity/player/**/*.js',
+    'src/entity/player/**/*.ts',
+  ];
 }
 
 let gameEntities = ['build/src/entity/game/**/*.js'];
@@ -64,14 +67,19 @@ if (profile === 'int-test') {
 
 let historyEntities = ['build/src/entity/history/**/*.js'];
 if (profile === 'int-test') {
-  historyEntities = ['build/src/entity/history/**/*.js', 'src/entity/history/**/*.ts'];
+  historyEntities = [
+    'build/src/entity/history/**/*.js',
+    'src/entity/history/**/*.ts',
+  ];
 }
 
 let debugEntities = ['build/src/entity/debug/**/*.js'];
 if (profile === 'int-test') {
-  debugEntities = ['build/src/entity/debug/**/*.js', 'src/entity/debug/**/*.ts'];
+  debugEntities = [
+    'build/src/entity/debug/**/*.js',
+    'src/entity/debug/**/*.ts',
+  ];
 }
-
 
 let configs: any = {
   default: {
@@ -209,7 +217,6 @@ if (process.env.NODE_ENV === 'test') {
   //   history: configs.history,
   //   users: configs.users,
   // };
-
 } else {
   // let envs = [pgHostKey, pgPortKey, pgUserKey, pgPasswordKey];
   // let errs = [];
@@ -241,7 +248,6 @@ if (process.env.NODE_ENV === 'test') {
     configs.history.ssl = true;
     configs.history.extra = extra;
   }
-
 }
 //export let default: any = configs.defaults;
 // export let users: any = configs.users;
@@ -255,6 +261,5 @@ export function getConnections(): any {
     history: configs.history,
     users: configs.users,
     debug: configs.debug,
-  };  
+  };
 }
-
