@@ -84,6 +84,7 @@ export interface PlayerInSeat {
   missedBlind: boolean;
   autoStraddle: boolean;
   buttonStraddle: boolean;
+  buttonStraddleBet: number; // multiple of bb
 }
 
 export interface NewHandInfo {
@@ -159,6 +160,7 @@ export interface GamePlayerSettings {
   autoStraddle?: boolean;
   straddle?: boolean;
   buttonStraddle?: boolean;
+  buttonStraddleBet?: number | undefined;
   bombPotEnabled?: boolean;
   muckLosingHand?: boolean;
   runItTwiceEnabled?: boolean;

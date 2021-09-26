@@ -686,6 +686,7 @@ export class NextHandProcess {
           missedBlind: false,
           autoStraddle: false,
           buttonStraddle: false,
+          buttonStraddleBet: 0,
         });
 
         for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
@@ -706,6 +707,7 @@ export class NextHandProcess {
               missedBlind: false,
               autoStraddle: false,
               buttonStraddle: false,
+              buttonStraddleBet: 0,
             });
           } else {
             const player = await Cache.getPlayer(playerSeat.playerUuid);
@@ -761,6 +763,7 @@ export class NextHandProcess {
               autoStraddle: playerSeat.autoStraddle,
               muckLosingHand: playerSeat.muckLosingHand,
               buttonStraddle: playerSeat.buttonStraddle,
+              buttonStraddleBet: playerSeat.buttonStraddleBet,
             });
           }
         }

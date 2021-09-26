@@ -83,6 +83,26 @@ class NatsClass {
     this.client.publish(gameChannel, this.stringCodec.encode(messageStr));
   }
 
+  public sendGameEndingMessage(gameCode: string, messageId: string) {
+    if (this.client === null) {
+      return;
+    }
+    /*
+    {
+      "type": "GAME_ENDING",
+      "gameCode": "ABCDE",
+    }
+    */
+    const message: any = {
+      type: 'GAME_ENDING',
+      gameCode: gameCode,
+      requestId: messageId,
+    };
+    const messageStr = JSON.stringify(message);
+    const gameChannel = this.getGameChannel(gameCode);
+    this.client.publish(gameChannel, this.stringCodec.encode(messageStr));
+  }
+
   /*
     Used for sending an update to the app to refresh the club screen.
     changed: What changed in the club

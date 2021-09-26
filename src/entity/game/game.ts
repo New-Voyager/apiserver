@@ -358,6 +358,14 @@ export class PokerGame {
   @Column({name: 'button_straddle', nullable: true, default: false})
   public buttonStraddleAllowed!: boolean;
 
+  @Column({
+    type: 'int',
+    name: 'button_straddle_bet',
+    nullable: true,
+    default: 2,
+  })
+  public buttonStraddleBet!: number; // max bet value (in big blinds)
+
   @Column({name: 'max_players', type: 'int'})
   public maxPlayers!: number;
 

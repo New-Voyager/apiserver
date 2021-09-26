@@ -83,6 +83,7 @@ input GameCreateInput {
   straddleBet: Float
   utgStraddleAllowed: Boolean
   buttonStraddleAllowed: Boolean
+  buttonStraddleBet: Int
   minPlayers: Int! # 2
   maxPlayers: Int! # 2-9
   gameLength: Int! # in minutes
@@ -175,6 +176,7 @@ type GameInfo {
   straddleBet: Float
   utgStraddleAllowed: Boolean
   buttonStraddleAllowed: Boolean
+  buttonStraddleBet: Int
   minPlayers: Int
   maxPlayers: Int
   gameLength: Int
@@ -275,6 +277,7 @@ type GamePlayerSettings {
   autoStraddle: Boolean
   straddle: Boolean
   buttonStraddle: Boolean
+  buttonStraddleBet: Int
   bombPotEnabled: Boolean
   muckLosingHand: Boolean
   runItTwiceEnabled: Boolean
@@ -284,6 +287,7 @@ input GamePlayerSettingsUpdateInput {
   autoStraddle: Boolean
   straddle: Boolean
   buttonStraddle: Boolean
+  buttonStraddleBet: Int
   bombPotEnabled: Boolean
   muckLosingHand: Boolean
   runItTwiceEnabled: Boolean

@@ -181,6 +181,9 @@ export class PlayerGameTracker {
   @Column({name: 'button_straddle', default: false})
   public buttonStraddle!: boolean;
 
+  @Column({type: 'int', name: 'button_straddle_bet', default: 2})
+  public buttonStraddleBet!: number;
+
   @Column({name: 'posted_blind', default: false}) // this is set to true, player posted blind
   public postedBlind!: boolean;
 
