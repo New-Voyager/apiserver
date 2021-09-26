@@ -62,7 +62,6 @@ export async function resetGames() {
     await deleteAll('high_hand_history', transactionEntityManager);
     await deleteAll('club_stats', transactionEntityManager);
     await deleteAll('player_game_stats', transactionEntityManager);
-    await deleteAll('player_hand_stats', transactionEntityManager);
   });
   await Cache.reset();
   return true;
