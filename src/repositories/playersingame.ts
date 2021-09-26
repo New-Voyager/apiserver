@@ -352,6 +352,15 @@ class PlayersInGameRepositoryImpl {
       }
       if (config.buttonStraddle !== undefined) {
         updates.buttonStraddle = config.buttonStraddle;
+
+        if (updates.buttonStraddle) {
+          if (config.buttonStraddleBet) {
+            updates.buttonStraddleBet = config.buttonStraddleBet;
+          } else {
+            // 2 times big blind
+            config.buttonStraddleBet = 2;
+          }
+        }
       }
       if (config.bombPotEnabled !== undefined) {
         updates.bombPotEnabled = config.bombPotEnabled;
