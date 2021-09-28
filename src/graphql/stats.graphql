@@ -28,6 +28,7 @@ type Stats {
   totalHands: Int
   totalGames: Int
   totalPlayersInHand: Int
+  totalPlayersInShowdown: Int
 }
 
 type PlayerGameStats {

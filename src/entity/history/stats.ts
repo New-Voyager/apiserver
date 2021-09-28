@@ -144,6 +144,9 @@ export class ClubStats {
   @Column({type: 'bigint', name: 'total_players_in_hand', default: 0})
   public totalPlayersInHand!: number;
 
+  @Column({type: 'bigint', name: 'total_players_in_showdown', default: 0})
+  public totalPlayersInShowdown!: number;
+
   @Column({name: 'straight5_flush', default: 0})
   public straight5Flush!: number;
 
@@ -230,6 +233,9 @@ export class SystemStats {
 
   @Column({type: 'bigint', name: 'total_players_in_hand', default: 0})
   public totalPlayersInHand!: number;
+
+  @Column({type: 'bigint', name: 'total_players_in_showdown', default: 0})
+  public totalPlayersInShowdown!: number;
 
   @Column({type: 'bigint', name: 'straight5_flush', default: 0})
   public straight5Flush!: number;
