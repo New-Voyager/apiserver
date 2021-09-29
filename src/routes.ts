@@ -51,6 +51,7 @@ export function addExternalRoutes(app: any) {
 
 export function addInternalRoutes(app: any) {
   app.get('/internal/ready', readyCheck);
+  app.get('/internal/alive', livenessCheck);
   app.post('/internal/register-game-server', GameServerAPI.registerGameServer);
   app.post('/internal/update-game-server', GameServerAPI.updateGameServer);
   app.get('/internal/game-servers', GameServerAPI.getGameServers);
@@ -137,5 +138,10 @@ async function getAssets(req: any, resp: any) {
 }
 
 async function readyCheck(req: any, resp: any) {
+  resp.status(200).send(JSON.stringify({status: 'OK'}));
+}
+
+async function livenessCheck(req: any, resp: any) {
+  // TODO: detect zombie server due to typeorm transaction hanging, etc.
   resp.status(200).send(JSON.stringify({status: 'OK'}));
 }
