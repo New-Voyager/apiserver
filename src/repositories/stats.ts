@@ -138,7 +138,8 @@ class StatsRepositoryImpl {
       .set({
         totalHands: () => 'total_hands + 1',
         totalPlayersInHand: () => `total_players_in_hand + ${playersInHand}`,
-        totalPlayersInShowdown: () => `total_players_in_showdown + ${playersInShowdown}`,
+        totalPlayersInShowdown: () =>
+          `total_players_in_showdown + ${playersInShowdown}`,
       })
       .where({
         clubId: game.clubId,
@@ -289,7 +290,8 @@ class StatsRepositoryImpl {
       .set({
         totalHands: () => 'total_hands + 1',
         totalPlayersInHand: () => `total_players_in_hand + ${playersInHand}`,
-        totalPlayersInShowdown: () => `total_players_in_showdown + ${playersInShowdown}`,
+        totalPlayersInShowdown: () =>
+          `total_players_in_showdown + ${playersInShowdown}`,
       })
       .where({
         gameType: gameType,
