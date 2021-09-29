@@ -9,17 +9,12 @@ import {
 } from './utils';
 
 describe('resumeGame APIs', () => {
-  let stop;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
     await resetDatabase();
     done();
   });
 
   afterAll(async done => {
-    stop();
     done();
   });
   test('resumeGame', async () => {

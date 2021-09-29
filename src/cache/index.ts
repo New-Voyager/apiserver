@@ -53,6 +53,9 @@ export function initializeRedis() {
 }
 
 class GameCache {
+  constructor() {
+    initializeRedis();
+  }
   public async getCache(key: string) {
     if (isRunningUnitTest()) {
       if (!unitTestCache[key]) {

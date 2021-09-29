@@ -3,17 +3,12 @@ import * as clubutils from '../utils/club.testutils';
 import {clubStats, playerRecentPerformance} from './utils';
 
 describe('playerRecentPerformance APIs', () => {
-  let stop;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
     await resetDatabase();
     done();
   });
 
   afterAll(async done => {
-    stop();
     done();
   });
   test('playerRecentPerformance', async () => {

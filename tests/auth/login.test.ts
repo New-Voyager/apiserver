@@ -8,17 +8,12 @@ import {resetDatabase, startGqlServer} from '../utils/utils';
 const PORT_NUMBER = 9501;
 
 describe('Login APIs', () => {
-  let stop;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
     await resetDatabase();
     done();
   });
 
   afterAll(async done => {
-    stop();
     done();
   });
 

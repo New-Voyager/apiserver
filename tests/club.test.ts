@@ -4,17 +4,12 @@ import {getLogger} from '../src/utils/log';
 const logger = getLogger('club');
 
 describe('Club APIs', () => {
-  let stop;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
     await resetDatabase();
     done();
   });
 
   afterAll(async done => {
-    stop();
     done();
   });
 

@@ -3,17 +3,12 @@ import * as clubutils from '../utils/club.testutils';
 import {getMessagesFromHost} from './utils';
 
 describe('getMessagesFromHost APIs', () => {
-  let stop;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
     await resetDatabase();
     done();
   });
 
   afterAll(async done => {
-    stop();
     done();
   });
   test('getMessagesFromHost', async () => {

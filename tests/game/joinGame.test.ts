@@ -8,17 +8,12 @@ import {
 } from './utils';
 
 describe('joinGame APIs', () => {
-  let stop;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
     await resetDatabase();
     done();
   });
 
   afterAll(async done => {
-    stop();
     done();
   });
   test('joinGame', async () => {

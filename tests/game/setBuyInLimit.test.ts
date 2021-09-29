@@ -8,17 +8,12 @@ import {
 } from './utils';
 
 describe('setBuyInLimit APIs', () => {
-  let stop;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
     await resetDatabase();
     done();
   });
 
   afterAll(async done => {
-    stop();
     done();
   });
   test('setBuyInLimit', async () => {

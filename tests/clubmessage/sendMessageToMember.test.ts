@@ -3,17 +3,12 @@ import * as clubutils from '../utils/club.testutils';
 import {sendMessageToMember} from './utils';
 
 describe('sendMessageToMember APIs', () => {
-  let stop;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
     await resetDatabase();
     done();
   });
 
   afterAll(async done => {
-    stop();
     done();
   });
   test('sendMessageToMember', async () => {

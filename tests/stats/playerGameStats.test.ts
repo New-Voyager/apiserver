@@ -4,17 +4,12 @@ import {playerGameStats} from './utils';
 import {configureGame, createGameServer, joinGame} from '../game/utils';
 
 describe('playerGameStats APIs', () => {
-  let stop;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
     await resetDatabase();
     done();
   });
 
   afterAll(async done => {
-    stop();
     done();
   });
   test('playerGameStats', async () => {

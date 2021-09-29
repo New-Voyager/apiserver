@@ -60,20 +60,8 @@ async function createPlayerTest(graphql: any, name: string, deviceId: string) {
 }
 
 describe('Test APIs', () => {
-  let stop, graphql;
-
-  beforeAll(async () => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
-    graphql = testServer.graphql;
-  });
-
-  afterAll(() => {
-    stop();
-  });
-
   test('create player', async () => {
-    await createClub2(graphql, 'test', 'test123');
+    await createClub2(null, 'test', 'test123');
     console.log('successful');
   });
 });

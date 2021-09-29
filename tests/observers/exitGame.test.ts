@@ -6,17 +6,12 @@ import {observeGame, exitGame} from './utils';
 import {configureGame, createGameServer} from '../game/utils';
 
 describe('exitGame APIs', () => {
-  let stop;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
     await resetDatabase();
     done();
   });
 
   afterAll(async done => {
-    stop();
     done();
   });
   test('exitGame', async () => {

@@ -5,17 +5,12 @@ import * as clubutils from '../utils/club.testutils';
 import {addClubAnnouncement} from './utils';
 
 describe('addClubAnnouncement APIs', () => {
-  let stop;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
     await resetDatabase();
     done();
   });
 
   afterAll(async done => {
-    stop();
     done();
   });
   test('addClubAnnouncement', async () => {

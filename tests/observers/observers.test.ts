@@ -6,17 +6,12 @@ import {observers} from './utils';
 import {configureGame, createGameServer} from '../game/utils';
 
 describe('observers APIs', () => {
-  let stop;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
     await resetDatabase();
     done();
   });
 
   afterAll(async done => {
-    stop();
     done();
   });
   test('observers', async () => {

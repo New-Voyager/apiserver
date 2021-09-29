@@ -106,18 +106,12 @@ function sleep(ms: number) {
 const GAMESERVER_API = `http://localhost:${INTERNAL_PORT}/internal`;
 
 describe('Tests: seat change APIs', () => {
-  let stop, graphql;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
-    graphql = testServer.graphql;
     await resetDatabase();
     done();
   });
 
   afterAll(async done => {
-    stop();
     done();
   });
 

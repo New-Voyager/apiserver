@@ -6,17 +6,12 @@ import {signUp} from '../utils/auth.testutils';
 import {resetDatabase, startGqlServer} from '../utils/utils';
 
 describe('Auth APIs', () => {
-  let stop;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
     await resetDatabase();
     done();
   });
 
   afterAll(async done => {
-    stop();
     done();
   });
 
