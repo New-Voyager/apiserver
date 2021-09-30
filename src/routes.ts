@@ -21,7 +21,12 @@ import {
 } from './auth';
 import {DevRepository} from './repositories/dev';
 import {Firebase} from './firebase';
-import {createPromotion, deleteAll, getAllPromotion} from './admin';
+import {
+  createAnnouncement,
+  createPromotion,
+  deleteAll,
+  getAllPromotion,
+} from './admin';
 import {AdminRepository} from './repositories/admin';
 
 export function addExternalRoutes(app: any) {
@@ -51,6 +56,7 @@ export function addExternalRoutes(app: any) {
 
 export function addInternalRoutes(app: any) {
   app.get('/internal/ready', readyCheck);
+  app.get('/internal/alive', livenessCheck);
   app.post('/internal/register-game-server', GameServerAPI.registerGameServer);
   app.post('/internal/update-game-server', GameServerAPI.updateGameServer);
   app.get('/internal/game-servers', GameServerAPI.getGameServers);
@@ -119,6 +125,7 @@ export function addInternalRoutes(app: any) {
   app.get('/admin/delete', deleteAll);
   app.post('/admin/post-process-games', GameAPI.aggregateGameData);
   app.post('/admin/set-max-games', GameServerAPI.setMaxGames);
+  app.post('/admin/announcement', createAnnouncement);
 }
 
 // returns nats urls
@@ -137,5 +144,10 @@ async function getAssets(req: any, resp: any) {
 }
 
 async function readyCheck(req: any, resp: any) {
+  resp.status(200).send(JSON.stringify({status: 'OK'}));
+}
+
+async function livenessCheck(req: any, resp: any) {
+  // TODO: detect zombie server due to typeorm transaction hanging, etc.
   resp.status(200).send(JSON.stringify({status: 'OK'}));
 }

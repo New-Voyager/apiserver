@@ -113,7 +113,9 @@ class AggregationImpl {
           // iteratre through hand history and aggregate counters
           let totalPlayersInHand = 0;
           for (const handHistory of handHistoryData) {
-            this.aggregateHandStats(handHistory, playerStatsMap);
+            if (handHistory.playersStats) {
+              this.aggregateHandStats(handHistory, playerStatsMap);
+            }
             const playersInHand = JSON.parse(handHistory.players).length;
             totalPlayersInHand += playersInHand;
             await handHistoryRepo.update(
@@ -125,6 +127,19 @@ class AggregationImpl {
                 playersStats: undefined,
               }
             );
+
+            // number of players in showdown
+            let playersInShowdown = 0;
+            if (handHistory.showDown && handHistory.playersStats) {
+              let playersHandStats = JSON.parse(handHistory.playersStats);
+              for (const key in playersHandStats.playerStats) {
+                const stats = playersHandStats.playerStats;
+                if (stats[key].wentToShowdown) {
+                  playersInShowdown++;
+                }
+              }
+            }
+
             let highRankJson = {};
             if (handHistory.highRank) {
               highRankJson = JSON.parse(handHistory.highRank);
@@ -133,12 +148,14 @@ class AggregationImpl {
               game,
               highRankJson,
               playersInHand,
+              playersInShowdown,
               transactionalEntityManager
             );
             await StatsRepository.updateSystemStats(
               game,
               highRankJson,
               playersInHand,
+              playersInShowdown,
               transactionalEntityManager
             );
           }

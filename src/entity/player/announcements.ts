@@ -11,7 +11,7 @@ import {
   DbAwareCreateDateColumn,
   DbAwareUpdateDateColumn,
 } from '../dbaware';
-import {AnnouncementType} from '../types';
+import {AnnouncementLevel, AnnouncementType} from '../types';
 
 @Entity({name: 'announcement'})
 export class Announcement {
@@ -27,6 +27,9 @@ export class Announcement {
 
   @Column({name: 'text'})
   public text!: string;
+
+  @Column({name: 'level', default: AnnouncementLevel.INFO})
+  public announcementLevel!: AnnouncementLevel;
 
   @DbAwareColumn({
     name: 'expires_at',

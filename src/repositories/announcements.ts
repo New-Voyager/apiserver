@@ -1,6 +1,6 @@
 import {Club} from '@src/entity/player/club';
 import {Announcement} from '@src/entity/player/announcements';
-import {AnnouncementType} from '@src/entity/types';
+import {AnnouncementLevel, AnnouncementType} from '@src/entity/types';
 import {AnnouncementData} from '@src/types';
 import {getUserRepository} from '.';
 
@@ -15,6 +15,7 @@ class AnnouncementRepositoryImpl {
     const newAnnouncement = new Announcement();
     newAnnouncement.club = club;
     newAnnouncement.text = text;
+    newAnnouncement.announcementLevel = AnnouncementLevel.INFO;
     newAnnouncement.expiresAt = new Date(expiresAt);
     newAnnouncement.announcementType = AnnouncementType.CLUB;
 
@@ -24,12 +25,14 @@ class AnnouncementRepositoryImpl {
 
   public async addSystemAnnouncement(
     text: string,
+    level: AnnouncementLevel,
     expiresAt: string
   ): Promise<boolean> {
     const announcementRepo = getUserRepository(Announcement);
 
     const newAnnouncement = new Announcement();
     newAnnouncement.text = text;
+    newAnnouncement.announcementLevel = level;
     newAnnouncement.expiresAt = new Date(expiresAt);
     newAnnouncement.announcementType = AnnouncementType.SYSTEM;
 
@@ -51,6 +54,7 @@ class AnnouncementRepositoryImpl {
         text: data.text,
         createdAt: data.createdAt,
         expiresAt: data.expiresAt,
+        level: AnnouncementLevel[data.announcementLevel],
       });
     }
     return announcements;
@@ -69,6 +73,7 @@ class AnnouncementRepositoryImpl {
         text: data.text,
         createdAt: data.createdAt,
         expiresAt: data.expiresAt,
+        level: AnnouncementLevel[data.announcementLevel],
       });
     }
     return announcements;
