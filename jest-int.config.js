@@ -7,7 +7,7 @@ module.exports = {
       isolatedModules: false,
     },
   },
-  globalSetup: '<rootDir>/tests/setup.ts',
+  // globalSetup: '<rootDir>/tests/setup.ts',
   moduleNameMapper: {
     '^@src/(.*)': '<rootDir>/src/$1',
   },
