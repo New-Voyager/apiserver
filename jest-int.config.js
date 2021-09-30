@@ -28,6 +28,8 @@ module.exports = {
     // '!<rootDir>/node_modules/"',
   ],
   // collectCoverage: true,
-  // coverageDirectory: 'cov',
+  coverageDirectory: 'cov',
+  coverageReporters: ["json", "html"],
+
   // testPathIgnorePatterns: ['/node_modules', '/unit-tests'],
 };

@@ -4,8 +4,7 @@ import {merge} from 'lodash';
 import {authorize} from '@src/middlewares/authorization';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
-import {ApolloServerPluginLandingPageGraphQLPlayground} from 'apollo-server-core'
-
+import {ApolloServerPluginLandingPageGraphQLPlayground} from 'apollo-server-core';
 
 import bodyParser from 'body-parser';
 const GQL_PORT = 9501;
