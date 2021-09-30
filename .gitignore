@@ -12,3 +12,5 @@ script-tests/.DS_Store
 src/.DS_Store
 .DS_Store
 DS_Store
+cov/
+.yarnclean

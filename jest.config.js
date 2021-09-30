@@ -12,6 +12,7 @@ module.exports = {
   //   '!<rootDir>/node_modules/"',
   //   ],
   //collectCoverage: true,
-  //coverageDirectory: 'cov',
+  coverageReporters: ["json", "html"],
+  coverageDirectory: 'cov',
   testPathIgnorePatterns: ['/node_modules', '/tests'],
 };
