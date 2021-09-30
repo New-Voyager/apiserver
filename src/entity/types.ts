@@ -164,6 +164,11 @@ export enum AnnouncementType {
   CLUB,
 }
 
+export enum AnnouncementLevel {
+  INFO,
+  IMPORTANT,
+}
+
 export enum TransactionType {
   TIPS,
   GAME_BUYIN,
