@@ -1,4 +1,5 @@
 import {Cache} from '@src/cache';
+import {AnnouncementLevel} from '@src/entity/types';
 import {AnnouncementsRepository} from '@src/repositories/announcements';
 import {AnnouncementData} from '@src/types';
 import {getLogger} from '@src/utils/log';
@@ -92,7 +93,11 @@ export async function addSystemAnnouncement(
   // }
 
   try {
-    await AnnouncementsRepository.addSystemAnnouncement(text, expiresAt);
+    await AnnouncementsRepository.addSystemAnnouncement(
+      text,
+      AnnouncementLevel.INFO,
+      expiresAt
+    );
     return true;
   } catch (error) {
     logger.error(`Failed with error: ${JSON.stringify(error)}`);

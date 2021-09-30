@@ -1,3 +1,6 @@
+import {Announcement} from '@src/entity/player/announcements';
+import {AnnouncementLevel} from '@src/entity/types';
+import {AnnouncementsRepository} from '@src/repositories/announcements';
 import {PromotionRepository} from '@src/repositories/promotion';
 import {getLogger} from '@src/utils/log';
 import {max} from 'lodash';
@@ -25,6 +28,7 @@ export async function getAllPromotion(req: any, resp: any) {
     resp.status(501).send({error: error.message});
   }
 }
+
 export async function createPromotion(req: any, resp: any) {
   const name = req.body['name'];
   const code = req.body['code'];
@@ -62,6 +66,48 @@ export async function createPromotion(req: any, resp: any) {
       coins,
       playerId,
       maxCount,
+      expiresAt
+    );
+    resp.status(200).send({result: result});
+  } catch (error) {
+    logger.error(error.message);
+    resp.contentType('application/json');
+    resp.status(501).send({error: error.message});
+  }
+}
+
+export async function createAnnouncement(req: any, resp: any) {
+  const text = req.body['text'];
+  const expiresAt = req.body['expires-at'];
+  let level: string = req.body['level'];
+
+  const errors = new Array<string>();
+  if (!text) {
+    errors.push('text is required');
+  }
+  let expiresAtDate: Date;
+  if (!expiresAt) {
+    expiresAtDate = new Date(Date.parse(expiresAt));
+  }
+
+  if (!level) {
+    level = AnnouncementLevel[AnnouncementLevel.INFO];
+  }
+
+  if (errors.length >= 1) {
+    resp.contentType('application/json');
+    return resp.status(400).send(JSON.stringify({errors: errors}));
+  }
+
+  try {
+    let levelEnum = AnnouncementLevel.INFO;
+    if (level == 'IMPORTANT') {
+      levelEnum = AnnouncementLevel.IMPORTANT;
+    }
+
+    const result = await AnnouncementsRepository.addSystemAnnouncement(
+      text,
+      levelEnum,
       expiresAt
     );
     resp.status(200).send({result: result});

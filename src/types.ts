@@ -1,4 +1,4 @@
-import {GameType, PlayerStatus} from './entity/types';
+import {AnnouncementLevel, GameType, PlayerStatus} from './entity/types';
 
 export interface PageOptions {
   prev?: number;
@@ -29,6 +29,7 @@ export interface AnnouncementData {
   text: string;
   createdAt: Date;
   expiresAt?: Date;
+  level: string;
 }
 
 export interface buyInRequest {

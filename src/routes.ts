@@ -21,7 +21,12 @@ import {
 } from './auth';
 import {DevRepository} from './repositories/dev';
 import {Firebase} from './firebase';
-import {createPromotion, deleteAll, getAllPromotion} from './admin';
+import {
+  createAnnouncement,
+  createPromotion,
+  deleteAll,
+  getAllPromotion,
+} from './admin';
 import {AdminRepository} from './repositories/admin';
 
 export function addExternalRoutes(app: any) {
@@ -120,6 +125,7 @@ export function addInternalRoutes(app: any) {
   app.get('/admin/delete', deleteAll);
   app.post('/admin/post-process-games', GameAPI.aggregateGameData);
   app.post('/admin/set-max-games', GameServerAPI.setMaxGames);
+  app.post('/admin/announcement', createAnnouncement);
 }
 
 // returns nats urls
