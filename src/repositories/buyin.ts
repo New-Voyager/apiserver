@@ -843,7 +843,9 @@ export class BuyIn {
           buyInExpAt: undefined,
         }
       );
-      GameRepository.seatOpened(this.game, playerInSeat.seatNo);
+      if (playerInSeat.seatNo !== 0) {
+        await GameRepository.seatOpened(this.game, playerInSeat.seatNo);
+      }
 
       // delete the row in pending updates table
       const pendingUpdatesRepo = getGameRepository(NextHandUpdates);
