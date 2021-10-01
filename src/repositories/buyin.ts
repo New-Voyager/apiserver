@@ -699,20 +699,6 @@ export class BuyIn {
               newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
             });
 
-            // mark the player not playing
-            await playerInGameRepo.update(
-              {
-                game: {id: this.game.id},
-                playerId: this.player.id,
-              },
-              {
-                seatNo: 0,
-                status: PlayerStatus.NOT_PLAYING,
-                buyInExpAt: undefined,
-              }
-            );
-
-            cancelTimer(this.game.id, this.player.id, BUYIN_TIMEOUT);
             await this.buyInDenied(playerInGame, transactionEntityManager);
             return true;
           }
