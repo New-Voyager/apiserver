@@ -863,6 +863,9 @@ export class BuyIn {
       );
     } else if (playerInSeat.status === PlayerStatus.PLAYING) {
       // cancel timer wasn't called (ignore the timeout callback)
+      logger.warn(
+        `Ignoring buy-in timeout callback since player is in ${playerInSeat.status} status`
+      );
     }
   }
 
