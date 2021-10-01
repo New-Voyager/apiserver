@@ -83,41 +83,6 @@ export async function configureGame(
     ret.status = GameStatus[gameInfo.status];
     ret.tableStatus = TableStatus[gameInfo.tableStatus];
     ret.gameID = gameInfo.id;
-
-    ret.janusRoomPin = 'abcd'; // randomize
-    ret.janusRoomId = gameInfo.id;
-    if (game.audioConfEnabled) {
-      audioConfCreateTime = new Date().getTime();
-      //logger.info(`Joining Janus audio conference: ${game.id}`);
-      try {
-        const session = await JanusSession.create(JANUS_APISECRET);
-        await session.attachAudio();
-        await session.createRoom(ret.janusRoomId, ret.janusRoomPin);
-        await GameRepository.updateJanus(
-          gameInfo.gameCode,
-          gameInfo.id,
-          session.getId(),
-          session.getHandleId(),
-          ret.janusRoomId,
-          ret.janusRoomPin
-        );
-        audioConfCreateTime = new Date().getTime() - audioConfCreateTime;
-        const endTime = new Date().getTime();
-        logger.debug(
-          `Time taken to create a new game: ${ret.gameCode} ${
-            endTime - startTime
-          }ms  audioConfCreateTime: ${audioConfCreateTime} createGameTime: ${createGameTime}`
-        );
-      } catch (err) {
-        logger.debug(
-          `Failed to join Janus audio conference: ${
-            game.id
-          }. Error: ${err.toString()}`
-        );
-        await GameRepository.updateAudioConfDisabled(gameInfo.gameCode);
-        game.audioConfEnabled = false;
-      }
-    }
     const messageId = uuidv4();
     Nats.sendClubUpdate(
       clubCode,

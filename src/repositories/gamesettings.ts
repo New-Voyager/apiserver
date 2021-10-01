@@ -72,6 +72,7 @@ class GameSettingsRepositoryImpl {
     gameSettings.funAnimations = input.funAnimations;
     gameSettings.chat = input.chat;
     gameSettings.runItTwiceAllowed = input.runItTwiceAllowed;
+    gameSettings.audioConfEnabled = input.audioConfEnabled;
 
     // ion sfu url (TODO: needs to be changed to handle multiple servers pion1, pion2, pion3)
     if (process.env.ION_SFU_URL) {
@@ -89,6 +90,9 @@ class GameSettingsRepositoryImpl {
     }
     if (input.buyInApproval !== undefined) {
       gameSettingsProps.buyInApproval = input.buyInApproval;
+    }
+    if (input.audioConfEnabled !== undefined) {
+      gameSettingsProps.audioConfEnabled = input.audioConfEnabled;
     }
     if (input.funAnimations !== undefined) {
       gameSettingsProps.funAnimations = input.funAnimations;

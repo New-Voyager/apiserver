@@ -4,6 +4,7 @@ import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/resolvers/reset';
 import {createPlayer} from '@src/resolvers/player';
 import {createClub, joinClub} from '@src/resolvers/club';
+import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {
   configureGame,
   joinGame,
@@ -323,6 +324,7 @@ describe('History APIs', () => {
     await buyIn(player3, game.gameCode, 100);
 
     await endGame(owner, game.gameCode);
+    await processPendingUpdates(game.id);
 
     const resp = await playersInGame(owner, game.gameCode);
     expect(resp[0].playerUuid).toBe(player1);

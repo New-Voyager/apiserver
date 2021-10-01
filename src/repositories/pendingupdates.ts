@@ -67,9 +67,6 @@ export async function processPendingUpdates(gameId: number) {
 
   await Cache.updateGamePendingUpdates(game?.gameCode, false);
 
-  // start buy in timers for the player's whose stack is 0 and playing
-  await BuyIn.startBuyInTimers(game);
-
   const gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
   const gameSeatInfo = await gameSeatInfoRepo.findOne({gameID: game.id});
   if (!gameSeatInfo) {
@@ -247,6 +244,10 @@ export async function processPendingUpdates(gameId: number) {
       );
       return;
     }
+
+    // start buy in timers for the player's whose stack is 0 and playing
+    await BuyIn.startBuyInTimers(game);
+
     if (dealerChoiceUpdate) {
       await handleDealersChoice(game, dealerChoiceUpdate, pendingUpdatesRepo);
     } else {
