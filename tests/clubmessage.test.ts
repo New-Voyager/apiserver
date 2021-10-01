@@ -2,24 +2,22 @@ import {resetDatabase, getClient, startGqlServer} from './utils/utils';
 import * as clubmessageutils from './utils/clubmessage.testutils';
 import * as clubutils from './utils/club.testutils';
 import {getLogger} from '../src/utils/log';
+import {
+  markHostMsgRead,
+  markMemberMsgRead,
+} from './utils/clubmessage.testutils';
 const logger = getLogger('clubmessage');
 
 describe('Club Message APIs', () => {
-  let stop, graphql;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
-    graphql = testServer.graphql;
     await resetDatabase();
     done();
   });
-  
+
   afterAll(async done => {
-     stop();
-     done();
+    done();
   });
-  
+
   test('send a text message', async () => {
     const [clubCode] = await clubutils.createClub();
     const playerId = await clubutils.createPlayer('adam', '1243ABC');
@@ -79,6 +77,90 @@ describe('Club Message APIs', () => {
     expect(response.data).not.toBeUndefined();
     const messageID = response.data.id;
     expect(messageID).not.toBeNull();
+  });
+
+  test('markHostMsgRead', async () => {
+    const [clubCode, ownerId] = await clubutils.createClub();
+    const playerId = await clubutils.createPlayer('adam', '1243ABC');
+    const playerId2 = await clubutils.createPlayer('adam2', '1243ABCs');
+    await clubutils.playerJoinsClub(clubCode, playerId);
+    try {
+      await markHostMsgRead({clubCode, ownerId: ''});
+    } catch (error) {
+      expect(error.toString()).toEqual('Error: GraphQL error: Unauthorized');
+    }
+    try {
+      await markHostMsgRead({clubCode, ownerId: 'test'});
+    } catch (error) {
+      expect(error.toString()).toEqual(
+        'Error: GraphQL error: Cannot find player uuid [test] in player repo'
+      );
+    }
+    try {
+      await markHostMsgRead({clubCode: 'test', ownerId});
+    } catch (error) {
+      expect(error.toString()).toEqual(
+        'Error: GraphQL error: Cannot find club code [test] in club repo'
+      );
+    }
+    try {
+      await markHostMsgRead({clubCode, ownerId: playerId2});
+    } catch (error) {
+      expect(error.toString()).toEqual(
+        `Error: GraphQL error: Player: ${playerId2} is not a member in club bbc`
+      );
+    }
+    const data = await markHostMsgRead({clubCode, ownerId});
+    expect(data.markHostMsgRead).toEqual(true);
+  });
+
+  test('markMemberMsg', async () => {
+    const [clubCode, ownerId] = await clubutils.createClub();
+    const playerId = await clubutils.createPlayer('adam', '1243ABC');
+    const playerId2 = await clubutils.createPlayer('adam2', '1243ABCs');
+    await clubutils.playerJoinsClub(clubCode, playerId);
+
+    try {
+      await markMemberMsgRead({clubCode, ownerId: '', playerId});
+    } catch (error) {
+      expect(error.toString()).toEqual('Error: GraphQL error: Unauthorized');
+    }
+    try {
+      await markMemberMsgRead({clubCode, ownerId: 'test', playerId});
+    } catch (error) {
+      expect(error.toString()).toEqual(
+        'Error: GraphQL error: Cannot find player uuid [test] in player repo'
+      );
+    }
+    try {
+      await markMemberMsgRead({clubCode, ownerId, playerId: 'test'});
+    } catch (error) {
+      expect(error.toString()).toEqual(
+        'Error: GraphQL error: Cannot find player uuid [test] in player repo'
+      );
+    }
+    try {
+      await markMemberMsgRead({clubCode, ownerId, playerId: playerId2});
+    } catch (error) {
+      expect(error.toString()).toEqual(
+        'Error: GraphQL error: Member: 1243ABCs is not a member in club bbc'
+      );
+    }
+
+    try {
+      await markMemberMsgRead({clubCode, ownerId: playerId2, playerId});
+    } catch (error) {
+      expect(error.toString()).toEqual(
+        'Error: GraphQL error: Player: 1243ABCs is not a host in club bbc'
+      );
+    }
+
+    const data = await markMemberMsgRead({
+      clubCode,
+      ownerId,
+      playerId,
+    });
+    expect(data.markMemberMsgRead).toEqual(true);
   });
 
   test('send a GIPHY message', async () => {

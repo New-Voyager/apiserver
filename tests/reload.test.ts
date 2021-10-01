@@ -1,10 +1,16 @@
-import {resetDatabase, getClient, INTERNAL_PORT, startGqlServer} from './utils/utils';
+import {
+  resetDatabase,
+  getClient,
+  INTERNAL_PORT,
+  startGqlServer,
+} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
 import * as handutils from './utils/hand.testutils';
 import * as rewardutils from './utils/reward.testutils';
 import {default as axios} from 'axios';
 import {getLogger} from '../src/utils/log';
+import {buyIn, reload, startGame} from './game/utils';
 const logger = getLogger('game');
 
 const holdemGameInput = {
@@ -99,19 +105,13 @@ function sleep(ms: number) {
 const GAMESERVER_API = `http://localhost:${INTERNAL_PORT}/internal`;
 
 describe('Tests: Reload API', () => {
-  let stop, graphql;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
-    graphql = testServer.graphql;
     await resetDatabase();
     done();
   });
-  
+
   afterAll(async done => {
-     stop();
-     done();
+    done();
   });
 
   beforeEach(async done => {
@@ -162,12 +162,12 @@ describe('Tests: Reload API', () => {
     await gameutils.joinGame(players[2], game.gameCode, 3);
 
     // buyin
-    await gameutils.buyin(players[0], game.gameCode, 100);
-    await gameutils.buyin(players[1], game.gameCode, 100);
-    await gameutils.buyin(players[2], game.gameCode, 100);
+    await buyIn({ownerId: players[0], gameCode: game.gameCode, amount: 100});
+    await buyIn({ownerId: players[1], gameCode: game.gameCode, amount: 100});
+    await buyIn({ownerId: players[2], gameCode: game.gameCode, amount: 100});
 
     // reload game
-    await gameutils.reload(players[0], game.gameCode, 50);
+    await reload({playerId: players[0], gameCode: game.gameCode, amount: 50});
     const gameInfo = await gameutils.gameInfo(players[0], game.gameCode);
     console.log(JSON.stringify(gameInfo));
 
@@ -218,12 +218,12 @@ describe('Tests: Reload API', () => {
     await gameutils.joinGame(players[2], game.gameCode, 3);
 
     // buyin
-    await gameutils.buyin(players[0], game.gameCode, 100);
-    await gameutils.buyin(players[1], game.gameCode, 100);
-    await gameutils.buyin(players[2], game.gameCode, 100);
+    await buyIn({ownerId: players[0], gameCode: game.gameCode, amount: 100});
+    await buyIn({ownerId: players[1], gameCode: game.gameCode, amount: 100});
+    await buyIn({ownerId: players[2], gameCode: game.gameCode, amount: 100});
 
     // reload game
-    await gameutils.reload(players[0], game.gameCode, 800);
+    await reload({playerId: players[0], gameCode: game.gameCode, amount: 800});
     const gameInfo = await gameutils.gameInfo(players[0], game.gameCode);
     console.log(JSON.stringify(gameInfo));
 
@@ -267,7 +267,7 @@ describe('Tests: Reload API', () => {
     gameInput.maxPlayers = 3;
     gameInput.minPlayers = 2;
     const game = await gameutils.configureGame(ownerId, clubCode, gameInput);
-    await gameutils.startGame(ownerId, game.gameCode);
+    await startGame({ownerId, gameCode: game.gameCode});
 
     // join a game
     await gameutils.joinGame(players[0], game.gameCode, 1);
@@ -275,13 +275,13 @@ describe('Tests: Reload API', () => {
     await gameutils.joinGame(players[2], game.gameCode, 3);
 
     // buyin
-    await gameutils.buyin(players[0], game.gameCode, 100);
-    await gameutils.buyin(players[1], game.gameCode, 100);
-    await gameutils.buyin(players[2], game.gameCode, 100);
-    await gameutils.startGame(ownerId, game.gameCode);
+    await buyIn({ownerId: players[0], gameCode: game.gameCode, amount: 100});
+    await buyIn({ownerId: players[1], gameCode: game.gameCode, amount: 100});
+    await buyIn({ownerId: players[2], gameCode: game.gameCode, amount: 100});
+    await startGame({ownerId, gameCode: game.gameCode});
 
     // reload
-    await gameutils.reload(players[0], game.gameCode, 100);
+    await reload({playerId: players[0], gameCode: game.gameCode, amount: 100});
     let gameInfo = await gameutils.gameInfo(players[0], game.gameCode);
     console.log(JSON.stringify(gameInfo));
 

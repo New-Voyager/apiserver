@@ -386,8 +386,6 @@ export async function getsharedHand(
   return resp.data.data;
 }
 
-
-
 export async function defaultHandData(
   file: string,
   gameId: number,
@@ -411,7 +409,7 @@ export async function defaultHandData(
   data.gameId = gameId.toString();
   replacedIds[players['8'].id] = playerIds[2];
   players['8'].id = playerIds[2].toString();
-  
+
   for (const oldId of Object.keys(replacedIds)) {
     const newId = replacedIds[oldId];
     data.result.playerStats[newId] = data.result.playerStats[oldId];

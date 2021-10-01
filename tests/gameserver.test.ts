@@ -58,20 +58,13 @@ async function saveReward(playerId, clubCode) {
 }
 
 describe('Game server APIs', () => {
-
-  let stop, graphql;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
-    graphql = testServer.graphql;
     await resetDatabase();
     done();
   });
-  
+
   afterAll(async done => {
-     stop();
-     done();
+    done();
   });
 
   beforeEach(async done => {

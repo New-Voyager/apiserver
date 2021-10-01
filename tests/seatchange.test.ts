@@ -1,11 +1,17 @@
-import {resetDatabase, getClient, INTERNAL_PORT, startGqlServer} from './utils/utils';
+import {
+  resetDatabase,
+  getClient,
+  INTERNAL_PORT,
+  startGqlServer,
+} from './utils/utils';
 import * as clubutils from './utils/club.testutils';
 import * as gameutils from './utils/game.testutils';
 import * as handutils from './utils/hand.testutils';
 import * as rewardutils from './utils/reward.testutils';
 import {default as axios} from 'axios';
 import {getLogger} from '../src/utils/log';
-import { SeatStatus } from '../src/entity/types';
+import {SeatStatus} from '../src/entity/types';
+import {buyIn, startGame} from './game/utils';
 const logger = getLogger('game');
 
 const holdemGameInput = {
@@ -100,21 +106,14 @@ function sleep(ms: number) {
 const GAMESERVER_API = `http://localhost:${INTERNAL_PORT}/internal`;
 
 describe('Tests: seat change APIs', () => {
-  let stop, graphql;
-
   beforeAll(async done => {
-    const testServer = await startGqlServer();
-    stop = testServer.stop;
-    graphql = testServer.graphql;
     await resetDatabase();
     done();
   });
-  
-  afterAll(async done => {
-     stop();
-     done();
-  });
 
+  afterAll(async done => {
+    done();
+  });
 
   test('seat change functionality', async () => {
     // Create club and owner
@@ -139,10 +138,9 @@ describe('Tests: seat change APIs', () => {
     await gameutils.joinGame(player2, game.gameCode, 2);
 
     // buyin
-    await gameutils.buyin(player1, game.gameCode, 100);
-    await gameutils.buyin(player2, game.gameCode, 100);
-
-    await gameutils.startGame(ownerId, game.gameCode);
+    await buyIn({ownerId: player1, gameCode: game.gameCode, amount: 100});
+    await buyIn({ownerId: player2, gameCode: game.gameCode, amount: 100});
+    await startGame({ownerId, gameCode: game.gameCode});
 
     // request seat change
     const resp1 = await gameutils.requestSeatChange(player1, game.gameCode);
@@ -214,10 +212,10 @@ describe('Tests: seat change APIs', () => {
     await gameutils.joinGame(player2, game.gameCode, 2);
 
     // buyin
-    await gameutils.buyin(player1, game.gameCode, 100);
-    await gameutils.buyin(player2, game.gameCode, 100);
+    await buyIn({ownerId: player1, gameCode: game.gameCode, amount: 100});
+    await buyIn({ownerId: player2, gameCode: game.gameCode, amount: 100});
 
-    await gameutils.startGame(ownerId, game.gameCode);
+    await startGame({ownerId, gameCode: game.gameCode});
 
     // get game info and verify seat positions
     let gameInfo = await gameutils.gameInfo(player1, game.gameCode);
@@ -262,5 +260,4 @@ describe('Tests: seat change APIs', () => {
     expect(seats[2].seatNo).toEqual(3);
     expect(seats[2].seatStatus).toEqual(SeatStatus[SeatStatus.OCCUPIED]);
   });
-
 });

@@ -20,7 +20,7 @@ async function addClubChatText(
   text: string
 ): Promise<boolean> {
   const club = await Cache.getClub(clubCode);
-  ChatTextRepository.addClubChatText(text, club);
+  await ChatTextRepository.addClubChatText(text, club);
   return true;
 }
 
@@ -30,7 +30,7 @@ async function removeClubChatText(
   text: string
 ): Promise<boolean> {
   const club = await Cache.getClub(clubCode);
-  ChatTextRepository.removeClubChatText(text, club);
+  await ChatTextRepository.removeClubChatText(text, club);
   return true;
 }
 
@@ -39,7 +39,7 @@ async function addPlayerChatText(
   text: string
 ): Promise<boolean> {
   const player = await Cache.getPlayer(playerId);
-  ChatTextRepository.addPlayerChatText(text, player);
+  await ChatTextRepository.addPlayerChatText(text, player);
   return true;
 }
 
@@ -48,7 +48,7 @@ async function removePlayerChatText(
   text: string
 ): Promise<boolean> {
   const player = await Cache.getPlayer(playerId);
-  ChatTextRepository.removePlayerChatText(text, player);
+  await ChatTextRepository.removePlayerChatText(text, player);
   return true;
 }
 

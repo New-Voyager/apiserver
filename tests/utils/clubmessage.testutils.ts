@@ -3,6 +3,17 @@ import {gql} from 'apollo-boost';
 import {getLogger} from '../../src/utils/log';
 const logger = getLogger('clubmessage');
 
+export const markHostMsgReadQuery = gql`
+  mutation($clubCode: String!) {
+    markHostMsgRead(clubCode: $clubCode)
+  }
+`;
+
+export const markMemberMsgReadQeury = gql`
+  mutation($clubCode: String!, $playerId: String!) {
+    markMemberMsgRead(clubCode: $clubCode, playerId: $playerId)
+  }
+`;
 export const sendMessageQuery = gql`
   mutation($clubCode: String!, $input: ClubMessageInput!) {
     messageId: sendClubMessage(clubCode: $clubCode, message: $input)
@@ -38,6 +49,31 @@ interface ClubMessageInputFormat {
   giphyLink: string;
   playerTags: string;
 }
+
+export const markMemberMsgRead = async ({clubCode, playerId, ownerId}) => {
+  const variables = {
+    clubCode,
+    playerId,
+  };
+  const client = getClient(ownerId);
+  const resp = await client.mutate({
+    variables: variables,
+    mutation: markMemberMsgReadQeury,
+  });
+  return resp.data;
+};
+
+export const markHostMsgRead = async ({clubCode, ownerId}) => {
+  const variables = {
+    clubCode,
+  };
+  const client = getClient(ownerId);
+  const resp = await client.mutate({
+    variables: variables,
+    mutation: markHostMsgReadQuery,
+  });
+  return resp.data;
+};
 
 export async function getClubMessage(
   clubCode: string,

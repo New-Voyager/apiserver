@@ -85,7 +85,8 @@ export async function resetDB() {
       await deleteAll('club_messages', transactionEntityManager);
       await deleteAll('saved_hands', transactionEntityManager);
       await deleteAll('announcement', transactionEntityManager);
-      //await deleteAll('club_token_transactions', transactionEntityManager);
+      // await deleteAll('club_token_transactions', transactionEntityManager);
+      await deleteAll('chat_text', transactionEntityManager);
       await deleteAll('club_host_messages', transactionEntityManager);
       await deleteAll('reward', transactionEntityManager);
       await deleteAll('ClubMember', transactionEntityManager);

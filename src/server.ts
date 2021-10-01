@@ -4,11 +4,9 @@ import {merge} from 'lodash';
 import {authorize} from '@src/middlewares/authorization';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
-const {
-  ApolloServerPluginLandingPageGraphQLPlayground,
-} = require('apollo-server-core');
+import {ApolloServerPluginLandingPageGraphQLPlayground} from 'apollo-server-core';
 
-const bodyParser = require('body-parser');
+import bodyParser from 'body-parser';
 const GQL_PORT = 9501;
 const INTERNAL_PORT = 9502;
 import {getLogger} from '@src/utils/log';
@@ -16,27 +14,6 @@ import {initializeGameServer} from './gameserver';
 import {initdb, seed} from './initdb';
 import {Firebase, getAppSettings} from './firebase';
 import {Nats} from './nats';
-import {
-  buyBotCoins,
-  generateBotScript,
-  generateBotScriptDebugHand,
-  resetServerSettings,
-  setServerSettings,
-  updateButtonPos,
-} from './internal/bot';
-import {restartTimers} from '@src/timer';
-import {getUserRepository} from './repositories';
-import {UserRegistrationPayload} from './types';
-import {PlayerRepository} from './repositories/player';
-import {
-  getRecoveryCode,
-  login,
-  loginUsingRecoveryCode,
-  newlogin,
-  signup,
-} from './auth';
-import {DevRepository} from './repositories/dev';
-import {createPromotion, deleteAll, getAllPromotion} from './admin';
 import {initializeRedis} from './cache';
 import {addExternalRoutes, addInternalRoutes} from './routes';
 export enum RunProfile {

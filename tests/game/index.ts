@@ -1,0 +1,13 @@
+import './applyWaitlistOrder.test';
+import './approveRequest.test';
+import './buyIn.test';
+import './declineWaitlistSeat.test';
+import './endGame.test';
+import './joinGame.test';
+import './kickOut.test';
+import './pauseGame.test';
+import './reload.test';
+import './resumeGame.test';
+import './setBuyInLimit.test';
+import './startGame.test';
+import './takeSeat.test';

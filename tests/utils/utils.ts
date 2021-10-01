@@ -1,12 +1,12 @@
 import {default as ApolloClient} from 'apollo-boost';
 import axios from 'axios';
-import { execute, gql, HttpLink, toPromise } from "apollo-boost";
-import { start } from "../../src/server";
-const fetch = require('node-fetch');
+import {execute, gql, HttpLink, toPromise} from 'apollo-boost';
+import {start} from '../../src/server';
+import fetch from 'node-fetch'
 export const EXTERNAL_PORT = 9501;
 export const INTERNAL_PORT = 9502;
 
-export function getClient(token?: string, test?: string): any {
+export function getClient(token?: string): any {
   return new ApolloClient({
     fetch: fetch,
     uri: `http://localhost:${EXTERNAL_PORT}/graphql`,
@@ -19,14 +19,11 @@ export function getClient(token?: string, test?: string): any {
         });
       }
     },
-    onError: e => {
-      console.log(e);
-    },
   });
 }
 
 export async function resetDatabase() {
-  const client = getClient('TEST_USER');
+  const client = getClient('TEST_USER',);
   const resetDB = gql`
     mutation {
       resetDB
@@ -85,25 +82,23 @@ export async function sleep(ms: number) {
 }
 
 export async function getClubs(playerId: string) {
-  console.log("In getClubs");
+  console.log('In getClubs');
   await resetDatabase();
-  
+
   const client = getClient(playerId);
-  
+
   const hello = gql`
-          query {
-            hello
-          }
-        `;
+    query {
+      hello
+    }
+  `;
   const resp = await client.query({
     query: hello,
   });
   console.log(JSON.stringify(resp));
 }
 
-
 export const startGqlServer = async () => {
-
   const [externalServer, internalServer, apollo]= await start(false, {intTest: true});
 
   const link = new HttpLink({
@@ -111,8 +106,8 @@ export const startGqlServer = async () => {
     fetch,
   });
 
-  const executeOperation = ({ query, variables = {} }) =>
-    execute(link, { query, variables });
+  const executeOperation = ({query, variables = {}}) =>
+    execute(link, {query, variables});
 
   return {
     link,

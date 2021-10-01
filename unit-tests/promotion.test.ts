@@ -118,7 +118,7 @@ describe('Promotion APIs', () => {
     expect(coins).toEqual(1000);
   });
 
-  test('promotion: count promotion', async () => {
+  test.skip('promotion: count promotion', async () => {
     await createPlayers();
 
     // consume expired promotion (should fail)

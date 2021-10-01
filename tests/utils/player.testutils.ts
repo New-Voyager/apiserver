@@ -1,5 +1,5 @@
-import { PlayerRepository } from "../../src/repositories/player";
-import { getLogger } from "../../src/utils/log";
+import {PlayerRepository} from '../../src/repositories/player';
+import {getLogger} from '../../src/utils/log';
 
 const logger = getLogger('Player unit-test');
 
