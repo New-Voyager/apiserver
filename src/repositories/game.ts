@@ -1188,6 +1188,7 @@ class GameRepositoryImpl {
             .update(PokerGame)
             .set({
               tableStatus: TableStatus.NOT_ENOUGH_PLAYERS,
+              gameStarted: true,
             })
             .where('id = :id', {id: gameId})
             .execute();
@@ -1197,21 +1198,11 @@ class GameRepositoryImpl {
             .update(PokerGame)
             .set({
               tableStatus: TableStatus.GAME_RUNNING,
-            })
-            .where('id = :id', {id: gameId})
-            .execute();
-          game.tableStatus = TableStatus.GAME_RUNNING;
-
-          await getGameConnection()
-            .createQueryBuilder()
-            .update(PokerGame)
-            .set({
               gameStarted: true,
             })
             .where('id = :id', {id: gameId})
             .execute();
-
-          // game started
+          game.tableStatus = TableStatus.GAME_RUNNING;
 
           // update last ip gps check time
           GameUpdatesRepository.updateLastIpCheckTime(game);

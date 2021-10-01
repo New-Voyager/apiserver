@@ -303,6 +303,7 @@ type GameSettings {
   allowRabbitHunt: Boolean
   showHandRank: Boolean
   doubleBoardEveryHand: Boolean
+  audioConfEnabled: Boolean
 
   # bomb pot (comes from PokerGameUpdates)
   bombPotEnabled: Boolean
@@ -328,6 +329,7 @@ type GameSettings {
 }
 
 input GameSettingsUpdateInput {
+  audioConfEnabled: Boolean
   resultPauseTime: Int
 
   buyInApproval: Boolean

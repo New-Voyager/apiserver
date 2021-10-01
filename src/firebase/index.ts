@@ -77,7 +77,10 @@ class FirebaseClass {
     });
     this.serviceAccount = serviceAccount;
     this.serviceAccountFile = serviceAccountFile;
-    this.firebaseInitialized = false;
+
+    if (runProfile == RunProfile.DEV || runProfile == RunProfile.PROD) {
+      this.firebaseInitialized = true;
+    }
     logger.info('Firebase is initialized');
   }
 
