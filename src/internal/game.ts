@@ -43,7 +43,11 @@ class GameAPIs {
       await GameRepository.markPlayerGameState(playerID, gameID, gameStatus);
       resp.status(200).send({status: 'OK'});
     } catch (err) {
-      logger.error(err.message);
+      logger.error(
+        `Error while updating player game state for game ${gameID}, player ${playerID}: ${errToLogString(
+          err
+        )}`
+      );
       resp.status(500).send({error: err.message});
     }
   }
@@ -62,8 +66,17 @@ class GameAPIs {
       return;
     }
 
-    await GameRepository.markGameStatus(gameID, gameStatus);
-    resp.status(200).send({status: 'OK'});
+    try {
+      await GameRepository.markGameStatus(gameID, gameStatus);
+      resp.status(200).send({status: 'OK'});
+    } catch (err) {
+      logger.error(
+        `Error while updating game status for game ${gameID} to ${gameStatus}: ${errToLogString(
+          err
+        )}`
+      );
+      resp.status(500).send({error: err.message});
+    }
   }
 
   public async updateTableStatus(req: any, resp: any) {
@@ -89,7 +102,11 @@ class GameAPIs {
       await GameRepository.markTableStatus(gameID, tableStatus);
       resp.status(200).send({status: 'OK'});
     } catch (err) {
-      logger.error(err.message);
+      logger.error(
+        `Error while updating table status for game ${gameID} to ${tableStatus}: ${errToLogString(
+          err
+        )}`
+      );
       resp.status(500).send(JSON.stringify({error: err.message}));
     }
   }
@@ -105,7 +122,11 @@ class GameAPIs {
       const pendingUpdates = await GameRepository.anyPendingUpdates(gameID);
       resp.status(200).send({pendingUpdates: pendingUpdates});
     } catch (err) {
-      logger.error(err.message);
+      logger.error(
+        `Error while checking for any pending updates for game ${gameID}: ${errToLogString(
+          err
+        )}`
+      );
       resp.status(500).send(JSON.stringify({error: err.message}));
     }
   }
@@ -127,7 +148,11 @@ class GameAPIs {
       await processPendingUpdates(gameID);
       resp.status(200).send({status: 'OK'});
     } catch (err) {
-      logger.error(err.message);
+      logger.error(
+        `Error while processing pending updates for game ${gameID}: ${errToLogString(
+          err
+        )}`
+      );
       resp.status(500).send(JSON.stringify({error: err.message}));
     }
   }
@@ -248,6 +273,11 @@ class GameAPIs {
         gameFound = true;
         break;
       } catch (err) {
+        logger.error(
+          `Error while getting game info for game [${gameCode}]: ${errToLogString(
+            err
+          )}`
+        );
         if (retryCount === 0) {
           resp.status(500).send(JSON.stringify({error: err.message}));
           return;
@@ -273,6 +303,9 @@ class GameAPIs {
       await GameRepository.markGameStatus(gameID, GameStatus.ACTIVE);
       resp.status(200).send({status: 'OK'});
     } catch (err) {
+      logger.error(
+        `Error while starting game ${gameID}: ${errToLogString(err)}`
+      );
       resp.status(500).send({error: err.message});
     }
   }
@@ -310,6 +343,11 @@ class GameAPIs {
       const ret = await nextHandProcess.moveToNextHand();
       resp.status(200).send(JSON.stringify(ret));
     } catch (err) {
+      logger.error(
+        `Error while moving game ${gameCode} to next hand: ${errToLogString(
+          err
+        )}`
+      );
       resp.status(500).send({error: err.message});
     }
   }
@@ -341,6 +379,11 @@ class GameAPIs {
       const ret = await nextHandProcess.getNextHandInfo();
       resp.status(200).send(JSON.stringify(ret));
     } catch (err) {
+      logger.error(
+        `Error while getting next hand info for game ${gameCode}: ${errToLogString(
+          err
+        )}`
+      );
       resp.status(500).send({error: err.message});
     }
   }
@@ -350,6 +393,7 @@ class GameAPIs {
       const ret = await Aggregation.postProcessGames();
       resp.status(200).send(JSON.stringify(ret));
     } catch (err) {
+      logger.error(`Error while aggregating game data: ${errToLogString(err)}`);
       resp.status(500).send({error: err.message});
     }
   }

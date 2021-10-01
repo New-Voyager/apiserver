@@ -471,6 +471,12 @@ class GameRepositoryImpl {
     seatNo: number,
     transManager?: EntityManager
   ) {
+    if (!seatNo || seatNo < 1 || seatNo > 9) {
+      throw new Error(
+        `seatOccupied called with invalid seat number: ${seatNo}`
+      );
+    }
+
     let gameSeatInfoRepo: Repository<PokerGameSeatInfo>;
     let playerGameTrackerRepo: Repository<PlayerGameTracker>;
     if (transManager) {
@@ -507,6 +513,10 @@ class GameRepositoryImpl {
     seatNo: number,
     transManager?: EntityManager
   ) {
+    if (!seatNo || seatNo < 1 || seatNo > 9) {
+      throw new Error(`seatOpened called with invalid seat number: ${seatNo}`);
+    }
+
     let gameSeatInfoRepo: Repository<PokerGameSeatInfo>;
     let playerGameTrackerRepo: Repository<PlayerGameTracker>;
     if (transManager) {

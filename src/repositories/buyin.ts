@@ -699,20 +699,6 @@ export class BuyIn {
               newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
             });
 
-            // mark the player not playing
-            await playerInGameRepo.update(
-              {
-                game: {id: this.game.id},
-                playerId: this.player.id,
-              },
-              {
-                seatNo: 0,
-                status: PlayerStatus.NOT_PLAYING,
-                buyInExpAt: undefined,
-              }
-            );
-
-            cancelTimer(this.game.id, this.player.id, BUYIN_TIMEOUT);
             await this.buyInDenied(playerInGame, transactionEntityManager);
             return true;
           }
@@ -843,7 +829,9 @@ export class BuyIn {
           buyInExpAt: undefined,
         }
       );
-      GameRepository.seatOpened(this.game, playerInSeat.seatNo);
+      if (playerInSeat.seatNo !== 0) {
+        await GameRepository.seatOpened(this.game, playerInSeat.seatNo);
+      }
 
       // delete the row in pending updates table
       const pendingUpdatesRepo = getGameRepository(NextHandUpdates);
@@ -863,6 +851,9 @@ export class BuyIn {
       );
     } else if (playerInSeat.status === PlayerStatus.PLAYING) {
       // cancel timer wasn't called (ignore the timeout callback)
+      logger.warn(
+        `Ignoring buy-in timeout callback since player is in ${playerInSeat.status} status`
+      );
     }
   }
 
