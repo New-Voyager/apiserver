@@ -197,10 +197,10 @@ class GameUpdatesRepositoryImpl {
 
     await gameUpdatesRepo.update(
       {
-        dealerChoiceSeat: playerId,
+        gameCode: game.gameCode,
       },
       {
-        gameCode: game.gameCode,
+        dealerChoiceSeat: playerId,
       }
     );
     await GameUpdatesRepository.get(game.gameCode, true);

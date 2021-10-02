@@ -261,7 +261,7 @@ async function kickoutPlayer(
   playerGameTrackerRepository: Repository<PlayerGameTracker>,
   game: PokerGame,
   update: NextHandUpdates,
-  pendingUpdatesRepo
+  pendingUpdatesRepo: Repository<NextHandUpdates>
 ): Promise<number> {
   const playerInGame = await playerGameTrackerRepository.findOne({
     where: {
@@ -300,7 +300,7 @@ async function kickoutPlayer(
     Nats.playerKickedOut(game, player, playerInGame.seatNo);
   }
   // delete this update
-  pendingUpdatesRepo.delete({id: update.id});
+  await pendingUpdatesRepo.delete({id: update.id});
   return playerInGame.seatNo;
 }
 
@@ -308,7 +308,7 @@ async function switchSeat(
   playerGameTrackerRepository: Repository<PlayerGameTracker>,
   game: PokerGame,
   update: NextHandUpdates,
-  pendingUpdatesRepo
+  pendingUpdatesRepo: Repository<NextHandUpdates>
 ) {
   const playerInGame = await playerGameTrackerRepository.findOne({
     where: {
@@ -356,7 +356,7 @@ async function switchSeat(
     });
   } finally {
     // delete this update
-    pendingUpdatesRepo.delete({id: update.id});
+    await pendingUpdatesRepo.delete({id: update.id});
   }
 }
 
@@ -364,7 +364,7 @@ async function leaveGame(
   playerGameTrackerRepository: Repository<PlayerGameTracker>,
   game: PokerGame,
   update: NextHandUpdates,
-  pendingUpdatesRepo
+  pendingUpdatesRepo: Repository<NextHandUpdates>
 ): Promise<number> {
   const playerInGame = await playerGameTrackerRepository.findOne({
     where: {
@@ -410,7 +410,7 @@ async function leaveGame(
     Nats.playerLeftGame(game, player, playerInGame.seatNo);
   }
   // delete this update
-  pendingUpdatesRepo.delete({id: update.id});
+  await pendingUpdatesRepo.delete({id: update.id});
   return openedSeat;
 }
 
@@ -418,7 +418,7 @@ async function buyinApproved(
   playerGameTrackerRepository: any,
   game: PokerGame,
   update: NextHandUpdates,
-  pendingUpdatesRepo
+  pendingUpdatesRepo: Repository<NextHandUpdates>
 ) {
   let amount = 0;
   if (update.buyinAmount) {
@@ -463,7 +463,7 @@ async function buyinApproved(
 async function reloadApproved(
   game: PokerGame,
   update: NextHandUpdates,
-  pendingUpdatesRepo
+  pendingUpdatesRepo: Repository<NextHandUpdates>
 ) {
   let amount = 0;
   if (update.buyinAmount) {
@@ -539,9 +539,6 @@ async function handleDealersChoice(
     gameUpdate.handNum + 1,
     timeout
   );
-
-  // delete this update
-  await pendingUpdatesRepo.delete({id: update.id});
 }
 
 export async function switchSeatNextHand(
