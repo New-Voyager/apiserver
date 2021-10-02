@@ -851,7 +851,7 @@ class HandRepositoryImpl {
             (now.getTime() - gameUpdates.lastIpGpsCheckTime.getTime()) / 1000
           );
           if (diff > getAppSettings().ipGpsCheckInterval) {
-            logger.debug('Game: [${game.gameCode}] time to check IP/GPS');
+            logger.debug(`Game: [${game.gameCode}] time to check IP/GPS`);
             await Cache.updateGamePendingUpdates(game.gameCode, true);
           }
         }
