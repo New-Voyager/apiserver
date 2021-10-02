@@ -539,9 +539,6 @@ async function handleDealersChoice(
     gameUpdate.handNum + 1,
     timeout
   );
-
-  // delete this update
-  await pendingUpdatesRepo.delete({id: update.id});
 }
 
 export async function switchSeatNextHand(
