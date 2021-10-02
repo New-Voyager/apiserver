@@ -73,6 +73,10 @@ class GameSettingsRepositoryImpl {
     gameSettings.chat = input.chat;
     gameSettings.runItTwiceAllowed = input.runItTwiceAllowed;
     gameSettings.audioConfEnabled = input.audioConfEnabled;
+    gameSettings.showResult = input.showResult;
+    if (input.showResult === undefined) {
+      gameSettings.showResult = true;
+    }
 
     // ion sfu url (TODO: needs to be changed to handle multiple servers pion1, pion2, pion3)
     if (process.env.ION_SFU_URL) {
@@ -151,6 +155,9 @@ class GameSettingsRepositoryImpl {
     }
     if (input.ipCheck !== undefined) {
       gameSettingsProps.ipCheck = input.ipCheck;
+    }
+    if (input.showResult !== undefined && input.showResult !== null) {
+      gameSettingsProps.showResult = input.showResult;
     }
     if (input.gpsCheck !== undefined) {
       gameSettingsProps.gpsCheck = input.gpsCheck;

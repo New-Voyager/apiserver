@@ -284,6 +284,9 @@ export class PokerGameSettings {
 
   @Column({name: 'ion_room', default: ''})
   public ionRoom!: string;
+
+  @Column({name: 'show_result', default: true})
+  public showResult!: boolean;
 }
 
 @Entity({name: 'poker_game'})
