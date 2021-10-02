@@ -152,10 +152,31 @@ export async function endGame(playerId: string, gameCode: string) {
       );
     }
 
+    let gameRunning = true;
     if (
       game.status === GameStatus.ACTIVE &&
       game.tableStatus === TableStatus.GAME_RUNNING
     ) {
+      const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
+        game.id
+      );
+      if (playersInSeats.length == 1) {
+        gameRunning = false;
+      }
+    } else {
+      if (
+        game.status === GameStatus.ACTIVE &&
+        game.tableStatus === TableStatus.NOT_ENOUGH_PLAYERS
+      ) {
+        gameRunning = false;
+      }
+    }
+
+    if (game.status === GameStatus.CONFIGURED) {
+      gameRunning = false;
+    }
+
+    if (gameRunning) {
       // the game will be stopped in the next hand
       await NextHandUpdatesRepository.endGameNextHand(player, game.id);
       const messageId = uuidv4();
@@ -398,6 +419,7 @@ export async function startGame(
     }
 
     let players = await PlayersInGameRepository.getPlayersInSeats(game.id);
+    let humanPlayers = players.length;
     if (game.botGame && players.length < game.maxPlayers) {
       // fill the empty seats with bots
       await fillSeats(game.clubCode, game.gameCode);
@@ -406,6 +428,11 @@ export async function startGame(
       while (!allFilled) {
         await new Promise(r => setTimeout(r, 1000));
         players = await PlayersInGameRepository.getPlayersInSeats(game.id);
+
+        if (players.length > humanPlayers) {
+          break;
+        }
+
         if (players.length !== game.maxPlayers) {
           logger.debug(
             `[${game.gameCode}] Waiting for bots to take empty seats`
@@ -1098,6 +1125,7 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
       }
       ret.ipCheck = settings.ipCheck;
       ret.gpsCheck = settings.gpsCheck;
+      ret.showResult = settings.showResult;
     }
     const now = new Date().getTime();
     // get player's game state
