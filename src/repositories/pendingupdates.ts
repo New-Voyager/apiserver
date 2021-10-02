@@ -242,11 +242,17 @@ export async function processPendingUpdates(gameId: number) {
         game.status,
         TableStatus.NOT_ENOUGH_PLAYERS
       );
-      return;
+      logger.info(
+        `Game ${gameId}/${game.gameCode} does not have enough players`
+      );
     }
 
     // start buy in timers for the player's whose stack is 0 and playing
     await BuyIn.startBuyInTimers(game);
+
+    if (!canContinue) {
+      return;
+    }
 
     if (dealerChoiceUpdate) {
       await handleDealersChoice(game, dealerChoiceUpdate, pendingUpdatesRepo);
