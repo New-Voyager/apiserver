@@ -1,4 +1,4 @@
-import {EntityManager, In} from 'typeorm';
+import {EntityManager, In, UpdateResult} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player/player';
@@ -818,10 +818,14 @@ export class BuyIn {
       // buyin timeout expired
 
       // mark the player as not playing
-      await playerGameTrackerRepository.update(
+      const result: UpdateResult = await playerGameTrackerRepository.update(
         {
           game: {id: this.game.id},
           playerId: this.player.id,
+          status: In([
+            PlayerStatus.WAIT_FOR_BUYIN,
+            PlayerStatus.WAIT_FOR_BUYIN_APPROVAL,
+          ]),
         },
         {
           status: PlayerStatus.NOT_PLAYING,
@@ -829,6 +833,23 @@ export class BuyIn {
           buyInExpAt: undefined,
         }
       );
+
+      if (result.affected === 0) {
+        // This can happen when the buy-in request was approved and timed out at the same time.
+        // The approval won here. No-op for the timeout.
+        logger.warn(
+          `Buy-in timeout handler returning since no db record was updated`
+        );
+        return;
+      }
+
+      if (result.affected && result.affected > 1) {
+        // Shouldn't get here.
+        logger.error(
+          `Multiple rows (${result.affected}) were updated when processing buy-in timeout`
+        );
+      }
+
       if (playerInSeat.seatNo !== 0) {
         await GameRepository.seatOpened(this.game, playerInSeat.seatNo);
       }
