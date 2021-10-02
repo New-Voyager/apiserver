@@ -1403,6 +1403,7 @@ class GameRepositoryImpl {
       where: {
         game: {id: gameID},
         status: PlayerStatus.PLAYING,
+        stack: Not(0),
       },
     });
 
