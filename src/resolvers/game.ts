@@ -172,6 +172,10 @@ export async function endGame(playerId: string, gameCode: string) {
       }
     }
 
+    if (game.status === GameStatus.CONFIGURED) {
+      gameRunning = false;
+    }
+
     if (gameRunning) {
       // the game will be stopped in the next hand
       await NextHandUpdatesRepository.endGameNextHand(player, game.id);
