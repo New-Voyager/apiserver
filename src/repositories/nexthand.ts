@@ -136,6 +136,10 @@ class MoveToNextHand {
       // API server has already moved to the next hand and is ahead of the game server.
       // Perhaps game server crashed after already having called this endpoint and is recovering now.
       // Don't do anything in that case.
+      logger.warn(
+        `MoveToNextHand.move is no-op for game ${this.game?.gameCode} because API server hand num (${this.gameUpdate?.handNum}) is ahead of game server (${this.handNum})`
+      );
+      this.handNum = this.gameUpdate.handNum;
       return;
     }
     this.handNum++;
