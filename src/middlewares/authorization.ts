@@ -27,8 +27,19 @@ export async function authorize(req, res, next) {
     }
   }
 
+  if (
+    process.env.TRACE_REQ_HEADERS === '1' ||
+    process.env.TRACE_REQ_HEADERS === 'true'
+  ) {
+    logger.info(`Req.headers: ${JSON.stringify(req.headers)}`);
+  }
+
   if (req.headers['x-realip']) {
     req.userIp = req.headers['x-realip'];
+  } else if (req.headers['x-real-ip']) {
+    req.userIp = req.headers['x-real-ip'];
+  } else if (req.headers['x-forwarded-for']) {
+    req.userIp = req.headers['x-forwarded-for'];
   } else {
     const ip = req.ip.replace('::ffff:', '');
     req.userIp = ip;
