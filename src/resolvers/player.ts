@@ -17,7 +17,6 @@ import {getHighHandsByGame} from './reward';
 import {Nats} from '@src/nats';
 import {ClubMessageRepository} from '@src/repositories/clubmessage';
 import {HostMessageRepository} from '@src/repositories/hostmessage';
-import {HandRepository} from '@src/repositories/hand';
 import {HistoryRepository} from '@src/repositories/history';
 import {PromotionRepository} from '@src/repositories/promotion';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
@@ -28,10 +27,16 @@ async function getClubs(playerId: string): Promise<Array<any>> {
   if (!player) {
     throw new Error('Player Not Found');
   }
-  const clubMembers = await ClubRepository.getPlayerClubs(playerId);
+  let clubMembers = await ClubRepository.getPlayerClubs(playerId);
   if (!clubMembers) {
     return [];
   }
+  clubMembers = clubMembers.filter(
+    x =>
+      x.memberStatus == ClubMemberStatus.ACTIVE ||
+      x.memberStatus == ClubMemberStatus.PENDING
+  );
+
   const clubs = _.map(clubMembers, x => {
     let isOwner = false;
     if (x.ownerId === player.id) {
