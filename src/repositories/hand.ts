@@ -905,14 +905,14 @@ class HandRepositoryImpl {
       };
     }
 
-    if (highhandWinners !== null) {
-      Nats.sendHighHandWinners(
-        game,
-        result.boardCards,
-        result.handNum,
-        highhandWinners.winners
-      );
-    }
+    // if (highhandWinners !== null) {
+    //   Nats.sendHighHandWinners(
+    //     game,
+    //     result.boardCards,
+    //     result.handNum,
+    //     highhandWinners.winners
+    //   );
+    // }
   }
 
   private async getSummary2(

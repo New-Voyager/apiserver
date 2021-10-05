@@ -809,6 +809,8 @@ export class NextHandProcess {
           bombPot: gameUpdate.bombPotThisHand,
           bombPotBet: gameSettings.bombPotBet * game.bigBlind,
           runItTwiceTimeout: gameSettings.runItTwiceTimeout,
+          highHandTracked: game.highHandTracked,
+          highHandRank: game.highHandRank,
           // Not implemented yet (do we need it?)
           bringIn: 0,
         };

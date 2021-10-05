@@ -112,6 +112,8 @@ export interface NewHandInfo {
   bombPotBet: number;
   bringIn: number;
   runItTwiceTimeout: number;
+  highHandTracked: boolean;
+  highHandRank: number;
 }
 
 export enum ReedeemPromotionError {
