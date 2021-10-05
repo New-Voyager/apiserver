@@ -152,52 +152,107 @@ class FirebaseClass {
     }
   }
 
-  public async newClubCreated(
+  public async clubMemberJoinRequest(
     club: Club,
-    owner: Player
-  ): Promise<[string, string]> {
+    host: Player,
+    requestingPlayer: Player
+  ) {
     if (!this.firebaseInitialized) {
-      return ['', ''];
+      return;
     }
 
-    const profileStr = getRunProfileStr();
-    const profile = getRunProfile();
-    // register a new device group
-    const groupName = `${profileStr}-${club.clubCode}`;
-    //const accessToken = await this.getAccessToken();
-    let apiKey: string | undefined;
-    if (profile === RunProfile.DEV) {
-      apiKey = DEV_FCM_API_KEY;
+    if (host.firebaseToken !== null && host.firebaseToken.length > 0) {
+      const message: firebase.messaging.TokenMessage = {
+        data: {
+          playerName: requestingPlayer.name,
+          playerUuid: requestingPlayer.uuid,
+          clubCode: club.clubCode,
+          clubName: club.name,
+          message: `Player '${requestingPlayer.name}' is requesting to join club '${club.name}'`,
+          type: 'MEMBER_JOIN',
+        },
+        token: host.firebaseToken,
+      };
+      const ret = await firebase.messaging().send(message, false);
+      logger.info(`message id: ${ret}`);
     }
-    if (apiKey) {
-      try {
-        const url = 'https://fcm.googleapis.com/fcm/notification';
-        const authToken = `key=${apiKey}`;
-        const payload = {
-          operation: 'create',
-          notification_key_name: groupName,
-          registration_ids: [owner.firebaseToken],
-        };
-        const resp = await axios.post(url, payload, {
-          headers: {
-            Authorization: authToken,
-            project_id: '76242661450',
-          },
-        });
-        const respData = resp.data;
-        // return notification key
-        return [groupName, respData['notification_key']];
-      } catch (err) {
-        logger.error(
-          `Failed to create device group for club ${
-            club.name
-          }. Error: ${err.toString()}`
-        );
-        return ['', ''];
-      }
-    }
-    return ['', ''];
   }
+
+  public async clubMemberDeniedJoinRequest(
+    club: Club,
+    host: Player,
+    requestingPlayer: Player
+  ) {
+    if (!this.firebaseInitialized) {
+      return;
+    }
+
+    if (
+      requestingPlayer.firebaseToken !== null &&
+      requestingPlayer.firebaseToken.length > 0
+    ) {
+      const message: firebase.messaging.TokenMessage = {
+        data: {
+          playerName: requestingPlayer.name,
+          playerUuid: requestingPlayer.uuid,
+          clubCode: club.clubCode,
+          clubName: club.name,
+          message: `Club host denied request to joining club '${club.name}'`,
+          type: 'MEMBER_DENIED',
+        },
+        token: requestingPlayer.firebaseToken,
+      };
+      const ret = await firebase.messaging().send(message, false);
+      logger.info(`message id: ${ret}`);
+    }
+  }
+
+  // public async newClubCreated(
+  //   club: Club,
+  //   owner: Player
+  // ): Promise<[string, string]> {
+  //   if (!this.firebaseInitialized) {
+  //     return ['', ''];
+  //   }
+
+  //   const profileStr = getRunProfileStr();
+  //   const profile = getRunProfile();
+  //   // register a new device group
+  //   const groupName = `${profileStr}-${club.clubCode}`;
+  //   //const accessToken = await this.getAccessToken();
+  //   let apiKey: string | undefined;
+  //   if (profile === RunProfile.DEV) {
+  //     apiKey = DEV_FCM_API_KEY;
+  //   }
+  //   if (apiKey) {
+  //     try {
+  //       const url = 'https://fcm.googleapis.com/fcm/notification';
+  //       const authToken = `key=${apiKey}`;
+  //       const payload = {
+  //         operation: 'create',
+  //         notification_key_name: groupName,
+  //         registration_ids: [owner.firebaseToken],
+  //       };
+  //       const resp = await axios.post(url, payload, {
+  //         headers: {
+  //           Authorization: authToken,
+  //           project_id: '76242661450',
+  //         },
+  //       });
+  //       const respData = resp.data;
+  //       // return notification key
+  //       return [groupName, respData['notification_key']];
+  //     } catch (err) {
+  //       logger.error(
+  //         `Failed to create device group for club ${
+  //           club.name
+  //         }. Error: ${err.toString()}`
+  //       );
+  //       return ['', ''];
+  //     }
+  //   }
+  //   return ['', ''];
+  // }
 
   public async sendClubMsg(club: Club, message: any) {
     if (!this.firebaseInitialized) {
