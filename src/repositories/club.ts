@@ -225,19 +225,19 @@ class ClubRepositoryImpl {
 
       try {
         // create firebase notification
-        const [groupName, notificationKey] = await Firebase.newClubCreated(
-          club,
-          ownerObj
-        );
-        await clubRepo.update(
-          {
-            id: club.id,
-          },
-          {
-            firebaseNotificationKeyName: groupName,
-            firebaseNotificationKey: notificationKey,
-          }
-        );
+        // const [groupName, notificationKey] = await Firebase.newClubCreated(
+        //   club,
+        //   ownerObj
+        // );
+        // await clubRepo.update(
+        //   {
+        //     id: club.id,
+        //   },
+        //   {
+        //     firebaseNotificationKeyName: groupName,
+        //     firebaseNotificationKey: notificationKey,
+        //   }
+        // );
       } catch (err) {}
     });
 
@@ -300,12 +300,12 @@ class ClubRepositoryImpl {
     playerId: string
   ): Promise<ClubMemberStatus> {
     clubCode = clubCode.toLowerCase();
-    let clubMember = await Cache.getClubMember(playerId, clubCode);
+    let clubMember = await Cache.getClubMember(playerId, clubCode, true);
     const player = await Cache.getPlayer(playerId);
+    const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
     if (clubMember) {
       if (player.bot) {
         clubMember.status = ClubMemberStatus.ACTIVE;
-        const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
         clubMemberRepository.update(
           {
             id: clubMember.id,
@@ -314,6 +314,19 @@ class ClubRepositoryImpl {
             status: ClubMemberStatus.ACTIVE,
           }
         );
+      }
+      if (clubMember.status !== ClubMemberStatus.ACTIVE) {
+        // make it pending
+        clubMemberRepository.update(
+          {
+            id: clubMember.id,
+          },
+          {
+            status: ClubMemberStatus.PENDING,
+          }
+        );
+        clubMember.status = ClubMemberStatus.PENDING;
+        await Cache.getClubMember(playerId, clubCode, true);
       }
       return clubMember.status;
     }
@@ -351,7 +364,6 @@ class ClubRepositoryImpl {
       await ClubMessageRepository.playerJoined(club, player);
     }
 
-    const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
     await clubMemberRepository.save(clubMember);
     const messageId = uuidv4();
     try {
@@ -362,6 +374,11 @@ class ClubRepositoryImpl {
         ClubUpdateType[ClubUpdateType.NEW_MEMBER],
         messageId
       );
+      const owner: Player | undefined = await Promise.resolve(club.owner);
+      if (!owner) {
+        throw new Error('Unexpected. There is no owner for the club');
+      }
+      Firebase.clubMemberJoinRequest(club, owner, player);
     } catch (err) {
       logger.error(`Failed to send NATS message. Error: ${err.toString()}`);
     }
@@ -395,7 +412,7 @@ class ClubRepositoryImpl {
       throw new Error('The player is not in the club');
     }
 
-    const club = await Cache.getClub(clubCode);
+    const club = await Cache.getClub(clubCode, true);
     const owner: Player | undefined = await Promise.resolve(club.owner);
     if (!owner) {
       throw new Error('Unexpected. There is no owner for the club');
@@ -447,12 +464,12 @@ class ClubRepositoryImpl {
     clubCode: string,
     playerId: string
   ): Promise<ClubMemberStatus> {
-    const clubMember = await Cache.getClubMember(playerId, clubCode);
+    const clubMember = await Cache.getClubMember(playerId, clubCode, true);
     if (!clubMember) {
       throw new Error('The player is not in the club');
     }
 
-    const club = await Cache.getClub(clubCode);
+    const club = await Cache.getClub(clubCode, true);
     const owner: Player | undefined = await Promise.resolve(club.owner);
     if (!owner) {
       throw new Error('Unexpected. There is no owner for the club');
@@ -481,6 +498,7 @@ class ClubRepositoryImpl {
       })
       .execute();
     await Cache.getClubMember(playerId, clubCode, true /* update cache */);
+    Firebase.clubMemberDeniedJoinRequest(club, owner, clubMember.player);
     return ClubMemberStatus.DENIED;
   }
 
