@@ -15,13 +15,15 @@ export async function completedGame(playerId: string, gameCode: string) {
     );
 
     gameHistoryData.gameType = GameType[gameHistoryData.gameType];
-    gameHistoryData.stackStat = gameHistoryData.stackStat.map(x => {
-      return {
-        handNum: x.hand,
-        before: x.playerStack.b,
-        after: x.playerStack.a,
-      };
-    });
+    if (gameHistoryData.stackStat) {
+      gameHistoryData.stackStat = gameHistoryData.stackStat.map(x => {
+        return {
+          handNum: x.hand,
+          before: x.playerStack.b,
+          after: x.playerStack.a,
+        };
+      });
+    }
     return gameHistoryData;
   } catch (err) {
     logger.error(JSON.stringify(err));
