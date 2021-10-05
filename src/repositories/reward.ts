@@ -144,9 +144,15 @@ class RewardRepositoryImpl {
         return null;
       }
       let existingHighHandRank = Number.MAX_SAFE_INTEGER;
-
       let existingRewardTracking;
+
+      const game = await Cache.getGame(
+        gameInput.gameCode,
+        false,
+        transactionManager
+      );
       if (gameTracking) {
+        existingHighHandRank = game.highHandRank;
       } else {
         if (input.rewardTrackingIds) {
           // right now, we handle only one reward
@@ -221,30 +227,31 @@ class RewardRepositoryImpl {
       }
 
       let winner = true;
-      const game = await Cache.getGame(
-        gameInput.gameCode,
-        false,
-        transactionManager
-      );
-      if (highHandRank > existingHighHandRank) {
+
+      if (existingHighHandRank != 0 && highHandRank > existingHighHandRank) {
         winner = false;
         logger.error(`Hand: ${hhCards} is not a high hand.`);
 
         // is this better high hand in that game?
         let gameHighHandRank = game.highHandRank;
         if (gameHighHandRank === 0) {
-          if (gameTracking) {
-            gameHighHandRank = await this.getGameHighHandWithoutReward(
-              game,
-              transactionManager
-            );
-          } else {
-            gameHighHandRank = await this.getGameHighHand(
-              game,
-              existingRewardTracking.reward.id,
-              transactionManager
-            );
-          }
+          gameHighHandRank = await this.getGameHighHand(
+            game,
+            existingRewardTracking.reward.id,
+            transactionManager
+          );
+          // if (gameTracking) {
+          //   gameHighHandRank = await this.getGameHighHandWithoutReward(
+          //     game,
+          //     transactionManager
+          //   );
+          // } else {
+          //   gameHighHandRank = await this.getGameHighHand(
+          //     game,
+          //     existingRewardTracking.reward.id,
+          //     transactionManager
+          //   );
+          // }
         }
 
         if (highHandRank > gameHighHandRank) {
@@ -298,7 +305,7 @@ class RewardRepositoryImpl {
           existingRewardTracking?.reward,
           transactionManager
         );
-        Cache.updateGameHighHand(game.gameCode, highHandRank);
+        await Cache.updateGameHighHand(game.gameCode, highHandRank);
       }
       return {
         rewardTrackingId: rewardTrackingId,
@@ -333,18 +340,16 @@ class RewardRepositoryImpl {
       logHighHandRepo = getGameRepository(HighHand);
     }
 
-    // reset previous winners
-    if (rewardTracking) {
-      logHighHandRepo.update(
-        {
-          rewardTracking: {id: rewardTracking.id},
-          rank: Not(rank),
-        },
-        {
-          winner: false,
-        }
-      );
-    }
+    await logHighHandRepo.update(
+      {
+        gameId: gameId,
+        rank: Not(rank),
+      },
+      {
+        winner: false,
+      }
+    );
+
     const player = new Player();
     player.id = playerId;
     const game = new PokerGame();
@@ -490,7 +495,7 @@ class RewardRepositoryImpl {
     }
 
     const gameHighHands = await highHandRepo.find({
-      where: {gameId: game.id, rewardId: rewardId},
+      where: {gameId: game.id},
       order: {handTime: 'DESC'},
       take: 1,
     });

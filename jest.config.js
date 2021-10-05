@@ -11,8 +11,8 @@ module.exports = {
   //   'src/**/*.{js,jsx,ts,tsx}',
   //   '!<rootDir>/node_modules/"',
   //   ],
-  //collectCoverage: true,
+  collectCoverage: true,
   coverageReporters: ["json", "html"],
-  coverageDirectory: 'cov',
+  coverageDirectory: 'cov-unit',
   testPathIgnorePatterns: ['/node_modules', '/tests'],
 };

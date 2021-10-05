@@ -27,8 +27,8 @@ module.exports = {
     '!src/botrunner/index.ts',
     // '!<rootDir>/node_modules/"',
   ],
-  // collectCoverage: true,
-  coverageDirectory: 'cov',
+  collectCoverage: true,
+  coverageDirectory: 'cov-int',
   coverageReporters: ["json", "html"],
 
   // testPathIgnorePatterns: ['/node_modules', '/unit-tests'],

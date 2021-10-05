@@ -1,5 +1,9 @@
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {PokerGame, PokerGameSeatInfo} from '@src/entity/game/game';
+import {
+  NextHandUpdates,
+  PokerGame,
+  PokerGameSeatInfo,
+} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {
   GameStatus,
@@ -671,6 +675,16 @@ export class SeatChangeProcess {
         // if the current player in seat tried to sit in the same seat, do nothing
         if (playerInSeat) {
           throw new Error('A player is in the seat');
+        }
+
+        // check whether there is another player waiting in the next hand update
+        const nextHandUpdatesRepo = getGameRepository(NextHandUpdates);
+        const prevUpdate = await nextHandUpdatesRepo.findOne({
+          game: {id: this.game.id},
+          newSeat: seatNo,
+        });
+        if (prevUpdate) {
+          throw new Error('A player has reserved the seat');
         }
 
         // is game running
