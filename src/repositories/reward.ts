@@ -150,7 +150,7 @@ class RewardRepositoryImpl {
         gameInput.gameCode,
         false,
         transactionManager
-      );      
+      );
       if (gameTracking) {
         existingHighHandRank = game.highHandRank;
       } else {
@@ -239,7 +239,7 @@ class RewardRepositoryImpl {
             game,
             existingRewardTracking.reward.id,
             transactionManager
-          );          
+          );
           // if (gameTracking) {
           //   gameHighHandRank = await this.getGameHighHandWithoutReward(
           //     game,
