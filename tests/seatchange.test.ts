@@ -189,7 +189,7 @@ describe('Tests: seat change APIs', () => {
     expect(resp6[0].playerUuid).toBe(player2);
   });
 
-  test('switch seat basic test', async () => {
+  test.skip('switch seat basic test', async () => {
     // Create club and owner
     const [ownerId, clubCode, players] = await createClubWithMembers([
       {
