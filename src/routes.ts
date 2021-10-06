@@ -126,6 +126,9 @@ export function addInternalRoutes(app: any) {
   app.post('/admin/post-process-games', GameAPI.aggregateGameData);
   app.post('/admin/set-max-games', GameServerAPI.setMaxGames);
   app.post('/admin/announcement', createAnnouncement);
+
+  // Yong: I added this endpoint to test how unhandled rejections behave.
+  app.get('/test/crashAsync', crashAsync);
 }
 
 // returns nats urls
@@ -150,4 +153,18 @@ async function readyCheck(req: any, resp: any) {
 async function livenessCheck(req: any, resp: any) {
   // TODO: detect zombie server due to typeorm transaction hanging, etc.
   resp.status(200).send(JSON.stringify({status: 'OK'}));
+}
+
+async function crashAsync(req: any, resp: any) {
+  try {
+    doCrashAsync();
+    resp.status(200).send(JSON.stringify({status: 'OK'}));
+  } catch (err) {
+    console.log(err.toString());
+    resp.status(500).send(JSON.stringify({error: err.toString()}));
+  }
+}
+
+async function doCrashAsync() {
+  throw new Error('Oops!');
 }

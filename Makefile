@@ -148,6 +148,12 @@ publish-apiserver:
 	docker push $(REGISTRY)/$(IMAGE_NAME):$(BUILD_NO)
 	docker push $(REGISTRY)/$(IMAGE_NAME):latest
 
+.PHONY: publish-apiserver-local
+publish-apiserver-local: export REGISTRY=$(GCP_REGISTRY)
+publish-apiserver-local:
+	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME):$(BUILD_NO)
+	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME):latest
+
 .PHONY: publish-3rdparty
 publish-3rdparty:
 	# publish 3rd-party images so that we don't have to pull from the docker hub

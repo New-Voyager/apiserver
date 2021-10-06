@@ -1,7 +1,22 @@
+// Run eslint manually using the command below:
+// npx eslint src/ --ext .ts --no-error-on-unmatched-pattern
+
 {
-  "extends": "./node_modules/gts/",
-  "ignorePatterns": ["./**/build/*.js"],
-  "env": {
-    "jest": true
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "parserOptions": {
+    "project": ["./tsconfig.json"],
+    "sourceType": "module"
+  },
+  "rules": {
+    // Checks for console.log statements.
+    "no-console": "error",
+
+    // Make sure all promises are properly handled (no unhandled rejections).
+    // This seems to take long.
+    "@typescript-eslint/no-floating-promises": "error"
   }
 }
