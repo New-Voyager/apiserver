@@ -429,9 +429,9 @@ export async function startGame(
         await new Promise(r => setTimeout(r, 1000));
         players = await PlayersInGameRepository.getPlayersInSeats(game.id);
 
-        if (players.length > humanPlayers) {
-          break;
-        }
+        // if (players.length > humanPlayers) {
+        //   break;
+        // }
 
         if (players.length !== game.maxPlayers) {
           logger.debug(
@@ -1109,6 +1109,7 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     const updates = await GameUpdatesRepository.get(game.gameCode);
     const settings = await GameSettingsRepository.get(game.gameCode);
     if (updates && settings) {
+      ret.waitlistAllowed = settings.waitlistAllowed;
       ret.useAgora = settings.useAgora;
       ret.audioConfEnabled = settings.audioConfEnabled;
       ret.rakeCollected = updates.rake;
@@ -2471,23 +2472,6 @@ const resolvers: any = {
         return playerState.gameToken;
       }
       return null;
-    },
-    playerGameStatus: async (parent, args, ctx, info) => {
-      const game = await Cache.getGame(parent.gameCode);
-      let playerState = ctx['playerState'];
-      if (!playerState) {
-        const player = await Cache.getPlayer(ctx.req.playerId);
-        // get player's game state
-        playerState = await PlayersInGameRepository.getGamePlayerState(
-          game,
-          player
-        );
-        ctx['playerState'] = playerState;
-      }
-      if (playerState) {
-        return PlayerStatus[playerState.playerStatus];
-      }
-      return PlayerStatus[PlayerStatus.NOT_PLAYING];
     },
     allPlayers: async (parent, args, ctx, info) => {
       const allPlayersInGame = GameRepository.getAllPlayersInGame(
