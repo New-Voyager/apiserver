@@ -444,21 +444,37 @@ class GameRepositoryImpl {
       const shouldExpireAt = new Date(
         game.startedAt.getTime() + 1000 * 60 * game.gameLength
       );
-      if (shouldExpireAt.getTime() > Date.now()) {
+      const now = Date.now();
+      if (shouldExpireAt.getTime() > now) {
+        // Still got time until expire.
         continue;
       }
+
       logger.info(
         `Scheduling to end expired game ${game.title} (${game.id}/${game.gameCode})`
       );
+
+      const minutesSinceExpired = (now - shouldExpireAt.getTime()) / 60_000;
+      const envKillLimit = parseInt(
+        process.env.RUNAWAY_GAME_KILL_THRESHOLD_MIN || ''
+      );
+      const killLimit = Number.isInteger(envKillLimit) ? envKillLimit : 10;
+
       if (
         game.status === GameStatus.ACTIVE &&
-        game.tableStatus === TableStatus.GAME_RUNNING
+        game.tableStatus === TableStatus.GAME_RUNNING &&
+        minutesSinceExpired < killLimit
       ) {
         // the game will be stopped in the next hand
         await NextHandUpdatesRepository.expireGameNextHand(game.id);
         const messageId = uuidv4();
         Nats.sendGameEndingMessage(game.gameCode, messageId);
       } else {
+        if (minutesSinceExpired >= killLimit) {
+          logger.info(
+            `Attempting to kill runaway game ${game.title} (${game.id}/${game.gameCode}). Minutes since expired: ${minutesSinceExpired}, kill threshold: ${killLimit} minutes.`
+          );
+        }
         await Cache.removeAllObservers(game.gameCode);
         await GameRepository.markGameEnded(game.id);
       }
