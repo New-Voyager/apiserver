@@ -2,6 +2,7 @@ import {GameServerAPI} from './internal/gameserver';
 import {HandServerAPI} from './internal/hand';
 import {GameAPI} from './internal/game';
 import {AdminAPI} from './internal/admin';
+import {UserAPI} from './internal/user';
 import {timerCallback} from './repositories/timer';
 import {
   buyBotCoins,
@@ -104,6 +105,11 @@ export function addInternalRoutes(app: any) {
   app.get(
     '/internal/next-hand-info/game_num/:gameCode',
     GameAPI.getNextHandInfo
+  );
+
+  app.get(
+    '/internal/get-encryption-key/playerId/:playerID',
+    UserAPI.getEncryptionKey
   );
 
   app.post(
