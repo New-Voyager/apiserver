@@ -35,6 +35,22 @@ export async function resetDatabase() {
   console.log(`Reset DB: ${resp.resetDB}`);
 }
 
+export async function runLivenessProbe() {
+  const url = `http://localhost:${INTERNAL_PORT}/internal/alive`;
+  try {
+    const start = Date.now()
+    const resp = await axios.get(url, {timeout: 3000});
+    const end = Date.now()
+    console.info(`Liveness probe took ${end - start} ms`);
+    if (resp.status != 200) {
+      throw new Error(`Received http status ${resp.status}`);
+    }
+  } catch (err) {
+    console.error(JSON.stringify(err));
+    expect(true).toBeFalsy();
+  }
+}
+
 export async function moveToNextHand(
   gameId: number,
   gameCode: string,

@@ -28,6 +28,9 @@ import {
   getAllPromotion,
 } from './admin';
 import {AdminRepository} from './repositories/admin';
+import {errToLogString, getLogger} from '@src/utils/log';
+
+const logger = getLogger('routes');
 
 export function addExternalRoutes(app: any) {
   app.post('/auth/login', login);
@@ -151,8 +154,13 @@ async function readyCheck(req: any, resp: any) {
 }
 
 async function livenessCheck(req: any, resp: any) {
-  // TODO: detect zombie server due to typeorm transaction hanging, etc.
-  resp.status(200).send(JSON.stringify({status: 'OK'}));
+  try {
+    await AdminRepository.checkDbTransaction();
+    resp.status(200).json({status: 'OK'});
+  } catch (err) {
+    logger.error(`DB transaction check failed: ${errToLogString(err, false)}`);
+    resp.status(500).json({error: errToLogString(err, false)});
+  }
 }
 
 async function crashAsync(req: any, resp: any) {
