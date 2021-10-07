@@ -33,6 +33,8 @@ import {errToLogString, getLogger} from '@src/utils/log';
 const logger = getLogger('routes');
 
 export function addExternalRoutes(app: any) {
+  app.get('/ready', readyCheck);
+  app.get('/alive', livenessCheck);
   app.post('/auth/login', login);
   app.post('/auth/new-login', newlogin);
   app.post('/auth/signup', signup);
