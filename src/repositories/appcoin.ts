@@ -48,7 +48,7 @@ class AppCoinRepositoryImpl {
           const existingTran = await coinTransactionRepo.findOne({
             receiptHash: receiptHash,
           });
-          if (existingTran !== null) {
+          if (existingTran) {
             // entry already found
             return true;
           }
