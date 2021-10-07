@@ -848,9 +848,9 @@ class GameRepositoryImpl {
     transactionEntityManager?: EntityManager
   ): Promise<void> {
     logger.info(
-      `[${
-        game.gameCode
-      }] Restarting game. Game status: ${game.status.toString()}`
+      `[${game.gameCode}] Restarting game. Game status: ${
+        GameStatus[game.status]
+      }`
     );
     if (game.status !== GameStatus.ACTIVE) {
       return;

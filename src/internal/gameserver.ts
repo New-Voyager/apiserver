@@ -280,27 +280,53 @@ export async function createGameServer(
 }
 
 async function restartGameServerGames(
-  gameServer: any
+  gameServer: GameServer
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<void> {
   const games: Array<PokerGame> = await GameServerRepository.getGamesForGameServer(
     gameServer.url
   );
   for (const game of games) {
-    logger.info(
-      `Restarting game ${game.title} (id: ${game.id}, code: ${game.gameCode}) in game server ID: ${gameServer.id} url: ${gameServer.url}`
-    );
-    try {
-      await publishNewGame(game, gameServer, true);
-      logger.info(
-        `Successfully restarted game ${game.title} (id: ${game.id}, code: ${game.gameCode})`
+    restartGame(game, gameServer).catch(reason => {
+      logger.error(
+        `Failed to restart game ${game.id}/${game.gameCode} on game server ${
+          gameServer.url
+        }: ${reason.toString()}`
       );
+    });
+  }
+}
+
+async function restartGame(game: PokerGame, gameServer: any): Promise<void> {
+  const maxAttempts = 5;
+  logger.info(
+    `Restarting game ${game.id}/${game.gameCode} in game server ID: ${gameServer.id} url: ${gameServer.url}`
+  );
+  for (let i = 1; i <= maxAttempts; i++) {
+    try {
+      if (i > 1) {
+        logger.info(
+          `Restarting game ${game.id}/${game.gameCode}...(${i}/${maxAttempts})`
+        );
+        await delay(getRandomNum(1000, 3000));
+      }
+      await publishNewGame(game, gameServer, true);
+      logger.info(`Successfully restarted game ${game.id}/${game.gameCode}`);
+      return;
     } catch (err) {
       logger.error(
-        `Error while restarting game ${game.title} (id: ${game.id}, code: ${game.gameCode}): ${err.message}`
+        `Error while restarting game ${game.id}/${game.gameCode}: ${err.message}`
       );
     }
   }
+}
+
+function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function getRandomNum(min: number, max: number) {
+  return Math.round(Math.random() * (max - min) + min);
 }
 
 export async function editGameServer(gameServerPayload: any) {
