@@ -7,6 +7,7 @@ import {getRunProfile, getRunProfileStr, RunProfile} from '@src/server';
 import {Club} from '@src/entity/player/club';
 import {default as axios} from 'axios';
 import {GoogleAuth} from 'google-auth-library';
+import {threadId} from 'worker_threads';
 
 //import {default as google} from 'googleapis';
 
@@ -22,6 +23,15 @@ const FETCH_INTERVAL = 1; // fetch every 60 minutes
 export interface IapProduct {
   productId: string;
   coins: number;
+}
+
+export interface AppInfo {
+  help: string;
+  toc: string;
+  tocUpdatedDate: Date;
+  privacyPolicy: string;
+  privacyPolicyUpdatedDate: Date;
+  attributions: string;
 }
 
 export interface Asset {
@@ -44,6 +54,14 @@ class FirebaseClass {
   private productsFetchTime: Date | undefined = undefined;
   private iapProducts = new Array<IapProduct>();
   private assets = new Array<Asset>();
+  private appInfo: AppInfo = {
+    help: 'Help is not available',
+    toc: 'Toc is not available',
+    privacyPolicy: 'Privacy policy is not available',
+    attributions: 'Attributions is not available',
+    tocUpdatedDate: new Date(Date.now()),
+    privacyPolicyUpdatedDate: new Date(Date.now()),
+  };
 
   constructor() {}
 
@@ -54,6 +72,10 @@ class FirebaseClass {
     });
     const authClient = await auth.getClient();
     return auth.getAccessToken();
+  }
+
+  public getAppInfo(): AppInfo {
+    return this.appInfo;
   }
 
   public async init() {
@@ -79,6 +101,7 @@ class FirebaseClass {
     this.serviceAccountFile = serviceAccountFile;
 
     if (runProfile == RunProfile.DEV || runProfile == RunProfile.PROD) {
+      await this.fetchFromFirebase();
       this.firebaseInitialized = true;
     }
     logger.info('Firebase is initialized');
@@ -331,6 +354,7 @@ class FirebaseClass {
       if (fetch) {
         await this.fetchAssets();
         await this.fetchIapProducts();
+        await this.fetchAppInfo();
         this.productsFetchTime = new Date();
       }
     } catch (err) {
@@ -364,6 +388,9 @@ class FirebaseClass {
         const soundLink = d.get('sound_link');
         let previewLink = d.get('preview_link');
         let updatedDate = d.get('updated_date');
+        if (updatedDate) {
+          updatedDate = updatedDate.toDate();
+        }
 
         if (!size) {
           size = 0;
@@ -430,6 +457,37 @@ class FirebaseClass {
       );
     }
     return this.iapProducts;
+  }
+
+  public async fetchAppInfo() {
+    try {
+      const query = await this.app?.firestore().collection('info');
+      const docs = await query?.listDocuments();
+      if (!docs) {
+        throw new Error('Could not get app info');
+      }
+      for (const doc of docs) {
+        const d = await doc.get();
+        const id = d.id;
+        if (id === 'attributions') {
+          this.appInfo.attributions = d.get('content');
+        } else if (id === 'toc') {
+          this.appInfo.toc = d.get('content');
+          this.appInfo.tocUpdatedDate = d.get('updated_date').toDate();
+        } else if (id === 'privacy_policy') {
+          this.appInfo.privacyPolicy = d.get('content');
+          this.appInfo.privacyPolicyUpdatedDate = d
+            .get('updated_date')
+            .toDate();
+        } else if (id === 'help') {
+          this.appInfo.help = d.get('content');
+        }
+      }
+    } catch (err) {
+      logger.error(
+        `Could not get products from the firestore. ${err.toString()}`
+      );
+    }
   }
 
   public async getAvailableProducts(): Promise<Array<IapProduct>> {

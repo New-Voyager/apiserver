@@ -41,6 +41,7 @@ export function addExternalRoutes(app: any) {
 
   app.get('/nats-urls', natsUrls);
   app.get('/assets', getAssets);
+  app.get('/app-info', getAppInfo);
 
   app.get('/bot-script/game-code/:gameCode/hand/:handNum', generateBotScript);
   app.get(
@@ -147,6 +148,12 @@ async function natsUrls(req: any, resp: any) {
 async function getAssets(req: any, resp: any) {
   const assets = await Firebase.getAllAssets();
   resp.status(200).send(JSON.stringify({assets: assets}));
+}
+
+// returns app information from the firebase
+async function getAppInfo(req: any, resp: any) {
+  const appInfo = await Firebase.getAppInfo();
+  resp.status(200).send(JSON.stringify(appInfo));
 }
 
 async function readyCheck(req: any, resp: any) {
