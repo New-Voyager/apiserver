@@ -252,7 +252,7 @@ class MoveToNextHand {
       logger.debug(
         `Seat: ${player.seatNo} Player: ${player.playerName} inhand: ${
           player.inHandNextHand
-        } status: ${player.status.toString()} missedBlind: ${
+        } status: ${PlayerStatus[player.status]} missedBlind: ${
           player.missedBlind
         } postedBlind: ${player.postedBlind}`
       );
