@@ -1,14 +1,118 @@
-import {getHistoryConnection, getHistoryManager, getHistoryRepository} from '.';
+import {
+  getGameManager,
+  getHistoryConnection,
+  getHistoryManager,
+  getHistoryRepository,
+  getUserManager,
+} from '.';
 import {GameHistory} from '@src/entity/history/game';
-import {PlayerGameStats} from '@src/entity/history/stats';
-import {HandHistory} from '@src/entity/history/hand';
+import {
+  ClubStats,
+  PlayerGameStats,
+  PlayerHandStats,
+} from '@src/entity/history/stats';
+import {HandHistory, HighHandHistory} from '@src/entity/history/hand';
 import {errToLogString, getLogger} from '@src/utils/log';
 import {performance} from 'perf_hooks';
+import {PlayersInGame} from '@src/entity/history/player';
+import {
+  GameReward,
+  GameRewardTracking,
+  HighHand,
+} from '@src/entity/game/reward';
+import {GameServer} from '@src/entity/game/gameserver';
+import {
+  HostSeatChangeProcess,
+  PlayerSeatChangeProcess,
+} from '@src/entity/game/seatchange';
+import {
+  NextHandUpdates,
+  PokerGame,
+  PokerGameSeatInfo,
+  PokerGameSettings,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
+import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
+import {Announcement} from '@src/entity/player/announcements';
+import {ChatText} from '@src/entity/player/chat';
+import {Club, ClubMember, ClubMemberStat} from '@src/entity/player/club';
+import {
+  ClubHostMessages,
+  ClubMessageInput,
+} from '@src/entity/player/clubmessage';
+import {
+  CoinConsumeTransaction,
+  CoinPurchaseTransaction,
+  PlayerCoin,
+} from '@src/entity/player/appcoin';
+import {Player, PlayerNotes, SavedHands} from '@src/entity/player/player';
+import {Promotion} from '@src/entity/player/promotion';
+import {PromotionConsumed} from '@src/entity/player/promotion_consumed';
+import {Reward} from '@src/entity/player/reward';
 
 const logger = getLogger('repositories::admin');
 
 class AdminRepositoryImpl {
   constructor() {}
+
+  public async checkDbTransaction() {
+    await getHistoryManager().transaction(async txnMgr => {
+      const historyEntities = [
+        ClubStats,
+        GameHistory,
+        HandHistory,
+        HighHandHistory,
+        PlayerGameStats,
+        PlayerHandStats,
+        PlayersInGame,
+      ];
+      for (const e of historyEntities) {
+        await txnMgr.getRepository(e).find({take: 1});
+      }
+    });
+    await getGameManager().transaction(async txnMgr => {
+      const gameEntities = [
+        GameReward,
+        GameRewardTracking,
+        GameServer,
+        HighHand,
+        HostSeatChangeProcess,
+        NextHandUpdates,
+        PlayerGameTracker,
+        PlayerSeatChangeProcess,
+        PokerGame,
+        PokerGameSeatInfo,
+        PokerGameSettings,
+        PokerGameUpdates,
+      ];
+      for (const e of gameEntities) {
+        await txnMgr.getRepository(e).find({take: 1});
+      }
+    });
+    await getUserManager().transaction(async txnMgr => {
+      const userEntities = [
+        Announcement,
+        ChatText,
+        Club,
+        ClubHostMessages,
+        ClubMember,
+        ClubMemberStat,
+        ClubMessageInput,
+        CoinConsumeTransaction,
+        CoinPurchaseTransaction,
+        Player,
+        PlayerCoin,
+        PlayerNotes,
+        Promotion,
+        PromotionConsumed,
+        Reward,
+        SavedHands,
+      ];
+      for (const e of userEntities) {
+        await txnMgr.getRepository(e).find({take: 1});
+      }
+    });
+  }
 
   public async postProcessGames(req: any, resp: any) {
     const processedGameIds: Array<number> = [];
