@@ -15,7 +15,11 @@ export async function sendRecoveryCode(
     from = 'contact.poker.clubapp@gmail.com';
   }
   const body = `Recovery code to recover/transfer your pokerclub account: ${code}`;
-  sendEmail(to, from, 'Recovery code', body);
+  sendEmail(to, from, 'Recovery code', body).catch(err => {
+    logger.error(
+      `Sending recovery code email failed. Error: ${err.toString()}`
+    );
+  });
 }
 
 // async..await is not allowed in global scope, must use a wrapper
