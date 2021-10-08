@@ -8,6 +8,7 @@ import {Club} from '@src/entity/player/club';
 import {default as axios} from 'axios';
 import {GoogleAuth} from 'google-auth-library';
 import {threadId} from 'worker_threads';
+import {GameType} from '@src/entity/types';
 
 //import {default as google} from 'googleapis';
 
@@ -224,6 +225,34 @@ class FirebaseClass {
           type: 'MEMBER_DENIED',
         },
         token: requestingPlayer.firebaseToken,
+      };
+      const ret = await firebase.messaging().send(message, false);
+      logger.info(`message id: ${ret}`);
+    }
+  }
+
+  public async sendWaitlistNotification(
+    messageId: string,
+    game: PokerGame,
+    player: Player,
+    expTime: Date
+  ) {
+    if (!this.firebaseInitialized) {
+      return;
+    }
+    if (player.firebaseToken !== null && player.firebaseToken.length > 0) {
+      const message: firebase.messaging.TokenMessage = {
+        data: {
+          type: 'WAITLIST_SEATING',
+          gameCode: game.gameCode,
+          gameType: GameType[game.gameType],
+          smallBlind: game.smallBlind.toString(),
+          bigBlind: game.bigBlind.toString(),
+          waitlistPlayerId: player.id.toString(),
+          expTime: expTime.toISOString(),
+          requestId: messageId,
+        },
+        token: player.firebaseToken,
       };
       const ret = await firebase.messaging().send(message, false);
       logger.info(`message id: ${ret}`);
