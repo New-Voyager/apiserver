@@ -1,5 +1,4 @@
 import fileUpload from 'express-fileupload';
-import * as del from 'del';
 import {GameServerAPI} from './internal/gameserver';
 import {HandServerAPI} from './internal/hand';
 import {GameAPI} from './internal/game';
@@ -68,7 +67,6 @@ export function addExternalRoutes(app: any) {
 
   app.post('/upload', function (req, res) {
     let file;
-    let uploadPath;
 
     if (!req.files || Object.keys(req.files).length === 0) {
       return res.status(400).send('No files were uploaded.');
