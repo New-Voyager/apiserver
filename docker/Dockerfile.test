@@ -6,4 +6,5 @@ WORKDIR /app
 COPY yarn.lock .yarnclean package.json package-lock.json ./
 RUN yarn install 
 COPY . .
+ENV NODE_OPTIONS=--max-old-space-size=2048
 RUN yarn compile 

@@ -200,6 +200,7 @@ docker-unit-tests: create-network
 		-e REDIS_HOST=redis \
 		-e REDIS_PORT=6379 \
 		-e REDIS_DB=0 \
+		-e NODE_OPTIONS=--max-old-space-size=2048 \
 		$(TEST_IMAGE_NAME) sh -c "yarn unit-tests"
 
 
