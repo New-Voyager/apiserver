@@ -4,7 +4,10 @@ import {merge} from 'lodash';
 import {authorize} from '@src/middlewares/authorization';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
-import {ApolloServerPluginLandingPageGraphQLPlayground} from 'apollo-server-core';
+import {
+  ApolloServerPluginLandingPageGraphQLPlayground,
+  ApolloServerPluginLandingPageDisabled,
+} from 'apollo-server-core';
 
 import bodyParser from 'body-parser';
 const GQL_PORT = 9501;
@@ -102,9 +105,11 @@ export function getApolloServer(options?: {intTest?: boolean}): ApolloServer {
     resolvers,
     context: requestContext,
     plugins: [
-      ApolloServerPluginLandingPageGraphQLPlayground({
-        // options
-      }),
+      process.env.NODE_ENV === 'prod'
+        ? ApolloServerPluginLandingPageDisabled()
+        : ApolloServerPluginLandingPageGraphQLPlayground({
+            // options
+          }),
     ],
   });
   return server;
@@ -116,6 +121,7 @@ export async function start(
 ): Promise<[any, any, any]> {
   logger.debug('In start method');
 
+  logger.info(`NODE_ENV: ${process.env.NODE_ENV}`);
   logger.info(`NATS_URL: ${process.env.NATS_URL}`);
   logger.info(`EXTERNAL_NATS_URL: ${process.env.EXTERNAL_NATS_URL}`);
   if (!process.env.NATS_URL) {
