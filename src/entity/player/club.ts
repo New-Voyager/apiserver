@@ -66,6 +66,12 @@ export class Club {
 
   @Column({name: 'firebase_notification_key', nullable: true})
   public firebaseNotificationKey!: string;
+
+  @Column({name: 'pic_url', default: ''})
+  public picUrl!: string;
+
+  @Column({name: 'show_highrank_stats', default: true})
+  public showHighRankStats!: boolean;
 }
 
 @Entity({name: 'club_member'})

@@ -23,6 +23,7 @@ input ClubCreateInput {
 input ClubUpdateInput {
   name: String
   description: String
+  showHighRankStats: Boolean
 }
 
 input ClubMemberUpdateInput {
