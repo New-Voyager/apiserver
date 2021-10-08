@@ -429,6 +429,8 @@ class PlayerRepositoryImpl {
       throw err;
     }
   }
+
+  public async updatePic(playerId: string, url: string) {}
 }
 
 export const PlayerRepository = new PlayerRepositoryImpl();

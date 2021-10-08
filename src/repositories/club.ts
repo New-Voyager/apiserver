@@ -39,6 +39,7 @@ export interface ClubCreateInput {
 export interface ClubUpdateInput {
   name: string;
   description: string;
+  showHighRankStats: boolean;
 }
 
 export interface ClubMemberUpdateInput {
@@ -158,6 +159,9 @@ class ClubRepositoryImpl {
     }
     if (input.name) {
       club.name = input.name;
+    }
+    if (input.showHighRankStats !== undefined) {
+      club.showHighRankStats = input.showHighRankStats;
     }
     clubRepository.save(club);
     return true;
@@ -692,7 +696,7 @@ class ClubRepositoryImpl {
       WHERE cm.club_id in (SELECT club_id FROM club_member WHERE player_id=?)
                  GROUP BY cm.club_id)
       SELECT c.club_code as "clubCode", member_count as "memberCount", c.name, p.name as "host", c.owner_id as "ownerId",
-          cm.status as "memberStatus", c.status, cm.balance balance
+          cm.status as "memberStatus", c.status, c.pic_url as "picUrl", cm.balance balance
       FROM club c JOIN my_clubs mc ON c.id = mc.club_id
       JOIN club_member cm ON cm.club_id = c.id AND cm.player_id=?
       JOIN player p ON p.id = c.owner_id`);
@@ -875,6 +879,18 @@ class ClubRepositoryImpl {
       })
       .execute();
     return resp.map(x => x.clubId);
+  }
+
+  public async updatePic(clubCode: string, url: string) {
+    const clubRepo = getUserRepository(Club);
+    const resp = await clubRepo.update(
+      {
+        clubCode: clubCode,
+      },
+      {
+        picUrl: url,
+      }
+    );
   }
 }
 

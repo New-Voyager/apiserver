@@ -68,6 +68,7 @@ export interface getPlayerClubsData {
   memberStatus: number;
   status: number;
   balance: number;
+  picUrl: string;
 }
 
 export interface getClubGamesData {

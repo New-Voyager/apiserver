@@ -19,6 +19,7 @@ import {Firebase, getAppSettings} from './firebase';
 import {Nats} from './nats';
 import {initializeRedis} from './cache';
 import {addExternalRoutes, addInternalRoutes} from './routes';
+import {DigitalOcean} from './digitalocean';
 export enum RunProfile {
   DEV,
   TEST,
@@ -176,8 +177,11 @@ export async function start(
 
   initializeRedis();
   initializeGameServer();
-  if (initializeFirebase && runProfile != RunProfile.INT_TEST) {
-    await Firebase.init();
+  if (runProfile != RunProfile.INT_TEST) {
+    if (initializeFirebase) {
+      await Firebase.init();
+    }
+    DigitalOcean.initialize();
   }
 
   // get config vars

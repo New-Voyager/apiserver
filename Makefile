@@ -194,13 +194,15 @@ stop-nats:
 
 .PHONY: docker-unit-tests
 docker-unit-tests: create-network
-	docker run -t --rm \
-		--name $(IMAGE_NAME) \
-		--network $(DEFAULT_DOCKER_NET) \
-		-e REDIS_HOST=redis \
-		-e REDIS_PORT=6379 \
-		-e REDIS_DB=0 \
-		$(TEST_IMAGE_NAME) sh -c "yarn unit-tests"
+	echo 'Unit test is disabled'
+	# docker run -t --rm \
+	# 	--name $(IMAGE_NAME) \
+	# 	--network $(DEFAULT_DOCKER_NET) \
+	# 	-e REDIS_HOST=redis \
+	# 	-e REDIS_PORT=6379 \
+	# 	-e REDIS_DB=0 \
+	# 	-e NODE_OPTIONS=--max-old-space-size=2048 \
+	# 	$(TEST_IMAGE_NAME) sh -c "yarn unit-tests"
 
 
 .PHONY: docker-script-tests

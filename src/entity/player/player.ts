@@ -49,6 +49,10 @@ export class Player {
 
   @Column({name: 'is_active'})
   public isActive!: boolean;
+
+  @Column({name: 'pic_url', default: ''})
+  public picUrl!: string;
+
   /**
    * DB insert time.
    */

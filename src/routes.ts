@@ -1,3 +1,4 @@
+import fileUpload from 'express-fileupload';
 import {GameServerAPI} from './internal/gameserver';
 import {HandServerAPI} from './internal/hand';
 import {GameAPI} from './internal/game';
@@ -30,6 +31,10 @@ import {
 } from './admin';
 import {AdminRepository} from './repositories/admin';
 import {errToLogString, getLogger} from '@src/utils/log';
+import {DigitalOcean} from './digitalocean';
+import express, {response} from 'express';
+import {PlayerRepository} from './repositories/player';
+import {ClubRepository} from './repositories/club';
 
 const logger = getLogger('routes');
 
@@ -57,6 +62,64 @@ export function addExternalRoutes(app: any) {
   app.post('/bot-script/server-settings', setServerSettings);
   app.post('/bot-script/reset-server-settings', resetServerSettings);
   app.post('/bot-script/buy-bot-coins', buyBotCoins);
+
+  // upload endpoints
+  app.use(fileUpload());
+  app.use(express.urlencoded({extended: true}));
+
+  app.post('/upload', uploadPic);
+}
+
+function uploadPic(req: any, res: any) {
+  let file;
+
+  if (!req.files || Object.keys(req.files).length === 0) {
+    return res.status(400).send('No files were uploaded.');
+  }
+
+  // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
+  file = req.files.file;
+  const playerId = req.body.playerId;
+  const clubCode = req.body.clubCode;
+  // upload this file to digital ocean
+  try {
+    if (playerId) {
+      return DigitalOcean.uploadPlayerPic(playerId, file.data)
+        .then(v => {
+          const url = v;
+          PlayerRepository.updatePic(playerId, url)
+            .then(v => {
+              // update url
+              return res.status(200).send({status: 'OK', url: url});
+            })
+            .catch(err => {
+              return res.status(400).send('Failed to update picture.');
+            });
+        })
+        .catch(v => {
+          return res.status(400).send('Failed to update picture.');
+        });
+    } else if (clubCode) {
+      return DigitalOcean.uploadClubPic(clubCode, file.data)
+        .then(v => {
+          const url = v;
+          ClubRepository.updatePic(clubCode, url)
+            .then(v => {
+              // update url
+              return res.status(200).send({status: 'OK', url: url});
+            })
+            .catch(err => {
+              return res.status(400).send('Failed to update picture.');
+            });
+        })
+        .catch(v => {
+          return res.status(400).send('Failed to update picture.');
+        });
+    }
+    res.status(400).send('Invalid request.');
+  } catch (err) {
+    return res.status(400).send('Failed to update picture.');
+  }
 }
 
 export function addInternalRoutes(app: any) {
