@@ -154,17 +154,17 @@ export async function createClub(playerId: string, club: ClubCreateInput) {
 export async function updateClub(
   playerId: string,
   clubCode: string,
-  club: any
+  clubUpdateInput: any
 ) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
 
   const errors = new Array<string>();
-  if (club.name && club.name === '') {
+  if (clubUpdateInput.name && clubUpdateInput.name === '') {
     errors.push('name is a required field');
   }
-  if (club.description && club.description === '') {
+  if (clubUpdateInput.description && clubUpdateInput.description === '') {
     errors.push('description is a required field');
   }
   if (errors.length > 0) {
@@ -186,8 +186,8 @@ export async function updateClub(
         `Unauthorized. ${playerId} is not the owner of the club ${clubCode}, ${a}`
       );
     }
-    const input = club as ClubUpdateInput;
-    return ClubRepository.updateClub(clubCode, input);
+    // const input = club as ClubUpdateInput;
+    return ClubRepository.updateClub(clubCode, clubUpdateInput);
   } catch (err) {
     logger.error(err);
     throw err;

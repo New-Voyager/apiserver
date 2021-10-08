@@ -7,6 +7,7 @@ import * as fs from 'fs';
 let apiKey = 'ODVR77D5X55UB3JVZUHU';
 let apiSecret = 'HXF/WPIpuLOVuziKvVnFvWPCqKBzP/jAb+v1nUqCicQ';
 let spaceName = 'assets-pokerclubapp';
+let assetsUrl = 'https://assets-pokerclubapp.nyc3.digitaloceanspaces.com/';
 
 class DigitalOceanImpl {
   private s3: AWS.S3 | null;
@@ -42,7 +43,7 @@ class DigitalOceanImpl {
     return resp
       .promise()
       .then(data => {
-        return path;
+        return assetsUrl + path;
       })
       .catch(err => {
         throw new Error(`Failed to update player pic`);
@@ -67,7 +68,7 @@ class DigitalOceanImpl {
     return resp
       .promise()
       .then(data => {
-        return path;
+        return assetsUrl + path;
       })
       .catch(err => {
         throw new Error('Failed to update club pic');

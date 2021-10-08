@@ -45,6 +45,7 @@ async function getClubs(playerId: string): Promise<Array<any>> {
 
     return {
       name: x.name,
+      picUrl: x.picUrl,
       private: true,
       imageId: '',
       isOwner: isOwner,
@@ -356,6 +357,8 @@ export async function getClubPlayerInfo(playerId: string, clubCode: string) {
 
   return {
     name: clubMember.club.name,
+    description: clubMember.club.description,
+    picUrl: clubMember.club.picUrl,
     myBalance: clubMember.balance,
     joinedAt: clubMember.joinedDate,
     // gamesPlayed: clubMember.totalGames,
@@ -363,6 +366,7 @@ export async function getClubPlayerInfo(playerId: string, clubCode: string) {
     isOwner: clubMember.isOwner,
     status: ClubMemberStatus[clubMember.status],
     clubCode: clubCode,
+    showHighRankStats: clubMember.club.showHighRankStats,
   };
 }
 
