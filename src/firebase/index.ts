@@ -121,8 +121,15 @@ class FirebaseClass {
       token: playerToken,
     };
 
-    const ret = await this.app.messaging().send(message, false);
-    logger.info(`message id: ${ret}`);
+    this.app
+      .messaging()
+      .send(message, false)
+      .then(e => {
+        logger.info('Message id: ${ret}');
+      })
+      .catch(e => {
+        logger.error(`Sending message failed`);
+      });
   }
 
   public async sendTestMessage(playerToken: string, data: any) {

@@ -3,6 +3,7 @@ import {Firebase} from '@src/firebase';
 import {Nats} from '@src/nats';
 import {PlayerRepository} from '@src/repositories/player';
 import {v4 as uuidv4} from 'uuid';
+import {loggers} from 'winston';
 
 async function sendTestMessage(playerId: string) {
   const player = await PlayerRepository.getPlayerById(playerId);
@@ -35,7 +36,9 @@ async function sendTestNotification(playerId: string) {
     name: player.name,
     requestId: messageId,
   };
-  Firebase.sendMessage(player.firebaseToken, message);
+  Firebase.sendMessage(player.firebaseToken, message).catch(err => {
+    // ignore the error
+  });
   Nats.sendTestMessage(player, message);
 }
 
