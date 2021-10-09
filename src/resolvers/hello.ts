@@ -1,8 +1,8 @@
 import {sendRecoveryCode} from '@src/email';
 import {Firebase} from '@src/firebase';
-import {JanusSession} from '@src/janus';
-import {ClubRepository} from '@src/repositories/club';
+import {Nats} from '@src/nats';
 import {PlayerRepository} from '@src/repositories/player';
+import {v4 as uuidv4} from 'uuid';
 
 async function sendTestMessage(playerId: string) {
   const player = await PlayerRepository.getPlayerById(playerId);
@@ -23,6 +23,22 @@ async function sendTestEmail(playerId: string) {
   sendRecoveryCode('soma.voyager@gmail.com', undefined, '123456');
 }
 
+async function sendTestNotification(playerId: string) {
+  const player = await PlayerRepository.getPlayerById(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} is not found`);
+  }
+  const messageId = uuidv4();
+  let message = {
+    type: 'TEST_PUSH',
+    playerId: playerId,
+    name: player.name,
+    requestId: messageId,
+  };
+  Firebase.sendMessage(player.firebaseToken, message);
+  Nats.sendTestMessage(player, message);
+}
+
 const resolvers: any = {
   Query: {
     hello: async (parent, args, ctx, info) => {
@@ -34,6 +50,9 @@ const resolvers: any = {
   Mutation: {
     sendTestEmail: async (parent, args, ctx, info) => {
       sendTestEmail(ctx.req.playerId);
+    },
+    sendTestNotification: async (parent, args, ctx, info) => {
+      sendTestNotification(ctx.req.playerId);
     },
     sendTestMessage: async (parent, args, ctx, info) => {
       sendTestMessage(ctx.req.playerId);

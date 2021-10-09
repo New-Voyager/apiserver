@@ -125,6 +125,23 @@ class FirebaseClass {
     logger.info(`message id: ${ret}`);
   }
 
+  public async sendTestMessage(playerToken: string, data: any) {
+    if (!this.firebaseInitialized) {
+      return;
+    }
+    if (!this.app) {
+      return;
+    }
+
+    const message: firebase.messaging.TokenMessage = {
+      data: data,
+      token: playerToken,
+    };
+
+    const ret = await this.app.messaging().send(message, false);
+    logger.info(`message id: ${ret}`);
+  }
+
   public async notifyBuyInRequest(
     game: PokerGame,
     requestingPlayer: Player,
