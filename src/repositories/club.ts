@@ -157,8 +157,8 @@ class ClubRepositoryImpl {
     if (input.name) {
       club.name = input.name;
     }
-    if (input.name) {
-      club.name = input.name;
+    if (input.description) {
+      club.description = input.description;
     }
     if (input.showHighRankStats !== undefined) {
       club.showHighRankStats = input.showHighRankStats;
