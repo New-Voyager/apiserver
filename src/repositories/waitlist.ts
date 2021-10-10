@@ -14,6 +14,7 @@ import {v4 as uuidv4} from 'uuid';
 import {Nats} from '@src/nats';
 import {WaitlistSeatError} from '@src/errors';
 import {getGameConnection, getGameManager, getGameRepository} from '.';
+import {Firebase} from '@src/firebase';
 
 const logger = getLogger('repositories::waitlist');
 
@@ -332,6 +333,16 @@ export class WaitListMgmt {
       waitingListTimeExp,
       messageId
     );
+    Firebase.sendWaitlistNotification(
+      messageId,
+      game,
+      player,
+      waitingListTimeExp
+    ).catch(err => {
+      logger.error(
+        `Error sending waiting list notification. Game: ${game.gameCode} Player: ${player.name}`
+      );
+    });
   }
 
   public async addToWaitingList(playerUuid: string) {
