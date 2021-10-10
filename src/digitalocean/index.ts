@@ -57,7 +57,9 @@ class DigitalOceanImpl {
     if (this.s3 === null) {
       throw new Error('Upload object is not initialized');
     }
-    const path = `dev/clubs/${clubCode}.jpeg`;
+    const now = Date.now();
+    const nowInMins = Math.ceil(now / (60 * 1000));
+    const path = `dev/clubs/${clubCode}-${nowInMins}.jpeg`;
     //const data = fs.readFileSync(fileName);
     const resp = this.s3.putObject({
       Bucket: spaceName,
