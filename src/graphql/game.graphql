@@ -554,7 +554,7 @@ type Mutation {
   endGame(gameCode: String!): GameStatus!
   resumeGame(gameCode: String!): GameStatus!
   kickOut(gameCode: String!, playerUuid: String!): Boolean!
-  setBuyInLimit(gameCode: String!, playerUuid: String!, limit: Float!): Boolean!
+  setBuyInLimit(gameCode: String!, playerUuid: String, playerId: Int, limit: Float!): Boolean!
   addToWaitingList(gameCode: String!): Boolean!
   removeFromWaitingList(gameCode: String!, playerUuid: String): Boolean!
   applyWaitlistOrder(gameCode: String!, playerUuid: [String!]): Boolean!

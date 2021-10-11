@@ -1465,6 +1465,7 @@ export async function setBuyInLimit(
   requestUser: string,
   gameCode: string,
   targetPlayerUuid: string,
+  targetPlayerId: number,
   limit: number
 ): Promise<boolean> {
   if (!requestUser) {
@@ -1486,7 +1487,17 @@ export async function setBuyInLimit(
       );
     }
 
-    const player = await Cache.getPlayer(targetPlayerUuid);
+    let player: Player | undefined;
+    if (targetPlayerUuid) {
+      player = await Cache.getPlayer(targetPlayerUuid);
+    } else if (targetPlayerId) {
+      player = await Cache.getPlayerById(targetPlayerId);
+    }
+    if (!player) {
+      throw new Error(
+        `Player ${targetPlayerUuid}:${targetPlayerId} is missing`
+      );
+    }
     await PlayersInGameRepository.setBuyInLimit(gameCode, player, limit);
     return true;
   } catch (err) {
@@ -2579,6 +2590,7 @@ const resolvers: any = {
         ctx.req.playerId,
         args.gameCode,
         args.playerUuid,
+        args.playerId,
         args.limit
       );
     },
