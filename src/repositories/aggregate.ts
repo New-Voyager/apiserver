@@ -51,8 +51,15 @@ class AggregationImpl {
   }
 
   public async postProcessGames(): Promise<any> {
-    const repo = getHistoryRepository(GameHistory);
+    const envAbortThreshold = parseInt(
+      process.env.POST_PROCESSING_ABORT_THRESHOLD_SEC || ''
+    );
+    const abortThresholdSec = Number.isInteger(envAbortThreshold)
+      ? envAbortThreshold
+      : 30;
+    const totalStart = Date.now();
 
+    const repo = getHistoryRepository(GameHistory);
     // process 10 games in a batch
     const allGames = await repo.find({
       where: {
@@ -67,6 +74,7 @@ class AggregationImpl {
     }
     let processedGameIds: Array<number> = [];
     for (let gameIdx = 0; gameIdx < processCount; gameIdx++) {
+      const gameStart = Date.now();
       const game = allGames[gameIdx];
       logger.info(
         `Aggregating game results for game: ${game.gameId}:${game.gameCode}`
@@ -219,11 +227,26 @@ class AggregationImpl {
           processedGameIds.push(game.gameId);
         }
       );
+      const gameEnd = Date.now();
       logger.info(
-        `Game results for game aggregated: ${game.gameId}:${game.gameCode}`
+        `Game results for game aggregated: ${game.gameId}:${
+          game.gameCode
+        }. Time taken: ${gameEnd - gameStart} ms.`
       );
+
+      // How much time have we spent so far.
+      const totalElapsedMillis = Date.now() - totalStart;
+      const abortThresholdMillis = abortThresholdSec * 1000;
+      if (totalElapsedMillis > abortThresholdMillis) {
+        if (processedGameIds.length < processCount) {
+          logger.info(
+            `Aggregation aborting batch due to elapsed time (${totalElapsedMillis} ms) > abort threshold (${abortThresholdMillis} ms). ${processedGameIds.length} out of ${processCount} games are processed.`
+          );
+        }
+        break;
+      }
     }
-    let more = allGames.length == BATCH_SIZE + 1;
+    const more = allGames.length > processedGameIds.length;
 
     return {
       more: more,
