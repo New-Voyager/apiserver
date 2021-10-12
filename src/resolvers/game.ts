@@ -48,6 +48,7 @@ import {GameSettingsRepository} from '@src/repositories/gamesettings';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
 import {GameUpdatesRepository} from '@src/repositories/gameupdates';
 import {NextHandUpdatesRepository} from '@src/repositories/nexthand_update';
+import {Metrics} from '@src/internal/metrics';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -76,6 +77,7 @@ export async function configureGame(
     const club = await Cache.getClub(clubCode);
     const player = await Cache.getPlayer(playerId);
     const gameInfo = await GameRepository.createPrivateGame(club, player, game);
+    Metrics.newGame();
     createGameTime = new Date().getTime() - createGameTime;
     logger.info(`Game ${gameInfo.gameCode} is created.`);
     const ret: any = gameInfo as any;
@@ -115,6 +117,7 @@ export async function configureGameByPlayer(playerId: string, game: any) {
     const player = await Cache.getPlayer(playerId);
 
     const gameInfo = await GameRepository.createPrivateGame(null, player, game);
+    Metrics.newGame();
     const ret: any = gameInfo as any;
     ret.gameType = GameType[gameInfo.gameType];
     return ret;

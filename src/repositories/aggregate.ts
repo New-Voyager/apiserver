@@ -247,7 +247,10 @@ class AggregationImpl {
       }
     }
     const more = allGames.length > processedGameIds.length;
-
+    const totalTakenSec = (Date.now() - totalStart) / 1000;
+    logger.info(
+      `Aggregated ${processedGameIds.length} games in ${totalTakenSec} seconds. Game IDs: [${processedGameIds}]`
+    );
     return {
       more: more,
       aggregated: processedGameIds,

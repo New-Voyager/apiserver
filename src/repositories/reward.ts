@@ -29,6 +29,8 @@ import {
   HighHand,
 } from '@src/entity/game/reward';
 import {HighHandHistory} from '@src/entity/history/hand';
+import {Metrics} from '@src/internal/metrics';
+
 const logger = getLogger('repositories::reward');
 
 class RewardRepositoryImpl {
@@ -370,6 +372,7 @@ class RewardRepositoryImpl {
     highhand.winner = winner;
     highhand.highHandCards = JSON.stringify(stringCards(highhandCards));
     await logHighHandRepo.save(highhand);
+    Metrics.highHand();
   }
 
   public async highHandByGame(gameCode: string) {

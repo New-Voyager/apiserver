@@ -4,6 +4,7 @@ import {HandServerAPI} from './internal/hand';
 import {GameAPI} from './internal/game';
 import {AdminAPI} from './internal/admin';
 import {UserAPI} from './internal/user';
+import {MetricsAPI} from './internal/metrics';
 import {timerCallback} from './repositories/timer';
 import {
   buyBotCoins,
@@ -189,6 +190,8 @@ export function addInternalRoutes(app: any) {
   app.post('/internal/restart-timers', restartTimers);
 
   app.post('/internal/end-expired-games', GameAPI.endExpiredGames);
+
+  app.get('/internal/metrics', MetricsAPI.getMetrics);
 
   // admin apis
   app.get('/admin/feature-requests', DevRepository.featureRequests);
