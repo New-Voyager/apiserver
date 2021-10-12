@@ -1513,7 +1513,8 @@ export async function setBuyInLimit(
 export async function assignHost(
   requestUser: string,
   gameCode: string,
-  newHostPlayerUuid: string
+  newHostPlayerUuid: string,
+  newHostPlayerId: number
 ): Promise<boolean> {
   if (!requestUser) {
     throw new Error('Unauthorized');
@@ -1536,7 +1537,12 @@ export async function assignHost(
     }
 
     const oldHostPlayer = await Cache.getPlayer(requestUser);
-    const newHostPlayer = await Cache.getPlayer(newHostPlayerUuid);
+    let newHostPlayer;
+    if (newHostPlayerUuid) {
+      newHostPlayer = await Cache.getPlayer(newHostPlayerUuid);
+    } else if (newHostPlayerId) {
+      newHostPlayer = await Cache.getPlayerById(newHostPlayerId);
+    }
     await PlayersInGameRepository.assignNewHost(
       gameCode,
       oldHostPlayer,
@@ -2614,7 +2620,12 @@ const resolvers: any = {
       return switchSeat(ctx.req.playerId, args.gameCode, args.seatNo);
     },
     assignHost: async (parent, args, ctx, info) => {
-      return assignHost(ctx.req.playerId, args.gameCode, args.playerUuid);
+      return assignHost(
+        ctx.req.playerId,
+        args.gameCode,
+        args.playerUuid,
+        args.playerId
+      );
     },
     dealerChoice: async (parent, args, ctx, info) => {
       return dealerChoice(ctx.req.playerId, args.gameCode, args.gameType);
