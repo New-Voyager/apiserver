@@ -491,6 +491,9 @@ export class PokerGame {
   @Column({name: 'bot_game', default: false})
   public botGame!: boolean;
 
+  @Column({name: 'bots_to_waitlist', default: false})
+  public botsToWaitlist!: boolean;
+
   // used for tracking game number for club games
   @Column({name: 'game_num', type: 'int', default: 0})
   public gameNum!: number;

@@ -103,6 +103,7 @@ input GameCreateInput {
   pauseAfterShowdown: Int   # default 2 seconds
   buyInTimeout: Int         # default 60 seconds
   botGame: Boolean
+  botsToWaitlist: Boolean
   showHandRank: Boolean
   appCoinsNeeded: Boolean
   doubleBoardEveryHand: Boolean
@@ -208,6 +209,7 @@ type GameInfo {
   waitlistSittingTimeout: Int
   hhEligible: Boolean           # true if this game is eligible for high hand
   botGame: Boolean
+  botsToWaitlist: Boolean
   runItTwiceAllowed: Boolean
   allowRabbitHunt: Boolean
   showHandRank: Boolean
