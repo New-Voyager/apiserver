@@ -232,8 +232,25 @@ class MoveToNextHand {
           .execute();
 
         if (game.gameType === GameType.DEALER_CHOICE) {
-          // if the game is dealer's choice, then prompt the user for next hand
-          await markDealerChoiceNextHand(game, transactionEntityManager);
+          let promptChoice = false;
+          if (!this.gameUpdate.dealerChoiceOrbit) {
+            promptChoice = true;
+          } else {
+            // orbit
+            if (this.gameUpdate.orbitPos === 0) {
+              promptChoice = true;
+            } else {
+              if (this.gameUpdate.orbitPos === this.buttonPos) {
+                // button is at previous orbit, next hand is dealer choice
+                promptChoice = true;
+              }
+            }
+          }
+
+          if (promptChoice) {
+            // if the game is dealer's choice, then prompt the user for next hand
+            await markDealerChoiceNextHand(game, transactionEntityManager);
+          }
         }
 
         if (this.gameUpdate && this.gameUpdate.gameType !== this.nextGameType) {

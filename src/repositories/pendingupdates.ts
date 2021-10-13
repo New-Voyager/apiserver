@@ -536,7 +536,11 @@ async function handleDealersChoice(
     }
     maxPlayers--;
   }
-  await GameUpdatesRepository.updateDealersChoiceSeat(game, playerId);
+  await GameUpdatesRepository.updateDealersChoiceSeat(
+    game,
+    playerId,
+    buttonPos
+  );
   const settings = await Cache.getGameSettings(game.gameCode);
   Nats.sendDealersChoiceMessage(
     game,
