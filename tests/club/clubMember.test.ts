@@ -6,7 +6,7 @@ import {
   createGameServer,
   holdemGameInput,
   joinGame,
-} from './utils';
+} from '../game/utils';
 
 describe('approve and deny club member APIs', () => {
   beforeAll(async done => {
