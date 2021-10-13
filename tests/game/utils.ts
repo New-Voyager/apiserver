@@ -2,6 +2,55 @@ import {gql} from 'apollo-server-express';
 import axios from 'axios';
 import {getClient, INTERNAL_PORT} from '../utils/utils';
 
+const playerById = gql`
+  query {
+    playerById {
+      id
+    }
+  }
+`
+
+const completedGame = gql`
+query completedGame($gameCode: String!) {
+  completedGame(gameCode: $gameCode) {
+    title
+  gameType
+  gameCode
+  gameNum
+  smallBlind
+  bigBlind
+  startedBy
+  startedAt
+  endedBy
+  endedAt
+  runTime
+  runTimeStr
+  sessionTime
+  sessionTimeStr
+  handsDealt
+  handsPlayed
+  dataAggregated
+  buyIn
+  profit
+  stack
+  highHandTracked
+  stackStat {
+    handNum
+    before
+    after
+  }
+  isHost
+  isOwner
+  isManager
+  preflopHands
+  flopHands
+  turnHands
+  riverHands
+  showdownHands
+  }
+}
+`
+
 const buyinQuery = gql`
   mutation($gameCode: String!, $amount: Float!) {
     status: buyIn(gameCode: $gameCode, amount: $amount) {
@@ -128,6 +177,17 @@ const declineWaitlistSeatMutation = gql`
   }
 `;
 
+export const getCompletedGame = async ({ ownerId, gameCode } ) => {
+  const resp = await getClient(ownerId).mutate({
+    variables: {
+      gameCode: gameCode,
+    },
+    mutation: completedGame,
+  });
+
+  return resp.data;
+}
+
 export const declineWaitlistSeat = async ({ownerId, gameCode}: any) => {
   const resp = await getClient(ownerId).mutate({
     variables: {
@@ -154,6 +214,14 @@ export const applyWaitlistOrder = async ({
 
   return resp.data;
 };
+
+export const getPlayerById = async ({ ownerId }) => {
+  const resp = await getClient(ownerId).query({
+    query: playerById,
+  });
+
+  return resp.data
+}
 
 export const setBuyInLimit = async ({ownerId, gameCode, playerId, limit}) => {
   const resp = await getClient(ownerId).mutate({
@@ -334,7 +402,7 @@ export const holdemGameInput = {
   rakePercentage: 5.0,
   rakeCap: 5.0,
   buyInMin: 100,
-  buyInMax: 600,
+  buyInMax: 1000,
   actionTime: 30,
   muckLosingHand: true,
   waitlistSittingTimeout: 5,
