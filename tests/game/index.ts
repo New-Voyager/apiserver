@@ -11,3 +11,5 @@ import './resumeGame.test';
 import './setBuyInLimit.test';
 import './startGame.test';
 import './takeSeat.test';
+import './hand.test'
+import './waitlist.test'
