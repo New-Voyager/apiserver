@@ -176,10 +176,12 @@
       "runtimeArgs": [
         "--inspect-brk",
         "${workspaceRoot}/node_modules/.bin/jest",
+        "--config",
+        "jest-int.config.js",
         "--runInBand",
-        "./tests/helloworld.test.ts",
-        "--testNamePattern",
-        "get my clubs"
+        "./tests/entrypoint.test.ts",
+        "--forceExit",
+        "--detectOpenHandles",
       ],
       "env": {
         "EXTERNAL_ENDPOINTS": "1",
