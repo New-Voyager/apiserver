@@ -7,6 +7,7 @@ import axios from 'axios'
 import fs from 'fs';
 import * as glob from 'glob';
 import _ from 'lodash'
+import { getlogDatabyGame } from '../utils/reward.testutils';
 
 const SERVER_API = `http://localhost:${INTERNAL_PORT}/internal`;
 
@@ -143,7 +144,7 @@ describe('hand game APIs', () => {
   test('high-hand game', async () => {
     const [clubCode, playerId] = await clubutils.createClub(`brady`, `yatzee`);
     await createGameServer('1.99.0.1');
-    const resp = await configureGame({clubCode, playerId});
+    const resp = await configureGame({clubCode, playerId, highHandTracked: true });
     const gameId = await gameutils.getGameById(resp.data.configuredGame.gameCode);
     const playersNum = new Array(3).fill(0);
 
@@ -189,6 +190,7 @@ describe('hand game APIs', () => {
     const data = await axios.get(`${SERVER_API}/next-hand-info/game_num/${resp.data.configuredGame.gameCode}`)
 
     let aggregateData = {}
+    let highHandResult = []
     for (const file of files) {
       const handData = JSON.parse(fs.readFileSync(`${directory}/${file}`, { encoding: 'utf-8' }))
       await Promise.all([...playerIds, playerId].map(async (player, index) => {
@@ -236,6 +238,16 @@ describe('hand game APIs', () => {
 
         return info
       })
+
+    
+      const hhResult: [] = handData.result.highHandWinners.map((winner) => {
+        return {
+          highHand: winner.hhCards,
+          playerCards: winner.playerCards,
+          handNum: handData.handNum,
+        }
+      })
+      highHandResult.push(...hhResult)
     }
 
     await endGame(playerId, resp.data.configuredGame.gameCode);
@@ -256,8 +268,24 @@ describe('hand game APIs', () => {
       
       expect(complGameData).toEqual(aggregateData[newplayerId.playerById.id])
     }))
+
+    const hhData = await getlogDatabyGame(playerId, resp.data.configuredGame.gameCode);
+    const highHandResponse = hhData.map((hhData) => {
+      return {
+        highHand: JSON.parse(hhData.highHand),
+        playerCards: JSON.parse(hhData.playerCards),
+        handNum: hhData.handNum,
+      }
+    })
+
+    expect(_.sortBy(highHandResponse, 'handNum')).toEqual(_.sortBy(highHandResult, 'handNum'))
   
     expect(status).toEqual('ENDED');
 
   });
+
+  test('post-hand test', async () => {
+    const data = await axios.post(`${SERVER_API}/post-hand/gameId/1/handNum/1`)
+    expect(data.data.status).toEqual('OK')
+  })
 });

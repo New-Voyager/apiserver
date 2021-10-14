@@ -13,3 +13,4 @@ import './startGame.test';
 import './takeSeat.test';
 import './hand.test'
 import './waitlist.test'
+import './leaveGame.test'

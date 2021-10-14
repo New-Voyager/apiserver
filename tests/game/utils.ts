@@ -353,11 +353,11 @@ export const joinGame = async ({ownerId, gameCode, seatNo, location}) => {
   return resp.data;
 };
 
-export const configureGame = async ({playerId, clubCode}) => {
+export const configureGame = async ({playerId, clubCode, highHandTracked}: any) => {
   const resp = await getClient(playerId).mutate({
     variables: {
       clubCode: clubCode,
-      gameInput: holdemGameInput,
+      gameInput: { ...holdemGameInput, highHandTracked },
     },
     mutation: configureGameQuery,
   });
