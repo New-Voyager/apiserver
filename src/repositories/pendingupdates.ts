@@ -3,6 +3,7 @@ import {fixQuery} from '@src/utils';
 import {
   ApprovalStatus,
   GameStatus,
+  GameType,
   NextHandUpdate,
   PlayerStatus,
   SeatStatus,
@@ -14,6 +15,7 @@ import {
   NextHandUpdates,
   PokerGame,
   PokerGameSeatInfo,
+  PokerGameUpdates,
 } from '@src/entity/game/game';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {startTimer} from '@src/timer';
@@ -254,7 +256,16 @@ export async function processPendingUpdates(gameId: number) {
       return;
     }
 
+    let promptDealerChoice = false;
     if (dealerChoiceUpdate) {
+      promptDealerChoice = true;
+    } else if (game.gameType === GameType.DEALER_CHOICE) {
+      const update = await GameUpdatesRepository.get(game.gameCode, true);
+      if (update.orbitPos === 0) {
+        promptDealerChoice = true;
+      }
+    }
+    if (promptDealerChoice) {
       await handleDealersChoice(game, dealerChoiceUpdate, pendingUpdatesRepo);
     } else {
       const cachedGame = await Cache.getGame(game.gameCode);
@@ -487,18 +498,22 @@ async function reloadApproved(
 
 async function handleDealersChoice(
   game: PokerGame,
-  update: NextHandUpdates,
+  update: NextHandUpdates | null,
   pendingUpdatesRepo: Repository<NextHandUpdates>
 ) {
   const dealerChoiceTimeout = new Date();
   const timeout = 10;
-  dealerChoiceTimeout.setSeconds(dealerChoiceTimeout.getSeconds() + timeout);
+  dealerChoiceTimeout.setSeconds(
+    dealerChoiceTimeout.getSeconds() + timeout + 1
+  );
 
   // start a timer
   startTimer(game.id, 0, DEALER_CHOICE_TIMEOUT, dealerChoiceTimeout);
 
   // delete this update
-  await pendingUpdatesRepo.delete({id: update.id});
+  if (update) {
+    await pendingUpdatesRepo.delete({id: update.id});
+  }
 
   // get next player and send the notification
   const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
@@ -536,19 +551,27 @@ async function handleDealersChoice(
     }
     maxPlayers--;
   }
+  // let nextOrbit = buttonPos + 1;
+  // if (nextOrbit > game.maxPlayers) {
+  //   nextOrbit = 1;
+  // }
+  logger.info(`DealerChoice: New dealer choice. Orbit ends at ${buttonPos}`);
   await GameUpdatesRepository.updateDealersChoiceSeat(
     game,
     playerId,
+    gameUpdate.handNum + 1,
     buttonPos
   );
   const settings = await Cache.getGameSettings(game.gameCode);
-  Nats.sendDealersChoiceMessage(
-    game,
-    settings,
-    playerId,
-    gameUpdate.handNum + 1,
-    timeout
-  );
+  setTimeout(() => {
+    Nats.sendDealersChoiceMessage(
+      game,
+      settings,
+      playerId,
+      gameUpdate.handNum + 1,
+      timeout
+    );
+  }, 1000);
 }
 
 export async function switchSeatNextHand(

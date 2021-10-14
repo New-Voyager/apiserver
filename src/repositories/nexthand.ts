@@ -85,6 +85,7 @@ class MoveToNextHand {
   private bombPotThisHand: boolean;
   private missedBlinds: Array<number>;
   private postedBlinds: Array<number>;
+  private passedOrbit: boolean;
 
   constructor(game: PokerGame, handNum: number) {
     this.game = game;
@@ -99,6 +100,7 @@ class MoveToNextHand {
     this.playersInThisHand = {};
     this.missedBlinds = new Array<number>();
     this.bombPotThisHand = false;
+    this.passedOrbit = false;
     this.playersInSeats = {};
     this.postedBlinds = new Array<number>();
   }
@@ -231,19 +233,16 @@ class MoveToNextHand {
           })
           .execute();
 
-        if (game.gameType === GameType.DEALER_CHOICE) {
+        if (
+          game.gameType === GameType.DEALER_CHOICE &&
+          this.gameUpdate.handNum > 0
+        ) {
           let promptChoice = false;
           if (!this.gameUpdate.dealerChoiceOrbit) {
             promptChoice = true;
           } else {
-            // orbit
-            if (this.gameUpdate.orbitPos === 0) {
+            if (this.passedOrbit) {
               promptChoice = true;
-            } else {
-              if (this.gameUpdate.orbitPos === this.buttonPos) {
-                // button is at previous orbit, next hand is dealer choice
-                promptChoice = true;
-              }
             }
           }
 
@@ -401,7 +400,7 @@ class MoveToNextHand {
     //      dead button = true
     //      did this player post blind?
     //          dead button = false;
-
+    let orbitPos = this.gameUpdate.orbitPos;
     let buttonPos = this.gameUpdate.buttonPos;
     if (this.gameUpdate.calculateButtonPos) {
       if (this.handNum === 1) {
@@ -409,9 +408,35 @@ class MoveToNextHand {
       } else {
         const oldButtonPos = buttonPos;
         buttonPos = this.gameUpdate.sbPos;
+
+        // if old button position 7, 8, 9 and now it is 2
+        // then we passed seat no 1
+        // this should be called ROE position
         if (oldButtonPos > buttonPos) {
           this.buttonPassedDealer = true;
         }
+
+        // orbit pos 1
+        // old button pos 1
+        // then we passed the orbit
+        if (this.handNum > 1 && this.handNum > this.gameUpdate.orbitHandNum) {
+          if (buttonPos === orbitPos) {
+            this.passedOrbit = true;
+          } else {
+            if (buttonPos < oldButtonPos) {
+              // oldButtonPos: 9
+              // newButtonPos: 2
+              // orbitPos: 1 (player left)
+              if (orbitPos <= buttonPos) {
+                this.passedOrbit = true;
+              }
+            }
+          }
+        }
+        logger.info(
+          `DealerChoice: buttonPos: ${buttonPos} oldButtonPos: ${oldButtonPos} orbitPos: ${orbitPos} passedOrbit: ${this.passedOrbit}`
+        );
+
         const playerSeat = takenSeats[buttonPos];
         if (playerSeat) {
           if (playerSeat.missedBlind && !playerSeat.postedBlind) {
@@ -523,7 +548,7 @@ class MoveToNextHand {
         this.nextGameType = GameType[roeGames[0]];
       }
     } else if (this.game.gameType === GameType.DEALER_CHOICE) {
-      if (this.handNum === 1) {
+      if (this.handNum === 1 && this.gameUpdate.gameType === GameType.UNKNOWN) {
         const dealerChoiceGames = gameSettings.dealerChoiceGames.split(',');
         this.nextGameType = GameType[dealerChoiceGames[0]];
       }
