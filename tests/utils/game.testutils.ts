@@ -1,6 +1,7 @@
 import {resetDatabase, getClient} from './utils';
 import {gql} from 'apollo-boost';
 import {loggers} from 'winston';
+import { GameType } from '../../src/entity/types';
 
 export const configureGameQuery = gql`
   mutation($clubCode: String!, $gameInput: GameCreateInput!) {
@@ -514,6 +515,12 @@ export const switchSeatQuery = gql`
   }
 `;
 
+export const dealerChoiceQuery = gql`
+  mutation($gameCode: String!, $gameType: GameType!) {
+    dealerChoice(gameCode: $gameCode, gameType: $gameType)
+  }
+`;
+
 export async function configureFriendsGame(
   playerId: string,
   gameInput: GameInput
@@ -899,6 +906,23 @@ export async function switchSeat(
       seatNo: seatNo,
     },
     mutation: switchSeatQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
+}
+
+export async function chooseGame(
+  playerId: string,
+  gameCode: string,
+  gameType: GameType,
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      gameCode: gameCode,
+      gameType: GameType[gameType],
+    },
+    mutation: dealerChoiceQuery,
   });
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();

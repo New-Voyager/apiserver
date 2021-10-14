@@ -65,6 +65,31 @@ export async function moveToNextHand(
   }
 }
 
+export async function anyPendingUpdates(
+  gameId: number,
+) {
+  const url = `http://localhost:${INTERNAL_PORT}/internal/any-pending-updates/gameId/${gameId}`;
+  try {
+    const resp = await axios.get(url);
+    return resp.data['pendingUpdates'];
+  } catch (err) {
+    console.error(JSON.stringify(err));
+    expect(true).toBeFalsy();
+  }
+}
+
+export async function processPendingUpdates(
+  gameId: number,
+) {
+  const url = `http://localhost:${INTERNAL_PORT}/internal/process-pending-updates/gameId/${gameId}`;
+  try {
+    await axios.post(url);
+  } catch (err) {
+    console.error(JSON.stringify(err));
+    expect(true).toBeFalsy();
+  }
+}
+
 export async function getNextHandInfo(gameCode: string) {
   const url = `http://localhost:${INTERNAL_PORT}/internal/next-hand-info/game_num/${gameCode}`;
   try {
