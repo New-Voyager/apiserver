@@ -28,7 +28,10 @@ module.exports = {
     '!src/3rdparty/agora.ts',
     '!src/firebase/index.ts',
     '!src/gameserver/index.ts',
-    '!src/janus/index.ts'
+    '!src/janus/index.ts',
+    '!src/repositories/appcoin.ts',
+    '!src/repositories/gamesettings.ts',
+    '!src/repositories/gameupdates.ts'
     // '!<rootDir>/node_modules/"',
   ],
   collectCoverage: true,
