@@ -2,10 +2,39 @@ import {gql} from 'apollo-server-express';
 import axios from 'axios';
 import {getClient, INTERNAL_PORT} from '../utils/utils';
 
+const seatChangeSwapSeatsMutation = gql`
+mutation seatChangeSwapSeats($gameCode: String!, $seatNo1: Int!, $seatNo2: Int!) {
+  seatChangeSwapSeats(gameCode: $gameCode, seatNo1: $seatNo1, seatNo2: $seatNo2)
+}
+`
+
 const playerById = gql`
   query {
     playerById {
       id
+    }
+  }
+`
+
+const seatPositions = gql`
+  query($gameCode: String!, $seatChange: Boolean) {
+    seatPositions(gameCode: $gameCode, seatChange: $seatChange) {
+      seatNo
+  playerUuid
+  playerId
+  name
+  buyIn
+  stack
+  missedBlind
+  status
+  seatStatus
+  buyInExpTime
+  breakStartedTime
+  breakExpTime
+  gameToken
+  agoraToken
+  isBot
+
     }
   }
 `
@@ -178,6 +207,30 @@ const declineWaitlistSeatMutation = gql`
   }
 `;
 
+export const seatChangeSwapSeats = async ({ ownerId, gameCode, seatNo1, seatNo2}) => {
+  const resp = await getClient(ownerId).mutate({
+    variables: {
+      gameCode: gameCode,
+      seatNo1,
+      seatNo2,
+    },
+    mutation: seatChangeSwapSeatsMutation,
+  });
+
+  return resp.data;
+}
+
+export const getSeatPositions = async ({ ownerId, gameCode }) => {
+  const resp = await getClient(ownerId).query({
+    variables: {
+      gameCode: gameCode,
+      seatChange: true,
+    },
+    query: seatPositions,
+  });
+
+  return resp.data;
+}
 export const getCompletedGame = async ({ ownerId, gameCode } ) => {
   const resp = await getClient(ownerId).mutate({
     variables: {
@@ -339,7 +392,7 @@ export const takeSeat = async ({ownerId, gameCode, seatNo, location}) => {
   return resp.data;
 };
 
-export const joinGame = async ({ownerId, gameCode, seatNo, location}) => {
+export const joinGame = async ({ownerId, gameCode, seatNo, location, ip}:any) => {
   const variables = {
     gameCode,
     seatNo,
@@ -347,17 +400,20 @@ export const joinGame = async ({ownerId, gameCode, seatNo, location}) => {
   };
   const client = getClient(ownerId);
   const resp = await client.mutate({
+    context: {
+      ip,
+    },
     variables: variables,
     mutation: joinGameMutation,
   });
   return resp.data;
 };
 
-export const configureGame = async ({playerId, clubCode, highHandTracked}: any) => {
+export const configureGame = async ({playerId, clubCode, highHandTracked, gpsCheck, ipCheck}: any) => {
   const resp = await getClient(playerId).mutate({
     variables: {
       clubCode: clubCode,
-      gameInput: { ...holdemGameInput, highHandTracked },
+      gameInput: { ...holdemGameInput, highHandTracked, gpsCheck, ipCheck },
     },
     mutation: configureGameQuery,
   });

@@ -13,6 +13,7 @@ export function getClient(token?: string): any {
     request: operation => {
       if (token) {
         operation.setContext({
+          userIp: 1,
           headers: {
             Authorization: `Bearer ${token}`,
           },
