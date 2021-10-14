@@ -31,16 +31,18 @@ module.exports = {
     '!src/janus/index.ts',
     '!src/repositories/appcoin.ts',
     '!src/repositories/gamesettings.ts',
-    '!src/repositories/gameupdates.ts'
     '!src/repositories/gameupdates.ts',
     '!src/repositories/promotion.ts',
-    '!src/repositories/promotion_consumed.ts'
+    '!src/repositories/timer.ts',
+    '!src/repositories/reward.ts',
     '!src/repositories/promotion_consumed.ts',
     '!src/digitalocean/index.ts',
     '!src/resolvers/appcoin.ts',
     '!src/utils/log.ts',
     '!src/scheduler/index.ts',
-    '!src/timer/index.ts'
+    '!src/timer/index.ts',
+    '!src/timer/nats.ts',
+
     // '!<rootDir>/node_modules/"',
   ],
   collectCoverage: true,

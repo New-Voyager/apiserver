@@ -16,3 +16,5 @@ import './waitlist.test'
 import './leaveGame.test'
 import './locationcheck.test'
 import './seatchange.test'
+
+import './takebreak.test'
