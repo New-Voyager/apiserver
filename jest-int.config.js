@@ -32,6 +32,9 @@ module.exports = {
     '!src/repositories/appcoin.ts',
     '!src/repositories/gamesettings.ts',
     '!src/repositories/gameupdates.ts'
+    '!src/repositories/gameupdates.ts',
+    '!src/repositories/promotion.ts',
+    '!src/repositories/promotion_consumed.ts'
     // '!<rootDir>/node_modules/"',
   ],
   collectCoverage: true,
