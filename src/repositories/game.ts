@@ -1381,6 +1381,12 @@ class GameRepositoryImpl {
     player: Player,
     gameType: GameType
   ) {
+    // is this player supposed to update?
+    const gameUpdate = await GameUpdatesRepository.get(game.gameCode, true);
+    if (gameUpdate.dealerChoiceSeat !== player.id) {
+      return;
+    }
+
     // cancel the dealer choice timer
     cancelTimer(game.id, 0, DEALER_CHOICE_TIMEOUT);
     await GameUpdatesRepository.updateNextGameType(game, gameType);

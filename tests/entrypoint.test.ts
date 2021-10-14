@@ -29,3 +29,5 @@ import './player.test';
 import './reload.test';
 import './seatchange.test';
 import './waitlistseating.test';
+
+import './game-types';

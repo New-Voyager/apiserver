@@ -63,6 +63,7 @@ const buyinQuery = gql`
 export const configureGameQuery = gql`
   mutation($clubCode: String!, $gameInput: GameCreateInput!) {
     configuredGame: configureGame(clubCode: $clubCode, game: $gameInput) {
+      gameID
       title
       gameCode
       gameType
@@ -408,3 +409,4 @@ export const holdemGameInput = {
   waitlistSittingTimeout: 5,
   rewardIds: [] as any,
 };
+

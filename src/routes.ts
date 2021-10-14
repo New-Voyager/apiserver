@@ -150,6 +150,7 @@ export function addInternalRoutes(app: any) {
     '/internal/any-pending-updates/gameId/:gameId',
     GameAPI.anyPendingUpdates
   );
+
   app.post(
     '/internal/process-pending-updates/gameId/:gameId',
     GameAPI.processPendingUpdates
