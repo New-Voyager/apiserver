@@ -25,6 +25,10 @@ module.exports = {
     '!src/repositories/hello.ts',
     '!src/admin/index.ts',
     '!src/botrunner/index.ts',
+    '!src/3rdparty/agora.ts',
+    '!src/firebase/index.ts',
+    '!src/gameserver/index.ts',
+    '!src/janus/index.ts'
     // '!<rootDir>/node_modules/"',
   ],
   collectCoverage: true,
