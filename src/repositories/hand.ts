@@ -504,6 +504,10 @@ class HandRepositoryImpl {
     return JSON.parse(data);
   }
 
+  public async cleanUpOldData(): Promise<void> {
+    throw new Error('Not implemented');
+  }
+
   public async saveHand(
     gameID: number,
     handNum: number,

@@ -1,5 +1,6 @@
 import {ClubRepository} from '@src/repositories/club';
-import {getLogger} from '@src/utils/log';
+import {HandRepository} from '@src/repositories/hand';
+import {errToLogString, getLogger} from '@src/utils/log';
 
 const logger = getLogger('internal::admin');
 
@@ -19,6 +20,16 @@ class AdminAPIs {
     } catch (err) {
       logger.error(err.message);
       resp.status(500).send({error: err.message});
+    }
+  }
+
+  public async dataRetention(req: any, resp: any) {
+    try {
+      const res = await HandRepository.cleanUpOldData();
+      resp.status(200).send({status: 'OK'});
+    } catch (err) {
+      logger.error(`Error in data retention process: ${errToLogString(err)}`);
+      resp.status(500).json({error: errToLogString(err, false)});
     }
   }
 }
