@@ -147,19 +147,19 @@ describe('Assign Game Host API', () => {
     expect(game.hostUuid).toEqual(ownerInput.deviceId);
 
     const originalHostId = game.hostId;
-    await assignHost(owner, game.gameCode, playersInput[0].deviceId);
+    await assignHost(owner, game.gameCode, playersInput[0].deviceId, originalHostId);
     const gameData: PokerGame = await Cache.getGame(game.gameCode);
     expect(gameData.hostId).not.toEqual(originalHostId);
     expect(gameData.hostUuid).toEqual(playersInput[0].deviceId);
 
     // The owner is no longer the host. Therefore, he should not be able to assign another host.
     const t = async () => {
-      await assignHost(owner, game.gameCode, playersInput[0].deviceId);
+      await assignHost(owner, game.gameCode, playersInput[0].deviceId, originalHostId);
     };
     await expect(t).rejects.toThrowError();
 
     // The new host (playersInput[0]) should be able to assign another host.
-    await assignHost(playersInput[0].deviceId, game.gameCode, playersInput[1].deviceId);
+    await assignHost(playersInput[0].deviceId, game.gameCode, playersInput[1].deviceId, originalHostId);
     const gameData2: PokerGame = await Cache.getGame(game.gameCode);
     expect(gameData2.hostUuid).toEqual(playersInput[1].deviceId);
   });

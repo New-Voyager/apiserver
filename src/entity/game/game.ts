@@ -45,6 +45,15 @@ export class PokerGameUpdates {
   @Column({name: 'bb_pos', nullable: true, default: 0})
   public bbPos!: number;
 
+  @Column({name: 'orbit_pos', default: 0})
+  public orbitPos!: number;
+
+  @Column({name: 'dealer_choice_orbit', default: true})
+  public dealerChoiceOrbit!: boolean;
+
+  @Column({name: 'orbit_hand_num', default: 0})
+  public orbitHandNum!: number;
+
   @Column({name: 'calculate_button_pos', default: true}) // if bot runner script sets the button position, then don't re-calculate button pos
   public calculateButtonPos!: boolean;
 

@@ -89,7 +89,7 @@ export async function configureGame(
     Nats.sendClubUpdate(
       clubCode,
       club.name,
-      ClubUpdateType[ClubUpdateType.MEW_GAME],
+      ClubUpdateType[ClubUpdateType.NEW_GAME],
       messageId
     );
     return ret;

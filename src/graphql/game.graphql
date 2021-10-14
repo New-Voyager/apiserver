@@ -108,6 +108,7 @@ input GameCreateInput {
   appCoinsNeeded: Boolean
   doubleBoardEveryHand: Boolean
   showResult: Boolean
+  dealerChoiceOrbit: Boolean
 
   # coming from game updates (can be changed)
   bombPotEnabled: Boolean
@@ -214,6 +215,7 @@ type GameInfo {
   allowRabbitHunt: Boolean
   showHandRank: Boolean
   doubleBoardEveryHand: Boolean
+  dealerChoiceOrbit: Boolean
 
   # bomb pot (comes from PokerGameUpdates)
   bombPotEnabled: Boolean
@@ -332,6 +334,7 @@ type GameSettings {
   roeGames: [GameType!]
   dealerChoiceGames: [GameType!]
   showResult: Boolean
+  dealerChoiceOrbit: Boolean
 }
 
 input GameSettingsUpdateInput {
@@ -369,6 +372,7 @@ input GameSettingsUpdateInput {
   dealerChoiceGames: [GameType!]
 
   showResult: Boolean
+  dealerChoiceOrbit: Boolean
 }
 
 input GameConfigUpdateInput {
