@@ -292,3 +292,7 @@ clean-ci: stop-nats stop-redis stop-pg
 		$(TEST_IMAGE_NAME) \
 		$(REGISTRY)/$(IMAGE_NAME):$(BUILD_NO) \
 		$(REGISTRY)/$(IMAGE_NAME):latest
+
+.PHONY: combine-cov
+combine-cov:
+	yarn ts-node-script ./scripts/mergeCoverage.ts --report ./cov-int/coverage-final.json --report ./cov-unit/coverage-final.json
