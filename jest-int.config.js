@@ -35,6 +35,12 @@ module.exports = {
     '!src/repositories/gameupdates.ts',
     '!src/repositories/promotion.ts',
     '!src/repositories/promotion_consumed.ts'
+    '!src/repositories/promotion_consumed.ts',
+    '!src/digitalocean/index.ts',
+    '!src/resolvers/appcoin.ts',
+    '!src/utils/log.ts',
+    '!src/scheduler/index.ts',
+    '!src/timer/index.ts'
     // '!<rootDir>/node_modules/"',
   ],
   collectCoverage: true,
