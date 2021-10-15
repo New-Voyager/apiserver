@@ -14,7 +14,6 @@ import {
 
 const SERVER_API = `http://localhost:${INTERNAL_PORT}/internal`;
 
-
 describe('resumeGame APIs', () => {
   beforeAll(async done => {
     await resetDatabase();
@@ -24,36 +23,11 @@ describe('resumeGame APIs', () => {
   afterAll(async done => {
     done();
   });
-  test('resumeGame', async () => {
+  test('leaveGameWithPending', async () => {
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
     await createGameServer('1.99.0.1');
     const resp = await configureGame({clubCode, playerId});
-
-    await joinGame({
-      ownerId: playerId,
-      gameCode: resp.data.configuredGame.gameCode,
-      seatNo: 1,
-      location: {
-        lat: 100,
-        long: 100,
-      },
-    });
-    await pauseGame({
-      ownerId: playerId,
-      gameCode: resp.data.configuredGame.gameCode,
-    });
-    const data = await resumeGame({
-      ownerId: playerId,
-      gameCode: resp.data.configuredGame.gameCode,
-    });
-
-    expect(data.resumeGame).toEqual('CONFIGURED');
-  });
-  test('resumeGameWhithPending', async () => {
-    const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
-    await createGameServer('1.99.0.1');
-    const resp = await configureGame({clubCode, playerId});
-    const gameId = await gameutils.getGameById(resp.data.configuredGame.gameCode);
+    const gameId = await gameutils.getGameById(resp.data.configuredGame.gameCode)
 
     const playerId2 = await clubutils.createPlayer(`adamqwe`, `1243ABCqwe`);
     await clubutils.playerJoinsClub(clubCode, playerId2);
@@ -103,24 +77,16 @@ describe('resumeGame APIs', () => {
     });
     await buyIn({ownerId: playerId4, gameCode: resp.data.configuredGame.gameCode, amount: 1000});
     await startGame({ ownerId: playerId, gameCode: resp.data.configuredGame.gameCode })
+
     await axios.post(`${SERVER_API}/process-pending-updates/gameId/${gameId}`)
-    
-
-    await axios.post(`${SERVER_API}/move-to-next-hand/game_num/${resp.data.configuredGame.gameCode}/hand_num/1`)
-    const data = await pauseGame({
-      ownerId: playerId,
-      gameCode: resp.data.configuredGame.gameCode,
-    });
-    await axios.post(`${SERVER_API}/process-pending-updates/gameId/${gameId}`)
-    const gameInfo = await gameutils.gameInfo(playerId, resp.data.configuredGame.gameCode)
-    expect(gameInfo.status).toEqual('PAUSED')
-
-    await resumeGame({
-      ownerId: playerId,
-      gameCode: resp.data.configuredGame.gameCode
-    })
-
     const gameInfo1 = await gameutils.gameInfo(playerId, resp.data.configuredGame.gameCode)
-    expect(gameInfo1.status).toEqual('ACTIVE')
+
+    await gameutils.leaveGame(playerId2, resp.data.configuredGame.gameCode)
+    const gameInfo2 = await gameutils.gameInfo(playerId, resp.data.configuredGame.gameCode)
+    expect(gameInfo2.seatInfo.playersInSeats.length).toEqual(4)
+    await axios.post(`${SERVER_API}/process-pending-updates/gameId/${gameId}`)
+
+    const gameInfo = await gameutils.gameInfo(playerId, resp.data.configuredGame.gameCode)
+    expect(gameInfo.seatInfo.playersInSeats.length).toEqual(3);
   })
-});
+})

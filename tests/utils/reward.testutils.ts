@@ -25,15 +25,15 @@ export const getRewardsQuery = gql`
 export const highHandsByGameQuery = gql`
   query($gameCode: String!) {
     logdata: highHandsByGame(gameCode: $gameCode) {
-      gameCode
-      handNum
       playerUuid
       playerName
       playerCards
       boardCards
       highHand
-      rank
       handTime
+      handNum
+      highHandCards
+      winner
     }
   }
 `;
@@ -108,6 +108,7 @@ export async function getlogDatabyGame(
     variables: variables,
     query: highHandsByGameQuery,
   });
+
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
   return resp.data.logdata;

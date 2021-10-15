@@ -20,7 +20,7 @@ API_SERVER_IMAGE := $(REGISTRY)/$(IMAGE_NAME):0.7.62
 GAME_SERVER_IMAGE := $(REGISTRY)/game-server:0.7.26
 BOTRUNNER_IMAGE := $(REGISTRY)/botrunner:0.7.26
 TIMER_IMAGE := $(REGISTRY)/timer:0.5.9
-SCHEDULER_IMAGE := $(REGISTRY)/scheduler:0.1.6
+SCHEDULER_IMAGE := $(REGISTRY)/scheduler:0.1.9
 
 NATS_SERVER_IMAGE := $(REGISTRY)/nats:$(NATS_VERSION)
 REDIS_IMAGE := $(REGISTRY)/redis:$(REDIS_VERSION)
@@ -292,3 +292,7 @@ clean-ci: stop-nats stop-redis stop-pg
 		$(TEST_IMAGE_NAME) \
 		$(REGISTRY)/$(IMAGE_NAME):$(BUILD_NO) \
 		$(REGISTRY)/$(IMAGE_NAME):latest
+
+.PHONY: combine-cov
+combine-cov:
+	yarn ts-node-script ./scripts/mergeCoverage.ts --report ./cov-int/coverage-final.json --report ./cov-unit/coverage-final.json

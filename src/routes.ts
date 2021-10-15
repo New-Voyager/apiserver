@@ -150,6 +150,7 @@ export function addInternalRoutes(app: any) {
     '/internal/any-pending-updates/gameId/:gameId',
     GameAPI.anyPendingUpdates
   );
+
   app.post(
     '/internal/process-pending-updates/gameId/:gameId',
     GameAPI.processPendingUpdates
@@ -202,6 +203,7 @@ export function addInternalRoutes(app: any) {
   app.post('/admin/post-process-games', GameAPI.aggregateGameData);
   app.post('/admin/set-max-games', GameServerAPI.setMaxGames);
   app.post('/admin/announcement', createAnnouncement);
+  app.post('/admin/data-retention', AdminAPI.dataRetention);
 
   // Yong: I added this endpoint to test how unhandled rejections behave.
   app.get('/test/crashAsync', crashAsync);

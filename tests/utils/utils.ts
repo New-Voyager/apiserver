@@ -13,6 +13,7 @@ export function getClient(token?: string): any {
     request: operation => {
       if (token) {
         operation.setContext({
+          userIp: 1,
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -57,6 +58,31 @@ export async function moveToNextHand(
   handNum: number
 ) {
   const url = `http://localhost:${INTERNAL_PORT}/internal/move-to-next-hand/game_num/${gameCode}/hand_num/${handNum}`;
+  try {
+    await axios.post(url);
+  } catch (err) {
+    console.error(JSON.stringify(err));
+    expect(true).toBeFalsy();
+  }
+}
+
+export async function anyPendingUpdates(
+  gameId: number,
+) {
+  const url = `http://localhost:${INTERNAL_PORT}/internal/any-pending-updates/gameId/${gameId}`;
+  try {
+    const resp = await axios.get(url);
+    return resp.data['pendingUpdates'];
+  } catch (err) {
+    console.error(JSON.stringify(err));
+    expect(true).toBeFalsy();
+  }
+}
+
+export async function processPendingUpdates(
+  gameId: number,
+) {
+  const url = `http://localhost:${INTERNAL_PORT}/internal/process-pending-updates/gameId/${gameId}`;
   try {
     await axios.post(url);
   } catch (err) {

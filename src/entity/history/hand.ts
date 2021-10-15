@@ -45,11 +45,11 @@ export class HandHistory {
   public players!: string;
 
   @Index()
-  @DbAwareColumn({name: 'time_started', type: 'timestamp'})
+  @DbAwareColumn({name: 'time_started', type: 'timestamp', nullable: false})
   public timeStarted!: Date;
 
   @Index()
-  @DbAwareColumn({name: 'time_ended', type: 'timestamp'})
+  @DbAwareColumn({name: 'time_ended', type: 'timestamp', nullable: false})
   public timeEnded!: Date;
 
   @DbAwareColumn({name: 'data_type', type: 'int', nullable: true})
@@ -88,6 +88,9 @@ export class HandHistory {
 
   @Column({name: 'compressed', default: false})
   public compressed!: boolean;
+
+  @Column({name: 'retention_days', type: 'int', nullable: true})
+  public retentionDays!: number;
 }
 
 @Entity({name: 'high_hand_history'})
