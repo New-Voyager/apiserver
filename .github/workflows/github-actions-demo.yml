@@ -3,7 +3,7 @@ name: GitHub Actions Demo
 on: [push]
 
 jobs:
-  build/test:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Setup
@@ -26,5 +26,5 @@ jobs:
         run: make docker-tests
 
   # publish:
-  #   needs: build/test
+  #   needs: build
   #   if: success() && github.ref == 'refs/heads/master'
