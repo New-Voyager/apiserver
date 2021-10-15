@@ -24,6 +24,7 @@ import {Nats} from '@src/nats';
 import {
   getGameManager,
   getGameRepository,
+  getHistoryConnection,
   getHistoryRepository,
   getUserManager,
   getUserRepository,
@@ -505,7 +506,34 @@ class HandRepositoryImpl {
   }
 
   public async cleanUpOldData(): Promise<void> {
-    throw new Error('Not implemented');
+    const envDays = parseInt(process.env.HAND_HISTORY_RETENTION_DAYS || '');
+    const daysToKeep = Number.isInteger(envDays) ? envDays : 30;
+
+    logger.info(
+      `Starting hand history retention. Keeping ${daysToKeep} days records`
+    );
+
+    const start = Date.now();
+    const result = await getHistoryConnection()
+      .createQueryBuilder()
+      .delete()
+      .from(HandHistory)
+      .where(
+        `
+        (retention_days IS NULL AND time_ended < NOW() - INTERVAL '${daysToKeep} days')
+        OR
+        (time_ended < NOW() - INTERVAL '1 day' * retention_days)
+        `
+      )
+      .execute();
+
+    const end = Date.now();
+
+    logger.info(
+      `Finished hand history retention. Deleted ${result.affected} rows in ${
+        end - start
+      } ms`
+    );
   }
 
   public async saveHand(
