@@ -128,6 +128,19 @@ describe('hand game APIs', () => {
     expect(resp1.wonAt).toBe('SHOW_DOWN');
     expect(resp1.handNum).toBe(10);
 
+    const handHistory = await handutils.getSpecificHandHistory(
+      playerId,
+      resp.data.configuredGame.gameCode,
+      '1'
+    );
+    expect(handHistory.gameType).toBe('HOLDEM');
+    expect(handHistory.handNum).toBe(1);
+
+    const test = await handutils.saveBookmarkHand(resp.data.configuredGame.gameCode, playerId, 1)
+    console.log(test)
+    const t1 = await handutils.removeBookmark(playerId, 1)
+    console.log(t1);
+
 
     await endGame(playerId, resp.data.configuredGame.gameCode);
     await axios.post(`${SERVER_API}/process-pending-updates/gameId/${gameId}`)
