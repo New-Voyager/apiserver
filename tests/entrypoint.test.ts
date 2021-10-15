@@ -8,27 +8,27 @@ beforeAll(async () => {
   await start(false, {intTest: true});
 });
 
-// import './announcements';
-// import './auth';
-// import './chat';
-// import './chipstrack';
-// import './club';
-// import './clubmessage';
-// import './game';
-// import './history';
-// import './observers';
-// import './stats';
+import './announcements';
+import './auth';
+import './chat';
+import './chipstrack';
+import './club';
+import './clubmessage';
+import './game';
+import './history';
+import './observers';
+import './stats';
 
-// import './club.test';
-// import './clubmessage.test';
-// import './game.test';
-// import './gameserver.test';
-// import './hand.test';
-// import './helloworld.test';
-// import './player.test';
-// import './reload.test';
-// import './seatchange.test';
-// import './waitlistseating.test';
-// import './game-types';
+import './club.test';
+import './clubmessage.test';
+import './game.test';
+import './gameserver.test';
+import './hand.test';
+import './helloworld.test';
+import './player.test';
+import './reload.test';
+import './seatchange.test';
+import './waitlistseating.test';
+import './game-types';
 
 import './appcoin/appcoin.test';
