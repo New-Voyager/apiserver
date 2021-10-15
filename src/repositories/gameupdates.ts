@@ -192,7 +192,12 @@ class GameUpdatesRepositoryImpl {
     await GameUpdatesRepository.get(game.gameCode, true);
   }
 
-  public async updateDealersChoiceSeat(game: PokerGame, playerId: number) {
+  public async updateDealersChoiceSeat(
+    game: PokerGame,
+    playerId: number,
+    handNum: number,
+    seat: number
+  ) {
     const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
 
     await gameUpdatesRepo.update(
@@ -201,6 +206,8 @@ class GameUpdatesRepositoryImpl {
       },
       {
         dealerChoiceSeat: playerId,
+        orbitPos: seat,
+        orbitHandNum: handNum,
       }
     );
     await GameUpdatesRepository.get(game.gameCode, true);

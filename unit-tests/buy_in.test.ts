@@ -153,14 +153,14 @@ describe('BuyIn APIs', () => {
 
     // Only the host can set buy-in limit.
     const t = async () => {
-      await setBuyInLimit(player1, game.gameCode, player2, 100);
+      await setBuyInLimit(player1, game.gameCode, player2, 0, 100);
     };
     await expect(t).rejects.toThrowError();
 
     // Set buy-in limit
-    await setBuyInLimit(owner, game.gameCode, player1, 50);
-    await setBuyInLimit(owner, game.gameCode, player2, 100);
-    await setBuyInLimit(owner, game.gameCode, player3, 150);
+    await setBuyInLimit(owner, game.gameCode, player1, 0, 50);
+    await setBuyInLimit(owner, game.gameCode, player2, 0, 100);
+    await setBuyInLimit(owner, game.gameCode, player3, 0, 150);
 
     // Player 1 - exceeds limit (not auto approved)
     const resp1 = await buyIn(player1, game.gameCode, 100);

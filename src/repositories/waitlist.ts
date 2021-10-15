@@ -323,6 +323,9 @@ export class WaitListMgmt {
     const title = `${GameType[game.gameType]} ${game.smallBlind}/${
       game.bigBlind
     }`;
+    logger.info(
+      `[${game.gameCode}] Player: ${player.name}/${player.uuid} is requested to take open seat`
+    );
     Nats.sendWaitlistMessage(
       game.gameCode,
       game.gameType,

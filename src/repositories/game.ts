@@ -53,6 +53,7 @@ import {PlayersInGame} from '@src/entity/history/player';
 import {schedulePostProcessing} from '@src/scheduler';
 import {notifyScheduler} from '@src/server';
 import {NextHandUpdatesRepository} from './nexthand_update';
+import {processPendingUpdates} from './pendingupdates';
 const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
@@ -843,7 +844,7 @@ class GameRepositoryImpl {
 
   public async restartGameIfNeeded(
     game: PokerGame,
-    processPendingUpdates: boolean,
+    runPendingUpdates: boolean,
     hostStartedGame: boolean,
     transactionEntityManager?: EntityManager
   ): Promise<void> {
@@ -936,14 +937,22 @@ class GameRepositoryImpl {
               }
             );
             // refresh the cache
-            const gameUpdate = await Cache.getGame(
+            const gameCached = await Cache.getGame(
               game.gameCode,
               true,
               transactionEntityManager
             );
             logger.info(`[${game.gameCode}] Resuming game`);
-            // resume the game
-            await resumeGame(gameUpdate.id, transactionEntityManager);
+            const gameUpdate = await Cache.getGameUpdates(game.gameCode, true);
+            if (
+              game.gameType === GameType.DEALER_CHOICE &&
+              gameUpdate.orbitPos === 0
+            ) {
+              await processPendingUpdates(game.id);
+            } else {
+              // resume the game
+              await resumeGame(gameCached.id, transactionEntityManager);
+            }
           }
         }
       } catch (err) {

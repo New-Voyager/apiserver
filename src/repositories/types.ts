@@ -154,7 +154,7 @@ export enum ClubUpdateType {
   MEMBER_DENIED,
   HOST_MESSAGE,
   ANNOUNCEMENT,
-  MEW_GAME,
+  NEW_GAME,
   MEMBER_LEFT,
 }
 
