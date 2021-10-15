@@ -93,6 +93,7 @@ class GameRepositoryImpl {
 
       const dealerChoiceGames = input.dealerChoiceGames.toString();
       input['dealerChoiceGames'] = dealerChoiceGames;
+      input['dealerChoiceOrbit'] = input.dealerChoiceOrbit;
     } else if (gameType === GameType.ROE) {
       if (input.roeGames === null || input.roeGames.length === 0) {
         throw new Error('roeGames must be specified');

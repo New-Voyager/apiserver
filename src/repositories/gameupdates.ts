@@ -33,6 +33,8 @@ class GameUpdatesRepositoryImpl {
       // first hand is bomb pot hand
       gameUpdates.bombPotThisHand = true;
     }
+
+    gameUpdates.dealerChoiceOrbit = input.dealerChoiceOrbit;
     await gameUpdatesRepo.save(gameUpdates);
   }
 
