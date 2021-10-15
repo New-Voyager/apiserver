@@ -1,12 +1,10 @@
-import {resetDatabase, startGqlServer, INTERNAL_PORT} from '../utils/utils';
+import {getNextHandInfo, moveToNextHand, processPendingUpdates, resetDatabase, startGqlServer} from '../utils/utils';
 import * as clubutils from '../utils/club.testutils';
-import * as gameutils from '../utils/game.testutils';
-import {buyIn, configureGame, createGameServer, getSeatPositions, joinGame, pauseGame, seatChangeSwapSeats, startGame} from './utils';
-import axios from 'axios';
+import {buyIn, configureGame, createGameServer, joinGame, pauseGame, startGame} from './utils';
+import { hostBeginSeatChange, seatChangeComplete, seatChangeSwapSeats, switchSeat, gameInfo } from '../utils/game.testutils';
+import _ from 'lodash';
 
-const SERVER_API = `http://localhost:${INTERNAL_PORT}/internal`;
-
-describe('seat change APIs', () => {
+describe('seatChangeTest APIs', () => {
   beforeAll(async done => {
     await resetDatabase();
     done();
@@ -16,93 +14,175 @@ describe('seat change APIs', () => {
     done();
   });
 
-  test('seat change', async () => {
+  test('Seat Change', async () => {
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
     await createGameServer('1.99.0.1');
     const resp = await configureGame({clubCode, playerId});
-    const gameId = await gameutils.getGameById(resp.data.configuredGame.gameCode);
 
-    const playerId2 = await clubutils.createPlayer(`adamqwe`, `1243ABCqwe`);
-    await clubutils.playerJoinsClub(clubCode, playerId2);
-    const playerId3 = await clubutils.createPlayer(`adamqwe3`, `1243ABCqwe3`);
-    await clubutils.playerJoinsClub(clubCode, playerId3);
-    const playerId4 = await clubutils.createPlayer(`adamqwe4`, `1243ABCqwe4`);
-    await clubutils.playerJoinsClub(clubCode, playerId4);
-    
+    const playersNum = new Array(2).fill(0);
+
     await joinGame({
       ownerId: playerId,
       gameCode: resp.data.configuredGame.gameCode,
-      seatNo: 1,
+      seatNo: 4,
+      location: {
+        lat: 100,
+        long: 100,
+      },
     });
+
     await buyIn({ownerId: playerId, gameCode: resp.data.configuredGame.gameCode, amount: 1000});
-    await startGame({ ownerId: playerId, gameCode: resp.data.configuredGame.gameCode })
 
-    await gameutils.addToWaitingList(playerId3, resp.data.configuredGame.gameCode)
+    let playersIdsInSeats: any = {};
+    playersIdsInSeats[4] = playerId;
 
-    await axios.post(`${SERVER_API}/process-pending-updates/gameId/${gameId}`)
-    expect(true).toEqual(true)
-  })
+    const playerIds = await Promise.all(playersNum.map(async (value, index) => {
+      const playerId = await clubutils.createPlayer(`adam${index}`, `1243ABC${index}`);
+      playersIdsInSeats[index+1] = playerId;
+      await clubutils.playerJoinsClub(clubCode, playerId);
+      await joinGame({
+        ownerId: playerId,
+        gameCode: resp.data.configuredGame.gameCode,
+        seatNo: index + 1,
+        location: {
+          lat: 100,
+          long: 100,
+        },
+      });
+      
+      await buyIn({ownerId: playerId, gameCode: resp.data.configuredGame.gameCode, amount: 1000});
+      
+      return playerId;
+    }));
+    const gameCode = resp.data.configuredGame.gameCode;
+    const gameId = resp.data.configuredGame.gameID;
+    const data = await startGame({ ownerId: playerId, gameCode: resp.data.configuredGame.gameCode })
+    expect(data.status).toEqual('ACTIVE');
 
-  test('getSeatPositions', async () => {
+    // first hand
+    // move to next hand
+    await moveToNextHand(0, gameCode, 1);
+
+    // get next hand info
+    let nextHand = await getNextHandInfo(gameCode);
+    console.log(JSON.stringify(nextHand));
+    await processPendingUpdates(gameId);
+    await moveToNextHand(0, gameCode, 2);
+    nextHand = await getNextHandInfo(gameCode);
+    let players = _.keyBy(nextHand.playersInSeats, 'seatNo');
+    expect(players[1].inhand).toBeTruthy();
+    expect(players[2].inhand).toBeTruthy();
+    expect(players[3].inhand).toBeFalsy();
+    expect(players[4].inhand).toBeTruthy();
+
+    // seat 3 is open
+    // switch seat
+    await switchSeat(playerId, gameCode, 3);
+
+    // hand num 2
+    await processPendingUpdates(gameId);
+    await moveToNextHand(0, gameCode, 2);
+    nextHand = await getNextHandInfo(gameCode);
+    console.log(JSON.stringify(nextHand));
+    players = _.keyBy(nextHand.playersInSeats, 'seatNo');
+    expect(players[1].inhand).toBeTruthy();
+    expect(players[2].inhand).toBeTruthy();
+    expect(players[3].inhand).toBeTruthy();
+    expect(players[4].inhand).toBeFalsy();
+  });
+
+
+  test('Host Seat Change', async () => {
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
     await createGameServer('1.99.0.1');
     const resp = await configureGame({clubCode, playerId});
-    const gameId = await gameutils.getGameById(resp.data.configuredGame.gameCode);
 
-    const playerId2 = await clubutils.createPlayer(`adamqwe`, `1243ABCqwe`);
-    await clubutils.playerJoinsClub(clubCode, playerId2);
-    const playerId3 = await clubutils.createPlayer(`adamqwe3`, `1243ABCqwe3`);
-    await clubutils.playerJoinsClub(clubCode, playerId3);
-    const playerId4 = await clubutils.createPlayer(`adamqwe4`, `1243ABCqwe4`);
-    await clubutils.playerJoinsClub(clubCode, playerId4);
-    
+    const playersNum = new Array(2).fill(0);
+
     await joinGame({
       ownerId: playerId,
       gameCode: resp.data.configuredGame.gameCode,
-      seatNo: 1,
+      seatNo: 4,
+      location: {
+        lat: 100,
+        long: 100,
+      },
     });
+
     await buyIn({ownerId: playerId, gameCode: resp.data.configuredGame.gameCode, amount: 1000});
-    await startGame({ ownerId: playerId, gameCode: resp.data.configuredGame.gameCode })
-    await gameutils.addToWaitingList(playerId3, resp.data.configuredGame.gameCode)
-    const resp1 = await gameutils.requestSeatChange(playerId, resp.data.configuredGame.gameCode);
-    const res = await getSeatPositions({ ownerId: playerId, gameCode: resp.data.configuredGame.gameCode })
-    console.log(res);
-    expect(true).toEqual(true)
-  })
 
+    let playersIdsInSeats: any = {};
+    playersIdsInSeats[4] = playerId;
 
-  test('seatChangeSwapSeats', async () => {
-    const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
-    await createGameServer('1.99.0.1');
-    const resp = await configureGame({clubCode, playerId});
-    const gameId = await gameutils.getGameById(resp.data.configuredGame.gameCode);
+    const playerIds = await Promise.all(playersNum.map(async (value, index) => {
+      const playerId = await clubutils.createPlayer(`adam${index}`, `1243ABC${index}`);
+      playersIdsInSeats[index+1] = playerId;
+      await clubutils.playerJoinsClub(clubCode, playerId);
+      await joinGame({
+        ownerId: playerId,
+        gameCode: resp.data.configuredGame.gameCode,
+        seatNo: index + 1,
+        location: {
+          lat: 100,
+          long: 100,
+        },
+      });
+      
+      await buyIn({ownerId: playerId, gameCode: resp.data.configuredGame.gameCode, amount: 1000});
+      
+      return playerId;
+    }));
+    const gameCode = resp.data.configuredGame.gameCode;
+    const gameId = resp.data.configuredGame.gameID;
+    const data = await startGame({ ownerId: playerId, gameCode: resp.data.configuredGame.gameCode })
+    expect(data.status).toEqual('ACTIVE');
 
-    const playerId2 = await clubutils.createPlayer(`adamqwe`, `1243ABCqwe`);
-    await clubutils.playerJoinsClub(clubCode, playerId2);
-    const playerId3 = await clubutils.createPlayer(`adamqwe3`, `1243ABCqwe3`);
-    await clubutils.playerJoinsClub(clubCode, playerId3);
-    const playerId4 = await clubutils.createPlayer(`adamqwe4`, `1243ABCqwe4`);
-    await clubutils.playerJoinsClub(clubCode, playerId4);
-    
-    await joinGame({
+    // first hand
+    // move to next hand
+    await moveToNextHand(0, gameCode, 1);
+
+    // get next hand info
+    let nextHand = await getNextHandInfo(gameCode);
+    console.log(JSON.stringify(nextHand));
+    await processPendingUpdates(gameId);
+    await moveToNextHand(0, gameCode, 2);
+    nextHand = await getNextHandInfo(gameCode);
+    let players = _.keyBy(nextHand.playersInSeats, 'seatNo');
+    expect(players[1].inhand).toBeTruthy();
+    expect(players[2].inhand).toBeTruthy();
+    expect(players[3].inhand).toBeFalsy();
+    expect(players[4].inhand).toBeTruthy();
+
+    // await processPendingUpdates(gameId);
+    const pausedStatus = await pauseGame({
       ownerId: playerId,
       gameCode: resp.data.configuredGame.gameCode,
-      seatNo: 1,
     });
-    await joinGame({
-      ownerId: playerId2,
-      gameCode: resp.data.configuredGame.gameCode,
-      seatNo: 2,
-    });
-    await buyIn({ownerId: playerId, gameCode: resp.data.configuredGame.gameCode, amount: 1000});
-    await startGame({ ownerId: playerId, gameCode: resp.data.configuredGame.gameCode })
-    
-    const data =  await seatChangeSwapSeats({ ownerId: playerId, gameCode: resp.data.configuredGame.gameCode, seatNo1: 1, seatNo2: 2})
 
-    console.log(data);
+    await processPendingUpdates(gameId);
+    const gi = await gameInfo(playerId, gameCode);
+    expect(gi.status).toEqual('PAUSED');
 
-    expect(true).toEqual(true)
-  })
+    // move seat 1 (adam1) to seat 3 (open)
+    // move seat 2 (adam2) to seat 4 (brady)
+    await hostBeginSeatChange(playerId, gameCode);
+    await seatChangeSwapSeats(playerId, gameCode, 1, 3);
+    await seatChangeSwapSeats(playerId, gameCode, 2, 4);
+    await seatChangeComplete(playerId, gameCode);
 
-  
+    // hand num 2
+    await processPendingUpdates(gameId);
+    await moveToNextHand(0, gameCode, 2);
+    nextHand = await getNextHandInfo(gameCode);
+    console.log(JSON.stringify(nextHand));
+    players = _.keyBy(nextHand.playersInSeats, 'seatNo');
+    expect(players[1].inhand).toBeFalsy();
+    expect(players[2].inhand).toBeTruthy();
+    expect(players[2].name).toEqual('brady');
+    expect(players[3].inhand).toBeTruthy();
+    expect(players[3].name).toEqual('adam0');
+    expect(players[4].inhand).toBeTruthy();
+    expect(players[4].name).toEqual('adam1');
+  });  
 });
+

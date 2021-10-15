@@ -2,6 +2,21 @@ import {gql} from 'apollo-server-express';
 import axios from 'axios';
 import {getClient, INTERNAL_PORT} from '../utils/utils';
 
+const sitBackMutation = gql`
+  mutation($gameCode: String!, $location: LocationInput!) {
+    sitBack(gameCode: $gameCode, location: $location) {
+      missedBlind
+      status
+    }
+  }
+`
+
+const updateLocationMutation = gql`
+  mutation($location: LocationInput!) {
+    updateLocation(location: $location)
+  }
+`
+
 const seatChangeSwapSeatsMutation = gql`
 mutation seatChangeSwapSeats($gameCode: String!, $seatNo1: Int!, $seatNo2: Int!) {
   seatChangeSwapSeats(gameCode: $gameCode, seatNo1: $seatNo1, seatNo2: $seatNo2)
@@ -206,6 +221,29 @@ const declineWaitlistSeatMutation = gql`
     declineWaitlistSeat(gameCode: $gameCode)
   }
 `;
+
+export const sitBack = async ({ ownerId, gameCode, location}) => {
+  const resp = await getClient(ownerId).mutate({
+    variables: {
+      location,
+      gameCode,
+    },
+    mutation: sitBackMutation,
+  });
+
+  return resp.data;
+}
+
+export const updateLocation = async ({ ownerId, location}) => {
+  const resp = await getClient(ownerId).mutate({
+    variables: {
+      location,
+    },
+    mutation: updateLocationMutation,
+  });
+
+  return resp.data
+};
 
 export const seatChangeSwapSeats = async ({ ownerId, gameCode, seatNo1, seatNo2}) => {
   const resp = await getClient(ownerId).mutate({

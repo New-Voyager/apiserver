@@ -107,8 +107,21 @@ const myClubsQuery = gql`
   query {
     clubs: myClubs {
       name
-      private
-      clubCode
+  host
+  clubCode
+  clubStatus
+  picUrl
+  memberCount
+  imageId
+  isOwner
+  private
+  memberStatus
+  balance
+  pendingMemberCount
+  unreadMessageCount
+  memberUnreadMessageCount
+  hostUnreadMessageCount
+  liveGameCount
     }
   }
 `;
