@@ -25,8 +25,8 @@ class AdminAPIs {
 
   public async dataRetention(req: any, resp: any) {
     try {
-      await HandRepository.cleanUpOldData();
-      resp.status(200).send({status: 'OK'});
+      const handHistoryDeleted = await HandRepository.cleanUpOldData();
+      resp.status(200).send({handHistory: handHistoryDeleted});
     } catch (err) {
       logger.error(`Error in data retention process: ${errToLogString(err)}`);
       resp.status(500).json({error: errToLogString(err, false)});

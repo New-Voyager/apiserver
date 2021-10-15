@@ -505,7 +505,7 @@ class HandRepositoryImpl {
     return JSON.parse(data);
   }
 
-  public async cleanUpOldData(): Promise<void> {
+  public async cleanUpOldData(): Promise<number | null | undefined> {
     const envDays = parseInt(process.env.HAND_HISTORY_RETENTION_DAYS || '');
     const daysToKeep = Number.isInteger(envDays) ? envDays : 30;
 
@@ -534,6 +534,8 @@ class HandRepositoryImpl {
         end - start
       } ms`
     );
+
+    return result.affected;
   }
 
   public async saveHand(
