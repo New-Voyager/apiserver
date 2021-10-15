@@ -29,5 +29,5 @@ import './reload.test';
 import './seatchange.test';
 import './waitlistseating.test';
 import './game-types';
-import './hand/'
-
+import './hand'
+import './player'
