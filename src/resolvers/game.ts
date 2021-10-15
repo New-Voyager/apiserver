@@ -154,42 +154,8 @@ export async function endGame(playerId: string, gameCode: string) {
         `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot end the game`
       );
     }
-
-    let gameRunning = true;
-    if (
-      game.status === GameStatus.ACTIVE &&
-      game.tableStatus === TableStatus.GAME_RUNNING
-    ) {
-      const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
-        game.id
-      );
-      if (playersInSeats.length == 1) {
-        gameRunning = false;
-      }
-    } else {
-      if (
-        game.status === GameStatus.ACTIVE &&
-        game.tableStatus === TableStatus.NOT_ENOUGH_PLAYERS
-      ) {
-        gameRunning = false;
-      }
-    }
-
-    if (game.status === GameStatus.CONFIGURED) {
-      gameRunning = false;
-    }
-
-    if (gameRunning) {
-      // the game will be stopped in the next hand
-      await NextHandUpdatesRepository.endGameNextHand(player, game.id);
-      const messageId = uuidv4();
-      Nats.sendGameEndingMessage(game.gameCode, messageId);
-    } else {
-      await Cache.removeAllObservers(game.gameCode);
-      const status = await GameRepository.markGameEnded(game.id);
-      return GameStatus[status];
-    }
-    return GameStatus[game.status];
+    const status = await GameRepository.endGame(player, game);
+    return GameStatus[status];
   } catch (err) {
     logger.error(
       `Error while ending game. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(

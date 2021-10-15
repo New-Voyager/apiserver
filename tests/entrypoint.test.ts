@@ -30,3 +30,5 @@ import './reload.test';
 import './seatchange.test';
 import './waitlistseating.test';
 import './game-types';
+
+import './appcoin/appcoin.test';

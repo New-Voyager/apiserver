@@ -1,5 +1,7 @@
+import {gql} from 'apollo-boost';
 import {PlayerRepository} from '../../src/repositories/player';
 import {getLogger} from '../../src/utils/log';
+import { getClient } from './utils';
 
 const logger = getLogger('Player unit-test');
 
@@ -47,4 +49,26 @@ export async function createPlayer(args: any) {
       return value === undefined || value === '';
     }
   }
+}
+
+export const buyDiamondsQuery = gql`
+  mutation($coinsUsed: Int!, $diamonds: Int!) {
+    status: buyDiamonds(coinsUsed: $coinsUsed, diamonds: $diamonds)
+  }
+`;
+export async function buyDiamonds(
+  playerId: string,
+  diamonds: number,
+  coinsUsed: number
+): Promise<any> {
+  const resp = await getClient(playerId).mutate({
+    variables: {
+      diamonds: diamonds,
+      coinsUsed: coinsUsed,
+    },
+    mutation: buyDiamondsQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.status;
 }

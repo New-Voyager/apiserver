@@ -105,6 +105,35 @@ const resolvers: any = {
     },
   },
   Mutation: {
+    buyDiamonds: async (parent, args, ctx, info) => {
+      if (!ctx.req.playerId) {
+        throw new Error('Unauthorized');
+      }
+      logger.info(
+        `Player: ${ctx.req.playerId} used ${args.coinsUsed} for diamonds`
+      );
+      try {
+        const availableCoins = await AppCoinRepository.availableCoins(
+          ctx.req.playerId
+        );
+        if (availableCoins < args.coinsUsed) {
+          throw new Error('Not enough coins available');
+        }
+        const ret = await AppCoinRepository.consumeCoins(
+          ctx.req.playerId,
+          args.coinsUsed,
+          '',
+          args.diamonds
+        );
+        return ret;
+      } catch (err) {
+        logger.error(
+          `Buying diamonds failed. Player Id: ctx.req.playerId. Error: ${err.toString()}`
+        );
+        return false;
+      }
+    },
+
     appCoinPurchase: async (parent, args, ctx, info) => {
       let purchase: Purchase;
       try {

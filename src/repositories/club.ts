@@ -17,7 +17,7 @@ import {ClubUpdateType} from './types';
 import {Nats} from '@src/nats';
 import {v4 as uuidv4} from 'uuid';
 import {StatsRepository} from './stats';
-import {Firebase} from '@src/firebase';
+import {Firebase, getAppSettings} from '@src/firebase';
 import {
   getGameConnection,
   getHistoryRepository,
@@ -27,6 +27,7 @@ import {
 } from '.';
 import {ClubMemberStat} from '@src/entity/player/club';
 import {ClubMessageRepository} from './clubmessage';
+import {AppCoinRepository} from './appcoin';
 
 const logger = getLogger('repositories::club');
 
@@ -225,24 +226,13 @@ class ClubRepositoryImpl {
       await transactionEntityManager
         .getRepository<ClubMember>(ClubMember)
         .save(clubMember);
+      const appSettings = getAppSettings();
+      await AppCoinRepository.addCoins(
+        0,
+        appSettings.clubHostFreeCoins,
+        ownerObj.uuid
+      );
       await StatsRepository.newClubStats(club);
-
-      try {
-        // create firebase notification
-        // const [groupName, notificationKey] = await Firebase.newClubCreated(
-        //   club,
-        //   ownerObj
-        // );
-        // await clubRepo.update(
-        //   {
-        //     id: club.id,
-        //   },
-        //   {
-        //     firebaseNotificationKeyName: groupName,
-        //     firebaseNotificationKey: notificationKey,
-        //   }
-        // );
-      } catch (err) {}
     });
 
     //logger.info('****** ENDING TRANSACTION  SAVE club and club member');
