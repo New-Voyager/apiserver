@@ -5,7 +5,7 @@ import {
   StoreType,
 } from '@src/entity/player/appcoin';
 import {Cache} from '@src/cache';
-import {getUserManager, getUserRepository} from '.';
+import {getGameManager, getUserManager, getUserRepository} from '.';
 import {getLogger} from '@src/utils/log';
 import {Player} from '@src/entity/player/player';
 import {getAppSettings} from '@src/firebase';
@@ -166,29 +166,52 @@ class AppCoinRepositoryImpl {
 
   public async consumeCoins(
     playerUuid: string,
-    coinsConsumed: number
+    coinsConsumed: number,
+    gameCode: string,
+    noOfDiamonds: number
   ): Promise<number> {
-    const playerCoinRepo = getUserRepository(PlayerCoin);
-    const existingRow = await playerCoinRepo.findOne({playerUuid: playerUuid});
-    if (existingRow == null) {
-      return 0;
-    } else {
-      let totalCoinsAvailable = existingRow.totalCoinsAvailable - coinsConsumed;
-      if (totalCoinsAvailable < 0) {
-        totalCoinsAvailable = 0;
-      }
-      await playerCoinRepo
-        .createQueryBuilder()
-        .update()
-        .set({
-          totalCoinsAvailable: () => `${totalCoinsAvailable}`,
-        })
-        .where({
+    const player = await Cache.getPlayer(playerUuid);
+    return await getUserManager().transaction(
+      async transactionEntityManager => {
+        const playerCoinRepo = transactionEntityManager.getRepository(
+          PlayerCoin
+        );
+        const consumeCoinRepo = transactionEntityManager.getRepository(
+          CoinConsumeTransaction
+        );
+        const existingRow = await playerCoinRepo.findOne({
           playerUuid: playerUuid,
-        })
-        .execute();
-      return totalCoinsAvailable;
-    }
+        });
+        if (existingRow == null) {
+          return 0;
+        } else {
+          let totalCoinsAvailable =
+            existingRow.totalCoinsAvailable - coinsConsumed;
+          if (totalCoinsAvailable < 0) {
+            totalCoinsAvailable = 0;
+          }
+          await playerCoinRepo
+            .createQueryBuilder()
+            .update()
+            .set({
+              totalCoinsAvailable: () => `${totalCoinsAvailable}`,
+            })
+            .where({
+              playerUuid: playerUuid,
+            })
+            .execute();
+          const trans = new CoinConsumeTransaction();
+          trans.playerId = player.id;
+          trans.playerUuid = player.uuid;
+          trans.gameCode = gameCode;
+          trans.diamonds = noOfDiamonds;
+          trans.coinsSpent = coinsConsumed;
+          trans.purchaseDate = new Date();
+          await consumeCoinRepo.save(trans);
+          return totalCoinsAvailable;
+        }
+      }
+    );
   }
 
   public async enoughCoinsForGame(gameCode: string): Promise<boolean> {
@@ -238,7 +261,12 @@ class AppCoinRepositoryImpl {
       playerUuid = owner.uuid;
     }
     const appSettings = getAppSettings();
-    await this.consumeCoins(playerUuid, appSettings.gameCoinsPerBlock);
+    await this.consumeCoins(
+      playerUuid,
+      appSettings.gameCoinsPerBlock,
+      game.gameCode,
+      0
+    );
 
     const nextConsumeTime = new Date();
     nextConsumeTime.setSeconds(

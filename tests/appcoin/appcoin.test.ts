@@ -8,6 +8,7 @@ import { getAppSettings } from '../../src/firebase';
 import { timerCallbackHandler } from '../../src/repositories/timer';
 import { GAME_COIN_CONSUME_TIME } from '../../src/repositories/types';
 import { AppCoinRepository } from '../../src/repositories/appcoin';
+import { buyDiamonds } from '../utils/player.testutils';
 
 describe('appCoin consumption APIs', () => {
   beforeAll(async done => {
@@ -193,5 +194,14 @@ describe('appCoin consumption APIs', () => {
     // game ended
     let gi = await gameInfo(playerId, gameCode);
     expect(gi.status).toEqual(GameStatus[GameStatus.ACTIVE]);
-  });  
+  });
+
+
+  test('buy diamonds', async () => {
+    const [clubCode, playerId] = await clubutils.createClub('diamond-user', 'yatzee');
+    const status = await buyDiamonds(playerId, 100, 5);
+    const availableCoins = await AppCoinRepository.availableCoins(playerId);
+    expect(availableCoins).toEqual(20);
+  });
+
 });

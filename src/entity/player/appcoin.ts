@@ -110,6 +110,9 @@ export class CoinConsumeTransaction {
   @Column({name: 'product_sku', nullable: true})
   public productSku!: string;
 
+  @Column({name: 'diamonds', nullable: true, type: 'int'})
+  public diamonds!: number;
+
   @Column({name: 'coins_spent', nullable: false, type: 'int'})
   public coinsSpent!: number;
 
