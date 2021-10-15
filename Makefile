@@ -216,7 +216,7 @@ docker-script-tests: create-network run-redis
 		$(TEST_IMAGE_NAME) sh -c "sh ./run_script_tests.sh"
 
 .PHONY: docker-tests
-docker-tests: create-network run-redis run-nats run-pg
+docker-tests: create-network login run-redis run-nats run-pg
 	docker run -t --rm \
 		--name $(TEST_IMAGE_NAME) \
 		--network $(DEFAULT_DOCKER_NET) \
