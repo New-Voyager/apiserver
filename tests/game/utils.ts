@@ -2,6 +2,84 @@ import {gql} from 'apollo-server-express';
 import axios from 'axios';
 import {getClient, INTERNAL_PORT} from '../utils/utils';
 
+const seatChangeSwapSeatsMutation = gql`
+mutation seatChangeSwapSeats($gameCode: String!, $seatNo1: Int!, $seatNo2: Int!) {
+  seatChangeSwapSeats(gameCode: $gameCode, seatNo1: $seatNo1, seatNo2: $seatNo2)
+}
+`
+
+const playerById = gql`
+  query {
+    playerById {
+      id
+    }
+  }
+`
+
+const seatPositions = gql`
+  query($gameCode: String!, $seatChange: Boolean) {
+    seatPositions(gameCode: $gameCode, seatChange: $seatChange) {
+      seatNo
+  playerUuid
+  playerId
+  name
+  buyIn
+  stack
+  missedBlind
+  status
+  seatStatus
+  buyInExpTime
+  breakStartedTime
+  breakExpTime
+  gameToken
+  agoraToken
+  isBot
+
+    }
+  }
+`
+
+const completedGame = gql`
+query completedGame($gameCode: String!) {
+  completedGame(gameCode: $gameCode) {
+    title
+  gameType
+  gameCode
+  gameNum
+  smallBlind
+  bigBlind
+  startedBy
+  startedAt
+  endedBy
+  endedAt
+  runTime
+  runTimeStr
+  sessionTime
+  sessionTimeStr
+  handsDealt
+  handsPlayed
+  dataAggregated
+  buyIn
+  profit
+  stack
+  highHandTracked
+  stackStat {
+    handNum
+    before
+    after
+  }
+  isHost
+  isOwner
+  isManager
+  preflopHands
+  flopHands
+  turnHands
+  riverHands
+  showdownHands
+  }
+}
+`
+
 const buyinQuery = gql`
   mutation($gameCode: String!, $amount: Float!) {
     status: buyIn(gameCode: $gameCode, amount: $amount) {
@@ -14,6 +92,7 @@ const buyinQuery = gql`
 export const configureGameQuery = gql`
   mutation($clubCode: String!, $gameInput: GameCreateInput!) {
     configuredGame: configureGame(clubCode: $clubCode, game: $gameInput) {
+      gameID
       title
       gameCode
       gameType
@@ -128,6 +207,41 @@ const declineWaitlistSeatMutation = gql`
   }
 `;
 
+export const seatChangeSwapSeats = async ({ ownerId, gameCode, seatNo1, seatNo2}) => {
+  const resp = await getClient(ownerId).mutate({
+    variables: {
+      gameCode: gameCode,
+      seatNo1,
+      seatNo2,
+    },
+    mutation: seatChangeSwapSeatsMutation,
+  });
+
+  return resp.data;
+}
+
+export const getSeatPositions = async ({ ownerId, gameCode }) => {
+  const resp = await getClient(ownerId).query({
+    variables: {
+      gameCode: gameCode,
+      seatChange: true,
+    },
+    query: seatPositions,
+  });
+
+  return resp.data;
+}
+export const getCompletedGame = async ({ ownerId, gameCode } ) => {
+  const resp = await getClient(ownerId).mutate({
+    variables: {
+      gameCode: gameCode,
+    },
+    mutation: completedGame,
+  });
+
+  return resp.data;
+}
+
 export const declineWaitlistSeat = async ({ownerId, gameCode}: any) => {
   const resp = await getClient(ownerId).mutate({
     variables: {
@@ -154,6 +268,14 @@ export const applyWaitlistOrder = async ({
 
   return resp.data;
 };
+
+export const getPlayerById = async ({ ownerId }) => {
+  const resp = await getClient(ownerId).query({
+    query: playerById,
+  });
+
+  return resp.data
+}
 
 export const setBuyInLimit = async ({ownerId, gameCode, playerId, limit}) => {
   const resp = await getClient(ownerId).mutate({
@@ -270,7 +392,7 @@ export const takeSeat = async ({ownerId, gameCode, seatNo, location}) => {
   return resp.data;
 };
 
-export const joinGame = async ({ownerId, gameCode, seatNo, location}) => {
+export const joinGame = async ({ownerId, gameCode, seatNo, location, ip}:any) => {
   const variables = {
     gameCode,
     seatNo,
@@ -278,17 +400,20 @@ export const joinGame = async ({ownerId, gameCode, seatNo, location}) => {
   };
   const client = getClient(ownerId);
   const resp = await client.mutate({
+    context: {
+      ip,
+    },
     variables: variables,
     mutation: joinGameMutation,
   });
   return resp.data;
 };
 
-export const configureGame = async ({playerId, clubCode}) => {
+export const configureGame = async ({playerId, clubCode, highHandTracked, gpsCheck, ipCheck}: any) => {
   const resp = await getClient(playerId).mutate({
     variables: {
       clubCode: clubCode,
-      gameInput: holdemGameInput,
+      gameInput: { ...holdemGameInput, highHandTracked, gpsCheck, ipCheck },
     },
     mutation: configureGameQuery,
   });
@@ -334,9 +459,10 @@ export const holdemGameInput = {
   rakePercentage: 5.0,
   rakeCap: 5.0,
   buyInMin: 100,
-  buyInMax: 600,
+  buyInMax: 1000,
   actionTime: 30,
   muckLosingHand: true,
   waitlistSittingTimeout: 5,
   rewardIds: [] as any,
 };
+
