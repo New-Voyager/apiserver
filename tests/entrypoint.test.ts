@@ -18,7 +18,6 @@ import './game';
 import './history';
 import './observers';
 import './stats';
-
 import './club.test';
 import './clubmessage.test';
 import './game.test';
@@ -30,3 +29,5 @@ import './reload.test';
 import './seatchange.test';
 import './waitlistseating.test';
 import './game-types';
+import './hand/'
+

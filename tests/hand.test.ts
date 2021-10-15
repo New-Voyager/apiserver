@@ -701,7 +701,8 @@ describe('Hand Tests', () => {
         data
       );
       expect(resp.status).toBe(200);
-      await handutils.saveBookmarkHand(gameCode, playerUuids[0], data.handNum);
+      const test = await handutils.saveBookmarkHand(gameCode, playerUuids[0], data.handNum);
+      console.log(test)
       lastHand += 1;
     }
     const bookmarkedHand = await handutils.getBookmarkedHands(playerUuids[0]);

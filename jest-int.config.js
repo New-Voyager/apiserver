@@ -50,6 +50,7 @@ module.exports = {
     '!src/internal/metrics.ts',
     '!src/nats/index.ts',
     '!src/internal/user.ts',
+    '!src/resolvers/reward.ts',
 
 
     // temporarily disable directories
