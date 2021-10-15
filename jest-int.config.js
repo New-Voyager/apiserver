@@ -42,7 +42,24 @@ module.exports = {
     '!src/scheduler/index.ts',
     '!src/timer/index.ts',
     '!src/timer/nats.ts',
+    '!src/internal/admin.ts',
+    '!src/internal/bot.ts',
+    '!src/internal/game.ts',
+    '!src/internal/gameserver.ts',
+    '!src/internal/hand.ts',
+    '!src/internal/metrics.ts',
+    '!src/nats/index.ts',
+    '!src/internal/user.ts',
 
+
+    // temporarily disable directories
+    '!src/email/*.ts',
+    '!src/entity/game/*.ts',
+    '!src/entity/history/*.ts',
+    '!src/entity/player/*.ts',
+    '!src/entity/debug/*.ts',
+    '!src/entity/*.ts',
+    
     // '!<rootDir>/node_modules/"',
   ],
   collectCoverage: true,

@@ -2,7 +2,7 @@ import {anyPendingUpdates, getClient, getNextHandInfo, moveToNextHand, processPe
 import * as clubutils from '../utils/club.testutils';
 import {buyIn, configureGame, configureGameQuery, createGameServer, joinGame, startGame} from '../game/utils';
 import { GameType } from '../../src/entity/types';
-import { chooseGame, takeBreak } from '../utils/game.testutils';
+import { takeBreak } from '../utils/game.testutils';
 import _ from 'lodash';
 
 describe('takeBreak APIs', () => {
