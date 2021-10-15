@@ -2,9 +2,15 @@ import {getLogger} from '@src/utils/log';
 import axios from 'axios';
 import {GameStatus} from '@src/entity/types';
 import {fixQuery} from '@src/utils';
-import {BUYIN_TIMEOUT, BREAK_TIMEOUT} from '@src/repositories/types';
+import {
+  BUYIN_TIMEOUT,
+  BREAK_TIMEOUT,
+  GAME_COIN_CONSUME_TIME,
+} from '@src/repositories/types';
 import {notifyGameServer} from '@src/gameserver';
 import {getGameConnection} from '@src/repositories';
+import {GameRepository} from '@src/repositories/game';
+import {GameUpdatesRepository} from '@src/repositories/gameupdates';
 
 const logger = getLogger('timer');
 
@@ -62,7 +68,7 @@ export async function cancelTimer(
   }
 }
 
-export async function restartTimers(req: any, resp: any) {
+async function restartBuyinTimers() {
   // Look into the db and find out what are the active games. PokerGame game_status = 2.
   // Among the active games which players have the buyInExpAt or breakExpAt that is NOT null.
   const query = fixQuery(`
@@ -102,12 +108,53 @@ export async function restartTimers(req: any, resp: any) {
             `Failed to restart timer (game id: ${data['game_id']}, player id: ${data['player_id']}, purpose: ${purpose}, expire at: ${expireAt}): ${err.message}`
           );
         } else {
-          await sleep(100);
+          await sleep(1000);
         }
       }
     }
   }
+}
 
+async function restartGameConsumeCoinTimers() {
+  const games = await GameRepository.getActiveGames();
+  for (const game of games) {
+    const gameUpdate = await GameUpdatesRepository.get(game.gameCode, true);
+    if (gameUpdate.nextCoinConsumeTime) {
+      let remaining = 5;
+      while (remaining > 0) {
+        try {
+          logger.info(
+            `Restarting game consume timer (game code: ${
+              game.gameCode
+            }, expire at: ${gameUpdate.nextCoinConsumeTime.toISOString()})`
+          );
+          await startTimer(
+            game.id,
+            0,
+            GAME_COIN_CONSUME_TIME,
+            gameUpdate.nextCoinConsumeTime
+          );
+          break;
+        } catch (err) {
+          remaining--;
+          if (remaining === 0) {
+            logger.error(
+              `Failed to restart game consume timer (game code: ${
+                game.gameCode
+              }, expire at: ${gameUpdate.nextCoinConsumeTime.toISOString()})`
+            );
+          } else {
+            await sleep(1000);
+          }
+        }
+      }
+    }
+  }
+}
+
+export async function restartTimers(req: any, resp: any) {
+  await restartBuyinTimers();
+  await restartGameConsumeCoinTimers();
   resp.status(200).send(JSON.stringify({status: 'OK'}));
 }
 

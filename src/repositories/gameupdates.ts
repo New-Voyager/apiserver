@@ -36,8 +36,9 @@ class GameUpdatesRepositoryImpl {
     await gameUpdatesRepo.save(gameUpdates);
   }
 
-  public async updateAppcoinNextConsumeTime(
+  public async updateAppcoinConsumeTime(
     game: PokerGame,
+    nextConsumeTime: Date,
     transactionManager?: EntityManager
   ) {
     if (!game.appCoinsNeeded) {
@@ -58,25 +59,19 @@ class GameUpdatesRepositoryImpl {
       if (!gameUpdateRow) {
         return;
       }
-      if (!gameUpdateRow.nextCoinConsumeTime) {
-        const freeTime = getAppSettings().freeTime;
-        const now = new Date();
-        const nextConsumeTime = new Date(now.getTime() + freeTime * 1000);
-        await gameUpdatesRepo.update(
-          {
-            gameCode: game.gameCode,
-          },
-          {
-            nextCoinConsumeTime: nextConsumeTime,
-          }
-        );
-        gameUpdateRow.nextCoinConsumeTime = nextConsumeTime;
-      }
+      await gameUpdatesRepo.update(
+        {
+          gameCode: game.gameCode,
+        },
+        {
+          nextCoinConsumeTime: nextConsumeTime,
+        }
+      );
       await this.get(game.gameCode, true, transactionManager);
       logger.info(
         `[${
           game.gameCode
-        }] Next coin consume time: ${gameUpdateRow.nextCoinConsumeTime.toISOString()}`
+        }] Coins consumed. Consume time: ${gameUpdateRow.lastCoinConsumeTime.toISOString()}`
       );
     } catch (err) {
       logger.error(
@@ -153,42 +148,6 @@ class GameUpdatesRepositoryImpl {
         gameType: gameType,
       }
     );
-    await GameUpdatesRepository.get(game.gameCode, true);
-  }
-
-  public async updateCoinNextTime(
-    game: PokerGame,
-    nextCoinConsumeTime: Date,
-    appCoinHostNotified: boolean
-  ) {
-    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-    await gameUpdatesRepo.update(
-      {
-        gameCode: game.gameCode,
-      },
-      {
-        nextCoinConsumeTime: nextCoinConsumeTime,
-        appCoinHostNotified: appCoinHostNotified,
-      }
-    );
-    await GameUpdatesRepository.get(game.gameCode, true);
-  }
-
-  public async updateCoinsUsed(game: PokerGame, nextCoinConsumeTime: Date) {
-    const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
-    const gameUpdates = await GameUpdatesRepository.get(game.gameCode, true);
-
-    await gameUpdatesRepo
-      .createQueryBuilder()
-      .update()
-      .set({
-        coinsUsed: () => `coins_used + ${gameUpdates.appcoinPerBlock}`,
-        nextCoinConsumeTime: nextCoinConsumeTime,
-      })
-      .where({
-        gameID: game.id,
-      })
-      .execute();
     await GameUpdatesRepository.get(game.gameCode, true);
   }
 

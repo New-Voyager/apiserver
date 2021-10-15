@@ -9,11 +9,14 @@ import {getUserManager, getUserRepository} from '.';
 import {getLogger} from '@src/utils/log';
 import {Player} from '@src/entity/player/player';
 import {getAppSettings} from '@src/firebase';
-import {Nats} from '@src/nats';
 import {GameUpdatesRepository} from './gameupdates';
+import {GameRepository} from './game';
+import {PokerGame} from '@src/entity/game/game';
+import {startTimer} from '@src/timer';
+import {GAME_COIN_CONSUME_TIME} from './types';
+import {GameStatus} from '@src/entity/types';
 const crypto = require('crypto');
 
-const COIN_PURCHASE_NOTIFICATION_TIME = 10;
 const logger = getLogger('repositories::appcoins');
 
 class AppCoinRepositoryImpl {
@@ -26,6 +29,7 @@ class AppCoinRepositoryImpl {
     purchaseDate: Date,
     receipt: string
   ): Promise<boolean> {
+    logger.info(`Player: ${playerUuid} bought ${coinsPurchased}`);
     return await getUserManager().transaction(
       async transactionEntityManager => {
         const coinTransactionRepo = transactionEntityManager.getRepository(
@@ -67,17 +71,21 @@ class AppCoinRepositoryImpl {
   public async addCoins(
     coinsPurchased: number,
     coinsRewarded: number,
-    playerId: string
+    playerUuid: string
   ): Promise<number> {
+    logger.info(
+      `Player: ${playerUuid} bought ${coinsPurchased}, awarded: ${coinsRewarded}`
+    );
+
     const repository = getUserRepository(PlayerCoin);
     const existingRow = await repository.findOne({
       where: {
-        playerUuid: playerId,
+        playerUuid: playerUuid,
       },
     });
     if (!existingRow) {
       const playerCoin: PlayerCoin = new PlayerCoin();
-      playerCoin.playerUuid = playerId;
+      playerCoin.playerUuid = playerUuid;
       playerCoin.totalCoinsAvailable = coinsPurchased + coinsRewarded;
       playerCoin.totalCoinsPurchased = coinsPurchased;
       await repository.save(playerCoin);
@@ -92,17 +100,17 @@ class AppCoinRepositoryImpl {
             `total_coins_purchased + ${coinsPurchased}`,
         })
         .where({
-          playerUuid: playerId,
+          playerUuid: playerUuid,
         })
         .execute();
     }
     const saved = await repository.findOne({
       where: {
-        playerUuid: playerId,
+        playerUuid: playerUuid,
       },
     });
     if (!saved) {
-      throw new Error('Player coin not updated');
+      throw new Error('Player coins not updated');
     }
     return saved.totalCoinsAvailable;
   }
@@ -183,153 +191,70 @@ class AppCoinRepositoryImpl {
     }
   }
 
-  public async canGameContinue(gameCode: string) {
-    // first get the game from cache
+  public async enoughCoinsForGame(gameCode: string): Promise<boolean> {
     const game = await Cache.getGame(gameCode);
-    if (game === null || game === undefined) {
-      return false;
+    if (!game) {
+      throw new Error(`Game: ${gameCode} is not found`);
     }
-
-    const gameUpdates = await GameUpdatesRepository.get(gameCode);
-    if (gameUpdates === null || gameUpdates === undefined) {
-      return false;
-    }
-
-    const settings = getAppSettings();
-    // we may support public games in the future
-    if (!gameUpdates.nextCoinConsumeTime) {
-      if (game.appCoinsNeeded) {
-        await GameUpdatesRepository.updateAppcoinNextConsumeTime(game);
-      }
-      return true;
-    }
-
-    const now = new Date();
-    const diff = gameUpdates.nextCoinConsumeTime.getTime() - now.getTime();
-    const diffInSecs = Math.ceil(diff / 1000);
-
-    if (diffInSecs > 0 && diffInSecs < settings.notifyHostTimeWindow) {
-      //logger.info(`[${game.gameCode}] app coin consumption time has not reached. Time remaining: ${diffInSecs} seconds`);
-      return true;
-    }
-    if (diffInSecs > 0 && diffInSecs <= settings.notifyHostTimeWindow) {
-      if (gameUpdates.appCoinHostNotified) {
-        logger.info(
-          `[${game.gameCode}] app coin consumption time has not reached. We notified the host. Time remaining: ${diffInSecs} seconds`
-        );
-        // we already notified the host
-        return true;
-      }
-    }
-
-    // get app coins from the host or club owner
-    let appCoinPlayerId;
-    let appCoinPlayerUuid;
-
+    let playerUuid = game.hostUuid;
     if (game.clubCode) {
+      // this is a club game, charge the club owner
       const club = await Cache.getClub(game.clubCode);
-      if (!club || !club.owner) {
-        logger.error(`Club [${game.clubCode}] is not found`);
-        return false;
-      }
       const owner: Player | undefined = await Promise.resolve(club.owner);
       if (!owner) {
-        logger.error(`Club [${game.clubCode}]. Owner is not found`);
-        return false;
+        throw new Error('Unexpected. There is no owner for the club');
       }
-      appCoinPlayerId = owner.id;
-      appCoinPlayerUuid = owner.uuid;
-    } else {
-      appCoinPlayerId = game.hostId;
-      appCoinPlayerUuid = game.hostUuid;
+      playerUuid = owner.uuid;
     }
 
-    const ret = await getUserManager().transaction(async tranManager => {
-      // get player coins
-      const coinRepo = tranManager.getRepository(PlayerCoin);
-      const appCoin = await coinRepo.findOne({
-        playerUuid: appCoinPlayerUuid,
-      });
-      let totalCoinsAvailable = 0;
-      if (appCoin) {
-        // no app coins available for the user
-        totalCoinsAvailable = appCoin.totalCoinsAvailable;
-      }
-
-      if (
-        diffInSecs <= settings.notifyHostTimeWindow &&
-        !gameUpdates.appCoinHostNotified
-      ) {
-        if (totalCoinsAvailable < gameUpdates.appcoinPerBlock) {
-          await Nats.notifyAppCoinShort(game);
-          // notify the host and extend the game bit longer
-          const nextCoinConsumeTime = new Date(
-            now.getTime() + settings.notifyHostTimeWindow * 1000
-          );
-          await GameUpdatesRepository.updateCoinNextTime(
-            game,
-            nextCoinConsumeTime,
-            true
-          );
-          logger.info(
-            `[${game.gameCode}] Host is notified to make coin purchase`
-          );
-          return true;
-        }
-      }
-
-      if (diffInSecs > 0) {
-        return true;
-      }
-
-      // do we have enough coins ??
-      // not enough coins, return false. pending updates: true, end the game
-      if (totalCoinsAvailable < gameUpdates.appcoinPerBlock) {
-        // notify the host that the game is ended due to low app coins
-        logger.info(
-          `[${game.gameCode}] app coin consumption time has reached. Not enough coins`
-        );
-        return false;
-      }
-      const appSettings = getAppSettings();
-      // consume app coins
-      const nextCoinConsumeTime = new Date(
-        now.getTime() + appSettings.consumeTime * 1000
-      );
-      await GameUpdatesRepository.updateCoinsUsed(game, nextCoinConsumeTime);
-      // subtract from user account
-      await coinRepo
-        .createQueryBuilder()
-        .update()
-        .set({
-          totalCoinsAvailable: () =>
-            `total_coins_available - ${gameUpdates.appcoinPerBlock}`,
-        })
-        .where({
-          playerUuid: appCoinPlayerUuid,
-        })
-        .execute();
-
-      // add an entry in transaction record
-      const consumeCoinsRepo = tranManager.getRepository(
-        CoinConsumeTransaction
-      );
-      const consumeCoins = new CoinConsumeTransaction();
-      consumeCoins.playerId = appCoinPlayerId;
-      consumeCoins.playerUuid = appCoinPlayerUuid;
-      consumeCoins.gameCode = game.gameCode;
-      consumeCoins.coinsSpent = gameUpdates.appcoinPerBlock;
-      consumeCoins.purchaseDate = new Date();
-      await consumeCoinsRepo.save(consumeCoins);
-      logger.info(
-        `[${game.gameCode}] subtracted ${
-          consumeCoins.coinsSpent
-        } from player: ${appCoinPlayerUuid} Next coin consumption time: ${nextCoinConsumeTime.toISOString()}`
-      );
+    const availableCoins = await this.availableCoins(playerUuid);
+    const appSettings = getAppSettings();
+    if (availableCoins >= appSettings.gameCoinsPerBlock) {
       return true;
-    });
+    }
+    return false;
+  }
 
-    return ret;
+  public async consumeGameCoins(game: PokerGame) {
+    if (game.status === GameStatus.ENDED) {
+      return;
+    }
+    logger.info(`Game: ${game.gameCode} consume coins`);
+
+    if (!(await this.enoughCoinsForGame(game.gameCode))) {
+      // end the game
+      await GameRepository.endGame(null, game);
+      return;
+    }
+    // consume coins
+    let playerUuid = game.hostUuid;
+    if (game.clubCode) {
+      // this is a club game, charge the club owner
+      const club = await Cache.getClub(game.clubCode);
+      const owner: Player | undefined = await Promise.resolve(club.owner);
+      if (!owner) {
+        throw new Error('Unexpected. There is no owner for the club');
+      }
+      playerUuid = owner.uuid;
+    }
+    const appSettings = getAppSettings();
+    await this.consumeCoins(playerUuid, appSettings.gameCoinsPerBlock);
+
+    const nextConsumeTime = new Date();
+    nextConsumeTime.setSeconds(
+      nextConsumeTime.getSeconds() + appSettings.gameCoinsPerBlock
+    );
+    logger.info(
+      `Game: ${
+        game.gameCode
+      } next consume coins time ${nextConsumeTime.toISOString()}`
+    );
+
+    // update and start next timer
+    await GameUpdatesRepository.updateAppcoinConsumeTime(game, nextConsumeTime);
+
+    // start a timer
+    startTimer(game.id, 0, GAME_COIN_CONSUME_TIME, nextConsumeTime);
   }
 }
 
