@@ -71,7 +71,7 @@ class GameUpdatesRepositoryImpl {
       logger.info(
         `[${
           game.gameCode
-        }] Coins consumed. Consume time: ${gameUpdateRow.lastCoinConsumeTime.toISOString()}`
+        }] Coins consumed. Next Consume time: ${gameUpdateRow.nextCoinConsumeTime.toISOString()}`
       );
     } catch (err) {
       logger.error(

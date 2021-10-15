@@ -1065,6 +1065,15 @@ class GameRepositoryImpl {
     gameNum?: number
   ): Promise<GameStatus> {
     const resp = this.markGameStatus(gameId, GameStatus.ACTIVE, gameNum);
+
+    const game = await Cache.getGameById(gameId);
+    if (!game) {
+      throw new Error(`Game: ${gameId} is not found`);
+    }
+
+    // consume game coins
+    await AppCoinRepository.consumeGameCoins(game);
+
     // update game history
     await HistoryRepository.updateGameNum(gameId, gameNum);
     return resp;

@@ -230,7 +230,7 @@ class ClubRepositoryImpl {
       await AppCoinRepository.addCoins(
         0,
         appSettings.clubHostFreeCoins,
-        club.owner.uuid
+        ownerObj.uuid
       );
       await StatsRepository.newClubStats(club);
     });
