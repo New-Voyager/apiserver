@@ -150,7 +150,9 @@ class NextHandUpdatesRepositoryImpl {
         );
       }
 
-      cancelTimer(game.id, player.id, BREAK_TIMEOUT);
+      cancelTimer(game.id, player.id, BREAK_TIMEOUT).catch(e => {
+        logger.error(`Failed to cancel break timeout. Error: ${e.message}`);
+      });
       playerInGame.status = PlayerStatus.PLAYING.valueOf();
       const sitBackQuery = `UPDATE player_game_tracker 
               SET status = ${playerInGame.status},
@@ -214,7 +216,7 @@ class NextHandUpdatesRepositoryImpl {
       }
       nextHandUpdate.endReason = endReason;
       nextHandUpdate.newUpdate = NextHandUpdate.END_GAME;
-      repository.save(nextHandUpdate);
+      await repository.save(nextHandUpdate);
 
       // notify users that the game will end in the next hand
     }
@@ -236,7 +238,7 @@ class NextHandUpdatesRepositoryImpl {
       game.id = gameId;
       nextHandUpdate.game = game;
       nextHandUpdate.newUpdate = NextHandUpdate.END_GAME;
-      repository.save(nextHandUpdate);
+      await repository.save(nextHandUpdate);
     }
   }
 
@@ -256,7 +258,7 @@ class NextHandUpdatesRepositoryImpl {
       game.id = gameId;
       nextHandUpdate.game = game;
       nextHandUpdate.newUpdate = NextHandUpdate.PAUSE_GAME;
-      repository.save(nextHandUpdate);
+      await repository.save(nextHandUpdate);
 
       // notify users that the game will pause in the next hand
     }

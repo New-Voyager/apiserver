@@ -58,11 +58,8 @@ class AppCoinRepositoryImpl {
           }
         }
         coinTrans.receiptHash = receiptHash;
-
-        coinTransactionRepo.save(coinTrans);
-
+        await coinTransactionRepo.save(coinTrans);
         await this.addCoins(coinsPurchased, 0, playerUuid);
-
         return false;
       }
     );
@@ -160,7 +157,7 @@ class AppCoinRepositoryImpl {
     }
     playerCoins.totalCoinsAvailable += amount;
     playerCoins.totalCoinsPurchased += amount;
-    playerCoinRepo.save(playerCoins);
+    await playerCoinRepo.save(playerCoins);
     return;
   }
 
@@ -289,7 +286,9 @@ class AppCoinRepositoryImpl {
     await GameUpdatesRepository.updateAppcoinConsumeTime(game, nextConsumeTime);
 
     // start a timer
-    startTimer(game.id, 0, GAME_COIN_CONSUME_TIME, nextConsumeTime);
+    startTimer(game.id, 0, GAME_COIN_CONSUME_TIME, nextConsumeTime).catch(e => {
+      logger.error(`${game.log} Start timer (GAME_COIN_CONSUME_TIME) failed`);
+    });
   }
 }
 

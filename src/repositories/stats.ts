@@ -93,7 +93,7 @@ T♣  T♦  T♠  T❤  A❤     59
  */
 
 class StatsRepositoryImpl {
-  public newGameStatsRow(
+  public async newGameStatsRow(
     game: PokerGame,
     player: Player,
     transactionManager?: EntityManager
@@ -108,7 +108,7 @@ class StatsRepositoryImpl {
     const playerStats = new PlayerGameStats();
     playerStats.playerId = player.id;
     playerStats.gameId = game.id;
-    repository.save(playerStats);
+    await repository.save(playerStats);
   }
 
   public async updateClubStats(

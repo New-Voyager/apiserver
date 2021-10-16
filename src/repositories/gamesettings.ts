@@ -197,13 +197,13 @@ class GameSettingsRepositoryImpl {
       gameCode: game.gameCode,
     });
     if (gameSettings) {
-      if (gameSettings.janusSessionId && gameSettings.janusPluginHandle) {
-        logger.info(`Deleting janus room: ${game.id}`);
-        const session = JanusSession.joinSession(gameSettings.janusSessionId);
-        session.attachAudioWithId(gameSettings.janusPluginHandle);
-        session.deleteRoom(game.id);
-        logger.info(`Janus room: ${game.id} is deleted`);
-      }
+      // if (gameSettings.janusSessionId && gameSettings.janusPluginHandle) {
+      // logger.info(`Deleting janus room: ${game.id}`);
+      // const session = JanusSession.joinSession(gameSettings.janusSessionId);
+      // session.attachAudioWithId(gameSettings.janusPluginHandle);
+      // session.deleteRoom(game.id);
+      // logger.info(`Janus room: ${game.id} is deleted`);
+      // }
     }
   }
 }

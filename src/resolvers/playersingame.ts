@@ -11,6 +11,12 @@ import {Player} from '@src/entity/player/player';
 import {Reload} from '@src/repositories/reload';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
 import {NextHandUpdatesRepository} from '@src/repositories/nexthand_update';
+import {
+  Errors,
+  GameNotFoundError,
+  GenericError,
+  UnauthorizedError,
+} from '@src/errors';
 
 const logger = getLogger('resolvers::players_in_game');
 
@@ -281,7 +287,7 @@ export async function joinGame(
   }
 ) {
   if (!playerUuid) {
-    throw new Error('Unauthorized');
+    throw new UnauthorizedError();
   }
   let playerName = playerUuid;
   const startTime = new Date().getTime();
@@ -293,7 +299,7 @@ export async function joinGame(
     // get game using game code
     const game = await Cache.getGame(gameCode);
     if (!game) {
-      throw new Error(`Game ${gameCode} is not found`);
+      throw new GameNotFoundError(gameCode);
     }
 
     if (game.clubCode) {
@@ -308,11 +314,18 @@ export async function joinGame(
       }
     }
     let ip = '';
-    let location: any = null;
+    let location: any = {};
     if (locationCheck) {
       ip = locationCheck.ip;
       location = locationCheck.location;
     }
+    logger.info(
+      `${game.log} Player: ${player.uuid}/${
+        player.name
+      } is joining seat ${seatNo}. Ip: ${ip} location: ${JSON.stringify(
+        location
+      )}`
+    );
 
     player = await Cache.updatePlayerLocation(player.uuid, location, ip);
     if (!player) {
@@ -352,8 +365,11 @@ export async function joinGame(
     if (err instanceof ApolloError) {
       throw err;
     } else {
-      throw new Error(
-        `Player: ${playerName} Failed to join the game. ${JSON.stringify(err)}`
+      throw new GenericError(
+        Errors.JOIN_FAILED,
+        `Player: ${playerName} Failed to join the game ${gameCode}. ${JSON.stringify(
+          err
+        )}`
       );
     }
   } finally {
@@ -408,6 +424,13 @@ export async function takeSeat(
       );
       await Cache.updatePlayerLocation(player.uuid, location, ip);
     }
+    logger.info(
+      `${game.log} Player: ${player.uuid}/${
+        player.name
+      } is taking seat ${seatNo}. Ip: ${ip} location: ${JSON.stringify(
+        location
+      )}`
+    );
 
     const status = await GameRepository.joinGame(
       player,
@@ -416,8 +439,12 @@ export async function takeSeat(
       ip,
       location
     );
-    logger.debug(
-      `Player: ${player.name} isBot: ${player.bot} joined game: ${game.gameCode}`
+    logger.info(
+      `${game.log} Player: ${player.uuid}/${player.name} isBot: ${
+        player.bot
+      } has taken seat ${seatNo}. Ip: ${ip} location: ${JSON.stringify(
+        location
+      )}`
     );
 
     const playerInSeat = await PlayersInGameRepository.getSeatInfo(
@@ -443,7 +470,8 @@ export async function takeSeat(
     if (err instanceof ApolloError) {
       throw err;
     } else {
-      throw new Error(
+      throw new GenericError(
+        Errors.JOIN_FAILED,
         `Player: ${playerName} Failed to join the game. ${JSON.stringify(err)}`
       );
     }
@@ -459,7 +487,7 @@ export async function buyIn(
   amount: number
 ) {
   if (!playerUuid) {
-    throw new Error('Unauthorized');
+    throw new UnauthorizedError();
   }
   const startTime = new Date().getTime();
   try {
@@ -480,8 +508,11 @@ export async function buyIn(
         );
       }
     }
-
     const player = await Cache.getPlayer(playerUuid);
+    logger.info(
+      `${game.log} Player: ${player.uuid}/${player.name} is buying for ${amount}`
+    );
+
     const buyin = new BuyIn(game, player);
     const status = await buyin.request(amount);
 
@@ -520,8 +551,7 @@ export async function buyIn(
         err
       )}`
     );
-    logger.debug(`Buyin took ${timeTaken}ms`);
-    throw new Error(`Failed to update buyin. ${err.toString()}`);
+    throw new GenericError(Errors.BUYIN_FAILED, `Failed to buyin`);
   }
 }
 
@@ -531,7 +561,7 @@ export async function reload(
   amount: number
 ) {
   if (!playerUuid) {
-    throw new Error('Unauthorized');
+    throw new UnauthorizedError();
   }
   try {
     // get game using game code
@@ -553,6 +583,10 @@ export async function reload(
     }
 
     const player = await Cache.getPlayer(playerUuid);
+    logger.info(
+      `${game.log} Player: ${player.uuid}/${player.name} is reloading for ${amount}`
+    );
+
     const buyin = new Reload(game, player);
     const status = await buyin.request(amount);
     // player is good to go
@@ -563,13 +597,13 @@ export async function reload(
         err
       )}`
     );
-    throw new Error(`Failed to update reload. ${JSON.stringify(err)}`);
+    throw new GenericError(Errors.RELOAD_FAILED, `Failed to reload`);
   }
 }
 
 export async function takeBreak(playerUuid: string, gameCode: string) {
   if (!playerUuid) {
-    throw new Error('Unauthorized');
+    throw new UnauthorizedError();
   }
   try {
     // get game using game code
@@ -590,6 +624,13 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
       }
     }
     const player = await Cache.getPlayer(playerUuid);
+    const now = new Date();
+    logger.info(
+      `${game.log} Player: ${player.uuid}/${
+        player.name
+      } is taking break at ${now.toISOString()}`
+    );
+
     const takeBreak = new TakeBreak(game, player);
     const status = await takeBreak.takeBreak();
     return status;
@@ -599,7 +640,7 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
         err
       )}`
     );
-    throw new Error(`Failed to take break. ${JSON.stringify(err)}`);
+    throw new GenericError(Errors.TAKEBREAK_FAILED, `Failed to take break`);
   }
 }
 
@@ -612,7 +653,7 @@ export async function sitBack(
   }
 ): Promise<SitBackResponse> {
   if (!playerUuid) {
-    throw new Error('Unauthorized');
+    throw new UnauthorizedError();
   }
   try {
     // get game using game code
@@ -639,6 +680,12 @@ export async function sitBack(
       ip = locationCheck.ip;
       location = locationCheck.location;
     }
+    logger.info(
+      `${game.log} Player: ${player.uuid}/${
+        player.name
+      } sits back. Ip: ${ip} location: ${JSON.stringify(location)}`
+    );
+
     await NextHandUpdatesRepository.sitBack(player, game, ip, location);
     const playerInGame = await PlayersInGameRepository.getPlayerInfo(
       game,
@@ -660,7 +707,11 @@ export async function sitBack(
         locationCheck
       )}: ${errToLogString(err)}`
     );
-    throw err;
+    if (err instanceof ApolloError) {
+      throw err;
+    } else {
+      throw new GenericError(Errors.JOIN_FAILED, `Sitting back to seat failed`);
+    }
   }
 }
 
@@ -670,13 +721,13 @@ export async function kickOutPlayer(
   kickedOutPlayer: string
 ): Promise<boolean> {
   if (!requestUser) {
-    throw new Error('Unauthorized');
+    throw new UnauthorizedError();
   }
   try {
     // get game using game code
     const game = await Cache.getGame(gameCode);
     if (!game) {
-      throw new Error(`Game ${gameCode} is not found`);
+      throw new GameNotFoundError(gameCode);
     }
 
     if (game.clubCode) {
@@ -716,6 +767,9 @@ export async function kickOutPlayer(
     }
 
     const player = await Cache.getPlayer(kickedOutPlayer);
+    logger.info(
+      `${game.log} Player: ${player.uuid}/${player.name} is being kicked out`
+    );
     await PlayersInGameRepository.kickOutPlayer(gameCode, player);
     return true;
   } catch (err) {
@@ -736,7 +790,7 @@ export async function setBuyInLimit(
   limit: number
 ): Promise<boolean> {
   if (!requestUser) {
-    throw new Error('Unauthorized');
+    throw new UnauthorizedError();
   }
   try {
     // get game using game code
@@ -801,6 +855,9 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
       }
     }
     const player = await Cache.getPlayer(playerUuid);
+    logger.info(
+      `${game.log} Player: ${player.uuid}/${player.name} is leaving game`
+    );
     const status = await NextHandUpdatesRepository.leaveGame(player, game);
     return status;
   } catch (err) {
@@ -809,9 +866,7 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
         err
       )}`
     );
-    throw new Error(
-      `Failed to leave game. ${err.toString()} ${JSON.stringify(err)}`
-    );
+    throw new GenericError(Errors.LEAVE_GAME_FAILED, `Failed to leave game`);
   }
 }
 
@@ -834,8 +889,9 @@ export async function dealerChoice(
         err
       )}`
     );
-    throw new Error(
-      `Failed to update set dealer choice:  ${err.message}. Game code: ${gameCode}`
+    throw new GenericError(
+      Errors.DEALER_CHOICE_FAILED,
+      `Failed to update set dealer choice`
     );
   }
 }
@@ -858,9 +914,7 @@ export async function postBlind(
         err
       )}`
     );
-    throw new Error(
-      `Failed to post blind:  ${err.message}. Game code: ${gameCode}`
-    );
+    throw new GenericError(Errors.POSTBLIND_FAILED, `Failed to post blind`);
   }
 }
 

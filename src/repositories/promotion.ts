@@ -118,9 +118,12 @@ class PromotionRepositoryImpl {
         promotion.coins,
         playerId
       );
-      PromotionConsumedRepository.createPromotionConsumed(promotion, player);
+      await PromotionConsumedRepository.createPromotionConsumed(
+        promotion,
+        player
+      );
       promotion.usedCount = promotion.usedCount + 1;
-      repository.save(promotion);
+      await repository.save(promotion);
       return {
         success: true,
         availableCoins: updatedCoins,

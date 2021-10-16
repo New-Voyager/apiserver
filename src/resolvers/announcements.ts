@@ -2,7 +2,7 @@ import {Cache} from '@src/cache';
 import {AnnouncementLevel} from '@src/entity/types';
 import {AnnouncementsRepository} from '@src/repositories/announcements';
 import {AnnouncementData} from '@src/types';
-import {getLogger} from '@src/utils/log';
+import {errToLogString, getLogger} from '@src/utils/log';
 const logger = getLogger('resolvers::announcements');
 
 export async function clubAnnouncements(
@@ -29,7 +29,7 @@ export async function clubAnnouncements(
     const resp = await AnnouncementsRepository.clubAnnouncements(club);
     return resp;
   } catch (error) {
-    logger.error(`Failed with error: ${JSON.stringify(error)}`);
+    logger.error(`Failed with error: ${errToLogString(error)}`);
     throw new Error(`Failed with error: ${JSON.stringify(error)}`);
   }
 }
@@ -37,16 +37,11 @@ export async function clubAnnouncements(
 export async function systemAnnouncements(
   playerId: string
 ): Promise<Array<AnnouncementData>> {
-  // const player = await Cache.getPlayer(playerId);
-  // if (!player) {
-  //   throw new Error(`Player ${playerId} is not found`);
-  // }
-
   try {
     const resp = await AnnouncementsRepository.systemAnnouncements();
     return resp;
   } catch (error) {
-    logger.error(`Failed with error: ${JSON.stringify(error)}`);
+    logger.error(`Failed with error: ${errToLogString(error)}`);
     throw new Error(`Failed with error: ${JSON.stringify(error)}`);
   }
 }
@@ -77,7 +72,7 @@ export async function addClubAnnouncement(
     await AnnouncementsRepository.addClubAnnouncement(club, text, expiresAt);
     return true;
   } catch (error) {
-    logger.error(`Failed with error: ${JSON.stringify(error)}`);
+    logger.error(`Failed with error: ${errToLogString(error)}`);
     throw new Error(`Failed with error: ${JSON.stringify(error)}`);
   }
 }
@@ -100,7 +95,7 @@ export async function addSystemAnnouncement(
     );
     return true;
   } catch (error) {
-    logger.error(`Failed with error: ${JSON.stringify(error)}`);
+    logger.error(`Failed with error: ${errToLogString(error)}`);
     throw new Error(`Failed with error: ${JSON.stringify(error)}`);
   }
 }

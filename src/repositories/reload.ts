@@ -157,7 +157,11 @@ export class Reload {
               this.player.id,
               RELOAD_APPROVAL_TIMEOUT,
               reloadTimeExp
-            );
+            ).catch(e => {
+              logger.error(
+                `Failed to start reload approval timer. Error: ${e.message}`
+              );
+            });
 
             logger.debug(
               `************ [${this.game.gameCode}]: Player ${this.player.name} is waiting for approval`
@@ -253,7 +257,13 @@ export class Reload {
     transactionManager?: EntityManager
   ) {
     let cancelTime = new Date().getTime();
-    cancelTimer(this.game.id, this.player.id, RELOAD_APPROVAL_TIMEOUT);
+    cancelTimer(this.game.id, this.player.id, RELOAD_APPROVAL_TIMEOUT).catch(
+      e => {
+        logger.error(
+          `Cancelling reload approval timer failed. Error: ${e.message}`
+        );
+      }
+    );
     cancelTime = new Date().getTime() - cancelTime;
 
     let playerGameTrackerRepository: Repository<PlayerGameTracker>;
@@ -458,7 +468,7 @@ export class Reload {
             this.game.tableStatus !== TableStatus.GAME_RUNNING
           ) {
             // game is just configured or table is paused
-            this.approvedAndUpdateStack(
+            await this.approvedAndUpdateStack(
               reloadRequest.buyinAmount,
               playerInGame,
               transactionEntityManager
@@ -502,7 +512,9 @@ export class Reload {
           if (!playerInGame) {
             return false;
           }
-          cancelTimer(this.game.id, this.player.id, RELOAD_TIMEOUT);
+          cancelTimer(this.game.id, this.player.id, RELOAD_TIMEOUT).catch(e => {
+            logger.error(`Cancelling reload timer failed. Error: ${e.message}`);
+          });
           await this.denied(playerInGame, transactionEntityManager);
           return true;
         }

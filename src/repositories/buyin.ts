@@ -195,7 +195,9 @@ export class BuyIn {
     databaseTime = new Date().getTime() - databaseTime;
 
     cancelTime = new Date().getTime();
-    cancelTimer(this.game.id, this.player.id, BUYIN_TIMEOUT);
+    cancelTimer(this.game.id, this.player.id, BUYIN_TIMEOUT).catch(e => {
+      logger.error(`Cancelling BUYIN_TIME failed. Error: ${e.message}`);
+    });
     cancelTime = new Date().getTime() - cancelTime;
 
     await Nats.playerStatusChanged(
@@ -884,6 +886,7 @@ export class BuyIn {
    * @param game
    */
   public static async startBuyInTimers(game: PokerGame) {
+    logger.debug(`[${game.log} Starting buyin timers`);
     await getGameManager().transaction(async transactionEntityManager => {
       const playerGameTrackerRepo = transactionEntityManager.getRepository(
         PlayerGameTracker

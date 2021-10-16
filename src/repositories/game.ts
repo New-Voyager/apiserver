@@ -792,7 +792,9 @@ class GameRepositoryImpl {
       Nats.newPlayerSat(game, player, playerInGame, seatNo);
 
       // continue to run wait list seating
-      waitlistMgmt.runWaitList();
+      waitlistMgmt.runWaitList().catch(e => {
+        logger.error(`Failed to run waitlist processing. Error: ${e.message}`);
+      });
     }
 
     if (playerInGame.status === PlayerStatus.PLAYING) {
@@ -1148,7 +1150,11 @@ class GameRepositoryImpl {
       logger.info(
         `Scheduling post processing for game ${game.id}/${game.gameCode}`
       );
-      schedulePostProcessing(game.id, game.gameCode);
+      schedulePostProcessing(game.id, game.gameCode).catch(e => {
+        logger.error(
+          `[${game.gameCode}] Failed to schedule post processing. Error: ${e.message}`
+        );
+      });
     }
     return ret;
   }
@@ -1267,7 +1273,7 @@ class GameRepositoryImpl {
           game.tableStatus = TableStatus.GAME_RUNNING;
 
           // update last ip gps check time
-          GameUpdatesRepository.updateLastIpCheckTime(game);
+          await GameUpdatesRepository.updateLastIpCheckTime(game);
         }
         // update the game server with new status
         await Nats.changeGameStatus(game, status, game.tableStatus);
@@ -1414,7 +1420,11 @@ class GameRepositoryImpl {
     }
 
     // cancel the dealer choice timer
-    cancelTimer(game.id, 0, DEALER_CHOICE_TIMEOUT);
+    cancelTimer(game.id, 0, DEALER_CHOICE_TIMEOUT).catch(e => {
+      logger.error(
+        `Cancelling dealer choice timeout failed. Error: ${e.message}`
+      );
+    });
     await GameUpdatesRepository.updateNextGameType(game, gameType);
     // pending updates done
     await resumeGame(game.id);

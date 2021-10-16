@@ -64,9 +64,10 @@ export async function processPendingUpdates(gameId: number) {
   const gameRespository = getGameRepository(PokerGame);
   const game = await gameRespository.findOne({id: gameId});
   if (!game) {
-    throw new Error(`Game: ${gameId} is not found`);
+    logger.error(`Game: ${gameId} is not found`);
+    return;
   }
-
+  logger.info(`[${game.log}] is processing pending updates`);
   await Cache.updateGamePendingUpdates(game?.gameCode, false);
 
   const gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
@@ -80,10 +81,9 @@ export async function processPendingUpdates(gameId: number) {
     return;
   }
 
-  logger.debug(`Processing pending updates for game id: ${game.gameCode}`);
   if (gameSeatInfo.seatChangeInProgress) {
     logger.info(
-      `Seat change is in progress for game id: ${game.gameCode}. No updates will be performed.`
+      `[${game.log}] Seat change is in progress. No updates will be performed.`
     );
     return;
   }
@@ -134,7 +134,7 @@ export async function processPendingUpdates(gameId: number) {
     NextHandUpdate.PAUSE_GAME,
   ]);
   if (resp[0]['updates'] > 0) {
-    logger.info(`Game: ${gameId} is paused`);
+    logger.info(`[${game.log}] game is paused`);
     // game paused
     await GameRepository.markGameStatus(gameId, GameStatus.PAUSED);
 
@@ -213,7 +213,7 @@ export async function processPendingUpdates(gameId: number) {
     if (seatChangeAllowed && openedSeat) {
       const seats = await occupiedSeats(game.id);
       if (newOpenSeat && seats <= game.maxPlayers - 1) {
-        logger.info(`[${game.gameCode}] Seat Change is in Progress`);
+        logger.info(`[${game.log}] Seat Change is in Progress`);
         // open seat
         const seatChangeProcess = new SeatChangeProcess(game);
         const waitingPlayers = await seatChangeProcess.getSeatChangeRequestedPlayers();
@@ -246,9 +246,7 @@ export async function processPendingUpdates(gameId: number) {
         game.status,
         TableStatus.NOT_ENOUGH_PLAYERS
       );
-      logger.info(
-        `Game ${gameId}/${game.gameCode} does not have enough players`
-      );
+      logger.info(`[${game.log}] does not have enough players`);
     }
 
     // start buy in timers for the player's whose stack is 0 and playing
@@ -291,6 +289,10 @@ async function kickoutPlayer(
   if (!playerInGame) {
     return 0;
   }
+  const player = await Cache.getPlayerById(update.playerId);
+  logger.info(
+    `[${game.gameCode}] Player: ${player.uuid}/${player.name} is kicked out`
+  );
   // calculate session time
   let sessionTime = playerInGame.sessionTime;
   const currentSessionTime =
@@ -315,7 +317,6 @@ async function kickoutPlayer(
   await GameRepository.seatOpened(game, playerInGame.seatNo);
 
   if (playerInGame) {
-    const player = await Cache.getPlayerById(update.playerId);
     Nats.playerKickedOut(game, player, playerInGame.seatNo);
   }
   // delete this update
@@ -344,6 +345,9 @@ async function switchSeat(
     const oldSeatNo = playerInGame.seatNo;
     const newSeatNo = update.newSeat;
     const player = await Cache.getPlayer(playerInGame.playerUuid);
+    logger.info(
+      `[${game.gameCode}] Player: ${player.uuid}/${player.name} is switching seat from ${oldSeatNo} to ${newSeatNo}`
+    );
 
     await getGameManager().transaction(async transactionEntityManager => {
       const playerGameTrackerRepository = transactionEntityManager.getRepository(
@@ -394,7 +398,7 @@ async function leaveGame(
   if (!playerInGame) {
     return 0;
   }
-
+  const player = await Cache.getPlayerById(update.playerId);
   const openedSeat = playerInGame.seatNo;
 
   let sessionTime = playerInGame.sessionTime;
@@ -406,6 +410,9 @@ async function leaveGame(
     const roundSeconds = Math.round(currentSessionTime / 1000);
     sessionTime = sessionTime + roundSeconds;
   }
+  logger.info(
+    `[${game.log}] ${player.uuid}/${player.name} left the game. Session time: ${sessionTime}`
+  );
 
   await playerGameTrackerRepository.update(
     {
@@ -425,7 +432,6 @@ async function leaveGame(
 
   if (playerInGame) {
     // notify game server, player is kicked out
-    const player = await Cache.getPlayerById(update.playerId);
     Nats.playerLeftGame(game, player, playerInGame.seatNo);
   }
   // delete this update
@@ -469,9 +475,12 @@ async function buyinApproved(
       noOfBuyins: playerInGame.noOfBuyins,
     }
   );
+  const player = await Cache.getPlayerById(update.playerId);
+  logger.info(
+    `[${game.log}] ${player.uuid}/${player.name} buyin is approved. Stack: ${playerInGame.stack} total buyin: ${playerInGame.buyIn}`
+  );
 
   if (playerInGame) {
-    const player = await Cache.getPlayerById(update.playerId);
     // notify game server, player has a new buyin
     await Nats.playerBuyIn(game, player, playerInGame);
   }
@@ -496,6 +505,9 @@ async function reloadApproved(
   const player = await Cache.getPlayerById(update.playerId);
   const reload = new Reload(game, player);
   await reload.approvedAndUpdateStack(amount);
+  logger.info(
+    `[${game.log}] ${player.uuid}/${player.name} reload is approved. Amount: ${amount}`
+  );
 }
 
 async function handleDealersChoice(
@@ -510,7 +522,11 @@ async function handleDealersChoice(
   );
 
   // start a timer
-  startTimer(game.id, 0, DEALER_CHOICE_TIMEOUT, dealerChoiceTimeout);
+  startTimer(game.id, 0, DEALER_CHOICE_TIMEOUT, dealerChoiceTimeout).catch(
+    e => {
+      logger.error(`Starting dealerchoice timeout failed. Error: ${e.message}`);
+    }
+  );
 
   // delete this update
   if (update) {
@@ -557,7 +573,9 @@ async function handleDealersChoice(
   // if (nextOrbit > game.maxPlayers) {
   //   nextOrbit = 1;
   // }
-  logger.info(`DealerChoice: New dealer choice. Orbit ends at ${buttonPos}`);
+  logger.info(
+    `[${game.log}] DealerChoice: New dealer choice. Orbit ends at ${buttonPos}`
+  );
   await GameUpdatesRepository.updateDealersChoiceSeat(
     game,
     playerId,

@@ -122,7 +122,7 @@ class AggregationImpl {
           let totalPlayersInHand = 0;
           for (const handHistory of handHistoryData) {
             if (handHistory.playersStats) {
-              this.aggregateHandStats(handHistory, playerStatsMap);
+              await this.aggregateHandStats(handHistory, playerStatsMap);
             }
             const playersInHand = JSON.parse(handHistory.players).length;
             totalPlayersInHand += playersInHand;
@@ -170,9 +170,6 @@ class AggregationImpl {
           const gameStatsRepo = transactionalEntityManager.getRepository(
             PlayerGameStats
           );
-          console.log(
-            `game: ${game.gameCode} Update players stats: ${playersInGame.length}`
-          );
           // update player game stats
           for (const player of playersInGame) {
             let headsupHandDetails = '[]';
@@ -188,11 +185,6 @@ class AggregationImpl {
               player.playerId
             ].headsupHandDetails = headsupHandDetails;
             delete playerStatsMap[player.playerId].headsupDetails;
-            console.log(
-              `game: ${game.gameCode} player: ${
-                player.playerName
-              } ${JSON.stringify(playerStatsMap[player.playerId])}`
-            );
             await gameStatsRepo.update(
               {
                 gameId: game.gameId,

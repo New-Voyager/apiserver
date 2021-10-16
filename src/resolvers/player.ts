@@ -185,7 +185,6 @@ const resolvers: any = {
   },
   Mutation: {
     createPlayer: async (parent, args, ctx, info) => {
-      console.log('**** CODE COV *** In CreatePlayer resolver');
       return createPlayer(args);
     },
     updatePlayer: async (parent, args, ctx, info) => {
@@ -397,10 +396,6 @@ export async function createPlayer(args: any) {
     throw new Error(errors.join('\n'));
   }
   try {
-    // I should see this in the console.log
-    console.log('**** CODE COV *** In CreatePlayer implementaion');
-    logger.info('**** CODE COV *** In CreatePlayer implementaion');
-
     const playerInput = args.player;
     return PlayerRepository.createPlayer(
       playerInput.name,

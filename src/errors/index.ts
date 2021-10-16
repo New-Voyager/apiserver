@@ -2,13 +2,28 @@
 
 import {ApolloError} from 'apollo-server-errors';
 
-enum Errors {
+export enum Errors {
   WAITLIST_SEAT_ERROR,
   BUYIN_ERROR,
   SEATING_ERROR,
   IP_MISSING_ERROR,
   SAME_IP_ERROR,
   LOC_PROXMITY_ERROR,
+  INVALID_GOOGLE_RECEIPT,
+  INVALID_APPSTORE_RECEIPT,
+  GAME_CREATION_FAILED,
+  UNAUTHORIZED,
+  ASSIGN_HOST_FAILED,
+  BUYIN_REQUEST_ERROR,
+  GAME_NOT_FOUND_ERROR,
+  JOIN_FAILED,
+  BUYIN_FAILED,
+  RELOAD_FAILED,
+  TAKEBREAK_FAILED,
+  SITBACK_FAILED,
+  LEAVE_GAME_FAILED,
+  DEALER_CHOICE_FAILED,
+  POSTBLIND_FAILED,
 }
 
 export class WaitlistSeatError extends ApolloError {
@@ -47,5 +62,57 @@ export class LocationPromixityError extends ApolloError {
     extensions['player1'] = player1;
     extensions['player2'] = player2;
     super(message, Errors[Errors.LOC_PROXMITY_ERROR], extensions);
+  }
+}
+
+export class GoogleReceiptVerifyError extends ApolloError {
+  constructor(productId: string, orderId: string) {
+    const message = `Verifying google receipt failed. Order Id: ${orderId}`;
+    const extensions: any = {};
+    extensions['orderId'] = orderId;
+    extensions['productId'] = productId;
+    super(message, Errors[Errors.INVALID_GOOGLE_RECEIPT], extensions);
+  }
+}
+
+export class AppleReceiptVerifyError extends ApolloError {
+  constructor(productId: string, orderId: string) {
+    const message = `Verifying apple receipt failed. Order Id: ${orderId}`;
+    const extensions: any = {};
+    extensions['orderId'] = orderId;
+    extensions['productId'] = productId;
+    super(message, Errors[Errors.INVALID_APPSTORE_RECEIPT], extensions);
+  }
+}
+
+export class GameCreationError extends ApolloError {
+  constructor(reason: string) {
+    const message = `Creating game failed`;
+    const extensions: any = {};
+    extensions['reason'] = reason;
+    super(message, Errors[Errors.GAME_CREATION_FAILED], extensions);
+  }
+}
+
+export class UnauthorizedError extends ApolloError {
+  constructor() {
+    const message = `Unauthorized user`;
+    const extensions: any = {};
+    super(message, Errors[Errors.UNAUTHORIZED], extensions);
+  }
+}
+
+export class GenericError extends ApolloError {
+  constructor(code: Errors, message: string) {
+    super(message, Errors[code]);
+  }
+}
+
+export class GameNotFoundError extends ApolloError {
+  constructor(gameCode: string) {
+    const message = `Game ${gameCode} is not found`;
+    const extensions: any = {};
+    extensions['gameCode'] = gameCode;
+    super(message, Errors[Errors.GAME_NOT_FOUND_ERROR], extensions);
   }
 }

@@ -406,7 +406,6 @@ class PlayersInGameRepositoryImpl {
     game: PokerGame
   ): Promise<GamePlayerSettings> {
     const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
-    console.log(`Player: ${player.deviceId} game: ${game.gameCode}`);
     const playerInGame = await playerGameTrackerRepo.findOne({
       game: {id: game.id},
       playerId: player.id,
@@ -482,7 +481,9 @@ class PlayersInGameRepositoryImpl {
       setProps
     );
 
-    startTimer(game.id, playerId, BUYIN_TIMEOUT, buyinTimeExp);
+    startTimer(game.id, playerId, BUYIN_TIMEOUT, buyinTimeExp).catch(e => {
+      logger.error(`Starting buyin timeout failed. Error: ${e.message}`);
+    });
   }
 
   public async resetNextHand(

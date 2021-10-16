@@ -164,7 +164,7 @@ class ClubRepositoryImpl {
     if (input.showHighRankStats !== undefined) {
       club.showHighRankStats = input.showHighRankStats;
     }
-    clubRepository.save(club);
+    await clubRepository.save(club);
     return true;
   }
 
@@ -265,7 +265,7 @@ class ClubRepositoryImpl {
           .from(ClubMember)
           .where('club_id = :id', {id: club.id})
           .execute();
-        transactionEntityManager.getRepository(Club).delete(club);
+        await transactionEntityManager.getRepository(Club).delete(club);
       });
       logger.debug('****** ENDING TRANSACTION TO delete club');
     }
@@ -300,7 +300,7 @@ class ClubRepositoryImpl {
     if (clubMember) {
       if (player.bot) {
         clubMember.status = ClubMemberStatus.ACTIVE;
-        clubMemberRepository.update(
+        await clubMemberRepository.update(
           {
             id: clubMember.id,
           },
@@ -311,7 +311,7 @@ class ClubRepositoryImpl {
       }
       if (clubMember.status !== ClubMemberStatus.ACTIVE) {
         // make it pending
-        clubMemberRepository.update(
+        await clubMemberRepository.update(
           {
             id: clubMember.id,
           },
@@ -372,7 +372,9 @@ class ClubRepositoryImpl {
       if (!owner) {
         throw new Error('Unexpected. There is no owner for the club');
       }
-      Firebase.clubMemberJoinRequest(club, owner, player);
+      Firebase.clubMemberJoinRequest(club, owner, player).catch(e => {
+        logger.error(`Failed to send firebase message. Error: ${e.message}`);
+      });
     } catch (err) {
       logger.error(`Failed to send NATS message. Error: ${err.toString()}`);
     }
@@ -492,7 +494,11 @@ class ClubRepositoryImpl {
       })
       .execute();
     await Cache.getClubMember(playerId, clubCode, true /* update cache */);
-    Firebase.clubMemberDeniedJoinRequest(club, owner, clubMember.player);
+    Firebase.clubMemberDeniedJoinRequest(club, owner, clubMember.player).catch(
+      e => {
+        logger.error(`Failed to send firebase message. Error: ${e.message}`);
+      }
+    );
     return ClubMemberStatus.DENIED;
   }
 
@@ -724,7 +730,7 @@ class ClubRepositoryImpl {
         status: ClubMemberStatus.LEFT,
       }
     );
-    ClubMessageRepository.playerLeft(club, player);
+    await ClubMessageRepository.playerLeft(club, player);
     return ClubMemberStatus.LEFT;
   }
 

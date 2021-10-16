@@ -1,8 +1,9 @@
 import {StoreType} from '@src/entity/player/appcoin';
+import {AppleReceiptVerifyError, GoogleReceiptVerifyError} from '@src/errors';
 import {Firebase} from '@src/firebase';
 import {AppCoinRepository} from '@src/repositories/appcoin';
 import {PlayerRepository} from '@src/repositories/player';
-import {getLogger} from '@src/utils/log';
+import {errToLogString, getLogger} from '@src/utils/log';
 
 const appleReceiptVerify = require('node-apple-receipt-verify');
 appleReceiptVerify.config({
@@ -54,11 +55,18 @@ interface Purchase {
   receipt: string;
 }
 
-async function verifyAppleReceipt(receipt: string): Promise<Purchase> {
+async function verifyAppleReceipt(
+  playerId: string,
+  receipt: string
+): Promise<Purchase> {
   // Promise version
+  let productId = '';
+  let orderId = '';
   try {
     const products = await appleReceiptVerify.validate({receipt: receipt});
     const product = products[0];
+    productId = product['productId'];
+    orderId = product['transactionId'];
     const purchaseDate = new Date(product['purchaseDate']);
     return {
       storeType: StoreType.IOS_APP_STORE,
@@ -73,13 +81,21 @@ async function verifyAppleReceipt(receipt: string): Promise<Purchase> {
     } else if (e instanceof appleReceiptVerify.ServiceUnavailableError) {
       // todo
     }
-    throw new Error('Purchase failed');
+    logger.error(`Verifying apple recepit failed ${errToLogString(e)}`);
+    throw new AppleReceiptVerifyError(productId, orderId);
   }
 }
 
-async function verifyGoogleReceipt(receipt: string): Promise<Purchase> {
+async function verifyGoogleReceipt(
+  playerUuid: string,
+  receipt: string
+): Promise<Purchase> {
+  let productId = '';
+  let orderId = '';
   try {
     const receiptJson = JSON.parse(receipt);
+    productId = receiptJson['productId'];
+    orderId = receiptJson['orderId'];
     await googleVerifier.verifyINAPP(receiptJson);
     const purchaseDate = new Date(receiptJson['purchaseTime']);
     return {
@@ -89,9 +105,9 @@ async function verifyGoogleReceipt(receipt: string): Promise<Purchase> {
       receipt: receipt,
       transactionId: receiptJson['orderId'],
     };
-  } catch (e) {
-    console.error(e.toString());
-    throw new Error('Purchase failed');
+  } catch (err) {
+    logger.error(`Verifying google recepit failed ${errToLogString(err)}`);
+    throw new GoogleReceiptVerifyError(productId, orderId);
   }
 }
 
@@ -128,7 +144,9 @@ const resolvers: any = {
         return ret;
       } catch (err) {
         logger.error(
-          `Buying diamonds failed. Player Id: ctx.req.playerId. Error: ${err.toString()}`
+          `Buying diamonds failed. Player Id: ctx.req.playerId. Error: ${errToLogString(
+            err
+          )}`
         );
         return false;
       }
@@ -146,9 +164,9 @@ const resolvers: any = {
           `Verifying purchase receipt from player: ${ctx.req.playerId}`
         );
         if (storeType == StoreType.IOS_APP_STORE) {
-          purchase = await verifyAppleReceipt(args.receipt);
+          purchase = await verifyAppleReceipt(ctx.req.playerId, args.receipt);
         } else if (storeType == StoreType.GOOGLE_PLAY_STORE) {
-          purchase = await verifyGoogleReceipt(args.receipt);
+          purchase = await verifyGoogleReceipt(ctx.req.playerId, args.receipt);
         } else {
           throw new Error(`Store type: ${args.storeType} is unsupported`);
         }
@@ -180,7 +198,7 @@ const resolvers: any = {
           duplicate: duplicate,
         };
       } catch (err) {
-        logger.error(`Verifying purchase failed: ${err.toString()}`);
+        logger.error(`Verifying purchase failed: ${errToLogString(err)}`);
         return {
           valid: false,
         };

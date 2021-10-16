@@ -33,6 +33,12 @@ import {GameUpdatesRepository} from '@src/repositories/gameupdates';
 import {NextHandUpdatesRepository} from '@src/repositories/nexthand_update';
 import {Metrics} from '@src/internal/metrics';
 import {gameSettings} from './gamesettings';
+import {
+  Errors,
+  GameCreationError,
+  GenericError,
+  UnauthorizedError,
+} from '@src/errors';
 
 const logger = getLogger('resolvers::game');
 
@@ -45,14 +51,12 @@ export async function configureGame(
     throw new Error('Unauthorized');
   }
 
-  const club = await Cache.getClub(clubCode);
-
   const errors = new Array<string>();
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
   }
   const startTime = new Date().getTime();
-  let createGameTime, audioConfCreateTime;
+  let createGameTime;
 
   try {
     createGameTime = new Date().getTime();
@@ -82,9 +86,7 @@ export async function configureGame(
         game
       )}: ${errToLogString(err)}`
     );
-    throw new Error(
-      `Failed to create a new game. ${err.toString()} ${JSON.stringify(err)}`
-    );
+    throw new GameCreationError('UNKNOWN');
   }
 }
 
@@ -98,8 +100,9 @@ export async function configureGameByPlayer(playerId: string, game: any) {
   }
   try {
     const player = await Cache.getPlayer(playerId);
-
     const gameInfo = await GameRepository.createPrivateGame(null, player, game);
+    const cachedGame = await Cache.getGame(gameInfo.gameCode, true);
+    logger.info(`[${cachedGame.log}] Game ${gameInfo.gameCode} is created.`);
     Metrics.newGame();
     const ret: any = gameInfo as any;
     ret.gameType = GameType[gameInfo.gameType];
@@ -110,9 +113,7 @@ export async function configureGameByPlayer(playerId: string, game: any) {
         game
       )}: ${errToLogString(err)}`
     );
-    throw new Error(
-      `Failed to create a new game. ${err.toString()} ${JSON.stringify(err)}`
-    );
+    throw new GameCreationError('UNKNOWN');
   }
 }
 
@@ -131,12 +132,11 @@ export async function endGame(playerId: string, gameCode: string) {
     const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
     if (!isAuthorized) {
       logger.error(
-        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot end the game`
+        `[${game.log}] Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot end the game`
       );
-      throw new Error(
-        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot end the game`
-      );
+      throw new UnauthorizedError();
     }
+    logger.info(`[${game.log}] Game ended by the host`);
     const status = await GameRepository.endGame(
       player,
       game,
@@ -149,7 +149,7 @@ export async function endGame(playerId: string, gameCode: string) {
         err
       )}`
     );
-    throw new Error('Failed to end the game. ' + err.message);
+    throw err;
   }
 }
 
@@ -158,7 +158,7 @@ export async function startGame(
   gameCode: string
 ): Promise<string> {
   if (!playerUuid) {
-    throw new Error('Unauthorized');
+    throw new UnauthorizedError();
   }
   try {
     let gameNum = 0;
@@ -184,13 +184,14 @@ export async function startGame(
         logger.error(
           `Player: ${playerUuid} is not manager or owner. The player is not authorized to start the game ${gameCode} in club ${game.clubName}`
         );
-        throw new Error(
-          `Player: ${playerUuid} is not manager or owner. The player is not authorized to start the game ${gameCode}`
-        );
+        throw new UnauthorizedError();
       }
 
       gameNum = await ClubRepository.getNextGameNum(game.clubId);
     }
+    logger.info(
+      `[${game.log}] Game start by the host. Bot game: ${game.botGame}`
+    );
 
     let players = await PlayersInGameRepository.getPlayersInSeats(game.id);
     let humanPlayers = players.length;
@@ -208,9 +209,7 @@ export async function startGame(
         // }
 
         if (players.length !== game.maxPlayers) {
-          logger.debug(
-            `[${game.gameCode}] Waiting for bots to take empty seats`
-          );
+          logger.debug(`[${game.log}] Waiting for bots to take empty seats`);
         } else {
           allFilled = true;
         }
@@ -250,11 +249,10 @@ export async function pendingApprovalsForGame(
         logger.error(
           `Player: ${hostUuid} is not authorized to approve buyIn in club ${game.clubName}`
         );
-        throw new Error(
-          `Player: ${hostUuid} is not authorized to approve buyIn in club ${game.clubName}`
-        );
+        throw new UnauthorizedError();
       }
     }
+    logger.debug(`[${game.log}] Fetching buyin approval requests`);
 
     const player = await Cache.getPlayer(hostUuid);
 
@@ -300,6 +298,7 @@ export async function pendingApprovalsForClub(
 
     const player = await Cache.getPlayer(hostUuid);
     const club = await Cache.getClub(clubCode);
+    logger.debug(`Fetching buyin approval requests`);
 
     const buyin = new BuyIn(new PokerGame(), player);
     const resp = await buyin.pendingApprovalsForClub();
@@ -360,7 +359,9 @@ export async function approveRequest(
         );
       }
     }
+
     const player = await Cache.getPlayer(playerUuid);
+    logger.info(`[${game.log}] Approve buyin request. ${player.uuid}`);
 
     let resp: boolean;
     if (type == ApprovalType.RELOAD_REQUEST) {
@@ -377,7 +378,10 @@ export async function approveRequest(
         err
       )}`
     );
-    throw new Error(`Failed to approve buyin. ${JSON.stringify(err)}`);
+    throw new GenericError(
+      Errors.BUYIN_ERROR,
+      `${gameCode} Buyin approval failed`
+    );
   }
 }
 
@@ -717,6 +721,9 @@ export async function assignHost(
     } else if (newHostPlayerId) {
       newHostPlayer = await Cache.getPlayerById(newHostPlayerId);
     }
+    logger.info(
+      `[${game.log}] Host is changed from ${oldHostPlayer.uuid}/${oldHostPlayer.name} to ${newHostPlayer.uuid}/${newHostPlayer.name}`
+    );
     await PlayersInGameRepository.assignNewHost(
       gameCode,
       oldHostPlayer,
@@ -729,7 +736,10 @@ export async function assignHost(
         err
       )}`
     );
-    throw new Error('Failed to assign game host');
+    throw new GenericError(
+      Errors.ASSIGN_HOST_FAILED,
+      `Error while assigning game host. requestUser: ${requestUser}, gameCode: ${gameCode}, new host player: ${newHostPlayerUuid}`
+    );
   }
 }
 
@@ -743,7 +753,7 @@ export async function pauseGame(playerId: string, gameCode: string) {
   }
   try {
     const game = await Cache.getGame(gameCode);
-
+    const player = await Cache.getPlayer(playerId);
     const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
     if (!isAuthorized) {
       logger.error(
@@ -753,18 +763,23 @@ export async function pauseGame(playerId: string, gameCode: string) {
         `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot pause game`
       );
     }
+    logger.info(
+      `[${game.log}] Host ${player.name}:${player.uuid} is requesting to pause the game`
+    );
 
     if (
       game.status === GameStatus.ACTIVE &&
       game.tableStatus === TableStatus.GAME_RUNNING
     ) {
       // the game will be stopped in the next hand
-      NextHandUpdatesRepository.pauseGameNextHand(game.id);
+      await NextHandUpdatesRepository.pauseGameNextHand(game.id);
+      logger.info(`[${game.log}] will be paued next hand`);
     } else {
       const status = await GameRepository.markGameStatus(
         game.id,
         GameStatus.PAUSED
       );
+      logger.info(`[${game.log}] is paued`);
       return GameStatus[status];
     }
     return GameStatus[game.status];
@@ -800,7 +815,10 @@ export async function resumeGame(playerId: string, gameCode: string) {
     }
 
     if (game.status === GameStatus.PAUSED) {
-      logger.info(`Resume game: ${gameCode}`);
+      const player = await Cache.getPlayer(playerId);
+      logger.info(
+        `[${game.log}] Host ${player.name}:${player.uuid} is requesting to pause the game`
+      );
       const status = await GameRepository.markGameStatus(
         game.id,
         GameStatus.ACTIVE
@@ -812,80 +830,6 @@ export async function resumeGame(playerId: string, gameCode: string) {
   } catch (err) {
     logger.error(
       `Error while resuming game. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
-        err
-      )}`
-    );
-    throw new Error(
-      `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
-    );
-  }
-}
-
-export async function approveBuyIn(
-  playerId: string,
-  gameCode: string,
-  requestPlayerId: string
-) {
-  if (!playerId) {
-    throw new Error('Unauthorized');
-  }
-  const errors = new Array<string>();
-  if (errors.length > 0) {
-    throw new Error(errors.join('\n'));
-  }
-  try {
-    const game = await Cache.getGame(gameCode);
-
-    const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
-    if (!isAuthorized) {
-      logger.error(
-        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot approve/deny requests`
-      );
-      throw new Error(
-        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot approve/deny requests`
-      );
-    }
-
-    const player = await Cache.getPlayer(playerId);
-  } catch (err) {
-    logger.error(
-      `Error while approving buy-in. playerId: ${playerId}, gameCode: ${gameCode}, requestPlayerId: ${requestPlayerId}: ${errToLogString(
-        err
-      )}`
-    );
-    throw new Error(
-      `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
-    );
-  }
-}
-
-export async function denyBuyIn(
-  playerId: string,
-  gameCode: string,
-  requestPlayerId: string
-) {
-  if (!playerId) {
-    throw new Error('Unauthorized');
-  }
-  const errors = new Array<string>();
-  if (errors.length > 0) {
-    throw new Error(errors.join('\n'));
-  }
-  try {
-    const game = await Cache.getGame(gameCode);
-
-    const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
-    if (!isAuthorized) {
-      logger.error(
-        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot approve/deny requests`
-      );
-      throw new Error(
-        `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot approve/deny requests`
-      );
-    }
-  } catch (err) {
-    logger.error(
-      `Error while denying buy-in. playerId: ${playerId}, gameCode: ${gameCode}, requestPlayerId: ${requestPlayerId}: ${errToLogString(
         err
       )}`
     );
