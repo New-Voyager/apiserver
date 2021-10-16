@@ -191,6 +191,7 @@ type Mutation {
     coinsPurchased: Int
     receipt: String!
   ): IapReceipt!
+  buyDiamonds(coinsUsed: Int!, diamonds: Int!): Boolean
   setNotes(playerId: String, playerUuid: String, notes: String): Boolean
   sendPlayerFcmMessage(message: Json!): Boolean
   changeDisplayName(name: String!): Boolean

@@ -22,10 +22,12 @@ import {
   DEALER_CHOICE_TIMEOUT,
   BREAK_TIMEOUT,
   PLAYER_SEATCHANGE_PROMPT,
+  GAME_COIN_CONSUME_TIME,
 } from './types';
 import {WaitListMgmt} from './waitlist';
 import {getGameRepository, getUserRepository} from '.';
 import {resumeGame} from '@src/gameserver';
+import {AppCoinRepository} from './appcoin';
 
 const logger = getLogger('repositories::timer');
 
@@ -55,11 +57,18 @@ export async function timerCallback(req: any, resp: any) {
     `Timer callback for game: ${gameID} player: ${playerID} purpose: ${purpose}`
   );
 
+  await timerCallbackHandler(gameID, playerID, purpose);
+  resp.status(200).send({status: 'OK'});
+}
+
+export async function timerCallbackHandler(
+  gameID: number,
+  playerID: number,
+  purpose: string
+) {
   try {
     if (purpose === WAITLIST_SEATING) {
       await waitlistTimeoutExpired(gameID, playerID);
-      // } else if (purpose === SEATCHANGE_PROGRSS) {
-      //   await seatChangeTimeoutExpired(gameID);
     } else if (purpose === BUYIN_TIMEOUT) {
       await buyInTimeoutExpired(gameID, playerID);
     } else if (purpose === BUYIN_APPROVAL_TIMEOUT) {
@@ -72,11 +81,12 @@ export async function timerCallback(req: any, resp: any) {
       await breakTimeoutExpired(gameID, playerID);
     } else if (purpose === PLAYER_SEATCHANGE_PROMPT) {
       await playerSeatChangeTimeoutExpired(gameID, playerID);
+    } else if (purpose === GAME_COIN_CONSUME_TIME) {
+      await gameConsumeTime(gameID);
     }
   } catch (err) {
     logger.error(`Error in timer callback: ${err.message}`);
   }
-  resp.status(200).send({status: 'OK'});
 }
 
 export async function waitlistTimeoutExpired(gameID: number, playerID: number) {
@@ -252,4 +262,13 @@ export async function dealerChoiceTimeout(gameID: number, playerID: number) {
     `Dealer choice timeout expired. GameID: ${gameID}, playerID: ${playerID}`
   );
   await resumeGame(gameID);
+}
+
+export async function gameConsumeTime(gameID: number) {
+  const game = await Cache.getGameById(gameID);
+  if (!game) {
+    logger.error(`Game: ${gameID} is not found. Game may have ended already`);
+  } else {
+    await AppCoinRepository.consumeGameCoins(game);
+  }
 }

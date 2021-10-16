@@ -18,6 +18,7 @@ import {
   NextHandUpdate,
   SeatChangeProcessType,
   SeatStatus,
+  GameEndReason,
 } from '../types';
 
 @Entity({name: 'poker_game_updates'})
@@ -76,6 +77,9 @@ export class PokerGameUpdates {
   })
   public nextCoinConsumeTime!: Date;
 
+  @Column({name: 'appcoin_per_block', default: 0, type: 'int'}) // per consumption block
+  public appcoinPerBlock!: number;
+
   @Column({name: 'bomb_pot_this_hand', default: false}) // indicates bomb pot this hand
   public bombPotThisHand!: boolean;
 
@@ -85,15 +89,6 @@ export class PokerGameUpdates {
     nullable: true,
   })
   public lastBombPotTime!: Date;
-
-  @Column({name: 'appcoin_host_notified', default: false})
-  public appCoinHostNotified!: boolean;
-
-  @Column({name: 'appcoin_per_block', default: 0, type: 'int'}) // per consumption block
-  public appcoinPerBlock!: number;
-
-  @Column({name: 'appcoin_consume_block', default: 0, type: 'int'}) // game time (in seconds) to allow game runtime
-  public appcoinConsumeBlock!: number;
 
   @DbAwareColumn({
     name: 'last_ip_gps_check_time',
@@ -466,6 +461,9 @@ export class PokerGame {
   })
   public endedAt!: Date;
 
+  @Column({name: 'end_reason', default: GameEndReason.UNKNOWN})
+  public endReason!: GameEndReason;
+
   @Column({name: 'started_by_player_id', type: 'int'})
   public startedBy!: number;
 
@@ -561,4 +559,7 @@ export class NextHandUpdates {
 
   @Column({name: 'new_seat', nullable: true})
   public newSeat!: number;
+
+  @Column({name: 'end_reason', default: GameEndReason.UNKNOWN})
+  public endReason!: GameEndReason;
 }

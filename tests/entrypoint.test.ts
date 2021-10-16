@@ -31,3 +31,4 @@ import './waitlistseating.test';
 import './game-types';
 import './hand'
 import './player'
+import './appcoin/appcoin.test';

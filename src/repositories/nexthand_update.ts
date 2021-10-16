@@ -1,7 +1,12 @@
 import {NextHandUpdates, PokerGame} from '@src/entity/game/game';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {Player} from '@src/entity/player/player';
-import {GameStatus, NextHandUpdate, PlayerStatus} from '@src/entity/types';
+import {
+  GameEndReason,
+  GameStatus,
+  NextHandUpdate,
+  PlayerStatus,
+} from '@src/entity/types';
 import {Nats} from '@src/nats';
 import {cancelTimer} from '@src/timer';
 import {fixQuery} from '@src/utils';
@@ -179,7 +184,11 @@ class NextHandUpdatesRepositoryImpl {
     await GameRepository.restartGameIfNeeded(game, true, false);
   }
 
-  public async endGameNextHand(player: Player, gameId: number) {
+  public async endGameNextHand(
+    player: Player | null,
+    gameId: number,
+    endReason: GameEndReason
+  ) {
     // check to see if the game is already marked to be ended
     const repository = getGameRepository(NextHandUpdates);
     const query = fixQuery(
@@ -194,9 +203,16 @@ class NextHandUpdatesRepositoryImpl {
       const game = new PokerGame();
       game.id = gameId;
       nextHandUpdate.game = game;
-      nextHandUpdate.playerId = player.id;
-      nextHandUpdate.playerName = player.name;
-      nextHandUpdate.playerUuid = player.uuid;
+      if (player) {
+        nextHandUpdate.playerId = player.id;
+        nextHandUpdate.playerName = player.name;
+        nextHandUpdate.playerUuid = player.uuid;
+      } else {
+        nextHandUpdate.playerId = 0;
+        nextHandUpdate.playerName = 'SYSTEM';
+        nextHandUpdate.playerUuid = 'SYSTEM_UUID';
+      }
+      nextHandUpdate.endReason = endReason;
       nextHandUpdate.newUpdate = NextHandUpdate.END_GAME;
       repository.save(nextHandUpdate);
 

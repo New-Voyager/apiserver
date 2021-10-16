@@ -218,3 +218,10 @@ export enum HandDataType {
   COMPRESSED_JSON_BASE64,
   PROTO_HAND_V1,
 }
+
+export enum GameEndReason {
+  UNKNOWN,
+  HOST_TERMINATED,
+  NOT_ENOUGH_COINS,
+  SYSTEM_TERMINATED,
+}
