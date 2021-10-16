@@ -14,10 +14,10 @@ jobs:
         with:
           node-version: '14'
           cache: npm
-      - name: Lint
-        run: make lint
       - name: Build
         run: make build
+      - name: Lint
+        run: make lint
       - name: Build Test Image
         run: make docker-build-test
       - name: Unit Test
