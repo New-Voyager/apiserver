@@ -72,7 +72,7 @@ jobs:
           file: docker/Dockerfile.apiserver
           push: false
           load: true # load image to local registry to use it in next steps
-          tags: apiserver
+          tags: api-server
           cache-from: type=local,src=/tmp/.buildx-cache-finalimage
           cache-to: type=local,mode=min,dest=/tmp/.buildx-cache-finalimage-new
 
