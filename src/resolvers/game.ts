@@ -10,6 +10,7 @@ import {
   ApprovalType,
   ApprovalStatus,
   SeatStatus,
+  GameEndReason,
 } from '@src/entity/types';
 import {getLogger, errToLogString} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
@@ -154,7 +155,11 @@ export async function endGame(playerId: string, gameCode: string) {
         `Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot end the game`
       );
     }
-    const status = await GameRepository.endGame(player, game);
+    const status = await GameRepository.endGame(
+      player,
+      game,
+      GameEndReason.HOST_TERMINATED
+    );
     return GameStatus[status];
   } catch (err) {
     logger.error(

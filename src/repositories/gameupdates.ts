@@ -23,9 +23,6 @@ class GameUpdatesRepositoryImpl {
     const appSettings = getAppSettings();
     gameUpdates.appcoinPerBlock = appSettings.gameCoinsPerBlock;
 
-    if (input.useAgora) {
-      gameUpdates.appcoinPerBlock += appSettings.agoraCoinsPerBlock;
-    }
     if (input.bombPotEnabled) {
       // set current time as last bomb pot time
       gameUpdates.lastBombPotTime = new Date();

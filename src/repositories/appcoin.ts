@@ -14,7 +14,7 @@ import {GameRepository} from './game';
 import {PokerGame} from '@src/entity/game/game';
 import {startTimer} from '@src/timer';
 import {GAME_COIN_CONSUME_TIME} from './types';
-import {GameStatus} from '@src/entity/types';
+import {GameEndReason, GameStatus} from '@src/entity/types';
 const crypto = require('crypto');
 
 const logger = getLogger('repositories::appcoins');
@@ -239,14 +239,19 @@ class AppCoinRepositoryImpl {
   }
 
   public async consumeGameCoins(game: PokerGame) {
-    if (game.status === GameStatus.ENDED) {
+    const host = await Cache.getPlayer(game.hostUuid);
+    if (!host.bot) {
       return;
     }
-    logger.info(`Game: ${game.gameCode} consume coins`);
+    logger.info(`Game: ${game.gameCode} consume coins to continue game`);
+    if (game.status === GameStatus.ENDED) {
+      logger.info(`Game: ${game.gameCode} Not enough coins to continue.`);
+      return;
+    }
 
     if (!(await this.enoughCoinsForGame(game.gameCode))) {
       // end the game
-      await GameRepository.endGame(null, game);
+      await GameRepository.endGame(null, game, GameEndReason.NOT_ENOUGH_COINS);
       return;
     }
     // consume coins
@@ -269,13 +274,15 @@ class AppCoinRepositoryImpl {
     );
 
     const nextConsumeTime = new Date();
+    const now = new Date();
     nextConsumeTime.setSeconds(
-      nextConsumeTime.getSeconds() + appSettings.gameCoinsPerBlock
+      nextConsumeTime.getSeconds() + appSettings.consumeTime
     );
+
     logger.info(
-      `Game: ${
-        game.gameCode
-      } next consume coins time ${nextConsumeTime.toISOString()}`
+      `Game: ${game.gameCode} Game block time: ${
+        appSettings.consumeTime
+      } now: ${now.toISOString()} next consume coins time ${nextConsumeTime.toISOString()}`
     );
 
     // update and start next timer

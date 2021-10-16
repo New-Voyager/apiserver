@@ -12,7 +12,7 @@ import {ClubRepository} from './club';
 import {In} from 'typeorm';
 import _ from 'lodash';
 import {Player} from '@src/entity/player/player';
-import {GameStatus} from '@src/entity/types';
+import {GameEndReason, GameStatus} from '@src/entity/types';
 import {stat, Stats} from 'fs';
 import {StatsRepository} from './stats';
 
@@ -52,13 +52,18 @@ class HistoryRepositoryImpl {
     await gameHistoryRepo.save(gameHistory);
   }
 
-  public async gameEnded(game: PokerGame, handsDealt: number) {
+  public async gameEnded(
+    game: PokerGame,
+    handsDealt: number,
+    endReason: GameEndReason
+  ) {
     const values: any = {
       status: GameStatus.ENDED,
       startedAt: game.startedAt,
       endedAt: game.endedAt,
       endedBy: game.endedBy,
       endedByName: game.endedByName,
+      endReason: endReason,
     };
     values.handsDealt = handsDealt;
     await getHistoryManager().transaction(async transactionEntityManager => {

@@ -18,6 +18,7 @@ import {
   NextHandUpdate,
   SeatChangeProcessType,
   SeatStatus,
+  GameEndReason,
 } from '../types';
 
 @Entity({name: 'poker_game_updates'})
@@ -460,6 +461,9 @@ export class PokerGame {
   })
   public endedAt!: Date;
 
+  @Column({name: 'end_reason', default: GameEndReason.UNKNOWN})
+  public endReason!: GameEndReason;
+
   @Column({name: 'started_by_player_id', type: 'int'})
   public startedBy!: number;
 
@@ -555,4 +559,7 @@ export class NextHandUpdates {
 
   @Column({name: 'new_seat', nullable: true})
   public newSeat!: number;
+
+  @Column({name: 'end_reason', default: GameEndReason.UNKNOWN})
+  public endReason!: GameEndReason;
 }

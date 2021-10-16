@@ -1,6 +1,6 @@
 import {Entity, Column, Index} from 'typeorm';
 import {DbAwareColumn} from '../dbaware';
-import {GameStatus, GameType} from '../types';
+import {GameEndReason, GameStatus, GameType} from '../types';
 
 @Entity({name: 'game_history'})
 export class GameHistory {
@@ -70,6 +70,9 @@ export class GameHistory {
 
   @Column({name: 'ended_by_name', nullable: true})
   public endedByName!: string;
+
+  @Column({name: 'end_reason', default: GameEndReason.UNKNOWN})
+  public endReason!: GameEndReason;
 
   // this flag is used to determine whether the data was aggregated after the game ended
   @Column({name: 'data_aggregated', nullable: false, default: false})

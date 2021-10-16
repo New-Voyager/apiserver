@@ -13,6 +13,7 @@ import {
   PlayerStatus,
   TableStatus,
   SeatStatus,
+  GameEndReason,
 } from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
 import {errToLogString, getLogger} from '@src/utils/log';
@@ -479,7 +480,10 @@ class GameRepositoryImpl {
           );
         }
         await Cache.removeAllObservers(game.gameCode);
-        await GameRepository.markGameEnded(game.id);
+        await GameRepository.markGameEnded(
+          game.id,
+          GameEndReason.SYSTEM_TERMINATED
+        );
       }
       numExpired++;
     }
@@ -1055,8 +1059,6 @@ class GameRepositoryImpl {
       return game.status;
     }
     await this.markGameStatus(game.id, GameStatus.ACTIVE);
-    // consume game coins
-    await AppCoinRepository.consumeGameCoins(game);
 
     return GameStatus.ACTIVE;
   }
@@ -1072,15 +1074,21 @@ class GameRepositoryImpl {
       throw new Error(`Game: ${gameId} is not found`);
     }
 
-    // consume game coins
-    await AppCoinRepository.consumeGameCoins(game);
+    const host = await Cache.getPlayer(game.hostUuid);
+    if (!host.bot) {
+      // consume game coins
+      await AppCoinRepository.consumeGameCoins(game);
+    }
 
     // update game history
     await HistoryRepository.updateGameNum(gameId, gameNum);
     return resp;
   }
 
-  public async markGameEnded(gameId: number): Promise<GameStatus> {
+  public async markGameEnded(
+    gameId: number,
+    endReason: GameEndReason
+  ): Promise<GameStatus> {
     const repository = getGameRepository(PokerGame);
     const game = await repository.findOne({where: {id: gameId}});
     if (!game) {
@@ -1115,13 +1123,21 @@ class GameRepositoryImpl {
         );
       }
     }
+
+    await getGameConnection()
+      .createQueryBuilder()
+      .update(PokerGame)
+      .set({
+        endReason: endReason,
+      })
+      .where('id = :id', {id: gameId})
+      .execute();
+
     const updatedGame = await Cache.getGame(game.gameCode, true);
     let updates = await GameUpdatesRepository.get(game.gameCode);
 
-    // complete books (accounting is in next release)
-    // await ChipsTrackRepository.settleClubBalances(updatedGame);
     await PlayersInGameRepository.gameEnded(game);
-    await HistoryRepository.gameEnded(game, updates.handNum);
+    await HistoryRepository.gameEnded(game, updates.handNum, endReason);
     const ret = this.markGameStatus(gameId, GameStatus.ENDED);
     await GameServerRepository.gameRemoved(game.gameServerUrl);
     game.status = GameStatus.ENDED;
@@ -1649,7 +1665,11 @@ class GameRepositoryImpl {
     return retNotes;
   }
 
-  public async endGame(player: Player | null, game: PokerGame) {
+  public async endGame(
+    player: Player | null,
+    game: PokerGame,
+    endReason: GameEndReason
+  ) {
     try {
       let gameRunning = true;
       if (
@@ -1677,12 +1697,16 @@ class GameRepositoryImpl {
 
       if (gameRunning) {
         // the game will be stopped in the next hand
-        await NextHandUpdatesRepository.endGameNextHand(player, game.id);
+        await NextHandUpdatesRepository.endGameNextHand(
+          player,
+          game.id,
+          endReason
+        );
         const messageId = uuidv4();
         Nats.sendGameEndingMessage(game.gameCode, messageId);
       } else {
         await Cache.removeAllObservers(game.gameCode);
-        const status = await GameRepository.markGameEnded(game.id);
+        const status = await GameRepository.markGameEnded(game.id, endReason);
         return GameStatus[status];
       }
       return game.status;
