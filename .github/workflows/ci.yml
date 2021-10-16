@@ -84,10 +84,11 @@ jobs:
       #     cache-to: type=local,mode=min,dest=/tmp/.buildx-cache-finalimage-new
 
       - name: Build Final Image (master only)
+        if: success() && github.ref == 'refs/heads/master'
         run: make docker-build
 
       - name: Publish Final Image (master only)
-        # if: success() && github.ref == 'refs/heads/master'
+        if: success() && github.ref == 'refs/heads/master'
         run: make publish
 
         # Temp fix - move cache instead of copying
