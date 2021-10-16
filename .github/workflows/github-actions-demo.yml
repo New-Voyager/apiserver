@@ -1,4 +1,4 @@
-name: GitHub Actions Demo
+name: API Server Build
 
 on: [push]
 
