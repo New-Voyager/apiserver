@@ -30,8 +30,6 @@ jobs:
       - name: Lint
         run: make lint
 
-      # Can't use docker caching at this point due to this bug.
-      # https://github.com/docker/buildx/issues/713
       - name: Cache Docker layers
         uses: actions/cache@v2
         with:
@@ -39,6 +37,7 @@ jobs:
           key: ${{ runner.os }}-buildx-apiserver-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-apiserver-
+
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@master
@@ -46,6 +45,7 @@ jobs:
           # install: true
           version: latest
           # driver-opts: image=moby/buildkit:master,network=host
+
       - name: Build Test Image (buildx)
         uses: docker/build-push-action@v2
         with:
@@ -53,28 +53,39 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           file: docker/Dockerfile.test
           push: false
-          load: true
+          load: true # load image to local registry to use it in next steps
           tags: api-server-test
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,mode=min,dest=/tmp/.buildx-cache-new
+          cache-from: type=local,src=/tmp/.buildx-cache-testimage
+          cache-to: type=local,mode=min,dest=/tmp/.buildx-cache-testimage-new
 
-      # - name: Build Test Image
-      #   run: make docker-build-test
       - name: Unit Test
         run: make docker-unit-tests
       - name: API Test
         run: make docker-tests
-        # This ugly bit is necessary if you don't want your cache to grow forever
-        # till it hits GitHub's limit of 5GB.
-        # Temp fix
+
+      - name: Build Final Image (master only)
+        # if: success() && github.ref == 'refs/heads/master'
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          builder: ${{ steps.buildx.outputs.name }}
+          file: docker/Dockerfile.apiserver
+          push: false
+          load: true # load image to local registry to use it in next steps
+          tags: apiserver
+          cache-from: type=local,src=/tmp/.buildx-cache-finalimage
+          cache-to: type=local,mode=min,dest=/tmp/.buildx-cache-finalimage-new
+
+      - name: Publish Final Image (master only)
+        # if: success() && github.ref == 'refs/heads/master'
+        run: make publish
+
+        # Temp fix - move cache instead of copying
         # https://evilmartians.com/chronicles/build-images-on-github-actions-with-docker-layer-caching
         # https://github.com/docker/build-push-action/issues/252
         # https://github.com/moby/buildkit/issues/1896
       - name: Move cache
         run: |
           rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-
-  # publish:
-  #   needs: build
-  #   if: success() && github.ref == 'refs/heads/master'
+          mv /tmp/.buildx-cache-testimage-new /tmp/.buildx-cache-testimage
+          mv /tmp/.buildx-cache-finalimage-new /tmp/.buildx-cache-finalimage
