@@ -58,8 +58,8 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,mode=min,dest=/tmp/.buildx-cache-new
 
-      - name: Build Test Image
-        run: make docker-build-test
+      # - name: Build Test Image
+      #   run: make docker-build-test
       - name: Unit Test
         run: make docker-unit-tests
       - name: API Test
