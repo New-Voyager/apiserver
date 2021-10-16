@@ -29,20 +29,16 @@ jobs:
         run: make build
       - name: Lint
         run: make lint
-      - name: Cache Docker layers
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@master
-        with:
-          install: true
-          version: latest
-          driver-opts: image=moby/buildkit:master,network=host
+
+      # Can't use docker caching at this point due to this bug.
+      # https://github.com/docker/buildx/issues/713
+      # - name: Set up Docker Buildx
+      #   id: buildx
+      #   uses: docker/setup-buildx-action@master
+      #   with:
+      #     install: true
+      #     version: latest
+      #     driver-opts: image=moby/buildkit:master,network=host
       # - name: Build Test Image (buildx)
       #   uses: docker/build-push-action@v2
       #   with:
@@ -53,8 +49,9 @@ jobs:
       #     tags: api-server-test:latest
       #     cache-from: type=local,src=/tmp/.buildx-cache
       #     cache-to: type=local,mode=min,dest=/tmp/.buildx-cache-new
+
       - name: Build Test Image
-        run: make docker-build-test-ci
+        run: make docker-build-test
       - name: Unit Test
         run: make docker-unit-tests
       - name: API Test
@@ -65,10 +62,10 @@ jobs:
         # https://evilmartians.com/chronicles/build-images-on-github-actions-with-docker-layer-caching
         # https://github.com/docker/build-push-action/issues/252
         # https://github.com/moby/buildkit/issues/1896
-      - name: Move cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+      # - name: Move cache
+      #   run: |
+      #     rm -rf /tmp/.buildx-cache
+      #     mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
   # publish:
   #   needs: build

@@ -95,15 +95,6 @@ docker-build:
 docker-build-test:
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build -f docker/Dockerfile.test . -t $(TEST_IMAGE_NAME)
 
-.PHONY: docker-build-test-ci
-docker-build-test-ci:
-	mkdir -p /tmp/.buildx-cache-new
-	docker buildx build \
-		--cache-from "type=local,src=/tmp/.buildx-cache/builder" \
-		--cache-to "type=local,dest=/tmp/.buildx-cache-new/builder" \
-		-f docker/Dockerfile.test . \
-		-t $(TEST_IMAGE_NAME)
-
 .PHONY: up
 up: create-network
 	$(COMPOSE) up
