@@ -116,7 +116,9 @@ export async function processPendingUpdates(gameId: number) {
     );
 
     // game ended
-    await GameRepository.markGameEnded(gameId);
+    if (update) {
+      await GameRepository.markGameEnded(gameId, update.endReason);
+    }
 
     // delete hand updates for the game
     await getGameConnection().query(

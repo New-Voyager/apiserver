@@ -613,33 +613,41 @@ class FirebaseClass {
 export interface AppSettings {
   newUserFreeCoins: number;
   clubHostFreeCoins: number;
-  freeTime: number;
-  agoraEnabled: boolean;
-  janusEnabled: boolean;
   consumeTime: number;
   notifyHostTimeWindow: number; // notify host before time expires
   gameCoinsPerBlock: number;
-  agoraCoinsPerBlock: number;
   compressHandData: boolean;
   ipGpsCheckInterval: number;
 }
 
 // get from firebase and update periodically
-let settings: AppSettings = {
-  newUserFreeCoins: 20,
-  clubHostFreeCoins: 100,
-  freeTime: 15 * 60, // seconds
-  notifyHostTimeWindow: 5 * 60, // seconds
-  agoraEnabled: true,
-  janusEnabled: true,
-  consumeTime: 15 * 60, // every 15 minutes
-  gameCoinsPerBlock: 3, // 3 coins per 15 minutes
-  agoraCoinsPerBlock: 3, // 3 coins per 15 minutes
-  compressHandData: true,
-  ipGpsCheckInterval: 15 * 60, // ip/gps check interval in seconds
-};
+let settings: AppSettings;
+resetAppSettings();
+
+// {
+//   newUserFreeCoins: 20,
+//   clubHostFreeCoins: 100,
+//   notifyHostTimeWindow: 5 * 60, // seconds
+//   consumeTime: 15 * 60 * 60, // every 30 minutes
+//   gameCoinsPerBlock: 5, // 5 coins per 30 minutes
+//   compressHandData: true,
+//   ipGpsCheckInterval: 15 * 60, // ip/gps check interval in seconds
+// };
 
 export function getAppSettings(): AppSettings {
+  return settings;
+}
+
+export function resetAppSettingsTest() {
+  settings = {
+    newUserFreeCoins: 10,
+    clubHostFreeCoins: 0,
+    consumeTime: 1 * 60, // every 1 minutes
+    gameCoinsPerBlock: 5, // 5 coins per 1 minutes
+    notifyHostTimeWindow: 2 * 60 * 60,
+    compressHandData: true,
+    ipGpsCheckInterval: 15 * 60,
+  };
   return settings;
 }
 
@@ -647,17 +655,13 @@ export function resetAppSettings() {
   settings = {
     newUserFreeCoins: 20,
     clubHostFreeCoins: 100,
-    freeTime: 15 * 60, // seconds
-    agoraEnabled: true,
-    janusEnabled: true,
-    consumeTime: 15 * 60, // every 15 minutes
-    gameCoinsPerBlock: 3, // 3 coins per 15 minutes
-    agoraCoinsPerBlock: 3, // 3 coins per 15 minutes
+    consumeTime: 30 * 60, // every 30 minutes
+    gameCoinsPerBlock: 5, // 5 coins per 30 minutes
     notifyHostTimeWindow: 10 * 60,
     compressHandData: true,
     ipGpsCheckInterval: 15 * 60,
   };
+  return settings;
 }
-
 const Firebase = new FirebaseClass();
 export {Firebase};
