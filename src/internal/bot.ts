@@ -363,7 +363,6 @@ export async function setServerSettings(req: any, resp: any) {
   }
 
   if (freeTime) {
-    appSettings.freeTime = freeTime;
   }
 
   if (newUserFreeCoins !== undefined && newUserFreeCoins !== null) {
