@@ -97,9 +97,10 @@ docker-build-test:
 
 .PHONY: docker-build-test-ci
 docker-build-test-ci:
+	mkdir -p /tmp/.buildx-cache-new
 	docker buildx build \
-		--cache-from "type=local,src=/tmp/.buildx-cache" \
-		--cache-to "type=local,dest=/tmp/.buildx-cache-new" \
+		--cache-from "type=local,src=/tmp/.buildx-cache/builder" \
+		--cache-to "type=local,dest=/tmp/.buildx-cache-new/builder" \
 		-f docker/Dockerfile.test . \
 		-t $(TEST_IMAGE_NAME)
 
