@@ -14,8 +14,12 @@ export function getBotRunnerUrl(): string {
   }
 }
 
-export async function fillSeats(clubCode: string, gameCode: string) {
-  const url = `${getBotRunnerUrl()}/join-human-game?club-code=${clubCode}&game-code=${gameCode}`;
+export async function fillSeats(
+  clubCode: string,
+  gameId: number,
+  gameCode: string
+) {
+  const url = `${getBotRunnerUrl()}/join-human-game?club-code=${clubCode}&game-id=${gameId}&game-code=${gameCode}`;
   const resp = await axios.post(url);
   if (resp.status !== 200) {
     logger.error(

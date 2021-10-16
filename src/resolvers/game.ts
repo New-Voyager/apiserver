@@ -396,7 +396,7 @@ export async function startGame(
     let humanPlayers = players.length;
     if (game.botGame && players.length < game.maxPlayers) {
       // fill the empty seats with bots
-      await fillSeats(game.clubCode, game.gameCode);
+      await fillSeats(game.clubCode, game.id, game.gameCode);
 
       let allFilled = false;
       while (!allFilled) {
