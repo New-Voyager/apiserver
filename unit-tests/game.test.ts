@@ -7,22 +7,23 @@ import {createClub, updateClubMember, joinClub} from '@src/resolvers/club';
 import {
   configureGame,
   configureGameByPlayer,
-  joinGame,
   startGame,
-  buyIn,
   pendingApprovalsForClub,
   pendingApprovalsForGame,
-  reload,
   approveRequest,
   myGameState,
   tableGameState,
-  takeBreak,
+} from '../src/resolvers/game';
+
+import {buyIn, joinGame, setBuyInLimit, reload,   takeBreak,
   sitBack,
-  leaveGame,
+  leaveGame} from '../src/resolvers/playersingame';
+import {
   addToWaitingList,
   removeFromWaitingList,
   waitingList,
-} from '@src/resolvers/game';
+} from '../src/resolvers/waitlist';
+
 import {Cache} from '@src/cache/index';
 import {saveReward} from '../src/resolvers/reward';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';

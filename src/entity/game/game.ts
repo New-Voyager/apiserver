@@ -524,6 +524,14 @@ export class PokerGame {
   // public nextCoinConsumeTime: Date | null = null;
 
   // public lastIpCheckTime: Date | null = null;
+  public logPrefix: string = '';
+  public get log(): string {
+    if (this.logPrefix.length > 0) {
+      return this.logPrefix;
+    }
+    this.logPrefix = `${this.gameCode}:${this.id}`;
+    return this.logPrefix;
+  }
 }
 
 @Entity({name: 'next_hand_updates'})

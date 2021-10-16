@@ -9,7 +9,10 @@ import {
   joinClub,
 } from '../src/resolvers/club';
 import {createGameServer} from '../src/internal/gameserver';
-import {buyIn, configureGame, joinGame, startGame} from '../src/resolvers/game';
+import {configureGame, startGame} from '../src/resolvers/game';
+import {buyIn, joinGame, setBuyInLimit, reload,   takeBreak,
+  sitBack,
+  leaveGame} from '../src/resolvers/playersingame';
 import {saveReward} from '../src/resolvers/reward';
 import {saveHand} from '../src/internal/hand';
 import * as fs from 'fs';

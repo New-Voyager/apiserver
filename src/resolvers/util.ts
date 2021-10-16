@@ -1,6 +1,8 @@
 import {Cache} from '@src/cache/index';
 import {PokerGame} from '@src/entity/game/game';
 import {getLogger} from '@src/utils/log';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const humanizeDuration = require('humanize-duration');
 
 const logger = getLogger('resolvers::util');
 
@@ -42,4 +44,17 @@ export async function isHostOrManagerOrOwner(
 
 export function getResolvers() {
   return {};
+}
+
+export function getSessionTimeStr(totalSeconds: number): string {
+  if (totalSeconds < 60) {
+    // "## seconds"
+    return humanizeDuration(totalSeconds * 1000);
+  }
+  if (totalSeconds < 3600) {
+    // "## minutes"
+    return humanizeDuration(totalSeconds * 1000, {units: ['m'], round: true});
+  }
+  // "## hours"
+  return humanizeDuration(totalSeconds * 1000, {units: ['h'], round: true});
 }

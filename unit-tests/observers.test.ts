@@ -12,11 +12,12 @@ import {resetDB} from '../src/resolvers/reset';
 import {createGameServer} from '../src/internal/gameserver';
 import {
   configureGame,
-  joinGame,
   startGame,
   endGame,
 } from '../src/resolvers/game';
-
+import {buyIn, joinGame, setBuyInLimit, reload,   takeBreak,
+  sitBack,
+  leaveGame} from '../src/resolvers/playersingame';
 const ownerInput = {
   name: 'player_name',
   deviceId: 'abc123',

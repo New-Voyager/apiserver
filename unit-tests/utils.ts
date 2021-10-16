@@ -49,7 +49,10 @@ import {
 } from '../src/entity/player/clubmessage';
 import {GameServer} from '../src/entity/game/gameserver';
 import {HostSeatChangeProcess} from '../src/entity/game/seatchange';
-import {buyIn, configureGame, joinGame, startGame} from '../src/resolvers/game';
+import {configureGame, startGame} from '../src/resolvers/game';
+import {buyIn, joinGame, setBuyInLimit, reload,   takeBreak,
+  sitBack,
+  leaveGame} from '../src/resolvers/playersingame';
 import {createPlayer, getPlayerById} from '../src/resolvers/player';
 import {
   approveMember,

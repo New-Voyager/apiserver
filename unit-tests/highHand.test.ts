@@ -4,7 +4,10 @@ import {resetDB} from '../src/resolvers/reset';
 import {createPlayer, getPlayerById} from '../src/resolvers/player';
 import {createClub, joinClub, approveMember} from '../src/resolvers/club';
 import {createGameServer} from '../src/internal/gameserver';
-import {configureGame, joinGame} from '../src/resolvers/game';
+import {configureGame} from '../src/resolvers/game';
+import {buyIn, joinGame, setBuyInLimit, reload,   takeBreak,
+  sitBack,
+  leaveGame} from '../src/resolvers/playersingame';
 import {
   saveReward,
   getHighHandWinners,

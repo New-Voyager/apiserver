@@ -310,6 +310,7 @@ class HistoryRepositoryImpl {
     let completedGame: any;
     if (game) {
       let gameData: any = {
+        gameId: game.gameId,
         gameCode: game.gameCode,
         gameNum: game.gameNum,
         status: game.status,

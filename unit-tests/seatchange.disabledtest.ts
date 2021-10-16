@@ -4,7 +4,10 @@ import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/resolvers/reset';
 import {createPlayer} from '@src/resolvers/player';
 import {createClub, joinClub} from '@src/resolvers/club';
-import {configureGame, joinGame, startGame, buyIn} from '@src/resolvers/game';
+import {configureGame, startGame} from '@src/resolvers/game';
+import {buyIn, joinGame, setBuyInLimit, reload,   takeBreak,
+  sitBack,
+  leaveGame} from '../src/resolvers/playersingame';
 import {saveReward} from '../src/resolvers/reward';
 import {approveMember} from '../src/resolvers/club';
 import {SeatChangeProcess} from '../src/repositories/seatchange';
