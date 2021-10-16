@@ -6,12 +6,12 @@ import {createPlayer, getPlayerById} from '@src/resolvers/player';
 import {createClub, updateClubMember, joinClub} from '@src/resolvers/club';
 import {
   configureGame,
-  joinGame,
   startGame,
   endGame,
-} from '@src/resolvers/game';
+} from '../src/resolvers/game';
+import {buyIn, joinGame, setBuyInLimit} from '../src/resolvers/playersingame';
+
 import {approveMember, clubLeaderBoard} from '../src/resolvers/club';
-import { buyIn, setBuyInLimit } from '../src/resolvers/game';
 
 const logger = getLogger('buy-in unit-test');
 const holdemGameInput = {

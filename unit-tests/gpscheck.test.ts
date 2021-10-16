@@ -4,9 +4,9 @@ import {getLogger} from '../src/utils/log';
 import {resetDB} from '../src/resolvers/reset';
 import {updateLocation} from '../src/resolvers/player';
 import {GameRepository} from '../src/repositories/game';
-import {
-   joinGame, sitBack, takeBreak,
-} from '../src/resolvers/game';
+import {buyIn, joinGame, setBuyInLimit, reload,   takeBreak,
+  sitBack,
+  leaveGame} from '../src/resolvers/playersingame';
 import {Cache} from '../src/cache/index';
 import {getGameInfo} from '../src/resolvers/game';
 import { PlayerStatus } from '../src/entity/types';

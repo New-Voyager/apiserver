@@ -7,11 +7,12 @@ import {createClub, joinClub} from '@src/resolvers/club';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
 import {
   configureGame,
-  joinGame,
   startGame,
-  buyIn,
   endGame,
 } from '@src/resolvers/game';
+import {buyIn, joinGame, setBuyInLimit, reload,   takeBreak,
+  sitBack,
+  leaveGame} from '../src/resolvers/playersingame';
 import {gameHistory, playersInGame, completedGame} from '../src/resolvers/history';
 import {saveReward} from '../src/resolvers/reward';
 import {approveMember, clubLeaderBoard} from '../src/resolvers/club';

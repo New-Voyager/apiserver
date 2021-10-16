@@ -186,7 +186,6 @@ class GameAPIs {
     let gameFound = false;
     while (retryCount > 0 && !gameFound) {
       try {
-        delay(1000);
         retryCount--;
 
         const ret = await getGameManager().transaction(
@@ -283,6 +282,7 @@ class GameAPIs {
           return;
         }
       }
+      await delay(1000);
     }
   }
 

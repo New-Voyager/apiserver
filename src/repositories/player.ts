@@ -395,7 +395,9 @@ class PlayerRepositoryImpl {
     }
 
     try {
-      sendRecoveryCode(email, null, code);
+      sendRecoveryCode(email, null, code).catch(e => {
+        logger.error(`Sending recovery code email failed. Error: ${e.message}`);
+      });
       return true;
     } catch (err) {
       throw err;

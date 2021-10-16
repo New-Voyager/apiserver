@@ -193,7 +193,7 @@ class AdminRepositoryImpl {
                   playerMap[key]
                 );
             }
-            repo.update(
+            await repo.update(
               {
                 gameId: value.gameId,
               },

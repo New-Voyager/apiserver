@@ -493,7 +493,7 @@ class NatsClass {
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
-  public async newPlayerSat(
+  public newPlayerSat(
     game: PokerGame,
     player: any,
     playerGameInfo: PlayerGameTracker,
@@ -526,7 +526,7 @@ class NatsClass {
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
-  public async playerBuyIn(
+  public playerBuyIn(
     game: PokerGame,
     player: Player,
     playerGameInfo: PlayerGameTracker,
@@ -557,7 +557,7 @@ class NatsClass {
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
-  public async playerKickedOut(
+  public playerKickedOut(
     game: PokerGame,
     player: any,
     seatNo: number,
@@ -586,7 +586,7 @@ class NatsClass {
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
-  public async hostChanged(
+  public hostChanged(
     game: PokerGame,
     newHostPlayer: Player,
     messageId?: string
@@ -610,7 +610,7 @@ class NatsClass {
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
-  public async playerStatusChanged(
+  public playerStatusChanged(
     game: PokerGame,
     player: any,
     oldStatus: PlayerStatus,
@@ -698,7 +698,7 @@ class NatsClass {
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
-  public async playerLeftGame(
+  public playerLeftGame(
     game: PokerGame,
     player: Player,
     seatNo: number,
@@ -752,7 +752,7 @@ class NatsClass {
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
-  public async gameSettingsChanged(game: PokerGame, messageId?: string) {
+  public gameSettingsChanged(game: PokerGame, messageId?: string) {
     if (this.client === null) {
       return;
     }

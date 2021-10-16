@@ -12,7 +12,8 @@ import {
   joinClub,
 } from '../src/resolvers/club';
 import {createGameServer} from '../src/internal/gameserver';
-import {buyIn, configureGame, joinGame, startGame} from '../src/resolvers/game';
+import {configureGame, startGame} from '../src/resolvers/game';
+import {buyIn, joinGame} from '../src/resolvers/playersingame';
 import {saveReward} from '../src/resolvers/reward';
 import {saveHand} from '../src/internal/hand';
 import * as fs from 'fs';
@@ -188,7 +189,7 @@ async function defaultHandData(
   return data;
 }
 
-describe('Appcoin tests', () => {
+describe.skip('Appcoin tests', () => {
   beforeEach(async done => {
     await resetDB();
     done();
@@ -205,7 +206,6 @@ describe('Appcoin tests', () => {
   test.skip('AppCoin: host does not buy coins', async () => {
     // setup server configuration
     const config = getAppSettings();
-    config.freeTime = 15; // 15 seconds
     config.consumeTime = 15; // charge every 15 seconds
     config.newUserFreeCoins = 0;
     let nextHandNum = 1;
@@ -275,7 +275,6 @@ describe('Appcoin tests', () => {
   test.skip('AppCoin: host buys coins after warning', async () => {
     // setup server configuration
     const config = getAppSettings();
-    config.freeTime = 5; // 15 seconds
     config.consumeTime = 5; // charge every 15 seconds
     config.gameCoinsPerBlock = 3; // charge 3 coins per block of game time
     config.notifyHostTimeWindow = 8; // notify host window after 5 seconds

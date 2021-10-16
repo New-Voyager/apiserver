@@ -1,6 +1,4 @@
 export async function createPromotion(req: any, resp: any) {
-  console.log('Enter: function createPromotion');
-
   const name = req.body['name'];
   const code = req.body['code'];
   const expiresAt = req.body['expires-at'];

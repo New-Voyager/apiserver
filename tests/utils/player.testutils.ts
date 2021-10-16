@@ -72,3 +72,22 @@ export async function buyDiamonds(
   expect(resp.data).not.toBeNull();
   return resp.data.status;
 }
+
+
+export const availableCoinsQuery = gql`
+  query {
+    coins: availableCoins
+  }
+`;
+export async function availableCoins(
+  playerId: string,
+): Promise<any> {
+  const resp = await getClient(playerId).query({
+    variables: {
+    },
+    query: availableCoinsQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.coins;
+}

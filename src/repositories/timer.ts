@@ -144,7 +144,7 @@ export async function buyInTimeoutExpired(gameID: number, playerID: number) {
       );
 
       const buyIn = new BuyIn(game, player);
-      buyIn.timerExpired();
+      await buyIn.timerExpired();
     }
   }
 }

@@ -63,7 +63,7 @@ export class WaitListMgmt {
     });
     if (!playerAskedToSit) {
       // no-one from the waiting list asked to be sit, something happened
-      gameSeatInfoRepo.update(
+      await gameSeatInfoRepo.update(
         {
           gameID: this.game.id,
         },
@@ -77,7 +77,11 @@ export class WaitListMgmt {
         throw new WaitlistSeatError(playerAskedToSit.playerName);
       }
 
-      cancelTimer(this.game.id, player.id, WAITLIST_SEATING);
+      cancelTimer(this.game.id, player.id, WAITLIST_SEATING).catch(e => {
+        logger.error(
+          `[${this.game.log}] Starting wait list timer failed. Error: ${e.message}`
+        );
+      });
 
       const count = await playerGameTrackerRepository.count({
         where: {
@@ -116,7 +120,11 @@ export class WaitListMgmt {
     });
 
     if (playerAskedToSit && playerAskedToSit.playerId === player.id) {
-      cancelTimer(this.game.id, player.id, WAITLIST_SEATING);
+      cancelTimer(this.game.id, player.id, WAITLIST_SEATING).catch(e => {
+        logger.error(
+          `[${this.game.log}] Canceling wait list timer failed. Error: ${e.message}`
+        );
+      });
 
       // remove this player from waiting list
       await playerGameTrackerRepository.update(
@@ -147,7 +155,11 @@ export class WaitListMgmt {
     );
     if (count > 0) {
       // continue to run the waitlist seating
-      this.runWaitList();
+      this.runWaitList().catch(e => {
+        logger.error(
+          `[${this.game.log}] Running waitlist process failed. Error: ${e.message}`
+        );
+      });
     }
     return true;
   }
@@ -304,7 +316,11 @@ export class WaitListMgmt {
       nextPlayer.playerId,
       WAITLIST_SEATING,
       waitingListTimeExp
-    );
+    ).catch(e => {
+      logger.error(
+        `[${this.game.log}] Starting waitlist timer failed. Error: ${e.message}`
+      );
+    });
     const game = await Cache.getGameById(gameId);
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
@@ -419,7 +435,7 @@ export class WaitListMgmt {
         {playersInWaitList: count}
       );
     });
-    getGameRepository(PlayerGameTracker)
+    await getGameRepository(PlayerGameTracker)
       .createQueryBuilder()
       .update()
       .set({

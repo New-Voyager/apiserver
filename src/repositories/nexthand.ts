@@ -131,6 +131,7 @@ class MoveToNextHand {
         `Game ${this.game.gameCode} is not found in PokerGameSettings`
       );
     }
+    logger.info(`[${game.log} Moving to next hand ${this.handNum}`);
 
     this.nextGameType = this.gameUpdate.gameType;
 
@@ -433,9 +434,11 @@ class MoveToNextHand {
             }
           }
         }
-        logger.info(
-          `DealerChoice: buttonPos: ${buttonPos} oldButtonPos: ${oldButtonPos} orbitPos: ${orbitPos} passedOrbit: ${this.passedOrbit}`
-        );
+        if (this.game.gameType === GameType.DEALER_CHOICE) {
+          logger.info(
+            `[${this.game.log}] DealerChoice: buttonPos: ${buttonPos} oldButtonPos: ${oldButtonPos} orbitPos: ${orbitPos} passedOrbit: ${this.passedOrbit}`
+          );
+        }
 
         const playerSeat = takenSeats[buttonPos];
         if (playerSeat) {
@@ -827,6 +830,9 @@ export class NextHandProcess {
         if (gameUpdate.bombPotThisHand) {
           doubleBoard = gameSettings.doubleBoardBombPot;
         }
+        logger.info(
+          `[${game.log}] Next Hand:HandNum: ${gameUpdate.handNum} SB: ${gameUpdate.sbPos} BB: ${gameUpdate.bbPos} Button: ${gameUpdate.buttonPos}`
+        );
         const nextHandInfo: NewHandInfo = {
           gameId: game.id,
           gameCode: this.gameCode,

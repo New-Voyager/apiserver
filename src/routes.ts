@@ -246,10 +246,9 @@ async function livenessCheck(req: any, resp: any) {
 
 async function crashAsync(req: any, resp: any) {
   try {
-    doCrashAsync();
+    await doCrashAsync();
     resp.status(200).send(JSON.stringify({status: 'OK'}));
   } catch (err) {
-    console.log(err.toString());
     resp.status(500).send(JSON.stringify({error: err.toString()}));
   }
 }

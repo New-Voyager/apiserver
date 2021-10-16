@@ -9,7 +9,7 @@ import {
   hostSeatChangePlayers,
   SeatChangeProcess,
 } from '@src/repositories/seatchange';
-import {getLogger} from '@src/utils/log';
+import {errToLogString, getLogger} from '@src/utils/log';
 import {argsToArgsConfig} from 'graphql/type/definition';
 import _ from 'lodash';
 import {isHostOrManagerOrOwner} from './util';
@@ -55,6 +55,9 @@ const resolvers: any = {
         args.gameCode,
         args.cancelChanges
       );
+    },
+    switchSeat: async (parent, args, ctx, info) => {
+      return switchSeat(ctx.req.playerId, args.gameCode, args.seatNo);
     },
   },
 };
@@ -394,6 +397,54 @@ export async function seatChangeComplete(
     logger.error(JSON.stringify(err));
     throw new Error(
       `Failed to complete seat change process. ${JSON.stringify(err)}`
+    );
+  }
+}
+
+export async function switchSeat(
+  playerUuid: string,
+  gameCode: string,
+  seatNo: number
+) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    if (game.clubCode) {
+      const clubMember = await Cache.isClubMember(playerUuid, game.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode} in club ${game.clubName}`
+        );
+        throw new Error(
+          `Player: ${playerUuid} is not authorized to play game ${gameCode}`
+        );
+      }
+    }
+
+    const player = await Cache.getPlayer(playerUuid);
+    const process = new SeatChangeProcess(game);
+    const status = await process.switchSeat(player, seatNo);
+    logger.debug(
+      `Player: ${player.name} isBot: ${player.bot} switched seat game: ${game.gameCode}`
+    );
+    // player is good to go
+    const playerStatus = PlayerStatus[status];
+    return playerStatus;
+  } catch (err) {
+    logger.error(
+      `Error while switching seat. playerUuid: ${playerUuid}, gameCode: ${gameCode}, seatNo: ${seatNo}: ${errToLogString(
+        err
+      )}`
+    );
+    throw new Error(
+      `Player: ${playerUuid} Failed to join the game. ${JSON.stringify(err)}`
     );
   }
 }

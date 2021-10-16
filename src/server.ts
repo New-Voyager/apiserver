@@ -82,7 +82,7 @@ export function getApolloServer(options?: {intTest?: boolean}): ApolloServer {
       }
     }
   } catch (err) {
-    console.error(err);
+    logger.error(err);
   }
 
   try {
@@ -97,7 +97,7 @@ export function getApolloServer(options?: {intTest?: boolean}): ApolloServer {
       }
     }
   } catch (err) {
-    console.error(err);
+    logger.error(err);
   }
 
   const server = new ApolloServer({

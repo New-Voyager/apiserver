@@ -72,7 +72,11 @@ export class SeatChangeProcess {
         seatChangeInProgress: true,
       }
     );
-    this.promptPlayer(openedSeat);
+    this.promptPlayer(openedSeat).catch(e => {
+      logger.error(
+        `Prompting player for seat change failed. Error: ${e.message}`
+      );
+    });
   }
 
   public async promptPlayer(openedSeat: number) {
@@ -122,7 +126,11 @@ export class SeatChangeProcess {
       );
       // seat change process is over, resume game
       const game = await Cache.getGame(this.game.gameCode, true);
-      processPendingUpdates(game.id);
+      processPendingUpdates(game.id).catch(e => {
+        logger.error(
+          `[${game.log}] Processing pending updates failed. Error: ${e.message}`
+        );
+      });
       return;
     }
     // get the open seat
@@ -144,8 +152,11 @@ export class SeatChangeProcess {
         );
         // seat change process is over, resume game
         const game = await Cache.getGame(this.game.gameCode, true);
-        processPendingUpdates(game.id);
-        //await GameRepository.restartGameIfNeeded(game);
+        processPendingUpdates(game.id).catch(e => {
+          logger.error(
+            `[${game.log}] Processing pending updates failed. Error: ${e.message}`
+          );
+        });
       }
       if (gameUpdate) {
         openedSeat = gameUpdate.seatChangeOpenSeat;
@@ -194,7 +205,11 @@ export class SeatChangeProcess {
       playerId: playerId,
     });
     // go to the next player
-    this.promptPlayer(0);
+    this.promptPlayer(0).catch(e => {
+      logger.error(
+        `[${this.game.log}] Prompting ${playerId} failed. Error: ${e.message}`
+      );
+    });
   }
 
   public async requestSeatChange(
@@ -274,7 +289,11 @@ export class SeatChangeProcess {
     logger.info(
       `[${this.game.gameCode}] Received decline seat change from player. ${player.id} ${player.name}`
     );
-    cancelTimer(this.game.id, player.id, PLAYER_SEATCHANGE_PROMPT);
+    cancelTimer(this.game.id, player.id, PLAYER_SEATCHANGE_PROMPT).catch(e => {
+      logger.error(
+        `Canceling seat change prompt timer failed. Error: ${e.message}`
+      );
+    });
     // send a message in NATS (the UI will do an animation)
     Nats.sendPlayerSeatChangeDeclined(
       this.game.gameCode,
@@ -284,7 +303,11 @@ export class SeatChangeProcess {
     );
 
     // move to next player
-    this.promptPlayer(0);
+    this.promptPlayer(0).catch(e => {
+      logger.error(
+        `[${this.game.log}] Prompting player ${player.id} for seat change failed. Error: ${e.message}`
+      );
+    });
     return true;
   }
 
@@ -296,7 +319,13 @@ export class SeatChangeProcess {
       logger.info(
         `[${this.game.gameCode}] Received confirm seat change from player. ${player.id} ${player.name}`
       );
-      cancelTimer(this.game.id, player.id, PLAYER_SEATCHANGE_PROMPT);
+      cancelTimer(this.game.id, player.id, PLAYER_SEATCHANGE_PROMPT).catch(
+        e => {
+          logger.error(
+            `Cancelling seat change prompt timer failed. Error: ${e.message}`
+          );
+        }
+      );
 
       const playerGameTrackerRepository = tran.getRepository(PlayerGameTracker);
       const playerInGame = await playerGameTrackerRepository.findOne({
@@ -390,7 +419,11 @@ export class SeatChangeProcess {
       return playerInGame.seatNo;
     });
     // move to the next player
-    this.promptPlayer(playerOldSeat);
+    this.promptPlayer(playerOldSeat).catch(e => {
+      logger.error(
+        `Prompting player for seat change failed. Error: ${e.message}`
+      );
+    });
 
     return true;
   }

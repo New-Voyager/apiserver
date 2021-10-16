@@ -127,7 +127,7 @@ export class TakeBreak {
     await this.startTimer(playerGameTrackerRepository);
     if (update) {
       const pendingUpdatesRepo = getGameRepository(NextHandUpdates);
-      pendingUpdatesRepo.delete({id: update.id});
+      await pendingUpdatesRepo.delete({id: update.id});
     }
 
     // update the clients with new status
@@ -202,7 +202,16 @@ export class TakeBreak {
       }
     );
 
-    startTimer(this.game.id, this.player.id, BREAK_TIMEOUT, breakTimeExpAt);
+    startTimer(
+      this.game.id,
+      this.player.id,
+      BREAK_TIMEOUT,
+      breakTimeExpAt
+    ).catch(e => {
+      logger.error(
+        `[${this.game.log}] Starting break timer failed. Error: ${e.message}`
+      );
+    });
   }
 
   public async timerExpired() {
