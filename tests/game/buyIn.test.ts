@@ -41,7 +41,7 @@ describe('buyIn APIs', () => {
         amount: 100,
       });
     } catch (error) {
-      const expectedError = 'Unauthorized';
+      const expectedError = 'Unauthorized user';
       expect(error.graphQLErrors[0].message).toEqual(expectedError);
     }
 
@@ -53,7 +53,7 @@ describe('buyIn APIs', () => {
       });
     } catch (error) {
       const expectedError =
-        'Failed to update buyin. Error: Cannot find game code [test] in poker game repo';
+        'Failed to buyin';
       expect(error.graphQLErrors[0].message).toEqual(expectedError);
     }
 
@@ -64,8 +64,7 @@ describe('buyIn APIs', () => {
         amount: 100,
       });
     } catch (error) {
-      const expectedError = `Failed to update buyin. Error: Player: 1243ABC is not authorized to play game ${resp.data.configuredGame.gameCode}`;
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect(error.graphQLErrors[0].message).toEqual('Failed to buyin');
     }
   });
 });

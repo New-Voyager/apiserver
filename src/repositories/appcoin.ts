@@ -237,7 +237,7 @@ class AppCoinRepositoryImpl {
 
   public async consumeGameCoins(game: PokerGame) {
     const host = await Cache.getPlayer(game.hostUuid);
-    if (!host.bot) {
+    if (host.bot) {
       return;
     }
     logger.info(`Game: ${game.gameCode} consume coins to continue game`);

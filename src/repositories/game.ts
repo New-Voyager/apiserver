@@ -1717,7 +1717,7 @@ class GameRepositoryImpl {
       } else {
         await Cache.removeAllObservers(game.gameCode);
         const status = await GameRepository.markGameEnded(game.id, endReason);
-        return GameStatus[status];
+        return status;
       }
       return game.status;
     } catch (err) {

@@ -8,7 +8,7 @@ import { getAppSettings } from '../../src/firebase';
 import { timerCallbackHandler } from '../../src/repositories/timer';
 import { GAME_COIN_CONSUME_TIME } from '../../src/repositories/types';
 import { AppCoinRepository } from '../../src/repositories/appcoin';
-import { buyDiamonds } from '../utils/player.testutils';
+import { buyDiamonds, availableCoins } from '../utils/player.testutils';
 
 describe('appCoin consumption APIs', () => {
   beforeAll(async done => {
@@ -112,6 +112,9 @@ describe('appCoin consumption APIs', () => {
 
   test('app coins/add coins', async () => {
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
+    let coins = await AppCoinRepository.availableCoins(playerId);// availableCoins(playerId);
+    expect(coins).toEqual(25);
+
     await createGameServer('1.99.0.1');
     const resp = await configureGame({clubCode, playerId});
 
@@ -155,6 +158,8 @@ describe('appCoin consumption APIs', () => {
     const data = await startGame({ ownerId: playerId, gameCode: resp.data.configuredGame.gameCode })
     expect(data.status).toEqual('ACTIVE');
 
+    coins = await AppCoinRepository.availableCoins(playerId);// availableCoins(playerId);
+    expect(coins).toEqual(15);
     // first hand
     // move to next hand
     await moveToNextHand(0, gameCode, 1);
@@ -162,6 +167,10 @@ describe('appCoin consumption APIs', () => {
     console.log(JSON.stringify(nextHand));
     await sleep(5000);
     await timerCallbackHandler(gameId, 0, GAME_COIN_CONSUME_TIME);
+    coins = await AppCoinRepository.availableCoins(playerId);// availableCoins(playerId);
+    expect(coins).toEqual(5);
+
+
     await processPendingUpdates(gameId);
 
     // hand num 2
@@ -173,6 +182,8 @@ describe('appCoin consumption APIs', () => {
     await sleep(5000);
     await timerCallbackHandler(gameId, 0, GAME_COIN_CONSUME_TIME);
     await processPendingUpdates(gameId);
+    coins = await AppCoinRepository.availableCoins(playerId);// availableCoins(playerId);
+    expect(coins).toEqual(45);
 
     // hand num 3
     await processPendingUpdates(gameId);
@@ -182,16 +193,20 @@ describe('appCoin consumption APIs', () => {
     await sleep(5000);
     await timerCallbackHandler(gameId, 0, GAME_COIN_CONSUME_TIME);
     await processPendingUpdates(gameId);
+    coins = await AppCoinRepository.availableCoins(playerId);// availableCoins(playerId);
+    expect(coins).toEqual(35);
 
-    // hand num 3
+    // hand num 4
     await moveToNextHand(0, gameCode, 4);
     nextHand = await getNextHandInfo(gameCode);
     console.log(JSON.stringify(nextHand));
     await sleep(5000);
     await timerCallbackHandler(gameId, 0, GAME_COIN_CONSUME_TIME);
     await processPendingUpdates(gameId);
-    
-    // game ended
+    coins = await AppCoinRepository.availableCoins(playerId);// availableCoins(playerId);
+    expect(coins).toEqual(25);
+
+    // game continues
     let gi = await gameInfo(playerId, gameCode);
     expect(gi.status).toEqual(GameStatus[GameStatus.ACTIVE]);
   });
