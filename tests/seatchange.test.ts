@@ -155,7 +155,8 @@ describe('Tests: seat change APIs', () => {
     // confirm seat change
     const resp4 = await gameutils.confirmSeatChange(player1, game.gameCode, 3);
     expect(resp4).toBe(true);
-
+    const data1 = await gameutils.getSeatPositions(player1, game.gameCode, true)
+    expect(data1.seatPositions).toEqual([])
     // second player tries to take a seat that is already occupied
     try {
       const resp5 = await gameutils.confirmSeatChange(
@@ -167,6 +168,9 @@ describe('Tests: seat change APIs', () => {
     } catch (err) {
       //console.error(JSON.stringify(err));
     }
+
+    const data = await gameutils.getSeatPositions(player1, game.gameCode, true)
+    expect(data.seatPositions).toEqual([])
 
     // wait for 6 seconds
     await sleep(6000);
@@ -187,6 +191,10 @@ describe('Tests: seat change APIs', () => {
     const resp6 = await gameutils.seatChangeRequests(ownerId, game.gameCode);
     expect(resp6).toHaveLength(1);
     expect(resp6[0].playerUuid).toBe(player2);
+
+    const resp11 = await gameutils.requestSeatChange(player1, game.gameCode);
+    expect(resp11).not.toBeNull();
+    await gameutils.declineSeatChange(player1, game.gameCode)
   });
 
   test('switch seat basic test', async () => {

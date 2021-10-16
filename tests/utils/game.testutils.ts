@@ -3,6 +3,22 @@ import {gql} from 'apollo-boost';
 import {loggers} from 'winston';
 import { GameType } from '../../src/entity/types';
 
+const declineSeatChangeMutation = gql`
+  mutation ($gameCode: String!) {
+    declineSeatChange (gameCode: $gameCode)
+  }
+`
+
+export const seatPositions = gql`
+  query ($gameCode: String!, $seatChange: Boolean) {
+    seatPositions(gameCode: $gameCode, seatChange: $seatChange) {
+      seatNo
+  playerUuid
+  playerId
+  }
+  }
+`
+
 export const configureGameQuery = gql`
   mutation($clubCode: String!, $gameInput: GameCreateInput!) {
     configuredGame: configureGame(clubCode: $clubCode, game: $gameInput) {
@@ -277,6 +293,17 @@ export const gameInfoQuery = gql`
     }
   }
 `;
+
+export const declineSeatChange = async (ownerId, gameCode) => {
+  const resp = await getClient(ownerId).mutate({
+    variables: {
+      gameCode,
+    },
+    mutation: declineSeatChangeMutation,
+  });
+
+  return resp.data
+}
 
 export async function configureGame(
   playerId: string,
@@ -554,6 +581,15 @@ export async function configureFriendsGame(
   const startedGame = resp.data.configuredGame;
   expect(startedGame).not.toBeNull();
   return startedGame;
+}
+
+export const getSeatPositions = async (ownerId, gameCode, seatChange) => {
+  const gameClient = getClient(ownerId);
+  const resp = await gameClient.query({
+    variables: {gameCode, seatChange},
+    query: seatPositions,
+  });
+  return resp.data;
 }
 
 export async function getGameById(gameCode: string): Promise<number> {

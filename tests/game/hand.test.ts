@@ -1,6 +1,7 @@
 import {INTERNAL_PORT, resetDatabase, startGqlServer} from '../utils/utils';
 import * as clubutils from '../utils/club.testutils';
 import * as gameutils from '../utils/game.testutils';
+import * as handutils from '../utils/hand.testutils';
 import {buyIn, configureGame, createGameServer, getCompletedGame, getPlayerById, joinGame, startGame} from './utils';
 import {endGame, gameInfo} from '../utils/game.testutils';
 import axios from 'axios'
@@ -116,7 +117,30 @@ describe('hand game APIs', () => {
 
         return info
       })
+      const test = await handutils.saveBookmarkHand(resp.data.configuredGame.gameCode, playerId, handData.handNum);
+      console.log('test', test);
     }
+    const bookmarkedHand = await handutils.getBookmarkedHands(playerId);
+    expect(bookmarkedHand).toHaveLength(10);
+
+    const resp1 = await handutils.getLastHandHistory(playerId, resp.data.configuredGame.gameCode);
+    expect(resp1.gameType).toBe('HOLDEM');
+    expect(resp1.wonAt).toBe('SHOW_DOWN');
+    expect(resp1.handNum).toBe(10);
+
+    const handHistory = await handutils.getSpecificHandHistory(
+      playerId,
+      resp.data.configuredGame.gameCode,
+      '1'
+    );
+    expect(handHistory.gameType).toBe('HOLDEM');
+    expect(handHistory.handNum).toBe(1);
+
+    const test = await handutils.saveBookmarkHand(resp.data.configuredGame.gameCode, playerId, 1)
+    console.log(test)
+    const t1 = await handutils.removeBookmark(playerId, 1)
+    console.log(t1);
+
 
     await endGame(playerId, resp.data.configuredGame.gameCode);
     await axios.post(`${SERVER_API}/process-pending-updates/gameId/${gameId}`)

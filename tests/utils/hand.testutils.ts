@@ -69,9 +69,6 @@ export const getMyWinningHandsQuery = gql`
       handNum
       winningCards
       winningRank
-      pot
-      isHigh
-      playerId
     }
   }
 `;
@@ -325,6 +322,24 @@ export async function saveSharedHand(
     mutation: shareHand,
   });
   return resp.data.status;
+}
+
+const removeBookmarkMutation = gql`
+  mutation ($bookmarkId: Int!) {
+    removeBookmark (bookmarkId: $bookmarkId) 
+  }
+`
+
+export const removeBookmark = async (playerId, bookmarkId) => {
+  const client = getClient(playerId);
+  const variables = {
+    bookmarkId: bookmarkId,
+  };
+  const resp = await client.mutate({
+    variables: variables,
+    mutation: removeBookmarkMutation,
+  });
+  return resp.data;
 }
 
 export async function saveBookmarkHand(
