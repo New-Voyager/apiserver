@@ -234,10 +234,7 @@ class MoveToNextHand {
           })
           .execute();
 
-        if (
-          game.gameType === GameType.DEALER_CHOICE &&
-          this.gameUpdate.handNum > 0
-        ) {
+        if (game.gameType === GameType.DEALER_CHOICE) {
           let promptChoice = false;
           if (!this.gameUpdate.dealerChoiceOrbit) {
             promptChoice = true;

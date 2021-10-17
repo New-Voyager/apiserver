@@ -172,6 +172,9 @@ class NatsClass {
     };
     const subject = this.getPlayerHandTextChannel(game.gameCode, playerId);
     const messageStr = JSON.stringify(message);
+    logger.info(
+      `[${game.id}:${game.gameCode}] Sending dealer choice message ${messageStr}`
+    );
     this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
