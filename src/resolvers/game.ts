@@ -15,7 +15,7 @@ import {getLogger, errToLogString} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
 import {default as _} from 'lodash';
 import {BuyIn} from '@src/repositories/buyin';
-import {PokerGame} from '@src/entity/game/game';
+import {gameLogPrefix, PokerGame} from '@src/entity/game/game';
 import {fillSeats} from '@src/botrunner';
 import {ClubRepository} from '@src/repositories/club';
 import {getCurrentHandLog} from '@src/gameserver';
@@ -66,7 +66,7 @@ export async function configureGame(
     const cachedGame = await Cache.getGame(gameInfo.gameCode, true);
     Metrics.newGame();
     createGameTime = new Date().getTime() - createGameTime;
-    logger.info(`[${cachedGame.log}] Game ${gameInfo.gameCode} is created.`);
+    logger.info(`[${gameLogPrefix(cachedGame)}] Game ${gameInfo.gameCode} is created.`);
     const ret: any = gameInfo as any;
     ret.gameType = GameType[gameInfo.gameType];
     ret.status = GameStatus[gameInfo.status];
@@ -102,7 +102,7 @@ export async function configureGameByPlayer(playerId: string, game: any) {
     const player = await Cache.getPlayer(playerId);
     const gameInfo = await GameRepository.createPrivateGame(null, player, game);
     const cachedGame = await Cache.getGame(gameInfo.gameCode, true);
-    logger.info(`[${cachedGame.log}] Game ${gameInfo.gameCode} is created.`);
+    logger.info(`[${gameLogPrefix(cachedGame)}] Game ${gameInfo.gameCode} is created.`);
     Metrics.newGame();
     const ret: any = gameInfo as any;
     ret.gameType = GameType[gameInfo.gameType];
@@ -132,11 +132,11 @@ export async function endGame(playerId: string, gameCode: string) {
     const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
     if (!isAuthorized) {
       logger.error(
-        `[${game.log}] Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot end the game`
+        `[${gameLogPrefix(game)}] Player: ${playerId} is not a owner or a manager ${game.clubName}. Cannot end the game`
       );
       throw new UnauthorizedError();
     }
-    logger.info(`[${game.log}] Game ended by the host`);
+    logger.info(`[${gameLogPrefix(game)}] Game ended by the host`);
     const status = await GameRepository.endGame(
       player,
       game,
@@ -190,7 +190,7 @@ export async function startGame(
       gameNum = await ClubRepository.getNextGameNum(game.clubId);
     }
     logger.info(
-      `[${game.log}] Game start by the host. Bot game: ${game.botGame}`
+      `[${gameLogPrefix(game)}] Game start by the host. Bot game: ${game.botGame}`
     );
 
     let players = await PlayersInGameRepository.getPlayersInSeats(game.id);
@@ -209,7 +209,7 @@ export async function startGame(
         // }
 
         if (players.length !== game.maxPlayers) {
-          logger.debug(`[${game.log}] Waiting for bots to take empty seats`);
+          logger.debug(`[${gameLogPrefix(game)}] Waiting for bots to take empty seats`);
         } else {
           allFilled = true;
         }
@@ -252,7 +252,7 @@ export async function pendingApprovalsForGame(
         throw new UnauthorizedError();
       }
     }
-    logger.debug(`[${game.log}] Fetching buyin approval requests`);
+    logger.debug(`[${gameLogPrefix(game)}] Fetching buyin approval requests`);
 
     const player = await Cache.getPlayer(hostUuid);
 
@@ -361,7 +361,7 @@ export async function approveRequest(
     }
 
     const player = await Cache.getPlayer(playerUuid);
-    logger.info(`[${game.log}] Approve buyin request. ${player.uuid}`);
+    logger.info(`[${gameLogPrefix(game)}] Approve buyin request. ${player.uuid}`);
 
     let resp: boolean;
     if (type == ApprovalType.RELOAD_REQUEST) {
@@ -722,7 +722,7 @@ export async function assignHost(
       newHostPlayer = await Cache.getPlayerById(newHostPlayerId);
     }
     logger.info(
-      `[${game.log}] Host is changed from ${oldHostPlayer.uuid}/${oldHostPlayer.name} to ${newHostPlayer.uuid}/${newHostPlayer.name}`
+      `[${gameLogPrefix(game)}] Host is changed from ${oldHostPlayer.uuid}/${oldHostPlayer.name} to ${newHostPlayer.uuid}/${newHostPlayer.name}`
     );
     await PlayersInGameRepository.assignNewHost(
       gameCode,
@@ -764,7 +764,7 @@ export async function pauseGame(playerId: string, gameCode: string) {
       );
     }
     logger.info(
-      `[${game.log}] Host ${player.name}:${player.uuid} is requesting to pause the game`
+      `[${gameLogPrefix(game)}] Host ${player.name}:${player.uuid} is requesting to pause the game`
     );
 
     if (
@@ -773,13 +773,13 @@ export async function pauseGame(playerId: string, gameCode: string) {
     ) {
       // the game will be stopped in the next hand
       await NextHandUpdatesRepository.pauseGameNextHand(game.id);
-      logger.info(`[${game.log}] will be paued next hand`);
+      logger.info(`[${gameLogPrefix(game)}] will be paued next hand`);
     } else {
       const status = await GameRepository.markGameStatus(
         game.id,
         GameStatus.PAUSED
       );
-      logger.info(`[${game.log}] is paued`);
+      logger.info(`[${gameLogPrefix(game)}] is paued`);
       return GameStatus[status];
     }
     return GameStatus[game.status];
@@ -817,7 +817,7 @@ export async function resumeGame(playerId: string, gameCode: string) {
     if (game.status === GameStatus.PAUSED) {
       const player = await Cache.getPlayer(playerId);
       logger.info(
-        `[${game.log}] Host ${player.name}:${player.uuid} is requesting to pause the game`
+        `[${gameLogPrefix(game)}] Host ${player.name}:${player.uuid} is requesting to pause the game`
       );
       const status = await GameRepository.markGameStatus(
         game.id,

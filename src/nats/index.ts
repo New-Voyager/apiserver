@@ -14,24 +14,39 @@ import {Cache} from '@src/cache';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import * as Constants from '../const';
 import {SeatMove, SeatUpdate} from '@src/types';
+import {SageMakerFeatureStoreRuntime} from 'aws-sdk';
 
 const logger = getLogger('nats');
 
 class NatsClass {
   private client: nats.NatsConnection | null = null;
   private stringCodec: nats.Codec<string> = nats.StringCodec();
-
-  public async init(natsUrls: string) {
-    const connOpts = {
-      servers: natsUrls.split(','),
-    };
+  private natsUrls: string = '';
+  private natsEnabled: boolean = false;
+  public async connect() {
     try {
+      const connOpts = {
+        servers: this.natsUrls.split(','),
+      };
       logger.info(
-        `Connecting to NATS url: ${natsUrls}. Options: ${JSON.stringify(
+        `Connecting to NATS url: ${this.natsUrls}. Options: ${JSON.stringify(
           connOpts
         )}`
       );
       this.client = await nats.connect(connOpts);
+    } catch (err) {
+      logger.error(
+        `Cannot connect to urls: ${this.natsUrls}. Error: ${err.message}`
+      );
+      throw err;
+    }
+  }
+
+  public async init(natsUrls: string) {
+    try {
+      this.natsEnabled = true;
+      this.natsUrls = natsUrls;
+      this.connect();
       logger.info('Nats is initialized');
     } catch (err) {
       logger.error(
@@ -51,9 +66,6 @@ class NatsClass {
     expTime: Date,
     messageId: string
   ) {
-    if (this.client === null) {
-      return;
-    }
     /*
     {
       "type": "WAITLIST_SEATING",
@@ -79,14 +91,11 @@ class NatsClass {
     const messageStr = JSON.stringify(message);
     const subject = this.getPlayerChannel(player);
     const gameChannel = this.getGameChannel(gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
-    this.client.publish(gameChannel, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
+    this.sendMessage(gameChannel, messageStr);
   }
 
   public sendGameEndingMessage(gameCode: string, messageId: string) {
-    if (this.client === null) {
-      return;
-    }
     /*
     {
       "type": "GAME_ENDING",
@@ -100,16 +109,54 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const gameChannel = this.getGameChannel(gameCode);
-    this.client.publish(gameChannel, this.stringCodec.encode(messageStr));
+    this.sendMessage(gameChannel, messageStr);
   }
 
   public sendTestMessage(player: Player, message: any) {
+    const messageStr = JSON.stringify(message);
+    const channel = this.getPlayerChannel(player);
+    this.sendMessage(channel, messageStr);
+  }
+
+  private sendMessageInternal(channel: string, messageStr: string) {
+    if (this.client === null) {
+      this.connect()
+        .then(e => {
+          if (this.client !== null) {
+            this.client.publish(channel, this.stringCodec.encode(messageStr));
+          }
+        })
+        .catch(e => {
+          return;
+        });
+    }
     if (this.client === null) {
       return;
     }
-    const messageStr = JSON.stringify(message);
-    const channel = this.getPlayerChannel(player);
+
     this.client.publish(channel, this.stringCodec.encode(messageStr));
+  }
+
+  public sendMessage(channel: string, messageStr: string) {
+    try {
+      if (!this.natsEnabled) {
+        return;
+      }
+      this.sendMessageInternal(channel, messageStr);
+    } catch (err) {
+      if (this.client !== null) {
+        this.client.close();
+      }
+      this.client = null;
+      try {
+        setTimeout(() => {
+          this.sendMessageInternal(channel, messageStr);
+        }, 5000);
+      } catch (err) {
+        this.client = null;
+        logger.error('Failed to send message');
+      }
+    }
   }
 
   /*
@@ -124,9 +171,6 @@ class NatsClass {
     changed: string,
     messageId: string
   ) {
-    if (this.client === null) {
-      return;
-    }
     /*
     {
       "type": "CLUB_UPDATED",
@@ -143,7 +187,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getClubChannel(clubCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public sendDealersChoiceMessage(
@@ -153,9 +197,6 @@ class NatsClass {
     handNum: number,
     timeout: number
   ) {
-    if (this.client === null) {
-      return;
-    }
     const tick = new Date().getTime();
     const message: any = {
       version: '1.0',
@@ -172,10 +213,10 @@ class NatsClass {
     };
     const subject = this.getPlayerHandTextChannel(game.gameCode, playerId);
     const messageStr = JSON.stringify(message);
+    this.sendMessage(subject, messageStr);
     logger.info(
       `[${game.id}:${game.gameCode}] Sending dealer choice message ${messageStr}`
     );
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
   }
 
   public sendSeatChangePrompt(
@@ -187,9 +228,6 @@ class NatsClass {
     expTime: Date,
     expSeconds: number
   ) {
-    if (this.client === null) {
-      return;
-    }
     const tick = new Date().getTime();
 
     const messageId = `SEATCHANGE:${tick}`;
@@ -217,7 +255,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public sendPlayerSeatMove(
@@ -228,9 +266,6 @@ class NatsClass {
     oldSeatNo: number,
     newSeatNo: number
   ) {
-    if (this.client === null) {
-      return;
-    }
     const tick = new Date().getTime();
 
     const messageId = `SEATMOVE:${tick}`;
@@ -247,7 +282,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public sendPlayerSeatChangeDeclined(
@@ -256,9 +291,6 @@ class NatsClass {
     playerUuid: string,
     playerName: string
   ) {
-    if (this.client === null) {
-      return;
-    }
     const tick = new Date().getTime();
 
     const messageId = `SEATMOVE:${tick}`;
@@ -273,13 +305,10 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public sendPlayerSeatChangeStart(gameCode: string) {
-    if (this.client === null) {
-      return;
-    }
     const tick = new Date().getTime();
 
     const messageId = `SEATMOVE:${tick}`;
@@ -291,13 +320,10 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public sendPlayerSeatChangeDone(gameCode: string) {
-    if (this.client === null) {
-      return;
-    }
     const tick = new Date().getTime();
 
     const messageId = `SEATMOVE:${tick}`;
@@ -309,7 +335,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public sendReloadApproved(
@@ -321,9 +347,6 @@ class NatsClass {
     newStack: number,
     reloadAmount: number
   ) {
-    if (this.client === null) {
-      return;
-    }
     const tick = new Date().getTime();
 
     const messageId = `RELOADAPPROVED:${tick}`;
@@ -342,7 +365,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public sendReloadApprovalRequest(
@@ -352,9 +375,6 @@ class NatsClass {
     host: Player,
     messageId: string
   ) {
-    if (this.client === null) {
-      return;
-    }
     const message: any = {
       type: 'RELOAD_REQUEST',
       gameCode: game.gameCode,
@@ -369,7 +389,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getPlayerChannel(host);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public sendReloadWaitTime(
@@ -379,9 +399,6 @@ class NatsClass {
     waitTime: number,
     messageId: string
   ) {
-    if (this.client === null) {
-      return;
-    }
     const message: any = {
       type: 'RELOAD_REQUEST_WAIT_FOR_APPROVAL',
       gameCode: game.gameCode,
@@ -393,7 +410,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getPlayerChannel(requestingPlayer);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public sendReloadTimeout(
@@ -401,9 +418,6 @@ class NatsClass {
     requestingPlayer: Player,
     messageId: string
   ) {
-    if (this.client === null) {
-      return;
-    }
     const message: any = {
       type: 'RELOAD_TIMEOUT',
       gameCode: game.gameCode,
@@ -414,13 +428,10 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getPlayerChannel(requestingPlayer);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public async notifyAppCoinShort(game: PokerGame) {
-    if (this.client === null) {
-      return;
-    }
     const player = await Cache.getPlayer(game.hostUuid);
     if (player) {
       const messageId = `APPCOIN:${uuidv4()}`;
@@ -431,7 +442,7 @@ class NatsClass {
       };
       const messageStr = JSON.stringify(message);
       const subject = this.getPlayerChannel(player);
-      this.client.publish(subject, this.stringCodec.encode(messageStr));
+      this.sendMessage(subject, messageStr);
     }
   }
 
@@ -442,10 +453,6 @@ class NatsClass {
     oldSeatNo: number,
     messageId?: string
   ): Promise<void> {
-    if (this.client === null) {
-      return;
-    }
-
     if (!messageId) {
       messageId = uuidv4();
     }
@@ -465,7 +472,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public async notifyPlayerSeatReserve(
@@ -474,10 +481,6 @@ class NatsClass {
     seatNo: number,
     messageId?: string
   ) {
-    if (this.client === null) {
-      return;
-    }
-
     if (!messageId) {
       messageId = uuidv4();
     }
@@ -493,7 +496,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public newPlayerSat(
@@ -503,10 +506,6 @@ class NatsClass {
     seatNo: number,
     messageId?: string
   ) {
-    if (this.client === null) {
-      return;
-    }
-
     if (!messageId) {
       messageId = uuidv4();
     }
@@ -526,7 +525,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public playerBuyIn(
@@ -535,10 +534,6 @@ class NatsClass {
     playerGameInfo: PlayerGameTracker,
     messageId?: string
   ) {
-    if (this.client === null) {
-      return;
-    }
-
     if (!messageId) {
       messageId = uuidv4();
     }
@@ -557,7 +552,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public playerKickedOut(
@@ -566,10 +561,6 @@ class NatsClass {
     seatNo: number,
     messageId?: string
   ) {
-    if (this.client === null) {
-      return;
-    }
-
     if (!messageId) {
       messageId = uuidv4();
     }
@@ -586,7 +577,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public hostChanged(
@@ -594,10 +585,6 @@ class NatsClass {
     newHostPlayer: Player,
     messageId?: string
   ) {
-    if (this.client === null) {
-      return;
-    }
-
     if (!messageId) {
       messageId = uuidv4();
     }
@@ -610,7 +597,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public playerStatusChanged(
@@ -622,10 +609,6 @@ class NatsClass {
     seatNo: number,
     messageId?: string
   ) {
-    if (this.client === null) {
-      return;
-    }
-
     if (!messageId) {
       messageId = uuidv4();
     }
@@ -644,7 +627,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
   /*
   message HighHandWinner {
@@ -680,10 +663,6 @@ class NatsClass {
     winners: Array<HighHandWinner>,
     messageId?: string
   ) {
-    if (this.client === null) {
-      return;
-    }
-
     if (!messageId) {
       messageId = uuidv4();
     }
@@ -698,7 +677,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public playerLeftGame(
@@ -707,10 +686,6 @@ class NatsClass {
     seatNo: number,
     messageId?: string
   ) {
-    if (this.client === null) {
-      return;
-    }
-
     if (!messageId) {
       messageId = uuidv4();
     }
@@ -727,7 +702,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public async changeGameStatus(
@@ -736,10 +711,6 @@ class NatsClass {
     tableStatus: TableStatus,
     messageId?: string
   ) {
-    if (this.client === null) {
-      return;
-    }
-
     if (!messageId) {
       messageId = uuidv4();
     }
@@ -752,7 +723,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public gameSettingsChanged(game: PokerGame, messageId?: string) {
@@ -771,7 +742,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   // indicate the players that host has started to make seat change
@@ -780,10 +751,6 @@ class NatsClass {
     seatChangeHostId: number,
     messageId?: string
   ) {
-    if (this.client === null) {
-      return;
-    }
-
     if (!messageId) {
       messageId = uuidv4();
     }
@@ -796,7 +763,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   // indicate the players that host has ended the seat change
@@ -806,10 +773,6 @@ class NatsClass {
     seatChangeHostId: number,
     messageId?: string
   ) {
-    if (this.client === null) {
-      return;
-    }
-
     if (!messageId) {
       messageId = uuidv4();
     }
@@ -832,7 +795,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   // indicate the players that host has ended the seat change
@@ -841,10 +804,6 @@ class NatsClass {
     updates: Array<SeatMove>,
     messageId?: string
   ) {
-    if (this.client === null) {
-      return;
-    }
-
     if (!messageId) {
       messageId = uuidv4();
     }
@@ -856,7 +815,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public async initiateSeatChangeProcess(
@@ -867,10 +826,6 @@ class NatsClass {
     seatChangeSeatNos: Array<number>,
     messageId?: string
   ) {
-    if (this.client === null) {
-      return;
-    }
-
     if (!messageId) {
       messageId = uuidv4();
     }
@@ -884,7 +839,7 @@ class NatsClass {
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
-    this.client.publish(subject, this.stringCodec.encode(messageStr));
+    this.sendMessage(subject, messageStr);
   }
 
   public getPlayerChannel(player: Player): string {

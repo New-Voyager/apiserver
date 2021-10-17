@@ -1,6 +1,6 @@
 import {Cache} from '@src/cache';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {PokerGame, PokerGameSeatInfo} from '@src/entity/game/game';
+import {gameLogPrefix, PokerGame, PokerGameSeatInfo} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {GameType, PlayerStatus} from '@src/entity/types';
 // import {waitlistSeating} from '@src/gameserver';
@@ -79,7 +79,7 @@ export class WaitListMgmt {
 
       cancelTimer(this.game.id, player.id, WAITLIST_SEATING).catch(e => {
         logger.error(
-          `[${this.game.log}] Starting wait list timer failed. Error: ${e.message}`
+          `[${gameLogPrefix(this.game)}] Starting wait list timer failed. Error: ${e.message}`
         );
       });
 
@@ -122,7 +122,7 @@ export class WaitListMgmt {
     if (playerAskedToSit && playerAskedToSit.playerId === player.id) {
       cancelTimer(this.game.id, player.id, WAITLIST_SEATING).catch(e => {
         logger.error(
-          `[${this.game.log}] Canceling wait list timer failed. Error: ${e.message}`
+          `[${gameLogPrefix(this.game)}] Canceling wait list timer failed. Error: ${e.message}`
         );
       });
 
@@ -157,7 +157,7 @@ export class WaitListMgmt {
       // continue to run the waitlist seating
       this.runWaitList().catch(e => {
         logger.error(
-          `[${this.game.log}] Running waitlist process failed. Error: ${e.message}`
+          `[${gameLogPrefix(this.game)}] Running waitlist process failed. Error: ${e.message}`
         );
       });
     }
@@ -318,7 +318,7 @@ export class WaitListMgmt {
       waitingListTimeExp
     ).catch(e => {
       logger.error(
-        `[${this.game.log}] Starting waitlist timer failed. Error: ${e.message}`
+        `[${gameLogPrefix(this.game)}] Starting waitlist timer failed. Error: ${e.message}`
       );
     });
     const game = await Cache.getGameById(gameId);
