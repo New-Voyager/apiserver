@@ -12,6 +12,7 @@ import {
 import {GameRepository} from './game';
 import {getLogger} from '@src/utils/log';
 import {
+  gameLogPrefix,
   NextHandUpdates,
   PokerGame,
   PokerGameSeatInfo,
@@ -67,7 +68,7 @@ export async function processPendingUpdates(gameId: number) {
     logger.error(`Game: ${gameId} is not found`);
     return;
   }
-  logger.info(`[${game.log}] is processing pending updates`);
+  logger.info(`[${gameLogPrefix(game)}] is processing pending updates`);
   await Cache.updateGamePendingUpdates(game?.gameCode, false);
 
   const gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
@@ -83,7 +84,7 @@ export async function processPendingUpdates(gameId: number) {
 
   if (gameSeatInfo.seatChangeInProgress) {
     logger.info(
-      `[${game.log}] Seat change is in progress. No updates will be performed.`
+      `[${gameLogPrefix(game)}] Seat change is in progress. No updates will be performed.`
     );
     return;
   }
@@ -134,7 +135,7 @@ export async function processPendingUpdates(gameId: number) {
     NextHandUpdate.PAUSE_GAME,
   ]);
   if (resp[0]['updates'] > 0) {
-    logger.info(`[${game.log}] game is paused`);
+    logger.info(`[${gameLogPrefix(game)}] game is paused`);
     // game paused
     await GameRepository.markGameStatus(gameId, GameStatus.PAUSED);
 
@@ -213,7 +214,7 @@ export async function processPendingUpdates(gameId: number) {
     if (seatChangeAllowed && openedSeat) {
       const seats = await occupiedSeats(game.id);
       if (newOpenSeat && seats <= game.maxPlayers - 1) {
-        logger.info(`[${game.log}] Seat Change is in Progress`);
+        logger.info(`[${gameLogPrefix(game)}] Seat Change is in Progress`);
         // open seat
         const seatChangeProcess = new SeatChangeProcess(game);
         const waitingPlayers = await seatChangeProcess.getSeatChangeRequestedPlayers();
@@ -246,7 +247,7 @@ export async function processPendingUpdates(gameId: number) {
         game.status,
         TableStatus.NOT_ENOUGH_PLAYERS
       );
-      logger.info(`[${game.log}] does not have enough players`);
+      logger.info(`[${gameLogPrefix(game)}] does not have enough players`);
     }
 
     // start buy in timers for the player's whose stack is 0 and playing
@@ -411,7 +412,7 @@ async function leaveGame(
     sessionTime = sessionTime + roundSeconds;
   }
   logger.info(
-    `[${game.log}] ${player.uuid}/${player.name} left the game. Session time: ${sessionTime}`
+    `[${gameLogPrefix(game)}] ${player.uuid}/${player.name} left the game. Session time: ${sessionTime}`
   );
 
   await playerGameTrackerRepository.update(
@@ -477,7 +478,7 @@ async function buyinApproved(
   );
   const player = await Cache.getPlayerById(update.playerId);
   logger.info(
-    `[${game.log}] ${player.uuid}/${player.name} buyin is approved. Stack: ${playerInGame.stack} total buyin: ${playerInGame.buyIn}`
+    `[${gameLogPrefix(game)}] ${player.uuid}/${player.name} buyin is approved. Stack: ${playerInGame.stack} total buyin: ${playerInGame.buyIn}`
   );
 
   if (playerInGame) {
@@ -506,7 +507,7 @@ async function reloadApproved(
   const reload = new Reload(game, player);
   await reload.approvedAndUpdateStack(amount);
   logger.info(
-    `[${game.log}] ${player.uuid}/${player.name} reload is approved. Amount: ${amount}`
+    `[${gameLogPrefix(game)}] ${player.uuid}/${player.name} reload is approved. Amount: ${amount}`
   );
 }
 
@@ -574,7 +575,7 @@ async function handleDealersChoice(
   //   nextOrbit = 1;
   // }
   logger.info(
-    `[${game.log}] DealerChoice: New dealer choice. Orbit ends at ${buttonPos}`
+    `[${gameLogPrefix(game)}] DealerChoice: New dealer choice. Orbit ends at ${buttonPos}`
   );
   await GameUpdatesRepository.updateDealersChoiceSeat(
     game,

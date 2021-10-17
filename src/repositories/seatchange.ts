@@ -1,5 +1,6 @@
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {
+  gameLogPrefix,
   NextHandUpdates,
   PokerGame,
   PokerGameSeatInfo,
@@ -128,7 +129,7 @@ export class SeatChangeProcess {
       const game = await Cache.getGame(this.game.gameCode, true);
       processPendingUpdates(game.id).catch(e => {
         logger.error(
-          `[${game.log}] Processing pending updates failed. Error: ${e.message}`
+          `[${gameLogPrefix(game)}] Processing pending updates failed. Error: ${e.message}`
         );
       });
       return;
@@ -154,7 +155,7 @@ export class SeatChangeProcess {
         const game = await Cache.getGame(this.game.gameCode, true);
         processPendingUpdates(game.id).catch(e => {
           logger.error(
-            `[${game.log}] Processing pending updates failed. Error: ${e.message}`
+            `[${gameLogPrefix(game)}] Processing pending updates failed. Error: ${e.message}`
           );
         });
       }
@@ -207,7 +208,7 @@ export class SeatChangeProcess {
     // go to the next player
     this.promptPlayer(0).catch(e => {
       logger.error(
-        `[${this.game.log}] Prompting ${playerId} failed. Error: ${e.message}`
+        `[${gameLogPrefix(this.game)}] Prompting ${playerId} failed. Error: ${e.message}`
       );
     });
   }
@@ -305,7 +306,7 @@ export class SeatChangeProcess {
     // move to next player
     this.promptPlayer(0).catch(e => {
       logger.error(
-        `[${this.game.log}] Prompting player ${player.id} for seat change failed. Error: ${e.message}`
+        `[${gameLogPrefix(this.game)}] Prompting player ${player.id} for seat change failed. Error: ${e.message}`
       );
     });
     return true;

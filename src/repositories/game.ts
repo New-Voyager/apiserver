@@ -2,6 +2,7 @@ import * as crypto from 'crypto';
 import {v4 as uuidv4} from 'uuid';
 import {In, Repository, EntityManager, Not} from 'typeorm';
 import {
+  gameLogPrefix,
   NextHandUpdates,
   PokerGame,
   PokerGameSeatInfo,
@@ -857,7 +858,7 @@ class GameRepositoryImpl {
     transactionEntityManager?: EntityManager
   ): Promise<void> {
     logger.info(
-      `[${game.gameCode}] Restarting game. Game status: ${
+      `[${gameLogPrefix(game)}] Restarting game. Game status: ${
         GameStatus[game.status]
       }`
     );

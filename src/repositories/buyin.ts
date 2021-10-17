@@ -2,7 +2,7 @@ import {EntityManager, In, UpdateResult} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player/player';
-import {NextHandUpdates, PokerGame} from '@src/entity/game/game';
+import {gameLogPrefix, NextHandUpdates, PokerGame} from '@src/entity/game/game';
 import {
   ApprovalStatus,
   ApprovalType,
@@ -886,7 +886,7 @@ export class BuyIn {
    * @param game
    */
   public static async startBuyInTimers(game: PokerGame) {
-    logger.debug(`[${game.log} Starting buyin timers`);
+    logger.debug(`[${gameLogPrefix(game)} Starting buyin timers`);
     await getGameManager().transaction(async transactionEntityManager => {
       const playerGameTrackerRepo = transactionEntityManager.getRepository(
         PlayerGameTracker

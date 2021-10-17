@@ -1,5 +1,6 @@
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {
+  gameLogPrefix,
   NextHandUpdates,
   PokerGame,
   PokerGameUpdates,
@@ -209,7 +210,7 @@ export class TakeBreak {
       breakTimeExpAt
     ).catch(e => {
       logger.error(
-        `[${this.game.log}] Starting break timer failed. Error: ${e.message}`
+        `[${gameLogPrefix(this.game)}] Starting break timer failed. Error: ${e.message}`
       );
     });
   }
