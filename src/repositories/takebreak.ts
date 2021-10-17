@@ -210,7 +210,9 @@ export class TakeBreak {
       breakTimeExpAt
     ).catch(e => {
       logger.error(
-        `[${gameLogPrefix(this.game)}] Starting break timer failed. Error: ${e.message}`
+        `[${gameLogPrefix(this.game)}] Starting break timer failed. Error: ${
+          e.message
+        }`
       );
     });
   }

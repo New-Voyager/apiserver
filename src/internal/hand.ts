@@ -64,7 +64,11 @@ class HandServerAPIs {
       if (!game) {
         throw new Error(`Game: ${gameID} is not found`);
       }
-      logger.info(`[${gameLogPrefix(game)}] Starting saveHand endpoint game ${gameID} hand ${handNum}`);
+      logger.info(
+        `[${gameLogPrefix(
+          game
+        )}] Starting saveHand endpoint game ${gameID} hand ${handNum}`
+      );
       const result = req.body;
       if (result.result?.timeoutStats) {
         await processConsecutiveActionTimeouts(
@@ -83,12 +87,16 @@ class HandServerAPIs {
       if (saveResult.success) {
         resp.status(200).send(saveResult);
         logger.info(
-          `[${gameLogPrefix(game)}] Finished saveHand endpoint game ${gameID} hand ${handNum}`
+          `[${gameLogPrefix(
+            game
+          )}] Finished saveHand endpoint game ${gameID} hand ${handNum}`
         );
         return;
       } else {
         logger.error(
-          `[${gameLogPrefix(game)}] Error while saving hand for game ${gameID} hand ${handNum}. saveResult is not success. saveResult: ${JSON.stringify(
+          `[${gameLogPrefix(
+            game
+          )}] Error while saving hand for game ${gameID} hand ${handNum}. saveResult is not success. saveResult: ${JSON.stringify(
             saveResult
           )}`
         );

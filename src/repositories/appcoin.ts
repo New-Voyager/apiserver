@@ -287,7 +287,9 @@ class AppCoinRepositoryImpl {
 
     // start a timer
     startTimer(game.id, 0, GAME_COIN_CONSUME_TIME, nextConsumeTime).catch(e => {
-      logger.error(`${gameLogPrefix(game)} Start timer (GAME_COIN_CONSUME_TIME) failed`);
+      logger.error(
+        `${gameLogPrefix(game)} Start timer (GAME_COIN_CONSUME_TIME) failed`
+      );
     });
   }
 }

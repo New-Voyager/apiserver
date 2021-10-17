@@ -17,7 +17,7 @@ import {
   GenericError,
   UnauthorizedError,
 } from '@src/errors';
-import { gameLogPrefix } from '@src/entity/game/game';
+import {gameLogPrefix} from '@src/entity/game/game';
 
 const logger = getLogger('resolvers::players_in_game');
 
@@ -511,7 +511,9 @@ export async function buyIn(
     }
     const player = await Cache.getPlayer(playerUuid);
     logger.info(
-      `${gameLogPrefix(game)} Player: ${player.uuid}/${player.name} is buying for ${amount}`
+      `${gameLogPrefix(game)} Player: ${player.uuid}/${
+        player.name
+      } is buying for ${amount}`
     );
 
     const buyin = new BuyIn(game, player);
@@ -585,7 +587,9 @@ export async function reload(
 
     const player = await Cache.getPlayer(playerUuid);
     logger.info(
-      `${gameLogPrefix(game)} Player: ${player.uuid}/${player.name} is reloading for ${amount}`
+      `${gameLogPrefix(game)} Player: ${player.uuid}/${
+        player.name
+      } is reloading for ${amount}`
     );
 
     const buyin = new Reload(game, player);
@@ -769,7 +773,9 @@ export async function kickOutPlayer(
 
     const player = await Cache.getPlayer(kickedOutPlayer);
     logger.info(
-      `${gameLogPrefix(game)} Player: ${player.uuid}/${player.name} is being kicked out`
+      `${gameLogPrefix(game)} Player: ${player.uuid}/${
+        player.name
+      } is being kicked out`
     );
     await PlayersInGameRepository.kickOutPlayer(gameCode, player);
     return true;
@@ -857,7 +863,9 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
     }
     const player = await Cache.getPlayer(playerUuid);
     logger.info(
-      `${gameLogPrefix(game)} Player: ${player.uuid}/${player.name} is leaving game`
+      `${gameLogPrefix(game)} Player: ${player.uuid}/${
+        player.name
+      } is leaving game`
     );
     const status = await NextHandUpdatesRepository.leaveGame(player, game);
     return status;

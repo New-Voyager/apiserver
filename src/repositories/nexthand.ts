@@ -275,7 +275,9 @@ class MoveToNextHand {
 
     this.gameUpdate = await GameUpdatesRepository.get(this.game.gameCode, true);
     logger.info(
-      `[${gameLogPrefix(game)}] Hand Num: ${this.gameUpdate.handNum} Button: ${this.gameUpdate.buttonPos} SB: ${this.gameUpdate.sbPos} BB: ${this.gameUpdate.bbPos}`
+      `[${gameLogPrefix(game)}] Hand Num: ${this.gameUpdate.handNum} Button: ${
+        this.gameUpdate.buttonPos
+      } SB: ${this.gameUpdate.sbPos} BB: ${this.gameUpdate.bbPos}`
     );
   }
 
@@ -434,7 +436,11 @@ class MoveToNextHand {
         }
         if (this.game.gameType === GameType.DEALER_CHOICE) {
           logger.info(
-            `[${gameLogPrefix(this.game)}] DealerChoice: buttonPos: ${buttonPos} oldButtonPos: ${oldButtonPos} orbitPos: ${orbitPos} passedOrbit: ${this.passedOrbit}`
+            `[${gameLogPrefix(
+              this.game
+            )}] DealerChoice: buttonPos: ${buttonPos} oldButtonPos: ${oldButtonPos} orbitPos: ${orbitPos} passedOrbit: ${
+              this.passedOrbit
+            }`
           );
         }
 
@@ -829,7 +835,11 @@ export class NextHandProcess {
           doubleBoard = gameSettings.doubleBoardBombPot;
         }
         logger.info(
-          `[${gameLogPrefix(game)}] Next Hand:HandNum: ${gameUpdate.handNum} SB: ${gameUpdate.sbPos} BB: ${gameUpdate.bbPos} Button: ${gameUpdate.buttonPos}`
+          `[${gameLogPrefix(game)}] Next Hand:HandNum: ${
+            gameUpdate.handNum
+          } SB: ${gameUpdate.sbPos} BB: ${gameUpdate.bbPos} Button: ${
+            gameUpdate.buttonPos
+          }`
         );
         const nextHandInfo: NewHandInfo = {
           gameId: game.id,

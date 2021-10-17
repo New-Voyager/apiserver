@@ -84,7 +84,9 @@ export async function processPendingUpdates(gameId: number) {
 
   if (gameSeatInfo.seatChangeInProgress) {
     logger.info(
-      `[${gameLogPrefix(game)}] Seat change is in progress. No updates will be performed.`
+      `[${gameLogPrefix(
+        game
+      )}] Seat change is in progress. No updates will be performed.`
     );
     return;
   }
@@ -412,7 +414,9 @@ async function leaveGame(
     sessionTime = sessionTime + roundSeconds;
   }
   logger.info(
-    `[${gameLogPrefix(game)}] ${player.uuid}/${player.name} left the game. Session time: ${sessionTime}`
+    `[${gameLogPrefix(game)}] ${player.uuid}/${
+      player.name
+    } left the game. Session time: ${sessionTime}`
   );
 
   await playerGameTrackerRepository.update(
@@ -478,7 +482,11 @@ async function buyinApproved(
   );
   const player = await Cache.getPlayerById(update.playerId);
   logger.info(
-    `[${gameLogPrefix(game)}] ${player.uuid}/${player.name} buyin is approved. Stack: ${playerInGame.stack} total buyin: ${playerInGame.buyIn}`
+    `[${gameLogPrefix(game)}] ${player.uuid}/${
+      player.name
+    } buyin is approved. Stack: ${playerInGame.stack} total buyin: ${
+      playerInGame.buyIn
+    }`
   );
 
   if (playerInGame) {
@@ -507,7 +515,9 @@ async function reloadApproved(
   const reload = new Reload(game, player);
   await reload.approvedAndUpdateStack(amount);
   logger.info(
-    `[${gameLogPrefix(game)}] ${player.uuid}/${player.name} reload is approved. Amount: ${amount}`
+    `[${gameLogPrefix(game)}] ${player.uuid}/${
+      player.name
+    } reload is approved. Amount: ${amount}`
   );
 }
 
@@ -580,7 +590,9 @@ async function handleDealersChoice(
   //   nextOrbit = 1;
   // }
   logger.info(
-    `[${gameLogPrefix(game)}] DealerChoice: New dealer choice. Orbit ends at ${buttonPos}`
+    `[${gameLogPrefix(
+      game
+    )}] DealerChoice: New dealer choice. Orbit ends at ${buttonPos}`
   );
   await GameUpdatesRepository.updateDealersChoiceSeat(
     game,
