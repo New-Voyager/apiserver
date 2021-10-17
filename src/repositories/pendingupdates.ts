@@ -558,18 +558,23 @@ async function handleDealersChoice(
   // determine button pos
   let buttonPos = gameUpdate.buttonPos;
   let playerId = 0;
-  let maxPlayers = game.maxPlayers;
-  while (maxPlayers > 0) {
-    buttonPos++;
-    if (buttonPos > maxPlayers) {
-      buttonPos = 1;
+  if (gameUpdate.handNum === 0 && occupiedSeats[buttonPos] !== 0) {
+    playerId = occupiedSeats[buttonPos];
+  } else {
+    let maxPlayers = game.maxPlayers;
+    while (maxPlayers > 0) {
+      buttonPos++;
+      if (buttonPos > maxPlayers) {
+        buttonPos = 1;
+      }
+      if (occupiedSeats[buttonPos] !== 0) {
+        playerId = occupiedSeats[buttonPos];
+        break;
+      }
+      maxPlayers--;
     }
-    if (occupiedSeats[buttonPos] !== 0) {
-      playerId = occupiedSeats[buttonPos];
-      break;
-    }
-    maxPlayers--;
   }
+
   // let nextOrbit = buttonPos + 1;
   // if (nextOrbit > game.maxPlayers) {
   //   nextOrbit = 1;
