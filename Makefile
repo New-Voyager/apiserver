@@ -75,6 +75,13 @@ tests-local: run-redis run-nats
 script-tests: run-redis
 	./run_script_tests.sh
 
+.PHONY: int-tests
+int-tests: export REDIS_HOST=localhost
+int-tests: export REDIS_PORT=6379
+int-tests: export REDIS_DB=0
+int-tests: login create-network run-all
+	npx yarn int-test
+
 .PHONY: setup-hook
 setup-hook:
 	ln -sf ../../lint.sh .git/hooks/pre-commit
@@ -118,48 +125,6 @@ do-login:
 .PHONY: gcp-login
 gcp-login:
 	@cat gcp_dev_image_push.json | docker login -u _json_key --password-stdin https://gcr.io
-
-.PHONY: publish
-publish: gcp-publish
-
-.PHONY: do-publish
-do-publish: export REGISTRY=$(DO_REGISTRY)
-do-publish: do-login publish-apiserver
-
-.PHONY: do-publish-all
-do-publish-all: export REGISTRY=$(DO_REGISTRY)
-do-publish-all: do-login publish-all
-
-.PHONY: gcp-publish
-gcp-publish: export REGISTRY=$(GCP_REGISTRY)
-gcp-publish: gcp-login publish-apiserver
-
-.PHONY: gcp-publish-all
-gcp-publish-all: export REGISTRY=$(GCP_REGISTRY)
-gcp-publish-all: gcp-login publish-all
-
-.PHONY: publish-all
-publish-all: publish-apiserver publish-3rdparty
-
-.PHONY: publish-apiserver
-publish-apiserver:
-	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME):$(BUILD_NO)
-	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME):latest
-	docker push $(REGISTRY)/$(IMAGE_NAME):$(BUILD_NO)
-	docker push $(REGISTRY)/$(IMAGE_NAME):latest
-
-.PHONY: publish-apiserver-local
-publish-apiserver-local: export REGISTRY=$(GCP_REGISTRY)
-publish-apiserver-local:
-	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME):$(BUILD_NO)
-	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME):latest
-
-.PHONY: publish-3rdparty
-publish-3rdparty:
-	# publish 3rd-party images so that we don't have to pull from the docker hub
-	docker pull postgres:$(POSTGRES_VERSION)
-	docker tag postgres:$(POSTGRES_VERSION) $(REGISTRY)/postgres:$(POSTGRES_VERSION)
-	docker push $(REGISTRY)/postgres:$(POSTGRES_VERSION)
 
 .PHONY: generate-env
 generate-env:
@@ -296,3 +261,45 @@ clean-ci: stop-nats stop-redis stop-pg
 .PHONY: combine-cov
 combine-cov:
 	yarn ts-node-script ./scripts/mergeCoverage.ts --report ./cov-int/coverage-final.json --report ./cov-unit/coverage-final.json
+
+.PHONY: publish
+publish: gcp-publish
+
+.PHONY: do-publish
+do-publish: export REGISTRY=$(DO_REGISTRY)
+do-publish: do-login publish-apiserver
+
+.PHONY: do-publish-all
+do-publish-all: export REGISTRY=$(DO_REGISTRY)
+do-publish-all: do-login publish-all
+
+.PHONY: gcp-publish
+gcp-publish: export REGISTRY=$(GCP_REGISTRY)
+gcp-publish: gcp-login publish-apiserver
+
+.PHONY: gcp-publish-all
+gcp-publish-all: export REGISTRY=$(GCP_REGISTRY)
+gcp-publish-all: gcp-login publish-all
+
+.PHONY: publish-all
+publish-all: publish-apiserver publish-3rdparty
+
+.PHONY: publish-apiserver
+publish-apiserver:
+	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME):$(BUILD_NO)
+	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME):latest
+	docker push $(REGISTRY)/$(IMAGE_NAME):$(BUILD_NO)
+	docker push $(REGISTRY)/$(IMAGE_NAME):latest
+
+.PHONY: publish-apiserver-local
+publish-apiserver-local: export REGISTRY=$(GCP_REGISTRY)
+publish-apiserver-local:
+	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME):$(BUILD_NO)
+	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME):latest
+
+.PHONY: publish-3rdparty
+publish-3rdparty:
+	# publish 3rd-party images so that we don't have to pull from the docker hub
+	docker pull postgres:$(POSTGRES_VERSION)
+	docker tag postgres:$(POSTGRES_VERSION) $(REGISTRY)/postgres:$(POSTGRES_VERSION)
+	docker push $(REGISTRY)/postgres:$(POSTGRES_VERSION)

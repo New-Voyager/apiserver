@@ -29,19 +29,14 @@ pipeline {
                 sh 'make build'
             }
         }
-        stage('Build Test Image') {
-            steps {
-                sh 'make docker-build-test'
-            }
-        }
         stage('Unit Test') {
             steps {
-                sh 'make docker-unit-tests'
+                sh 'make unit-tests'
             }
         }
         stage('API Test') {
             steps {
-                sh 'make docker-tests'
+                sh 'make int-tests'
             }
         }
         stage('Publish') {
