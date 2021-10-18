@@ -3,14 +3,19 @@ import {Player} from '@src/entity/player/player';
 import {getLogger} from '@src/utils/log';
 import * as firebase from 'firebase-admin';
 import {ServiceAccount} from 'firebase-admin';
+
 import {getRunProfile, getRunProfileStr, RunProfile} from '@src/server';
 import {Club} from '@src/entity/player/club';
 import {default as axios} from 'axios';
 import {GoogleAuth} from 'google-auth-library';
 import {threadId} from 'worker_threads';
 import {GameType} from '@src/entity/types';
+import {ClubRepository} from '@src/repositories/club';
+import _ from 'lodash';
+import {PlayerRepository} from '@src/repositories/player';
 
 //import {default as google} from 'googleapis';
+let CLUB_MESSAGE_BATCH_SIZE = 100;
 
 const fs = require('fs');
 const {google} = require('googleapis');
@@ -269,7 +274,7 @@ class FirebaseClass {
         data: {
           type: 'WAITLIST_SEATING',
           gameCode: game.gameCode,
-          gameType: GameType[game.gameType],
+          gameType: game.gameType.toString(),
           smallBlind: game.smallBlind.toString(),
           bigBlind: game.bigBlind.toString(),
           waitlistPlayerId: player.id.toString(),
@@ -283,52 +288,28 @@ class FirebaseClass {
     }
   }
 
-  // public async newClubCreated(
-  //   club: Club,
-  //   owner: Player
-  // ): Promise<[string, string]> {
-  //   if (!this.firebaseInitialized) {
-  //     return ['', ''];
-  //   }
-
-  //   const profileStr = getRunProfileStr();
-  //   const profile = getRunProfile();
-  //   // register a new device group
-  //   const groupName = `${profileStr}-${club.clubCode}`;
-  //   //const accessToken = await this.getAccessToken();
-  //   let apiKey: string | undefined;
-  //   if (profile === RunProfile.DEV) {
-  //     apiKey = DEV_FCM_API_KEY;
-  //   }
-  //   if (apiKey) {
-  //     try {
-  //       const url = 'https://fcm.googleapis.com/fcm/notification';
-  //       const authToken = `key=${apiKey}`;
-  //       const payload = {
-  //         operation: 'create',
-  //         notification_key_name: groupName,
-  //         registration_ids: [owner.firebaseToken],
-  //       };
-  //       const resp = await axios.post(url, payload, {
-  //         headers: {
-  //           Authorization: authToken,
-  //           project_id: '76242661450',
-  //         },
-  //       });
-  //       const respData = resp.data;
-  //       // return notification key
-  //       return [groupName, respData['notification_key']];
-  //     } catch (err) {
-  //       logger.error(
-  //         `Failed to create device group for club ${
-  //           club.name
-  //         }. Error: ${err.toString()}`
-  //       );
-  //       return ['', ''];
-  //     }
-  //   }
-  //   return ['', ''];
-  // }
+  public newGame(
+    club: Club,
+    gameType: GameType,
+    sb: number,
+    bb: number,
+    messageId: string
+  ) {
+    const message: any = {
+      type: 'NEW_GAME',
+      clubCode: club.clubCode,
+      clubName: club.name,
+      gameType: gameType,
+      sb: sb.toString(),
+      bb: bb.toString(),
+      requestId: messageId,
+    };
+    this.sendClubMsg(club, message).catch(err => {
+      logger.error(
+        `Failed to send club firebase message: ${club.clubCode}, err: ${err.message}`
+      );
+    });
+  }
 
   public async sendClubMsg(club: Club, message: any) {
     if (!this.firebaseInitialized) {
@@ -340,13 +321,38 @@ class FirebaseClass {
       return;
     }
     try {
-      await this.app
-        .messaging()
-        .sendToDeviceGroup(club.firebaseNotificationKey, {
+      const members = await ClubRepository.getClubMembersForFirebase(club);
+      const chunks = _.chunk(members, CLUB_MESSAGE_BATCH_SIZE);
+      for (const chunk of chunks) {
+        const toks = _.map(chunk, e => e.firebaseToken);
+        const firebaseMessage: firebase.messaging.MulticastMessage = {
+          tokens: toks,
           data: message,
-        });
+        };
+        const resp: firebase.messaging.BatchResponse = await this.app
+          .messaging()
+          .sendMulticast(firebaseMessage);
+        logger.info(
+          `firebase club message: success count: ${resp.successCount} fail count: ${resp.failureCount}`
+        );
+        if (resp.failureCount > 0) {
+          // find failed users and remove the firebase token
+          for (let i = 0; i < resp.responses.length; i++) {
+            const r = resp.responses[i];
+            if (r.error) {
+              try {
+                await PlayerRepository.resetFirebaseToken(chunk[i].playerId);
+              } catch (e) {
+                logger.error(
+                  'Resetting firebase token for player ${chunk[i].playerId} failed'
+                );
+              }
+            }
+          }
+        }
+      }
     } catch (err) {
-      logger.error(`Sending to device group failed. ${err.toString()}`);
+      logger.error(`Sending message to club members failed. ${err.toString()}`);
     }
   }
 

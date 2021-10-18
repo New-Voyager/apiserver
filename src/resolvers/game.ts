@@ -39,6 +39,7 @@ import {
   GenericError,
   UnauthorizedError,
 } from '@src/errors';
+import {Firebase} from '@src/firebase';
 
 const logger = getLogger('resolvers::game');
 
@@ -61,7 +62,7 @@ export async function configureGame(
   try {
     createGameTime = new Date().getTime();
     const club = await Cache.getClub(clubCode);
-    const player = await Cache.getPlayer(playerId);
+    const player = await Cache.getPlayer(playerId, true);
     const gameInfo = await GameRepository.createPrivateGame(club, player, game);
     const cachedGame = await Cache.getGame(gameInfo.gameCode, true);
     Metrics.newGame();
@@ -79,6 +80,13 @@ export async function configureGame(
       clubCode,
       club.name,
       ClubUpdateType[ClubUpdateType.NEW_GAME],
+      messageId
+    );
+    Firebase.newGame(
+      club,
+      gameInfo.gameType,
+      gameInfo.smallBlind,
+      gameInfo.bigBlind,
       messageId
     );
     return ret;

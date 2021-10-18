@@ -41,10 +41,10 @@ async function sendTestNotification(playerId: string) {
     name: player.name,
     requestId: messageId,
   };
-  // Firebase.sendMessage(player.firebaseToken, message).catch(err => {
-  //   // ignore the error
-  // });
-  Nats.sendTestMessage(player, message);
+  Firebase.sendMessage(player.firebaseToken, message).catch(err => {
+    // ignore the error
+  });
+  //Nats.sendTestMessage(player, message);
 }
 
 const resolvers: any = {

@@ -13,7 +13,7 @@ import {getLogger} from '@src/utils/log';
 import {getClubCode} from '@src/utils/uniqueid';
 import {fixQuery} from '@src/utils';
 import {Cache} from '@src/cache';
-import {ClubUpdateType} from './types';
+import {ClubMemberFirebaseToken, ClubUpdateType} from './types';
 import {Nats} from '@src/nats';
 import {v4 as uuidv4} from 'uuid';
 import {StatsRepository} from './stats';
@@ -903,6 +903,24 @@ class ClubRepositoryImpl {
         picUrl: url,
       }
     );
+  }
+
+  public async getClubMembersForFirebase(
+    club: Club
+  ): Promise<Array<ClubMemberFirebaseToken>> {
+    const sql = `select player.id, firebase_token "firebaseToken" from player join club_member cm 
+            on player.id = cm.player_id where cm.club_id = ? order by player.id`;
+    const ret = new Array<ClubMemberFirebaseToken>();
+    const query = fixQuery(sql);
+    const resp = await getUserConnection().query(query, [club.id]);
+    for (const r of resp) {
+      ret.push({
+        playerId: r.id,
+        firebaseToken: r.firebaseToken,
+      });
+    }
+
+    return ret;
   }
 }
 

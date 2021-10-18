@@ -4,6 +4,7 @@ import {
   PlayerStatus,
   TableStatus,
 } from '@src/entity/types';
+import {playersInGameById} from '@src/resolvers/playersingame';
 
 export interface PlayerSitInput {
   clubId: number;
@@ -172,4 +173,9 @@ export interface GamePlayerSettings {
 export interface SitBackResponse {
   missedBlind: boolean;
   status: string;
+}
+
+export interface ClubMemberFirebaseToken {
+  playerId: number;
+  firebaseToken: string;
 }
