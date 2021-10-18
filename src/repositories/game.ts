@@ -490,6 +490,24 @@ class GameRepositoryImpl {
     }
     return {numExpired: numExpired};
   }
+
+  public async endGameInternal(
+    gameCode: string,
+    force: boolean
+  ): Promise<GameStatus> {
+    const game: PokerGame | undefined = await getGameRepository(
+      PokerGame
+    ).findOne({
+      where: {gameCode: gameCode},
+    });
+    if (!game) {
+      throw new Error(`Cannot find game ${gameCode}`);
+    }
+    const player = null;
+    const endReason = GameEndReason.SYSTEM_TERMINATED;
+    return this.endGame(player, game, endReason, force);
+  }
+
   public async seatOccupied(
     game: PokerGame,
     seatNo: number,
@@ -1679,7 +1697,8 @@ class GameRepositoryImpl {
   public async endGame(
     player: Player | null,
     game: PokerGame,
-    endReason: GameEndReason
+    endReason: GameEndReason,
+    force: boolean
   ) {
     try {
       let gameRunning = true;
@@ -1706,7 +1725,15 @@ class GameRepositoryImpl {
         gameRunning = false;
       }
 
-      if (gameRunning) {
+      logger.info(
+        `Ending Game ${game.gameCode}. game.status: ${
+          GameStatus[game.status]
+        }, game.tableStatus: ${
+          TableStatus[game.tableStatus]
+        }, force: ${force}, reason: ${GameEndReason[endReason]}`
+      );
+
+      if (gameRunning && !force) {
         // the game will be stopped in the next hand
         await NextHandUpdatesRepository.endGameNextHand(
           player,

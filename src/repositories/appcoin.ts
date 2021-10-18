@@ -248,7 +248,12 @@ class AppCoinRepositoryImpl {
 
     if (!(await this.enoughCoinsForGame(game.gameCode))) {
       // end the game
-      await GameRepository.endGame(null, game, GameEndReason.NOT_ENOUGH_COINS);
+      await GameRepository.endGame(
+        null,
+        game,
+        GameEndReason.NOT_ENOUGH_COINS,
+        false
+      );
       return;
     }
     // consume coins

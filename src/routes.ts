@@ -191,6 +191,10 @@ export function addInternalRoutes(app: any) {
   app.post('/internal/restart-timers', restartTimers);
 
   app.post('/internal/end-expired-games', GameAPI.endExpiredGames);
+  app.post(
+    '/internal/end-game/:gameCode/force/:force',
+    GameAPI.endGameInternal
+  );
 
   app.get('/internal/metrics', MetricsAPI.getMetrics);
 
