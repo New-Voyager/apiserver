@@ -611,6 +611,7 @@ class FirebaseClass {
 }
 
 export interface AppSettings {
+  maxClubCount: number;
   newUserFreeCoins: number;
   clubHostFreeCoins: number;
   consumeTime: number;
@@ -640,6 +641,7 @@ export function getAppSettings(): AppSettings {
 
 export function resetAppSettingsTest() {
   settings = {
+    maxClubCount: 5, // each user can create upto 25 clubs
     newUserFreeCoins: 10,
     clubHostFreeCoins: 0,
     consumeTime: 1 * 60, // every 1 minutes
@@ -653,6 +655,7 @@ export function resetAppSettingsTest() {
 
 export function resetAppSettings() {
   settings = {
+    maxClubCount: 20,
     newUserFreeCoins: 20,
     clubHostFreeCoins: 100,
     consumeTime: 30 * 60, // every 30 minutes

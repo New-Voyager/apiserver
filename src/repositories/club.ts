@@ -28,6 +28,7 @@ import {
 import {ClubMemberStat} from '@src/entity/player/club';
 import {ClubMessageRepository} from './clubmessage';
 import {AppCoinRepository} from './appcoin';
+import {Errors, GenericError} from '@src/errors';
 
 const logger = getLogger('repositories::club');
 
@@ -221,17 +222,32 @@ class ClubRepositoryImpl {
 
     //logger.info('****** STARTING TRANSACTION TO SAVE club and club member');
     await getUserManager().transaction(async transactionEntityManager => {
+      const clubMemberRepo = transactionEntityManager.getRepository<ClubMember>(
+        ClubMember
+      );
+      const clubCount = await clubMemberRepo.count({
+        player: {id: owner.id},
+      });
+      const appSettings = getAppSettings();
+      if (clubCount >= appSettings.maxClubCount) {
+        throw new GenericError(
+          Errors.MAXCLUB_REACHED,
+          'Max club count reached'
+        );
+      }
+
       const clubRepo = transactionEntityManager.getRepository(Club);
       await clubRepo.save(club);
-      await transactionEntityManager
-        .getRepository<ClubMember>(ClubMember)
-        .save(clubMember);
-      const appSettings = getAppSettings();
-      await AppCoinRepository.addCoins(
-        0,
-        appSettings.clubHostFreeCoins,
-        ownerObj.uuid
-      );
+      await clubMemberRepo.save(clubMember);
+
+      if (clubCount === 0) {
+        // if this is the first club for the user, add first time club owner coins
+        await AppCoinRepository.addCoins(
+          0,
+          appSettings.clubHostFreeCoins,
+          ownerObj.uuid
+        );
+      }
       await StatsRepository.newClubStats(club);
     });
 
