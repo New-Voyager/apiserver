@@ -148,7 +148,8 @@ export async function endGame(playerId: string, gameCode: string) {
     const status = await GameRepository.endGame(
       player,
       game,
-      GameEndReason.HOST_TERMINATED
+      GameEndReason.HOST_TERMINATED,
+      false
     );
     return GameStatus[status];
   } catch (err) {
