@@ -109,6 +109,18 @@ class PlayerRepositoryImpl {
     );
   }
 
+  // Updates firebase token for the player
+  public async resetFirebaseToken(playerId: number) {
+    await getUserRepository(Player).update(
+      {
+        id: playerId,
+      },
+      {
+        firebaseToken: '',
+      }
+    );
+  }
+
   public async getPlayers(): Promise<Array<any>> {
     const repository = getUserRepository(Player);
     // get all players (testing only)
