@@ -19,6 +19,11 @@ pipeline {
                 sh 'ls -l'
             }
         }
+        stage('Install dependencies') {
+            steps {
+                sh 'make install_deps'
+            }
+        }
         stage('Lint') {
             steps {
                 sh 'make lint'
