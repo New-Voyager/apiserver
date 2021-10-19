@@ -38,6 +38,12 @@ COMPOSE_REDIS := docker-compose -p $(COMPOSE_PROJECT_NAME) -f docker-compose-red
 COMPOSE_NATS := docker-compose -p $(COMPOSE_PROJECT_NAME) -f docker-compose-nats.yaml
 COMPOSE_PG := docker-compose -p $(COMPOSE_PROJECT_NAME) -f docker-compose-pg.yaml
 
+ifdef JENKINS_HOME
+TEST_DOCKER_NET := jenkins_default
+else
+TEST_DOCKER_NET := $(DEFAULT_DOCKER_NET)
+endif
+
 ifeq ($(OS), Windows_NT)
 	BUILD_NO := $(file < build_number.txt)
 else
@@ -136,26 +142,26 @@ generate-env:
 
 .PHONY: run-pg
 run-pg: stop-pg generate-env
-	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_PG) up -d
+	TEST_DOCKER_NET=$(TEST_DOCKER_NET) $(COMPOSE_PG) up -d
 
 .PHONY: stop-pg
 stop-pg:
-	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_PG) down
+	TEST_DOCKER_NET=$(TEST_DOCKER_NET) $(COMPOSE_PG) down
 
 run-redis: stop-redis generate-env
-	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_REDIS) up -d
+	TEST_DOCKER_NET=$(TEST_DOCKER_NET) $(COMPOSE_REDIS) up -d
 
 .PHONY: stop-redis
 stop-redis:
-	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_REDIS) down
+	TEST_DOCKER_NET=$(TEST_DOCKER_NET) $(COMPOSE_REDIS) down
 
 .PHONY: run-nats
 run-nats: stop-nats generate-env
-	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_NATS) up -d
+	TEST_DOCKER_NET=$(TEST_DOCKER_NET) $(COMPOSE_NATS) up -d
 
 .PHONY: stop-nats
 stop-nats:
-	TEST_DOCKER_NET=$(DEFAULT_DOCKER_NET) $(COMPOSE_NATS) down
+	TEST_DOCKER_NET=$(TEST_DOCKER_NET) $(COMPOSE_NATS) down
 
 .PHONY: docker-unit-tests
 docker-unit-tests: create-network
