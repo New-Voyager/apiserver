@@ -112,6 +112,7 @@ describe('appCoin consumption APIs', () => {
 
   test('app coins/add coins', async () => {
     const [clubCode, playerId] = await clubutils.createClub('brady', 'yatzee');
+    await AppCoinRepository.addCoins(20, 0, playerId);
     let coins = await AppCoinRepository.availableCoins(playerId);// availableCoins(playerId);
     expect(coins).toEqual(25);
 
@@ -214,9 +215,11 @@ describe('appCoin consumption APIs', () => {
 
   test('buy diamonds', async () => {
     const [clubCode, playerId] = await clubutils.createClub('diamond-user', 'yatzee');
+    await AppCoinRepository.addCoins(20, 0, playerId);
+    let availableCoinsBefore = await AppCoinRepository.availableCoins(playerId);
     const status = await buyDiamonds(playerId, 100, 5);
-    const availableCoins = await AppCoinRepository.availableCoins(playerId);
-    expect(availableCoins).toEqual(20);
+    const availableCoinsAfter = await AppCoinRepository.availableCoins(playerId);
+    expect(availableCoinsAfter).toEqual(availableCoinsBefore - 5);
   });
 
 });
