@@ -348,6 +348,7 @@ export async function setServerSettings(req: any, resp: any) {
   const freeTime = payload['free-time'];
   const newUserFreeCoins = payload['new-user-free-coins'];
   const ipGpsCheckInterval = payload['ip-gps-check-interval'];
+  const maxClubs = payload['max-clubs'];
 
   const appSettings = getAppSettings();
   if (gameBlockTime) {
@@ -371,6 +372,10 @@ export async function setServerSettings(req: any, resp: any) {
 
   if (ipGpsCheckInterval) {
     appSettings.ipGpsCheckInterval = ipGpsCheckInterval;
+  }
+
+  if (maxClubs) {
+    appSettings.maxClubCount = maxClubs;
   }
 
   resp.status(200).send({status: 'OK'});
