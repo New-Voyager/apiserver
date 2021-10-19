@@ -410,6 +410,32 @@ class GameAPIs {
       resp.status(500).send(JSON.stringify(response));
     }
   }
+
+  public async endGameInternal(req: any, resp: any) {
+    try {
+      const gameCode = req.params.gameCode;
+      if (!gameCode) {
+        const res = {error: `Invalid game code: ${gameCode}`};
+        resp.status(500).json(res);
+        return;
+      }
+
+      const force: boolean = req.params.force === '1';
+
+      logger.info(
+        `Processing internal request to end game: ${gameCode} force: ${force}`
+      );
+
+      const res = await GameRepository.endGameInternal(gameCode, force);
+      resp.status(200).json({status: GameStatus[res]});
+    } catch (err) {
+      logger.error(`Unable to end game: ${errToLogString(err)}`);
+      const response = {
+        error: errToLogString(err, false),
+      };
+      resp.status(500).json(response);
+    }
+  }
 }
 
 export const GameAPI = new GameAPIs();

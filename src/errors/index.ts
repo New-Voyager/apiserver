@@ -24,6 +24,7 @@ export enum Errors {
   LEAVE_GAME_FAILED,
   DEALER_CHOICE_FAILED,
   POSTBLIND_FAILED,
+  MAXCLUB_REACHED,
 }
 
 export class WaitlistSeatError extends ApolloError {

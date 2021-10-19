@@ -11,7 +11,7 @@ import {Player} from '@src/entity/player/player';
 import {getAppSettings} from '@src/firebase';
 import {GameUpdatesRepository} from './gameupdates';
 import {GameRepository} from './game';
-import {PokerGame} from '@src/entity/game/game';
+import {gameLogPrefix, PokerGame} from '@src/entity/game/game';
 import {startTimer} from '@src/timer';
 import {GAME_COIN_CONSUME_TIME} from './types';
 import {GameEndReason, GameStatus} from '@src/entity/types';
@@ -248,7 +248,12 @@ class AppCoinRepositoryImpl {
 
     if (!(await this.enoughCoinsForGame(game.gameCode))) {
       // end the game
-      await GameRepository.endGame(null, game, GameEndReason.NOT_ENOUGH_COINS);
+      await GameRepository.endGame(
+        null,
+        game,
+        GameEndReason.NOT_ENOUGH_COINS,
+        false
+      );
       return;
     }
     // consume coins
@@ -287,7 +292,9 @@ class AppCoinRepositoryImpl {
 
     // start a timer
     startTimer(game.id, 0, GAME_COIN_CONSUME_TIME, nextConsumeTime).catch(e => {
-      logger.error(`${game.log} Start timer (GAME_COIN_CONSUME_TIME) failed`);
+      logger.error(
+        `${gameLogPrefix(game)} Start timer (GAME_COIN_CONSUME_TIME) failed`
+      );
     });
   }
 }

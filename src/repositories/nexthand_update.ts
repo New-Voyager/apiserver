@@ -237,6 +237,7 @@ class NextHandUpdatesRepositoryImpl {
       const game = new PokerGame();
       game.id = gameId;
       nextHandUpdate.game = game;
+      nextHandUpdate.endReason = GameEndReason.SYSTEM_TERMINATED;
       nextHandUpdate.newUpdate = NextHandUpdate.END_GAME;
       await repository.save(nextHandUpdate);
     }

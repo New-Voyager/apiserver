@@ -44,7 +44,7 @@ async function sendTestNotification(playerId: string) {
   Firebase.sendMessage(player.firebaseToken, message).catch(err => {
     // ignore the error
   });
-  Nats.sendTestMessage(player, message);
+  //Nats.sendTestMessage(player, message);
 }
 
 const resolvers: any = {
