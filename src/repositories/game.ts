@@ -1745,6 +1745,8 @@ class GameRepositoryImpl {
       } else {
         await Cache.removeAllObservers(game.gameCode);
         const status = await GameRepository.markGameEnded(game.id, endReason);
+        const messageId = uuidv4();
+        Nats.sendGameEndingMessage(game.gameCode, messageId);
         return status;
       }
       return game.status;
