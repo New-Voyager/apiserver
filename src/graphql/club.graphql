@@ -120,6 +120,7 @@ type Query {
   # clubGames(clubCode: "", prev: 20, from: 10000001)
   clubGames(clubCode: String!, page: PageInput, completedGames: Boolean): [ClubGameInfo!]
   clubLeaderBoard(clubCode: String!): [ClubMemberStat]
+  clubCoins(clubCode: String!): Int!
 }
 
 type Mutation {

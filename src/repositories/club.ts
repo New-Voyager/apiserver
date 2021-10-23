@@ -29,6 +29,7 @@ import {ClubMemberStat} from '@src/entity/player/club';
 import {ClubMessageRepository} from './clubmessage';
 import {AppCoinRepository} from './appcoin';
 import {Errors, GenericError} from '@src/errors';
+import _ from 'lodash';
 
 const logger = getLogger('repositories::club');
 
@@ -667,6 +668,16 @@ class ClubRepositoryImpl {
       where: where,
     });
     return clubMembers;
+  }
+
+  public async getClubMemberStat(clubCode: string) {
+    const clubMemberStatRepo = getUserRepository(ClubMemberStat);
+    const club = await Cache.getClub(clubCode);
+    // see whehter the player is already a member
+    const clubMemberStat = await clubMemberStatRepo.find({
+      where: {clubId: club.id},
+    });
+    return _.keyBy(clubMemberStat, 'playerId');
   }
 
   public async isClubMember(

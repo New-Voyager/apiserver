@@ -32,7 +32,7 @@ import {utcTime} from '@src/utils';
 import _ from 'lodash';
 import {HandHistory} from '@src/entity/history/hand';
 import {Player, PlayerNotes} from '@src/entity/player/player';
-import {Club} from '@src/entity/player/club';
+import {Club, ClubMember} from '@src/entity/player/club';
 import {PlayerGameStats} from '@src/entity/history/stats';
 import {HistoryRepository} from './history';
 import {GameHistory} from '@src/entity/history/game';
@@ -41,6 +41,7 @@ import {
   getGameManager,
   getGameRepository,
   getHistoryRepository,
+  getUserConnection,
   getUserRepository,
 } from '.';
 import {GameReward, GameRewardTracking} from '@src/entity/game/reward';
@@ -797,10 +798,30 @@ class GameRepositoryImpl {
             transactionEntityManager
           );
         }
-
         return [playerInGame, true];
       }
     );
+    try {
+      if (game.clubCode) {
+        const clubMember = await Cache.getClubMember(
+          player.uuid,
+          game.clubCode
+        );
+        if (clubMember) {
+          const clubMemberRepo = getUserRepository(ClubMember);
+          await clubMemberRepo.update(
+            {
+              id: clubMember.id,
+            },
+            {
+              lastGamePlayedDate: new Date(),
+            }
+          );
+        }
+      }
+    } catch (err) {
+      // ignore this error (not critical)
+    }
     let timeTaken = new Date().getTime() - startTime;
     logger.debug(`joingame database time taken: ${timeTaken}`);
     startTime = new Date().getTime();
