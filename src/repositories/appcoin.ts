@@ -13,8 +13,9 @@ import {GameUpdatesRepository} from './gameupdates';
 import {GameRepository} from './game';
 import {gameLogPrefix, PokerGame} from '@src/entity/game/game';
 import {startTimer} from '@src/timer';
-import {GAME_COIN_CONSUME_TIME} from './types';
+import {CHECK_AVAILABLE_COINS, GAME_COIN_CONSUME_TIME} from './types';
 import {GameEndReason, GameStatus} from '@src/entity/types';
+import {Nats} from '@src/nats';
 const crypto = require('crypto');
 
 const logger = getLogger('repositories::appcoins');
@@ -235,6 +236,41 @@ class AppCoinRepositoryImpl {
     return false;
   }
 
+  public async gameCheckAvailableCoins(game: PokerGame) {
+    const host = await Cache.getPlayer(game.hostUuid);
+    if (host.bot) {
+      return;
+    }
+    logger.info(`Game: ${game.gameCode} consume coins to continue game`);
+    if (game.status === GameStatus.ENDED) {
+      logger.info(`Game: ${game.gameCode} Game ended.`);
+      return;
+    }
+    let playerUuid = game.hostUuid;
+    if (game.clubCode) {
+      // this is a club game, charge the club owner
+      const club = await Cache.getClub(game.clubCode);
+      const owner: Player | undefined = await Promise.resolve(club.owner);
+      if (!owner) {
+        throw new Error('Unexpected. There is no owner for the club');
+      }
+      playerUuid = owner.uuid;
+    }
+
+    const availableCoins = await this.availableCoins(playerUuid);
+    const appSettings = getAppSettings();
+    if (availableCoins >= appSettings.gameCoinsPerBlock) {
+      return;
+    }
+    logger.info(
+      `Game: ${game.gameCode} will run out of coins to continue. Notifying the host`
+    );
+    // notify the player that there are enough coins to continue
+    Nats.notifyAppCoinShort(game).catch(err => {
+      logger.error(`Failed to notify host (${game.gameCode}) coin shortage`);
+    });
+  }
+
   public async consumeGameCoins(game: PokerGame) {
     const host = await Cache.getPlayer(game.hostUuid);
     if (host.bot) {
@@ -242,11 +278,14 @@ class AppCoinRepositoryImpl {
     }
     logger.info(`Game: ${game.gameCode} consume coins to continue game`);
     if (game.status === GameStatus.ENDED) {
-      logger.info(`Game: ${game.gameCode} Not enough coins to continue.`);
+      logger.info(`Game: ${game.gameCode} Game ended.`);
       return;
     }
 
     if (!(await this.enoughCoinsForGame(game.gameCode))) {
+      logger.info(
+        `Game: ${game.gameCode} cannot continue game. Not enough coins`
+      );
       // end the game
       await GameRepository.endGame(
         null,
@@ -276,7 +315,7 @@ class AppCoinRepositoryImpl {
     );
 
     const nextConsumeTime = new Date();
-    const now = new Date();
+    let now = new Date();
     nextConsumeTime.setSeconds(
       nextConsumeTime.getSeconds() + appSettings.consumeTime
     );
@@ -296,6 +335,21 @@ class AppCoinRepositoryImpl {
         `${gameLogPrefix(game)} Start timer (GAME_COIN_CONSUME_TIME) failed`
       );
     });
+
+    const nextCoinsCheckTime = new Date();
+    now = new Date();
+    nextCoinsCheckTime.setSeconds(
+      nextCoinsCheckTime.getSeconds() + appSettings.coinsAlertNotifyTime
+    );
+
+    // start a timer to notify if not enough coins
+    startTimer(game.id, 0, CHECK_AVAILABLE_COINS, nextCoinsCheckTime).catch(
+      e => {
+        logger.error(
+          `${gameLogPrefix(game)} Start timer (CHECK_AVAILABLE_COINS) failed`
+        );
+      }
+    );
   }
 }
 

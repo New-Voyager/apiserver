@@ -220,6 +220,7 @@ class ClubRepositoryImpl {
     clubMember.isOwner = true;
     clubMember.joinedDate = new Date();
     clubMember.status = ClubMemberStatus.ACTIVE;
+    clubMember.lastGamePlayedDate = new Date();
 
     //logger.info('****** STARTING TRANSACTION TO SAVE club and club member');
     await getUserManager().transaction(async transactionEntityManager => {
@@ -349,6 +350,7 @@ class ClubRepositoryImpl {
     clubMember.player = await Cache.getPlayer(playerId);
     clubMember.joinedDate = new Date();
     clubMember.status = ClubMemberStatus.PENDING;
+    clubMember.lastGamePlayedDate = new Date();
 
     const clubMemberStatRepository = getUserRepository(ClubMemberStat);
     let clubMemberStat = await clubMemberStatRepository.findOne({
