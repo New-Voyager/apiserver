@@ -111,6 +111,7 @@ export class ClubMember {
     name: 'last_played_date',
     type: 'timestamptz',
     nullable: true,
+    default: new Date(),
   })
   public lastGamePlayedDate!: Date;
 
