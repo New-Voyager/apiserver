@@ -621,6 +621,7 @@ export interface AppSettings {
   newUserFreeCoins: number;
   clubHostFreeCoins: number;
   consumeTime: number;
+  coinsAlertNotifyTime: number;
   notifyHostTimeWindow: number; // notify host before time expires
   gameCoinsPerBlock: number;
   compressHandData: boolean;
@@ -630,16 +631,6 @@ export interface AppSettings {
 // get from firebase and update periodically
 let settings: AppSettings;
 resetAppSettings();
-
-// {
-//   newUserFreeCoins: 20,
-//   clubHostFreeCoins: 100,
-//   notifyHostTimeWindow: 5 * 60, // seconds
-//   consumeTime: 15 * 60 * 60, // every 30 minutes
-//   gameCoinsPerBlock: 5, // 5 coins per 30 minutes
-//   compressHandData: true,
-//   ipGpsCheckInterval: 15 * 60, // ip/gps check interval in seconds
-// };
 
 export function getAppSettings(): AppSettings {
   return settings;
@@ -651,6 +642,7 @@ export function resetAppSettingsTest() {
     newUserFreeCoins: 10,
     clubHostFreeCoins: 0,
     consumeTime: 1 * 60, // every 1 minutes
+    coinsAlertNotifyTime: 30, // every 30 seconds
     gameCoinsPerBlock: 5, // 5 coins per 1 minutes
     notifyHostTimeWindow: 2 * 60 * 60,
     compressHandData: true,
@@ -665,6 +657,7 @@ export function resetAppSettings() {
     newUserFreeCoins: 20,
     clubHostFreeCoins: 100,
     consumeTime: 30 * 60, // every 30 minutes
+    coinsAlertNotifyTime: 15 * 60,
     gameCoinsPerBlock: 5, // 5 coins per 30 minutes
     notifyHostTimeWindow: 10 * 60,
     compressHandData: true,

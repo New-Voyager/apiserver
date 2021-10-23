@@ -23,6 +23,7 @@ import {
   BREAK_TIMEOUT,
   PLAYER_SEATCHANGE_PROMPT,
   GAME_COIN_CONSUME_TIME,
+  CHECK_AVAILABLE_COINS,
 } from './types';
 import {WaitListMgmt} from './waitlist';
 import {getGameRepository, getUserRepository} from '.';
@@ -83,6 +84,8 @@ export async function timerCallbackHandler(
       await playerSeatChangeTimeoutExpired(gameID, playerID);
     } else if (purpose === GAME_COIN_CONSUME_TIME) {
       await gameConsumeTime(gameID);
+    } else if (purpose === CHECK_AVAILABLE_COINS) {
+      await gameCheckAvailableCoins(gameID);
     }
   } catch (err) {
     logger.error(`Error in timer callback: ${err.message}`);
@@ -270,5 +273,14 @@ export async function gameConsumeTime(gameID: number) {
     logger.error(`Game: ${gameID} is not found. Game may have ended already`);
   } else {
     await AppCoinRepository.consumeGameCoins(game);
+  }
+}
+
+export async function gameCheckAvailableCoins(gameID: number) {
+  const game = await Cache.getGameById(gameID);
+  if (!game) {
+    logger.error(`Game: ${gameID} is not found. Game may have ended already`);
+  } else {
+    await AppCoinRepository.gameCheckAvailableCoins(game);
   }
 }

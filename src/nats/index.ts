@@ -15,6 +15,7 @@ import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import * as Constants from '../const';
 import {SeatMove, SeatUpdate} from '@src/types';
 import {SageMakerFeatureStoreRuntime} from 'aws-sdk';
+import {getAppSettings} from '@src/firebase';
 
 const logger = getLogger('nats');
 
@@ -433,12 +434,15 @@ class NatsClass {
 
   public async notifyAppCoinShort(game: PokerGame) {
     const player = await Cache.getPlayer(game.hostUuid);
+    const now = new Date();
+    now.setSeconds(now.getSeconds() + getAppSettings().coinsAlertNotifyTime);
     if (player) {
       const messageId = `APPCOIN:${uuidv4()}`;
       const message: any = {
         type: 'APPCOIN_NEEDED',
         gameCode: game.gameCode,
         requestId: messageId,
+        endTime: now.toISOString(),
       };
       const messageStr = JSON.stringify(message);
       const subject = this.getPlayerChannel(player);
