@@ -593,7 +593,8 @@ class PlayersInGameRepositoryImpl {
             .update()
             .set({
               totalBuyins: () => `total_buyins + ${playerChip.buyIn}`,
-              totalWinnings: () => `total_winnings + ${playerChip.stack}`,
+              totalWinnings: () =>
+                `total_winnings + ${playerChip.stack - playerChip.buyIn}`,
               rakePaid: () => `rake_paid + ${playerChip.rakePaid}`,
               totalGames: () => 'total_games + 1',
               totalHands: () => `total_hands + ${playerChip.noHandsPlayed}`,

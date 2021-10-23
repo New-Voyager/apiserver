@@ -10,6 +10,7 @@ import {PageOptions} from '@src/types';
 import * as _ from 'lodash';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
+import {AppCoinRepository} from '@src/repositories/appcoin';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -34,17 +35,24 @@ export async function getClubMembers(playerId: string, args: any) {
     args.clubCode,
     args.filter
   );
+  const clubMemberStat = await ClubRepository.getClubMemberStat(args.clubCode);
   const members = new Array<any>();
   for (const member of clubMembers) {
     const memberAny = member as any;
     memberAny.memberId = member.id;
     memberAny.name = member.player.name;
     memberAny.playerId = member.player.uuid;
-    const today = new Date();
-    today.setDate(today.getDate() - 7);
-    memberAny.lastPlayedDate = today;
+    memberAny.lastPlayedDate = member.lastGamePlayedDate;
     memberAny.contactInfo = member.contactInfo;
     memberAny.status = ClubMemberStatus[member.status];
+    const stat = clubMemberStat[member.player.id];
+    if (stat) {
+      memberAny.totalGames = stat.totalGames;
+      memberAny.totalBuyins = stat.totalBuyins;
+      memberAny.totalWinnings = stat.totalWinnings;
+      memberAny.totalHands = stat.totalHands;
+      memberAny.rakePaid = stat.rakePaid;
+    }
     members.push(memberAny);
   }
   return members;
@@ -400,6 +408,33 @@ export async function clubLeaderBoard(playerId: string, clubCode: string) {
   return stats;
 }
 
+export async function clubCoins(playerId: string, clubCode: string) {
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    throw new Error('Player not found');
+  }
+  const club = await Cache.getClub(clubCode);
+  if (!club) {
+    throw new Error('Club not found');
+  }
+  // is this player a host or manager?
+  const clubMember = await Cache.getClubMember(playerId, clubCode, true);
+  if (!clubMember) {
+    return 0;
+  }
+  if (!(clubMember.isManager || clubMember.isOwner)) {
+    return 0;
+  }
+
+  // the owner's coins are club coins
+  const owner = await Promise.resolve(club.owner);
+  if (!owner) {
+    return 0;
+  }
+  const coins = AppCoinRepository.availableCoins(owner.uuid);
+  return coins;
+}
+
 const resolvers: any = {
   Query: {
     clubMembers: async (parent, args, ctx, info) => {
@@ -421,6 +456,10 @@ const resolvers: any = {
 
     clubLeaderBoard: async (parent, args, ctx, info) => {
       return clubLeaderBoard(ctx.req.playerId, args.clubCode);
+    },
+
+    clubCoins: async (parent, args, ctx, info) => {
+      return clubCoins(ctx.req.playerId, args.clubCode);
     },
   },
   Mutation: {
