@@ -271,15 +271,36 @@ class AppCoinRepositoryImpl {
     });
   }
 
-  public async consumeGameCoins(game: PokerGame) {
+  public async consumeGameCoins(game: PokerGame): Promise<boolean> {
+    // consume coins
+    let playerUuid = game.hostUuid;
     const host = await Cache.getPlayer(game.hostUuid);
-    if (host.bot) {
-      return;
+    let clubOwnedByBot = false;
+
+    if (game.clubCode) {
+      // this is a club game, charge the club owner
+      const club = await Cache.getClub(game.clubCode);
+      const owner: Player | undefined = await Promise.resolve(club.owner);
+      if (!owner) {
+        throw new Error('Unexpected. There is no owner for the club');
+      }
+      if (owner.bot) {
+        clubOwnedByBot = true;
+      }
+      playerUuid = owner.uuid;
+      if (clubOwnedByBot) {
+        return true;
+      }
+    } else {
+      if (host.bot) {
+        return true;
+      }
     }
+
     logger.info(`Game: ${game.gameCode} consume coins to continue game`);
     if (game.status === GameStatus.ENDED) {
       logger.info(`Game: ${game.gameCode} Game ended.`);
-      return;
+      return false;
     }
 
     if (!(await this.enoughCoinsForGame(game.gameCode))) {
@@ -293,19 +314,9 @@ class AppCoinRepositoryImpl {
         GameEndReason.NOT_ENOUGH_COINS,
         false
       );
-      return;
+      return false;
     }
-    // consume coins
-    let playerUuid = game.hostUuid;
-    if (game.clubCode) {
-      // this is a club game, charge the club owner
-      const club = await Cache.getClub(game.clubCode);
-      const owner: Player | undefined = await Promise.resolve(club.owner);
-      if (!owner) {
-        throw new Error('Unexpected. There is no owner for the club');
-      }
-      playerUuid = owner.uuid;
-    }
+
     const appSettings = getAppSettings();
     await this.consumeCoins(
       playerUuid,
@@ -350,6 +361,7 @@ class AppCoinRepositoryImpl {
         );
       }
     );
+    return true;
   }
 }
 

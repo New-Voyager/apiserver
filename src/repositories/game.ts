@@ -1116,8 +1116,17 @@ class GameRepositoryImpl {
       throw new Error(`Game: ${gameId} is not found`);
     }
 
+    let clubOwnedByBot = false;
+    if (game.clubCode) {
+      const club = await Cache.getClub(game.clubCode);
+      const owner = await Promise.resolve(club.owner);
+      if (owner && owner.bot) {
+        clubOwnedByBot = true;
+      }
+    }
+
     const host = await Cache.getPlayer(game.hostUuid);
-    if (!host.bot) {
+    if (!host.bot || !clubOwnedByBot) {
       // consume game coins
       await AppCoinRepository.consumeGameCoins(game);
     }
