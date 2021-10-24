@@ -30,6 +30,7 @@ import {ClubMessageRepository} from './clubmessage';
 import {AppCoinRepository} from './appcoin';
 import {Errors, GenericError} from '@src/errors';
 import _ from 'lodash';
+import { getRunProfile, RunProfile } from '@src/server';
 
 const logger = getLogger('repositories::club');
 
@@ -244,9 +245,13 @@ class ClubRepositoryImpl {
 
       if (clubCount === 0) {
         // if this is the first club for the user, add first time club owner coins
+        let firstClubCoins = appSettings.clubHostFreeCoins;
+        if (getRunProfile() == RunProfile.DEV) {
+          firstClubCoins = 1000;
+        }
         await AppCoinRepository.addCoins(
           0,
-          appSettings.clubHostFreeCoins,
+          firstClubCoins,
           ownerObj.uuid
         );
       }
