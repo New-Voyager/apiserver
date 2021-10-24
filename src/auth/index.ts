@@ -422,3 +422,62 @@ function generateAccessToken(payload) {
   // expires after 3 days
   return jwt.sign(payload, getJwtSecret(), {expiresIn: `${JWT_EXPIRY_DAYS}d`});
 }
+
+/**
+ * Logs in using bot name
+ * @param resp
+ * {
+ *   "device-secret": device secret,
+ *   "jwt": jwt for the user
+ * }
+ */
+export async function loginBot(req: any, resp: any) {
+  try {
+    const botName = req.params.botName;
+    if (!botName) {
+      const res = {error: 'Bot name should be specified'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+
+    let player: Player | null;
+    try {
+      player = await PlayerRepository.loginBot(botName);
+      if (!player) {
+        resp.status(403).send({
+          status: 'FAIL',
+          error: `Bot ${botName} is not found`,
+        });
+        return;
+      }
+    } catch (err) {
+      logger.error(`Failed to login bot ${botName}. ${err.toString()}`);
+      resp.status(400).send({error: err.message});
+      return;
+    }
+
+    try {
+      const expiryTime = new Date();
+      expiryTime.setDate(expiryTime.getDate() + JWT_EXPIRY_DAYS);
+      const jwtClaims = {
+        user: player.name,
+        uuid: player.uuid,
+        id: player.id,
+      };
+      const jwt = generateAccessToken(jwtClaims);
+      const response = {
+        'device-secret': player.deviceSecret,
+        name: player.name,
+        uuid: player.uuid,
+        id: player.id,
+        jwt: jwt,
+      };
+      resp.status(200).send(JSON.stringify(response));
+    } catch (err) {
+      logger.error(`Failed to login bot ${botName}. ${err.toString()}`);
+      resp.status(500).send({errors: ['JWT cannot be generated']});
+    }
+  } catch (e) {
+    resp.status(500).send({errors: e.toString()});
+  }
+}

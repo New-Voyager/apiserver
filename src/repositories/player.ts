@@ -444,6 +444,20 @@ class PlayerRepositoryImpl {
     }
   }
 
+  public async loginBot(botName: string): Promise<Player> {
+    const repository = getUserRepository(Player);
+    let player = await repository.findOne({
+      name: botName,
+    });
+    if (!player) {
+      throw new Error(`${botName} is not a a bot`);
+    }
+    if (!player.bot) {
+      throw new Error(`${botName} is not a a bot`);
+    }
+    return player;
+  }
+
   public async updatePic(playerId: string, url: string) {}
 }
 

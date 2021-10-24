@@ -18,6 +18,7 @@ import {restartTimers} from '@src/timer';
 import {
   getRecoveryCode,
   login,
+  loginBot,
   loginUsingRecoveryCode,
   newlogin,
   signup,
@@ -36,6 +37,7 @@ import {DigitalOcean} from './digitalocean';
 import express, {response} from 'express';
 import {PlayerRepository} from './repositories/player';
 import {ClubRepository} from './repositories/club';
+import {getRunProfile, RunProfile} from './server';
 
 const logger = getLogger('routes');
 
@@ -45,6 +47,10 @@ export function addExternalRoutes(app: any) {
   app.post('/auth/signup', signup);
   app.post('/auth/recovery-code', getRecoveryCode);
   app.post('/auth/login-recovery-code', loginUsingRecoveryCode);
+  const profile = getRunProfile();
+  if (profile != RunProfile.PROD) {
+    app.post('/auth/login-bot/:botName', loginBot);
+  }
 
   app.get('/nats-urls', natsUrls);
   app.get('/assets', getAssets);
