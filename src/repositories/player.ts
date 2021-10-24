@@ -353,6 +353,8 @@ class PlayerRepositoryImpl {
     if (!player) {
       player = new Player();
       newUser = true;
+    } else {
+      return player;
     }
     player.name = register.name;
     if (register.displayName && register.displayName.length > 0) {
@@ -369,7 +371,6 @@ class PlayerRepositoryImpl {
       player.uuid = register.deviceId;
       player.deviceSecret = register.deviceId;
     } else {
-      newUser = true;
       player.bot = false;
       player.uuid = uuidv4();
       player.deviceSecret = uuidv4();
