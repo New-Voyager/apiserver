@@ -30,7 +30,7 @@ import {ClubMessageRepository} from './clubmessage';
 import {AppCoinRepository} from './appcoin';
 import {Errors, GenericError} from '@src/errors';
 import _ from 'lodash';
-import { getRunProfile, RunProfile } from '@src/server';
+import {getRunProfile, RunProfile} from '@src/server';
 
 const logger = getLogger('repositories::club');
 
@@ -249,11 +249,7 @@ class ClubRepositoryImpl {
         if (getRunProfile() == RunProfile.DEV) {
           firstClubCoins = 1000;
         }
-        await AppCoinRepository.addCoins(
-          0,
-          firstClubCoins,
-          ownerObj.uuid
-        );
+        await AppCoinRepository.addCoins(0, firstClubCoins, ownerObj.uuid);
       }
       await StatsRepository.newClubStats(club);
     });
