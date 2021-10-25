@@ -120,7 +120,7 @@ export async function processPendingUpdates(gameId: number) {
 
     // game ended
     if (update) {
-      await GameRepository.markGameEnded(gameId, update.endReason);
+      await GameRepository.markGameEnded(gameId, update.endReason, false);
     }
 
     // delete hand updates for the game

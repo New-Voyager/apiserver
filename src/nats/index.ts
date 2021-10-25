@@ -713,6 +713,7 @@ class NatsClass {
     game: PokerGame,
     status: GameStatus,
     tableStatus: TableStatus,
+    forced?: boolean,
     messageId?: string
   ) {
     if (!messageId) {
@@ -724,6 +725,7 @@ class NatsClass {
       gameId: game.id,
       gameStatus: GameStatus[status],
       tableStatus: TableStatus[tableStatus],
+      forced: forced,
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
