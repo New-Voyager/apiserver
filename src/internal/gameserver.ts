@@ -170,11 +170,6 @@ class GameServerAPIs {
     resp.status(200).send(JSON.stringify({status: 'OK'}));
   }
 
-  /*
-  curl -i -X POST 'http://localhost:9502/admin/set-max-games' \
-    -H 'content-type: application/json' \
-    -d'{"gameServerId": 1, "numGames": 2}'
-  */
   public async setMaxGames(req: any, resp: any) {
     const payload = req.body;
     if (!payload) {

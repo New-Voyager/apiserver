@@ -484,7 +484,8 @@ class GameRepositoryImpl {
         await Cache.removeAllObservers(game.gameCode);
         await GameRepository.markGameEnded(
           game.id,
-          GameEndReason.SYSTEM_TERMINATED
+          GameEndReason.SYSTEM_TERMINATED,
+          false
         );
       }
       numExpired++;
@@ -1138,7 +1139,8 @@ class GameRepositoryImpl {
 
   public async markGameEnded(
     gameId: number,
-    endReason: GameEndReason
+    endReason: GameEndReason,
+    forced: boolean
   ): Promise<GameStatus> {
     const repository = getGameRepository(PokerGame);
     const game = await repository.findOne({where: {id: gameId}});
@@ -1189,7 +1191,12 @@ class GameRepositoryImpl {
 
     await PlayersInGameRepository.gameEnded(game);
     await HistoryRepository.gameEnded(game, updates.handNum, endReason);
-    const ret = this.markGameStatus(gameId, GameStatus.ENDED);
+    const ret = this.markGameStatus(
+      gameId,
+      GameStatus.ENDED,
+      undefined,
+      forced
+    );
     await GameServerRepository.gameRemoved(game.gameServerUrl);
     game.status = GameStatus.ENDED;
     updates = await GameUpdatesRepository.get(game.gameCode, true);
@@ -1227,18 +1234,14 @@ class GameRepositoryImpl {
   public async markGameStatus(
     gameId: number,
     status: GameStatus,
-    gameNum?: number
+    gameNum?: number,
+    forced?: boolean
   ) {
     const repository = getGameRepository(PokerGame);
-    const playersInGame = getGameRepository(PlayerGameTracker);
     let game = await repository.findOne({where: {id: gameId}});
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
     }
-
-    const players = await playersInGame.find({
-      where: {game: {id: gameId}},
-    });
 
     const values: any = {
       status: status,
@@ -1283,7 +1286,8 @@ class GameRepositoryImpl {
       await Nats.changeGameStatus(
         game,
         status,
-        TableStatus.WAITING_TO_BE_STARTED
+        TableStatus.WAITING_TO_BE_STARTED,
+        forced
       );
       return status;
     } else {
@@ -1774,7 +1778,11 @@ class GameRepositoryImpl {
         Nats.sendGameEndingMessage(game.gameCode, messageId);
       } else {
         await Cache.removeAllObservers(game.gameCode);
-        const status = await GameRepository.markGameEnded(game.id, endReason);
+        const status = await GameRepository.markGameEnded(
+          game.id,
+          endReason,
+          force
+        );
         return status;
       }
       return game.status;
