@@ -1230,15 +1230,10 @@ class GameRepositoryImpl {
     gameNum?: number
   ) {
     const repository = getGameRepository(PokerGame);
-    const playersInGame = getGameRepository(PlayerGameTracker);
     let game = await repository.findOne({where: {id: gameId}});
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
     }
-
-    const players = await playersInGame.find({
-      where: {game: {id: gameId}},
-    });
 
     const values: any = {
       status: status,
