@@ -134,6 +134,8 @@ export function addInternalRoutes(app: any) {
   app.get('/internal/alive', livenessCheck);
   app.post('/internal/register-game-server', GameServerAPI.registerGameServer);
   app.post('/internal/update-game-server', GameServerAPI.updateGameServer);
+
+  // curl http://apiserver-internal:9502/internal/game-servers
   app.get('/internal/game-servers', GameServerAPI.getGameServers);
   app.post(
     '/internal/post-hand/gameId/:gameId/handNum/:handNum',
@@ -211,6 +213,12 @@ export function addInternalRoutes(app: any) {
   app.get('/admin/promotion', getAllPromotion);
   app.get('/admin/delete', deleteAll);
   app.post('/admin/post-process-games', GameAPI.aggregateGameData);
+
+  /*
+  curl -i -X POST 'http://localhost:9502/admin/set-max-games' \
+    -H 'content-type: application/json' \
+    -d'{"gameServerId": 1, "numGames": 2}'
+  */
   app.post('/admin/set-max-games', GameServerAPI.setMaxGames);
   app.post('/admin/announcement', createAnnouncement);
   app.post('/admin/data-retention', AdminAPI.dataRetention);
