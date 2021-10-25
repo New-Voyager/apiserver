@@ -436,12 +436,14 @@ class NatsClass {
     const player = await Cache.getPlayer(game.hostUuid);
     const now = new Date();
     now.setSeconds(now.getSeconds() + getAppSettings().coinsAlertNotifyTime);
+    const endMins = Math.round(getAppSettings().coinsAlertNotifyTime / 60);
     if (player) {
       const messageId = `APPCOIN:${uuidv4()}`;
       const message: any = {
         type: 'APPCOIN_NEEDED',
         gameCode: game.gameCode,
         requestId: messageId,
+        endMins: endMins,
         endTime: now.toISOString(),
       };
       const messageStr = JSON.stringify(message);
