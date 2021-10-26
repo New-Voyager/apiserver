@@ -237,16 +237,10 @@ class AppCoinRepositoryImpl {
   }
 
   public async gameCheckAvailableCoins(game: PokerGame) {
-    const host = await Cache.getPlayer(game.hostUuid);
-    if (host.bot) {
-      return;
-    }
-    logger.info(`Game: ${game.gameCode} consume coins to continue game`);
-    if (game.status === GameStatus.ENDED) {
-      logger.info(`Game: ${game.gameCode} Game ended.`);
-      return;
-    }
     let playerUuid = game.hostUuid;
+    const host = await Cache.getPlayer(game.hostUuid);
+    let clubOwnedByBot = false;
+
     if (game.clubCode) {
       // this is a club game, charge the club owner
       const club = await Cache.getClub(game.clubCode);
@@ -254,9 +248,23 @@ class AppCoinRepositoryImpl {
       if (!owner) {
         throw new Error('Unexpected. There is no owner for the club');
       }
+      if (owner.bot) {
+        clubOwnedByBot = true;
+      }
       playerUuid = owner.uuid;
+      if (clubOwnedByBot) {
+        return;
+      }
+    } else {
+      if (host.bot) {
+        return;
+      }
     }
-
+    logger.info(`Game: ${game.gameCode} consume coins to continue game`);
+    if (game.status === GameStatus.ENDED) {
+      logger.info(`Game: ${game.gameCode} Game ended.`);
+      return;
+    }
     const availableCoins = await this.availableCoins(playerUuid);
     const appSettings = getAppSettings();
     if (availableCoins >= appSettings.gameCoinsPerBlock) {
@@ -269,6 +277,7 @@ class AppCoinRepositoryImpl {
     Nats.notifyAppCoinShort(game).catch(err => {
       logger.error(`Failed to notify host (${game.gameCode}) coin shortage`);
     });
+    return;
   }
 
   public async consumeGameCoins(game: PokerGame): Promise<boolean> {
