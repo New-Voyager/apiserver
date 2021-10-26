@@ -562,7 +562,6 @@ class ClubRepositoryImpl {
       .execute();
     await Cache.getClubMember(playerId, clubCode, true /* update cache */);
 
-    const messageId = uuidv4();
     try {
       const player = await Cache.getPlayer(playerId);
 
