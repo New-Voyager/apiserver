@@ -531,6 +531,9 @@ class ClubRepositoryImpl {
     if (!clubMember) {
       throw new Error('The player is not in the club');
     }
+    if (clubMember.isOwner) {
+      throw new Error('Cannot kick out club owner from the club');
+    }
 
     const club = await Cache.getClub(clubCode);
     const owner: Player | undefined = await Promise.resolve(club.owner);
