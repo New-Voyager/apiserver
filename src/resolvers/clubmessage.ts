@@ -25,7 +25,7 @@ export async function getClubMsg(
   const clubMember = await ClubRepository.isClubMember(clubCode, playerId);
   if (!clubMember) {
     logger.error(
-      `The user ${playerId} is not a member of ${clubCode}, ${JSON.stringify(
+      `The user ${playerId} is not a member of club ${clubCode}, ${JSON.stringify(
         clubMembers1
       )}`
     );
@@ -33,7 +33,9 @@ export async function getClubMsg(
   }
 
   if (clubMember.status !== ClubMemberStatus.ACTIVE) {
-    logger.error(`The user ${playerId} is not an active member of ${clubCode}`);
+    logger.error(
+      `The user ${playerId} is not an active member of club ${clubCode}`
+    );
     throw new Error('Unauthorized');
   }
   const messages = await ClubMessageRepository.getClubMessage(
