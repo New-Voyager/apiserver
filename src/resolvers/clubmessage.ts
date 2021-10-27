@@ -32,8 +32,8 @@ export async function getClubMsg(
     throw new Error('Unauthorized');
   }
 
-  if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
-    logger.error(`The user ${playerId} is kicked out of ${clubCode}`);
+  if (clubMember.status !== ClubMemberStatus.ACTIVE) {
+    logger.error(`The user ${playerId} is not an active member of ${clubCode}`);
     throw new Error('Unauthorized');
   }
   const messages = await ClubMessageRepository.getClubMessage(
