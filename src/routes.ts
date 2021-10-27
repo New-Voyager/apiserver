@@ -38,6 +38,7 @@ import express, {response} from 'express';
 import {PlayerRepository} from './repositories/player';
 import {ClubRepository} from './repositories/club';
 import {getRunProfile, RunProfile} from './server';
+import {authReq} from './middlewares/authorization';
 
 const logger = getLogger('routes');
 
@@ -75,43 +76,14 @@ export function addExternalRoutes(app: any) {
   app.use(express.urlencoded({extended: true}));
 
   app.post('/upload', uploadPic);
-  app.post('/remove-pic', removePic);
-}
-
-function removePic(req: any, res: any) {
-  const playerId = req.body.playerId;
-  const clubCode = req.body.clubCode;
-  try {
-    if (playerId) {
-      PlayerRepository.updatePic(playerId, '')
-        .then(v => {
-          // update url
-          return res.status(200).send({status: 'OK'});
-        })
-        .catch(err => {
-          logger.error(
-            `Could not remove player picture: ${errToLogString(err)}`
-          );
-          return res.status(400).send('Failed to remove picture.');
-        });
-    } else if (clubCode) {
-      ClubRepository.updatePic(clubCode, '')
-        .then(v => {
-          // update url
-          return res.status(200).send({status: 'OK'});
-        })
-        .catch(err => {
-          logger.error(`Could not remove club picture: ${errToLogString(err)}`);
-          return res.status(400).send('Failed to remove picture.');
-        });
-    }
-    res.status(400).send('Invalid request.');
-  } catch (err) {
-    return res.status(400).send('Failed to update picture.');
-  }
 }
 
 function uploadPic(req: any, res: any) {
+  const ok = authReq(req, res);
+  if (!ok) {
+    return;
+  }
+
   let file;
 
   if (!req.files || Object.keys(req.files).length === 0) {

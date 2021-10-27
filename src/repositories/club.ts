@@ -9,7 +9,7 @@ import {
   getPlayerClubsData,
   PageOptions,
 } from '@src/types';
-import {getLogger} from '@src/utils/log';
+import {errToLogString, getLogger} from '@src/utils/log';
 import {getClubCode} from '@src/utils/uniqueid';
 import {fixQuery} from '@src/utils';
 import {Cache} from '@src/cache';
@@ -44,6 +44,7 @@ export interface ClubUpdateInput {
   name: string;
   description: string;
   showHighRankStats: boolean;
+  picUrl: string;
 }
 
 export interface ClubMemberUpdateInput {
@@ -164,8 +165,11 @@ class ClubRepositoryImpl {
     if (input.description) {
       club.description = input.description;
     }
-    if (input.showHighRankStats !== undefined) {
+    if (typeof input.showHighRankStats === 'boolean') {
       club.showHighRankStats = input.showHighRankStats;
+    }
+    if (typeof input.picUrl === 'string') {
+      club.picUrl = input.picUrl;
     }
     await clubRepository.save(club);
     return true;
