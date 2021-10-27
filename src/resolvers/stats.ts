@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
 import {getLogger} from '@src/utils/log';
 import {StatsRepository} from '@src/repositories/stats';
-import {GameType} from '@src/entity/types';
+import {ClubMemberStatus, GameType} from '@src/entity/types';
 import {Cache} from '@src/cache/index';
 
 const logger = getLogger('resolvers::stats');
@@ -31,6 +31,11 @@ async function getClubStats(
   gameTypeStr: string,
   clubCode: string
 ) {
+  const clubMember = await Cache.getClubMember(playerId, clubCode);
+  if (!clubMember || clubMember.status != ClubMemberStatus.ACTIVE) {
+    throw new Error('The player is not in the club');
+  }
+
   const gameType: GameType = GameType[gameTypeStr];
   const stats = await StatsRepository.getClubStats(gameType, clubCode);
   return stats;
