@@ -22,12 +22,16 @@ export async function getClubMembers(playerId: string, args: any) {
   }
   const clubMember = await ClubRepository.isClubMember(args.clubCode, playerId);
   if (!clubMember) {
-    logger.error(`The user ${playerId} is not a member of ${args.clubCode}`);
+    logger.error(
+      `The user ${playerId} is not a member of club ${args.clubCode}`
+    );
     throw new Error('Unauthorized');
   }
 
-  if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
-    logger.error(`The user ${playerId} is kicked out of ${args.clubCode}`);
+  if (clubMember.status !== ClubMemberStatus.ACTIVE) {
+    logger.error(
+      `The user ${playerId} is not an active member of club ${args.clubCode}`
+    );
     throw new Error('Unauthorized');
   }
 
