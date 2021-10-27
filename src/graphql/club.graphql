@@ -24,6 +24,7 @@ input ClubUpdateInput {
   name: String
   description: String
   showHighRankStats: Boolean
+  picUrl: String
 }
 
 input ClubMemberUpdateInput {
