@@ -59,7 +59,7 @@ describe('observers APIs', () => {
         gameCode: 'test',
       });
     } catch (error) {
-      const expectedError = 'Cannot find player uuid [test] in player repo';
+      const expectedError = 'Game test is not found';
       expect(error.graphQLErrors[0].message).toEqual(expectedError);
     }
 
