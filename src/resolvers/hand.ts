@@ -10,6 +10,8 @@ import _ from 'lodash';
 import * as lz from 'lzutf8';
 
 import {getGameRepository} from '@src/repositories';
+import {HistoryRepository} from '@src/repositories/history';
+import {UnauthorizedError} from '@src/errors';
 
 const logger = getLogger('resolvers::hand');
 
@@ -78,6 +80,7 @@ async function generateHandHistoryData(
     }
   }
 
+  authorized = true;
   const ret: any = {
     pageId: handHistory.id,
     gameId: handHistory.gameId,
@@ -96,8 +99,9 @@ async function generateHandHistoryData(
     playersInHand: playersInHand,
     summary: handHistory.summary,
     authorized: authorized,
+    data: handHistory.data,
   };
-  if (includeData) {
+  if (includeData && !ret.data) {
     if (!authorized) {
       ret.data = null;
     } else {
@@ -134,6 +138,10 @@ export async function getLastHandHistory(playerId: string, args: any) {
     }
   }
 
+  if (!(await HistoryRepository.didPlayInGame(game.gameCode, playerId))) {
+    throw new UnauthorizedError();
+  }
+
   const handHistory = await HandRepository.getLastHandHistory(game.id);
   if (!handHistory) {
     return null;
@@ -151,10 +159,10 @@ export async function getSpecificHandHistory(playerId: string, args: any) {
     throw new Error(`Game ${args.gameCode} is not found`);
   }
   const player = await Cache.getPlayer(playerId);
-  let authorized = false;
-  if (game.hostUuid === player.uuid) {
-    authorized = true;
-  }
+  let authorized = true;
+  // if (game.hostUuid === player.uuid) {
+  //   authorized = true;
+  // }
 
   if (game.clubCode) {
     const clubMember = await Cache.getClubMember(playerId, game.clubCode);

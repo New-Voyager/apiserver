@@ -35,7 +35,7 @@ type HandHistory {
   totalPot: Float!
   playersInHand: [Int!]
   data: Json
-  summary: String
+  summary: Json # String
   authorized: Boolean
 }
 

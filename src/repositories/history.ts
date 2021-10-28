@@ -15,6 +15,7 @@ import {Player} from '@src/entity/player/player';
 import {GameEndReason, GameStatus} from '@src/entity/types';
 import {stat, Stats} from 'fs';
 import {StatsRepository} from './stats';
+import {GameNotFoundError} from '@src/errors';
 
 class HistoryRepositoryImpl {
   constructor() {}
@@ -465,6 +466,22 @@ class HistoryRepositoryImpl {
       gameCode: gameCode,
     });
     return game;
+  }
+
+  public async didPlayInGame(gameCode: string, playerUuid: string) {
+    const game = await this.getCompletedGameByCode(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
+    const playersRepo = getHistoryRepository(PlayersInGame);
+    const player = await playersRepo.findOne({
+      gameId: game.gameId,
+      playerUuid: playerUuid,
+    });
+    if (player) {
+      return true;
+    }
+    return false;
   }
 }
 

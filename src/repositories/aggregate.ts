@@ -12,6 +12,9 @@ import {PlayersInGame} from '@src/entity/history/player';
 import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {StatsRepository} from './stats';
+import * as lz from 'lzutf8';
+import {DigitalOcean} from '@src/digitalocean';
+import {getGameCodeForClub} from '@src/utils/uniqueid';
 
 const BATCH_SIZE = 10;
 const logger = getLogger('repositories::aggregate');
@@ -120,6 +123,7 @@ class AggregationImpl {
           }
           // iteratre through hand history and aggregate counters
           let totalPlayersInHand = 0;
+          let hands = new Array<any>();
           for (const handHistory of handHistoryData) {
             if (handHistory.playersStats) {
               await this.aggregateHandStats(handHistory, playerStatsMap);
@@ -166,7 +170,62 @@ class AggregationImpl {
               playersInShowdown,
               transactionalEntityManager
             );
+
+            // hand history
+            let hand: any = {};
+            hand.wonAt = handHistory.wonAt;
+            hand.showDown = handHistory.showDown;
+            hand.timeStarted = handHistory.timeStarted.toISOString();
+            hand.timeEnded = handHistory.timeEnded.toISOString();
+            hand.data = JSON.parse(handHistory.data.toString());
+            hand.totalPot = handHistory.totalPot;
+            hand.tips = handHistory.rake;
+            hand.playersStack = JSON.parse(handHistory.playersStack);
+            hand.summary = JSON.parse(handHistory.summary);
+            hand.handNum = handHistory.handNum;
+            hands.push(hand);
           }
+
+          // convert hands to string
+          const handStr = JSON.stringify(hands);
+          let handCompressed = false;
+          let handAggregated = false;
+          let handDataUrl = '';
+          try {
+            const handData = new TextEncoder().encode(handStr);
+            const compressedData = lz.compress(handData);
+            const decompressedData = lz.decompress(compressedData);
+            if (handStr.toString() === decompressedData.toString()) {
+              console.log('Data is equal');
+            }
+            handDataUrl = await DigitalOcean.uploadHandData(
+              game.gameCode,
+              compressedData
+            );
+            handAggregated = true;
+            handCompressed = true;
+          } catch (err) {
+            // caught an error when aggregating the data (ignore it)
+            logger.error(
+              `Failed to aggregate hand data. Error: ${err.message}`
+            );
+          }
+
+          // update game history table
+          await gameHistoryRepo.update(
+            {
+              gameId: game.gameId,
+            },
+            {
+              handDataLink: handDataUrl,
+              handsDataCompressed: handCompressed,
+              handsAggregated: handAggregated,
+            }
+          );
+          await handHistoryRepo.delete({
+            gameId: game.gameId,
+          });
+
           const gameStatsRepo = transactionalEntityManager.getRepository(
             PlayerGameStats
           );
