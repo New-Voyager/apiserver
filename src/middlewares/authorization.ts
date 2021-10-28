@@ -4,7 +4,7 @@ import {getJwtSecret} from '@src/auth';
 
 const logger = getLogger('middleware::authorization');
 
-export async function authorize(req, res, next) {
+export function authReq(req, res): boolean {
   if (req.headers.authorization) {
     const toks: string[] = req.headers.authorization.split(' ');
     if (toks[0] === 'Bearer') {
@@ -21,10 +21,19 @@ export async function authorize(req, res, next) {
         } catch (err) {
           logger.error('Invalid JWT');
           res.status(401).send('Invalid JWT. Unauthorized');
-          return;
+          return false;
         }
       }
     }
+  }
+
+  return true;
+}
+
+export async function authorize(req, res, next) {
+  const ok = authReq(req, res);
+  if (!ok) {
+    return;
   }
 
   if (

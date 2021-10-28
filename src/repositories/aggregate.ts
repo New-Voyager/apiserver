@@ -1,5 +1,8 @@
+import {Cache} from '@src/cache';
+
 import {
   getGameManager,
+  getGameRepository,
   getHistoryConnection,
   getHistoryManager,
   getHistoryRepository,
@@ -15,6 +18,19 @@ import {StatsRepository} from './stats';
 import * as lz from 'lzutf8';
 import {DigitalOcean} from '@src/digitalocean';
 import {getGameCodeForClub} from '@src/utils/uniqueid';
+import {
+  NextHandUpdates,
+  PokerGame,
+  PokerGameSeatInfo,
+  PokerGameSettings,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
+import {
+  HostSeatChangeProcess,
+  PlayerSeatChangeProcess,
+} from '@src/entity/game/seatchange';
+import {HighHand} from '@src/entity/game/reward';
+import {EntityManager} from 'typeorm';
 
 const BATCH_SIZE = 10;
 const logger = getLogger('repositories::aggregate');
@@ -186,45 +202,8 @@ class AggregationImpl {
             hands.push(hand);
           }
 
-          // convert hands to string
-          const handStr = JSON.stringify(hands);
-          let handCompressed = false;
-          let handAggregated = false;
-          let handDataUrl = '';
-          try {
-            const handData = new TextEncoder().encode(handStr);
-            const compressedData = lz.compress(handData);
-            const decompressedData = lz.decompress(compressedData);
-            if (handStr.toString() === decompressedData.toString()) {
-              console.log('Data is equal');
-            }
-            handDataUrl = await DigitalOcean.uploadHandData(
-              game.gameCode,
-              compressedData
-            );
-            handAggregated = true;
-            handCompressed = true;
-          } catch (err) {
-            // caught an error when aggregating the data (ignore it)
-            logger.error(
-              `Failed to aggregate hand data. Error: ${err.message}`
-            );
-          }
-
-          // update game history table
-          await gameHistoryRepo.update(
-            {
-              gameId: game.gameId,
-            },
-            {
-              handDataLink: handDataUrl,
-              handsDataCompressed: handCompressed,
-              handsAggregated: handAggregated,
-            }
-          );
-          await handHistoryRepo.delete({
-            gameId: game.gameId,
-          });
+          // aggregate hand history and upload to S3
+          this.aggregateHandHistory(transactionalEntityManager, game, hands);
 
           const gameStatsRepo = transactionalEntityManager.getRepository(
             PlayerGameStats
@@ -278,6 +257,10 @@ class AggregationImpl {
           processedGameIds.push(game.gameId);
         }
       );
+
+      // remove game data from live games db
+      await this.removeLiveGamesData(game.gameCode);
+
       const gameEnd = Date.now();
       logger.info(
         `Game results for game aggregated: ${game.gameId}:${
@@ -308,6 +291,78 @@ class AggregationImpl {
       more: more,
       aggregated: processedGameIds,
     };
+  }
+
+  private async aggregateHandHistory(
+    transManager: EntityManager,
+    game: GameHistory,
+    hands: Array<any>
+  ) {
+    const gameHistoryRepo = transManager.getRepository(GameHistory);
+    const handHistoryRepo = transManager.getRepository(HandHistory);
+
+    // convert hands to string
+    const handStr = JSON.stringify(hands);
+    let handCompressed = false;
+    let handAggregated = false;
+    let handDataUrl = '';
+    try {
+      const handData = new TextEncoder().encode(handStr);
+      const compressedData = lz.compress(handData);
+      const decompressedData = lz.decompress(compressedData);
+      if (handStr.toString() === decompressedData.toString()) {
+        console.log('Data is equal');
+      }
+      handDataUrl = await DigitalOcean.uploadHandData(
+        game.gameCode,
+        compressedData
+      );
+      handAggregated = true;
+      handCompressed = true;
+    } catch (err) {
+      // caught an error when aggregating the data (ignore it)
+      logger.error(`Failed to aggregate hand data. Error: ${err.message}`);
+    }
+
+    // update game history table
+    await gameHistoryRepo.update(
+      {
+        gameId: game.gameId,
+      },
+      {
+        handDataLink: handDataUrl,
+        handsDataCompressed: handCompressed,
+        handsAggregated: handAggregated,
+      }
+    );
+    await handHistoryRepo.delete({
+      gameId: game.gameId,
+    });
+  }
+  private async removeLiveGamesData(gameCode: string) {
+    await getGameManager().transaction(async transManager => {
+      const game = await Cache.getGame(gameCode, true);
+      if (!game) {
+        return;
+      }
+      await transManager.delete(PokerGameSeatInfo, {gameCode: gameCode});
+      await transManager.delete(PokerGameUpdates, {gameCode: gameCode});
+      await transManager.delete(HighHand, {gameId: game.id});
+      await transManager.delete(HostSeatChangeProcess, {gameCode: gameCode});
+      await transManager.delete(PlayerSeatChangeProcess, {gameCode: gameCode});
+      await transManager.delete(PokerGameSettings, {gameCode: gameCode});
+      await transManager.delete(NextHandUpdates, {game: {gameCode: gameCode}});
+
+      const gameRepo = transManager.getRepository(PokerGame);
+      const playerGameTrackerRepo = transManager.getRepository(
+        PlayerGameTracker
+      );
+      await playerGameTrackerRepo.delete({
+        game: {id: game.id},
+      });
+      await gameRepo.delete({id: game.id});
+      await Cache.removeGame(gameCode);
+    });
   }
 }
 

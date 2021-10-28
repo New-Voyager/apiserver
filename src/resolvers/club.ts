@@ -199,7 +199,7 @@ export async function updateClub(
       );
     }
     // const input = club as ClubUpdateInput;
-    return ClubRepository.updateClub(clubCode, clubUpdateInput);
+    return await ClubRepository.updateClub(clubCode, clubUpdateInput);
   } catch (err) {
     logger.error(err);
     throw err;
