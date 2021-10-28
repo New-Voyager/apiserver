@@ -103,9 +103,8 @@ export class Reload {
         // if auto approval is set, add the buyin
         // make sure buyin within min and maxBuyin
         // send a message to game server that buyer stack has been updated
-        const playerGameTrackerRepository = transactionEntityManager.getRepository(
-          PlayerGameTracker
-        );
+        const playerGameTrackerRepository =
+          transactionEntityManager.getRepository(PlayerGameTracker);
         const playerInGame = await playerGameTrackerRepository.findOne({
           game: {id: this.game.id},
           playerId: this.player.id,
@@ -268,9 +267,8 @@ export class Reload {
 
     let playerGameTrackerRepository: Repository<PlayerGameTracker>;
     if (transactionManager) {
-      playerGameTrackerRepository = transactionManager.getRepository(
-        PlayerGameTracker
-      );
+      playerGameTrackerRepository =
+        transactionManager.getRepository(PlayerGameTracker);
     } else {
       playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     }
@@ -431,9 +429,8 @@ export class Reload {
       return await getGameManager().transaction(
         async transactionEntityManager => {
           // get amount from the next hand update table
-          const pendingUpdatesRepo = transactionEntityManager.getRepository(
-            NextHandUpdates
-          );
+          const pendingUpdatesRepo =
+            transactionEntityManager.getRepository(NextHandUpdates);
           const reloadRequest = await pendingUpdatesRepo.findOne({
             game: {id: this.game.id},
             playerId: this.player.id,
@@ -444,9 +441,8 @@ export class Reload {
           }
 
           // update player game tracker
-          const playerInGameRepo = transactionEntityManager.getRepository(
-            PlayerGameTracker
-          );
+          const playerInGameRepo =
+            transactionEntityManager.getRepository(PlayerGameTracker);
           const playerInGame = await playerInGameRepo.findOne({
             game: {id: this.game.id},
             playerId: this.player.id,
@@ -489,9 +485,8 @@ export class Reload {
       return await getGameManager().transaction(
         async transactionEntityManager => {
           // get amount from the next hand update table
-          const pendingUpdatesRepo = transactionEntityManager.getRepository(
-            NextHandUpdates
-          );
+          const pendingUpdatesRepo =
+            transactionEntityManager.getRepository(NextHandUpdates);
           const request = await pendingUpdatesRepo.findOne({
             game: {id: this.game.id},
             playerId: this.player.id,
@@ -502,9 +497,8 @@ export class Reload {
           }
 
           // update player game tracker
-          const playerInGameRepo = transactionEntityManager.getRepository(
-            PlayerGameTracker
-          );
+          const playerInGameRepo =
+            transactionEntityManager.getRepository(PlayerGameTracker);
           const playerInGame = await playerInGameRepo.findOne({
             game: {id: this.game.id},
             playerId: this.player.id,
@@ -529,9 +523,8 @@ export class Reload {
   ) {
     let nextHandUpdatesRepository;
     if (transactionEntityManager) {
-      nextHandUpdatesRepository = transactionEntityManager.getRepository(
-        NextHandUpdates
-      );
+      nextHandUpdatesRepository =
+        transactionEntityManager.getRepository(NextHandUpdates);
     } else {
       nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
     }

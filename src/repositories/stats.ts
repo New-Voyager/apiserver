@@ -420,12 +420,10 @@ class StatsRepositoryImpl {
     transactionalEntityManager: EntityManager
   ) {
     try {
-      const playerStatsRepo = transactionalEntityManager.getRepository(
-        PlayerHandStats
-      );
-      const gameStatsRepo = transactionalEntityManager.getRepository(
-        PlayerGameStats
-      );
+      const playerStatsRepo =
+        transactionalEntityManager.getRepository(PlayerHandStats);
+      const gameStatsRepo =
+        transactionalEntityManager.getRepository(PlayerGameStats);
       const rows = await gameStatsRepo.find({
         gameId: gameId,
       });

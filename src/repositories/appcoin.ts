@@ -171,9 +171,8 @@ class AppCoinRepositoryImpl {
     const player = await Cache.getPlayer(playerUuid);
     return await getUserManager().transaction(
       async transactionEntityManager => {
-        const playerCoinRepo = transactionEntityManager.getRepository(
-          PlayerCoin
-        );
+        const playerCoinRepo =
+          transactionEntityManager.getRepository(PlayerCoin);
         const consumeCoinRepo = transactionEntityManager.getRepository(
           CoinConsumeTransaction
         );

@@ -74,9 +74,8 @@ class HistoryRepositoryImpl {
         .where('gameId = :gameId', {gameId: game.id})
         .execute();
 
-      const playersInGameRepo = transactionEntityManager.getRepository(
-        PlayersInGame
-      );
+      const playersInGameRepo =
+        transactionEntityManager.getRepository(PlayersInGame);
       const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
       const players = await playerGameTrackerRepo.find({
         where: {
@@ -104,9 +103,8 @@ class HistoryRepositoryImpl {
         await playersInGameRepo.save(playersInGame);
       }
 
-      const highHandHistoryRepo = transactionEntityManager.getRepository(
-        HighHandHistory
-      );
+      const highHandHistoryRepo =
+        transactionEntityManager.getRepository(HighHandHistory);
       const highHandRepo = getGameRepository(HighHand);
       const highHands = await highHandRepo.find({
         where: {

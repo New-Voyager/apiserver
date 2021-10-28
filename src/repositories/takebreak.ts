@@ -37,12 +37,10 @@ export class TakeBreak {
     let playerGameTrackerRepository;
     let nextHandUpdatesRepository;
     if (transactionManager) {
-      playerGameTrackerRepository = transactionManager.getRepository(
-        PlayerGameTracker
-      );
-      nextHandUpdatesRepository = transactionManager.getRepository(
-        NextHandUpdates
-      );
+      playerGameTrackerRepository =
+        transactionManager.getRepository(PlayerGameTracker);
+      nextHandUpdatesRepository =
+        transactionManager.getRepository(NextHandUpdates);
     } else {
       playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
       nextHandUpdatesRepository = getGameRepository(NextHandUpdates);

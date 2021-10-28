@@ -46,9 +46,8 @@ export class WaitListMgmt {
     let playerGameTrackerRepository: Repository<PlayerGameTracker>;
     let gameSeatInfoRepo: Repository<PokerGameSeatInfo>;
     if (transactionManager) {
-      playerGameTrackerRepository = transactionManager.getRepository(
-        PlayerGameTracker
-      );
+      playerGameTrackerRepository =
+        transactionManager.getRepository(PlayerGameTracker);
       gameSeatInfoRepo = transactionManager.getRepository(PokerGameSeatInfo);
     } else {
       playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
@@ -388,9 +387,8 @@ export class WaitListMgmt {
     await getGameManager().transaction(async transactionEntityManager => {
       // add this user to waiting list
       // if this user is already playing, then he cannot be in the waiting list
-      const playerGameTrackerRepository = transactionEntityManager.getRepository(
-        PlayerGameTracker
-      );
+      const playerGameTrackerRepository =
+        transactionEntityManager.getRepository(PlayerGameTracker);
 
       if (playerInGame) {
         // if the player is already playing, the user cannot add himself to the waiting list
@@ -437,9 +435,8 @@ export class WaitListMgmt {
         },
       });
 
-      const gameSeatInfoRepo = transactionEntityManager.getRepository(
-        PokerGameSeatInfo
-      );
+      const gameSeatInfoRepo =
+        transactionEntityManager.getRepository(PokerGameSeatInfo);
       await gameSeatInfoRepo.update(
         {
           gameID: this.game.id,
@@ -465,9 +462,8 @@ export class WaitListMgmt {
   public async removeFromWaitingList(playerUuid: string) {
     await getGameManager().transaction(async transactionEntityManager => {
       // remove this user from waiting list
-      const playerGameTrackerRepository = transactionEntityManager.getRepository(
-        PlayerGameTracker
-      );
+      const playerGameTrackerRepository =
+        transactionEntityManager.getRepository(PlayerGameTracker);
       const player = await Cache.getPlayer(playerUuid);
       const playerInGame = await playerGameTrackerRepository.findOne({
         where: {
@@ -504,9 +500,8 @@ export class WaitListMgmt {
         },
       });
 
-      const gameSeatInfoRepo = transactionEntityManager.getRepository(
-        PokerGameSeatInfo
-      );
+      const gameSeatInfoRepo =
+        transactionEntityManager.getRepository(PokerGameSeatInfo);
       await gameSeatInfoRepo.update(
         {
           gameID: this.game.id,
@@ -544,9 +539,8 @@ export class WaitListMgmt {
 
   public async applyWaitlistOrder(players: Array<string>) {
     await getGameManager().transaction(async transactionEntityManager => {
-      const playerGameTrackerRepository = transactionEntityManager.getRepository(
-        PlayerGameTracker
-      );
+      const playerGameTrackerRepository =
+        transactionEntityManager.getRepository(PlayerGameTracker);
       const count = await playerGameTrackerRepository.count({
         where: {
           game: {id: this.game.id},
