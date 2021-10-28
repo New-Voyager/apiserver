@@ -5,7 +5,7 @@ import * as clubutils from '../utils/club.testutils';
 import {observeGame, exitGame} from './utils';
 import {configureGame, createGameServer} from '../game/utils';
 
-describe('exitGame APIs', () => {
+describe.skip('exitGame APIs', () => {
   beforeAll(async done => {
     await resetDatabase();
     done();
