@@ -39,6 +39,8 @@ import {PlayerRepository} from './repositories/player';
 import {ClubRepository} from './repositories/club';
 import {getRunProfile, RunProfile} from './server';
 import {authReq} from './middlewares/authorization';
+import {Club} from './entity/player/club';
+import {Player} from './entity/player/player';
 
 const logger = getLogger('routes');
 
@@ -78,7 +80,7 @@ export function addExternalRoutes(app: any) {
   app.post('/upload', uploadPic);
 }
 
-function uploadPic(req: any, res: any) {
+async function uploadPic(req: any, res: any) {
   const ok = authReq(req, res);
   if (!ok) {
     return;
@@ -113,6 +115,24 @@ function uploadPic(req: any, res: any) {
           return res.status(400).send('Failed to update picture.');
         });
     } else if (clubCode) {
+      try {
+        const club: Club | undefined = await ClubRepository.getClub(clubCode);
+        if (!club) {
+          const errMsg = `Could not find club ${clubCode}`;
+          logger.error(errMsg);
+          throw new Error(errMsg);
+        }
+        const owner: Player | undefined = await Promise.resolve(club.owner);
+        if (owner?.uuid !== req.playerId) {
+          logger.error(
+            `Attempt to update club picture by non owner. Request user: ${req.playerId}, Owner: ${owner?.uuid}`
+          );
+          throw new Error('Unauthorized');
+        }
+      } catch (err) {
+        res.status(400).send('Failed to update picture.');
+        return;
+      }
       return DigitalOcean.uploadClubPic(clubCode, file.data)
         .then(v => {
           const url = v;
