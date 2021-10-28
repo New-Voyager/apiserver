@@ -1,5 +1,8 @@
+import {Cache} from '@src/cache';
+
 import {
   getGameManager,
+  getGameRepository,
   getHistoryConnection,
   getHistoryManager,
   getHistoryRepository,
@@ -12,6 +15,21 @@ import {PlayersInGame} from '@src/entity/history/player';
 import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {StatsRepository} from './stats';
+import * as lz from 'lzutf8';
+import {DigitalOcean} from '@src/digitalocean';
+import {getGameCodeForClub} from '@src/utils/uniqueid';
+import {
+  NextHandUpdates,
+  PokerGame,
+  PokerGameSeatInfo,
+  PokerGameSettings,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
+import {
+  HostSeatChangeProcess,
+  PlayerSeatChangeProcess,
+} from '@src/entity/game/seatchange';
+import {HighHand} from '@src/entity/game/reward';
 
 const BATCH_SIZE = 10;
 const logger = getLogger('repositories::aggregate');
@@ -219,6 +237,10 @@ class AggregationImpl {
           processedGameIds.push(game.gameId);
         }
       );
+
+      // remove game data from live games db
+      await this.removeLiveGamesData(game.gameCode);
+
       const gameEnd = Date.now();
       logger.info(
         `Game results for game aggregated: ${game.gameId}:${
@@ -249,6 +271,32 @@ class AggregationImpl {
       more: more,
       aggregated: processedGameIds,
     };
+  }
+
+  private async removeLiveGamesData(gameCode: string) {
+    await getGameManager().transaction(async transManager => {
+      const game = await Cache.getGame(gameCode, true);
+      if (!game) {
+        return;
+      }
+      await transManager.delete(PokerGameSeatInfo, {gameCode: gameCode});
+      await transManager.delete(PokerGameUpdates, {gameCode: gameCode});
+      await transManager.delete(HighHand, {gameId: game.id});
+      await transManager.delete(HostSeatChangeProcess, {gameCode: gameCode});
+      await transManager.delete(PlayerSeatChangeProcess, {gameCode: gameCode});
+      await transManager.delete(PokerGameSettings, {gameCode: gameCode});
+      await transManager.delete(NextHandUpdates, {game: {gameCode: gameCode}});
+
+      const gameRepo = transManager.getRepository(PokerGame);
+      const playerGameTrackerRepo = transManager.getRepository(
+        PlayerGameTracker
+      );
+      await playerGameTrackerRepo.delete({
+        game: {id: game.id},
+      });
+      await gameRepo.delete({id: game.id});
+      await Cache.removeGame(gameCode);
+    });
   }
 }
 
