@@ -1,6 +1,6 @@
 import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player/player';
-import { GameNotFoundError } from '@src/errors';
+import {GameNotFoundError} from '@src/errors';
 import {getLogger} from '@src/utils/log';
 
 const logger = getLogger('resolvers::observers');

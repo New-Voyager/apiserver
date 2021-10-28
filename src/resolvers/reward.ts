@@ -106,8 +106,8 @@ export async function getHighHandWinners(
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  const messages = await RewardRepository.highHandWinners(gameCode, rewardId);
-  return _.map(messages, x => {
+  const highHands = await RewardRepository.highHandByGame(gameCode);
+  return _.map(highHands, x => {
     return {
       gameCode: x.gameCode,
       handNum: x.handNum,

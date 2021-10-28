@@ -246,12 +246,16 @@ class HandRepositoryImpl {
           }]
         }
     */
-    const myHands = _.filter(allHands, e => e.summary.includes(playerIdMatch));
+    const myHands = _.filter(allHands, e => {
+      const summary = JSON.stringify(e.summary);
+      return summary.includes(playerIdMatch);
+    });
     return myHands;
   }
 
   public async bookmarkHand(
-    game: PokerGame,
+    gameCode: string,
+    gameType: GameType,
     player: Player,
     handHistory: HandHistory
   ): Promise<number> {
@@ -259,15 +263,15 @@ class HandRepositoryImpl {
       const savedHandsRepository = getUserRepository(SavedHands);
 
       let bookmarkedHand = await savedHandsRepository.findOne({
-        gameCode: game.gameCode,
+        gameCode: gameCode,
         handNum: handHistory.handNum,
         savedBy: {id: player.id},
       });
 
       if (!bookmarkedHand) {
         bookmarkedHand = new SavedHands();
-        bookmarkedHand.gameCode = game.gameCode;
-        bookmarkedHand.gameType = game.gameType;
+        bookmarkedHand.gameCode = gameCode;
+        bookmarkedHand.gameType = gameType;
         bookmarkedHand.handNum = handHistory.handNum;
         bookmarkedHand.savedBy = player;
         bookmarkedHand.data = this.getHandData(handHistory);
@@ -320,13 +324,14 @@ class HandRepositoryImpl {
         data = handHistory.data.toString();
       }
     } else {
-      data = handHistory.data.toString();
+      data = JSON.stringify(handHistory.data);
     }
     return data;
   }
 
   public async shareHand(
-    game: PokerGame,
+    gameCode: string,
+    gameType: GameType,
     player: Player,
     club: Club,
     handHistory: HandHistory
@@ -339,7 +344,7 @@ class HandRepositoryImpl {
           );
 
           let sharedHand = await savedHandsRepository.findOne({
-            gameCode: game.gameCode,
+            gameCode: gameCode,
             handNum: handHistory.handNum,
             savedBy: {id: player.id},
             sharedTo: {id: club.id},
@@ -347,8 +352,8 @@ class HandRepositoryImpl {
 
           if (!sharedHand) {
             sharedHand = new SavedHands();
-            sharedHand.gameCode = game.gameCode;
-            sharedHand.gameType = game.gameType;
+            sharedHand.gameCode = gameCode;
+            sharedHand.gameType = gameType;
             sharedHand.handNum = handHistory.handNum;
             sharedHand.sharedBy = player;
             sharedHand.sharedTo = club;

@@ -31,8 +31,8 @@ import {
 import {HighHandHistory} from '@src/entity/history/hand';
 import {Metrics} from '@src/internal/metrics';
 import {GameNotFoundError} from '@src/errors';
-import { GameHistory } from '@src/entity/history/game';
-import { HistoryRepository } from './history';
+import {GameHistory} from '@src/entity/history/game';
+import {HistoryRepository} from './history';
 
 const logger = getLogger('repositories::reward');
 
@@ -423,7 +423,7 @@ class RewardRepositoryImpl {
             winner: highHand.winner,
           });
         }
-      } else if(liveGame) {
+      } else if (liveGame) {
         const highHandRepo = getGameRepository(HighHand);
         const gameHighHands = await highHandRepo.find({
           where: {gameId: liveGame.id},
@@ -558,7 +558,7 @@ class RewardRepositoryImpl {
     const game = await Cache.getGame(gameCode);
     if (!game) {
       logger.error('Invalid gameCode');
-      throw new Error('Invalid gameCode');
+      throw new GameNotFoundError(gameCode);
     }
 
     if (!rewardId) {

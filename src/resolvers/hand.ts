@@ -190,64 +190,26 @@ export async function getSpecificHandHistory(playerId: string, args: any) {
     console.log('getSpecificHandHistory unauthorized');
     throw new Error('Unauthorized');
   }
-
-  const game = await Cache.getGame(args.gameCode);
-  if (!game) {
-    throw new Error(`Game ${args.gameCode} is not found`);
-  }
   const player = await Cache.getPlayer(playerId);
-  let authorized = true;
-  // if (game.hostUuid === player.uuid) {
-  //   authorized = true;
-  // }
-
-  if (game.clubCode) {
-    const clubMember = await Cache.getClubMember(playerId, game.clubCode);
-    if (!clubMember) {
-      logger.error(
-        `Player: ${playerId} is not authorized to start the game ${args.gameCode} in club ${game.clubName}`
-      );
-      throw new Error(
-        `Player: ${playerId} is not authorized to start the game ${args.gameCode}`
-      );
+  const liveGame = await Cache.getGame(args.gameCode);
+  let historyGame: GameHistory | undefined;
+  let clubCode = '';
+  let gameId = 0;
+  if (!liveGame) {
+    historyGame = await HistoryRepository.getHistoryGame(args.gameCode);
+    if (!historyGame) {
+      throw new GameNotFoundError(args.gameCode);
     }
-
-    if (clubMember.status !== ClubMemberStatus.ACTIVE) {
-      logger.error(`The user ${playerId} is not Active in ${args.clubCode}`);
-      throw new Error('Unauthorized');
-    }
-
-    if (!authorized) {
-      if (clubMember.isOwner || clubMember.isManager) {
-        authorized = true;
-      }
-    }
+    clubCode = historyGame.clubCode;
+    gameId = historyGame.gameId;
+  } else {
+    gameId = liveGame.id;
+    clubCode = liveGame.clubCode;
   }
-
-  const handHistory = await HandRepository.getSpecificHandHistory(
-    game.id,
-    parseInt(args.handNum)
-  );
-  if (!handHistory) {
-    throw new Error('No hand found');
-  }
-  return await generateHandHistoryData(handHistory, player, authorized, true);
-}
-
-export async function getAllHandHistory(playerId: string, args: any) {
-  if (!playerId) {
-    throw new Error('Unauthorized');
-  }
-
-  const game = await Cache.getGame(args.gameCode);
-  if (!game) {
-    throw new Error(`Game ${args.gameCode} is not found`);
-  }
-  const player = await Cache.getPlayer(playerId);
   let authorized = false;
-  if (game.clubCode) {
+  if (clubCode) {
     // make sure this player is a club member
-    const clubMember = await Cache.getClubMember(playerId, game.clubCode);
+    const clubMember = await Cache.getClubMember(playerId, clubCode);
     if (!clubMember) {
       logger.error(
         `The user ${playerId} is not a member of ${
@@ -261,18 +223,80 @@ export async function getAllHandHistory(playerId: string, args: any) {
       logger.error(`The user ${playerId} is not Active in ${args.clubCode}`);
       throw new Error('Unauthorized');
     }
-
-    if (game.hostUuid === player.uuid) {
-      authorized = true;
-    } else if (clubMember.isManager || clubMember.isOwner) {
+    if (clubMember.isManager || clubMember.isOwner) {
       authorized = true;
     }
   }
+  if (
+    liveGame &&
+    (liveGame.hostUuid === player.uuid || liveGame.startedBy === player.id)
+  ) {
+    authorized = true;
+  } else if (historyGame && historyGame.startedBy === player.id) {
+    authorized = true;
+  }
 
-  const handHistory = await HandRepository.getAllHandHistory(
-    game.id,
-    args.page
+  const handHistory = await HandRepository.getSpecificHandHistory(
+    gameId,
+    parseInt(args.handNum)
   );
+  if (!handHistory) {
+    throw new Error('No hand found');
+  }
+  return await generateHandHistoryData(handHistory, player, authorized, true);
+}
+
+export async function getAllHandHistory(playerId: string, args: any) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+
+  const liveGame = await Cache.getGame(args.gameCode);
+  let historyGame: GameHistory | undefined;
+  let clubCode = '';
+  let gameId = 0;
+  if (!liveGame) {
+    historyGame = await HistoryRepository.getHistoryGame(args.gameCode);
+    if (!historyGame) {
+      throw new GameNotFoundError(args.gameCode);
+    }
+    clubCode = historyGame.clubCode;
+    gameId = historyGame.gameId;
+  } else {
+    gameId = liveGame.id;
+    clubCode = liveGame.clubCode;
+  }
+  const player = await Cache.getPlayer(playerId);
+  let authorized = false;
+  if (clubCode) {
+    // make sure this player is a club member
+    const clubMember = await Cache.getClubMember(playerId, clubCode);
+    if (!clubMember) {
+      logger.error(
+        `The user ${playerId} is not a member of ${
+          args.clubCode
+        }, ${JSON.stringify(clubMember)}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    if (clubMember.status !== ClubMemberStatus.ACTIVE) {
+      logger.error(`The user ${playerId} is not Active in ${args.clubCode}`);
+      throw new Error('Unauthorized');
+    }
+    if (clubMember.isManager || clubMember.isOwner) {
+      authorized = true;
+    }
+  }
+  if (
+    liveGame &&
+    (liveGame.hostUuid === player.uuid || liveGame.startedBy === player.id)
+  ) {
+    authorized = true;
+  } else if (historyGame && historyGame.startedBy === player.id) {
+    authorized = true;
+  }
+  const handHistory = await HandRepository.getAllHandHistory(gameId, args.page);
   const hands = new Array<any>();
   for (const hand of handHistory) {
     hands.push(await generateHandHistoryData(hand, player, authorized));
@@ -289,35 +313,53 @@ export async function getMyWinningHands(playerId: string, args: any) {
     throw new Error(`Player ${playerId} is not found`);
   }
 
-  const game = await Cache.getGame(args.gameCode);
-  if (!game) {
-    throw new Error(`Game ${args.gameCode} is not found`);
+  const liveGame = await Cache.getGame(args.gameCode);
+  let historyGame: GameHistory | undefined;
+  let clubCode = '';
+  let gameId = 0;
+  if (!liveGame) {
+    historyGame = await HistoryRepository.getHistoryGame(args.gameCode);
+    if (!historyGame) {
+      throw new GameNotFoundError(args.gameCode);
+    }
+    clubCode = historyGame.clubCode;
+    gameId = historyGame.gameId;
+  } else {
+    gameId = liveGame.id;
+    clubCode = liveGame.clubCode;
   }
   let authorized = false;
-  if (game.clubCode) {
-    const clubMember = await Cache.getClubMember(playerId, game.clubCode);
+  if (clubCode) {
+    // make sure this player is a club member
+    const clubMember = await Cache.getClubMember(playerId, clubCode);
     if (!clubMember) {
       logger.error(
-        `Player: ${playerId} is not authorized to start the game ${args.gameCode} in club ${game.clubName}`
+        `The user ${playerId} is not a member of ${
+          args.clubCode
+        }, ${JSON.stringify(clubMember)}`
       );
-      throw new Error(
-        `Player: ${playerId} is not authorized to start the game ${args.gameCode}`
-      );
+      throw new Error('Unauthorized');
     }
 
     if (clubMember.status !== ClubMemberStatus.ACTIVE) {
       logger.error(`The user ${playerId} is not Active in ${args.clubCode}`);
       throw new Error('Unauthorized');
     }
-    if (game.hostUuid === player.uuid) {
-      authorized = true;
-    } else if (clubMember.isManager || clubMember.isOwner) {
+    if (clubMember.isManager || clubMember.isOwner) {
       authorized = true;
     }
   }
+  if (
+    liveGame &&
+    (liveGame.hostUuid === player.uuid || liveGame.startedBy === player.id)
+  ) {
+    authorized = true;
+  } else if (historyGame && historyGame.startedBy === player.id) {
+    authorized = true;
+  }
 
   const handHistory = await HandRepository.getMyWinningHands(
-    game.id,
+    gameId,
     player.id,
     args.page
   );
@@ -355,45 +397,61 @@ export async function shareHand(playerId: string, args: any) {
   if (!player) {
     throw new Error(`Player ${playerId} is not found`);
   }
-  const game = await Cache.getGame(args.gameCode);
-  if (!game) {
-    throw new Error(`Game ${args.gameCode} is not found`);
-  }
 
-  const club = await Cache.getClub(args.clubCode);
-  if (!club) {
-    throw new Error(`Club ${args.clubCode} is not found`);
-  }
-  const clubMember = await Cache.getClubMember(playerId, club.clubCode);
-  if (!clubMember) {
-    logger.error(
-      `Player: ${playerId} is not an active member in club ${club.name}`
-    );
-    throw new Error(
-      `Player: ${playerId} is not an active member in club ${club.name}`
-    );
-  }
-
-  const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
-  const gamePlayer = await playerGameTrackerRepository.findOne({
-    playerId: player.id,
-    game: {id: game.id},
-  });
-  if (!gamePlayer) {
-    logger.error(`Player: ${playerId} is not in the game: ${args.gameCode}`);
-    throw new Error(`Player: ${playerId} is not in the game: ${args.gameCode}`);
+  let gameId = 0;
+  let gameType = GameType.UNKNOWN;
+  let gameCode = '';
+  let clubCode = '';
+  const liveGame = await Cache.getGame(args.gameCode);
+  if (liveGame) {
+    clubCode = liveGame.clubCode;
+    // live game is found
+    if (!(await GameRepository.didPlayInGame(args.gameCode, playerId))) {
+      throw new Error(
+        `Player: ${playerId} is not in the game: ${args.gameCode}`
+      );
+    }
+    gameId = liveGame.id;
+    gameType = liveGame.gameType;
+    gameCode = liveGame.gameCode;
+  } else {
+    // history game
+    const historyGame = await HistoryRepository.getHistoryGame(args.gameCode);
+    if (!historyGame) {
+      throw new GameNotFoundError(args.gameCode);
+    }
+    clubCode = historyGame.clubCode;
+    gameId = historyGame.gameId;
+    gameType = historyGame.gameType;
+    gameCode = historyGame.gameCode;
+    // did player play this game
+    if (!(await HistoryRepository.didPlayInGame(args.gameCode, playerId))) {
+      throw new Error(
+        `Player: ${playerId} is not in the game: ${args.gameCode}`
+      );
+    }
   }
 
   const handHistory = await HandRepository.getSpecificHandHistory(
-    game.id,
+    gameId,
     parseInt(args.handNum)
   );
   if (!handHistory) {
     logger.error(`The hand ${args.handNum} is not found`);
     throw new Error('Hand not found');
   }
+  const club = await Cache.getClub(clubCode);
+  if (!club) {
+    throw new Error(`Club ${clubCode} is not found`);
+  }
 
-  const resp = await HandRepository.shareHand(game, player, club, handHistory);
+  const resp = await HandRepository.shareHand(
+    gameCode,
+    gameType,
+    player,
+    club,
+    handHistory
+  );
   return resp;
 }
 
@@ -420,23 +478,40 @@ export async function bookmarkHand(playerId: string, args: any) {
   if (!player) {
     throw new Error(`Player ${playerId} is not found`);
   }
-  const game = await Cache.getGame(args.gameCode);
-  if (!game) {
-    throw new Error(`Game ${args.gameCode} is not found`);
-  }
 
-  const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
-  const gamePlayer = await playerGameTrackerRepository.findOne({
-    playerId: player.id,
-    game: {id: game.id},
-  });
-  if (!gamePlayer) {
-    logger.error(`Player: ${playerId} is not in the game: ${args.gameCode}`);
-    throw new Error(`Player: ${playerId} is not in the game: ${args.gameCode}`);
+  let gameId = 0;
+  let gameType = GameType.UNKNOWN;
+  let gameCode = '';
+  const liveGame = await Cache.getGame(args.gameCode);
+  if (liveGame) {
+    // live game is found
+    if (!(await GameRepository.didPlayInGame(args.gameCode, playerId))) {
+      throw new Error(
+        `Player: ${playerId} is not in the game: ${args.gameCode}`
+      );
+    }
+    gameId = liveGame.id;
+    gameType = liveGame.gameType;
+    gameCode = liveGame.gameCode;
+  } else {
+    // history game
+    const historyGame = await HistoryRepository.getHistoryGame(args.gameCode);
+    if (!historyGame) {
+      throw new GameNotFoundError(args.gameCode);
+    }
+    gameId = historyGame.gameId;
+    gameType = historyGame.gameType;
+    gameCode = historyGame.gameCode;
+    // did player play this game
+    if (!(await HistoryRepository.didPlayInGame(args.gameCode, playerId))) {
+      throw new Error(
+        `Player: ${playerId} is not in the game: ${args.gameCode}`
+      );
+    }
   }
 
   const handHistory = await HandRepository.getSpecificHandHistory(
-    game.id,
+    gameId,
     parseInt(args.handNum)
   );
   if (!handHistory) {
@@ -444,7 +519,12 @@ export async function bookmarkHand(playerId: string, args: any) {
     throw new Error('Hand not found');
   }
 
-  const resp = await HandRepository.bookmarkHand(game, player, handHistory);
+  const resp = await HandRepository.bookmarkHand(
+    gameCode,
+    gameType,
+    player,
+    handHistory
+  );
   return resp;
 }
 
