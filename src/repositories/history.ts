@@ -237,6 +237,7 @@ class HistoryRepositoryImpl {
         endedBy: game.endedByName,
         handsDealt: game.handsDealt,
         dataAggregated: game.dataAggregated,
+        handDataLink: game.handDataLink,
       };
       dataAggregated = game.dataAggregated;
       gameData.isHost = false;
