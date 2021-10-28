@@ -1,4 +1,4 @@
-FROM node:14.7.0-alpine3.12 AS builder
+FROM node:16.13-alpine3.14 AS builder
 RUN apk --no-cache add yarn curl
 WORKDIR /app
 
@@ -27,7 +27,7 @@ RUN clean-modules --exclude **/googleapis/**/docs && \
   rm -rf node_modules/aws-sdk/dist/
 
 
-FROM node:14.7.0-alpine3.12
+FROM node:16.13-alpine3.14
 RUN apk --no-cache add --update yarn curl
 COPY --from=builder /build/ /app/
 
