@@ -1,5 +1,6 @@
 import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player/player';
+import { GameNotFoundError } from '@src/errors';
 import {getLogger} from '@src/utils/log';
 
 const logger = getLogger('resolvers::observers');
@@ -14,7 +15,7 @@ export async function observeGame(
   }
   const game = await Cache.getGame(gameCode);
   if (!game) {
-    throw new Error(`Game ${gameCode} is not found`);
+    throw new GameNotFoundError(gameCode);
   }
   if (game.clubCode) {
     const clubMember = await Cache.getClubMember(hostId, game.clubCode);
@@ -40,8 +41,9 @@ export async function exitGame(
   }
   const game = await Cache.getGame(gameCode);
   if (!game) {
-    throw new Error(`Game ${gameCode} is not found`);
+    throw new GameNotFoundError(gameCode);
   }
+
   if (game.clubCode) {
     const clubMember = await Cache.getClubMember(hostId, game.clubCode);
     if (!clubMember) {
