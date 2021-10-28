@@ -77,4 +77,13 @@ export class GameHistory {
   // this flag is used to determine whether the data was aggregated after the game ended
   @Column({name: 'data_aggregated', nullable: false, default: false})
   public dataAggregated!: boolean;
+
+  @Column({name: 'hands_data_compressed', default: false})
+  public handsDataCompressed!: boolean;
+
+  @Column({name: 'hands_aggregated', default: false})
+  public handsAggregated!: boolean;
+
+  @Column({name: 'hand_data_link', default: ''})
+  public handDataLink!: string;
 }

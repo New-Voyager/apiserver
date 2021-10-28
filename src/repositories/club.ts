@@ -20,6 +20,7 @@ import {StatsRepository} from './stats';
 import {Firebase, getAppSettings} from '@src/firebase';
 import {
   getGameConnection,
+  getHistoryConnection,
   getHistoryRepository,
   getUserConnection,
   getUserManager,
@@ -777,7 +778,7 @@ class ClubRepositoryImpl {
   ): Promise<Array<getClubGamesData>> {
     let endedAt = '';
     if (completedGames) {
-      endedAt = 'AND pg.ended_at IS NOT NULL';
+      return this.getCompletedGames(clubCode, playerId);
     }
 
     const query = fixQuery(`
@@ -800,6 +801,35 @@ class ClubRepositoryImpl {
         ORDER BY pg.id DESC`);
     // TODO: we need to do pagination here
     const result = await getGameConnection().query(query, [playerId, clubCode]);
+    return result;
+  }
+
+  public async getCompletedGames(
+    clubCode: string,
+    playerId: number
+  ): Promise<Array<getClubGamesData>> {
+    const query = fixQuery(`
+        SELECT gh.game_id, gh.game_code as "gameCode", gh.game_num as "gameNum",
+        pig.session_time as "sessionTime", gh.game_status as "status",
+        gh.small_blind as "smallBlind", gh.big_blind as "bigBlind",
+        pig.no_hands_played as "handsPlayed", 
+        pig.no_hands_won as "handsWon",
+        gh.game_type as "gameType", 
+        gh.started_at as "startedAt", gh.started_by_name as "startedBy",
+        gh.ended_at as "endedAt", gh.ended_by_name as "endedBy", 
+        gh.started_at as "startedAt", pig.session_time as "sessionTime", 
+        (pig.stack - pig.buy_in) as balance 
+        FROM
+        game_history gh  
+        LEFT OUTER JOIN players_in_game pig ON 
+        pig.game_id = gh.game_id and pig.player_id = ?
+        WHERE gh.club_code = ? and ended_at is not null
+        ORDER BY gh.game_id desc`);
+    // TODO: we need to do pagination here
+    const result = await getHistoryConnection().query(query, [
+      playerId,
+      clubCode,
+    ]);
     return result;
   }
 

@@ -32,3 +32,5 @@ import './game-types';
 import './hand'
 import './player'
 import './appcoin/appcoin.test';
+
+// import './observers/observers.test';

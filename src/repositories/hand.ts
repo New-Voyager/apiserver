@@ -20,7 +20,6 @@ import {Player} from '@src/entity/player/player';
 import {Club} from '@src/entity/player/club';
 import {StatsRepository} from './stats';
 import {ClubMessageInput} from '@src/entity/player/clubmessage';
-import {Nats} from '@src/nats';
 import {
   getGameManager,
   getGameRepository,
@@ -31,13 +30,12 @@ import {
 } from '.';
 import {GameReward} from '@src/entity/game/reward';
 import {HistoryRepository} from './history';
-import {AppCoinRepository} from './appcoin';
-import {GameRepository} from './game';
 import * as lz from 'lzutf8';
 import {getAppSettings} from '@src/firebase';
-import {Repository} from 'typeorm';
 import {GameUpdatesRepository} from './gameupdates';
-import {NextHandUpdatesRepository} from './nexthand_update';
+import {GameHistory} from '@src/entity/history/game';
+import {GameNotFoundError} from '@src/errors';
+import Axios from 'axios';
 const logger = getLogger('repositories::hand');
 
 const MAX_STARRED_HAND = 25;
@@ -45,84 +43,18 @@ let totalHandsSaved = 0;
 let totalHandsDataLen = 0;
 let totalHandsCompressedDataLen = 0;
 const HIGH_RANK = 166;
-class HandRepositoryImpl {
-  private async getSummary(result: any): Promise<any> {
-    // returns hand summary information
-    const summary: any = {};
-    summary.boardCards = new Array<any>();
-    if (result.boardCards) {
-      summary.boardCards.push(result.boardCards);
-    }
-    if (result.boardCards2 && result.boardCards2.length > 0) {
-      summary.boardCards.push(result.boardCards2);
-    }
-    let noCards = 2;
-    for (const seatNo of Object.keys(result.players)) {
-      const player = result.players[seatNo];
-      noCards = player.cards.length;
-      break;
-    }
-    summary.noCards = noCards;
-    const isShowDown = result.wonAt === 'SHOW_DOWN';
-    const log = result.handLog;
-    const hiWinners = {};
-    const lowWinners = {};
-    for (const potNo of Object.keys(log.potWinners)) {
-      const pot = log.potWinners[potNo];
-      for (const winner of pot.hiWinners) {
-        const seatNo = winner.seatNo;
-        const player = result.players[seatNo];
-        if (!hiWinners[player.id]) {
-          const cachedPlayer = await Cache.getPlayerById(player.id);
-          hiWinners[player.id] = {};
-          hiWinners[player.id].playerId = player.id;
-          hiWinners[player.id].playerName = cachedPlayer.name;
-          hiWinners[player.id].amount = 0;
-          hiWinners[player.id].cards = player.cards;
-          if (isShowDown) {
-            hiWinners[player.id] = JSON.stringify(player.playerCards);
-            hiWinners[player.id].rankStr = winner.rankStr;
-          }
-        }
-        hiWinners[player.id].amount += winner.amount;
-      }
-      for (const winner of pot.lowWinners) {
-        const seatNo = winner.seatNo;
-        const player = result.players[seatNo];
-        if (!lowWinners[player.id]) {
-          const cachedPlayer = await Cache.getPlayerById(player.id);
-          lowWinners[player.id] = {};
-          lowWinners[player.id].playerId = player.id;
-          lowWinners[player.id].playerName = cachedPlayer.name;
-          lowWinners[player.id].amount = 0;
-          lowWinners[player.id].cards = player.cards;
-          if (isShowDown) {
-            lowWinners[player.id] = JSON.stringify(player.playerCards);
-          }
-        }
-        lowWinners[player.id].amount += winner.amount;
-      }
-    }
-    summary.flop = result.flop;
-    summary.turn = result.turn;
-    summary.river = result.river;
-    summary.hiWinners = Object.values(hiWinners);
-    summary.lowWinners = Object.values(lowWinners);
-    if (summary.lowWinners && summary.lowWinners.length === 0) {
-      delete summary.lowWinners;
-    }
-    return summary;
-  }
 
+class HandRepositoryImpl {
   public async getSpecificHandHistory(
     gameId: number,
     handNum: number
   ): Promise<HandHistory | undefined> {
-    const handHistoryRepository = getHistoryRepository(HandHistory);
-    const handHistory = await handHistoryRepository.findOne({
-      where: {gameId: gameId, handNum: handNum},
-    });
-    return handHistory;
+    const allHands = await this.getAllHandHistory(gameId);
+    const hands = _.filter(allHands, {handNum: handNum});
+    if (!hands || hands.length == 0) {
+      return undefined;
+    }
+    return hands[0];
   }
 
   public async getLastHandHistory(
@@ -140,7 +72,7 @@ class HandRepositoryImpl {
     return hands[0];
   }
 
-  public async getAllHandHistory(
+  public async getAllHandHistory1(
     gameId: number,
     pageOptions?: PageOptions
   ): Promise<Array<HandHistory>> {
@@ -228,6 +160,66 @@ class HandRepositoryImpl {
     return handHistory;
   }
 
+  public async getAllHandHistory(
+    gameId: number,
+    pageOptions?: PageOptions
+  ): Promise<Array<HandHistory>> {
+    const gameHistory = getHistoryRepository(GameHistory);
+    const game = await gameHistory.findOne({gameId: gameId});
+    if (!game) {
+      throw new GameNotFoundError(gameId.toString());
+    }
+
+    if (!game.handDataLink) {
+      const handHistoryRepository = getHistoryRepository(HandHistory);
+      const handHistory = await handHistoryRepository.find({
+        gameId: gameId,
+      });
+      return handHistory;
+    } else {
+      // hand is uploaded to S3
+      // download the link
+
+      const resp = await Axios.request({
+        responseType: 'arraybuffer',
+        url: game.handDataLink,
+        method: 'get',
+        headers: {
+          'Content-Type': 'application/octet-stream',
+        },
+      });
+      //Axios.get(game.handDataLink);
+      let handData: any = {};
+      if (game.handsDataCompressed) {
+        const data = Buffer.from(resp.data);
+        const json = lz.decompress(data);
+        handData = JSON.parse(json);
+      } else {
+        handData = JSON.parse(resp.data);
+      }
+      let hands = _.values(handData);
+      hands = _.sortBy(hands, function (hand) {
+        return hand.handNum * -1;
+      });
+
+      const handList = hands.map(e => {
+        const history = new HandHistory();
+        history.handNum = e.handNum;
+        history.data = e.data;
+        history.timeStarted = new Date(Date.parse(e.timeStarted));
+        history.timeEnded = new Date(Date.parse(e.timeEnded));
+        history.playersStack = e.playersStack;
+        history.rake = e.tips;
+        history.showDown = e.showDown;
+        history.wonAt = e.wonAt;
+        history.totalPot = e.totalPot;
+        history.summary = e.summary;
+        return history;
+      });
+      return handList;
+    }
+  }
+
   public async getMyWinningHands(
     gameId: number,
     playerId: number,
@@ -254,12 +246,16 @@ class HandRepositoryImpl {
           }]
         }
     */
-    const myHands = _.filter(allHands, e => e.summary.includes(playerIdMatch));
+    const myHands = _.filter(allHands, e => {
+      const summary = JSON.stringify(e.summary);
+      return summary.includes(playerIdMatch);
+    });
     return myHands;
   }
 
   public async bookmarkHand(
-    game: PokerGame,
+    gameCode: string,
+    gameType: GameType,
     player: Player,
     handHistory: HandHistory
   ): Promise<number> {
@@ -267,15 +263,15 @@ class HandRepositoryImpl {
       const savedHandsRepository = getUserRepository(SavedHands);
 
       let bookmarkedHand = await savedHandsRepository.findOne({
-        gameCode: game.gameCode,
+        gameCode: gameCode,
         handNum: handHistory.handNum,
         savedBy: {id: player.id},
       });
 
       if (!bookmarkedHand) {
         bookmarkedHand = new SavedHands();
-        bookmarkedHand.gameCode = game.gameCode;
-        bookmarkedHand.gameType = game.gameType;
+        bookmarkedHand.gameCode = gameCode;
+        bookmarkedHand.gameType = gameType;
         bookmarkedHand.handNum = handHistory.handNum;
         bookmarkedHand.savedBy = player;
         bookmarkedHand.data = this.getHandData(handHistory);
@@ -328,13 +324,14 @@ class HandRepositoryImpl {
         data = handHistory.data.toString();
       }
     } else {
-      data = handHistory.data.toString();
+      data = JSON.stringify(handHistory.data);
     }
     return data;
   }
 
   public async shareHand(
-    game: PokerGame,
+    gameCode: string,
+    gameType: GameType,
     player: Player,
     club: Club,
     handHistory: HandHistory
@@ -347,7 +344,7 @@ class HandRepositoryImpl {
           );
 
           let sharedHand = await savedHandsRepository.findOne({
-            gameCode: game.gameCode,
+            gameCode: gameCode,
             handNum: handHistory.handNum,
             savedBy: {id: player.id},
             sharedTo: {id: club.id},
@@ -355,8 +352,8 @@ class HandRepositoryImpl {
 
           if (!sharedHand) {
             sharedHand = new SavedHands();
-            sharedHand.gameCode = game.gameCode;
-            sharedHand.gameType = game.gameType;
+            sharedHand.gameCode = gameCode;
+            sharedHand.gameType = gameType;
             sharedHand.handNum = handHistory.handNum;
             sharedHand.sharedBy = player;
             sharedHand.sharedTo = club;

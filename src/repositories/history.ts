@@ -15,6 +15,7 @@ import {Player} from '@src/entity/player/player';
 import {GameEndReason, GameStatus} from '@src/entity/types';
 import {stat, Stats} from 'fs';
 import {StatsRepository} from './stats';
+import {GameNotFoundError} from '@src/errors';
 
 class HistoryRepositoryImpl {
   constructor() {}
@@ -236,6 +237,7 @@ class HistoryRepositoryImpl {
         endedBy: game.endedByName,
         handsDealt: game.handsDealt,
         dataAggregated: game.dataAggregated,
+        handDataLink: game.handDataLink,
       };
       dataAggregated = game.dataAggregated;
       gameData.isHost = false;
@@ -251,7 +253,7 @@ class HistoryRepositoryImpl {
       if (includeStats && dataAggregated) {
         const stats = await StatsRepository.getPlayerGameStats(
           cachedPlayer.uuid,
-          game.gameCode
+          game.gameId
         );
         if (stats) {
           gameData.preflopHands = stats.inPreflop;
@@ -430,6 +432,14 @@ class HistoryRepositoryImpl {
     return pastGames;
   }
 
+  public async getHistoryGame(
+    gameCode: string
+  ): Promise<GameHistory | undefined> {
+    const gameRepo = getHistoryRepository(GameHistory);
+    const game = await gameRepo.findOne({gameCode: gameCode});
+    return game;
+  }
+
   public async getGameResultTable(gameCode: string): Promise<Array<any>> {
     const gameRepo = getHistoryRepository(GameHistory);
     const game = await gameRepo.findOne({gameCode: gameCode});
@@ -465,6 +475,22 @@ class HistoryRepositoryImpl {
       gameCode: gameCode,
     });
     return game;
+  }
+
+  public async didPlayInGame(gameCode: string, playerUuid: string) {
+    const game = await this.getCompletedGameByCode(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
+    const playersRepo = getHistoryRepository(PlayersInGame);
+    const player = await playersRepo.findOne({
+      gameId: game.gameId,
+      playerUuid: playerUuid,
+    });
+    if (player) {
+      return true;
+    }
+    return false;
   }
 }
 

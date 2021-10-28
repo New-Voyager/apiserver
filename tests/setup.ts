@@ -4,5 +4,5 @@ module.exports = async () => {
   require('reflect-metadata');
   require('ts-node/register');
   const {start} = require('@src/server');
-  await start(false, {intTest: true});
+  // await start(false, {intTest: true});
 };

@@ -18,6 +18,7 @@ import {getGameRepository, getUserRepository} from '@src/repositories';
 import {PlayerLocation} from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
 import {getLogger, errToLogString} from '@src/utils/log';
+import {GameNotFoundError} from '@src/errors';
 
 const logger = getLogger('cache');
 
@@ -289,7 +290,7 @@ class GameCache {
     gameCode: string,
     update = false,
     transactionManager?: EntityManager
-  ): Promise<PokerGame> {
+  ): Promise<PokerGame | undefined> {
     const getResp = await this.getCache(`gameCache-${gameCode}`);
     if (getResp.success && getResp.data && !update) {
       const ret = JSON.parse(getResp.data) as PokerGame;
@@ -305,9 +306,8 @@ class GameCache {
         where: {gameCode: gameCode},
       });
       if (!game) {
-        throw new Error(
-          `Cannot find game code [${gameCode}] in poker game repo`
-        );
+        return undefined;
+        //.throw new GameNotFoundError(gameCode);
       }
       await this.updateGameIdGameCodeChange(game.id, game.gameCode);
 

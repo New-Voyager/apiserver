@@ -28,6 +28,7 @@ import {Nats} from '@src/nats';
 import {Cache} from '@src/cache/index';
 import {processPendingUpdates, switchSeatNextHand} from './pendingupdates';
 import {getGameConnection, getGameManager, getGameRepository} from '.';
+import {GameNotFoundError} from '@src/errors';
 
 const logger = getLogger('repositories::seatchange');
 
@@ -127,6 +128,10 @@ export class SeatChangeProcess {
       );
       // seat change process is over, resume game
       const game = await Cache.getGame(this.game.gameCode, true);
+      if (!game) {
+        throw new GameNotFoundError(this.game.gameCode);
+      }
+
       processPendingUpdates(game.id).catch(e => {
         logger.error(
           `[${gameLogPrefix(game)}] Processing pending updates failed. Error: ${
@@ -155,6 +160,9 @@ export class SeatChangeProcess {
         );
         // seat change process is over, resume game
         const game = await Cache.getGame(this.game.gameCode, true);
+        if (!game) {
+          throw new GameNotFoundError(this.game.gameCode);
+        }
         processPendingUpdates(game.id).catch(e => {
           logger.error(
             `[${gameLogPrefix(
