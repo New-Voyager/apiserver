@@ -4,7 +4,7 @@ import {Cache} from '@src/cache';
 import {WonAtStatus} from '@src/entity/types';
 import {HandRepository} from '@src/repositories/hand';
 import {getGameConnection} from '@src/repositories';
-import {getLogger} from '@src/utils/log';
+import {errToLogString, getLogger} from '@src/utils/log';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
 import _ from 'lodash';
 import {GameUpdatesRepository} from '@src/repositories/gameupdates';
@@ -104,9 +104,12 @@ class HandServerAPIs {
       }
     } catch (err) {
       logger.error(
-        `Error while saving hand for game ${gameID} hand ${handNum}. Error: ${err.message}. (processedConsecutiveTimeouts = ${processedConsecutiveTimeouts})`
+        `Error while saving hand for game ${gameID} hand ${handNum}. Error: ${errToLogString(
+          err,
+          false
+        )}. (processedConsecutiveTimeouts = ${processedConsecutiveTimeouts})`
       );
-      resp.status(500).send({error: err.message});
+      resp.status(500).send({error: errToLogString(err, false)});
     }
     logger.info(`Finished saveHand endpoint game ${gameID} hand ${handNum}`);
   }
@@ -159,7 +162,7 @@ class HandServerAPIs {
       //   resp.status(500).send(saveResult);
       // }
     } catch (err) {
-      resp.status(500).send({error: err.message});
+      resp.status(500).send({error: errToLogString(err, false)});
     }
   }
 }

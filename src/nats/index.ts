@@ -7,7 +7,7 @@ import {
   TableStatus,
 } from '@src/entity/types';
 import {HighHandWinner, NewUpdate} from '@src/repositories/types';
-import {getLogger} from '@src/utils/log';
+import {errToLogString, getLogger} from '@src/utils/log';
 import * as nats from 'nats';
 import {v4 as uuidv4} from 'uuid';
 import {Cache} from '@src/cache';
@@ -37,7 +37,10 @@ class NatsClass {
       this.client = await nats.connect(connOpts);
     } catch (err) {
       logger.error(
-        `Cannot connect to urls: ${this.natsUrls}. Error: ${err.message}`
+        `Cannot connect to urls: ${this.natsUrls}. Error: ${errToLogString(
+          err,
+          false
+        )}`
       );
       throw err;
     }
@@ -51,7 +54,10 @@ class NatsClass {
       logger.info('Nats is initialized');
     } catch (err) {
       logger.error(
-        `Cannot connect to urls: ${natsUrls}. Error: ${err.message}`
+        `Cannot connect to urls: ${natsUrls}. Error: ${errToLogString(
+          err,
+          false
+        )}`
       );
       throw err;
     }

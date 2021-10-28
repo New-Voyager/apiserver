@@ -399,7 +399,9 @@ class ClubRepositoryImpl {
         logger.error(`Failed to send firebase message. Error: ${e.message}`);
       });
     } catch (err) {
-      logger.error(`Failed to send NATS message. Error: ${err.toString()}`);
+      logger.error(
+        `Failed to send NATS message. Error: ${errToLogString(err)}`
+      );
     }
     return clubMember.status;
   }
@@ -472,7 +474,9 @@ class ClubRepositoryImpl {
       //   messageId
       // );
     } catch (err) {
-      logger.error(`Failed to send NATS message. Error: ${err.toString()}`);
+      logger.error(
+        `Failed to send NATS message. Error: ${errToLogString(err)}`
+      );
     }
 
     return ClubMemberStatus.ACTIVE;
@@ -574,7 +578,9 @@ class ClubRepositoryImpl {
       // add a message in the chat
       await ClubMessageRepository.playerKickedout(club, player);
     } catch (err) {
-      logger.error(`Failed to send NATS message. Error: ${err.toString()}`);
+      logger.error(
+        `Failed to send NATS message. Error: ${errToLogString(err)}`
+      );
     }
 
     return ClubMemberStatus.KICKEDOUT;

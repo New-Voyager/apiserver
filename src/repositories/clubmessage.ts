@@ -70,7 +70,7 @@ class ClubMessageRepositoryImpl {
         }
       }
     } catch (e) {
-      throw new Error(e.message);
+      throw e;
     }
   }
 
@@ -247,7 +247,7 @@ class ClubMessageRepositoryImpl {
         return clubMessages;
       }
     } catch (e) {
-      throw new Error(e.message);
+      throw e;
     }
   }
 

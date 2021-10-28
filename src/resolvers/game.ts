@@ -647,9 +647,10 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
       )}`
     );
     throw new Error(
-      `Failed to get game information. Message: ${
-        err.message
-      } err: ${JSON.stringify(err)}`
+      `Failed to get game information. Message: ${errToLogString(
+        err,
+        false
+      )} err: ${JSON.stringify(err)}`
     );
   }
 }
@@ -704,9 +705,10 @@ async function getPlayerRole(playerUuid: string, gameCode: string) {
       )}`
     );
     throw new Error(
-      `Failed to get game information. Message: ${
-        err.message
-      } err: ${JSON.stringify(err)}`
+      `Failed to get game information. Message: ${errToLogString(
+        err,
+        false
+      )} err: ${JSON.stringify(err)}`
     );
   }
 }
@@ -816,7 +818,7 @@ export async function pauseGame(playerId: string, gameCode: string) {
         err
       )}`
     );
-    throw new Error('Failed to pause the game. ' + err.message);
+    throw new Error('Failed to pause the game. ' + errToLogString(err, false));
   }
 }
 
@@ -863,7 +865,10 @@ export async function resumeGame(playerId: string, gameCode: string) {
       )}`
     );
     throw new Error(
-      `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
+      `Failed to resume game:  ${errToLogString(
+        err,
+        false
+      )}. Game code: ${gameCode}`
     );
   }
 }
@@ -896,7 +901,10 @@ export async function openSeats(playerId: string, gameCode: string) {
       )}`
     );
     throw new Error(
-      `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
+      `Failed to resume game:  ${errToLogString(
+        err,
+        false
+      )}. Game code: ${gameCode}`
     );
   }
 }

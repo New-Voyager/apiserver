@@ -139,7 +139,7 @@ export async function sqlliteConnection() {
     ]);
     return connection;
   } catch (err) {
-    console.log(`Failed to create connections. ${err.toString()}`);
+    console.log(`Failed to create connections. ${errToLogString(err)}`);
     throw err;
   }
 }

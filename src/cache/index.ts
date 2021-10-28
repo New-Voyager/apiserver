@@ -47,7 +47,7 @@ export function initializeRedis() {
     client = redis.createClient(redisPort(), redisHost());
   }
   client.on('error', error => {
-    logger.error(`Redis client error: ${error.toString()}}`);
+    logger.error(`Redis client error: ${errToLogString(error, false)}}`);
     throw new Error(error);
   });
 }

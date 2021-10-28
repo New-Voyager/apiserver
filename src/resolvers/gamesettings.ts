@@ -131,7 +131,10 @@ export async function updateGameSettings(
       )}`
     );
     throw new Error(
-      `Failed updating game settings:  ${err.message}. Game code: ${gameCode}`
+      `Failed updating game settings:  ${errToLogString(
+        err,
+        false
+      )}. Game code: ${gameCode}`
     );
   }
 }
@@ -160,7 +163,10 @@ export async function updateGamePlayerSettings(
       )}`
     );
     throw new Error(
-      `Failed while updating player settings:  ${err.message}. Game code: ${gameCode}`
+      `Failed while updating player settings:  ${errToLogString(
+        err,
+        false
+      )}. Game code: ${gameCode}`
     );
   }
 }

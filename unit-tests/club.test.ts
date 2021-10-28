@@ -142,7 +142,7 @@ describe('Club APIs', () => {
       expect(resp).not.toBeNull();
     } catch (error) {
       logger.error(JSON.stringify(error));
-      expect(error.message).toBe(
+      expect(errToLogString(error, false)).toBe(
         'The player is already in the club. Member status: ACTIVE'
       );
     }
@@ -172,7 +172,7 @@ describe('Club APIs', () => {
       const approved = await approveMember(player1Id, clubCode, player2Id);
       expect(approved).not.toBe('ACTIVE');
     } catch (error) {
-      expect(error.message).toContain('Unauthorized');
+      expect(errToLogString(error, false)).toContain('Unauthorized');
     }
   });
 

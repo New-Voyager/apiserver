@@ -285,7 +285,10 @@ class HandRepositoryImpl {
       return resp.id;
     } catch (error) {
       logger.error(
-        `Error when trying to save bookmarked hand: ${error.toString}`
+        `Error when trying to save bookmarked hand: ${errToLogString(
+          error,
+          false
+        )}`
       );
       throw error;
     }
@@ -310,7 +313,10 @@ class HandRepositoryImpl {
       }
     } catch (error) {
       logger.error(
-        `Error when trying to deleting bookmarked hand: ${error.toString}`
+        `Error when trying to deleting bookmarked hand: ${errToLogString(
+          error,
+          false
+        )}`
       );
       throw error;
     }
@@ -376,7 +382,9 @@ class HandRepositoryImpl {
       );
       return id;
     } catch (error) {
-      logger.error(`Error when trying to share hands: ${error.toString()}`);
+      logger.error(
+        `Error when trying to share hands: ${errToLogString(error, false)}`
+      );
       throw error;
     }
   }
@@ -392,7 +400,9 @@ class HandRepositoryImpl {
       });
       return sharedHand;
     } catch (error) {
-      logger.error(`Error when trying to get shared hand: ${error.toString}`);
+      logger.error(
+        `Error when trying to get shared hand: ${errToLogString(error, false)}`
+      );
       throw error;
     }
   }
@@ -410,7 +420,9 @@ class HandRepositoryImpl {
       });
       return sharedHands;
     } catch (error) {
-      logger.error(`Error when trying to get shared hands: ${error.toString}`);
+      logger.error(
+        `Error when trying to get shared hands: ${errToLogString(error, false)}`
+      );
       throw error;
     }
   }
@@ -433,7 +445,10 @@ class HandRepositoryImpl {
       return bookmarkedHands;
     } catch (error) {
       logger.error(
-        `Error when trying to get bookmarked hands: ${error.toString}`
+        `Error when trying to get bookmarked hands: ${errToLogString(
+          error,
+          false
+        )}`
       );
       throw error;
     }
@@ -461,7 +476,10 @@ class HandRepositoryImpl {
       return bookmarkedHands;
     } catch (error) {
       logger.error(
-        `Error when trying to get bookmarked hands: ${error.toString}`
+        `Error when trying to get bookmarked hands: ${errToLogString(
+          error,
+          false
+        )}`
       );
       throw error;
     }
@@ -891,13 +909,15 @@ class HandRepositoryImpl {
       //logger.info(`Hand ended`);
       return saveResult;
     } catch (err) {
-      logger.error(`Error when trying to save hand log: ${err.toString()}`);
+      logger.error(
+        `Error when trying to save hand log: ${errToLogString(err)}`
+      );
       return {
         gameCode: gameCode,
         handNum: handNum,
         success: false,
         skipped: false,
-        error: err.message,
+        error: errToLogString(err, false),
       };
     }
   }

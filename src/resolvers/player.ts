@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
 import {PlayerRepository} from '@src/repositories/player';
 import {ClubRepository} from '@src/repositories/club';
-import {getLogger} from '@src/utils/log';
+import {errToLogString, getLogger} from '@src/utils/log';
 import {GameRepository} from '@src/repositories/game';
 import {Cache} from '@src/cache/index';
 import {Player} from '@src/entity/player/player';
@@ -312,7 +312,7 @@ export async function getPlayerInfo(playerId: string, getPrivs: boolean) {
       privileges = getPrivileges(playerId);
     } catch (err) {
       logger.error(
-        `Exception caught when getting privileges ${err.toString()}`
+        `Exception caught when getting privileges ${errToLogString(err)}`
       );
     }
   }
@@ -457,7 +457,9 @@ export async function updateFirebaseToken(playerId: string, token: string) {
     await PlayerRepository.updateFirebaseToken(playerId, token);
     return true;
   } catch (err) {
-    logger.error(`Failed to update firebase token. Error: ${err.toString}`);
+    logger.error(
+      `Failed to update firebase token. Error: ${errToLogString(err)}`
+    );
     throw err;
   }
 }
@@ -618,7 +620,9 @@ async function getPrivileges(playerId: string) {
     };
     return ret;
   } catch (err) {
-    logger.error(`Exception caught when getting privileges ${err.toString()}`);
+    logger.error(
+      `Exception caught when getting privileges ${errToLogString(err)}`
+    );
     throw new Error('Failed to get privileges');
   }
 }
@@ -680,7 +684,7 @@ export async function getMessageUnreadCount(
   try {
     count = await ClubMessageRepository.getUnreadMessageCount(club, player);
   } catch (err) {
-    logger.error(`Could not get unread message count. ${err.toString()}`);
+    logger.error(`Could not get unread message count. ${errToLogString(err)}`);
   }
   return count;
 }
@@ -695,7 +699,7 @@ export async function getLiveGameCount(clubCode: string) {
   try {
     count = await GameRepository.getLiveGameCount(club);
   } catch (err) {
-    logger.error(`Could not get unread message count. ${err.toString()}`);
+    logger.error(`Could not get unread message count. ${errToLogString(err)}`);
   }
   return count;
 }

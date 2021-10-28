@@ -228,7 +228,9 @@ class GameRepositoryImpl {
                     transactionEntityManager.getRepository(GameReward);
                   await gameRewardRepository.save(createGameReward);
                 } catch (err) {
-                  logger.error(`Failed to update rewards. ${err.toString()}`);
+                  logger.error(
+                    `Failed to update rewards. ${errToLogString(err)}`
+                  );
                   throw err;
                 }
               } else {
@@ -291,7 +293,7 @@ class GameRepositoryImpl {
       );
     } catch (err) {
       logger.error(
-        `Couldn't create game and retry again. Error: ${err.toString()}`
+        `Couldn't create game and retry again. Error: ${errToLogString(err)}`
       );
       throw new Error("Couldn't create the game, please retry again");
     }
@@ -744,7 +746,9 @@ class GameRepositoryImpl {
             }
           } catch (err) {
             logger.error(
-              `Failed to get agora token ${err.toString()} Game: ${game.id}`
+              `Failed to get agora token ${errToLogString(err)} Game: ${
+                game.id
+              }`
             );
           }
 
@@ -755,9 +759,9 @@ class GameRepositoryImpl {
             await StatsRepository.newGameStatsRow(game, player);
           } catch (err) {
             logger.error(
-              `Failed to update player_game_tracker and player_game_stats table ${err.toString()} Game: ${
-                game.id
-              }`
+              `Failed to update player_game_tracker and player_game_stats table ${errToLogString(
+                err
+              )} Game: ${game.id}`
             );
             throw err;
           }
@@ -993,7 +997,7 @@ class GameRepositoryImpl {
           }
         }
       } catch (err) {
-        logger.error(`Error handling buyin approval. ${err.toString()}`);
+        logger.error(`Error handling buyin approval. ${errToLogString(err)}`);
       }
     }
   }
@@ -1272,7 +1276,9 @@ class GameRepositoryImpl {
         // update the game server with new status
         await endGame(game.id);
       } catch (err) {
-        logger.warn(`Could not end game in game server: ${err.toString()}`);
+        logger.warn(
+          `Could not end game in game server: ${errToLogString(err)}`
+        );
       }
 
       // announce to the players the game has ended

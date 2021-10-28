@@ -1,6 +1,6 @@
 import {EntityManager, getConnection, SelectQueryBuilder} from 'typeorm';
 import {getManager} from 'typeorm';
-import {getLogger} from '@src/utils/log';
+import {errToLogString, getLogger} from '@src/utils/log';
 import {isGameServerEnabled} from '@src/gameserver';
 import {startTimer} from '@src/timer';
 import {Cache} from '@src/cache';
@@ -117,8 +117,8 @@ export async function resetDB() {
     logger.info('Resetting cache');
     await Cache.reset();
   } catch (err) {
-    logger.error(`Failed to reset database. ${err.toString()}`);
-    throw new Error(`Failed to reset database. ${err.toString()}`);
+    logger.error(`Failed to reset database. ${errToLogString(err)}`);
+    throw new Error(`Failed to reset database. ${errToLogString(err)}`);
   }
   return true;
 }

@@ -125,8 +125,10 @@ class GameServerAPIs {
       }
       resp.status(200).send(JSON.stringify({server: gameServer}));
     } catch (err) {
-      logger.error(err.message);
-      resp.status(500).send(JSON.stringify({error: err.message}));
+      logger.error(errToLogString(err, false));
+      resp
+        .status(500)
+        .send(JSON.stringify({error: errToLogString(err, false)}));
     }
   }
 
@@ -146,10 +148,13 @@ class GameServerAPIs {
       }
     } catch (err) {
       logger.error(
-        `Unable to restart all games in game server. Error: ${err.message}`
+        `Unable to restart all games in game server. Error: ${errToLogString(
+          err,
+          false
+        )}`
       );
       const response = {
-        error: err.message,
+        error: errToLogString(err, false),
       };
       resp.status(500).send(JSON.stringify(response));
       return;
@@ -162,7 +167,7 @@ class GameServerAPIs {
         `Unable to restart all games in game server ${gameServer.id} (url: ${gameServer.url})`
       );
       const response = {
-        error: err.message,
+        error: errToLogString(err, false),
       };
       resp.status(500).send(JSON.stringify(response));
       return;
@@ -269,7 +274,9 @@ export async function createGameServer(
     await gameServerRepository.save(gameServer);
     return [gameServer, null];
   } catch (err) {
-    logger.error(`Registering game server failed. Error: ${err.toString()}`);
+    logger.error(
+      `Registering game server failed. Error: ${errToLogString(err)}`
+    );
     return [null, err];
   }
 }
@@ -309,7 +316,9 @@ async function restartGame(game: PokerGame, gameServer: any): Promise<void> {
       return;
     } catch (err) {
       logger.error(
-        `Error while restarting game ${game.id}/${game.gameCode}: ${err.message}`
+        `Error while restarting game ${game.id}/${
+          game.gameCode
+        }: ${errToLogString(err, false)}`
       );
     }
   }

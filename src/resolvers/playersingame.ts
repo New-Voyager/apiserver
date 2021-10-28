@@ -150,7 +150,10 @@ export async function playerStackStat(playerId: string, gameCode: string) {
       )}`
     );
     throw new Error(
-      `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
+      `Failed to resume game:  ${errToLogString(
+        err,
+        false
+      )}. Game code: ${gameCode}`
     );
   }
 }

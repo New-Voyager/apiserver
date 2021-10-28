@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {getLogger} from '@src/utils/log';
+import {errToLogString, getLogger} from '@src/utils/log';
 import {PokerGame} from '@src/entity/game/game';
 import {GameRepository} from '@src/repositories/game';
 import {EntityManager} from 'typeorm';
@@ -66,7 +66,10 @@ export async function publishNewGame(
     }
     return resp.data.tableStatus;
   } catch (err) {
-    const msg = `Error while posting new game to ${url}: ${err.message}`;
+    const msg = `Error while posting new game to ${url}: ${errToLogString(
+      err,
+      false
+    )}`;
     logger.error(msg);
     throw new Error(msg);
   }
@@ -146,7 +149,10 @@ export async function getCurrentHandLog(gameId: number): Promise<any> {
     }
     return resp.data;
   } catch (err) {
-    const msg = `Failed to get current hand log from ${url}: ${err.message}`;
+    const msg = `Failed to get current hand log from ${url}: ${errToLogString(
+      err,
+      false
+    )}`;
     logger.error(msg);
     throw new Error(msg);
   }
@@ -167,7 +173,10 @@ export async function playerConfigUpdate(game: PokerGame, update: any) {
       throw new Error(`Received HTTP ${resp?.status}`);
     }
   } catch (err) {
-    const msg = `Error while posting player config status to ${url}: ${err.message}`;
+    const msg = `Error while posting player config status to ${url}: ${errToLogString(
+      err,
+      false
+    )}`;
     logger.error(msg);
     throw new Error(msg);
   }

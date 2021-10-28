@@ -293,7 +293,7 @@ async function crashAsync(req: any, resp: any) {
     await doCrashAsync();
     resp.status(200).send(JSON.stringify({status: 'OK'}));
   } catch (err) {
-    resp.status(500).send(JSON.stringify({error: err.toString()}));
+    resp.status(500).send(JSON.stringify({error: errToLogString(err)}));
   }
 }
 

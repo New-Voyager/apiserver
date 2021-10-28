@@ -48,7 +48,7 @@ class GameAPIs {
           err
         )}`
       );
-      resp.status(500).send({error: err.message});
+      resp.status(500).send({error: errToLogString(err, false)});
     }
   }
 
@@ -75,7 +75,7 @@ class GameAPIs {
           err
         )}`
       );
-      resp.status(500).send({error: err.message});
+      resp.status(500).send({error: errToLogString(err, false)});
     }
   }
 
@@ -107,7 +107,9 @@ class GameAPIs {
           err
         )}`
       );
-      resp.status(500).send(JSON.stringify({error: err.message}));
+      resp
+        .status(500)
+        .send(JSON.stringify({error: errToLogString(err, false)}));
     }
   }
 
@@ -127,7 +129,9 @@ class GameAPIs {
           err
         )}`
       );
-      resp.status(500).send(JSON.stringify({error: err.message}));
+      resp
+        .status(500)
+        .send(JSON.stringify({error: errToLogString(err, false)}));
     }
   }
 
@@ -153,7 +157,9 @@ class GameAPIs {
           err
         )}`
       );
-      resp.status(500).send(JSON.stringify({error: err.message}));
+      resp
+        .status(500)
+        .send(JSON.stringify({error: errToLogString(err, false)}));
     }
   }
 
@@ -278,7 +284,9 @@ class GameAPIs {
           )}`
         );
         if (retryCount === 0) {
-          resp.status(500).send(JSON.stringify({error: err.message}));
+          resp
+            .status(500)
+            .send(JSON.stringify({error: errToLogString(err, false)}));
           return;
         }
       }
@@ -306,7 +314,7 @@ class GameAPIs {
       logger.error(
         `Error while starting game ${gameID}: ${errToLogString(err)}`
       );
-      resp.status(500).send({error: err.message});
+      resp.status(500).send({error: errToLogString(err, false)});
     }
   }
 
@@ -348,7 +356,7 @@ class GameAPIs {
           err
         )}`
       );
-      resp.status(500).send({error: err.message});
+      resp.status(500).send({error: errToLogString(err, false)});
     }
   }
 
@@ -384,7 +392,7 @@ class GameAPIs {
           err
         )}`
       );
-      resp.status(500).send({error: err.message});
+      resp.status(500).send({error: errToLogString(err, false)});
     }
   }
 
@@ -394,7 +402,7 @@ class GameAPIs {
       resp.status(200).send(JSON.stringify(ret));
     } catch (err) {
       logger.error(`Error while aggregating game data: ${errToLogString(err)}`);
-      resp.status(500).send({error: err.message});
+      resp.status(500).send({error: errToLogString(err, false)});
     }
   }
 
@@ -405,7 +413,7 @@ class GameAPIs {
     } catch (err) {
       logger.error(`Unable to end all expired games: ${errToLogString(err)}`);
       const response = {
-        error: err.message,
+        error: errToLogString(err, false),
       };
       resp.status(500).send(JSON.stringify(response));
     }

@@ -14,7 +14,7 @@ import {
 } from '@src/entity/types';
 import {startTimer} from '@src/timer';
 import {utcTime} from '@src/utils';
-import {getLogger} from '@src/utils/log';
+import {errToLogString, getLogger} from '@src/utils/log';
 import {EntityManager, Repository} from 'typeorm';
 import {BREAK_TIMEOUT, NewUpdate} from './types';
 import {Cache} from '@src/cache/index';
@@ -283,7 +283,10 @@ export async function breakTimeoutExpired(gameID: number, playerID: number) {
     await takeBreak.timerExpired();
   } catch (err) {
     logger.error(
-      `Could not handle break time out. Game: ${gameID} or Player: ${playerID}. Error: ${err.message}`
+      `Could not handle break time out. Game: ${gameID} or Player: ${playerID}. Error: ${errToLogString(
+        err,
+        false
+      )}`
     );
   }
 }

@@ -18,8 +18,8 @@ class AdminAPIs {
       await ClubRepository.deleteClubByName(clubName);
       resp.status(200).send({status: 'OK'});
     } catch (err) {
-      logger.error(err.message);
-      resp.status(500).send({error: err.message});
+      logger.error(errToLogString(err, false));
+      resp.status(500).send({error: errToLogString(err, false)});
     }
   }
 

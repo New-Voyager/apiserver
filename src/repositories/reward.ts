@@ -11,7 +11,7 @@ export interface RewardInputFormat {
   endHour: number;
   schedule: ScheduleType;
 }
-import {getLogger} from '@src/utils/log';
+import {errToLogString, getLogger} from '@src/utils/log';
 import {
   HighHandWinner,
   HighHandWinnerResult,
@@ -311,7 +311,7 @@ class RewardRepositoryImpl {
       };
     } catch (err) {
       logger.error(
-        `Couldn't update reward. retry again. Error: ${err.toString()}`
+        `Couldn't update reward. retry again. Error: ${errToLogString(err)}`
       );
       throw new Error("Couldn't update reward, please retry again");
     }
@@ -427,7 +427,7 @@ class RewardRepositoryImpl {
       return highHands;
     } catch (err) {
       logger.error(
-        `Couldn't retrieve Highhand. retry again. Error: ${err.toString()}`
+        `Couldn't retrieve Highhand. retry again. Error: ${errToLogString(err)}`
       );
       throw new Error("Couldn't retrieve highhand, please retry again");
     }
@@ -475,7 +475,7 @@ class RewardRepositoryImpl {
       return highHands;
     } catch (err) {
       logger.error(
-        `Couldn't retrieve Highhand. retry again. Error: ${err.toString()}`
+        `Couldn't retrieve Highhand. retry again. Error: ${errToLogString(err)}`
       );
       throw new Error("Couldn't retrieve highhand, please retry again");
     }
@@ -598,7 +598,7 @@ class RewardRepositoryImpl {
       return highHands;
     } catch (err) {
       logger.error(
-        `Couldn't retrieve Highhand. retry again. Error: ${err.toString()}`
+        `Couldn't retrieve Highhand. retry again. Error: ${errToLogString(err)}`
       );
       throw new Error("Couldn't retrieve highhand, please retry again");
     }
