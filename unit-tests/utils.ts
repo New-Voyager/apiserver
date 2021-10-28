@@ -61,6 +61,7 @@ import {
   joinClub,
 } from '../src/resolvers/club';
 import {createGameServer} from '../src/internal/gameserver';
+import { errToLogString } from '../src/utils/log';
 
 export async function initializeSqlLite() {
   process.env.DB_USED = 'sqllite';
