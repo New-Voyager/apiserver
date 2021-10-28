@@ -133,6 +133,10 @@ export async function playerStackStat(playerId: string, gameCode: string) {
   try {
     const player = await Cache.getPlayer(playerId);
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
+
     const stackStat = await GameRepository.getPlayerStackStat(player, game);
 
     /*
@@ -890,6 +894,9 @@ export async function dealerChoice(
   try {
     const gameType: GameType = GameType[gameTypeStr];
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
     const player = await Cache.getPlayer(playerId);
     await GameRepository.updateDealerChoice(game, player, gameType);
   } catch (err) {
@@ -914,6 +921,9 @@ export async function postBlind(
   }
   try {
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
     const player = await Cache.getPlayer(playerId);
     await GameRepository.postBlind(game, player);
     return true;

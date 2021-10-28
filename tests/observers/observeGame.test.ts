@@ -37,7 +37,7 @@ describe('observeGame APIs', () => {
         gameCode,
       });
     } catch (error) {
-      const expectedError = 'Cannot find player uuid [test] in player repo';
+      const expectedError = 'Game test is not found';
       expect(error.graphQLErrors[0].message).toEqual(expectedError);
     }
 
@@ -59,7 +59,7 @@ describe('observeGame APIs', () => {
         gameCode: 'test',
       });
     } catch (error) {
-      const expectedError = 'Cannot find game code [test] in poker game repo';
+      const expectedError = 'Game test is not found';
       expect(error.graphQLErrors[0].message).toEqual(expectedError);
     }
 

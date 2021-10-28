@@ -30,6 +30,7 @@ import {
 } from '@src/entity/game/reward';
 import {HighHandHistory} from '@src/entity/history/hand';
 import {Metrics} from '@src/internal/metrics';
+import {GameNotFoundError} from '@src/errors';
 
 const logger = getLogger('repositories::reward');
 
@@ -96,6 +97,10 @@ class RewardRepositoryImpl {
 
   public async handleRewards(gameCode: string, input: any, handTime: Date) {
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
+
     return await this.handleHighHand(game, input, handTime);
   }
 
@@ -153,6 +158,10 @@ class RewardRepositoryImpl {
         false,
         transactionManager
       );
+      if (!game) {
+        throw new GameNotFoundError(gameInput.gameCode);
+      }
+
       if (gameTracking) {
         existingHighHandRank = game.highHandRank;
       } else {
@@ -381,6 +390,9 @@ class RewardRepositoryImpl {
     }
     const highHands = [] as any;
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
 
     try {
       if (!game || game.status === GameStatus.ENDED) {

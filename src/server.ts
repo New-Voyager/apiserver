@@ -153,7 +153,7 @@ export async function start(
   logger.info(`Server is running ${RunProfile[runProfile].toString()} profile`);
 
   apolloServer = getApolloServer(options);
-  getAppSettings().compressHandData = true;
+  getAppSettings().compressHandData = false;
   if (process.env.COMPRESS_HAND_DATA === 'false') {
     getAppSettings().compressHandData = false;
   }

@@ -645,7 +645,7 @@ export function resetAppSettingsTest() {
     coinsAlertNotifyTime: 30, // every 30 seconds
     gameCoinsPerBlock: 5, // 5 coins per 1 minutes
     notifyHostTimeWindow: 2 * 60 * 60,
-    compressHandData: true,
+    compressHandData: false,
     ipGpsCheckInterval: 15 * 60,
   };
   return settings;

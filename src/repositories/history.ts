@@ -252,7 +252,7 @@ class HistoryRepositoryImpl {
       if (includeStats && dataAggregated) {
         const stats = await StatsRepository.getPlayerGameStats(
           cachedPlayer.uuid,
-          game.gameCode
+          game.gameId
         );
         if (stats) {
           gameData.preflopHands = stats.inPreflop;
@@ -429,6 +429,14 @@ class HistoryRepositoryImpl {
       }
     }
     return pastGames;
+  }
+
+  public async getHistoryGame(
+    gameCode: string
+  ): Promise<GameHistory | undefined> {
+    const gameRepo = getHistoryRepository(GameHistory);
+    const game = await gameRepo.findOne({gameCode: gameCode});
+    return game;
   }
 
   public async getGameResultTable(gameCode: string): Promise<Array<any>> {

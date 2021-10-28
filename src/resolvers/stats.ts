@@ -3,6 +3,8 @@ import {getLogger} from '@src/utils/log';
 import {StatsRepository} from '@src/repositories/stats';
 import {ClubMemberStatus, GameType} from '@src/entity/types';
 import {Cache} from '@src/cache/index';
+import {HistoryRepository} from '@src/repositories/history';
+import {GameNotFoundError} from '@src/errors';
 
 const logger = getLogger('resolvers::stats');
 
@@ -56,7 +58,19 @@ async function getPlayerHandStats(playerId: string) {
 }
 
 async function getPlayerGameStats(playerId: string, gameCode: string) {
-  const stats = await StatsRepository.getPlayerGameStats(playerId, gameCode);
+  const liveGame = await Cache.getGame(gameCode);
+  let gameId = 0;
+  if (liveGame) {
+    gameId = liveGame.id;
+  } else {
+    const historyGame = await HistoryRepository.getHistoryGame(gameCode);
+    if (!historyGame) {
+      throw new GameNotFoundError(gameCode);
+    }
+    gameId = historyGame.gameId;
+  }
+
+  const stats = await StatsRepository.getPlayerGameStats(playerId, gameId);
   try {
     if (stats) {
       stats.headsupHandDetails = JSON.parse(stats.headsupHandDetails);
