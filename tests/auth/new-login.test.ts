@@ -23,10 +23,10 @@ describe('New login APIs', () => {
         'device-secret field is required',
         'device-id field is required',
       ];
-      expect(error.response.data.errors).toEqual(
+      expect((error as any).response.data.errors).toEqual(
         expect.arrayContaining(expectedErrors)
       );
-      expect(error.response.status).toEqual(400);
+      expect((error as any).response.status).toEqual(400);
     }
   });
 
@@ -41,10 +41,10 @@ describe('New login APIs', () => {
       const expectedErrors = [
         `Player with device id ${deviceId} does not exist`,
       ];
-      expect(error.response.data.errors).toEqual(
+      expect((error as any).response.data.errors).toEqual(
         expect.arrayContaining(expectedErrors)
       );
-      expect(error.response.status).toEqual(403);
+      expect((error as any).response.status).toEqual(403);
     }
   });
 
@@ -62,10 +62,10 @@ describe('New login APIs', () => {
       const expectedErrors = [
         `Login failed for ${deviceId}. Incorrect device secret.`,
       ];
-      expect(error.response.data.errors).toEqual(
+      expect((error as any).response.data.errors).toEqual(
         expect.arrayContaining(expectedErrors)
       );
-      expect(error.response.status).toEqual(403);
+      expect((error as any).response.status).toEqual(403);
     }
   });
 
@@ -121,8 +121,8 @@ describe('New login APIs', () => {
       );
     } catch (error) {
       const expectedError = 'Invalid JWT. Unauthorized';
-      expect(error.response.status).toEqual(401);
-      expect(error.response.data).toEqual(expectedError);
+      expect((error as any).response.status).toEqual(401);
+      expect((error as any).response.data).toEqual(expectedError);
     }
   });
 });

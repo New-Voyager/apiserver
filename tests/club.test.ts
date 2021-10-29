@@ -36,7 +36,7 @@ describe('Club APIs', () => {
         mutation: clubutils.createClubQuery,
       });
     } catch (error) {
-      expect(error.toString()).toContain('Unauthorized');
+      expect((error as any).toString()).toContain('Unauthorized');
     }
 
     logger.debug(`Owner id before using in getClient ${ownerId}`);
@@ -65,7 +65,7 @@ describe('Club APIs', () => {
         mutation: clubutils.updateClubQuery,
       });
     } catch (error) {
-      expect(error.toString()).toContain('Unauthorized');
+      expect((error as any).toString()).toContain('Unauthorized');
     }
 
     const clubUpdateInputInvalid = {
@@ -79,7 +79,7 @@ describe('Club APIs', () => {
         mutation: clubutils.updateClubQuery,
       });
     } catch (error) {
-      expect(error.toString()).toEqual(
+      expect((error as any).toString()).toEqual(
         'Error: GraphQL error: Club invalidClub is not found'
       );
     }
@@ -95,7 +95,7 @@ describe('Club APIs', () => {
         mutation: clubutils.updateClubQuery,
       });
     } catch (error) {
-      expect(error.toString()).toEqual('name is a required field');
+      expect((error as any).toString()).toEqual('name is a required field');
     }
 
     try {
@@ -112,7 +112,7 @@ describe('Club APIs', () => {
       console.log('DONEEEÈ');
     } catch (error) {
       console.log(error);
-      expect(error.toString()).toEqual('description is a required field');
+      expect((error as any).toString()).toEqual('description is a required field');
     }
 
     try {
@@ -124,7 +124,7 @@ describe('Club APIs', () => {
         mutation: clubutils.updateClubQuery,
       });
     } catch (error) {
-      expect(error.toString()).toEqual('club object not found');
+      expect((error as any).toString()).toEqual('club object not found');
     }
 
     // the owner of the club can update
@@ -151,7 +151,7 @@ describe('Club APIs', () => {
       expect(false).toBeTruthy();
     } catch (error) {
       // FIXME: Later
-      //expect(error.toString()).toContain('Unauthorized');
+      //expect((error as any).toString()).toContain('Unauthorized');
     }
     try {
       await client.mutate({
@@ -160,7 +160,7 @@ describe('Club APIs', () => {
       });
       expect(false).toBeTruthy();
     } catch (error) {
-      expect(error.toString()).toContain('Unauthorized');
+      expect((error as any).toString()).toContain('Unauthorized');
     }
     const playerClient = getClient(playerId);
     const resp = await playerClient.mutate({
@@ -195,7 +195,7 @@ describe('Club APIs', () => {
       });
       expect(false).toBeTruthy();
     } catch (error) {
-      expect(error.toString()).toContain('Unauthorized');
+      expect((error as any).toString()).toContain('Unauthorized');
     }
   });
 
@@ -333,7 +333,7 @@ describe('Club APIs', () => {
       clubMembers = await clubutils.getClubMembers(player1Id, clubCode);
       expect(false).toBeTruthy();
     } catch (error) {
-      expect(error.toString()).toContain('Unauthorized');
+      expect((error as any).toString()).toContain('Unauthorized');
     }
   });
 
@@ -356,7 +356,7 @@ describe('Club APIs', () => {
       });
       expect(false).toBeTruthy();
     } catch (error) {
-      expect(error.toString()).toContain('Owner cannot leave the club');
+      expect((error as any).toString()).toContain('Owner cannot leave the club');
     }
 
     const player1Client = getClient(player1Id);
@@ -396,7 +396,7 @@ describe('Club APIs', () => {
       });
     } catch (error) {
       const expectedError = 'clubCode is a required field';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
     try {
       await clubutils.updateClubMember(clubCode, '', player1Id, {
@@ -409,7 +409,7 @@ describe('Club APIs', () => {
       });
     } catch (error) {
       const expectedError = 'Unauthorized';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
     try {
       await clubutils.updateClubMember(clubCode, ownerId, '', {
@@ -422,7 +422,7 @@ describe('Club APIs', () => {
       });
     } catch (error) {
       const expectedError = 'playerUuid is a required field';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     const resp = await clubutils.updateClubMember(
@@ -455,7 +455,7 @@ describe('Club APIs', () => {
       });
     } catch (error) {
       const expectedError = 'playerUuid is a required field';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     try {
@@ -466,7 +466,7 @@ describe('Club APIs', () => {
       });
     } catch (error) {
       const expectedError = 'Unauthorized';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
     try {
       await clubutils.kickMember({
@@ -476,7 +476,7 @@ describe('Club APIs', () => {
       });
     } catch (error) {
       const expectedError = 'clubCode is a required field';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
   });
 
@@ -493,7 +493,7 @@ describe('Club APIs', () => {
       });
     } catch (error) {
       const expectedError = 'clubCode is a required field';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     try {
@@ -504,7 +504,7 @@ describe('Club APIs', () => {
       });
     } catch (error) {
       const expectedError = 'Unauthorized';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     try {
@@ -515,7 +515,7 @@ describe('Club APIs', () => {
       });
     } catch (error) {
       const expectedError = 'playerUuid is a required field';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
   });
 
@@ -528,21 +528,21 @@ describe('Club APIs', () => {
       await clubutils.approvePlayer('', ownerId, player1Id);
     } catch (error) {
       const expectedError = 'clubCode is a required field';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     try {
       await clubutils.approvePlayer(clubCode, ownerId, '');
     } catch (error) {
       const expectedError = 'playerUuid is a required field';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     try {
       await clubutils.approvePlayer(clubCode, '', player1Id);
     } catch (error) {
       const expectedError = 'Unauthorized';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
   });
 
@@ -554,14 +554,14 @@ describe('Club APIs', () => {
       await clubutils.playerJoinsClub('', player1Id);
     } catch (error) {
       const expectedError = 'clubCode is a required field';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     try {
       await clubutils.playerJoinsClub(clubCode, '');
     } catch (error) {
       const expectedError = 'Unauthorized';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
   });
 
@@ -573,27 +573,27 @@ describe('Club APIs', () => {
       await clubutils.deleteClub({clubCode: '', ownerId: player1Id});
     } catch (error) {
       const expectedError = 'clubCode is a required field';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     try {
       await clubutils.deleteClub({clubCode, ownerId: ''});
     } catch (error) {
       const expectedError = 'Unauthorized';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
     try {
       await clubutils.deleteClub({clubCode, ownerId: player1Id});
     } catch (error) {
       const expectedError = 'Unauthorized. Only owner can delete the club';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     try {
       await clubutils.deleteClub({clubCode: 'test', ownerId});
     } catch (error) {
       const expectedError = 'Club: test does not exist';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     const data = await clubutils.deleteClub({clubCode, ownerId});
@@ -611,7 +611,7 @@ describe('Club APIs', () => {
       });
     } catch (error) {
       const expectedError = 'Club test is not found';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     await clubutils.sendClubFcmMessage({
@@ -632,7 +632,7 @@ describe('Club APIs', () => {
     } catch (error) {
       const expectedError =
         'Cannot find player uuid [undefined] in player repo';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
     try {
       await clubutils.leaderboard({
@@ -641,7 +641,7 @@ describe('Club APIs', () => {
       });
     } catch (error) {
       const expectedError = 'Cannot find club code [test] in club repo';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     await clubutils.leaderboard({

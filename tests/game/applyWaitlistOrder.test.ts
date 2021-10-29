@@ -51,7 +51,7 @@ describe('applyWaitlistOrder APIs', () => {
       });
     } catch (error) {
       const expectedError = 'Unauthorized';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     try {
@@ -62,7 +62,7 @@ describe('applyWaitlistOrder APIs', () => {
       });
     } catch (error) {
       const expectedError = 'Failed to change waitlist order';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     try {
@@ -73,7 +73,7 @@ describe('applyWaitlistOrder APIs', () => {
       });
     } catch (error) {
       const expectedError = 'Failed to change waitlist order';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     await Cache.setCache(`playerCache-test`, 'null');

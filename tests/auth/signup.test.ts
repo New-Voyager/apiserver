@@ -23,10 +23,10 @@ describe('Auth APIs', () => {
         'screen-name field is required',
         'device-id field is required',
       ];
-      expect(error.response.data.errors).toEqual(
+      expect((error as any).response.data.errors).toEqual(
         expect.arrayContaining(expectedErrors)
       );
-      expect(error.response.status).toEqual(400);
+      expect((error as any).response.status).toEqual(400);
     }
   });
 
@@ -61,10 +61,10 @@ describe('Auth APIs', () => {
       const expectedErrors = [
         'Error: Another device is registered with this recovery email address',
       ];
-      expect(error.response.data.errors).toEqual(
+      expect((error as any).response.data.errors).toEqual(
         expect.arrayContaining(expectedErrors)
       );
-      expect(error.response.status).toEqual(500);
+      expect((error as any).response.status).toEqual(500);
     }
   });
 });

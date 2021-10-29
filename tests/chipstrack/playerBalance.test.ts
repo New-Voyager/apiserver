@@ -36,7 +36,7 @@ describe('getPlayerBalance APIs', () => {
       });
     } catch (error) {
       const expectedError = 'ClubCode is mandatory field';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     try {
@@ -47,7 +47,7 @@ describe('getPlayerBalance APIs', () => {
       });
     } catch (error) {
       const expectedError = `Player 1243ABCs is not a club member ${clubCode}`;
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
   });
 });

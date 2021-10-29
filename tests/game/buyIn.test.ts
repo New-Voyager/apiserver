@@ -42,7 +42,7 @@ describe('buyIn APIs', () => {
       });
     } catch (error) {
       const expectedError = 'Unauthorized user';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     try {
@@ -54,7 +54,7 @@ describe('buyIn APIs', () => {
     } catch (error) {
       const expectedError =
         'Failed to buyin';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     try {
@@ -64,7 +64,7 @@ describe('buyIn APIs', () => {
         amount: 100,
       });
     } catch (error) {
-      expect(error.graphQLErrors[0].message).toEqual('Failed to buyin');
+      expect((error as any).graphQLErrors[0].message).toEqual('Failed to buyin');
     }
   });
 });

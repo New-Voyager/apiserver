@@ -28,7 +28,7 @@ describe('getClubBalance APIs', () => {
       });
     } catch (error) {
       const expectedError = 'Unauthorized';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     try {
@@ -38,7 +38,7 @@ describe('getClubBalance APIs', () => {
       });
     } catch (error) {
       const expectedError = 'ClubCode is a mandatory field';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
   });
 });

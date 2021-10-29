@@ -24,7 +24,7 @@ describe('getRakeCollected APIs', () => {
       });
     } catch (error) {
       const expectedError = 'Cannot find game code [test] in poker game repo';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     try {
@@ -35,7 +35,7 @@ describe('getRakeCollected APIs', () => {
       });
     } catch (error) {
       const expectedError = 'Unauthorized';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
   });
 });

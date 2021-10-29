@@ -18,8 +18,8 @@ describe('Recovery code APIs', () => {
       await axios.post(`http://localhost:${EXTERNAL_PORT}/auth/recovery-code`);
     } catch (error) {
       const expectedError = 'Email address is not found';
-      expect(error.response.data.error).toEqual(expectedError);
-      expect(error.response.status).toEqual(403);
+      expect((error as any).response.data.error).toEqual(expectedError);
+      expect((error as any).response.status).toEqual(403);
     }
   });
 
@@ -31,8 +31,8 @@ describe('Recovery code APIs', () => {
       });
     } catch (error) {
       const expectedError = `${email} is not a registered email`;
-      expect(error.response.data.error).toEqual(expectedError);
-      expect(error.response.status).toEqual(500);
+      expect((error as any).response.data.error).toEqual(expectedError);
+      expect((error as any).response.status).toEqual(500);
     }
   });
 
