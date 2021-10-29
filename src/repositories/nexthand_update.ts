@@ -104,10 +104,12 @@ class NextHandUpdatesRepositoryImpl {
     location: any
   ): Promise<void> {
     await getGameManager().transaction(async transactionEntityManager => {
-      const playerGameTrackerRepository =
-        transactionEntityManager.getRepository(PlayerGameTracker);
-      const nextHandUpdatesRepository =
-        transactionEntityManager.getRepository(NextHandUpdates);
+      const playerGameTrackerRepository = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
+      const nextHandUpdatesRepository = transactionEntityManager.getRepository(
+        NextHandUpdates
+      );
       const rows = await playerGameTrackerRepository
         .createQueryBuilder()
         .where({

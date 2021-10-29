@@ -16,8 +16,9 @@ class GameUpdatesRepositoryImpl {
     transactionEntityManager: EntityManager
   ) {
     // create a entry in PokerGameUpdates
-    const gameUpdatesRepo =
-      transactionEntityManager.getRepository(PokerGameUpdates);
+    const gameUpdatesRepo = transactionEntityManager.getRepository(
+      PokerGameUpdates
+    );
     const gameUpdates = new PokerGameUpdates();
     gameUpdates.gameCode = gameCode;
     const appSettings = getAppSettings();
@@ -89,8 +90,9 @@ class GameUpdatesRepositoryImpl {
 
     const ret = await getGameManager().transaction(
       async transactionEntityManager => {
-        const pokerGameUpdates =
-          transactionEntityManager.getRepository(PokerGameUpdates);
+        const pokerGameUpdates = transactionEntityManager.getRepository(
+          PokerGameUpdates
+        );
         await pokerGameUpdates.update(
           {
             gameCode: game.gameCode,
@@ -182,8 +184,9 @@ class GameUpdatesRepositoryImpl {
     rake: number,
     transactionEntityManager: EntityManager
   ) {
-    const gameUpdatesRepo =
-      transactionEntityManager.getRepository(PokerGameUpdates);
+    const gameUpdatesRepo = transactionEntityManager.getRepository(
+      PokerGameUpdates
+    );
     await gameUpdatesRepo
       .createQueryBuilder()
       .update()

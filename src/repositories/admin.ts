@@ -125,8 +125,9 @@ class AdminRepositoryImpl {
       allGames.map(async value => {
         await getHistoryManager().transaction(
           async transactionalEntityManager => {
-            const handHistoryRepo =
-              transactionalEntityManager.getRepository(HandHistory);
+            const handHistoryRepo = transactionalEntityManager.getRepository(
+              HandHistory
+            );
             const playerStatsFromHandHistory = await handHistoryRepo.find({
               gameId: value.gameId,
             });

@@ -17,8 +17,9 @@ class GameSettingsRepositoryImpl {
     const gameSettings = new PokerGameSettings();
     let gameSettingsRepo: Repository<PokerGameSettings>;
     if (transactionEntityManager) {
-      gameSettingsRepo =
-        transactionEntityManager.getRepository(PokerGameSettings);
+      gameSettingsRepo = transactionEntityManager.getRepository(
+        PokerGameSettings
+      );
     } else {
       gameSettingsRepo = getRepository(PokerGameSettings);
     }

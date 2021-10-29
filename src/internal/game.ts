@@ -91,7 +91,7 @@ class GameAPIs {
     if (typeof req.body.status === 'number') {
       tableStatus = req.body.status;
     } else {
-      tableStatus = TableStatus[req.body.status] as unknown as TableStatus;
+      tableStatus = (TableStatus[req.body.status] as unknown) as TableStatus;
     }
     if (!tableStatus) {
       const res = {error: 'Invalid table status'};
@@ -204,11 +204,10 @@ class GameAPIs {
               false,
               transactionEntityManager
             );
-            const playersInSeats =
-              await PlayersInGameRepository.getPlayersInSeats(
-                game.id,
-                transactionEntityManager
-              );
+            const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
+              game.id,
+              transactionEntityManager
+            );
             const players = new Array<any>();
             for (const playerInSeat of playersInSeats) {
               const player = playerInSeat as any;
@@ -225,8 +224,9 @@ class GameAPIs {
                 availableSeats.push(seatNo);
               }
             }
-            const gameRewardRepository =
-              transactionEntityManager.getRepository(GameReward);
+            const gameRewardRepository = transactionEntityManager.getRepository(
+              GameReward
+            );
             const gameRewards: GameReward[] = await gameRewardRepository.find({
               where: {
                 gameId: game.id,

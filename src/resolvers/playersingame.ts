@@ -124,7 +124,7 @@ export async function getGamePlayers(gameCode: string) {
 
 export async function playerStackStat(playerId: string, gameCode: string) {
   if (!playerId) {
-    throw new Error('Unauthorized');
+    throw new UnauthorizedError();
   }
   const errors = new Array<string>();
   if (errors.length > 0) {

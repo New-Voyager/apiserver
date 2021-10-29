@@ -22,8 +22,9 @@ class ChipsTrackRepositoryImpl {
   ): Promise<boolean> {
     try {
       // update session time
-      const playerGameRepo =
-        transactionEntityManager.getRepository(PlayerGameTracker);
+      const playerGameRepo = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
       const playerInGame = await playerGameRepo.find({
         game: {id: game.id},
       });

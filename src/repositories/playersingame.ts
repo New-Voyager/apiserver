@@ -35,8 +35,9 @@ class PlayersInGameRepositoryImpl {
   ): Promise<Array<PlayerGameTracker>> {
     let playerGameTrackerRepo: Repository<PlayerGameTracker>;
     if (transactionManager) {
-      playerGameTrackerRepo =
-        transactionManager.getRepository(PlayerGameTracker);
+      playerGameTrackerRepo = transactionManager.getRepository(
+        PlayerGameTracker
+      );
     } else {
       playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     }
@@ -55,8 +56,9 @@ class PlayersInGameRepositoryImpl {
   ): Promise<any> {
     let playerGameTrackerRepo;
     if (transactionManager) {
-      playerGameTrackerRepo =
-        transactionManager.getRepository(PlayerGameTracker);
+      playerGameTrackerRepo = transactionManager.getRepository(
+        PlayerGameTracker
+      );
     } else {
       playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     }
@@ -75,8 +77,9 @@ class PlayersInGameRepositoryImpl {
   ): Promise<PlayerGameTracker> {
     let playerGameTrackerRepo;
     if (transactionManager) {
-      playerGameTrackerRepo =
-        transactionManager.getRepository(PlayerGameTracker);
+      playerGameTrackerRepo = transactionManager.getRepository(
+        PlayerGameTracker
+      );
     } else {
       playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     }
@@ -114,8 +117,9 @@ class PlayersInGameRepositoryImpl {
       if (!game) {
         throw new Error(`Game ${gameCode} is not found`);
       }
-      const playerGameTrackerRepository =
-        transactionEntityManager.getRepository(PlayerGameTracker);
+      const playerGameTrackerRepository = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
       logger.info(
         `Kick out player ${player?.id}/${player?.name} from game ${gameCode}`
       );
@@ -150,8 +154,9 @@ class PlayersInGameRepositoryImpl {
           },
         });
 
-        const gameSeatInfoRepo =
-          transactionEntityManager.getRepository(PokerGameSeatInfo);
+        const gameSeatInfoRepo = transactionEntityManager.getRepository(
+          PokerGameSeatInfo
+        );
         await gameSeatInfoRepo.update(
           {
             gameID: game.id,
@@ -162,8 +167,9 @@ class PlayersInGameRepositoryImpl {
       } else {
         // game is running, so kickout the user in next hand
         // deal with this in the next hand update
-        const nextHandUpdatesRepository =
-          transactionEntityManager.getRepository(NextHandUpdates);
+        const nextHandUpdatesRepository = transactionEntityManager.getRepository(
+          NextHandUpdates
+        );
         const update = new NextHandUpdates();
         update.game = game;
         update.playerId = player.id;
@@ -186,8 +192,9 @@ class PlayersInGameRepositoryImpl {
       if (!game) {
         throw new Error(`Game ${gameCode} is not found`);
       }
-      const playerGameTrackerRepository =
-        transactionEntityManager.getRepository(PlayerGameTracker);
+      const playerGameTrackerRepository = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
       logger.info(
         `Setting buy-in limit to ${limit} for player ${player?.id}/${player?.name} in game ${gameCode}`
       );
@@ -232,8 +239,10 @@ class PlayersInGameRepositoryImpl {
       }
 
       // Only one of the seated players can be assigned as the new host.
-      const playersInSeats: Array<PlayerGameTracker> =
-        await this.getPlayersInSeats(game.id, transactionEntityManager);
+      const playersInSeats: Array<PlayerGameTracker> = await this.getPlayersInSeats(
+        game.id,
+        transactionEntityManager
+      );
       let isPlayerInSeat: boolean = false;
       for (const p of playersInSeats) {
         if (p.playerId === newHostPlayer.id) {
@@ -274,8 +283,9 @@ class PlayersInGameRepositoryImpl {
     logger.info(`getAudioToken is called`);
     let playerGameTrackerRepository: Repository<PlayerGameTracker>;
     if (transactionEntityManager) {
-      playerGameTrackerRepository =
-        transactionEntityManager.getRepository(PlayerGameTracker);
+      playerGameTrackerRepository = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
     } else {
       playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     }
@@ -356,8 +366,9 @@ class PlayersInGameRepositoryImpl {
         updates.bombPotEnabled = config.bombPotEnabled;
       }
 
-      const playerGameTrackerRepo =
-        transactionEntityManager.getRepository(PlayerGameTracker);
+      const playerGameTrackerRepo = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
       logger.info(
         `Updating player game settings for player ${player?.id}/${player?.name} game ${game?.gameCode}`
       );
@@ -432,16 +443,18 @@ class PlayersInGameRepositoryImpl {
     let playerGameTrackerRepository: Repository<PlayerGameTracker>;
 
     if (transactionEntityManager) {
-      playerGameTrackerRepository =
-        transactionEntityManager.getRepository(PlayerGameTracker);
+      playerGameTrackerRepository = transactionEntityManager.getRepository(
+        PlayerGameTracker
+      );
     } else {
       playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     }
     // TODO: start a buy-in timer
     let gameSettingsRepo: Repository<PokerGameSettings>;
     if (transactionEntityManager) {
-      gameSettingsRepo =
-        transactionEntityManager.getRepository(PokerGameSettings);
+      gameSettingsRepo = transactionEntityManager.getRepository(
+        PokerGameSettings
+      );
     } else {
       gameSettingsRepo = getGameRepository(PokerGameSettings);
     }
@@ -496,8 +509,9 @@ class PlayersInGameRepositoryImpl {
     try {
       let playerGameRepo: Repository<PlayerGameTracker>;
       if (transactionEntityManager) {
-        playerGameRepo =
-          transactionEntityManager.getRepository(PlayerGameTracker);
+        playerGameRepo = transactionEntityManager.getRepository(
+          PlayerGameTracker
+        );
       } else {
         playerGameRepo = getGameRepository(PlayerGameTracker);
       }

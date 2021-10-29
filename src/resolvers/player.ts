@@ -599,8 +599,11 @@ async function getPrivileges(playerId: string) {
   }
   try {
     // get club member count
-    const [memberCount, ownerCount, managerCount] =
-      await ClubRepository.getClubOwnerManagerCount(playerId);
+    const [
+      memberCount,
+      ownerCount,
+      managerCount,
+    ] = await ClubRepository.getClubOwnerManagerCount(playerId);
     const hostingCount = await GameRepository.hostingCount(playerId);
 
     /*

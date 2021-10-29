@@ -159,8 +159,9 @@ class MoveToNextHand {
           transactionEntityManager
         );
 
-        const playerGameRepo =
-          transactionEntityManager.getRepository(PlayerGameTracker);
+        const playerGameRepo = transactionEntityManager.getRepository(
+          PlayerGameTracker
+        );
         // reset posted blind next field
         await playerGameRepo.update(
           {
@@ -222,8 +223,9 @@ class MoveToNextHand {
         if (this.bombPotThisHand) {
           setProps['lastBombPotTime'] = new Date();
         }
-        const gameUpdatesRepo =
-          transactionEntityManager.getRepository(PokerGameUpdates);
+        const gameUpdatesRepo = transactionEntityManager.getRepository(
+          PokerGameUpdates
+        );
         // update button pos and gameType
         await gameUpdatesRepo
           .createQueryBuilder()
@@ -285,8 +287,9 @@ class MoveToNextHand {
     entityManager: EntityManager
   ) {
     // update the players who have posted blinds or posted due to natural blind position
-    const playerGameTrackerRepo =
-      entityManager.getRepository(PlayerGameTracker);
+    const playerGameTrackerRepo = entityManager.getRepository(
+      PlayerGameTracker
+    );
 
     // if only two players are playing, then don't worry about missed blind
     // and a dealer seat
@@ -721,11 +724,10 @@ export class NextHandProcess {
           throw new Error(`Game code: Game updates ${this.gameCode} not found`);
         }
 
-        const playersInSeats: Array<PlayerGameTracker> =
-          await PlayersInGameRepository.getPlayersInSeats(
-            game.id,
-            transactionEntityManager
-          );
+        const playersInSeats: Array<PlayerGameTracker> = await PlayersInGameRepository.getPlayersInSeats(
+          game.id,
+          transactionEntityManager
+        );
         const takenSeats = _.keyBy(playersInSeats, 'seatNo');
         const seats = new Array<PlayerInSeat>();
 

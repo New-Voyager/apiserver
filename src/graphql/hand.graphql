@@ -95,7 +95,7 @@ type Query {
   # To get specific hand history for a given gameId, clubId and handNum
   specificHandHistory(
     gameCode: String!
-    handNum: String!
+    handNum: Int!
   ): HandHistory!
 
   # To get all hand history for a given gameId and clubId

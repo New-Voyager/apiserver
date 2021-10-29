@@ -217,8 +217,9 @@ async function processConsecutiveActionTimeouts(
     );
 
     const playersInGame = _.keyBy(playersInGameArr, 'playerId');
-    const playersInGameRepo =
-      transactionEntityManager.getRepository(PlayerGameTracker);
+    const playersInGameRepo = transactionEntityManager.getRepository(
+      PlayerGameTracker
+    );
     let shouldUpdateCache = false;
     for (const playerIdStr of Object.keys(timeoutStats)) {
       const currentHandTimeouts =
@@ -274,8 +275,9 @@ async function processConsecutiveActionTimeouts(
     // Remember that we processed the consecutive timeout counts for this hand,
     // so that we don't add the count again if the game server crashes
     // and this function gets called again.
-    const pokerGameUpdatesRepo =
-      transactionEntityManager.getRepository(PokerGameUpdates);
+    const pokerGameUpdatesRepo = transactionEntityManager.getRepository(
+      PokerGameUpdates
+    );
     await pokerGameUpdatesRepo
       .createQueryBuilder()
       .update()
