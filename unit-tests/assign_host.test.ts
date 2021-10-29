@@ -141,6 +141,9 @@ describe('Assign Game Host API', () => {
     );
     
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error('Game not found');
+    }
     
     expect(game.hostId).toBeGreaterThan(0);
     expect(game.hostName).toEqual(ownerInput.name);

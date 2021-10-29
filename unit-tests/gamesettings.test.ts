@@ -139,6 +139,9 @@ describe('Game APIs', () => {
     );
     
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error('Game not found');
+    }
     const gameSettings = await GameSettingsRepository.get(gameCode);
 
     expect(gameSettings.buyInApproval).toEqual(false);

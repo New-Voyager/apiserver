@@ -255,7 +255,14 @@ describe.skip('Game APIs', () => {
       //await createReward(owner, club);
       const startedGame = await configureGame(owner, club, holdemGameInput);
       const gameData = await Cache.getGame(startedGame.gameCode);
-      expect(gameData.id).not.toBe(null);
+      if (!gameData) {
+        throw new Error('Game not found');
+      }
+  
+      expect(gameData).not.toBeUndefined();
+      if (gameData) {
+        expect(gameData.id).not.toBe(null);
+      }
     } catch (err) {
       logger.error(JSON.stringify(err));
       expect(true).toBeFalsy();

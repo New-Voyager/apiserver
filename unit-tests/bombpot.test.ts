@@ -187,6 +187,9 @@ describe('Game APIs', () => {
     );
 
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error('Game not found');
+    }
 
     // get next hand information
     let nextHandProcess = new NextHandProcess(game.gameCode, 0);
