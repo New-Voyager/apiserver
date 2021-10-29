@@ -1,4 +1,5 @@
 import * as _ from 'lodash';
+import * as zlib from 'zlib';
 import {SavedHands} from '@src/entity/player/player';
 import {HandHistory} from '@src/entity/history/hand';
 import {
@@ -192,7 +193,7 @@ class HandRepositoryImpl {
       let handData: any = {};
       if (game.handsDataCompressed) {
         const data = Buffer.from(resp.data);
-        const json = lz.decompress(data);
+        const json = zlib.inflateSync(data).toString();
         handData = JSON.parse(json);
       } else {
         handData = JSON.parse(resp.data);

@@ -16,6 +16,7 @@ import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {StatsRepository} from './stats';
 import * as lz from 'lzutf8';
+import * as zlib from 'zlib';
 import {DigitalOcean} from '@src/digitalocean';
 import {getGameCodeForClub} from '@src/utils/uniqueid';
 import {
@@ -329,9 +330,12 @@ class AggregationImpl {
     let handAggregated = false;
     let handDataUrl = '';
     try {
-      const handData = new TextEncoder().encode(handStr);
-      const compressedData = lz.compress(handData);
-      const decompressedData = lz.decompress(compressedData);
+      //const handData = new TextEncoder().encode(handStr);
+      var bufferObject = Buffer.from(handStr);
+      const compressedData = zlib.deflateSync(bufferObject);
+      const decompressedData = zlib.inflateSync(compressedData);
+      // const compressedData = lz.compress(handData);
+      // const decompressedData = lz.decompress(compressedData);
       if (handStr.toString() === decompressedData.toString()) {
         console.log('Data is equal');
       }
