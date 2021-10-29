@@ -25,6 +25,9 @@ export function authReq(req, res): boolean {
         }
       }
     }
+  } else {
+    res.status(401).send('Unauthorized');
+    return false;
   }
 
   return true;
