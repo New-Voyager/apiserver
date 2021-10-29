@@ -52,7 +52,7 @@ describe('location check APIs', () => {
         },
       });
     } catch (error) {
-      expect(error.graphQLErrors[0].message).toEqual('Players have same ip address')
+      expect((error as any).graphQLErrors[0].message).toEqual('Players have same ip address')
     }
   })
 
@@ -92,7 +92,7 @@ describe('location check APIs', () => {
         },
       });
     } catch (error) {
-      expect(error.graphQLErrors[0].message).toEqual('Players are close to each other')
+      expect((error as any).graphQLErrors[0].message).toEqual('Players are close to each other')
     }
   })
 

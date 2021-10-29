@@ -12,7 +12,7 @@ import {PlayerGameStats} from '@src/entity/history/stats';
 import {HandHistory} from '@src/entity/history/hand';
 import {GameStatus} from '@src/entity/types';
 import {PlayersInGame} from '@src/entity/history/player';
-import {getLogger} from '@src/utils/log';
+import {getLogger, errToStr} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {StatsRepository} from './stats';
 import * as lz from 'lzutf8';
@@ -102,19 +102,16 @@ class AggregationImpl {
       );
       await getHistoryManager().transaction(
         async transactionalEntityManager => {
-          const gameHistoryRepo = transactionalEntityManager.getRepository(
-            GameHistory
-          );
+          const gameHistoryRepo =
+            transactionalEntityManager.getRepository(GameHistory);
 
-          const handHistoryRepo = transactionalEntityManager.getRepository(
-            HandHistory
-          );
+          const handHistoryRepo =
+            transactionalEntityManager.getRepository(HandHistory);
           const handHistoryData = await handHistoryRepo.find({
             gameId: game.gameId,
           });
-          const playersInGameRepo = transactionalEntityManager.getRepository(
-            PlayersInGame
-          );
+          const playersInGameRepo =
+            transactionalEntityManager.getRepository(PlayersInGame);
           const playersInGame = await playersInGameRepo.find({
             gameId: game.gameId,
           });
@@ -224,9 +221,8 @@ class AggregationImpl {
             );
           }
 
-          const gameStatsRepo = transactionalEntityManager.getRepository(
-            PlayerGameStats
-          );
+          const gameStatsRepo =
+            transactionalEntityManager.getRepository(PlayerGameStats);
           // update player game stats
           for (const player of playersInGame) {
             let headsupHandDetails = '[]';
@@ -238,9 +234,8 @@ class AggregationImpl {
                 playerStatsMap[player.playerId].headsupDetails
               );
             }
-            playerStatsMap[
-              player.playerId
-            ].headsupHandDetails = headsupHandDetails;
+            playerStatsMap[player.playerId].headsupHandDetails =
+              headsupHandDetails;
             delete playerStatsMap[player.playerId].headsupDetails;
             await gameStatsRepo.update(
               {
@@ -347,7 +342,7 @@ class AggregationImpl {
       handCompressed = true;
     } catch (err) {
       // caught an error when aggregating the data (ignore it)
-      logger.error(`Failed to aggregate hand data. Error: ${err.message}`);
+      logger.error(`Failed to aggregate hand data. Error: ${errToStr(err)}`);
     }
 
     // update game history table
@@ -382,9 +377,8 @@ class AggregationImpl {
       await transManager.delete(PokerGameSettings, {gameCode: gameCode});
 
       const gameRepo = transManager.getRepository(PokerGame);
-      const playerGameTrackerRepo = transManager.getRepository(
-        PlayerGameTracker
-      );
+      const playerGameTrackerRepo =
+        transManager.getRepository(PlayerGameTracker);
       await playerGameTrackerRepo.delete({
         game: {id: game.id},
       });

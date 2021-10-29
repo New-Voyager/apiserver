@@ -38,7 +38,7 @@ describe.skip('observeGame APIs', () => {
       });
     } catch (error) {
       const expectedError = 'Game test is not found';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     await Cache.setCache('playerCache-test', 'null');
@@ -50,7 +50,7 @@ describe.skip('observeGame APIs', () => {
       });
     } catch (error) {
       const expectedError = 'Player test is not found';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     try {
@@ -60,7 +60,7 @@ describe.skip('observeGame APIs', () => {
       });
     } catch (error) {
       const expectedError = 'Cannot find player uuid [test] in player repo';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     await Cache.setCache('gameCache-test', 'null');
@@ -72,7 +72,7 @@ describe.skip('observeGame APIs', () => {
       });
     } catch (error) {
       const expectedError = 'Game test is not found';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
 
     try {
@@ -82,7 +82,7 @@ describe.skip('observeGame APIs', () => {
       });
     } catch (error) {
       const expectedError = 'Player: 1243ABCs is not a club member in club bbc';
-      expect(error.graphQLErrors[0].message).toEqual(expectedError);
+      expect((error as any).graphQLErrors[0].message).toEqual(expectedError);
     }
   });
 });

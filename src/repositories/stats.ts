@@ -10,7 +10,7 @@ import {
 import {PokerGame} from '@src/entity/game/game';
 import {isArray} from 'lodash';
 import {loggers} from 'winston';
-import {getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {Club} from '@src/entity/player/club';
 import {GameType} from '@src/entity/types';
 import {Cache} from '@src/cache';
@@ -420,12 +420,10 @@ class StatsRepositoryImpl {
     transactionalEntityManager: EntityManager
   ) {
     try {
-      const playerStatsRepo = transactionalEntityManager.getRepository(
-        PlayerHandStats
-      );
-      const gameStatsRepo = transactionalEntityManager.getRepository(
-        PlayerGameStats
-      );
+      const playerStatsRepo =
+        transactionalEntityManager.getRepository(PlayerHandStats);
+      const gameStatsRepo =
+        transactionalEntityManager.getRepository(PlayerGameStats);
       const rows = await gameStatsRepo.find({
         gameId: gameId,
       });
@@ -500,7 +498,7 @@ class StatsRepositoryImpl {
       }
       await Promise.all(updates);
     } catch (err) {
-      logger.error(`Failed to update player stats: ${err.toString()}`);
+      logger.error(`Failed to update player stats: ${errToStr(err)}`);
     }
   }
 
@@ -518,7 +516,7 @@ class StatsRepositoryImpl {
         })
         .execute();
     } catch (err) {
-      logger.error(`Failed to update player stats: ${err.toString()}`);
+      logger.error(`Failed to update player stats: ${errToStr(err)}`);
     }
   }
 
@@ -537,7 +535,7 @@ class StatsRepositoryImpl {
         })
         .execute();
     } catch (err) {
-      logger.error(`Failed to update club stats: ${err.toString()}`);
+      logger.error(`Failed to update club stats: ${errToStr(err)}`);
     }
   }
 
@@ -707,7 +705,9 @@ class StatsRepositoryImpl {
         }
       }
     } catch (err) {
-      logger.error(`Error when player hand stats data. Error: ${err.message}`);
+      logger.error(
+        `Error when player hand stats data. Error: ${errToStr(err, false)}`
+      );
       throw err;
     }
   }

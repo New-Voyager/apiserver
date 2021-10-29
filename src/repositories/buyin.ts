@@ -265,9 +265,8 @@ export class BuyIn {
         // if auto approval is set, add the buyin
         // make sure buyin within min and maxBuyin
         // send a message to game server that buyer stack has been updated
-        const playerGameTrackerRepository = transactionEntityManager.getRepository(
-          PlayerGameTracker
-        );
+        const playerGameTrackerRepository =
+          transactionEntityManager.getRepository(PlayerGameTracker);
         logger.info('buyin request');
         const playerInGame = await playerGameTrackerRepository.findOne({
           game: {id: this.game.id},
@@ -622,9 +621,8 @@ export class BuyIn {
         return await getGameManager().transaction(
           async transactionEntityManager => {
             // get amount from the next hand update table
-            const pendingUpdatesRepo = transactionEntityManager.getRepository(
-              NextHandUpdates
-            );
+            const pendingUpdatesRepo =
+              transactionEntityManager.getRepository(NextHandUpdates);
             const buyInRequest = await pendingUpdatesRepo.findOne({
               game: {id: this.game.id},
               playerId: this.player.id,
@@ -635,9 +633,8 @@ export class BuyIn {
             }
 
             // update player game tracker
-            const playerInGameRepo = transactionEntityManager.getRepository(
-              PlayerGameTracker
-            );
+            const playerInGameRepo =
+              transactionEntityManager.getRepository(PlayerGameTracker);
             const playerInGame = await playerInGameRepo.findOne({
               game: {id: this.game.id},
               playerId: this.player.id,
@@ -670,9 +667,8 @@ export class BuyIn {
         return await getGameManager().transaction(
           async transactionEntityManager => {
             // get amount from the next hand update table
-            const pendingUpdatesRepo = transactionEntityManager.getRepository(
-              NextHandUpdates
-            );
+            const pendingUpdatesRepo =
+              transactionEntityManager.getRepository(NextHandUpdates);
             const buyInRequest = await pendingUpdatesRepo.findOne({
               game: {id: this.game.id},
               playerId: this.player.id,
@@ -683,9 +679,8 @@ export class BuyIn {
             }
 
             // update player game tracker
-            const playerInGameRepo = transactionEntityManager.getRepository(
-              PlayerGameTracker
-            );
+            const playerInGameRepo =
+              transactionEntityManager.getRepository(PlayerGameTracker);
             const playerInGame = await playerInGameRepo.findOne({
               game: {id: this.game.id},
               playerId: this.player.id,
@@ -781,9 +776,8 @@ export class BuyIn {
   ) {
     let nextHandUpdatesRepository;
     if (transactionEntityManager) {
-      nextHandUpdatesRepository = transactionEntityManager.getRepository(
-        NextHandUpdates
-      );
+      nextHandUpdatesRepository =
+        transactionEntityManager.getRepository(NextHandUpdates);
     } else {
       nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
     }
@@ -888,9 +882,8 @@ export class BuyIn {
   public static async startBuyInTimers(game: PokerGame) {
     logger.debug(`[${gameLogPrefix(game)} Starting buyin timers`);
     await getGameManager().transaction(async transactionEntityManager => {
-      const playerGameTrackerRepo = transactionEntityManager.getRepository(
-        PlayerGameTracker
-      );
+      const playerGameTrackerRepo =
+        transactionEntityManager.getRepository(PlayerGameTracker);
       const emptyStackPlayers = await playerGameTrackerRepo.find({
         game: {id: game.id},
         status: PlayerStatus.PLAYING,

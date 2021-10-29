@@ -12,7 +12,7 @@ import {
   PlayerHandStats,
 } from '@src/entity/history/stats';
 import {HandHistory, HighHandHistory} from '@src/entity/history/hand';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {performance} from 'perf_hooks';
 import {PlayersInGame} from '@src/entity/history/player';
 import {
@@ -125,9 +125,8 @@ class AdminRepositoryImpl {
       allGames.map(async value => {
         await getHistoryManager().transaction(
           async transactionalEntityManager => {
-            const handHistoryRepo = transactionalEntityManager.getRepository(
-              HandHistory
-            );
+            const handHistoryRepo =
+              transactionalEntityManager.getRepository(HandHistory);
             const playerStatsFromHandHistory = await handHistoryRepo.find({
               gameId: value.gameId,
             });
@@ -213,7 +212,7 @@ class AdminRepositoryImpl {
         } ms. Processed game IDs - [${processedGameIds}]`
       );
     } catch (err) {
-      logger.error(`Error during post processing: ${errToLogString(err)}`);
+      logger.error(`Error during post processing: ${errToStr(err)}`);
       resp.status(500).send({
         processedGameIds: [],
       });

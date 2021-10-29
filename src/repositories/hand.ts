@@ -12,7 +12,7 @@ import {
 import {LessThan, MoreThan, getManager, EntityManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {PokerGame} from '@src/entity/game/game';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {Cache} from '@src/cache';
 import {RewardRepository} from './reward';
@@ -282,7 +282,7 @@ class HandRepositoryImpl {
       return resp.id;
     } catch (error) {
       logger.error(
-        `Error when trying to save bookmarked hand: ${error.toString}`
+        `Error when trying to save bookmarked hand: ${errToStr(error, false)}`
       );
       throw error;
     }
@@ -307,7 +307,7 @@ class HandRepositoryImpl {
       }
     } catch (error) {
       logger.error(
-        `Error when trying to deleting bookmarked hand: ${error.toString}`
+        `Error when trying to deleting bookmarked hand: ${errToStr(error)}`
       );
       throw error;
     }
@@ -340,9 +340,8 @@ class HandRepositoryImpl {
     try {
       const id = await getUserManager().transaction(
         async transactionEntityManager => {
-          const savedHandsRepository = transactionEntityManager.getRepository(
-            SavedHands
-          );
+          const savedHandsRepository =
+            transactionEntityManager.getRepository(SavedHands);
 
           let sharedHand = await savedHandsRepository.findOne({
             gameCode: gameCode,
@@ -362,9 +361,8 @@ class HandRepositoryImpl {
           }
 
           const resp = await savedHandsRepository.save(sharedHand);
-          const clubMsgRepo = transactionEntityManager.getRepository(
-            ClubMessageInput
-          );
+          const clubMsgRepo =
+            transactionEntityManager.getRepository(ClubMessageInput);
           const message = new ClubMessageInput();
           message.clubCode = club.clubCode;
           message.player = player;
@@ -376,7 +374,9 @@ class HandRepositoryImpl {
       );
       return id;
     } catch (error) {
-      logger.error(`Error when trying to share hands: ${error.toString()}`);
+      logger.error(
+        `Error when trying to share hands: ${errToStr(error, false)}`
+      );
       throw error;
     }
   }
@@ -392,7 +392,9 @@ class HandRepositoryImpl {
       });
       return sharedHand;
     } catch (error) {
-      logger.error(`Error when trying to get shared hand: ${error.toString}`);
+      logger.error(
+        `Error when trying to get shared hand: ${errToStr(error, false)}`
+      );
       throw error;
     }
   }
@@ -410,7 +412,9 @@ class HandRepositoryImpl {
       });
       return sharedHands;
     } catch (error) {
-      logger.error(`Error when trying to get shared hands: ${error.toString}`);
+      logger.error(
+        `Error when trying to get shared hands: ${errToStr(error, false)}`
+      );
       throw error;
     }
   }
@@ -433,7 +437,7 @@ class HandRepositoryImpl {
       return bookmarkedHands;
     } catch (error) {
       logger.error(
-        `Error when trying to get bookmarked hands: ${error.toString}`
+        `Error when trying to get bookmarked hands: ${errToStr(error, false)}`
       );
       throw error;
     }
@@ -461,7 +465,7 @@ class HandRepositoryImpl {
       return bookmarkedHands;
     } catch (error) {
       logger.error(
-        `Error when trying to get bookmarked hands: ${error.toString}`
+        `Error when trying to get bookmarked hands: ${errToStr(error, false)}`
       );
       throw error;
     }
@@ -873,7 +877,7 @@ class HandRepositoryImpl {
       //   }
       //   // } catch (err) {}
       // } catch (err) {
-      //   logger.error(errToLogString(err));
+      //   logger.error(errToStr(err));
       // }
 
       if (!pendingUpdates) {
@@ -891,13 +895,13 @@ class HandRepositoryImpl {
       //logger.info(`Hand ended`);
       return saveResult;
     } catch (err) {
-      logger.error(`Error when trying to save hand log: ${err.toString()}`);
+      logger.error(`Error when trying to save hand log: ${errToStr(err)}`);
       return {
         gameCode: gameCode,
         handNum: handNum,
         success: false,
         skipped: false,
-        error: err.message,
+        error: errToStr(err, false),
       };
     }
   }

@@ -20,8 +20,8 @@ describe('Login recovery code APIs', () => {
       );
     } catch (error) {
       const expectedError = 'Email address is required';
-      expect(error.response.data.error).toEqual(expectedError);
-      expect(error.response.status).toEqual(403);
+      expect((error as any).response.data.error).toEqual(expectedError);
+      expect((error as any).response.status).toEqual(403);
     }
   });
 
@@ -36,8 +36,8 @@ describe('Login recovery code APIs', () => {
       );
     } catch (error) {
       const expectedError = 'code is required';
-      expect(error.response.data.error).toEqual(expectedError);
-      expect(error.response.status).toEqual(403);
+      expect((error as any).response.data.error).toEqual(expectedError);
+      expect((error as any).response.status).toEqual(403);
     }
   });
 
@@ -54,8 +54,8 @@ describe('Login recovery code APIs', () => {
       );
     } catch (error) {
       const expectedError = 'New device id is required';
-      expect(error.response.data.error).toEqual(expectedError);
-      expect(error.response.status).toEqual(403);
+      expect((error as any).response.data.error).toEqual(expectedError);
+      expect((error as any).response.status).toEqual(403);
     }
   });
 
@@ -74,8 +74,8 @@ describe('Login recovery code APIs', () => {
       );
     } catch (error) {
       const expectedError = `${email} is not a registered email`;
-      expect(error.response.data.error).toEqual(expectedError);
-      expect(error.response.status).toEqual(400);
+      expect((error as any).response.data.error).toEqual(expectedError);
+      expect((error as any).response.status).toEqual(400);
     }
   });
 
@@ -97,8 +97,8 @@ describe('Login recovery code APIs', () => {
       );
     } catch (error) {
       const expectedError = 'Recovery code does not match';
-      expect(error.response.data.error).toEqual(expectedError);
-      expect(error.response.status).toEqual(400);
+      expect((error as any).response.data.error).toEqual(expectedError);
+      expect((error as any).response.status).toEqual(400);
     }
   });
 });

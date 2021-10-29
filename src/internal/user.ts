@@ -1,5 +1,5 @@
 import {PlayerRepository} from '@src/repositories/player';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 
 const logger = getLogger('internal::user');
 
@@ -16,8 +16,8 @@ class UserAPIs {
       }
       resp.status(200).json({status: 'OK', key: player.encryptionKey});
     } catch (err) {
-      logger.error(`Error getting encryption key: ${errToLogString(err)}`);
-      resp.status(500).json({error: errToLogString(err, false)});
+      logger.error(`Error getting encryption key: ${errToStr(err)}`);
+      resp.status(500).json({error: errToStr(err, false)});
     }
   }
 }

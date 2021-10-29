@@ -3,7 +3,7 @@ import {GameServer} from '@src/entity/game/gameserver';
 import {GameServerStatus, GameStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {fixQuery} from '@src/utils';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {PokerGame} from '@src/entity/game/game';
 import {publishNewGame} from '@src/gameserver';
 import {getGameConnection, getGameRepository} from '@src/repositories';
@@ -125,8 +125,8 @@ class GameServerAPIs {
       }
       resp.status(200).send(JSON.stringify({server: gameServer}));
     } catch (err) {
-      logger.error(err.message);
-      resp.status(500).send(JSON.stringify({error: err.message}));
+      logger.error(errToStr(err, false));
+      resp.status(500).send(JSON.stringify({error: errToStr(err, false)}));
     }
   }
 
@@ -146,10 +146,10 @@ class GameServerAPIs {
       }
     } catch (err) {
       logger.error(
-        `Unable to restart all games in game server. Error: ${err.message}`
+        `Unable to restart all games in game server. Error: ${errToStr(err)}`
       );
       const response = {
-        error: err.message,
+        error: errToStr(err, false),
       };
       resp.status(500).send(JSON.stringify(response));
       return;
@@ -162,7 +162,7 @@ class GameServerAPIs {
         `Unable to restart all games in game server ${gameServer.id} (url: ${gameServer.url})`
       );
       const response = {
-        error: err.message,
+        error: errToStr(err, false),
       };
       resp.status(500).send(JSON.stringify(response));
       return;
@@ -212,10 +212,10 @@ class GameServerAPIs {
       resp.status(200).send(JSON.stringify({status: 'OK'}));
     } catch (err) {
       const msg = `Could not set max games for game server ID ${gameServerId}: `;
-      logger.error(msg + errToLogString(err));
+      logger.error(msg + errToStr(err));
       resp
         .status(500)
-        .send(JSON.stringify({error: msg + errToLogString(err, false)}));
+        .send(JSON.stringify({error: msg + errToStr(err, false)}));
     }
   }
 }
@@ -269,7 +269,7 @@ export async function createGameServer(
     await gameServerRepository.save(gameServer);
     return [gameServer, null];
   } catch (err) {
-    logger.error(`Registering game server failed. Error: ${err.toString()}`);
+    logger.error(`Registering game server failed. Error: ${errToStr(err)}`);
     return [null, err];
   }
 }
@@ -278,9 +278,8 @@ async function restartGameServerGames(
   gameServer: GameServer
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<void> {
-  const games: Array<PokerGame> = await GameServerRepository.getGamesForGameServer(
-    gameServer.url
-  );
+  const games: Array<PokerGame> =
+    await GameServerRepository.getGamesForGameServer(gameServer.url);
   for (const game of games) {
     restartGame(game, gameServer).catch(reason => {
       logger.error(
@@ -310,7 +309,9 @@ async function restartGame(game: PokerGame, gameServer: any): Promise<void> {
       return;
     } catch (err) {
       logger.error(
-        `Error while restarting game ${game.id}/${game.gameCode}: ${err.message}`
+        `Error while restarting game ${game.id}/${game.gameCode}: ${errToStr(
+          err
+        )}`
       );
     }
   }

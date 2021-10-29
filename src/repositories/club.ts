@@ -9,7 +9,7 @@ import {
   getPlayerClubsData,
   PageOptions,
 } from '@src/types';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {getClubCode} from '@src/utils/uniqueid';
 import {fixQuery} from '@src/utils';
 import {Cache} from '@src/cache';
@@ -113,9 +113,9 @@ class ClubRepositoryImpl {
       clubMember.notes = updateData.notes.toString();
     }
     if (updateData.status) {
-      clubMember.status = (ClubMemberStatus[
+      clubMember.status = ClubMemberStatus[
         updateData.status
-      ] as unknown) as ClubMemberStatus;
+      ] as unknown as ClubMemberStatus;
     }
     if (updateData.isManager || updateData.isManager === false) {
       clubMember.isManager = updateData.isManager;
@@ -230,9 +230,8 @@ class ClubRepositoryImpl {
 
     //logger.info('****** STARTING TRANSACTION TO SAVE club and club member');
     await getUserManager().transaction(async transactionEntityManager => {
-      const clubMemberRepo = transactionEntityManager.getRepository<ClubMember>(
-        ClubMember
-      );
+      const clubMemberRepo =
+        transactionEntityManager.getRepository<ClubMember>(ClubMember);
       const clubCount = await clubMemberRepo.count({
         player: {id: owner.id},
       });
@@ -401,7 +400,7 @@ class ClubRepositoryImpl {
         logger.error(`Failed to send firebase message. Error: ${e.message}`);
       });
     } catch (err) {
-      logger.error(`Failed to send NATS message. Error: ${err.toString()}`);
+      logger.error(`Failed to send NATS message. Error: ${errToStr(err)}`);
     }
     return clubMember.status;
   }
@@ -474,7 +473,7 @@ class ClubRepositoryImpl {
       //   messageId
       // );
     } catch (err) {
-      logger.error(`Failed to send NATS message. Error: ${err.toString()}`);
+      logger.error(`Failed to send NATS message. Error: ${errToStr(err)}`);
     }
 
     return ClubMemberStatus.ACTIVE;
@@ -576,7 +575,7 @@ class ClubRepositoryImpl {
       // add a message in the chat
       await ClubMessageRepository.playerKickedout(club, player);
     } catch (err) {
-      logger.error(`Failed to send NATS message. Error: ${err.toString()}`);
+      logger.error(`Failed to send NATS message. Error: ${errToStr(err)}`);
     }
 
     return ClubMemberStatus.KICKEDOUT;

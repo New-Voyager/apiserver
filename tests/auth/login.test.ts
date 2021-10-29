@@ -22,10 +22,10 @@ describe('Login APIs', () => {
       await axios.post(`http://localhost:${PORT_NUMBER}/auth/login`);
     } catch (error) {
       const expectedErrors = ['uuid and deviceId should be specified to login'];
-      expect(error.response.data.errors).toEqual(
+      expect((error as any).response.data.errors).toEqual(
         expect.arrayContaining(expectedErrors)
       );
-      expect(error.response.status).toEqual(500);
+      expect((error as any).response.status).toEqual(500);
     }
   });
 
@@ -64,10 +64,10 @@ describe('Login APIs', () => {
       });
     } catch (error) {
       const expectedErrors = ['Invalid device id'];
-      expect(error.response.data.errors).toEqual(
+      expect((error as any).response.data.errors).toEqual(
         expect.arrayContaining(expectedErrors)
       );
-      expect(error.response.status).toEqual(401);
+      expect((error as any).response.status).toEqual(401);
     }
   });
 
@@ -81,10 +81,10 @@ describe('Login APIs', () => {
       });
     } catch (error) {
       const expectedErrors = ['Player is not found'];
-      expect(error.response.data.errors).toEqual(
+      expect((error as any).response.data.errors).toEqual(
         expect.arrayContaining(expectedErrors)
       );
-      expect(error.response.status).toEqual(401);
+      expect((error as any).response.status).toEqual(401);
     }
   });
 
@@ -95,8 +95,8 @@ describe('Login APIs', () => {
       });
     } catch (error) {
       const expectedError = 'test user is not found';
-      expect(error.response.data.error).toEqual(expectedError);
-      expect(error.response.status).toEqual(500);
+      expect((error as any).response.data.error).toEqual(expectedError);
+      expect((error as any).response.status).toEqual(500);
     }
   });
 
@@ -117,10 +117,10 @@ describe('Login APIs', () => {
       });
     } catch (error) {
       const expectedErrors = ['Invalid password'];
-      expect(error.response.data.errors).toEqual(
+      expect((error as any).response.data.errors).toEqual(
         expect.arrayContaining(expectedErrors)
       );
-      expect(error.response.status).toEqual(401);
+      expect((error as any).response.status).toEqual(401);
     }
   });
 });

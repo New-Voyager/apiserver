@@ -4,7 +4,7 @@ import {Cache} from '@src/cache';
 import {WonAtStatus} from '@src/entity/types';
 import {HandRepository} from '@src/repositories/hand';
 import {getGameConnection} from '@src/repositories';
-import {getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
 import _ from 'lodash';
 import {GameUpdatesRepository} from '@src/repositories/gameupdates';
@@ -104,9 +104,11 @@ class HandServerAPIs {
       }
     } catch (err) {
       logger.error(
-        `Error while saving hand for game ${gameID} hand ${handNum}. Error: ${err.message}. (processedConsecutiveTimeouts = ${processedConsecutiveTimeouts})`
+        `Error while saving hand for game ${gameID} hand ${handNum}. Error: ${errToStr(
+          err
+        )}. (processedConsecutiveTimeouts = ${processedConsecutiveTimeouts})`
       );
-      resp.status(500).send({error: err.message});
+      resp.status(500).send({error: errToStr(err, false)});
     }
     logger.info(`Finished saveHand endpoint game ${gameID} hand ${handNum}`);
   }
@@ -159,7 +161,7 @@ class HandServerAPIs {
       //   resp.status(500).send(saveResult);
       // }
     } catch (err) {
-      resp.status(500).send({error: err.message});
+      resp.status(500).send({error: errToStr(err, false)});
     }
   }
 }
@@ -215,9 +217,8 @@ async function processConsecutiveActionTimeouts(
     );
 
     const playersInGame = _.keyBy(playersInGameArr, 'playerId');
-    const playersInGameRepo = transactionEntityManager.getRepository(
-      PlayerGameTracker
-    );
+    const playersInGameRepo =
+      transactionEntityManager.getRepository(PlayerGameTracker);
     let shouldUpdateCache = false;
     for (const playerIdStr of Object.keys(timeoutStats)) {
       const currentHandTimeouts =
@@ -273,9 +274,8 @@ async function processConsecutiveActionTimeouts(
     // Remember that we processed the consecutive timeout counts for this hand,
     // so that we don't add the count again if the game server crashes
     // and this function gets called again.
-    const pokerGameUpdatesRepo = transactionEntityManager.getRepository(
-      PokerGameUpdates
-    );
+    const pokerGameUpdatesRepo =
+      transactionEntityManager.getRepository(PokerGameUpdates);
     await pokerGameUpdatesRepo
       .createQueryBuilder()
       .update()

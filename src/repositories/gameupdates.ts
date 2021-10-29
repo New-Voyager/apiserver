@@ -2,7 +2,7 @@ import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {EntityManager, Repository} from 'typeorm';
 import {Cache} from '@src/cache/index';
 import {getGameManager, getGameRepository} from '.';
-import {getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {getAppSettings} from '@src/firebase';
 import {GameType} from '@src/entity/types';
 import {GameNotFoundError} from '@src/errors';
@@ -16,9 +16,8 @@ class GameUpdatesRepositoryImpl {
     transactionEntityManager: EntityManager
   ) {
     // create a entry in PokerGameUpdates
-    const gameUpdatesRepo = transactionEntityManager.getRepository(
-      PokerGameUpdates
-    );
+    const gameUpdatesRepo =
+      transactionEntityManager.getRepository(PokerGameUpdates);
     const gameUpdates = new PokerGameUpdates();
     gameUpdates.gameCode = gameCode;
     const appSettings = getAppSettings();
@@ -75,7 +74,9 @@ class GameUpdatesRepositoryImpl {
       );
     } catch (err) {
       logger.error(
-        `Failed to update appcoins next consumption time. Error: ${err.toString()}`
+        `Failed to update appcoins next consumption time. Error: ${errToStr(
+          err
+        )}`
       );
     }
   }
@@ -88,9 +89,8 @@ class GameUpdatesRepositoryImpl {
 
     const ret = await getGameManager().transaction(
       async transactionEntityManager => {
-        const pokerGameUpdates = transactionEntityManager.getRepository(
-          PokerGameUpdates
-        );
+        const pokerGameUpdates =
+          transactionEntityManager.getRepository(PokerGameUpdates);
         await pokerGameUpdates.update(
           {
             gameCode: game.gameCode,
@@ -182,9 +182,8 @@ class GameUpdatesRepositoryImpl {
     rake: number,
     transactionEntityManager: EntityManager
   ) {
-    const gameUpdatesRepo = transactionEntityManager.getRepository(
-      PokerGameUpdates
-    );
+    const gameUpdatesRepo =
+      transactionEntityManager.getRepository(PokerGameUpdates);
     await gameUpdatesRepo
       .createQueryBuilder()
       .update()

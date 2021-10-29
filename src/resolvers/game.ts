@@ -11,7 +11,7 @@ import {
   SeatStatus,
   GameEndReason,
 } from '@src/entity/types';
-import {getLogger, errToLogString} from '@src/utils/log';
+import {getLogger, errToStr} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
 import {default as _} from 'lodash';
 import {BuyIn} from '@src/repositories/buyin';
@@ -99,7 +99,7 @@ export async function configureGame(
     logger.error(
       `Error while configuring game. playerId: ${playerId}, clubCode: ${clubCode}, game: ${JSON.stringify(
         game
-      )}: ${errToLogString(err)}`
+      )}: ${errToStr(err)}`
     );
     throw new GameCreationError('UNKNOWN');
   }
@@ -131,7 +131,7 @@ export async function configureGameByPlayer(playerId: string, game: any) {
     logger.error(
       `Error while configuring game by player. playerId: ${playerId}, game: ${JSON.stringify(
         game
-      )}: ${errToLogString(err)}`
+      )}: ${errToStr(err)}`
     );
     throw new GameCreationError('UNKNOWN');
   }
@@ -173,7 +173,7 @@ export async function endGame(playerId: string, gameCode: string) {
     return GameStatus[status];
   } catch (err) {
     logger.error(
-      `Error while ending game. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while ending game. playerId: ${playerId}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
@@ -253,7 +253,7 @@ export async function startGame(
     return GameStatus[status];
   } catch (err) {
     logger.error(
-      `Error while starting game. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while starting game. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
@@ -300,7 +300,7 @@ export async function pendingApprovalsForGame(
     return ret;
   } catch (err) {
     logger.error(
-      `Error in pendingApprovalsForGame. hostUuid: ${hostUuid}, gameCode: ${gameCode}: ${errToLogString(
+      `Error in pendingApprovalsForGame. hostUuid: ${hostUuid}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
@@ -344,7 +344,7 @@ export async function pendingApprovalsForClub(
     return ret;
   } catch (err) {
     logger.error(
-      `Error in pendingApprovalsForClub. hostUuid: ${hostUuid}, clubCode: ${clubCode}: ${errToLogString(
+      `Error in pendingApprovalsForClub. hostUuid: ${hostUuid}, clubCode: ${clubCode}: ${errToStr(
         err
       )}`
     );
@@ -408,7 +408,7 @@ export async function approveRequest(
     return resp;
   } catch (err) {
     logger.error(
-      `Error while approving request. hostUuid: ${hostUuid}, playerUuid: ${playerUuid}, gameCode: ${gameCode}, type: ${type}, status: ${status}: ${errToLogString(
+      `Error while approving request. hostUuid: ${hostUuid}, playerUuid: ${playerUuid}, gameCode: ${gameCode}, type: ${type}, status: ${status}: ${errToStr(
         err
       )}`
     );
@@ -458,7 +458,7 @@ export async function myGameState(playerUuid: string, gameCode: string) {
     return gameState;
   } catch (err) {
     logger.error(
-      `Error in myGameState. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+      `Error in myGameState. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
@@ -508,7 +508,7 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
     return tableGameState;
   } catch (err) {
     logger.error(
-      `Error while getting table game state. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while getting table game state. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
@@ -653,15 +653,11 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     return ret;
   } catch (err) {
     logger.error(
-      `Error while getting game info. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while getting game info. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
-    throw new Error(
-      `Failed to get game information. Message: ${
-        err.message
-      } err: ${JSON.stringify(err)}`
-    );
+    throw new Error(`Failed to get game information: ${errToStr(err)}`);
   }
 }
 
@@ -710,15 +706,11 @@ async function getPlayerRole(playerUuid: string, gameCode: string) {
     return ret;
   } catch (err) {
     logger.error(
-      `Error while getting player role. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while getting player role. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
-    throw new Error(
-      `Failed to get game information. Message: ${
-        err.message
-      } err: ${JSON.stringify(err)}`
-    );
+    throw new Error(`Failed to get game information: ${errToStr(err)}`);
   }
 }
 
@@ -768,7 +760,7 @@ export async function assignHost(
     return true;
   } catch (err) {
     logger.error(
-      `Error while assigning game host. requestUser: ${requestUser}, gameCode: ${gameCode}, new host player: ${newHostPlayerUuid}: ${errToLogString(
+      `Error while assigning game host. requestUser: ${requestUser}, gameCode: ${gameCode}, new host player: ${newHostPlayerUuid}: ${errToStr(
         err
       )}`
     );
@@ -826,11 +818,11 @@ export async function pauseGame(playerId: string, gameCode: string) {
     return GameStatus[game.status];
   } catch (err) {
     logger.error(
-      `Error while pausing game. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while pausing game. playerId: ${playerId}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
-    throw new Error('Failed to pause the game. ' + err.message);
+    throw new Error('Failed to pause the game. ' + errToStr(err, false));
   }
 }
 
@@ -875,12 +867,12 @@ export async function resumeGame(playerId: string, gameCode: string) {
     return GameStatus[game.status];
   } catch (err) {
     logger.error(
-      `Error while resuming game. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while resuming game. playerId: ${playerId}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
     throw new Error(
-      `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
+      `Failed to resume game:  ${errToStr(err, false)}. Game code: ${gameCode}`
     );
   }
 }
@@ -912,12 +904,12 @@ export async function openSeats(playerId: string, gameCode: string) {
     return availableSeats;
   } catch (err) {
     logger.error(
-      `Error while getting open seats. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while getting open seats. playerId: ${playerId}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
     throw new Error(
-      `Failed to resume game:  ${err.message}. Game code: ${gameCode}`
+      `Failed to resume game:  ${errToStr(err, false)}. Game code: ${gameCode}`
     );
   }
 }
@@ -1211,7 +1203,7 @@ export async function pendingApprovals(hostUuid: string) {
     return ret;
   } catch (err) {
     logger.error(
-      `Error in pendingApprovals. hostUuid: ${hostUuid}: ${errToLogString(err)}`
+      `Error in pendingApprovals. hostUuid: ${hostUuid}: ${errToStr(err)}`
     );
     throw new Error(
       `Failed to fetch approval requests. ${JSON.stringify(err)}`

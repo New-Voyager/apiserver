@@ -11,7 +11,7 @@ export interface RewardInputFormat {
   endHour: number;
   schedule: ScheduleType;
 }
-import {getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {
   HighHandWinner,
   HighHandWinnerResult,
@@ -52,13 +52,11 @@ class RewardRepositoryImpl {
         createReward.endHour = reward.endHour;
         createReward.minRank = reward.minRank;
         createReward.schedule =
-          ScheduleType[
-            (reward.schedule as unknown) as keyof typeof ScheduleType
-          ];
+          ScheduleType[reward.schedule as unknown as keyof typeof ScheduleType];
         createReward.name = reward.name;
         createReward.startHour = reward.startHour;
         createReward.type =
-          RewardType[(reward.type as unknown) as keyof typeof RewardType];
+          RewardType[reward.type as unknown as keyof typeof RewardType];
         const repository = getUserRepository(Reward);
         const response = await repository.save(createReward);
         return response.id;
@@ -180,9 +178,8 @@ class RewardRepositoryImpl {
           rewardTrackingId = trackingId;
           let rewardTrackRepo: Repository<GameRewardTracking>;
           if (transactionManager) {
-            rewardTrackRepo = transactionManager.getRepository(
-              GameRewardTracking
-            );
+            rewardTrackRepo =
+              transactionManager.getRepository(GameRewardTracking);
           } else {
             rewardTrackRepo = getGameRepository(GameRewardTracking);
           }
@@ -281,9 +278,8 @@ class RewardRepositoryImpl {
         if (!gameTracking) {
           let rewardTrackRepo: Repository<GameRewardTracking>;
           if (transactionManager) {
-            rewardTrackRepo = transactionManager.getRepository(
-              GameRewardTracking
-            );
+            rewardTrackRepo =
+              transactionManager.getRepository(GameRewardTracking);
           } else {
             rewardTrackRepo = getGameRepository(GameRewardTracking);
           }
@@ -326,7 +322,7 @@ class RewardRepositoryImpl {
       };
     } catch (err) {
       logger.error(
-        `Couldn't update reward. retry again. Error: ${err.toString()}`
+        `Couldn't update reward. retry again. Error: ${errToStr(err)}`
       );
       throw new Error("Couldn't update reward, please retry again");
     }
@@ -449,7 +445,7 @@ class RewardRepositoryImpl {
       return highHands;
     } catch (err) {
       logger.error(
-        `Couldn't retrieve Highhand. retry again. Error: ${err.toString()}`
+        `Couldn't retrieve Highhand. retry again. Error: ${errToStr(err)}`
       );
       throw new Error("Couldn't retrieve highhand, please retry again");
     }
@@ -497,7 +493,7 @@ class RewardRepositoryImpl {
       return highHands;
     } catch (err) {
       logger.error(
-        `Couldn't retrieve Highhand. retry again. Error: ${err.toString()}`
+        `Couldn't retrieve Highhand. retry again. Error: ${errToStr(err)}`
       );
       throw new Error("Couldn't retrieve highhand, please retry again");
     }
@@ -620,7 +616,7 @@ class RewardRepositoryImpl {
       return highHands;
     } catch (err) {
       logger.error(
-        `Couldn't retrieve Highhand. retry again. Error: ${err.toString()}`
+        `Couldn't retrieve Highhand. retry again. Error: ${errToStr(err)}`
       );
       throw new Error("Couldn't retrieve highhand, please retry again");
     }

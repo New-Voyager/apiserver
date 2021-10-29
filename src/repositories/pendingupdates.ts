@@ -219,7 +219,8 @@ export async function processPendingUpdates(gameId: number) {
         logger.info(`[${gameLogPrefix(game)}] Seat Change is in Progress`);
         // open seat
         const seatChangeProcess = new SeatChangeProcess(game);
-        const waitingPlayers = await seatChangeProcess.getSeatChangeRequestedPlayers();
+        const waitingPlayers =
+          await seatChangeProcess.getSeatChangeRequestedPlayers();
         if (waitingPlayers.length > 0) {
           endPendingProcess = false;
           await seatChangeProcess.start(openedSeat);
@@ -353,9 +354,8 @@ async function switchSeat(
     );
 
     await getGameManager().transaction(async transactionEntityManager => {
-      const playerGameTrackerRepository = transactionEntityManager.getRepository(
-        PlayerGameTracker
-      );
+      const playerGameTrackerRepository =
+        transactionEntityManager.getRepository(PlayerGameTracker);
       await playerGameTrackerRepository.update(
         {
           game: {id: game.id},
@@ -627,15 +627,13 @@ export async function switchSeatNextHand(
   update.newUpdate = NextHandUpdate.SWITCH_SEAT;
   update.newSeat = seatNo;
   if (transactionEntityManager) {
-    nextHandUpdatesRepository = transactionEntityManager.getRepository(
-      NextHandUpdates
-    );
+    nextHandUpdatesRepository =
+      transactionEntityManager.getRepository(NextHandUpdates);
     await nextHandUpdatesRepository.save(update);
     const gameSeatInfoProps: any = {};
     gameSeatInfoProps[`seat${seatNo}`] = SeatStatus.RESERVED;
-    const gameSeatInfoRepo = transactionEntityManager.getRepository(
-      PokerGameSeatInfo
-    );
+    const gameSeatInfoRepo =
+      transactionEntityManager.getRepository(PokerGameSeatInfo);
     await gameSeatInfoRepo.update(
       {
         gameID: game.id,
@@ -644,13 +642,11 @@ export async function switchSeatNextHand(
     );
   } else {
     await getGameManager().transaction(async transactionEntityManager => {
-      nextHandUpdatesRepository = transactionEntityManager.getRepository(
-        NextHandUpdates
-      );
+      nextHandUpdatesRepository =
+        transactionEntityManager.getRepository(NextHandUpdates);
       await nextHandUpdatesRepository.save(update);
-      const gameSeatInfoRepo = transactionEntityManager.getRepository(
-        PokerGameSeatInfo
-      );
+      const gameSeatInfoRepo =
+        transactionEntityManager.getRepository(PokerGameSeatInfo);
       const gameSeatInfoProps: any = {};
       gameSeatInfoProps[`seat${seatNo}`] = SeatStatus.RESERVED;
       await gameSeatInfoRepo.update(

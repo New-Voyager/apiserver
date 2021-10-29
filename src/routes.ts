@@ -32,7 +32,7 @@ import {
   getAllPromotion,
 } from './admin';
 import {AdminRepository} from './repositories/admin';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {DigitalOcean} from './digitalocean';
 import express, {response} from 'express';
 import {PlayerRepository} from './repositories/player';
@@ -283,8 +283,8 @@ async function livenessCheck(req: any, resp: any) {
     await AdminRepository.checkDbTransaction();
     resp.status(200).json({status: 'OK'});
   } catch (err) {
-    logger.error(`DB transaction check failed: ${errToLogString(err, false)}`);
-    resp.status(500).json({error: errToLogString(err, false)});
+    logger.error(`DB transaction check failed: ${errToStr(err, false)}`);
+    resp.status(500).json({error: errToStr(err, false)});
   }
 }
 
@@ -293,7 +293,7 @@ async function crashAsync(req: any, resp: any) {
     await doCrashAsync();
     resp.status(200).send(JSON.stringify({status: 'OK'}));
   } catch (err) {
-    resp.status(500).send(JSON.stringify({error: err.toString()}));
+    resp.status(500).send(JSON.stringify({error: errToStr(err)}));
   }
 }
 

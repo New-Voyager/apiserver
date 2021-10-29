@@ -17,7 +17,7 @@ const mysqlSqliteTypeMapping: {[key: string]: ColumnType} = {
 
 export function setAppropriateColumnType(mySqlType: ColumnType): ColumnType {
   const isTestEnv = process.env.DB_USED === 'sqllite';
-  if (isTestEnv && mySqlType in mysqlSqliteTypeMapping) {
+  if (isTestEnv && mySqlType.toString() in mysqlSqliteTypeMapping) {
     return mysqlSqliteTypeMapping[mySqlType.toString()];
   }
   return mySqlType;

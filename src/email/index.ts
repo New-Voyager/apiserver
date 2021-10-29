@@ -1,6 +1,6 @@
 'use strict';
 
-import {getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 
 const nodemailer = require('nodemailer');
 const account = 'contact.poker.clubapp@gmail.com';
@@ -16,9 +16,7 @@ export async function sendRecoveryCode(
   }
   const body = `Recovery code to recover/transfer your pokerclub account: ${code}`;
   sendEmail(to, from, 'Recovery code', body).catch(err => {
-    logger.error(
-      `Sending recovery code email failed. Error: ${err.toString()}`
-    );
+    logger.error(`Sending recovery code email failed. Error: ${errToStr(err)}`);
   });
 }
 

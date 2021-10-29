@@ -17,7 +17,7 @@ import {
   GameEndReason,
 } from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
 import {publishNewGame, resumeGame, endGame} from '@src/gameserver';
@@ -180,9 +180,8 @@ class GameRepositoryImpl {
             transactionEntityManager
           );
 
-          const gameSeatInfoRepo = transactionEntityManager.getRepository(
-            PokerGameSeatInfo
-          );
+          const gameSeatInfoRepo =
+            transactionEntityManager.getRepository(PokerGameSeatInfo);
           const gameSeatInfo = new PokerGameSeatInfo();
           gameSeatInfo.gameID = game.id;
           gameSeatInfo.gameCode = game.gameCode;
@@ -203,9 +202,8 @@ class GameRepositoryImpl {
                 throw new Error(`Reward: ${rewardId} is not found`);
               }
 
-              const rewardTrackRepo = transactionEntityManager.getRepository(
-                GameRewardTracking
-              );
+              const rewardTrackRepo =
+                transactionEntityManager.getRepository(GameRewardTracking);
               const rewardTrack = await rewardTrackRepo.findOne({
                 rewardId: rewardId,
                 active: true,
@@ -216,9 +214,8 @@ class GameRepositoryImpl {
                 createRewardTrack.day = new Date();
 
                 try {
-                  const rewardTrackRepository = transactionEntityManager.getRepository(
-                    GameRewardTracking
-                  );
+                  const rewardTrackRepository =
+                    transactionEntityManager.getRepository(GameRewardTracking);
                   const rewardTrackResponse = await rewardTrackRepository.save(
                     createRewardTrack
                   );
@@ -228,12 +225,11 @@ class GameRepositoryImpl {
                   createGameReward.rewardId = rewardId;
                   createGameReward.rewardTrackingId = rewardTrackResponse;
                   rewardTrackingIds.push(rewardTrackResponse.id);
-                  const gameRewardRepository = transactionEntityManager.getRepository(
-                    GameReward
-                  );
+                  const gameRewardRepository =
+                    transactionEntityManager.getRepository(GameReward);
                   await gameRewardRepository.save(createGameReward);
                 } catch (err) {
-                  logger.error(`Failed to update rewards. ${err.toString()}`);
+                  logger.error(`Failed to update rewards. ${errToStr(err)}`);
                   throw err;
                 }
               } else {
@@ -244,9 +240,8 @@ class GameRepositoryImpl {
                 createGameReward.rewardId = rewardId;
                 createGameReward.rewardTrackingId = rewardTrack;
 
-                const gameRewardRepository = transactionEntityManager.getRepository(
-                  GameReward
-                );
+                const gameRewardRepository =
+                  transactionEntityManager.getRepository(GameReward);
                 await gameRewardRepository.save(createGameReward);
               }
             }
@@ -297,7 +292,7 @@ class GameRepositoryImpl {
       );
     } catch (err) {
       logger.error(
-        `Couldn't create game and retry again. Error: ${err.toString()}`
+        `Couldn't create game and retry again. Error: ${errToStr(err)}`
       );
       throw new Error("Couldn't create the game, please retry again");
     }
@@ -608,9 +603,8 @@ class GameRepositoryImpl {
     let startTime = new Date().getTime();
     const [playerInGame, newPlayer] = await getGameManager().transaction(
       async transactionEntityManager => {
-        const gameSeatInfoRepo = transactionEntityManager.getRepository(
-          PokerGameSeatInfo
-        );
+        const gameSeatInfoRepo =
+          transactionEntityManager.getRepository(PokerGameSeatInfo);
 
         const gameSeatInfo = await gameSeatInfoRepo.findOne({gameID: game.id});
         if (!gameSeatInfo) {
@@ -647,9 +641,8 @@ class GameRepositoryImpl {
           );
         }
 
-        const playerGameTrackerRepository = transactionEntityManager.getRepository(
-          PlayerGameTracker
-        );
+        const playerGameTrackerRepository =
+          transactionEntityManager.getRepository(PlayerGameTracker);
 
         if (gameSeatInfo.waitlistSeatingInprogress) {
           // wait list seating in progress
@@ -743,15 +736,16 @@ class GameRepositoryImpl {
 
           try {
             if (gameSettings.useAgora) {
-              playerInGame.audioToken = await PlayersInGameRepository.getAudioToken(
-                player,
-                game,
-                transactionEntityManager
-              );
+              playerInGame.audioToken =
+                await PlayersInGameRepository.getAudioToken(
+                  player,
+                  game,
+                  transactionEntityManager
+                );
             }
           } catch (err) {
             logger.error(
-              `Failed to get agora token ${err.toString()} Game: ${game.id}`
+              `Failed to get agora token ${errToStr(err)} Game: ${game.id}`
             );
           }
 
@@ -762,9 +756,9 @@ class GameRepositoryImpl {
             await StatsRepository.newGameStatsRow(game, player);
           } catch (err) {
             logger.error(
-              `Failed to update player_game_tracker and player_game_stats table ${err.toString()} Game: ${
-                game.id
-              }`
+              `Failed to update player_game_tracker and player_game_stats table ${errToStr(
+                err
+              )} Game: ${game.id}`
             );
             throw err;
           }
@@ -908,9 +902,8 @@ class GameRepositoryImpl {
     }
     let playerGameTrackerRepository: Repository<PlayerGameTracker>;
     if (transactionEntityManager) {
-      playerGameTrackerRepository = transactionEntityManager.getRepository(
-        PlayerGameTracker
-      );
+      playerGameTrackerRepository =
+        transactionEntityManager.getRepository(PlayerGameTracker);
     } else {
       playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     }
@@ -1001,7 +994,7 @@ class GameRepositoryImpl {
           }
         }
       } catch (err) {
-        logger.error(`Error handling buyin approval. ${err.toString()}`);
+        logger.error(`Error handling buyin approval. ${errToStr(err)}`);
       }
     }
   }
@@ -1066,7 +1059,7 @@ class GameRepositoryImpl {
       logger.error(`Game: ${gameId} not available`);
       throw new Error(`Game: ${gameId} not available`);
     }
-    const playerStatus = (PlayerStatus[status] as unknown) as PlayerStatus;
+    const playerStatus = PlayerStatus[status] as unknown as PlayerStatus;
     await playerGameTrackerRepository
       .createQueryBuilder()
       .update()
@@ -1284,7 +1277,7 @@ class GameRepositoryImpl {
         // update the game server with new status
         await endGame(game.id);
       } catch (err) {
-        logger.warn(`Could not end game in game server: ${err.toString()}`);
+        logger.warn(`Could not end game in game server: ${errToStr(err)}`);
       }
 
       // announce to the players the game has ended
@@ -1297,9 +1290,8 @@ class GameRepositoryImpl {
       return status;
     } else {
       if (status === GameStatus.ACTIVE) {
-        const playerGameTrackerRepository = getGameManager().getRepository(
-          PlayerGameTracker
-        );
+        const playerGameTrackerRepository =
+          getGameManager().getRepository(PlayerGameTracker);
         const playingCount = await playerGameTrackerRepository
           .createQueryBuilder()
           .where({
@@ -1805,7 +1797,7 @@ class GameRepositoryImpl {
       logger.error(
         `Error while ending game. playerId: ${playerUuid}, gameCode: ${
           game.gameCode
-        }: ${errToLogString(err)}`
+        }: ${errToStr(err)}`
       );
       throw err;
     }

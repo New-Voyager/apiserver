@@ -87,26 +87,26 @@ describe('Club Message APIs', () => {
     try {
       await markHostMsgRead({clubCode, ownerId: ''});
     } catch (error) {
-      expect(error.toString()).toEqual('Error: GraphQL error: Unauthorized');
+      expect((error as any).toString()).toEqual('Error: GraphQL error: Unauthorized');
     }
     try {
       await markHostMsgRead({clubCode, ownerId: 'test'});
     } catch (error) {
-      expect(error.toString()).toEqual(
+      expect((error as any).toString()).toEqual(
         'Error: GraphQL error: Cannot find player uuid [test] in player repo'
       );
     }
     try {
       await markHostMsgRead({clubCode: 'test', ownerId});
     } catch (error) {
-      expect(error.toString()).toEqual(
+      expect((error as any).toString()).toEqual(
         'Error: GraphQL error: Cannot find club code [test] in club repo'
       );
     }
     try {
       await markHostMsgRead({clubCode, ownerId: playerId2});
     } catch (error) {
-      expect(error.toString()).toEqual(
+      expect((error as any).toString()).toEqual(
         `Error: GraphQL error: Player: ${playerId2} is not a member in club bbc`
       );
     }
@@ -123,26 +123,26 @@ describe('Club Message APIs', () => {
     try {
       await markMemberMsgRead({clubCode, ownerId: '', playerId});
     } catch (error) {
-      expect(error.toString()).toEqual('Error: GraphQL error: Unauthorized');
+      expect((error as any).toString()).toEqual('Error: GraphQL error: Unauthorized');
     }
     try {
       await markMemberMsgRead({clubCode, ownerId: 'test', playerId});
     } catch (error) {
-      expect(error.toString()).toEqual(
+      expect((error as any).toString()).toEqual(
         'Error: GraphQL error: Cannot find player uuid [test] in player repo'
       );
     }
     try {
       await markMemberMsgRead({clubCode, ownerId, playerId: 'test'});
     } catch (error) {
-      expect(error.toString()).toEqual(
+      expect((error as any).toString()).toEqual(
         'Error: GraphQL error: Cannot find player uuid [test] in player repo'
       );
     }
     try {
       await markMemberMsgRead({clubCode, ownerId, playerId: playerId2});
     } catch (error) {
-      expect(error.toString()).toEqual(
+      expect((error as any).toString()).toEqual(
         'Error: GraphQL error: Member: 1243ABCs is not a member in club bbc'
       );
     }
@@ -150,7 +150,7 @@ describe('Club Message APIs', () => {
     try {
       await markMemberMsgRead({clubCode, ownerId: playerId2, playerId});
     } catch (error) {
-      expect(error.toString()).toEqual(
+      expect((error as any).toString()).toEqual(
         'Error: GraphQL error: Player: 1243ABCs is not a host in club bbc'
       );
     }

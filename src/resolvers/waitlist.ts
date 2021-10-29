@@ -1,4 +1,4 @@
-import {getLogger, errToLogString} from '@src/utils/log';
+import {getLogger, errToStr} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
 import {WaitListMgmt} from '@src/repositories/waitlist';
 import {default as _} from 'lodash';
@@ -58,7 +58,7 @@ export async function addToWaitingList(playerId: string, gameCode: string) {
     return true;
   } catch (err) {
     logger.error(
-      `Error while adding to waiting list. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while adding to waiting list. playerId: ${playerId}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
@@ -97,7 +97,7 @@ export async function removeFromWaitingList(
     return true;
   } catch (err) {
     logger.error(
-      `Error while removing from waiting list. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while removing from waiting list. playerId: ${playerId}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
@@ -135,7 +135,7 @@ export async function waitingList(
     return waitlistMgmt.getWaitingListUsers();
   } catch (err) {
     logger.error(
-      `Error while getting waiting list. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while getting waiting list. playerId: ${playerId}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
@@ -201,7 +201,7 @@ export async function applyWaitlistOrder(
     logger.error(
       `Error while applying waitlist order. hostUuid: ${hostUuid}, gameCode: ${gameCode}, players: ${JSON.stringify(
         players
-      )}: ${errToLogString(err)}`
+      )}: ${errToStr(err)}`
     );
     throw new Error('Failed to change waitlist order');
   }
@@ -236,7 +236,7 @@ export async function declineWaitlistSeat(playerId: string, gameCode: string) {
     return true;
   } catch (err) {
     logger.error(
-      `Error while declining waitlist seat. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while declining waitlist seat. playerId: ${playerId}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );

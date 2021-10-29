@@ -1,4 +1,4 @@
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import axios from 'axios';
 import {notifyGameServer} from '@src/gameserver';
 
@@ -31,7 +31,7 @@ export async function schedulePostProcessing(gameId: number, gameCode: string) {
     }
   } catch (err) {
     logger.error(
-      `Could not schedule post processing for game ${gameId}/${gameCode}: ${errToLogString(
+      `Could not schedule post processing for game ${gameId}/${gameCode}: ${errToStr(
         err
       )}`
     );

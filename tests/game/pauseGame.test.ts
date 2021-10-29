@@ -44,7 +44,7 @@ describe('joinGame APIs', () => {
       });
       expect(data.pauseGame).toEqual('PAUSED');
     } catch (error) {
-      expect(error.graphQLErrors[0].message).toEqual('Failed to pause the game. Player: 1243ABCqwe is not a owner or a manager yatzee. Cannot pause game')
+      expect((error as any).graphQLErrors[0].message).toEqual('Failed to pause the game. Player: 1243ABCqwe is not a owner or a manager yatzee. Cannot pause game')
     }
 
     try {
@@ -54,7 +54,7 @@ describe('joinGame APIs', () => {
       });
       expect(data.pauseGame).toEqual('PAUSED');
     } catch (error) {
-      expect(error.graphQLErrors[0].message).toEqual('Failed to pause the game. Player: 1243ABCqwe3 is not a owner or a manager yatzee. Cannot pause game')
+      expect((error as any).graphQLErrors[0].message).toEqual('Failed to pause the game. Player: 1243ABCqwe3 is not a owner or a manager yatzee. Cannot pause game')
     }
 
     try {
@@ -64,7 +64,7 @@ describe('joinGame APIs', () => {
       });
       expect(data.pauseGame).toEqual('PAUSED');
     } catch (error) {
-      expect(error.graphQLErrors[0].message).toEqual('qweqweFailed to pause the game. Player: 1243ABCqwe3 is not a owner or a manager yatzee. Cannot pause game')
+      expect((error as any).graphQLErrors[0].message).toEqual('qweqweFailed to pause the game. Player: 1243ABCqwe3 is not a owner or a manager yatzee. Cannot pause game')
     }
     
   });

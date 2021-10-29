@@ -30,4 +30,5 @@ class PromotionConsumedRepositoryImpl {
   }
 }
 
-export const PromotionConsumedRepository = new PromotionConsumedRepositoryImpl();
+export const PromotionConsumedRepository =
+  new PromotionConsumedRepositoryImpl();

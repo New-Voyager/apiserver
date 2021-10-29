@@ -30,7 +30,7 @@ class HostMessageRepositoryImpl {
       };
     } catch (e) {
       logger.error(JSON.stringify(e));
-      throw new Error(e.message);
+      throw e;
     }
   }
 
@@ -73,7 +73,7 @@ class HostMessageRepositoryImpl {
       };
     } catch (e) {
       logger.error(JSON.stringify(e));
-      throw new Error(e.message);
+      throw e;
     }
   }
 
@@ -101,7 +101,7 @@ class HostMessageRepositoryImpl {
       return summary;
     } catch (e) {
       logger.error(JSON.stringify(e));
-      throw new Error(e.message);
+      throw e;
     }
   }
 
@@ -140,7 +140,7 @@ class HostMessageRepositoryImpl {
       return messages;
     } catch (e) {
       logger.error(JSON.stringify(e));
-      throw new Error(e.message);
+      throw e;
     }
   }
 
@@ -164,7 +164,7 @@ class HostMessageRepositoryImpl {
       return true;
     } catch (e) {
       logger.error(JSON.stringify(e));
-      throw new Error(e.message);
+      throw e;
     }
   }
 
@@ -179,7 +179,7 @@ class HostMessageRepositoryImpl {
       return hostUnreadCount;
     } catch (e) {
       logger.error(JSON.stringify(e));
-      throw new Error(e.message);
+      throw e;
     }
   }
 
@@ -195,7 +195,7 @@ class HostMessageRepositoryImpl {
       return memberUnreadCount;
     } catch (e) {
       logger.error(JSON.stringify(e));
-      throw new Error(e.message);
+      throw e;
     }
   }
 }
