@@ -177,6 +177,10 @@ describe('Game APIs', () => {
     );
     
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error('Game not found');
+    }
+
   });
 
   test('gpstest: Join game one player is in proximity', async () => {
@@ -213,6 +217,9 @@ describe('Game APIs', () => {
     );
     
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error('Game not found');
+    }
     try {
       await joinGame(proximityPlayer.deviceId, game.gameCode, 5, 
         {ip: '', location: proximityPlayer.location});

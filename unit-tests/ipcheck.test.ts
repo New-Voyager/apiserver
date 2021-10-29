@@ -184,6 +184,9 @@ describe('Game APIs', () => {
     );
     
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error('Game not found');
+    }
     try {
       await joinGame(proximityPlayer.deviceId, game.gameCode, 5, 
         {ip: '24.102.20.3', location: proximityPlayer.location});
