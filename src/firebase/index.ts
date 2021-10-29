@@ -13,6 +13,7 @@ import {GameType} from '@src/entity/types';
 import {ClubRepository} from '@src/repositories/club';
 import _ from 'lodash';
 import {PlayerRepository} from '@src/repositories/player';
+import {Cache} from '@src/cache';
 
 //import {default as google} from 'googleapis';
 let CLUB_MESSAGE_BATCH_SIZE = 100;
@@ -137,7 +138,20 @@ class FirebaseClass {
     logger.info('Firebase is initialized');
   }
 
-  public async getSettings(): Promise<ClientFirebaseSettings | undefined> {
+  public async getSettings(
+    playerUuid: string
+  ): Promise<ClientFirebaseSettings | undefined> {
+    if (!playerUuid) {
+      logger.warn('No player uuid provided for getting firebase settings');
+      throw new Error('Unauthorized');
+    }
+
+    const p = await Cache.getPlayer(playerUuid);
+    if (!p) {
+      logger.warn('Player not found with uuid ' + playerUuid);
+      throw new Error('Unauthorized');
+    }
+
     return this.clientFirebaseSettings;
   }
 
