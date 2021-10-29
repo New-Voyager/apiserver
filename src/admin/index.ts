@@ -12,9 +12,9 @@ export async function deleteAll(req: any, resp: any) {
     const result = await PromotionRepository.deleteAll();
     resp.status(200).send({result: result});
   } catch (error) {
-    logger.error(errToStr(error, false));
+    logger.error(errToStr(error));
     resp.contentType('application/json');
-    resp.status(501).send({error: errToStr(error, false)});
+    resp.status(501).send({error: errToStr(error)});
   }
 }
 
@@ -23,9 +23,9 @@ export async function getAllPromotion(req: any, resp: any) {
     const result = await PromotionRepository.findAll();
     resp.status(200).send({result: result});
   } catch (error) {
-    logger.error(errToStr(error, false));
+    logger.error(errToStr(error));
     resp.contentType('application/json');
-    resp.status(501).send({error: errToStr(error, false)});
+    resp.status(501).send({error: errToStr(error)});
   }
 }
 
@@ -70,9 +70,9 @@ export async function createPromotion(req: any, resp: any) {
     );
     resp.status(200).send({result: result});
   } catch (error) {
-    logger.error(errToStr(error, false));
+    logger.error(errToStr(error));
     resp.contentType('application/json');
-    resp.status(501).send({error: errToStr(error, false)});
+    resp.status(501).send({error: errToStr(error)});
   }
 }
 
@@ -112,8 +112,8 @@ export async function createAnnouncement(req: any, resp: any) {
     );
     resp.status(200).send({result: result});
   } catch (error) {
-    logger.error(errToStr(error, false));
+    logger.error(errToStr(error));
     resp.contentType('application/json');
-    resp.status(501).send({error: errToStr(error, false)});
+    resp.status(501).send({error: errToStr(error)});
   }
 }

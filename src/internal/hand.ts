@@ -108,7 +108,7 @@ class HandServerAPIs {
           err
         )}. (processedConsecutiveTimeouts = ${processedConsecutiveTimeouts})`
       );
-      resp.status(500).send({error: errToStr(err, false)});
+      resp.status(500).send({error: errToStr(err)});
     }
     logger.info(`Finished saveHand endpoint game ${gameID} hand ${handNum}`);
   }
@@ -161,7 +161,7 @@ class HandServerAPIs {
       //   resp.status(500).send(saveResult);
       // }
     } catch (err) {
-      resp.status(500).send({error: errToStr(err, false)});
+      resp.status(500).send({error: errToStr(err)});
     }
   }
 }

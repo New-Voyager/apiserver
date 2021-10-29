@@ -17,7 +17,7 @@ class UserAPIs {
       resp.status(200).json({status: 'OK', key: player.encryptionKey});
     } catch (err) {
       logger.error(`Error getting encryption key: ${errToStr(err)}`);
-      resp.status(500).json({error: errToStr(err, false)});
+      resp.status(500).json({error: errToStr(err)});
     }
   }
 }

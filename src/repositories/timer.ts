@@ -88,7 +88,7 @@ export async function timerCallbackHandler(
       await gameCheckAvailableCoins(gameID);
     }
   } catch (err) {
-    logger.error(`Error in timer callback: ${errToStr(err, false)}`);
+    logger.error(`Error in timer callback: ${errToStr(err)}`);
   }
 }
 

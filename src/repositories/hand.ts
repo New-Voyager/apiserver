@@ -282,7 +282,7 @@ class HandRepositoryImpl {
       return resp.id;
     } catch (error) {
       logger.error(
-        `Error when trying to save bookmarked hand: ${errToStr(error, false)}`
+        `Error when trying to save bookmarked hand: ${errToStr(error)}`
       );
       throw error;
     }
@@ -374,9 +374,7 @@ class HandRepositoryImpl {
       );
       return id;
     } catch (error) {
-      logger.error(
-        `Error when trying to share hands: ${errToStr(error, false)}`
-      );
+      logger.error(`Error when trying to share hands: ${errToStr(error)}`);
       throw error;
     }
   }
@@ -392,9 +390,7 @@ class HandRepositoryImpl {
       });
       return sharedHand;
     } catch (error) {
-      logger.error(
-        `Error when trying to get shared hand: ${errToStr(error, false)}`
-      );
+      logger.error(`Error when trying to get shared hand: ${errToStr(error)}`);
       throw error;
     }
   }
@@ -412,9 +408,7 @@ class HandRepositoryImpl {
       });
       return sharedHands;
     } catch (error) {
-      logger.error(
-        `Error when trying to get shared hands: ${errToStr(error, false)}`
-      );
+      logger.error(`Error when trying to get shared hands: ${errToStr(error)}`);
       throw error;
     }
   }
@@ -437,7 +431,7 @@ class HandRepositoryImpl {
       return bookmarkedHands;
     } catch (error) {
       logger.error(
-        `Error when trying to get bookmarked hands: ${errToStr(error, false)}`
+        `Error when trying to get bookmarked hands: ${errToStr(error)}`
       );
       throw error;
     }
@@ -465,7 +459,7 @@ class HandRepositoryImpl {
       return bookmarkedHands;
     } catch (error) {
       logger.error(
-        `Error when trying to get bookmarked hands: ${errToStr(error, false)}`
+        `Error when trying to get bookmarked hands: ${errToStr(error)}`
       );
       throw error;
     }
@@ -901,7 +895,7 @@ class HandRepositoryImpl {
         handNum: handNum,
         success: false,
         skipped: false,
-        error: errToStr(err, false),
+        error: errToStr(err),
       };
     }
   }

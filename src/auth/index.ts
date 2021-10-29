@@ -117,7 +117,7 @@ export async function login(req: any, resp: any) {
     }
   } catch (err) {
     logger.error(`Failed to authenticate user. ${errToStr(err)}`);
-    resp.status(500).send({error: errToStr(err, false)});
+    resp.status(500).send({error: errToStr(err)});
   }
 }
 
@@ -343,7 +343,7 @@ export async function loginUsingRecoveryCode(req: any, resp: any) {
     logger.error(
       `Failed to send recovery code for user ${deviceId}. ${errToStr(err)}`
     );
-    resp.status(400).send({error: errToStr(err, false)});
+    resp.status(400).send({error: errToStr(err)});
     return;
   }
 
@@ -411,7 +411,7 @@ export async function getRecoveryCode(req: any, resp: any) {
     logger.error(
       `Failed to send recovery code for user ${email}. ${errToStr(err)}`
     );
-    resp.status(500).send({status: 'FAIL', error: errToStr(err, false)});
+    resp.status(500).send({status: 'FAIL', error: errToStr(err)});
     return;
   }
 }
@@ -452,7 +452,7 @@ export async function loginBot(req: any, resp: any) {
       }
     } catch (err) {
       logger.error(`Failed to login bot ${botName}. ${errToStr(err)}`);
-      resp.status(400).send({error: errToStr(err, false)});
+      resp.status(400).send({error: errToStr(err)});
       return;
     }
 
@@ -478,6 +478,6 @@ export async function loginBot(req: any, resp: any) {
       resp.status(500).send({errors: ['JWT cannot be generated']});
     }
   } catch (e) {
-    resp.status(500).send({errors: errToStr(e, false)});
+    resp.status(500).send({errors: errToStr(e)});
   }
 }

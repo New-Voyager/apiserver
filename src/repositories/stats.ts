@@ -706,7 +706,7 @@ class StatsRepositoryImpl {
       }
     } catch (err) {
       logger.error(
-        `Error when player hand stats data. Error: ${errToStr(err, false)}`
+        `Error when player hand stats data. Error: ${errToStr(err)}`
       );
       throw err;
     }

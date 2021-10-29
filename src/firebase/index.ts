@@ -308,7 +308,7 @@ class FirebaseClass {
       logger.error(
         `Failed to send club firebase message: ${
           club.clubCode
-        }, err: ${errToStr(err, false)}`
+        }, err: ${errToStr(err)}`
       );
     });
   }
