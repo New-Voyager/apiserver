@@ -141,6 +141,10 @@ describe('Game APIs', () => {
     );
 
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error('Game not found');
+    }
+
     const player = await Cache.getPlayer('abc1234');
     console.log(`Player: ${player.deviceId} game: ${game.gameCode}`);
 
@@ -181,6 +185,9 @@ describe('Game APIs', () => {
     );
 
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error('Game not found');
+    }
     const player = await Cache.getPlayer('abc1234');
     console.log(`Player: ${player.deviceId} game: ${game.gameCode}`);
     

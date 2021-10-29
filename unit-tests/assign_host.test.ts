@@ -144,14 +144,17 @@ describe('Assign Game Host API', () => {
     if (!game) {
       throw new Error('Game not found');
     }
-    
+
     expect(game.hostId).toBeGreaterThan(0);
     expect(game.hostName).toEqual(ownerInput.name);
     expect(game.hostUuid).toEqual(ownerInput.deviceId);
 
     const originalHostId = game.hostId;
     await assignHost(owner, game.gameCode, playersInput[0].deviceId, originalHostId);
-    const gameData: PokerGame = await Cache.getGame(game.gameCode);
+    const gameData = await Cache.getGame(game.gameCode);
+    if (!gameData) {
+      throw new Error('Game not found');
+    }
     expect(gameData.hostId).not.toEqual(originalHostId);
     expect(gameData.hostUuid).toEqual(playersInput[0].deviceId);
 
@@ -163,8 +166,12 @@ describe('Assign Game Host API', () => {
 
     // The new host (playersInput[0]) should be able to assign another host.
     await assignHost(playersInput[0].deviceId, game.gameCode, playersInput[1].deviceId, originalHostId);
-    const gameData2: PokerGame = await Cache.getGame(game.gameCode);
+    const gameData2 = await Cache.getGame(game.gameCode);
+    if (!gameData2) {
+      throw new Error('Game not found');
+    }
     expect(gameData2.hostUuid).toEqual(playersInput[1].deviceId);
+
   });
 });
 
