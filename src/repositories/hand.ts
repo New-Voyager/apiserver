@@ -11,7 +11,7 @@ import {
 import {LessThan, MoreThan, getManager, EntityManager} from 'typeorm';
 import {PageOptions} from '@src/types';
 import {PokerGame} from '@src/entity/game/game';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {Cache} from '@src/cache';
 import {RewardRepository} from './reward';
@@ -285,10 +285,7 @@ class HandRepositoryImpl {
       return resp.id;
     } catch (error) {
       logger.error(
-        `Error when trying to save bookmarked hand: ${errToLogString(
-          error,
-          false
-        )}`
+        `Error when trying to save bookmarked hand: ${errToStr(error, false)}`
       );
       throw error;
     }
@@ -313,10 +310,7 @@ class HandRepositoryImpl {
       }
     } catch (error) {
       logger.error(
-        `Error when trying to deleting bookmarked hand: ${errToLogString(
-          error,
-          false
-        )}`
+        `Error when trying to deleting bookmarked hand: ${errToStr(error)}`
       );
       throw error;
     }
@@ -383,7 +377,7 @@ class HandRepositoryImpl {
       return id;
     } catch (error) {
       logger.error(
-        `Error when trying to share hands: ${errToLogString(error, false)}`
+        `Error when trying to share hands: ${errToStr(error, false)}`
       );
       throw error;
     }
@@ -401,7 +395,7 @@ class HandRepositoryImpl {
       return sharedHand;
     } catch (error) {
       logger.error(
-        `Error when trying to get shared hand: ${errToLogString(error, false)}`
+        `Error when trying to get shared hand: ${errToStr(error, false)}`
       );
       throw error;
     }
@@ -421,7 +415,7 @@ class HandRepositoryImpl {
       return sharedHands;
     } catch (error) {
       logger.error(
-        `Error when trying to get shared hands: ${errToLogString(error, false)}`
+        `Error when trying to get shared hands: ${errToStr(error, false)}`
       );
       throw error;
     }
@@ -445,10 +439,7 @@ class HandRepositoryImpl {
       return bookmarkedHands;
     } catch (error) {
       logger.error(
-        `Error when trying to get bookmarked hands: ${errToLogString(
-          error,
-          false
-        )}`
+        `Error when trying to get bookmarked hands: ${errToStr(error, false)}`
       );
       throw error;
     }
@@ -476,10 +467,7 @@ class HandRepositoryImpl {
       return bookmarkedHands;
     } catch (error) {
       logger.error(
-        `Error when trying to get bookmarked hands: ${errToLogString(
-          error,
-          false
-        )}`
+        `Error when trying to get bookmarked hands: ${errToStr(error, false)}`
       );
       throw error;
     }
@@ -891,7 +879,7 @@ class HandRepositoryImpl {
       //   }
       //   // } catch (err) {}
       // } catch (err) {
-      //   logger.error(errToLogString(err));
+      //   logger.error(errToStr(err));
       // }
 
       if (!pendingUpdates) {
@@ -909,15 +897,13 @@ class HandRepositoryImpl {
       //logger.info(`Hand ended`);
       return saveResult;
     } catch (err) {
-      logger.error(
-        `Error when trying to save hand log: ${errToLogString(err)}`
-      );
+      logger.error(`Error when trying to save hand log: ${errToStr(err)}`);
       return {
         gameCode: gameCode,
         handNum: handNum,
         success: false,
         skipped: false,
-        error: errToLogString(err, false),
+        error: errToStr(err, false),
       };
     }
   }

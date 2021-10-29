@@ -1,6 +1,6 @@
 import {GameRepository} from '@src/repositories/game';
 import {GameType, PlayerStatus} from '@src/entity/types';
-import {getLogger, errToLogString} from '@src/utils/log';
+import {getLogger, errToStr} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
 import {default as _} from 'lodash';
 import {BuyIn} from '@src/repositories/buyin';
@@ -112,7 +112,7 @@ export async function getGamePlayers(gameCode: string) {
     return resp;
   } catch (err) {
     logger.error(
-      `Error while getting game players. gameCode: ${gameCode}: ${errToLogString(
+      `Error while getting game players. gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
@@ -145,15 +145,12 @@ export async function playerStackStat(playerId: string, gameCode: string) {
     return stackStat;
   } catch (err) {
     logger.error(
-      `Error while getting player stack stat. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while getting player stack stat. playerId: ${playerId}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
     throw new Error(
-      `Failed to resume game:  ${errToLogString(
-        err,
-        false
-      )}. Game code: ${gameCode}`
+      `Failed to resume game:  ${errToStr(err, false)}. Game code: ${gameCode}`
     );
   }
 }
@@ -209,7 +206,7 @@ export async function playersInGameById(playerId: string, gameCode: string) {
     return playersInGameData;
   } catch (err) {
     logger.error(
-      `Error while getting players in game data. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while getting players in game data. playerId: ${playerId}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
@@ -273,7 +270,7 @@ export async function playersGameTrackerById(
     return playerGameTrackerData;
   } catch (err) {
     logger.error(
-      `Error while getting players game tracker data. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while getting players game tracker data. playerId: ${playerId}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
@@ -364,7 +361,7 @@ export async function joinGame(
     logger.error(
       `Error while joining game. playerUuid: ${playerUuid}, gameCode: ${gameCode}, seatNo: ${seatNo}, locationCheck: ${JSON.stringify(
         locationCheck
-      )}: ${errToLogString(err)}`
+      )}: ${errToStr(err)}`
     );
     if (err instanceof ApolloError) {
       throw err;
@@ -469,7 +466,7 @@ export async function takeSeat(
     logger.error(
       `Error while taking seat. playerUuid: ${playerUuid}, gameCode: ${gameCode}, seatNo: ${seatNo}, locationCheck: ${JSON.stringify(
         locationCheck
-      )}: ${errToLogString(err)}`
+      )}: ${errToStr(err)}`
     );
     if (err instanceof ApolloError) {
       throw err;
@@ -553,7 +550,7 @@ export async function buyIn(
   } catch (err) {
     const timeTaken = new Date().getTime() - startTime;
     logger.error(
-      `Error while buying in. playerUuid: ${playerUuid}, gameCode: ${gameCode}, amount: ${amount}: ${errToLogString(
+      `Error while buying in. playerUuid: ${playerUuid}, gameCode: ${gameCode}, amount: ${amount}: ${errToStr(
         err
       )}`
     );
@@ -601,7 +598,7 @@ export async function reload(
     return status;
   } catch (err) {
     logger.error(
-      `Error while reloading. playerUuid: ${playerUuid}, gameCode: ${gameCode}, amount: ${amount}: ${errToLogString(
+      `Error while reloading. playerUuid: ${playerUuid}, gameCode: ${gameCode}, amount: ${amount}: ${errToStr(
         err
       )}`
     );
@@ -644,7 +641,7 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
     return status;
   } catch (err) {
     logger.error(
-      `Error while taking break. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while taking break. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
@@ -713,7 +710,7 @@ export async function sitBack(
     logger.error(
       `Error while sitting back. playerUuid: ${playerUuid}, gameCode: ${gameCode}, locationCheck: ${JSON.stringify(
         locationCheck
-      )}: ${errToLogString(err)}`
+      )}: ${errToStr(err)}`
     );
     if (err instanceof ApolloError) {
       throw err;
@@ -784,7 +781,7 @@ export async function kickOutPlayer(
     return true;
   } catch (err) {
     logger.error(
-      `Error while kicking player out. requestUser: ${requestUser}, gameCode: ${gameCode}, kickedOutPlayer: ${kickedOutPlayer}: ${errToLogString(
+      `Error while kicking player out. requestUser: ${requestUser}, gameCode: ${gameCode}, kickedOutPlayer: ${kickedOutPlayer}: ${errToStr(
         err
       )}`
     );
@@ -833,7 +830,7 @@ export async function setBuyInLimit(
     return true;
   } catch (err) {
     logger.error(
-      `Error while setting buy-in limit. requestUser: ${requestUser}, gameCode: ${gameCode}, targetPlayer: ${targetPlayerUuid}: ${errToLogString(
+      `Error while setting buy-in limit. requestUser: ${requestUser}, gameCode: ${gameCode}, targetPlayer: ${targetPlayerUuid}: ${errToStr(
         err
       )}`
     );
@@ -874,7 +871,7 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
     return status;
   } catch (err) {
     logger.error(
-      `Error while leaving game. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while leaving game. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
@@ -897,7 +894,7 @@ export async function dealerChoice(
     await GameRepository.updateDealerChoice(game, player, gameType);
   } catch (err) {
     logger.error(
-      `Error while updating dealer choice. playerId: ${playerId}, gameCode: ${gameCode}, gameTypeStr: ${gameTypeStr}: ${errToLogString(
+      `Error while updating dealer choice. playerId: ${playerId}, gameCode: ${gameCode}, gameTypeStr: ${gameTypeStr}: ${errToStr(
         err
       )}`
     );
@@ -922,7 +919,7 @@ export async function postBlind(
     return true;
   } catch (err) {
     logger.error(
-      `Error while posting blind. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while posting blind. playerId: ${playerId}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );

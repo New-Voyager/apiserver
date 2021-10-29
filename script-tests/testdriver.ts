@@ -4,7 +4,7 @@ import {default as axios} from 'axios';
 import {resetDatabase, mutationHelper, queryHelper} from './utils/utils';
 import * as queries from './utils/queries';
 import * as URL from './utils/APIPaths';
-import { errToLogString } from '@src/utils/log';
+import { errToStr } from '@src/utils/log';
 
 /*
 This class runs game script and verifies results in different stages
@@ -525,7 +525,7 @@ class GameScript {
       await axios.post(url, {});
       this.log(`Club ${params.name} has been deleted`);
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
     }
   }
 
@@ -556,7 +556,7 @@ class GameScript {
       );
       return [playerResp.data.player.uuid, playerResp.data.player.id, token];
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
       throw err;
     }
   }
@@ -573,7 +573,7 @@ class GameScript {
       this.log(`player ${params.name} has logged in successfully`);
       return resp.data.jwt;
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
       throw err;
     }
   }
@@ -600,7 +600,7 @@ class GameScript {
       );
       return [resp.data.clubCode, clubResp.data.club.id];
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
       throw err;
     }
   }
@@ -618,7 +618,7 @@ class GameScript {
         );
       }
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
       throw err;
     }
   }
@@ -642,7 +642,7 @@ class GameScript {
         }
       }
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
       throw err;
     }
   }
@@ -661,7 +661,7 @@ class GameScript {
         );
       }
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
       throw err;
     }
   }
@@ -680,7 +680,7 @@ class GameScript {
         );
       }
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
       throw err;
     }
   }
@@ -744,7 +744,7 @@ class GameScript {
       };
       return [resp.data.configuredGame.gameCode, gameResp.data.game.id];
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
       throw err;
     }
   }
@@ -804,7 +804,7 @@ class GameScript {
         throw new Error('Club stack verification failed');
       }
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
       throw err;
     }
   }
@@ -837,7 +837,7 @@ class GameScript {
         }
       }
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
       throw err;
     }
   }
@@ -870,7 +870,7 @@ class GameScript {
         }
       }
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
       throw err;
     }
   }
@@ -913,7 +913,7 @@ class GameScript {
         saveHandData
       );
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
       throw err;
     }
   }
@@ -928,7 +928,7 @@ class GameScript {
       );
       this.log(`Game ${[params.game]} has been ended`);
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
       throw err;
     }
   }
@@ -948,7 +948,7 @@ class GameScript {
         throw new Error('Club balance verification failed');
       }
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
       throw err;
     }
   }
@@ -971,7 +971,7 @@ class GameScript {
         throw new Error('Player balance verification failed');
       }
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
       throw err;
     }
   }
@@ -1086,7 +1086,7 @@ class GameScript {
         }
       }
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
       throw err;
     }
   }
@@ -1202,7 +1202,7 @@ class GameScript {
         }
       }
     } catch (err) {
-      this.log(errToLogString(err));
+      this.log(errToStr(err));
       throw err;
     }
   }
@@ -1342,7 +1342,7 @@ async function main() {
         await gameScript1.run();
       } catch (err) {
         console.log(
-          `Setting up script ${file} failed. Error: ${errToLogString(err)}`
+          `Setting up script ${file} failed. Error: ${errToStr(err)}`
         );
         throw err;
       }

@@ -1,7 +1,7 @@
 import {GameStatus, GameType, TableStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
 import {PokerGame} from '@src/entity/game/game';
 import {PlayerStatus} from '@src/entity/types';
@@ -44,11 +44,11 @@ class GameAPIs {
       resp.status(200).send({status: 'OK'});
     } catch (err) {
       logger.error(
-        `Error while updating player game state for game ${gameID}, player ${playerID}: ${errToLogString(
+        `Error while updating player game state for game ${gameID}, player ${playerID}: ${errToStr(
           err
         )}`
       );
-      resp.status(500).send({error: errToLogString(err, false)});
+      resp.status(500).send({error: errToStr(err, false)});
     }
   }
 
@@ -71,11 +71,11 @@ class GameAPIs {
       resp.status(200).send({status: 'OK'});
     } catch (err) {
       logger.error(
-        `Error while updating game status for game ${gameID} to ${gameStatus}: ${errToLogString(
+        `Error while updating game status for game ${gameID} to ${gameStatus}: ${errToStr(
           err
         )}`
       );
-      resp.status(500).send({error: errToLogString(err, false)});
+      resp.status(500).send({error: errToStr(err, false)});
     }
   }
 
@@ -103,13 +103,11 @@ class GameAPIs {
       resp.status(200).send({status: 'OK'});
     } catch (err) {
       logger.error(
-        `Error while updating table status for game ${gameID} to ${tableStatus}: ${errToLogString(
+        `Error while updating table status for game ${gameID} to ${tableStatus}: ${errToStr(
           err
         )}`
       );
-      resp
-        .status(500)
-        .send(JSON.stringify({error: errToLogString(err, false)}));
+      resp.status(500).send(JSON.stringify({error: errToStr(err, false)}));
     }
   }
 
@@ -125,13 +123,11 @@ class GameAPIs {
       resp.status(200).send({pendingUpdates: pendingUpdates});
     } catch (err) {
       logger.error(
-        `Error while checking for any pending updates for game ${gameID}: ${errToLogString(
+        `Error while checking for any pending updates for game ${gameID}: ${errToStr(
           err
         )}`
       );
-      resp
-        .status(500)
-        .send(JSON.stringify({error: errToLogString(err, false)}));
+      resp.status(500).send(JSON.stringify({error: errToStr(err, false)}));
     }
   }
 
@@ -153,13 +149,11 @@ class GameAPIs {
       resp.status(200).send({status: 'OK'});
     } catch (err) {
       logger.error(
-        `Error while processing pending updates for game ${gameID}: ${errToLogString(
+        `Error while processing pending updates for game ${gameID}: ${errToStr(
           err
         )}`
       );
-      resp
-        .status(500)
-        .send(JSON.stringify({error: errToLogString(err, false)}));
+      resp.status(500).send(JSON.stringify({error: errToStr(err, false)}));
     }
   }
 
@@ -279,14 +273,12 @@ class GameAPIs {
         break;
       } catch (err) {
         logger.error(
-          `Error while getting game info for game [${gameCode}]: ${errToLogString(
+          `Error while getting game info for game [${gameCode}]: ${errToStr(
             err
           )}`
         );
         if (retryCount === 0) {
-          resp
-            .status(500)
-            .send(JSON.stringify({error: errToLogString(err, false)}));
+          resp.status(500).send(JSON.stringify({error: errToStr(err, false)}));
           return;
         }
       }
@@ -311,10 +303,8 @@ class GameAPIs {
       await GameRepository.markGameStatus(gameID, GameStatus.ACTIVE);
       resp.status(200).send({status: 'OK'});
     } catch (err) {
-      logger.error(
-        `Error while starting game ${gameID}: ${errToLogString(err)}`
-      );
-      resp.status(500).send({error: errToLogString(err, false)});
+      logger.error(`Error while starting game ${gameID}: ${errToStr(err)}`);
+      resp.status(500).send({error: errToStr(err, false)});
     }
   }
 
@@ -352,11 +342,9 @@ class GameAPIs {
       resp.status(200).send(JSON.stringify(ret));
     } catch (err) {
       logger.error(
-        `Error while moving game ${gameCode} to next hand: ${errToLogString(
-          err
-        )}`
+        `Error while moving game ${gameCode} to next hand: ${errToStr(err)}`
       );
-      resp.status(500).send({error: errToLogString(err, false)});
+      resp.status(500).send({error: errToStr(err, false)});
     }
   }
 
@@ -388,11 +376,11 @@ class GameAPIs {
       resp.status(200).send(JSON.stringify(ret));
     } catch (err) {
       logger.error(
-        `Error while getting next hand info for game ${gameCode}: ${errToLogString(
+        `Error while getting next hand info for game ${gameCode}: ${errToStr(
           err
         )}`
       );
-      resp.status(500).send({error: errToLogString(err, false)});
+      resp.status(500).send({error: errToStr(err, false)});
     }
   }
 
@@ -401,8 +389,8 @@ class GameAPIs {
       const ret = await Aggregation.postProcessGames();
       resp.status(200).send(JSON.stringify(ret));
     } catch (err) {
-      logger.error(`Error while aggregating game data: ${errToLogString(err)}`);
-      resp.status(500).send({error: errToLogString(err, false)});
+      logger.error(`Error while aggregating game data: ${errToStr(err)}`);
+      resp.status(500).send({error: errToStr(err, false)});
     }
   }
 
@@ -411,9 +399,9 @@ class GameAPIs {
       const res = await GameRepository.endExpireGames();
       resp.status(200).send(JSON.stringify({expired: res.numExpired}));
     } catch (err) {
-      logger.error(`Unable to end all expired games: ${errToLogString(err)}`);
+      logger.error(`Unable to end all expired games: ${errToStr(err)}`);
       const response = {
-        error: errToLogString(err, false),
+        error: errToStr(err, false),
       };
       resp.status(500).send(JSON.stringify(response));
     }
@@ -437,9 +425,9 @@ class GameAPIs {
       const res = await GameRepository.endGameInternal(gameCode, force);
       resp.status(200).json({status: GameStatus[res]});
     } catch (err) {
-      logger.error(`Unable to end game: ${errToLogString(err)}`);
+      logger.error(`Unable to end game: ${errToStr(err)}`);
       const response = {
-        error: errToLogString(err, false),
+        error: errToStr(err, false),
       };
       resp.status(500).json(response);
     }

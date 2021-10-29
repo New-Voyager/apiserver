@@ -16,7 +16,7 @@ import {createPlayer, leaveClub} from '../src/resolvers/player';
 import {configureGame} from '../src/resolvers/game';
 import {saveReward} from '../src/resolvers/reward';
 import {createGameServer} from '../src/internal/gameserver';
-import {errToLogString, getLogger} from '../src/utils/log';
+import {errToStr, getLogger} from '../src/utils/log';
 
 const logger = getLogger('club unit-test');
 
@@ -142,7 +142,7 @@ describe('Club APIs', () => {
       expect(resp).not.toBeNull();
     } catch (error) {
       logger.error(JSON.stringify(error));
-      expect(errToLogString(error, false)).toBe(
+      expect(errToStr(error, false)).toBe(
         'The player is already in the club. Member status: ACTIVE'
       );
     }
@@ -172,7 +172,7 @@ describe('Club APIs', () => {
       const approved = await approveMember(player1Id, clubCode, player2Id);
       expect(approved).not.toBe('ACTIVE');
     } catch (error) {
-      expect(errToLogString(error, false)).toContain('Unauthorized');
+      expect(errToStr(error, false)).toContain('Unauthorized');
     }
   });
 
@@ -309,7 +309,7 @@ describe('Club APIs', () => {
       clubMembers = await getClubMembers(player1Id, {clubCode: clubCode});
       expect(false).toBeTruthy();
     } catch (error) {
-      expect(errToLogString(error, false)).toContain('Unauthorized');
+      expect(errToStr(error, false)).toContain('Unauthorized');
     }
   });
 
@@ -338,7 +338,7 @@ describe('Club APIs', () => {
       await leaveClub(playerId, {clubCode: clubCode});
       expect(false).toBeTruthy();
     } catch (error) {
-      expect(errToLogString(error, false)).toContain('Owner cannot leave the club');
+      expect(errToStr(error, false)).toContain('Owner cannot leave the club');
     }
 
     await leaveClub(player1Id, {clubCode: clubCode});
@@ -359,7 +359,7 @@ describe('Club APIs', () => {
       const members = await getClubMembers('1234', {clubCode: '1234'});
       expect(members).toBeNull();
     } catch (err) {
-      expect(errToLogString(err, false)).toContain('Unauthorized');
+      expect(errToStr(err, false)).toContain('Unauthorized');
     }
   });
 
@@ -451,7 +451,7 @@ describe('Club APIs', () => {
       const games = await getClubById(ownerId, clubCode);
       expect(games).not.toBeNull();
     } catch (err) {
-      expect(errToLogString(err, false)).toContain('not found');
+      expect(errToStr(err, false)).toContain('not found');
     }
   });
 
@@ -504,7 +504,7 @@ describe('Club APIs', () => {
       });
       expect(false).toBeTruthy();
     } catch (error) {
-      expect(errToLogString(error, false)).toContain('Unauthorized');
+      expect(errToStr(error, false)).toContain('Unauthorized');
     }
   });
 });

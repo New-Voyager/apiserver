@@ -17,7 +17,7 @@ import {
 import {getGameRepository, getUserRepository} from '@src/repositories';
 import {PlayerLocation} from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
-import {getLogger, errToLogString} from '@src/utils/log';
+import {getLogger, errToStr} from '@src/utils/log';
 
 const logger = getLogger('cache');
 
@@ -47,7 +47,7 @@ export function initializeRedis() {
     client = redis.createClient(redisPort(), redisHost());
   }
   client.on('error', error => {
-    logger.error(`Redis client error: ${errToLogString(error, false)}}`);
+    logger.error(`Redis client error: ${errToStr(error, false)}}`);
     throw new Error(error);
   });
 }
@@ -79,10 +79,7 @@ class GameCache {
           client.get(key, (err: any, value: any) => {
             if (err) {
               logger.error(
-                `Error from Redis client.get (key: ${key}): ${errToLogString(
-                  err,
-                  false
-                )}`
+                `Error from Redis client.get (key: ${key}): ${errToStr(err)}`
               );
               resolve({success: false, data: value});
             } else {
@@ -91,7 +88,7 @@ class GameCache {
           });
         } catch (error) {
           logger.error(
-            `Error while calling redis client.get (key: ${key}): ${errToLogString(
+            `Error while calling redis client.get (key: ${key}): ${errToStr(
               error
             )}`
           );
@@ -119,10 +116,7 @@ class GameCache {
         client.set(key, value, (err: any, object: any) => {
           if (err) {
             logger.error(
-              `Error from Redis client.set (key: ${key}): ${errToLogString(
-                err,
-                false
-              )}`
+              `Error from Redis client.set (key: ${key}): ${errToStr(err)}`
             );
             resolve({success: false});
           } else {
@@ -131,7 +125,7 @@ class GameCache {
         });
       } catch (error) {
         logger.error(
-          `Error while calling redis client.set (key: ${key}): ${errToLogString(
+          `Error while calling redis client.set (key: ${key}): ${errToStr(
             error
           )}`
         );
@@ -159,10 +153,7 @@ class GameCache {
         client.del(key, (err: any, object: any) => {
           if (err) {
             logger.error(
-              `Error from Redis client.del (key: ${key}): ${errToLogString(
-                err,
-                false
-              )}`
+              `Error from Redis client.del (key: ${key}): ${errToStr(err)}`
             );
             resolve({success: false});
           } else {
@@ -171,7 +162,7 @@ class GameCache {
         });
       } catch (error) {
         logger.error(
-          `Error while calling Redis client.del (key: ${key}): ${errToLogString(
+          `Error while calling Redis client.del (key: ${key}): ${errToStr(
             error
           )}`
         );
@@ -203,7 +194,7 @@ class GameCache {
           client.keys(pattern, (err: any, reply: any) => {
             if (err) {
               logger.error(
-                `Error from Redis client.keys: ${errToLogString(err, false)}`
+                `Error from Redis client.keys: ${errToStr(err, false)}`
               );
               resolve({success: false, data: err});
             } else {
@@ -212,7 +203,7 @@ class GameCache {
           });
         } catch (error) {
           logger.error(
-            `Error while calling Redis client.keys: ${errToLogString(error)}`
+            `Error while calling Redis client.keys: ${errToStr(error)}`
           );
           reject({success: false, data: error});
         }
@@ -652,7 +643,7 @@ class GameCache {
     return new Promise(async (resolve, reject) => {
       client.flushall((err: Error, succeeded) => {
         if (err) {
-          logger.error(`Redis flushall error: ${errToLogString(err, false)}`);
+          logger.error(`Redis flushall error: ${errToStr(err, false)}`);
         } else {
           logger.info(`Redis flushall succeeded. Result: ${succeeded}`);
           resolve(true);

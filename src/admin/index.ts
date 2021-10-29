@@ -2,7 +2,7 @@ import {Announcement} from '@src/entity/player/announcements';
 import {AnnouncementLevel} from '@src/entity/types';
 import {AnnouncementsRepository} from '@src/repositories/announcements';
 import {PromotionRepository} from '@src/repositories/promotion';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {max} from 'lodash';
 
 const logger = getLogger('admin_promotion');
@@ -12,9 +12,9 @@ export async function deleteAll(req: any, resp: any) {
     const result = await PromotionRepository.deleteAll();
     resp.status(200).send({result: result});
   } catch (error) {
-    logger.error(errToLogString(error, false));
+    logger.error(errToStr(error, false));
     resp.contentType('application/json');
-    resp.status(501).send({error: errToLogString(error, false)});
+    resp.status(501).send({error: errToStr(error, false)});
   }
 }
 
@@ -23,9 +23,9 @@ export async function getAllPromotion(req: any, resp: any) {
     const result = await PromotionRepository.findAll();
     resp.status(200).send({result: result});
   } catch (error) {
-    logger.error(errToLogString(error, false));
+    logger.error(errToStr(error, false));
     resp.contentType('application/json');
-    resp.status(501).send({error: errToLogString(error, false)});
+    resp.status(501).send({error: errToStr(error, false)});
   }
 }
 
@@ -70,9 +70,9 @@ export async function createPromotion(req: any, resp: any) {
     );
     resp.status(200).send({result: result});
   } catch (error) {
-    logger.error(errToLogString(error, false));
+    logger.error(errToStr(error, false));
     resp.contentType('application/json');
-    resp.status(501).send({error: errToLogString(error, false)});
+    resp.status(501).send({error: errToStr(error, false)});
   }
 }
 
@@ -112,8 +112,8 @@ export async function createAnnouncement(req: any, resp: any) {
     );
     resp.status(200).send({result: result});
   } catch (error) {
-    logger.error(errToLogString(error, false));
+    logger.error(errToStr(error, false));
     resp.contentType('application/json');
-    resp.status(501).send({error: errToLogString(error, false)});
+    resp.status(501).send({error: errToStr(error, false)});
   }
 }

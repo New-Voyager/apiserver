@@ -9,7 +9,7 @@ import {
   hostSeatChangePlayers,
   SeatChangeProcess,
 } from '@src/repositories/seatchange';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {argsToArgsConfig} from 'graphql/type/definition';
 import _ from 'lodash';
 import {isHostOrManagerOrOwner} from './util';
@@ -99,9 +99,7 @@ export async function confirmSeatChange(
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error(
-      `Failed to confirm seat change.  ${errToLogString(err)} ${JSON.stringify(
-        err
-      )}`
+      `Failed to confirm seat change.  ${errToStr(err)} ${JSON.stringify(err)}`
     );
   }
 }
@@ -441,7 +439,7 @@ export async function switchSeat(
     return playerStatus;
   } catch (err) {
     logger.error(
-      `Error while switching seat. playerUuid: ${playerUuid}, gameCode: ${gameCode}, seatNo: ${seatNo}: ${errToLogString(
+      `Error while switching seat. playerUuid: ${playerUuid}, gameCode: ${gameCode}, seatNo: ${seatNo}: ${errToStr(
         err
       )}`
     );

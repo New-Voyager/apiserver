@@ -3,7 +3,7 @@ import {GameServer} from '@src/entity/game/gameserver';
 import {GameServerStatus, GameStatus} from '@src/entity/types';
 import {GameRepository} from '@src/repositories/game';
 import {fixQuery} from '@src/utils';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {PokerGame} from '@src/entity/game/game';
 import {publishNewGame} from '@src/gameserver';
 import {getGameConnection, getGameRepository} from '@src/repositories';
@@ -125,10 +125,8 @@ class GameServerAPIs {
       }
       resp.status(200).send(JSON.stringify({server: gameServer}));
     } catch (err) {
-      logger.error(errToLogString(err, false));
-      resp
-        .status(500)
-        .send(JSON.stringify({error: errToLogString(err, false)}));
+      logger.error(errToStr(err, false));
+      resp.status(500).send(JSON.stringify({error: errToStr(err, false)}));
     }
   }
 
@@ -148,13 +146,10 @@ class GameServerAPIs {
       }
     } catch (err) {
       logger.error(
-        `Unable to restart all games in game server. Error: ${errToLogString(
-          err,
-          false
-        )}`
+        `Unable to restart all games in game server. Error: ${errToStr(err)}`
       );
       const response = {
-        error: errToLogString(err, false),
+        error: errToStr(err, false),
       };
       resp.status(500).send(JSON.stringify(response));
       return;
@@ -167,7 +162,7 @@ class GameServerAPIs {
         `Unable to restart all games in game server ${gameServer.id} (url: ${gameServer.url})`
       );
       const response = {
-        error: errToLogString(err, false),
+        error: errToStr(err, false),
       };
       resp.status(500).send(JSON.stringify(response));
       return;
@@ -217,10 +212,10 @@ class GameServerAPIs {
       resp.status(200).send(JSON.stringify({status: 'OK'}));
     } catch (err) {
       const msg = `Could not set max games for game server ID ${gameServerId}: `;
-      logger.error(msg + errToLogString(err));
+      logger.error(msg + errToStr(err));
       resp
         .status(500)
-        .send(JSON.stringify({error: msg + errToLogString(err, false)}));
+        .send(JSON.stringify({error: msg + errToStr(err, false)}));
     }
   }
 }
@@ -274,9 +269,7 @@ export async function createGameServer(
     await gameServerRepository.save(gameServer);
     return [gameServer, null];
   } catch (err) {
-    logger.error(
-      `Registering game server failed. Error: ${errToLogString(err)}`
-    );
+    logger.error(`Registering game server failed. Error: ${errToStr(err)}`);
     return [null, err];
   }
 }
@@ -316,9 +309,9 @@ async function restartGame(game: PokerGame, gameServer: any): Promise<void> {
       return;
     } catch (err) {
       logger.error(
-        `Error while restarting game ${game.id}/${
-          game.gameCode
-        }: ${errToLogString(err, false)}`
+        `Error while restarting game ${game.id}/${game.gameCode}: ${errToStr(
+          err
+        )}`
       );
     }
   }

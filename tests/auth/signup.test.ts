@@ -59,7 +59,7 @@ describe('Auth APIs', () => {
       await signUp({screenName: anotherName, deviceId: anotherDeviceId, email});
     } catch (error) {
       const expectedErrors = [
-        'Error: Another device is registered with this recovery email address',
+        'Another device is registered with this recovery email address',
       ];
       expect((error as any).response.data.errors).toEqual(
         expect.arrayContaining(expectedErrors)

@@ -1,4 +1,4 @@
-import {getLogger, errToLogString} from '@src/utils/log';
+import {getLogger, errToStr} from '@src/utils/log';
 import {default as _} from 'lodash';
 import {getSessionTimeStr} from './util';
 import {Cache} from '@src/cache/index';
@@ -50,7 +50,7 @@ export async function getGameResultTable(gameCode: string) {
     return resp;
   } catch (err) {
     logger.error(
-      `Error in getting game result table. gameCode: ${gameCode}: ${errToLogString(
+      `Error in getting game result table. gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
@@ -101,7 +101,7 @@ export async function downloadResult(playerId: string, gameCode: string) {
     return output;
   } catch (err) {
     logger.error(
-      `[${gameCode}] [${playerId}] Error while downloading result. ${errToLogString(
+      `[${gameCode}] [${playerId}] Error while downloading result. ${errToStr(
         err
       )}`
     );

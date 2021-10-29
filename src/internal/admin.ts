@@ -1,6 +1,6 @@
 import {ClubRepository} from '@src/repositories/club';
 import {HandRepository} from '@src/repositories/hand';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 
 const logger = getLogger('internal::admin');
 
@@ -18,8 +18,8 @@ class AdminAPIs {
       await ClubRepository.deleteClubByName(clubName);
       resp.status(200).send({status: 'OK'});
     } catch (err) {
-      logger.error(errToLogString(err, false));
-      resp.status(500).send({error: errToLogString(err, false)});
+      logger.error(errToStr(err, false));
+      resp.status(500).send({error: errToStr(err, false)});
     }
   }
 
@@ -28,8 +28,8 @@ class AdminAPIs {
       const handHistoryDeleted = await HandRepository.cleanUpOldData();
       resp.status(200).send({handHistory: handHistoryDeleted});
     } catch (err) {
-      logger.error(`Error in data retention process: ${errToLogString(err)}`);
-      resp.status(500).json({error: errToLogString(err, false)});
+      logger.error(`Error in data retention process: ${errToStr(err)}`);
+      resp.status(500).json({error: errToStr(err, false)});
     }
   }
 }

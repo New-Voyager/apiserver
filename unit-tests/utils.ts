@@ -61,7 +61,7 @@ import {
   joinClub,
 } from '../src/resolvers/club';
 import {createGameServer} from '../src/internal/gameserver';
-import { errToLogString } from '../src/utils/log';
+import { errToStr } from '../src/utils/log';
 
 export async function initializeSqlLite() {
   process.env.DB_USED = 'sqllite';
@@ -140,7 +140,7 @@ export async function sqlliteConnection() {
     ]);
     return connection;
   } catch (err) {
-    console.log(`Failed to create connections. ${errToLogString(err)}`);
+    console.log(`Failed to create connections. ${errToStr(err)}`);
     throw err;
   }
 }

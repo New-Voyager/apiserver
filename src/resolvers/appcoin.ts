@@ -3,7 +3,7 @@ import {AppleReceiptVerifyError, GoogleReceiptVerifyError} from '@src/errors';
 import {Firebase} from '@src/firebase';
 import {AppCoinRepository} from '@src/repositories/appcoin';
 import {PlayerRepository} from '@src/repositories/player';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 
 const appleReceiptVerify = require('node-apple-receipt-verify');
 appleReceiptVerify.config({
@@ -80,7 +80,7 @@ async function verifyAppleReceipt(
     } else if (e instanceof appleReceiptVerify.ServiceUnavailableError) {
       // todo
     }
-    logger.error(`Verifying apple recepit failed ${errToLogString(e)}`);
+    logger.error(`Verifying apple recepit failed ${errToStr(e)}`);
     throw new AppleReceiptVerifyError(productId, orderId);
   }
 }
@@ -105,7 +105,7 @@ async function verifyGoogleReceipt(
       transactionId: receiptJson['orderId'],
     };
   } catch (err) {
-    logger.error(`Verifying google recepit failed ${errToLogString(err)}`);
+    logger.error(`Verifying google recepit failed ${errToStr(err)}`);
     throw new GoogleReceiptVerifyError(productId, orderId);
   }
 }
@@ -143,7 +143,7 @@ const resolvers: any = {
         return ret;
       } catch (err) {
         logger.error(
-          `Buying diamonds failed. Player Id: ctx.req.playerId. Error: ${errToLogString(
+          `Buying diamonds failed. Player Id: ctx.req.playerId. Error: ${errToStr(
             err
           )}`
         );
@@ -197,7 +197,7 @@ const resolvers: any = {
           duplicate: duplicate,
         };
       } catch (err) {
-        logger.error(`Verifying purchase failed: ${errToLogString(err)}`);
+        logger.error(`Verifying purchase failed: ${errToStr(err)}`);
         return {
           valid: false,
         };

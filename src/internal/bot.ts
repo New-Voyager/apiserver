@@ -4,7 +4,7 @@ import {AppCoinRepository} from '@src/repositories/appcoin';
 import {DevRepository} from '@src/repositories/dev';
 import {GameUpdatesRepository} from '@src/repositories/gameupdates';
 import {HandRepository} from '@src/repositories/hand';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import * as fs from 'fs';
 import {remove, shuffle} from 'lodash';
 import * as yaml from 'yaml';
@@ -198,7 +198,7 @@ export async function updateButtonPos(req: any, resp: any) {
     await GameUpdatesRepository.updateButtonPos(gameCode, buttonPos);
     resp.status(200).send({status: 'OK'});
   } catch (e) {
-    resp.status(500).send({errors: errToLogString(e, false)});
+    resp.status(500).send({errors: errToStr(e, false)});
   }
 }
 
@@ -336,7 +336,7 @@ export async function generateBotScript(req: any, resp: any) {
     const yamlScript = convertHandLogToYaml(handlog);
     resp.status(200).send(yamlScript);
   } catch (e) {
-    resp.status(500).send({errors: errToLogString(e, false)});
+    resp.status(500).send({errors: errToStr(e, false)});
   }
 }
 
@@ -413,7 +413,7 @@ export async function generateBotScriptDebugHand(req: any, resp: any) {
     const yamlScript = convertHandLogToYaml(handlog);
     resp.status(200).send(yamlScript);
   } catch (e) {
-    resp.status(500).send({errors: errToLogString(e, false)});
+    resp.status(500).send({errors: errToStr(e, false)});
   }
 }
 
@@ -426,6 +426,6 @@ export async function buyBotCoins(req: any, resp: any) {
     await AppCoinRepository.buyCoins(playerUuid, appCoins);
     resp.status(200).send({status: 'OK'});
   } catch (e) {
-    resp.status(500).send({errors: errToLogString(e, false)});
+    resp.status(500).send({errors: errToStr(e, false)});
   }
 }

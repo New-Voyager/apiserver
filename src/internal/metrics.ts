@@ -1,4 +1,4 @@
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import * as client from 'prom-client';
 
 const logger = getLogger('internal::metrics');
@@ -35,7 +35,7 @@ class MetricsAPIs {
       const metrics = await client.register.metrics();
       resp.status(200).send(metrics);
     } catch (err) {
-      logger.error(`Error while collecting metrics: ${errToLogString(err)}`);
+      logger.error(`Error while collecting metrics: ${errToStr(err)}`);
       resp.status(500).send('Internal service error');
       return;
     }

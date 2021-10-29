@@ -7,7 +7,7 @@ import {
   PlayerStatus,
   TableStatus,
 } from '@src/entity/types';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {BuyIn} from './buyin';
 import {SeatChangeProcess} from './seatchange';
 import {breakTimeoutExpired} from './takebreak';
@@ -88,7 +88,7 @@ export async function timerCallbackHandler(
       await gameCheckAvailableCoins(gameID);
     }
   } catch (err) {
-    logger.error(`Error in timer callback: ${errToLogString(err, false)}`);
+    logger.error(`Error in timer callback: ${errToStr(err, false)}`);
   }
 }
 

@@ -17,7 +17,7 @@ import {
   GameEndReason,
 } from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
 import {publishNewGame, resumeGame, endGame} from '@src/gameserver';
@@ -228,9 +228,7 @@ class GameRepositoryImpl {
                     transactionEntityManager.getRepository(GameReward);
                   await gameRewardRepository.save(createGameReward);
                 } catch (err) {
-                  logger.error(
-                    `Failed to update rewards. ${errToLogString(err)}`
-                  );
+                  logger.error(`Failed to update rewards. ${errToStr(err)}`);
                   throw err;
                 }
               } else {
@@ -293,7 +291,7 @@ class GameRepositoryImpl {
       );
     } catch (err) {
       logger.error(
-        `Couldn't create game and retry again. Error: ${errToLogString(err)}`
+        `Couldn't create game and retry again. Error: ${errToStr(err)}`
       );
       throw new Error("Couldn't create the game, please retry again");
     }
@@ -746,9 +744,7 @@ class GameRepositoryImpl {
             }
           } catch (err) {
             logger.error(
-              `Failed to get agora token ${errToLogString(err)} Game: ${
-                game.id
-              }`
+              `Failed to get agora token ${errToStr(err)} Game: ${game.id}`
             );
           }
 
@@ -759,7 +755,7 @@ class GameRepositoryImpl {
             await StatsRepository.newGameStatsRow(game, player);
           } catch (err) {
             logger.error(
-              `Failed to update player_game_tracker and player_game_stats table ${errToLogString(
+              `Failed to update player_game_tracker and player_game_stats table ${errToStr(
                 err
               )} Game: ${game.id}`
             );
@@ -997,7 +993,7 @@ class GameRepositoryImpl {
           }
         }
       } catch (err) {
-        logger.error(`Error handling buyin approval. ${errToLogString(err)}`);
+        logger.error(`Error handling buyin approval. ${errToStr(err)}`);
       }
     }
   }
@@ -1276,9 +1272,7 @@ class GameRepositoryImpl {
         // update the game server with new status
         await endGame(game.id);
       } catch (err) {
-        logger.warn(
-          `Could not end game in game server: ${errToLogString(err)}`
-        );
+        logger.warn(`Could not end game in game server: ${errToStr(err)}`);
       }
 
       // announce to the players the game has ended
@@ -1792,7 +1786,7 @@ class GameRepositoryImpl {
       logger.error(
         `Error while ending game. playerId: ${playerUuid}, gameCode: ${
           game.gameCode
-        }: ${errToLogString(err)}`
+        }: ${errToStr(err)}`
       );
       throw err;
     }

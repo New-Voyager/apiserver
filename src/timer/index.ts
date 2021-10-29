@@ -1,4 +1,4 @@
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import axios from 'axios';
 import {GameStatus} from '@src/entity/types';
 import {fixQuery} from '@src/utils';
@@ -107,10 +107,7 @@ async function restartBuyinTimers() {
           logger.error(
             `Failed to restart timer (game id: ${data['game_id']}, player id: ${
               data['player_id']
-            }, purpose: ${purpose}, expire at: ${expireAt}): ${errToLogString(
-              err,
-              false
-            )}`
+            }, purpose: ${purpose}, expire at: ${expireAt}): ${errToStr(err)}`
           );
         } else {
           await sleep(1000);

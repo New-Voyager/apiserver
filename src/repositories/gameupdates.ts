@@ -2,7 +2,7 @@ import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {EntityManager, Repository} from 'typeorm';
 import {Cache} from '@src/cache/index';
 import {getGameManager, getGameRepository} from '.';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {getAppSettings} from '@src/firebase';
 import {GameType} from '@src/entity/types';
 
@@ -73,7 +73,7 @@ class GameUpdatesRepositoryImpl {
       );
     } catch (err) {
       logger.error(
-        `Failed to update appcoins next consumption time. Error: ${errToLogString(
+        `Failed to update appcoins next consumption time. Error: ${errToStr(
           err
         )}`
       );

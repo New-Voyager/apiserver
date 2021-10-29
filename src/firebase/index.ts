@@ -1,6 +1,6 @@
 import {PokerGame} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
-import {errToLogString, getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import * as firebase from 'firebase-admin';
 import {ServiceAccount} from 'firebase-admin';
 
@@ -308,7 +308,7 @@ class FirebaseClass {
       logger.error(
         `Failed to send club firebase message: ${
           club.clubCode
-        }, err: ${errToLogString(err, false)}`
+        }, err: ${errToStr(err, false)}`
       );
     });
   }
@@ -354,9 +354,7 @@ class FirebaseClass {
         }
       }
     } catch (err) {
-      logger.error(
-        `Sending message to club members failed. ${errToLogString(err)}`
-      );
+      logger.error(`Sending message to club members failed. ${errToStr(err)}`);
     }
   }
 
@@ -373,7 +371,7 @@ class FirebaseClass {
         data: message,
       });
     } catch (err) {
-      logger.error(`Sending to device group failed. ${errToLogString(err)}`);
+      logger.error(`Sending to device group failed. ${errToStr(err)}`);
     }
   }
 
@@ -393,7 +391,7 @@ class FirebaseClass {
         },
       });
     } catch (err) {
-      logger.error(`Sending to device group failed. ${errToLogString(err)}`);
+      logger.error(`Sending to device group failed. ${errToStr(err)}`);
     }
   }
 
@@ -422,9 +420,7 @@ class FirebaseClass {
       }
     } catch (err) {
       logger.error(
-        `Cannot fetch data from the firebase database. Error: ${errToLogString(
-          err
-        )}`
+        `Cannot fetch data from the firebase database. Error: ${errToStr(err)}`
       );
     }
   }
@@ -486,9 +482,7 @@ class FirebaseClass {
       this.assets = assets;
       return this.assets;
     } catch (err) {
-      logger.error(
-        `Could not get assets from the firestore. ${errToLogString(err)}`
-      );
+      logger.error(`Could not get assets from the firestore. ${errToStr(err)}`);
       throw new Error('Could not fetch assets');
     }
   }
@@ -518,7 +512,7 @@ class FirebaseClass {
       return this.iapProducts;
     } catch (err) {
       logger.error(
-        `Could not get products from the firestore. ${errToLogString(err)}`
+        `Could not get products from the firestore. ${errToStr(err)}`
       );
     }
     return this.iapProducts;
@@ -550,7 +544,7 @@ class FirebaseClass {
       }
     } catch (err) {
       logger.error(
-        `Could not get products from the firestore. ${errToLogString(err)}`
+        `Could not get products from the firestore. ${errToStr(err)}`
       );
     }
   }
@@ -561,7 +555,7 @@ class FirebaseClass {
       return this.iapProducts;
     } catch (err) {
       logger.error(
-        `Could not get products from the firestore. ${errToLogString(err)}`
+        `Could not get products from the firestore. ${errToStr(err)}`
       );
       throw new Error('Could not fetch products');
     }
@@ -578,9 +572,7 @@ class FirebaseClass {
       }
       return ret;
     } catch (err) {
-      logger.error(
-        `Could not get assets from the firestore. ${errToLogString(err)}`
-      );
+      logger.error(`Could not get assets from the firestore. ${errToStr(err)}`);
       throw new Error('Could not fetch assets');
     }
   }
@@ -596,9 +588,7 @@ class FirebaseClass {
       }
       return ret;
     } catch (err) {
-      logger.error(
-        `Could not get assets from the firestore. ${errToLogString(err)}`
-      );
+      logger.error(`Could not get assets from the firestore. ${errToStr(err)}`);
       throw new Error('Could not fetch assets');
     }
   }
@@ -614,9 +604,7 @@ class FirebaseClass {
       }
       return ret;
     } catch (err) {
-      logger.error(
-        `Could not get assets from the firestore. ${errToLogString(err)}`
-      );
+      logger.error(`Could not get assets from the firestore. ${errToStr(err)}`);
       throw new Error('Could not fetch assets');
     }
   }

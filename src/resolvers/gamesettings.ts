@@ -1,4 +1,4 @@
-import {getLogger, errToLogString} from '@src/utils/log';
+import {getLogger, errToStr} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
 import {default as _} from 'lodash';
 import {isHostOrManagerOrOwner} from './util';
@@ -66,7 +66,7 @@ export async function gameSettings(playerUuid: string, gameCode: string) {
     return gameSettingsRet;
   } catch (err) {
     logger.error(
-      `Error while getting game settings. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while getting game settings. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
@@ -94,7 +94,7 @@ export async function myGameSettings(playerUuid: string, gameCode: string) {
     return playerSettings;
   } catch (err) {
     logger.error(
-      `Error while getting game settings. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while getting game settings. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
@@ -126,15 +126,12 @@ export async function updateGameSettings(
     return true;
   } catch (err) {
     logger.error(
-      `Error while updating game settings. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while updating game settings. playerId: ${playerId}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
     throw new Error(
-      `Failed updating game settings:  ${errToLogString(
-        err,
-        false
-      )}. Game code: ${gameCode}`
+      `Failed updating game settings:  ${errToStr(err)}. Game code: ${gameCode}`
     );
   }
 }
@@ -158,14 +155,13 @@ export async function updateGamePlayerSettings(
     );
   } catch (err) {
     logger.error(
-      `Error while updating player settings. playerId: ${playerId}, gameCode: ${gameCode}: ${errToLogString(
+      `Error while updating player settings. playerId: ${playerId}, gameCode: ${gameCode}: ${errToStr(
         err
       )}`
     );
     throw new Error(
-      `Failed while updating player settings:  ${errToLogString(
-        err,
-        false
+      `Failed while updating player settings:  ${errToStr(
+        err
       )}. Game code: ${gameCode}`
     );
   }

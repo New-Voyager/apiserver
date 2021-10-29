@@ -11,7 +11,7 @@ import {
 } from './repositories';
 import {ChatTextRepository} from './repositories/chat';
 import {StatsRepository} from './repositories/stats';
-import {errToLogString, getLogger} from './utils/log';
+import {errToStr, getLogger} from './utils/log';
 
 const systemChatText = [
   'Donkey call',
@@ -37,7 +37,7 @@ export async function seed() {
 
     await StatsRepository.newSystemStats();
   } catch (err) {
-    logger.error(`Error when seeding database. ${errToLogString(err)}`);
+    logger.error(`Error when seeding database. ${errToStr(err)}`);
     throw err;
   }
 }
@@ -62,9 +62,8 @@ export async function initdb() {
         logger.info('Enabled pg_stat_statements extension');
       } catch (err) {
         logger.error(
-          `Enabling pg_stat_statements extension failed. Error: ${errToLogString(
-            err,
-            false
+          `Enabling pg_stat_statements extension failed. Error: ${errToStr(
+            err
           )}`
         );
       }
@@ -74,7 +73,7 @@ export async function initdb() {
           `GRANT ALL PRIVILEGES ON DATABASE livegames TO "${defaultObj.username}"`
         );
       } catch (err) {
-        const message: string = errToLogString(err);
+        const message: string = errToStr(err);
         if (message.indexOf('already exists') === -1) {
           throw err;
         }
@@ -85,7 +84,7 @@ export async function initdb() {
           `GRANT ALL PRIVILEGES ON DATABASE users TO "${defaultObj.username}"`
         );
       } catch (err) {
-        const message: string = errToLogString(err);
+        const message: string = errToStr(err);
         if (message.indexOf('already exists') === -1) {
           throw err;
         }
@@ -96,14 +95,14 @@ export async function initdb() {
           `GRANT ALL PRIVILEGES ON DATABASE history TO "${defaultObj.username}"`
         );
       } catch (err) {
-        const message: string = errToLogString(err);
+        const message: string = errToStr(err);
         if (message.indexOf('already exists') === -1) {
           throw err;
         }
       }
     } catch (err) {
       logger.error(
-        `Errors reported when creating the database ${errToLogString(err)}`
+        `Errors reported when creating the database ${errToStr(err)}`
       );
       throw err;
     }
@@ -134,7 +133,7 @@ export async function initdb() {
         },
       ]);
     } catch (err) {
-      logger.error(`Error creating connections: ${errToLogString(err)}`);
+      logger.error(`Error creating connections: ${errToStr(err)}`);
       throw err;
     }
   } else {
@@ -168,7 +167,7 @@ export async function initdb() {
         },
       ]);
     } catch (err) {
-      logger.error(`Error creating connections: ${errToLogString(err)}`);
+      logger.error(`Error creating connections: ${errToStr(err)}`);
     }
   }
 
@@ -178,9 +177,8 @@ export async function initdb() {
     logger.info('Enabled pg_stat_statements extension in users db');
   } catch (err) {
     logger.error(
-      `Enabling pg_stat_statements in users db extension failed. Error: ${errToLogString(
-        err,
-        false
+      `Enabling pg_stat_statements in users db extension failed. Error: ${errToStr(
+        err
       )}`
     );
   }
@@ -190,9 +188,8 @@ export async function initdb() {
     logger.info('Enabled pg_stat_statements extension in users db');
   } catch (err) {
     logger.error(
-      `Enabling pg_stat_statements in users db extension failed. Error: ${errToLogString(
-        err,
-        false
+      `Enabling pg_stat_statements in users db extension failed. Error: ${errToStr(
+        err
       )}`
     );
   }
@@ -202,9 +199,8 @@ export async function initdb() {
     logger.info('Enabled pg_stat_statements extension in users db');
   } catch (err) {
     logger.error(
-      `Enabling pg_stat_statements in users db extension failed. Error: ${errToLogString(
-        err,
-        false
+      `Enabling pg_stat_statements in users db extension failed. Error: ${errToStr(
+        err
       )}`
     );
   }
