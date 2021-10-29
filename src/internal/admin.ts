@@ -18,8 +18,8 @@ class AdminAPIs {
       await ClubRepository.deleteClubByName(clubName);
       resp.status(200).send({status: 'OK'});
     } catch (err) {
-      logger.error(errToStr(err, false));
-      resp.status(500).send({error: errToStr(err, false)});
+      logger.error(errToStr(err));
+      resp.status(500).send({error: errToStr(err)});
     }
   }
 
@@ -29,7 +29,7 @@ class AdminAPIs {
       resp.status(200).send({handHistory: handHistoryDeleted});
     } catch (err) {
       logger.error(`Error in data retention process: ${errToStr(err)}`);
-      resp.status(500).json({error: errToStr(err, false)});
+      resp.status(500).json({error: errToStr(err)});
     }
   }
 }

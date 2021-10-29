@@ -822,7 +822,7 @@ export async function pauseGame(playerId: string, gameCode: string) {
         err
       )}`
     );
-    throw new Error('Failed to pause the game. ' + errToStr(err, false));
+    throw new Error('Failed to pause the game. ' + errToStr(err));
   }
 }
 
@@ -872,7 +872,7 @@ export async function resumeGame(playerId: string, gameCode: string) {
       )}`
     );
     throw new Error(
-      `Failed to resume game:  ${errToStr(err, false)}. Game code: ${gameCode}`
+      `Failed to resume game:  ${errToStr(err)}. Game code: ${gameCode}`
     );
   }
 }
@@ -909,7 +909,7 @@ export async function openSeats(playerId: string, gameCode: string) {
       )}`
     );
     throw new Error(
-      `Failed to resume game:  ${errToStr(err, false)}. Game code: ${gameCode}`
+      `Failed to resume game:  ${errToStr(err)}. Game code: ${gameCode}`
     );
   }
 }

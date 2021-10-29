@@ -125,8 +125,8 @@ class GameServerAPIs {
       }
       resp.status(200).send(JSON.stringify({server: gameServer}));
     } catch (err) {
-      logger.error(errToStr(err, false));
-      resp.status(500).send(JSON.stringify({error: errToStr(err, false)}));
+      logger.error(errToStr(err));
+      resp.status(500).send(JSON.stringify({error: errToStr(err)}));
     }
   }
 
@@ -149,7 +149,7 @@ class GameServerAPIs {
         `Unable to restart all games in game server. Error: ${errToStr(err)}`
       );
       const response = {
-        error: errToStr(err, false),
+        error: errToStr(err),
       };
       resp.status(500).send(JSON.stringify(response));
       return;
@@ -162,7 +162,7 @@ class GameServerAPIs {
         `Unable to restart all games in game server ${gameServer.id} (url: ${gameServer.url})`
       );
       const response = {
-        error: errToStr(err, false),
+        error: errToStr(err),
       };
       resp.status(500).send(JSON.stringify(response));
       return;
@@ -213,9 +213,7 @@ class GameServerAPIs {
     } catch (err) {
       const msg = `Could not set max games for game server ID ${gameServerId}: `;
       logger.error(msg + errToStr(err));
-      resp
-        .status(500)
-        .send(JSON.stringify({error: msg + errToStr(err, false)}));
+      resp.status(500).send(JSON.stringify({error: msg + errToStr(err)}));
     }
   }
 }

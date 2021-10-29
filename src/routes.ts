@@ -283,8 +283,8 @@ async function livenessCheck(req: any, resp: any) {
     await AdminRepository.checkDbTransaction();
     resp.status(200).json({status: 'OK'});
   } catch (err) {
-    logger.error(`DB transaction check failed: ${errToStr(err, false)}`);
-    resp.status(500).json({error: errToStr(err, false)});
+    logger.error(`DB transaction check failed: ${errToStr(err)}`);
+    resp.status(500).json({error: errToStr(err)});
   }
 }
 

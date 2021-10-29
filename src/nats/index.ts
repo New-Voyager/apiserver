@@ -51,7 +51,7 @@ class NatsClass {
       logger.info('Nats is initialized');
     } catch (err) {
       logger.error(
-        `Cannot connect to urls: ${natsUrls}. Error: ${errToStr(err, false)}`
+        `Cannot connect to urls: ${natsUrls}. Error: ${errToStr(err)}`
       );
       throw err;
     }

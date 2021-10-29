@@ -198,7 +198,7 @@ export async function updateButtonPos(req: any, resp: any) {
     await GameUpdatesRepository.updateButtonPos(gameCode, buttonPos);
     resp.status(200).send({status: 'OK'});
   } catch (e) {
-    resp.status(500).send({errors: errToStr(e, false)});
+    resp.status(500).send({errors: errToStr(e)});
   }
 }
 
@@ -336,7 +336,7 @@ export async function generateBotScript(req: any, resp: any) {
     const yamlScript = convertHandLogToYaml(handlog);
     resp.status(200).send(yamlScript);
   } catch (e) {
-    resp.status(500).send({errors: errToStr(e, false)});
+    resp.status(500).send({errors: errToStr(e)});
   }
 }
 
@@ -413,7 +413,7 @@ export async function generateBotScriptDebugHand(req: any, resp: any) {
     const yamlScript = convertHandLogToYaml(handlog);
     resp.status(200).send(yamlScript);
   } catch (e) {
-    resp.status(500).send({errors: errToStr(e, false)});
+    resp.status(500).send({errors: errToStr(e)});
   }
 }
 
@@ -426,6 +426,6 @@ export async function buyBotCoins(req: any, resp: any) {
     await AppCoinRepository.buyCoins(playerUuid, appCoins);
     resp.status(200).send({status: 'OK'});
   } catch (e) {
-    resp.status(500).send({errors: errToStr(e, false)});
+    resp.status(500).send({errors: errToStr(e)});
   }
 }

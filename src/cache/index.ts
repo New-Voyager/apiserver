@@ -47,7 +47,7 @@ export function initializeRedis() {
     client = redis.createClient(redisPort(), redisHost());
   }
   client.on('error', error => {
-    logger.error(`Redis client error: ${errToStr(error, false)}}`);
+    logger.error(`Redis client error: ${errToStr(error)}}`);
     throw new Error(error);
   });
 }
@@ -193,9 +193,7 @@ class GameCache {
         try {
           client.keys(pattern, (err: any, reply: any) => {
             if (err) {
-              logger.error(
-                `Error from Redis client.keys: ${errToStr(err, false)}`
-              );
+              logger.error(`Error from Redis client.keys: ${errToStr(err)}`);
               resolve({success: false, data: err});
             } else {
               resolve({success: true, data: reply});
@@ -642,7 +640,7 @@ class GameCache {
     return new Promise(async (resolve, reject) => {
       client.flushall((err: Error, succeeded) => {
         if (err) {
-          logger.error(`Redis flushall error: ${errToStr(err, false)}`);
+          logger.error(`Redis flushall error: ${errToStr(err)}`);
         } else {
           logger.info(`Redis flushall succeeded. Result: ${succeeded}`);
           resolve(true);
