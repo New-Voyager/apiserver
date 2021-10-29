@@ -1,0 +1,16 @@
+type FirebaseSettings {
+  androidApiKey: String!
+  iosApiKey: String!
+  androidAppId: String!
+  iosAppId: String!
+  projectId: String!
+  authDomain: String!
+  databaseURL: String!
+  storageBucket: String!
+  messagingSenderId: String!
+  measurementId: String
+}
+
+type Query {
+  firebaseSettings: FirebaseSettings
+}
