@@ -201,9 +201,8 @@ export class LocationCheck {
       // get active players in the game
       let playerGameTrackerRepo: Repository<PlayerGameTracker>;
       if (transactionEntityManager) {
-        playerGameTrackerRepo = transactionEntityManager.getRepository(
-          PlayerGameTracker
-        );
+        playerGameTrackerRepo =
+          transactionEntityManager.getRepository(PlayerGameTracker);
       } else {
         playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
       }

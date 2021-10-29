@@ -276,9 +276,8 @@ async function restartGameServerGames(
   gameServer: GameServer
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<void> {
-  const games: Array<PokerGame> = await GameServerRepository.getGamesForGameServer(
-    gameServer.url
-  );
+  const games: Array<PokerGame> =
+    await GameServerRepository.getGamesForGameServer(gameServer.url);
   for (const game of games) {
     restartGame(game, gameServer).catch(reason => {
       logger.error(

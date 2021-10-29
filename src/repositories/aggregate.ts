@@ -102,19 +102,16 @@ class AggregationImpl {
       );
       await getHistoryManager().transaction(
         async transactionalEntityManager => {
-          const gameHistoryRepo = transactionalEntityManager.getRepository(
-            GameHistory
-          );
+          const gameHistoryRepo =
+            transactionalEntityManager.getRepository(GameHistory);
 
-          const handHistoryRepo = transactionalEntityManager.getRepository(
-            HandHistory
-          );
+          const handHistoryRepo =
+            transactionalEntityManager.getRepository(HandHistory);
           const handHistoryData = await handHistoryRepo.find({
             gameId: game.gameId,
           });
-          const playersInGameRepo = transactionalEntityManager.getRepository(
-            PlayersInGame
-          );
+          const playersInGameRepo =
+            transactionalEntityManager.getRepository(PlayersInGame);
           const playersInGame = await playersInGameRepo.find({
             gameId: game.gameId,
           });
@@ -224,9 +221,8 @@ class AggregationImpl {
             );
           }
 
-          const gameStatsRepo = transactionalEntityManager.getRepository(
-            PlayerGameStats
-          );
+          const gameStatsRepo =
+            transactionalEntityManager.getRepository(PlayerGameStats);
           // update player game stats
           for (const player of playersInGame) {
             let headsupHandDetails = '[]';
@@ -238,9 +234,8 @@ class AggregationImpl {
                 playerStatsMap[player.playerId].headsupDetails
               );
             }
-            playerStatsMap[
-              player.playerId
-            ].headsupHandDetails = headsupHandDetails;
+            playerStatsMap[player.playerId].headsupHandDetails =
+              headsupHandDetails;
             delete playerStatsMap[player.playerId].headsupDetails;
             await gameStatsRepo.update(
               {
@@ -382,9 +377,8 @@ class AggregationImpl {
       await transManager.delete(PokerGameSettings, {gameCode: gameCode});
 
       const gameRepo = transManager.getRepository(PokerGame);
-      const playerGameTrackerRepo = transManager.getRepository(
-        PlayerGameTracker
-      );
+      const playerGameTrackerRepo =
+        transManager.getRepository(PlayerGameTracker);
       await playerGameTrackerRepo.delete({
         game: {id: game.id},
       });
