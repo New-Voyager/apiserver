@@ -17,6 +17,7 @@ import {PlayersInGameRepository} from './playersingame';
 import {GameUpdatesRepository} from './gameupdates';
 import {EntityManager} from 'typeorm';
 import _ from 'lodash';
+import {GameNotFoundError} from '@src/errors';
 
 const logger = getLogger('repositories::nexthand');
 
@@ -115,9 +116,9 @@ class MoveToNextHand {
   }
 
   public async move() {
-    const game: PokerGame = await Cache.getGame(this.game.gameCode, false);
+    const game = await Cache.getGame(this.game.gameCode, false);
     if (!game) {
-      throw new Error(`Game code: ${this.game.gameCode} not found`);
+      throw new GameNotFoundError(this.game.gameCode);
     }
     this.gameSettings = await GameSettingsRepository.get(game.gameCode);
     if (!this.gameSettings) {
@@ -660,6 +661,10 @@ export class NextHandProcess {
 
   public async moveToNextHand() {
     const game = await Cache.getGame(this.gameCode);
+    if (!game) {
+      throw new GameNotFoundError(this.gameCode);
+    }
+
     const moveToNextHand = new MoveToNextHand(game, this.gameServerHandNum);
     await moveToNextHand.move();
     return {
@@ -686,13 +691,14 @@ export class NextHandProcess {
   public async getNextHandInfo(): Promise<NewHandInfo> {
     const ret = await getGameManager().transaction(
       async transactionEntityManager => {
-        const game: PokerGame = await Cache.getGame(
+        const game = await Cache.getGame(
           this.gameCode,
           false,
           transactionEntityManager
         );
+
         if (!game) {
-          throw new Error(`Game code: ${this.gameCode} not found`);
+          throw new GameNotFoundError(this.gameCode);
         }
 
         const gameSettings = await GameSettingsRepository.get(

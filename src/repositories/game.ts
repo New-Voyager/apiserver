@@ -58,6 +58,7 @@ import {notifyScheduler} from '@src/server';
 import {NextHandUpdatesRepository} from './nexthand_update';
 import {processPendingUpdates} from './pendingupdates';
 import {AppCoinRepository} from './appcoin';
+import {GameNotFoundError} from '@src/errors';
 const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
@@ -951,7 +952,7 @@ class GameRepositoryImpl {
                 .where('id = :id', {id: game.id})
                 .execute();
 
-              game = await Cache.getGame(
+              await Cache.getGame(
                 game.gameCode,
                 true,
                 transactionEntityManager
@@ -988,7 +989,7 @@ class GameRepositoryImpl {
               await processPendingUpdates(game.id);
             } else {
               // resume the game
-              await resumeGame(gameCached.id, transactionEntityManager);
+              await resumeGame(game.id, transactionEntityManager);
             }
           }
         }
@@ -1263,10 +1264,14 @@ class GameRepositoryImpl {
       );
       return status;
     }
+    const gameCode = game.gameCode;
     // if game ended
     if (status === GameStatus.ENDED) {
       // update cached game
       game = await Cache.getGame(game.gameCode, true /** update */);
+      if (!game) {
+        throw new GameNotFoundError(gameCode);
+      }
 
       try {
         // update the game server with new status
@@ -1327,6 +1332,9 @@ class GameRepositoryImpl {
           game.gameCode,
           true /** update */
         );
+        if (!updatedGame) {
+          throw new GameNotFoundError(gameCode);
+        }
 
         if (status === GameStatus.ACTIVE) {
           await this.restartGameIfNeeded(
@@ -1688,6 +1696,9 @@ class GameRepositoryImpl {
   ): Promise<Array<any>> {
     const player = await Cache.getPlayer(playerId);
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
     // get players in the game
     const playersInGame = await PlayersInGameRepository.getPlayersInSeats(
       game.id
@@ -1798,6 +1809,22 @@ class GameRepositoryImpl {
       status: GameStatus.ACTIVE,
     });
     return games;
+  }
+
+  public async didPlayInGame(gameCode: string, playerUuid: string) {
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
+    const playersRepo = getGameRepository(PlayerGameTracker);
+    const player = await playersRepo.findOne({
+      game: {id: game.id},
+      playerUuid: playerUuid,
+    });
+    if (player) {
+      return true;
+    }
+    return false;
   }
 }
 

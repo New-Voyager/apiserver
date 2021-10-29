@@ -30,6 +30,9 @@ import {
 } from '@src/entity/game/reward';
 import {HighHandHistory} from '@src/entity/history/hand';
 import {Metrics} from '@src/internal/metrics';
+import {GameNotFoundError} from '@src/errors';
+import {GameHistory} from '@src/entity/history/game';
+import {HistoryRepository} from './history';
 
 const logger = getLogger('repositories::reward');
 
@@ -94,6 +97,10 @@ class RewardRepositoryImpl {
 
   public async handleRewards(gameCode: string, input: any, handTime: Date) {
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
+
     return await this.handleHighHand(game, input, handTime);
   }
 
@@ -151,6 +158,10 @@ class RewardRepositoryImpl {
         false,
         transactionManager
       );
+      if (!game) {
+        throw new GameNotFoundError(gameInput.gameCode);
+      }
+
       if (gameTracking) {
         existingHighHandRank = game.highHandRank;
       } else {
@@ -376,13 +387,20 @@ class RewardRepositoryImpl {
       return;
     }
     const highHands = [] as any;
-    const game = await Cache.getGame(gameCode);
+    const liveGame = await Cache.getGame(gameCode);
+    let historyGame: GameHistory | undefined;
+    if (!liveGame) {
+      historyGame = await HistoryRepository.getHistoryGame(gameCode);
+      if (!historyGame) {
+        throw new GameNotFoundError(gameCode);
+      }
+    }
 
     try {
-      if (!game || game.status === GameStatus.ENDED) {
+      if (historyGame && historyGame.status === GameStatus.ENDED) {
         const highHandRepo = getHistoryRepository(HighHandHistory);
         const gameHighHands = await highHandRepo.find({
-          where: {gameId: game.id},
+          where: {gameId: historyGame.gameId},
           order: {handTime: 'DESC'},
         });
         for await (const highHand of gameHighHands) {
@@ -401,10 +419,10 @@ class RewardRepositoryImpl {
             winner: highHand.winner,
           });
         }
-      } else {
+      } else if (liveGame) {
         const highHandRepo = getGameRepository(HighHand);
         const gameHighHands = await highHandRepo.find({
-          where: {gameId: game.id},
+          where: {gameId: liveGame.id},
           order: {handTime: 'DESC'},
         });
         for await (const highHand of gameHighHands) {
@@ -536,7 +554,7 @@ class RewardRepositoryImpl {
     const game = await Cache.getGame(gameCode);
     if (!game) {
       logger.error('Invalid gameCode');
-      throw new Error('Invalid gameCode');
+      throw new GameNotFoundError(gameCode);
     }
 
     if (!rewardId) {

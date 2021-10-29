@@ -634,13 +634,12 @@ class StatsRepositoryImpl {
 
   public async getPlayerGameStats(
     playerId: string,
-    gameCode: string
+    gameId: number
   ): Promise<PlayerGameStats | undefined> {
     const playerGameRepo = getHistoryRepository(PlayerGameStats);
     const player = await Cache.getPlayer(playerId);
-    const game = await Cache.getGame(gameCode);
     const playerStatHand = await playerGameRepo.findOne({
-      gameId: game.id,
+      gameId: gameId,
       playerId: player.id,
     });
     return playerStatHand;

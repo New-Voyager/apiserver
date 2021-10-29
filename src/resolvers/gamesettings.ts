@@ -5,6 +5,7 @@ import {isHostOrManagerOrOwner} from './util';
 import {GamePlayerSettings} from '@src/repositories/types';
 import {GameSettingsRepository} from '@src/repositories/gamesettings';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
+import {GameNotFoundError} from '@src/errors';
 
 const logger = getLogger('resolvers::gamesettings');
 
@@ -86,6 +87,9 @@ export async function myGameSettings(playerUuid: string, gameCode: string) {
     // }
     // return gameSettings;
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
     const player = await Cache.getPlayer(playerUuid);
     const playerSettings = await PlayersInGameRepository.getPlayerGameSettings(
       player,
@@ -111,6 +115,9 @@ export async function updateGameSettings(
   }
   try {
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
     const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
     if (!isAuthorized) {
       logger.error(
@@ -146,6 +153,9 @@ export async function updateGamePlayerSettings(
   }
   try {
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
     const player = await Cache.getPlayer(playerId);
     // update player game settings
     return PlayersInGameRepository.updatePlayerGameSettings(

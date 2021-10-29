@@ -13,6 +13,7 @@ import {NextHandProcess} from '@src/repositories/nexthand';
 import {GameSettingsRepository} from '@src/repositories/gamesettings';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
 import {Aggregation} from '@src/repositories/aggregate';
+import {GameNotFoundError} from '@src/errors';
 
 const logger = getLogger('internal::game');
 
@@ -190,13 +191,13 @@ class GameAPIs {
 
         const ret = await getGameManager().transaction(
           async transactionEntityManager => {
-            const game: PokerGame = await Cache.getGame(
+            const game = await Cache.getGame(
               gameCode,
               false,
               transactionEntityManager
             );
             if (!game) {
-              throw new Error(`Game ${gameCode} is not found`);
+              throw new GameNotFoundError(gameCode);
             }
             const gameSettings = await GameSettingsRepository.get(
               game.gameCode,

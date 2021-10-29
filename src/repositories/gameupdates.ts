@@ -5,6 +5,7 @@ import {getGameManager, getGameRepository} from '.';
 import {errToStr, getLogger} from '@src/utils/log';
 import {getAppSettings} from '@src/firebase';
 import {GameType} from '@src/entity/types';
+import {GameNotFoundError} from '@src/errors';
 
 const logger = getLogger('repositories::gameupdates');
 class GameUpdatesRepositoryImpl {
@@ -112,6 +113,10 @@ class GameUpdatesRepositoryImpl {
     // verify it here
 
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
+
     const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
     const gameUpdate = await gameUpdatesRepo.findOne({
       where: {gameID: game.id},

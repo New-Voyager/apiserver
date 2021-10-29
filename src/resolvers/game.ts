@@ -36,6 +36,7 @@ import {gameSettings} from './gamesettings';
 import {
   Errors,
   GameCreationError,
+  GameNotFoundError,
   GenericError,
   UnauthorizedError,
 } from '@src/errors';
@@ -65,6 +66,10 @@ export async function configureGame(
     const player = await Cache.getPlayer(playerId, true);
     const gameInfo = await GameRepository.createPrivateGame(club, player, game);
     const cachedGame = await Cache.getGame(gameInfo.gameCode, true);
+    if (!cachedGame) {
+      throw new GameNotFoundError(gameInfo.gameCode);
+    }
+
     Metrics.newGame();
     createGameTime = new Date().getTime() - createGameTime;
     logger.info(
@@ -112,6 +117,9 @@ export async function configureGameByPlayer(playerId: string, game: any) {
     const player = await Cache.getPlayer(playerId);
     const gameInfo = await GameRepository.createPrivateGame(null, player, game);
     const cachedGame = await Cache.getGame(gameInfo.gameCode, true);
+    if (!cachedGame) {
+      throw new GameNotFoundError(gameInfo.gameCode);
+    }
     logger.info(
       `[${gameLogPrefix(cachedGame)}] Game ${gameInfo.gameCode} is created.`
     );
@@ -139,6 +147,9 @@ export async function endGame(playerId: string, gameCode: string) {
   }
   try {
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
     const player = await Cache.getPlayer(playerId);
 
     const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
@@ -182,7 +193,7 @@ export async function startGame(
     // get game using game code
     const game = await Cache.getGame(gameCode);
     if (!game) {
-      throw new Error(`Game ${gameCode} is not found`);
+      throw new GameNotFoundError(gameCode);
     }
 
     if (game.clubCode) {
@@ -770,6 +781,9 @@ export async function pauseGame(playerId: string, gameCode: string) {
   }
   try {
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
     const player = await Cache.getPlayer(playerId);
     const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
     if (!isAuthorized) {
@@ -822,6 +836,9 @@ export async function resumeGame(playerId: string, gameCode: string) {
   }
   try {
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
 
     const isAuthorized = await isHostOrManagerOrOwner(playerId, game);
     if (!isAuthorized) {
@@ -870,6 +887,10 @@ export async function openSeats(playerId: string, gameCode: string) {
   }
   try {
     const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
+
     const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
       game.id
     );
@@ -907,6 +928,9 @@ const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
       const game = await Cache.getGame(args.gameCode);
+      if (!game) {
+        throw new GameNotFoundError(args.gameCode);
+      }
       return {
         id: game.id,
       };
@@ -940,6 +964,10 @@ const resolvers: any = {
     // },
     currentHandLog: async (parent, args, ctx, info) => {
       const game = await Cache.getGame(args.gameCode);
+      if (!game) {
+        throw new GameNotFoundError(args.gameCode);
+      }
+
       logger.info(`Getting current hand log for ${args.gameCode}`);
       return getCurrentHandLog(game.id);
     },
@@ -954,6 +982,10 @@ const resolvers: any = {
     },
     seatInfo: async (parent, args, ctx, info) => {
       const game = await Cache.getGame(parent.gameCode);
+      if (!game) {
+        throw new GameNotFoundError(parent.gameCode);
+      }
+
       const seatStatuses = await GameRepository.getSeatStatus(game.id);
       const players = await PlayersInGameRepository.getPlayersInSeats(game.id);
       const playersInSeats = new Array<any>();
@@ -1057,6 +1089,9 @@ const resolvers: any = {
     },
     gameToken: async (parent, args, ctx, info) => {
       const game = await Cache.getGame(parent.gameCode);
+      if (!game) {
+        throw new GameNotFoundError(parent.gameCode);
+      }
       let playerState = ctx['playerState'];
       if (!playerState) {
         const player = await Cache.getPlayer(ctx.req.playerId);

@@ -483,6 +483,8 @@ type CompletedGame {
   isOwner: Boolean
   isManager: Boolean
 
+  handDataLink: String
+
   # other stats
   preflopHands: Int
   flopHands: Int

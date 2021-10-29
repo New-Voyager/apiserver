@@ -1,5 +1,8 @@
+import {Cache} from '@src/cache';
+
 import {
   getGameManager,
+  getGameRepository,
   getHistoryConnection,
   getHistoryManager,
   getHistoryRepository,
@@ -9,9 +12,27 @@ import {PlayerGameStats} from '@src/entity/history/stats';
 import {HandHistory} from '@src/entity/history/hand';
 import {GameStatus} from '@src/entity/types';
 import {PlayersInGame} from '@src/entity/history/player';
-import {getLogger} from '@src/utils/log';
+import {getLogger, errToStr} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {StatsRepository} from './stats';
+import * as lz from 'lzutf8';
+import * as zlib from 'zlib';
+import {DigitalOcean} from '@src/digitalocean';
+import {getGameCodeForClub} from '@src/utils/uniqueid';
+import {
+  NextHandUpdates,
+  PokerGame,
+  PokerGameSeatInfo,
+  PokerGameSettings,
+  PokerGameUpdates,
+} from '@src/entity/game/game';
+import {
+  HostSeatChangeProcess,
+  PlayerSeatChangeProcess,
+} from '@src/entity/game/seatchange';
+import {HighHand} from '@src/entity/game/reward';
+import {EntityManager} from 'typeorm';
+import {getRunProfile, RunProfile} from '@src/server';
 
 const BATCH_SIZE = 10;
 const logger = getLogger('repositories::aggregate');
@@ -117,6 +138,7 @@ class AggregationImpl {
           }
           // iteratre through hand history and aggregate counters
           let totalPlayersInHand = 0;
+          let hands = new Array<any>();
           for (const handHistory of handHistoryData) {
             if (handHistory.playersStats) {
               await this.aggregateHandStats(handHistory, playerStatsMap);
@@ -163,7 +185,42 @@ class AggregationImpl {
               playersInShowdown,
               transactionalEntityManager
             );
+
+            // hand history
+            let hand: any = {};
+            hand.wonAt = handHistory.wonAt;
+            hand.showDown = handHistory.showDown;
+            hand.timeStarted = handHistory.timeStarted.toISOString();
+            hand.timeEnded = handHistory.timeEnded.toISOString();
+            logger.info(
+              `Aggregating hand history for game: ${game.gameId}:${game.gameCode} hand data: ${handHistory.data}`
+            );
+            hand.data = JSON.parse(handHistory.data.toString());
+            hand.totalPot = handHistory.totalPot;
+            hand.tips = handHistory.rake;
+            hand.playersStack = JSON.parse(handHistory.playersStack);
+            hand.summary = JSON.parse(handHistory.summary);
+            hand.handNum = handHistory.handNum;
+            hands.push(hand);
           }
+
+          if (
+            !(
+              getRunProfile() == RunProfile.INT_TEST ||
+              getRunProfile() == RunProfile.TEST
+            )
+          ) {
+            logger.info(
+              `Aggregating hand history for game: ${game.gameId}:${game.gameCode}`
+            );
+            // aggregate hand history and upload to S3
+            await this.aggregateHandHistory(
+              transactionalEntityManager,
+              game,
+              hands
+            );
+          }
+
           const gameStatsRepo =
             transactionalEntityManager.getRepository(PlayerGameStats);
           // update player game stats
@@ -214,6 +271,14 @@ class AggregationImpl {
           processedGameIds.push(game.gameId);
         }
       );
+
+      logger.info(
+        `Aggregation: Removing live games data: ${game.gameId}:${game.gameCode}`
+      );
+
+      // remove game data from live games db
+      await this.removeLiveGamesData(game.gameCode);
+
       const gameEnd = Date.now();
       logger.info(
         `Game results for game aggregated: ${game.gameId}:${
@@ -244,6 +309,82 @@ class AggregationImpl {
       more: more,
       aggregated: processedGameIds,
     };
+  }
+
+  private async aggregateHandHistory(
+    transManager: EntityManager,
+    game: GameHistory,
+    hands: Array<any>
+  ) {
+    const gameHistoryRepo = transManager.getRepository(GameHistory);
+    const handHistoryRepo = transManager.getRepository(HandHistory);
+
+    // convert hands to string
+    const handStr = JSON.stringify(hands);
+    let handCompressed = false;
+    let handAggregated = false;
+    let handDataUrl = '';
+    try {
+      //const handData = new TextEncoder().encode(handStr);
+      var bufferObject = Buffer.from(handStr);
+      const compressedData = zlib.deflateSync(bufferObject);
+      const decompressedData = zlib.inflateSync(compressedData);
+      // const compressedData = lz.compress(handData);
+      // const decompressedData = lz.decompress(compressedData);
+      if (handStr.toString() === decompressedData.toString()) {
+        console.log('Data is equal');
+      }
+      handDataUrl = await DigitalOcean.uploadHandData(
+        game.gameCode,
+        compressedData
+      );
+      handAggregated = true;
+      handCompressed = true;
+    } catch (err) {
+      // caught an error when aggregating the data (ignore it)
+      logger.error(`Failed to aggregate hand data. Error: ${errToStr(err)}`);
+    }
+
+    // update game history table
+    await gameHistoryRepo.update(
+      {
+        gameId: game.gameId,
+      },
+      {
+        handDataLink: handDataUrl,
+        handsDataCompressed: handCompressed,
+        handsAggregated: handAggregated,
+      }
+    );
+    await handHistoryRepo.delete({
+      gameId: game.gameId,
+    });
+  }
+  private async removeLiveGamesData(gameCode: string) {
+    await getGameManager().transaction(async transManager => {
+      const game = await Cache.getGame(gameCode, true);
+      if (!game) {
+        return;
+      }
+      await transManager.getRepository(NextHandUpdates).delete({
+        game: {id: game.id},
+      });
+      await transManager.delete(PokerGameSeatInfo, {gameCode: gameCode});
+      await transManager.delete(PokerGameUpdates, {gameCode: gameCode});
+      await transManager.delete(HighHand, {gameId: game.id});
+      await transManager.delete(HostSeatChangeProcess, {gameCode: gameCode});
+      await transManager.delete(PlayerSeatChangeProcess, {gameCode: gameCode});
+      await transManager.delete(PokerGameSettings, {gameCode: gameCode});
+
+      const gameRepo = transManager.getRepository(PokerGame);
+      const playerGameTrackerRepo =
+        transManager.getRepository(PlayerGameTracker);
+      await playerGameTrackerRepo.delete({
+        game: {id: game.id},
+      });
+      await gameRepo.delete({id: game.id});
+      await Cache.removeGame(gameCode);
+    });
   }
 }
 

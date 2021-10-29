@@ -120,13 +120,15 @@ describe('hand game APIs', () => {
       const test = await handutils.saveBookmarkHand(resp.data.configuredGame.gameCode, playerId, handData.handNum);
       console.log('test', test);
     }
+    console.log('get bookmarked hands');
     const bookmarkedHand = await handutils.getBookmarkedHands(playerId);
     expect(bookmarkedHand).toHaveLength(10);
-
+    console.log('get last hand history');
     const resp1 = await handutils.getLastHandHistory(playerId, resp.data.configuredGame.gameCode);
     expect(resp1.gameType).toBe('HOLDEM');
     expect(resp1.wonAt).toBe('SHOW_DOWN');
     expect(resp1.handNum).toBe(10);
+    console.log('get specific hand history');
 
     const handHistory = await handutils.getSpecificHandHistory(
       playerId,
@@ -135,22 +137,27 @@ describe('hand game APIs', () => {
     );
     expect(handHistory.gameType).toBe('HOLDEM');
     expect(handHistory.handNum).toBe(1);
+    console.log('bookmark hand');
 
     const test = await handutils.saveBookmarkHand(resp.data.configuredGame.gameCode, playerId, 1)
     console.log(test)
     const t1 = await handutils.removeBookmark(playerId, 1)
     console.log(t1);
 
+    console.log('end game');
 
     await endGame(playerId, resp.data.configuredGame.gameCode);
     await axios.post(`${SERVER_API}/process-pending-updates/gameId/${gameId}`)
     const status = await endGame(playerId, resp.data.configuredGame.gameCode);
 
+    console.log('Waiting for post processing');
     await axios.post(`http://localhost:${INTERNAL_PORT}/admin/post-process-games`)
-    
+    console.log('Post processing done');
     await Promise.all(playerIds.map(async (playerId) => {
       const newplayerId = await getPlayerById({ownerId: playerId});
+      console.log('Fetch completed game');
       const complData = await getCompletedGame({ ownerId: playerId, gameCode: resp.data.configuredGame.gameCode})
+      console.log('Got completed game');
 
       const complGameData = complData.completedGame.stackStat.map(item => ({
         handNum: item.handNum,
@@ -165,7 +172,7 @@ describe('hand game APIs', () => {
 
   });
 
-  test('high-hand game', async () => {
+  test.skip('high-hand game', async () => {
     const [clubCode, playerId] = await clubutils.createClub(`brady`, `yatzee`);
     await createGameServer('1.99.0.1');
     const resp = await configureGame({clubCode, playerId, highHandTracked: true });
@@ -308,7 +315,7 @@ describe('hand game APIs', () => {
 
   });
 
-  test('post-hand test', async () => {
+  test.skip('post-hand test', async () => {
     const data = await axios.post(`${SERVER_API}/post-hand/gameId/1/handNum/1`)
     expect(data.data.status).toEqual('OK')
   })
