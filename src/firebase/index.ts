@@ -13,6 +13,7 @@ import {GameType} from '@src/entity/types';
 import {ClubRepository} from '@src/repositories/club';
 import _ from 'lodash';
 import {PlayerRepository} from '@src/repositories/player';
+import {Cache} from '@src/cache';
 
 //import {default as google} from 'googleapis';
 let CLUB_MESSAGE_BATCH_SIZE = 100;
@@ -25,6 +26,19 @@ const DEV_FCM_API_KEY =
 
 const logger = getLogger('firebase');
 const FETCH_INTERVAL = 1; // fetch every 60 minutes
+
+export interface ClientFirebaseSettings {
+  androidApiKey: string;
+  iosApiKey: string;
+  androidAppId: string;
+  iosAppId: string;
+  projectId: string;
+  authDomain: string;
+  databaseURL: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  measurementId: string | undefined;
+}
 
 export interface IapProduct {
   productId: string;
@@ -54,6 +68,7 @@ export interface Asset {
 
 class FirebaseClass {
   private firebaseInitialized = false;
+  private clientFirebaseSettings: ClientFirebaseSettings | undefined;
   private app: firebase.app.App | undefined;
   private serviceAccount: ServiceAccount | undefined;
   private serviceAccountFile = '';
@@ -87,8 +102,14 @@ class FirebaseClass {
   public async init() {
     const runProfile = getRunProfile();
     let serviceAccountFile = '';
+    let clientConfigFile = '';
+    const configDir = `${__dirname}/../google-services`;
     if (runProfile === RunProfile.DEV) {
-      serviceAccountFile = `${__dirname}/../google-services/dev-poker-club-app.json`;
+      serviceAccountFile = `${configDir}/dev-poker-club-app.json`;
+      clientConfigFile = `${configDir}/client-config-dev.json`;
+    } else if (runProfile === RunProfile.PROD) {
+      serviceAccountFile = `${configDir}/prod-poker-club-app.json`;
+      clientConfigFile = `${configDir}/client-config-prod.json`;
     } else {
       logger.error(
         `Run profile is not supported ${RunProfile[runProfile].toString()}`
@@ -106,11 +127,32 @@ class FirebaseClass {
     this.serviceAccount = serviceAccount;
     this.serviceAccountFile = serviceAccountFile;
 
+    // Configuration served to the apps.
+    const config = JSON.parse(fs.readFileSync(clientConfigFile, 'utf8'));
+    this.clientFirebaseSettings = config as ClientFirebaseSettings;
+
     if (runProfile == RunProfile.DEV || runProfile == RunProfile.PROD) {
       await this.fetchFromFirebase();
       this.firebaseInitialized = true;
     }
     logger.info('Firebase is initialized');
+  }
+
+  public async getSettings(
+    playerUuid: string
+  ): Promise<ClientFirebaseSettings | undefined> {
+    if (!playerUuid) {
+      logger.warn('No player uuid provided for getting firebase settings');
+      throw new Error('Unauthorized');
+    }
+
+    const p = await Cache.getPlayer(playerUuid);
+    if (!p) {
+      logger.warn('Player not found with uuid ' + playerUuid);
+      throw new Error('Unauthorized');
+    }
+
+    return this.clientFirebaseSettings;
   }
 
   public async sendMessage(playerToken: string, data: any) {
