@@ -1,6 +1,6 @@
 import {initializeSqlLite} from '../../unit-tests/utils';
 import {getLogger} from '../../src/utils/log';
-import {resetDB} from '../../src/resolvers/reset';
+import {resetDB} from '../../src/dev/resolvers/reset';
 import {createPlayer, getPlayerById} from '../../src/resolvers/player';
 import {createGameServer} from '../../src/internal/gameserver';
 import {configureGameByPlayer} from '../../src/resolvers/game';

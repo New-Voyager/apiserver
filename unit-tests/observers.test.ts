@@ -8,7 +8,7 @@ import {
 import {createPlayer, getPlayerById} from '../src/resolvers/player';
 import {observeGame, observers, exitGame} from '../src/resolvers/observers';
 import {saveReward} from '../src/resolvers/reward';
-import {resetDB} from '../src/resolvers/reset';
+import {resetDB} from '../src/dev/resolvers/reset';
 import {createGameServer} from '../src/internal/gameserver';
 import {
   configureGame,

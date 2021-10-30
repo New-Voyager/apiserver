@@ -3,6 +3,4 @@
 type Mutation {
   deleteGame(gameCode: String, includeGame: Boolean): Boolean
   debugHandLog(gameCode: String!, handNum: Int!): Boolean
-  requestFeature(feature: String!): Boolean
-  reportBug(bug: String!): Boolean
 }

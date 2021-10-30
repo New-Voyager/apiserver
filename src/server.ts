@@ -51,53 +51,43 @@ function setPgConversion() {
 }
 
 export function getApolloServer(options?: {intTest?: boolean}): ApolloServer {
-  const typesArray1: Array<string> = fileLoader(
-    __dirname + '/' + './graphql/*.graphql',
-    {recursive: true}
-  );
-  const typesArray2: Array<string> = fileLoader(
-    __dirname + '/' + '../../src/graphql/*.graphql',
-    {recursive: true}
-  );
   const allTypes = new Array<string>();
-  allTypes.push(...typesArray1);
-  allTypes.push(...typesArray2);
+
+  const gqlDirs = [
+    __dirname + '/' + './graphql/*.graphql',
+    __dirname + '/' + '../../src/graphql/*.graphql',
+  ];
+  if (runProfile !== RunProfile.PROD) {
+    gqlDirs.push(__dirname + '/' + './dev/graphql/*.graphql');
+    gqlDirs.push(__dirname + '/' + '../../src/dev/graphql/*.graphql');
+  }
+
+  for (const gqlDir of gqlDirs) {
+    const types: Array<string> = fileLoader(gqlDir, {recursive: true});
+    allTypes.push(...types);
+  }
 
   const typeDefs = mergeTypes(allTypes, {all: true});
-  let resolverFiles: any;
+
   let resolvers = {};
   let extensions = ['.js'];
   if (runProfile === RunProfile.INT_TEST) {
     extensions = ['.js', '.ts'];
   }
-  try {
-    const resolversDir2 = __dirname + '/' + '../build/src/resolvers/';
-    if (fs.existsSync(resolversDir2)) {
-      resolverFiles = fileLoader(resolversDir2, {
-        recursive: true,
-        extensions: extensions,
-      });
-      for (const resolverFile of resolverFiles) {
-        resolvers = merge(resolvers, resolverFile.getResolvers());
-      }
-    }
-  } catch (err) {
-    logger.error(err);
+
+  const resolverDirs = [
+    __dirname + '/' + '../build/src/resolvers/',
+    __dirname + '/' + './resolvers/',
+  ];
+
+  if (runProfile !== RunProfile.PROD) {
+    resolverDirs.push(__dirname + '/' + '../build/src/dev/resolvers/');
+    resolverDirs.push(__dirname + '/' + './dev/resolvers/');
   }
 
-  try {
-    const resolversDir = __dirname + '/' + './resolvers/';
-    if (fs.existsSync(resolversDir)) {
-      resolverFiles = fileLoader(resolversDir, {
-        recursive: true,
-        extensions: extensions,
-      });
-      for (const resolverFile of resolverFiles) {
-        resolvers = merge(resolvers, resolverFile.getResolvers());
-      }
-    }
-  } catch (err) {
-    logger.error(err);
+  for (const resolverDir of resolverDirs) {
+    logger.info('Processing resolvers from ' + resolverDir);
+    mergeResolverDir(resolvers, resolverDir, extensions);
   }
 
   const server = new ApolloServer({
@@ -105,7 +95,7 @@ export function getApolloServer(options?: {intTest?: boolean}): ApolloServer {
     resolvers,
     context: requestContext,
     plugins: [
-      process.env.NODE_ENV === 'prod'
+      runProfile === RunProfile.PROD
         ? ApolloServerPluginLandingPageDisabled()
         : ApolloServerPluginLandingPageGraphQLPlayground({
             // options
@@ -113,6 +103,25 @@ export function getApolloServer(options?: {intTest?: boolean}): ApolloServer {
     ],
   });
   return server;
+}
+
+function mergeResolverDir(
+  resolvers: any,
+  dir: string,
+  extensions: Array<string>
+) {
+  if (!fs.existsSync(dir)) {
+    logger.info('Directory does not exist - ' + dir);
+    return;
+  }
+
+  const resolverFiles = fileLoader(dir, {
+    recursive: true,
+    extensions: extensions,
+  });
+  for (const resolverFile of resolverFiles) {
+    resolvers = merge(resolvers, resolverFile.getResolvers());
+  }
 }
 
 export async function start(

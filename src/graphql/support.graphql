@@ -1,0 +1,4 @@
+type Mutation {
+  requestFeature(feature: String!): Boolean
+  reportBug(bug: String!): Boolean
+}

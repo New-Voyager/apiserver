@@ -1,7 +1,7 @@
 import {createClubWithMembers, initializeSqlLite, sleep, setupGameEnvironment} from './utils';
 import {createGameServer} from '../src/internal/gameserver';
 import {getLogger} from '../src/utils/log';
-import {resetDB} from '../src/resolvers/reset';
+import {resetDB} from '../src/dev/resolvers/reset';
 import {Cache} from '../src/cache/index';
 import _ from 'lodash';
 import {PlayersInGameRepository} from '../src/repositories/playersingame';
