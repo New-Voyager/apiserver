@@ -138,20 +138,7 @@ class FirebaseClass {
     logger.info('Firebase is initialized');
   }
 
-  public async getSettings(
-    playerUuid: string
-  ): Promise<ClientFirebaseSettings | undefined> {
-    if (!playerUuid) {
-      logger.warn('No player uuid provided for getting firebase settings');
-      throw new Error('Unauthorized');
-    }
-
-    const p = await Cache.getPlayer(playerUuid);
-    if (!p) {
-      logger.warn('Player not found with uuid ' + playerUuid);
-      throw new Error('Unauthorized');
-    }
-
+  public async getSettings(): Promise<ClientFirebaseSettings | undefined> {
     return this.clientFirebaseSettings;
   }
 
