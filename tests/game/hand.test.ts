@@ -133,7 +133,7 @@ describe('hand game APIs', () => {
     const handHistory = await handutils.getSpecificHandHistory(
       playerId,
       resp.data.configuredGame.gameCode,
-      '1'
+      1
     );
     expect(handHistory.gameType).toBe('HOLDEM');
     expect(handHistory.handNum).toBe(1);
