@@ -1600,12 +1600,14 @@ class GameRepositoryImpl {
     const playerStacks = new Array<any>();
     for (const stack of stacks) {
       const playerStack = JSON.parse(stack['players_stack'])[playerIdStr];
-      const stackRet = {
-        handNum: stack.hand_num,
-        before: playerStack.b,
-        after: playerStack.a,
-      };
-      playerStacks.push(stackRet);
+      if (playerStack) {
+        const stackRet = {
+          handNum: stack.hand_num,
+          before: playerStack.b,
+          after: playerStack.a,
+        };
+        playerStacks.push(stackRet);
+      }
     }
     return playerStacks;
   }

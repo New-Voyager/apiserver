@@ -238,7 +238,7 @@ export async function getSpecificHandHistory(playerId: string, args: any) {
 
   const handHistory = await HandRepository.getSpecificHandHistory(
     gameId,
-    parseInt(args.handNum)
+    args.handNum
   );
   if (!handHistory) {
     throw new Error('No hand found');

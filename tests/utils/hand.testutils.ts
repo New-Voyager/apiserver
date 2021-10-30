@@ -3,7 +3,7 @@ import {gql} from 'apollo-boost';
 import * as fs from 'fs';
 
 export const getSpecificHandHistoryQuery = gql`
-  query($gameCode: String!, $handNum: String!) {
+  query($gameCode: String!, $handNum: Int!) {
     handHistory: specificHandHistory(gameCode: $gameCode, handNum: $handNum) {
       pageId
       handNum
@@ -177,7 +177,7 @@ export const sharedHands = gql`
 export async function getSpecificHandHistory(
   playerId: string,
   gameCode: string,
-  handNum: string
+  handNum: number
 ): Promise<any> {
   const variables: any = {
     gameCode: gameCode,
