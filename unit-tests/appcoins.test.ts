@@ -1,6 +1,6 @@
 import {initializeSqlLite} from './utils';
 import {getLogger} from '../src/utils/log';
-import {resetDB} from '../src/resolvers/reset';
+import {resetDB} from '../src/dev/resolvers/reset';
 import {GameRepository} from '../src/repositories/game';
 import {AppCoinRepository} from '../src/repositories/appcoin';
 import {processPendingUpdates} from '../src/repositories/pendingupdates';

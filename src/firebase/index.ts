@@ -159,7 +159,7 @@ class FirebaseClass {
       .messaging()
       .send(message, false)
       .then(e => {
-        logger.info('Message id: ${ret}');
+        logger.info(`Message id: ${e}`);
       })
       .catch(e => {
         logger.error(`Sending message failed`);

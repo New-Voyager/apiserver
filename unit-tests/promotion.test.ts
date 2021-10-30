@@ -1,6 +1,6 @@
 import { getLogger } from '../src/utils/log';
 import {initializeSqlLite} from './utils';
-import {resetDB} from '../src/resolvers/reset';
+import {resetDB} from '../src/dev/resolvers/reset';
 import {PromotionRepository} from '../src/repositories/promotion';
 import { createPlayer } from '../src/resolvers/player';
 import { ReedeemPromotionError } from '../src/repositories/types';

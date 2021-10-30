@@ -5,7 +5,7 @@ import {
   getAllGameServers,
 } from '@src/internal/gameserver';
 import {getLogger} from '../src/utils/log';
-import {resetDB} from '@src/resolvers/reset';
+import {resetDB} from '@src/dev/resolvers/reset';
 import {createPlayer} from '@src/resolvers/player';
 import {saveReward} from '../src/resolvers/reward';
 import {createClub} from '@src/resolvers/club';

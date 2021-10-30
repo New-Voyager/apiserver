@@ -1,7 +1,7 @@
 import {createClubWithMembers, initializeSqlLite, sleep, setupGameEnvironment} from './utils';
 import {createGameServer} from '../src/internal/gameserver';
 import {getLogger} from '../src/utils/log';
-import {resetDB} from '../src/resolvers/reset';
+import {resetDB} from '../src/dev/resolvers/reset';
 import {updateLocation} from '../src/resolvers/player';
 import {GameRepository} from '../src/repositories/game';
 import {buyIn, joinGame, setBuyInLimit, reload,   takeBreak,

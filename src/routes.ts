@@ -53,26 +53,25 @@ export function addExternalRoutes(app: any) {
   const profile = getRunProfile();
   if (profile != RunProfile.PROD) {
     app.post('/auth/login-bot/:botName', loginBot);
+    app.get('/bot-script/game-code/:gameCode/hand/:handNum', generateBotScript);
+    app.get(
+      '/bot-script/debug/game-code/:gameCode/hand/:handNum',
+      generateBotScriptDebugHand
+    );
+
+    app.post(
+      '/bot-script/game-code/:gameCode/button-pos/:buttonPos',
+      updateButtonPos
+    );
+    app.post('/bot-script/server-settings', setServerSettings);
+    app.post('/bot-script/reset-server-settings', resetServerSettings);
+    app.post('/bot-script/buy-bot-coins', buyBotCoins);
   }
 
   app.get('/nats-urls', natsUrls);
   app.get('/assets', getAssets);
   app.get('/app-info', getAppInfo);
   app.get('/firebase-settings', getFirebaseSettings);
-
-  app.get('/bot-script/game-code/:gameCode/hand/:handNum', generateBotScript);
-  app.get(
-    '/bot-script/debug/game-code/:gameCode/hand/:handNum',
-    generateBotScriptDebugHand
-  );
-
-  app.post(
-    '/bot-script/game-code/:gameCode/button-pos/:buttonPos',
-    updateButtonPos
-  );
-  app.post('/bot-script/server-settings', setServerSettings);
-  app.post('/bot-script/reset-server-settings', resetServerSettings);
-  app.post('/bot-script/buy-bot-coins', buyBotCoins);
 
   // upload endpoints
   app.use(fileUpload());
