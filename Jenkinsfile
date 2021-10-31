@@ -41,7 +41,7 @@ pipeline {
         }
         stage('API Test') {
             steps {
-                sh 'make int-tests'
+                sh 'make int-tests-ci'
             }
         }
         stage('Publish') {
