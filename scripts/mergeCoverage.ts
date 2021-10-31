@@ -1,7 +1,7 @@
 /*
 
-yarn tsn-script ./scripts/mergeCoverage.ts --report ./coverage0/coverage-final.json --report ./coverage1/coverage-final.json
-yarn ts-node-script ./scripts/mergeCoverage.ts --report ./cov-int/coverage-final.json --report ./cov-unit/coverage-final.json
+npx tsn-script ./scripts/mergeCoverage.ts --report ./coverage0/coverage-final.json --report ./coverage1/coverage-final.json
+npx ts-node-script ./scripts/mergeCoverage.ts --report ./cov-int/coverage-final.json --report ./cov-unit/coverage-final.json
 */
 
 import * as fs from 'fs-extra'

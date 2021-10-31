@@ -5,7 +5,7 @@ set -eo pipefail
 # PORT_NUMBER=9501
 
 # echo "Starting test server in background"
-# npx yarn int-server &
+# npm run int-server &
 # TEST_SERVER_PID=$!
 
 # echo "Test server PID: ${TEST_SERVER_PID}"
@@ -22,4 +22,4 @@ set -eo pipefail
 # trap cleanup EXIT
 
 echo "Running tests"
-npx yarn int-test
+npm run int-test
