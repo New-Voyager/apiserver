@@ -562,6 +562,16 @@ export class NextHandUpdates {
 
   @Column({name: 'end_reason', default: GameEndReason.UNKNOWN})
   public endReason!: GameEndReason;
+
+  /**
+   * DB last update time.
+   */
+  @DbAwareUpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  public updatedAt!: Date;
 }
 
 export function gameLogPrefix(game: PokerGame): string {
