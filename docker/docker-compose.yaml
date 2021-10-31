@@ -57,7 +57,7 @@ services:
   #   command:
   #     - "/bin/sh"
   #     - "-c"
-  #     - "sleep 5 && yarn run-docker"
+  #     - "sleep 5 && npm run run-docker"
   #   environment:
   #     EXTERNAL_ENDPOINTS: 1,
   #     INTERNAL_ENDPOINTS: 1,

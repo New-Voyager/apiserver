@@ -5,7 +5,7 @@ set -eo pipefail
 PORT_NUMBER=9501
 
 echo "Starting test server in background"
-npx yarn test-server &
+npm run test-server &
 TEST_SERVER_PID=$!
 
 echo "Test server PID: ${TEST_SERVER_PID}"
@@ -23,4 +23,4 @@ trap cleanup EXIT
 echo "Waiting 5 seconds for the server to start..."
 sleep 5
 echo "Running script tests"
-npx yarn script-tests
+npm run script-tests

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if ! { [ -d node_modules/gts ] && [ -d node_modules/prettier ]; }; then
-  npx yarn install
+  npm install
 fi
 echo "Running prettier check"
 status=0
