@@ -39,7 +39,7 @@ COMPOSE_NATS := docker-compose -p $(COMPOSE_PROJECT_NAME) -f docker-compose-nats
 COMPOSE_PG := docker-compose -p $(COMPOSE_PROJECT_NAME) -f docker-compose-pg.yaml
 
 ifdef JENKINS_HOME
-TEST_DOCKER_NET := jenkins_default
+TEST_DOCKER_NET := jenkins
 else
 TEST_DOCKER_NET := $(DEFAULT_DOCKER_NET)
 endif
