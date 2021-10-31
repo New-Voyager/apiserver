@@ -15,6 +15,7 @@ import {
   TableStatus,
   SeatStatus,
   GameEndReason,
+  NextHandUpdate,
 } from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
 import {errToStr, getLogger} from '@src/utils/log';
@@ -441,41 +442,77 @@ class GameRepositoryImpl {
       },
     });
     let numExpired = 0;
+
+    const envKillLimit = parseInt(
+      process.env.RUNAWAY_GAME_KILL_THRESHOLD_MIN || ''
+    );
+    const killLimit = Number.isInteger(envKillLimit) ? envKillLimit : 10;
+
     for (const game of games) {
       // Game length is in minutes.
-      const shouldExpireAt = new Date(
+      const normalExpireAt = new Date(
         game.startedAt.getTime() + 1000 * 60 * game.gameLength
       );
+      let forceKillExpired = false;
+      let forceKillStuck = false;
+      let minutesSinceExpired = 0;
+      let minutesSinceEndGameReq = 0;
       const now = Date.now();
-      if (shouldExpireAt.getTime() > now) {
-        // Still got time until expire.
-        continue;
+
+      if (normalExpireAt.getTime() <= now) {
+        minutesSinceExpired = (now - normalExpireAt.getTime()) / 60_000;
+        if (minutesSinceExpired >= killLimit) {
+          forceKillExpired = true;
+        }
       }
 
-      logger.info(
-        `Scheduling to end expired game ${game.title} (${game.id}/${game.gameCode})`
-      );
+      if (!forceKillExpired) {
+        const nextHandRepo = getGameRepository(NextHandUpdates);
+        const endGameReq = await nextHandRepo.findOne({
+          game: {id: game.id},
+          newUpdate: NextHandUpdate.END_GAME,
+        });
 
-      const minutesSinceExpired = (now - shouldExpireAt.getTime()) / 60_000;
-      const envKillLimit = parseInt(
-        process.env.RUNAWAY_GAME_KILL_THRESHOLD_MIN || ''
-      );
-      const killLimit = Number.isInteger(envKillLimit) ? envKillLimit : 10;
+        if (endGameReq) {
+          minutesSinceEndGameReq =
+            (now - endGameReq.updatedAt.getTime()) / 60_000;
+        }
+
+        if (minutesSinceEndGameReq >= killLimit) {
+          forceKillStuck = true;
+        }
+      }
+
+      if (
+        normalExpireAt.getTime() > now &&
+        !forceKillExpired &&
+        !forceKillStuck
+      ) {
+        continue;
+      }
 
       if (
         game.status === GameStatus.ACTIVE &&
         game.tableStatus === TableStatus.GAME_RUNNING &&
-        minutesSinceExpired < killLimit
+        !forceKillExpired &&
+        !forceKillStuck
       ) {
         // the game will be stopped in the next hand
         await NextHandUpdatesRepository.expireGameNextHand(game.id);
         const messageId = uuidv4();
         Nats.sendGameEndingMessage(game.gameCode, messageId);
       } else {
-        if (minutesSinceExpired >= killLimit) {
+        if (forceKillExpired) {
           logger.info(
-            `Attempting to kill runaway game ${game.title} (${game.id}/${game.gameCode}). Minutes since expired: ${minutesSinceExpired}, kill threshold: ${killLimit} minutes.`
+            `Attempting to kill expired game. Game: ${game.id}/${game.gameCode}, minutes since expired: ${minutesSinceExpired}, grace period: ${killLimit} minutes`
           );
+        } else if (forceKillStuck) {
+          logger.info(
+            `Attempting to kill stuck game. Game: ${game.id}/${game.gameCode}, minutes since stuck: ${minutesSinceEndGameReq}, grace period: ${killLimit} minutes`
+          );
+        } else {
+          // Not stuck or expired past grace period. Just expired normally while not being actively played.
+          logger.info(`Ending expired game. Game: ${game.id}/${game.gameCode}`);
         }
         await Cache.removeAllObservers(game.gameCode);
         await GameRepository.markGameEnded(
