@@ -82,12 +82,16 @@ script-tests: run-redis
 	./run_script_tests.sh
 
 .PHONY: int-tests
-int-tests: export REDIS_HOST=redis
-int-tests: export REDIS_PORT=6379
-int-tests: export REDIS_DB=0
-int-tests: export NATS_URL=nats://nats:4222
-int-tests: export POSTGRES_HOST=mydb
 int-tests: login create-network run-all
+	npx yarn int-test
+
+.PHONY: int-tests-ci
+int-tests-ci: export REDIS_HOST=redis
+int-tests-ci: export REDIS_PORT=6379
+int-tests-ci: export REDIS_DB=0
+int-tests-ci: export NATS_URL=nats://nats:4222
+int-tests-ci: export POSTGRES_HOST=mydb
+int-tests-ci: login create-network run-all
 	npx yarn int-test
 
 .PHONY: setup-hook
