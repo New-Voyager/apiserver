@@ -100,3 +100,34 @@ export function isRunningUnitTest(): boolean {
   }
   return false;
 }
+
+export function cardNumber(card: number) {
+  if (card >= 1 && card <= 8) {
+    return 2;
+  } else if (card >= 17 && card <= 24) {
+    return 3;
+  } else if (card >= 33 && card <= 40) {
+    return 4;
+  } else if (card >= 49 && card <= 56) {
+    return 5;
+  } else if (card >= 65 && card <= 72) {
+    return 6;
+  } else if (card >= 81 && card <= 88) {
+    return 7;
+  } else if (card >= 97 && card <= 104) {
+    return 8;
+  } else if (card >= 113 && card <= 119) {
+    return 9;
+  } else if (card >= 129 && card <= 136) {
+    return 10;
+  } else if (card >= 145 && card <= 152) {
+    return 11; // jack
+  } else if (card >= 161 && card <= 168) {
+    return 12; // queen
+  } else if (card >= 177 && card <= 184) {
+    return 13; // king
+  } else if (card >= 193 && card <= 200) {
+    return 14;
+  }
+  return 0;
+}
