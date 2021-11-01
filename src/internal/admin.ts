@@ -6,6 +6,7 @@ import {HistoryRepository} from '@src/repositories/history';
 import {GameNotFoundError} from '@src/errors';
 import {cardNumber, stringCards} from '@src/utils';
 import _ from 'lodash';
+import assert from 'assert';
 
 const logger = getLogger('internal::admin');
 
@@ -63,7 +64,7 @@ class AdminAPIs {
         gameInfo.gameType = gameHistory.gameType;
         gameInfo.handsDealt = gameHistory.handsDealt;
         gameInfo.startedBy = gameHistory.startedBy;
-        gameInfo.endedAt = gameHistory.endedAt.toISOString();
+        gameInfo.endedAt = gameHistory.endedAt?.toISOString();
         gameInfo.smallBlind = gameHistory.smallBlind;
         gameInfo.bigBlind = gameHistory.bigBlind;
       } else {
@@ -75,7 +76,7 @@ class AdminAPIs {
         gameInfo.gameType = game.gameType;
         gameInfo.handsDealt = gameUpdates.handNum;
         gameInfo.startedBy = startedByPlayer.name;
-        gameInfo.endedAt = game.endedAt.toISOString();
+        gameInfo.endedAt = game.endedAt?.toISOString();
         gameInfo.smallBlind = game.smallBlind;
         gameInfo.bigBlind = game.bigBlind;
       }
@@ -100,6 +101,9 @@ class AdminAPIs {
       let ret: any = {};
       ret.game = gameInfo;
       ret.pairedBoards = [];
+      ret.flopPairedBoards = [];
+      ret.turnPairedBoards = [];
+      ret.riverPairedBoards = [];
       ret.straightFlushes = [];
       ret.fourOfKinds = [];
       ret.fullHouseHands = [];
@@ -115,26 +119,35 @@ class AdminAPIs {
         ) {
           const board = handLog.result.boards[0];
           const cards = board.cards;
+          assert(cards.length === 5);
 
           // find out whether we have paired cards on the board
           let cardNumbers: any = {};
-          let pairedBoard = false;
-          for (const card of cards) {
+          let pairedAt = 0;
+          for (let i = 0; i < 5; i++) {
+            const card = cards[i];
             const n = cardNumber(card);
             if (cardNumbers[n]) {
               // paired board
-              pairedBoard = true;
+              pairedAt = i + 1;
               break;
             }
             cardNumbers[n] = 1;
           }
 
-          if (pairedBoard) {
+          if (pairedAt > 0) {
             let board = {
               cards: cards,
               str: stringCards(cards),
             };
             ret.pairedBoards.push(board);
+            if (pairedAt <= 3) {
+              ret.flopPairedBoards.push(board);
+            } else if (pairedAt === 4) {
+              ret.turnPairedBoards.push(board);
+            } else {
+              ret.riverPairedBoards.push(board);
+            }
           }
 
           // check player's rank
@@ -241,6 +254,9 @@ class AdminAPIs {
       }
 
       ret.game.pairedBoards = ret.pairedBoards.length;
+      ret.game.flopPairedBoards = ret.flopPairedBoards.length;
+      ret.game.turnPairedBoards = ret.turnPairedBoards.length;
+      ret.game.riverPairedBoards = ret.riverPairedBoards.length;
       ret.game.straightFlushes = ret.straightFlushes.length;
       ret.game.fourOfKinds = ret.fourOfKinds.length;
       ret.game.fullHouseHands = ret.fullHouseHands.length;

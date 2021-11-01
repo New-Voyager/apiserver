@@ -116,7 +116,7 @@ export function cardNumber(card: number) {
     return 7;
   } else if (card >= 97 && card <= 104) {
     return 8;
-  } else if (card >= 113 && card <= 119) {
+  } else if (card >= 113 && card <= 120) {
     return 9;
   } else if (card >= 129 && card <= 136) {
     return 10;
