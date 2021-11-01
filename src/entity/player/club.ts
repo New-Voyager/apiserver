@@ -74,6 +74,27 @@ export class Club {
   public showHighRankStats!: boolean;
 }
 
+@Entity({name: 'club_setting'})
+export class ClubSetting {
+  @Column({name: 'club_id', primary: true})
+  public clubId!: number;
+
+  @Column({name: 'advance_features_activated', default: false})
+  public advanceFeaturesActivated!: boolean;
+
+  @Column({name: 'advance_features_enabled', default: false})
+  public advanceFeaturesEnabled!: boolean;
+
+  @Column({name: 'first_time', default: true})
+  public first_time!: boolean;
+
+  @Column({name: 'active_until', nullable: true})
+  public activeUntil!: Date;
+
+  @Column({name: 'email', nullable: true})
+  public email!: string;
+}
+
 @Entity({name: 'club_member'})
 export class ClubMember {
   @PrimaryGeneratedColumn()
@@ -171,24 +192,14 @@ export class ClubMember {
   })
   public creditLimit!: number;
 
-  // TODO: remove commented code on success
-  // @Column({
-  //   name: 'total_buyins',
-  //   type: 'decimal',
-  //   precision: 12,
-  //   scale: 2,
-  //   default: 0,
-  // })
-  // public totalBuyins!: number;
-
-  // @Column({
-  //   name: 'total_winnings',
-  //   type: 'decimal',
-  //   precision: 12,
-  //   scale: 2,
-  //   default: 0,
-  // })
-  // public totalWinnings!: number;
+  @Column({
+    name: 'available_credits',
+    type: 'decimal',
+    precision: 8,
+    scale: 2,
+    default: 0,
+  })
+  public availableCredits!: number;
 
   @Column({
     name: 'balance',
@@ -198,25 +209,6 @@ export class ClubMember {
     default: 0,
   })
   public balance!: number;
-
-  // TODO: remove commented code on success
-  // @Column({name: 'total_games', type: 'int', nullable: true, default: 0})
-  // public totalGames!: number;
-
-  // @Column({name: 'total_hands', type: 'int', nullable: true, default: 0})
-  // public totalHands!: number;
-
-  // @Column({name: 'won_hands', type: 'int', nullable: true, default: 0})
-  // public wonHands!: number;
-
-  // @Column({
-  //   name: 'rake_paid',
-  //   type: 'decimal',
-  //   precision: 12,
-  //   scale: 2,
-  //   default: 0,
-  // })
-  // public rakePaid!: number;
 }
 
 @Entity({name: 'club_member_stat'})
@@ -266,6 +258,87 @@ export class ClubMemberStat {
   })
   public rakePaid!: number;
 }
+
+@Entity({name: 'club_buyin_tracking'})
+export class ClubBuyinTracking {
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @ManyToOne(type => Club)
+  @JoinColumn({name: 'club_id'})
+  public club!: Club;
+
+  @ManyToOne(type => Player)
+  @JoinColumn({name: 'player_id'})
+  public player!: Player;
+
+  @Column({name: 'game_code', type: 'text'})
+  public gameCode!: string;
+
+  @Column({name: 'buyin_time'})
+  public buyInTime!: Date;
+
+  @Column({name: 'amount', type: 'decimal', precision: 8, scale: 2})
+  public amount!: number;
+
+  @Column({name: 'auto_approved', default: false})
+  public autoApproved!: boolean;
+
+  @Column({name: 'balance', type: 'decimal', precision: 8, scale: 2})
+  public balance!: number;
+
+  @Column({name: 'available_credits', type: 'decimal', precision: 8, scale: 2})
+  public availableCredits!: number;
+
+  @DbAwareUpdateDateColumn({
+    name: 'updated_at',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  public updatedAt!: Date;
+}
+
+@Entity({name: 'balance_updates'})
+export class BalanceUpdates {
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @ManyToOne(type => Club)
+  @JoinColumn({name: 'club_id'})
+  public club!: Club;
+
+  @ManyToOne(type => Player)
+  @JoinColumn({name: 'player_id'})
+  public player!: Player;
+
+  @Column({name: 'game_code', type: 'text', nullable: true})
+  public gameCode!: string;
+
+  @Column({name: 'update_type'})
+  public updateType!: string;
+
+  @Column({name: 'game_time', nullable: true})
+  public gameTime!: Date;
+
+  @Column({name: 'amount', type: 'decimal', precision: 8, scale: 2})
+  public amount!: number;
+
+  @Column({name: 'notes', type: 'text', nullable: true})
+  public notes!: string;
+
+  @Column({name: 'updated_balance', type: 'decimal', precision: 8, scale: 2})
+  public updatedBalance!: number;
+
+  @DbAwareUpdateDateColumn({
+    name: 'updated_at',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  public updatedAt!: Date;
+}
+
 /*
 @Entity({name: 'club_chips_transaction'})
 export class ClubChipsTransaction {

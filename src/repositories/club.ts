@@ -32,6 +32,7 @@ import {AppCoinRepository} from './appcoin';
 import {Errors, GenericError} from '@src/errors';
 import _ from 'lodash';
 import {getRunProfile, RunProfile} from '@src/server';
+import {ClubMemberTracking} from './clubMemberTracking';
 
 const logger = getLogger('repositories::club');
 
@@ -244,7 +245,11 @@ class ClubRepositoryImpl {
       }
 
       const clubRepo = transactionEntityManager.getRepository(Club);
-      await clubRepo.save(club);
+      const savedClub = await clubRepo.save(club);
+      await ClubMemberTracking.createClubSetting(
+        savedClub.id,
+        transactionEntityManager
+      );
       await clubMemberRepo.save(clubMember);
 
       if (clubCount === 0) {
