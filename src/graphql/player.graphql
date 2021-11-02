@@ -60,6 +60,7 @@ type LiveGame {
   handsDealt: Int!
   highHands: [HighHand!]
   highHandWinners: [HighHand!]
+  clubPicUrl: String
 }
 
 type PastGame {
@@ -83,6 +84,7 @@ type PastGame {
   handsPlayed: Int
   highHands: [HighHand!]
   highHandWinners: [HighHand!]
+  clubPicUrl: String
 }
 
 type PlayerId {
