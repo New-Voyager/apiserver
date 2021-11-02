@@ -248,6 +248,7 @@ export function addInternalRoutes(app: any) {
   app.post('/admin/set-max-games', GameServerAPI.setMaxGames);
   app.post('/admin/announcement', createAnnouncement);
   app.post('/admin/data-retention', AdminAPI.dataRetention);
+  app.get('/admin/hand-analysis/:gameCode', AdminAPI.handAnalysis);
 
   // Yong: I added this endpoint to test how unhandled rejections behave.
   app.get('/test/crashAsync', crashAsync);

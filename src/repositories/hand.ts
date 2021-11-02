@@ -180,10 +180,12 @@ class HandRepositoryImpl {
     } else {
       // hand is uploaded to S3
       // download the link
-
+      let handLink = game.handDataLink;
+      // handLink =
+      //   'https://hands-pokerclub.nyc3.digitaloceanspaces.com/game/cgtypkmp/hand.dat';
       const resp = await Axios.request({
         responseType: 'arraybuffer',
-        url: game.handDataLink,
+        url: handLink,
         method: 'get',
         headers: {
           'Content-Type': 'application/octet-stream',
