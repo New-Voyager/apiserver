@@ -257,7 +257,7 @@ describe('Hand Tests', () => {
     const handHistory = await handutils.getSpecificHandHistory(
       playerUuids[0],
       gameCode,
-      '1'
+      1
     );
     expect(handHistory.gameType).toBe('HOLDEM');
     expect(handHistory.handNum).toBe(1);
