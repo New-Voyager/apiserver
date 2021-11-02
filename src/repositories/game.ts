@@ -331,7 +331,14 @@ class GameRepositoryImpl {
   public async getLiveGames(playerId: string) {
     const clubGames = await this.getClubGames(playerId);
     const playerGames = await this.getPlayerGames(playerId);
-
+    if (clubGames && clubGames.length > 0) {
+      for (const clubGame of clubGames) {
+        const club = await Cache.getClub(clubGame.clubCode, false);
+        if (club) {
+          clubGame.clubPicUrl = club.picUrl;
+        }
+      }
+    }
     const liveGames = new Array<any>();
     liveGames.push(...clubGames);
 

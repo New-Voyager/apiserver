@@ -952,6 +952,8 @@ class ClubRepositoryImpl {
         picUrl: url,
       }
     );
+    // update cache
+    await Cache.getClub(clubCode, true);
   }
 
   public async getClubMembersForFirebase(
