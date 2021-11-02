@@ -1,10 +1,10 @@
 FROM node:16.13-alpine3.14
 RUN apk --no-cache add python3 build-base
-RUN apk --no-cache add --update yarn curl
+RUN apk --no-cache add --update curl
 RUN ln -s /usr/bin/python3 /bin/python
 WORKDIR /app
-COPY yarn.lock .yarnclean package.json package-lock.json ./
-RUN yarn install 
+COPY package.json package-lock.json ./
+RUN npm install 
 COPY . .
 ENV NODE_OPTIONS=--max-old-space-size=2048
-RUN yarn compile 
+RUN npm run compile 

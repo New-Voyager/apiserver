@@ -1,17 +1,16 @@
 FROM node:16.13-alpine3.14 AS builder
-RUN apk --no-cache add yarn curl
+RUN apk --no-cache add curl
 WORKDIR /app
 
 RUN mkdir /build
 COPY package.json package-lock.json /build/
-COPY .yarnclean /build/
 WORKDIR /build
-RUN yarn install --production=true && \
-  yarn global add clean-modules
+RUN npm install --production=true && \
+  npm install --global clean-modules && \
+  npm install gts
 COPY . .
 
-RUN yarn compile && \
-  rm -rf /usr/local/share/.cache/yarn && \
+RUN npm run compile && \
   rm -rf /app/node_modules/typescript && \
   rm -rf /app/node_modules/prettier
 
@@ -28,11 +27,11 @@ RUN clean-modules --exclude **/googleapis/**/docs && \
 
 
 FROM node:16.13-alpine3.14
-RUN apk --no-cache add --update yarn curl
+RUN apk --no-cache add --update curl
 COPY --from=builder /build/ /app/
 
 WORKDIR /app
 
 #RUN echo "changed"
 # TOOD: Change to production cmd.
-CMD ["yarn", "debug"]
+CMD ["npm", "run", "debug"]

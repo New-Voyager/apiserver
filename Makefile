@@ -39,7 +39,7 @@ COMPOSE_NATS := docker-compose -p $(COMPOSE_PROJECT_NAME) -f docker-compose-nats
 COMPOSE_PG := docker-compose -p $(COMPOSE_PROJECT_NAME) -f docker-compose-pg.yaml
 
 ifdef JENKINS_HOME
-TEST_DOCKER_NET := jenkins_default
+TEST_DOCKER_NET := jenkins
 else
 TEST_DOCKER_NET := $(DEFAULT_DOCKER_NET)
 endif
@@ -52,7 +52,7 @@ endif
 
 .PHONY: build
 build: install_deps
-	npx yarn compile
+	npm run compile
 
 .PHONY: install_deps
 install_deps:
@@ -69,7 +69,7 @@ tests: run-redis run-nats run-pg
 
 .PHONY: unit-tests
 unit-tests:
-	npx yarn unit-tests
+	npm run unit-tests
 
 .PHONY: tests-local
 tests-local: export NATS_URL=http://localhost:4222
@@ -82,13 +82,17 @@ script-tests: run-redis
 	./run_script_tests.sh
 
 .PHONY: int-tests
-int-tests: export REDIS_HOST=redis
-int-tests: export REDIS_PORT=6379
-int-tests: export REDIS_DB=0
-int-tests: export NATS_URL=nats://nats:4222
-int-tests: export POSTGRES_HOST=mydb
 int-tests: login create-network run-all
-	npx yarn int-test
+	npm run int-test
+
+.PHONY: int-tests-ci
+int-tests-ci: export REDIS_HOST=redis
+int-tests-ci: export REDIS_PORT=6379
+int-tests-ci: export REDIS_DB=0
+int-tests-ci: export NATS_URL=nats://nats:4222
+int-tests-ci: export POSTGRES_HOST=mydb
+int-tests-ci: login create-network run-all
+	npm run int-test
 
 .PHONY: setup-hook
 setup-hook:
@@ -121,7 +125,7 @@ debug: watch-localhost-debug
 watch-localhost-debug: export NATS_URL=$(LOCAL_NATS_URL)
 watch-localhost-debug: export POSTGRES_HOST=$(LOCAL_POSTGRES_HOST)
 watch-localhost-debug:
-	npx yarn watch-localhost-debug
+	npm run watch-localhost-debug
 
 .PHONY: login
 login: gcp-login
@@ -175,7 +179,7 @@ docker-unit-tests: create-network
 	# 	-e REDIS_PORT=6379 \
 	# 	-e REDIS_DB=0 \
 	# 	-e NODE_OPTIONS=--max-old-space-size=2048 \
-	# 	$(TEST_IMAGE_NAME) sh -c "yarn unit-tests"
+	# 	$(TEST_IMAGE_NAME) sh -c "npm run unit-tests"
 
 
 .PHONY: docker-script-tests
@@ -268,7 +272,7 @@ clean-ci: stop-nats stop-redis stop-pg
 
 .PHONY: combine-cov
 combine-cov:
-	yarn ts-node-script ./scripts/mergeCoverage.ts --report ./cov-int/coverage-final.json --report ./cov-unit/coverage-final.json
+	npx ts-node-script ./scripts/mergeCoverage.ts --report ./cov-int/coverage-final.json --report ./cov-unit/coverage-final.json
 
 .PHONY: publish
 publish: gcp-publish
