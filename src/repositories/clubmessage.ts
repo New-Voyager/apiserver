@@ -88,13 +88,18 @@ class ClubMessageRepositoryImpl {
     const repository = getUserRepository(ClubMessageInput);
     const response = await repository.save(sendMessage);
     const messageId = uuidv4();
+    const data = {
+      playerName: player.name,
+      playerUuid: player.uuid,
+    };
     // TODO: send firebase notification
     // we need to send this message to all the club members
     Nats.sendClubUpdate(
       club.clubCode,
       club.name,
       ClubUpdateType[ClubUpdateType.NEW_MEMBER],
-      messageId
+      messageId,
+      data
     );
 
     return response.id;

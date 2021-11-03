@@ -156,7 +156,7 @@ class HistoryRepositoryImpl {
     const cachedPlayer = await Cache.getPlayer(playerUuid);
     let clubMember;
     if (gameHistory.clubCode) {
-      clubMember = Cache.getClubMember(playerUuid, gameHistory.clubCode);
+      clubMember = await Cache.getClubMember(playerUuid, gameHistory.clubCode);
     }
     const completedGames = await this.completeData(
       cachedPlayer,
@@ -175,7 +175,7 @@ class HistoryRepositoryImpl {
     const cachedPlayer = await Cache.getPlayer(playerUuid);
 
     if (club) {
-      clubMember = Cache.getClubMember(playerUuid, club.clubCode);
+      clubMember = await Cache.getClubMember(playerUuid, club.clubCode);
       // club games
       gameHistory = await gameRepo.find({
         where: {
