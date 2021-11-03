@@ -18,6 +18,7 @@ import {
   UnauthorizedError,
 } from '@src/errors';
 import {gameLogPrefix} from '@src/entity/game/game';
+import {HistoryRepository} from '@src/repositories/history';
 
 const logger = getLogger('resolvers::players_in_game');
 
@@ -108,8 +109,18 @@ const resolvers: any = {
 
 export async function getGamePlayers(gameCode: string) {
   try {
-    const resp = await GameRepository.getGamePlayers(gameCode);
-    return resp;
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      // check in history table
+      const historyGame = await HistoryRepository.getHistoryGame(gameCode);
+      if (!historyGame) {
+        throw new GameNotFoundError(gameCode);
+      }
+      return await HistoryRepository.getGamePlayers(historyGame);
+    } else {
+      const resp = await GameRepository.getGamePlayers(gameCode);
+      return resp;
+    }
   } catch (err) {
     logger.error(
       `Error while getting game players. gameCode: ${gameCode}: ${errToStr(
