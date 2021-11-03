@@ -5,7 +5,12 @@ import {HighHandHistory} from '@src/entity/history/hand';
 import {PlayersInGame} from '@src/entity/history/player';
 import {Cache} from '@src/cache/index';
 import {PlayerGameStats} from '@src/entity/history/stats';
-import {getGameRepository, getHistoryManager, getHistoryRepository} from '.';
+import {
+  getGameRepository,
+  getHistoryConnection,
+  getHistoryManager,
+  getHistoryRepository,
+} from '.';
 import {HighHand} from '@src/entity/game/reward';
 import {Club, ClubMember} from '@src/entity/player/club';
 import {ClubRepository} from './club';
@@ -16,6 +21,7 @@ import {GameEndReason, GameStatus} from '@src/entity/types';
 import {stat, Stats} from 'fs';
 import {StatsRepository} from './stats';
 import {GameNotFoundError} from '@src/errors';
+import {fixQuery} from '@src/utils';
 
 class HistoryRepositoryImpl {
   constructor() {}
@@ -489,6 +495,20 @@ class HistoryRepositoryImpl {
       return true;
     }
     return false;
+  }
+
+  public async getGamePlayers(historyGame: GameHistory): Promise<Array<any>> {
+    const playersRepo = getHistoryRepository(PlayersInGame);
+    const players = await playersRepo.find({
+      gameId: historyGame.gameId,
+    });
+    return players.map(x => {
+      return {
+        id: x.playerId,
+        name: x.playerName,
+        uuid: x.playerUuid,
+      };
+    });
   }
 }
 
