@@ -170,7 +170,8 @@ class NatsClass {
     clubCode: string,
     clubName: string,
     changed: string,
-    messageId: string
+    messageId: string,
+    data?: any
   ) {
     /*
     {
@@ -179,13 +180,17 @@ class NatsClass {
       "clubCode": "<>"
     }
     */
-    const message: any = {
+    let message: any = {
       type: 'CLUB_UPDATED',
       clubCode: clubCode,
       clubName: clubName,
       changed: changed,
       requestId: messageId,
     };
+
+    if (data) {
+      message = Object.assign(message, data);
+    }
     const messageStr = JSON.stringify(message);
     const subject = this.getClubChannel(clubCode);
     this.sendMessage(subject, messageStr);

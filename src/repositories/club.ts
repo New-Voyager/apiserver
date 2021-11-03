@@ -385,12 +385,17 @@ class ClubRepositoryImpl {
     await clubMemberRepository.save(clubMember);
     const messageId = uuidv4();
     try {
+      const data = {
+        playerName: player.name,
+        playerUuid: player.uuid,
+      };
       // TODO: send firebase notification
       Nats.sendClubUpdate(
         clubCode,
         club.name,
-        ClubUpdateType[ClubUpdateType.NEW_MEMBER],
-        messageId
+        ClubUpdateType[ClubUpdateType.NEW_MEMBER_REQUEST],
+        messageId,
+        data
       );
       const owner: Player | undefined = await Promise.resolve(club.owner);
       if (!owner) {
