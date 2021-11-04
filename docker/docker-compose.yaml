@@ -5,6 +5,7 @@ services:
     image: ${GAME_SERVER_IMAGE}
     tty: true
     restart: always
+    hostname: gameserver
     ports:
       - 8080:8080
     depends_on:
