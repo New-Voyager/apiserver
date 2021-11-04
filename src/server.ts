@@ -39,6 +39,7 @@ let externalApp: any = null;
 let internalApp: any = null;
 let runProfile: RunProfile = RunProfile.DEV;
 let apolloServer: any = null;
+let storeHandAnalysis = false;
 
 function setPgConversion() {
   const types = require('pg').types;
@@ -137,6 +138,12 @@ export async function start(
     throw new Error(
       'NATS_URL should be specified in the environment variable.'
     );
+  }
+
+  if (process.env.STORE_HAND_ANALYSIS) {
+    if (process.env.STORE_HAND_ANALYSIS === '1') {
+      storeHandAnalysis = true;
+    }
   }
 
   logger.info(`INTERNAL_ENDPOINTS: ${process.env.INTERNAL_ENDPOINTS}`);
@@ -323,4 +330,8 @@ export function notifyScheduler(): boolean {
     return false;
   }
   return true;
+}
+
+export function getStoreHandAnalysis() {
+  return storeHandAnalysis;
 }
