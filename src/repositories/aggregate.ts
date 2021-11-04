@@ -1,6 +1,7 @@
 import {Cache} from '@src/cache';
 
 import {
+  getDebugRepository,
   getGameManager,
   getGameRepository,
   getHistoryConnection,
@@ -32,7 +33,9 @@ import {
 } from '@src/entity/game/seatchange';
 import {HighHand} from '@src/entity/game/reward';
 import {EntityManager} from 'typeorm';
-import {getRunProfile, RunProfile} from '@src/server';
+import {getRunProfile, getStoreHandAnalysis, RunProfile} from '@src/server';
+import {AdminRepository} from './admin';
+import {HandAnalysis} from '@src/entity/debug/handanalyze';
 
 const BATCH_SIZE = 10;
 const logger = getLogger('repositories::aggregate');
@@ -97,6 +100,7 @@ class AggregationImpl {
     for (let gameIdx = 0; gameIdx < processCount; gameIdx++) {
       const gameStart = Date.now();
       const game = allGames[gameIdx];
+      let handDataLink = '';
       logger.info(
         `Aggregating game results for game: ${game.gameId}:${game.gameCode}`
       );
@@ -214,7 +218,7 @@ class AggregationImpl {
               `Aggregating hand history for game: ${game.gameId}:${game.gameCode}`
             );
             // aggregate hand history and upload to S3
-            await this.aggregateHandHistory(
+            handDataLink = await this.aggregateHandHistory(
               transactionalEntityManager,
               game,
               hands
@@ -297,7 +301,10 @@ class AggregationImpl {
         }
         break;
       }
+      // save hand analysis data
+      await this.saveHandAnalysis(game.gameCode, handDataLink);
     }
+
     const more = allGames.length > processedGameIds.length;
     const totalTakenSec = (Date.now() - totalStart) / 1000;
     if (processedGameIds.length > 0) {
@@ -315,7 +322,7 @@ class AggregationImpl {
     transManager: EntityManager,
     game: GameHistory,
     hands: Array<any>
-  ) {
+  ): Promise<string> {
     const gameHistoryRepo = transManager.getRepository(GameHistory);
     const handHistoryRepo = transManager.getRepository(HandHistory);
 
@@ -359,7 +366,9 @@ class AggregationImpl {
     await handHistoryRepo.delete({
       gameId: game.gameId,
     });
+    return handDataUrl;
   }
+
   private async removeLiveGamesData(gameCode: string) {
     await getGameManager().transaction(async transManager => {
       const game = await Cache.getGame(gameCode, true);
@@ -385,6 +394,36 @@ class AggregationImpl {
       await gameRepo.delete({id: game.id});
       await Cache.removeGame(gameCode);
     });
+  }
+
+  private async saveHandAnalysis(gameCode: string, handsLink: string) {
+    if (!getStoreHandAnalysis()) {
+      return;
+    }
+    try {
+      const ret = await AdminRepository.analyzeHands(gameCode);
+      const repo = getDebugRepository(HandAnalysis);
+      const data = new HandAnalysis();
+
+      data.gameCode = gameCode;
+      const gi = ret.game;
+      data.handsDealt = gi.handsDealt;
+      data.endedAt = new Date(Date.parse(gi.endedAt));
+      data.handsLink = handsLink;
+      data.balanceMismatch = ret.balanceMismatch;
+      data.resultTable = JSON.stringify(ret.result);
+      data.pairedBoardsCount = ret.pairedBoards.length;
+      data.pairedSecondBoardsCount = ret.pairedSecondBoards.length;
+      data.sameHoleCardsCount = ret.game.sameRankHolecards;
+      data.straightFlushesCount = ret.game.fullHouseHands;
+      data.fourOfKindCount = ret.game.fourOfKinds;
+      data.fullHouseCount = ret.game.fullHouseHands;
+      await repo.save(data);
+    } catch (err) {
+      logger.error(
+        `Failed to save hand analysis data. Error: ${errToStr(err)}`
+      );
+    }
   }
 }
 
