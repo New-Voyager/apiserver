@@ -29,7 +29,7 @@ import {
 import {ClubMemberStat} from '@src/entity/player/club';
 import {ClubMessageRepository} from './clubmessage';
 import {AppCoinRepository} from './appcoin';
-import {Errors, GenericError} from '@src/errors';
+import {Errors, GenericError, UnauthorizedError} from '@src/errors';
 import _ from 'lodash';
 import {getRunProfile, RunProfile} from '@src/server';
 
@@ -87,8 +87,14 @@ class ClubRepositoryImpl {
     if (!owner) {
       throw new Error('Unexpected. There is no owner for the club');
     }
+
+    // check whether the calling user is the owner of the club
     if (owner.uuid !== hostUuid) {
-      throw new Error('Unauthorized!');
+      throw new UnauthorizedError();
+    }
+    const callingUser = await Cache.getClubMember(hostUuid, clubCode);
+    if (!callingUser) {
+      throw new UnauthorizedError();
     }
 
     // Check ClubMember data
@@ -118,6 +124,9 @@ class ClubRepositoryImpl {
       ] as unknown as ClubMemberStatus;
     }
     if (updateData.isManager || updateData.isManager === false) {
+      if (!callingUser.isOwner) {
+        throw new UnauthorizedError();
+      }
       clubMember.isManager = updateData.isManager;
     }
     if (
