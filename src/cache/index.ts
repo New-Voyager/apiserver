@@ -42,10 +42,10 @@ export function initializeRedis() {
       user: redisUser(),
       password: redisPassword(),
     });
-    logger.info('Successfully connected to redis');
   } else {
     client = redis.createClient(redisPort(), redisHost());
   }
+  logger.info('Successfully connected to redis');
   client.on('error', error => {
     logger.error(`Redis client error: ${errToStr(error)}}`);
     throw new Error(error);

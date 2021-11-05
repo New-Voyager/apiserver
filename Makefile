@@ -92,6 +92,7 @@ int-tests-ci: export REDIS_DB=0
 int-tests-ci: export NATS_URL=nats://nats:4222
 int-tests-ci: export POSTGRES_HOST=mydb
 int-tests-ci: login create-network run-all
+	sleep 10
 	npm run int-test
 
 .PHONY: setup-hook
