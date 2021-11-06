@@ -285,6 +285,7 @@ export class CreditTracking {
   @Column({name: 'club_id', type: 'int'})
   public clubId!: number;
 
+  @Index()
   @Column({name: 'player_id', type: 'int'})
   public playerId!: number;
 
@@ -304,7 +305,7 @@ export class CreditTracking {
     scale: 2,
     nullable: false,
   })
-  public buyInMin!: number;
+  public amount!: number;
 
   @Column({name: 'notes', nullable: true})
   public notes!: string;

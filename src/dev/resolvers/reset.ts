@@ -92,6 +92,7 @@ export async function resetDB() {
       await deleteAll('ClubMember', transactionEntityManager);
       await deleteAll('Club', transactionEntityManager);
       await deleteAll('club_member_stat', transactionEntityManager);
+      await deleteAll('credit_tracking', transactionEntityManager);
       await deleteAll('coin_purchase_transactions', transactionEntityManager);
       await deleteAll('player_coins', transactionEntityManager);
       await deleteAll('coin_consume_transactions', transactionEntityManager);

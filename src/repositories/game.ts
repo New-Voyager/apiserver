@@ -16,6 +16,7 @@ import {
   SeatStatus,
   GameEndReason,
   NextHandUpdate,
+  CreditUpdateType,
 } from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
 import {errToStr, getLogger} from '@src/utils/log';
@@ -33,7 +34,7 @@ import {utcTime} from '@src/utils';
 import _ from 'lodash';
 import {HandHistory} from '@src/entity/history/hand';
 import {Player, PlayerNotes} from '@src/entity/player/player';
-import {Club, ClubMember} from '@src/entity/player/club';
+import {Club, ClubMember, CreditTracking} from '@src/entity/player/club';
 import {PlayerGameStats} from '@src/entity/history/stats';
 import {HistoryRepository} from './history';
 import {GameHistory} from '@src/entity/history/game';
@@ -55,7 +56,7 @@ import {GameUpdatesRepository} from './gameupdates';
 import {GameServerRepository} from './gameserver';
 import {PlayersInGame} from '@src/entity/history/player';
 import {schedulePostProcessing} from '@src/scheduler';
-import {notifyScheduler} from '@src/server';
+import {getRunProfile, notifyScheduler, RunProfile} from '@src/server';
 import {NextHandUpdatesRepository} from './nexthand_update';
 import {processPendingUpdates} from './pendingupdates';
 import {AppCoinRepository} from './appcoin';
@@ -1191,6 +1192,8 @@ class GameRepositoryImpl {
     const players = await playerGameTrackerRepository.find({
       game: {id: game.id},
     });
+
+    const creditChanges = new Array<CreditTracking>();
     for (const playerInGame of players) {
       if (playerInGame.satAt) {
         const satAt = new Date(Date.parse(playerInGame.satAt.toString()));
@@ -1212,7 +1215,83 @@ class GameRepositoryImpl {
             satAt: undefined,
           }
         );
+
+        if (game.clubId) {
+          const playerUuid = playerInGame.playerUuid;
+          const clubMember = await Cache.getClubMember(
+            playerUuid,
+            game.clubCode
+          );
+          if (clubMember) {
+            const amount = playerInGame.stack - playerInGame.buyIn;
+            let newBalance: number;
+
+            if (process.env.DB_USED === 'sqllite') {
+              // RETURNING not supported in sqlite.
+              newBalance = clubMember.balance + amount;
+              const updateResult = await getUserConnection()
+                .getRepository(ClubMember)
+                .update(
+                  {
+                    id: clubMember.id,
+                  },
+                  {
+                    balance: newBalance,
+                  }
+                );
+
+              if (updateResult.affected === 0) {
+                throw new Error(
+                  `Could not update club member balance after game. Club member does not exist. club: ${game.clubCode}, member ID: ${clubMember.id}, game: ${game.gameCode}`
+                );
+              }
+            } else {
+              const updateResult = await getUserConnection()
+                .createQueryBuilder()
+                .update(ClubMember)
+                .set({
+                  balance: () => `balance + :amount`,
+                })
+                .setParameter('amount', amount)
+                .where({
+                  id: clubMember.id,
+                })
+                .returning(['balance'])
+                .execute();
+
+              if (updateResult.affected === 0) {
+                logger.error(
+                  `Could not update club member balance after game. Club member does not exist. club: ${game.clubCode}, member ID: ${clubMember.id}, game: ${game.gameCode}`
+                );
+                continue;
+              }
+
+              newBalance = updateResult.raw[0].balance;
+            }
+
+            await Cache.getClubMember(playerUuid, game.clubCode, true);
+
+            const ct = new CreditTracking();
+            ct.clubId = game.clubId;
+            ct.playerId = playerInGame.playerId;
+            ct.updateType = CreditUpdateType.GAME_RESULT;
+            ct.gameCode = game.gameCode;
+            ct.amount = amount;
+            ct.updatedCredits = newBalance;
+            creditChanges.push(ct);
+          } else {
+            logger.error(
+              `Could not find club member in cache. club: ${game.clubCode}, player: ${playerUuid}`
+            );
+          }
+        }
       }
+    }
+
+    if (creditChanges.length > 0) {
+      await getUserConnection()
+        .getRepository(CreditTracking)
+        .save(creditChanges);
     }
 
     await getGameConnection()
