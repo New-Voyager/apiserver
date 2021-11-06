@@ -13,7 +13,7 @@ import {
   DbAwareUpdateDateColumn,
 } from '../dbaware';
 import {Player} from './player';
-import {ClubMemberStatus, ClubStatus} from '../types';
+import {ClubMemberStatus, ClubStatus, CreditUpdateType} from '../types';
 
 @Entity({name: 'club'})
 export class Club {
@@ -163,6 +163,15 @@ export class ClubMember {
   public autoBuyinApproval!: boolean;
 
   @Column({
+    name: 'available_credit',
+    type: 'decimal',
+    precision: 8,
+    scale: 2,
+    default: 0,
+  })
+  public availableCredit!: number;
+
+  @Column({
     name: 'credit_limit',
     type: 'decimal',
     precision: 8,
@@ -266,31 +275,46 @@ export class ClubMemberStat {
   })
   public rakePaid!: number;
 }
-/*
-@Entity({name: 'club_chips_transaction'})
-export class ClubChipsTransaction {
+
+@Entity({name: 'credit_tracking'})
+export class CreditTracking {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @ManyToOne(type => Club)
-  @JoinColumn({name: 'club_id'})
-  public club!: Club;
+  @Index()
+  @Column({name: 'club_id', type: 'int'})
+  public clubId!: number;
 
-  @Column({name: 'description', type: 'text'})
-  public description!: string;
+  @Column({name: 'player_id', type: 'int'})
+  public playerId!: number;
 
-  @Column({name: 'amount', type: 'decimal', precision: 8, scale: 2})
-  public amount!: number;
+  @Column({name: 'update_type'})
+  public updateType!: number;
 
-  @Column({name: 'balance', type: 'decimal', precision: 8, scale: 2})
-  public balance!: number;
+  @Column({name: 'game_code', nullable: true})
+  public gameCode!: string;
 
-  @DbAwareUpdateDateColumn({
-    name: 'updated_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
+  @Column({name: 'admin_id', nullable: true})
+  public adminId!: number;
+
+  @Column({
+    name: 'amount',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: false,
   })
-  public updatedAt!: Date;
+  public buyInMin!: number;
+
+  @Column({name: 'notes', nullable: true})
+  public notes!: string;
+
+  @Column({
+    name: 'updated_credits',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: false,
+  })
+  public updatedCredits!: number;
 }
-*/
