@@ -174,6 +174,7 @@ export async function start(
     getAppSettings().compressHandData = false;
   }
 
+  logger.info('Initializing databases');
   await initdb();
   if (process.env.NODE_ENV) {
     const profile = process.env.NODE_ENV.toLowerCase();
@@ -188,15 +189,19 @@ export async function start(
     }
   }
   if (process.env.NODE_ENV !== 'unit-test' && process.env.NODE_ENV !== 'test') {
+    logger.info('Initializing NATS');
     await initializeNats();
   }
 
+  logger.info('Initializing Redis');
   initializeRedis();
   initializeGameServer();
   if (runProfile != RunProfile.INT_TEST) {
     if (initializeFirebase) {
+      logger.info('Initializing Firebase');
       await Firebase.init();
     }
+    logger.info('Initializing DigitalOcean storage');
     DigitalOcean.initialize();
   }
 
@@ -206,6 +211,7 @@ export async function start(
   setPgConversion();
 
   // eslint-disable-next-line @typescript-eslint/no-var-requires
+  logger.info('Initializing apis');
   const express = require('express');
   let externalServer: any;
   let internalServer: any;
@@ -223,6 +229,7 @@ export async function start(
     externalApp.use(authorize);
     //app.use(bodyParser.raw({ inflate: false, limit: '100kb', type: 'application/octet-stream' }));
 
+    logger.info('Initializing GraphQL server');
     await apolloServer.start();
     apolloServer.applyMiddleware({app: externalApp});
 
@@ -255,6 +262,7 @@ export async function start(
   }
 
   // initialize db
+  logger.info('Seeding default data');
   await seed();
   return [externalServer, internalServer, apolloServer];
 }
