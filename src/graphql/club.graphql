@@ -15,6 +15,12 @@ enum ClubStatus {
   DEFUNCT
 }
 
+enum CreditUpdateType {
+  CHANGE
+  BUYIN
+  GAME_RESULT
+}
+
 input ClubCreateInput {
   name: String!
   description: String!
@@ -112,6 +118,16 @@ type ClubMemberStat {
   rakePaid: Float! 
 }
 
+type CreditHistory {
+  updateType: CreditUpdateType!
+  amount: Float!
+  updatedCredits: Float!
+  gameCode: String
+  adminUuid: String
+  adminName: String
+  notes: String
+}
+
 type Query {
   clubMembers(clubCode: String!, filter: MemberFilterInput): [ClubMember!]
   clubById(clubCode: String!): clubId!
@@ -122,6 +138,7 @@ type Query {
   clubGames(clubCode: String!, page: PageInput, completedGames: Boolean): [ClubGameInfo!]
   clubLeaderBoard(clubCode: String!): [ClubMemberStat]
   clubCoins(clubCode: String!): Int!
+  creditHistory(clubCode: String!, playerUuid: String!): [CreditHistory!]
 }
 
 type Mutation {

@@ -1273,7 +1273,7 @@ class GameRepositoryImpl {
 
             const ct = new CreditTracking();
             ct.clubId = game.clubId;
-            ct.playerId = playerInGame.playerId;
+            ct.playerUuid = playerInGame.playerUuid;
             ct.updateType = CreditUpdateType.GAME_RESULT;
             ct.gameCode = game.gameCode;
             ct.amount = amount;

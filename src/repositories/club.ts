@@ -1,5 +1,9 @@
-import {Club, ClubMember} from '@src/entity/player/club';
-import {ClubMemberStatus, ClubStatus} from '@src/entity/types';
+import {Club, ClubMember, CreditTracking} from '@src/entity/player/club';
+import {
+  ClubMemberStatus,
+  ClubStatus,
+  CreditUpdateType,
+} from '@src/entity/types';
 import {Player} from '@src/entity/player/player';
 import {Not, LessThan, MoreThan, In} from 'typeorm';
 import {PokerGame} from '@src/entity/game/game';
@@ -986,6 +990,72 @@ class ClubRepositoryImpl {
     }
 
     return ret;
+  }
+
+  public async getCreditHistory(
+    reqPlayerId: string,
+    clubCode: string,
+    playerUuid: string
+  ): Promise<Array<any>> {
+    const reqPlayer = await Cache.getPlayer(reqPlayerId);
+    if (!reqPlayer) {
+      logger.error(
+        `Could not get credit history. Request player does not exist. player: ${reqPlayerId}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const club = await Cache.getClub(clubCode);
+    if (!club) {
+      logger.error(
+        `Could not get credit history. Club does not exist. club: ${clubCode}`
+      );
+      throw new Error('Invalid club');
+    }
+
+    const owner: Player | undefined = await Promise.resolve(club.owner);
+    if (!owner) {
+      throw new Error('Unexpected. There is no owner for the club');
+    }
+
+    const player = await Cache.getPlayer(playerUuid);
+    if (!player) {
+      logger.error(
+        `Could not get credit history. Player does not exist. player: ${playerUuid}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+    if (!clubMember) {
+      throw new Error('The player is not in the club');
+    }
+
+    if (reqPlayer.uuid !== playerUuid && reqPlayer.uuid !== owner.uuid) {
+      logger.error(
+        `Credit history requested by unauthorized player. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const creditTrackingRepo =
+      getUserRepository<CreditTracking>(CreditTracking);
+    const res: Array<any> = await creditTrackingRepo.find({
+      where: {
+        clubId: club.id,
+        playerUuid: playerUuid,
+      },
+      order: {
+        id: 'DESC',
+      },
+      take: 100,
+    });
+
+    for (const r of res) {
+      r.updateType = CreditUpdateType[r.updateType];
+    }
+
+    return res;
   }
 }
 

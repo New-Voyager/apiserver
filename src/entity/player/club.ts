@@ -277,26 +277,25 @@ export class ClubMemberStat {
 }
 
 @Entity({name: 'credit_tracking'})
+@Index(['clubId', 'playerUuid'])
 export class CreditTracking {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @Index()
   @Column({name: 'club_id', type: 'int'})
   public clubId!: number;
 
-  @Index()
-  @Column({name: 'player_id', type: 'int'})
-  public playerId!: number;
+  @Column({name: 'player_uuid'})
+  public playerUuid!: string;
 
   @Column({name: 'update_type'})
-  public updateType!: number;
+  public updateType!: CreditUpdateType;
 
   @Column({name: 'game_code', nullable: true})
   public gameCode!: string;
 
-  @Column({name: 'admin_id', nullable: true})
-  public adminId!: number;
+  @Column({name: 'admin_uuid', nullable: true})
+  public adminUuid!: string;
 
   @Column({
     name: 'amount',
@@ -318,4 +317,13 @@ export class CreditTracking {
     nullable: false,
   })
   public updatedCredits!: number;
+
+  /**
+   * DB insert time.
+   */
+  @DbAwareCreateDateColumn({
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  public createdAt!: Date;
 }
