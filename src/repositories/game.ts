@@ -1223,7 +1223,7 @@ class GameRepositoryImpl {
             game.clubCode
           );
           if (clubMember) {
-            const amount = playerInGame.stack - playerInGame.buyIn;
+            const amount = playerInGame.stack;
             let newCredit: number;
 
             try {
