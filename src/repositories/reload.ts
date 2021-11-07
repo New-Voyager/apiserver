@@ -359,6 +359,8 @@ export class Reload {
     if (this.game.hostUuid === this.player.uuid) {
       isHost = true;
     }
+
+    const isMemberCreditTrackingEnabled = false;
     if (
       clubMember.isOwner ||
       clubMember.isManager ||
@@ -368,7 +370,25 @@ export class Reload {
     ) {
       approved = true;
     } else {
-      if (amount <= clubMember.availableCredit) {
+      let isWithinAutoApprovalLimit = false;
+      if (isMemberCreditTrackingEnabled) {
+        // Club member auto approval credit.
+        const profit = playerInGame.stack - playerInGame.buyIn;
+        const credit = clubMember.availableCredit + profit;
+        if (amount <= credit) {
+          isWithinAutoApprovalLimit = true;
+        }
+      } else {
+        // Per-game auto approval limit.
+        if (
+          playerInGame.buyIn + amount <=
+          playerInGame.buyInAutoApprovalLimit
+        ) {
+          isWithinAutoApprovalLimit = true;
+        }
+      }
+
+      if (isWithinAutoApprovalLimit) {
         approved = true;
         await this.approve(amount, playerInGame, transactionEntityManager);
       } else {

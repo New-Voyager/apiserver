@@ -124,9 +124,7 @@ export class BuyIn {
       clubMember.autoBuyinApproval ||
       !gameSettings.buyInApproval ||
       this.player.bot ||
-      isHost ||
-      (!isMemberCreditTrackingEnabled &&
-        playerInGame.buyIn + amount <= playerInGame.buyInAutoApprovalLimit)
+      isHost
     ) {
       logger.debug(`***** [${this.game.gameCode}] Player: ${this.player.name} buyin approved.
             clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager}
@@ -140,7 +138,24 @@ export class BuyIn {
       );
       playerStatus = updatedPlayerInGame.status;
     } else {
-      if (amount <= clubMember.availableCredit) {
+      let isWithinAutoApprovalLimit = false;
+      if (isMemberCreditTrackingEnabled) {
+        // Club member auto approval credit.
+        const profit = playerInGame.stack - playerInGame.buyIn;
+        const credit = clubMember.availableCredit + profit;
+        if (amount <= credit) {
+          isWithinAutoApprovalLimit = true;
+        }
+      } else {
+        // Per-game auto approval limit.
+        if (
+          playerInGame.buyIn + amount <=
+          playerInGame.buyInAutoApprovalLimit
+        ) {
+          isWithinAutoApprovalLimit = true;
+        }
+      }
+      if (isWithinAutoApprovalLimit) {
         approved = true;
         await this.approveBuyInRequest(
           amount,
