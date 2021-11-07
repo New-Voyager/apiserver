@@ -36,21 +36,17 @@ input ClubUpdateInput {
 input ClubMemberUpdateInput {
   isManager: Boolean
   notes: String
-  balance: Float
   status: ClubMemberStatus
   autoBuyinApproval: Boolean
   referredBy: String
   contactInfo: String
 }
 
-
 type ClubMember {
   name: String!
-  memberId: Int!
-  playerId: String!
   joinedDate: DateTime!
   status: ClubMemberStatus!
-  lastPlayedDate: DateTime
+  lastGamePlayedDate: String
   imageId: String
   isOwner: Boolean
   isManager: Boolean
@@ -58,12 +54,8 @@ type ClubMember {
   balance: Float
   totalBuyins: Int
   totalWinnings: Int
-  rakePaid: Float
   notes: String
-  contactInfo: String
-  referredBy: String
-  autoBuyinApproval: Boolean
-  totalGames: Int
+  updatedAt: DateTime
 }
 
 type ClubGameInfo {

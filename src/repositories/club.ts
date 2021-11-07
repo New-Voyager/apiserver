@@ -1122,6 +1122,27 @@ class ClubRepositoryImpl {
     return true;
   }
 
+  public async setCreditAndTracker(
+    playerUuid: string,
+    clubCode: string,
+    newCredit: number,
+    adminUuid: string,
+    notes: string
+  ) {
+    await this.setCredit(adminUuid, playerUuid, clubCode, newCredit);
+    const club = await Cache.getClub(clubCode);
+    await this.addCreditTracker(
+      playerUuid,
+      club.id,
+      0,
+      newCredit,
+      CreditUpdateType.CHANGE,
+      undefined,
+      adminUuid,
+      notes
+    );
+  }
+
   public async setCredit(
     adminUuid: string,
     playerUuid: string,
@@ -1162,24 +1183,30 @@ class ClubRepositoryImpl {
     await Cache.getClubMember(playerUuid, clubCode, true);
   }
 
-  public async setCreditAndTracker(
+  public async updateCreditAndTracker(
     playerUuid: string,
     clubCode: string,
-    newCredit: number,
-    adminUuid: string,
-    notes: string
-  ) {
-    await this.setCredit(adminUuid, playerUuid, clubCode, newCredit);
+    amount: number,
+    updateType: CreditUpdateType,
+    gameCode: string
+  ): Promise<number> {
+    const newCredit = await ClubRepository.updateCredit(
+      playerUuid,
+      clubCode,
+      amount
+    );
     const club = await Cache.getClub(clubCode);
-    const ct = new CreditTracking();
-    ct.clubId = club.id;
-    ct.playerUuid = playerUuid;
-    ct.updateType = CreditUpdateType.CHANGE;
-    ct.adminUuid = adminUuid;
-    ct.amount = 0;
-    ct.updatedCredits = newCredit;
-    ct.notes = notes;
-    await getUserConnection().getRepository(CreditTracking).save(ct);
+    await this.addCreditTracker(
+      playerUuid,
+      club.id,
+      amount,
+      newCredit,
+      updateType,
+      gameCode,
+      undefined,
+      undefined
+    );
+    return newCredit;
   }
 
   public async updateCredit(
@@ -1231,28 +1258,40 @@ class ClubRepositoryImpl {
     return newCredit;
   }
 
-  public async updateCreditAndTracker(
+  public async addCreditTracker(
     playerUuid: string,
-    clubCode: string,
+    clubId: number,
     amount: number,
+    newCredit: number,
     updateType: CreditUpdateType,
-    gameCode: string
-  ): Promise<number> {
-    const newCredit = await ClubRepository.updateCredit(
-      playerUuid,
-      clubCode,
-      amount
-    );
-    const club = await Cache.getClub(clubCode);
-    const ct = new CreditTracking();
-    ct.clubId = club.id;
+    gameCode?: string,
+    adminUuid?: string,
+    notes?: string
+  ) {
+    const ct: any = new CreditTracking();
+    ct.clubId = clubId;
     ct.playerUuid = playerUuid;
-    ct.updateType = updateType;
-    ct.gameCode = gameCode;
     ct.amount = amount;
     ct.updatedCredits = newCredit;
+    ct.updateType = updateType;
+
+    if (updateType === CreditUpdateType.CHANGE) {
+      if (!adminUuid) {
+        throw new Error(
+          `adminUuid is required for CreditUpdateType ${CreditUpdateType[updateType]}`
+        );
+      }
+      ct.adminUuid = adminUuid;
+      ct.notes = notes;
+    } else {
+      if (!gameCode) {
+        throw new Error(
+          `gameCode is required for CreditUpdateType ${CreditUpdateType[updateType]}`
+        );
+      }
+      ct.gameCode = gameCode;
+    }
     await getUserConnection().getRepository(CreditTracking).save(ct);
-    return newCredit;
   }
 }
 
