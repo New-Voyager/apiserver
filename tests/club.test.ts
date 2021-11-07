@@ -387,9 +387,7 @@ describe('Club APIs', () => {
 
     try {
       await clubutils.updateClubMember('', ownerId, player1Id, {
-        balance: 10,
-        creditLimit: 1000,
-        notes: 'Added credit limit',
+        notes: 'Kicked out',
         status: 'KICKEDOUT',
         autoBuyinApproval: true,
         referredBy: ownerId,
@@ -400,9 +398,7 @@ describe('Club APIs', () => {
     }
     try {
       await clubutils.updateClubMember(clubCode, '', player1Id, {
-        balance: 10,
-        creditLimit: 1000,
-        notes: 'Added credit limit',
+        notes: 'Kicked out',
         status: 'KICKEDOUT',
         autoBuyinApproval: true,
         referredBy: ownerId,
@@ -413,9 +409,7 @@ describe('Club APIs', () => {
     }
     try {
       await clubutils.updateClubMember(clubCode, ownerId, '', {
-        balance: 10,
-        creditLimit: 1000,
-        notes: 'Added credit limit',
+        notes: 'Kicked out',
         status: 'KICKEDOUT',
         autoBuyinApproval: true,
         referredBy: ownerId,
@@ -430,9 +424,7 @@ describe('Club APIs', () => {
       ownerId,
       player1Id,
       {
-        balance: 10,
-        creditLimit: 1000,
-        notes: 'Added credit limit',
+        notes: 'Kicked out',
         status: 'KICKEDOUT',
         autoBuyinApproval: true,
         referredBy: ownerId,
