@@ -41,8 +41,6 @@ const logger = getLogger('repositories::club');
 
 const MIN_CREDIT = -1000000000;
 const MAX_CREDIT = 1000000000;
-const MIN_CREDIT_UPDATE: number = MIN_CREDIT;
-const MAX_CREDIT_UPDATE: number = MAX_CREDIT;
 
 export interface ClubCreateInput {
   ownerUuid: string;
@@ -1121,18 +1119,9 @@ class ClubRepositoryImpl {
       throw new Error('Invalid player');
     }
 
-    if (amount < MIN_CREDIT_UPDATE || amount > MAX_CREDIT_UPDATE) {
+    if (amount < MIN_CREDIT || amount > MAX_CREDIT) {
       logger.error(
         `Could not set credit. Amount exceeds limit. player: ${reqPlayerId}, club: ${clubCode}, amount: ${amount}`
-      );
-      throw new Error('Invalid amount');
-    }
-
-    const newAmt = clubMember.balance + amount;
-
-    if (newAmt < MIN_CREDIT || newAmt > MAX_CREDIT) {
-      logger.error(
-        `Could not set credit. New amount will exceeds limit. player: ${reqPlayerId}, club: ${clubCode}, amount: ${amount}, new amount: ${newAmt}`
       );
       throw new Error('Invalid amount');
     }
@@ -1141,7 +1130,7 @@ class ClubRepositoryImpl {
       .createQueryBuilder()
       .update(ClubMember)
       .set({
-        balance: amount,
+        availableCredit: amount,
       })
       .where({
         id: clubMember.id,
@@ -1162,7 +1151,7 @@ class ClubRepositoryImpl {
     ct.playerUuid = playerUuid;
     ct.updateType = CreditUpdateType.CHANGE;
     ct.adminUuid = reqPlayerId;
-    ct.amount = amount;
+    ct.amount = 0;
     ct.updatedCredits = amount;
     ct.notes = notes;
     await getUserConnection().getRepository(CreditTracking).save(ct);

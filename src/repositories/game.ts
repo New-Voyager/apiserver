@@ -1228,7 +1228,7 @@ class GameRepositoryImpl {
 
             if (process.env.DB_USED === 'sqllite') {
               // RETURNING not supported in sqlite.
-              newBalance = clubMember.balance + amount;
+              newBalance = clubMember.availableCredit + amount;
               const updateResult = await getUserConnection()
                 .getRepository(ClubMember)
                 .update(
@@ -1236,7 +1236,7 @@ class GameRepositoryImpl {
                     id: clubMember.id,
                   },
                   {
-                    balance: newBalance,
+                    availableCredit: newBalance,
                   }
                 );
 
@@ -1250,13 +1250,13 @@ class GameRepositoryImpl {
                 .createQueryBuilder()
                 .update(ClubMember)
                 .set({
-                  balance: () => `balance + :amount`,
+                  availableCredit: () => `available_credit + :amount`,
                 })
                 .setParameter('amount', amount)
                 .where({
                   id: clubMember.id,
                 })
-                .returning(['balance'])
+                .returning(['availableCredit'])
                 .execute();
 
               if (updateResult.affected === 0) {
@@ -1266,7 +1266,20 @@ class GameRepositoryImpl {
                 continue;
               }
 
-              newBalance = updateResult.raw[0].balance;
+              newBalance = updateResult.raw[0].available_credit;
+              if (newBalance === null || newBalance === undefined) {
+                // Shouldn't get here. Just guarding against future changes to the column name.
+                const errMsg =
+                  'Could not capture the updated club member credit';
+                logger.error(errMsg);
+                if (
+                  getRunProfile() === RunProfile.TEST ||
+                  getRunProfile() === RunProfile.INT_TEST
+                ) {
+                  throw new Error(errMsg);
+                }
+                continue;
+              }
             }
 
             await Cache.getClubMember(playerUuid, game.clubCode, true);
