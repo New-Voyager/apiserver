@@ -1,26 +1,5 @@
 scalar DateTime
 
-type ClubMember {
-  name: String!
-  joinedDate: DateTime!
-  status: ClubMemberStatus!
-  lastGamePlayedDate: String
-  imageId: String
-  isOwner: Boolean
-  isManager: Boolean
-  playerId: String
-  balance: Float
-  totalBuyins: Int
-  totalWinnings: Int
-  notes: String
-  updatedAt: DateTime
-}
-
-type clubAmount{
-  balance: Float
-  updatedAt: DateTime
-}
-
 type playerTrack{
   buyIn: Int
   stack: Int
@@ -30,15 +9,7 @@ type playerTrack{
   hhHandNum: Int
 }
 
-type clubTrack{
-  rake: Int
-  promotion: Int
-  handNum: Int
-}
-
 type Query {
-  clubBalance(clubCode: String!): clubAmount!
-  playerBalance(clubCode: String!, playerId: String): ClubMember!
   # playerGametrack(clubCode: String!, gameCode: String!, playerId: String!): playerTrack! # Resolver Not found?
   rakeCollected(gameCode: String!): Float!
 }

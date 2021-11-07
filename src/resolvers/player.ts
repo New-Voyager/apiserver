@@ -53,7 +53,7 @@ async function getClubs(playerId: string): Promise<Array<any>> {
       memberCount: parseInt(x.memberCount),
       clubStatus: ClubStatus[x.status],
       memberStatus: ClubMemberStatus[x.memberStatus],
-      balance: x.balance,
+      balance: x.availableCredit,
       host: x.host,
     };
   });

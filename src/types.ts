@@ -67,7 +67,7 @@ export interface getPlayerClubsData {
   ownerId: number;
   memberStatus: number;
   status: number;
-  balance: number;
+  availableCredit: number;
   picUrl: string;
 }
 

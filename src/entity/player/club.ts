@@ -33,15 +33,6 @@ export class Club {
   @Column()
   public status!: ClubStatus;
 
-  @Column({
-    name: 'balance',
-    type: 'decimal',
-    precision: 8,
-    scale: 2,
-    default: 0,
-  })
-  public balance!: number;
-
   @DbAwareUpdateDateColumn({
     name: 'updated_at',
     type: 'timestamp',

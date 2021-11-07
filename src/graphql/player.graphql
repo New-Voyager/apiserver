@@ -31,7 +31,7 @@ type PlayerClub {
   isOwner: Boolean
   private: Boolean
   memberStatus: ClubMemberStatus
-  balance: Float
+  availableCredit: Float
   pendingMemberCount: Int
   unreadMessageCount: Int
   memberUnreadMessageCount: Int
