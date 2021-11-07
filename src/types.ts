@@ -44,7 +44,7 @@ export interface pendingApprovalsForClubData {
   name: string;
   amount: number;
   approvalType: string;
-  outstandingBalance: number;
+  availableCredit: number;
   clubCode: string;
   gameType: GameType;
   smallBlind: number;

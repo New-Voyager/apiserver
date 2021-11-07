@@ -371,13 +371,6 @@ export class Reload {
       if (amount <= clubMember.availableCredit) {
         approved = true;
         await this.approve(amount, playerInGame, transactionEntityManager);
-        await ClubRepository.updateCreditAndTracker(
-          this.player.uuid,
-          this.game.clubCode,
-          -amount,
-          CreditUpdateType.BUYIN,
-          this.game.gameCode
-        );
       } else {
         await this.addToNextHand(
           amount,
@@ -387,6 +380,15 @@ export class Reload {
 
         approved = false;
       }
+    }
+    if (approved) {
+      await ClubRepository.updateCreditAndTracker(
+        this.player.uuid,
+        this.game.clubCode,
+        -amount,
+        CreditUpdateType.BUYIN,
+        this.game.gameCode
+      );
     }
     return approved;
   }
