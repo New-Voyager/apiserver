@@ -1234,7 +1234,7 @@ class GameRepositoryImpl {
               );
             } catch (err) {
               logger.error(
-                `Could not update club member balance after game. club: ${
+                `Could not update club member credit after game. club: ${
                   game.clubCode
                 }, member ID: ${clubMember.id}, game: ${
                   game.gameCode

@@ -664,7 +664,7 @@ class ClubRepositoryImpl {
         // nothing to filter
       } else {
         if (filter.unsettled) {
-          where.balance = Not(0);
+          where.availableCredit = LessThan(0);
         }
 
         if (filter.managers) {
