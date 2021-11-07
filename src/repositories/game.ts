@@ -1224,11 +1224,11 @@ class GameRepositoryImpl {
           );
           if (clubMember) {
             const amount = playerInGame.stack - playerInGame.buyIn;
-            let newBalance: number;
+            let newCredit: number;
 
             if (process.env.DB_USED === 'sqllite') {
               // RETURNING not supported in sqlite.
-              newBalance = clubMember.availableCredit + amount;
+              newCredit = clubMember.availableCredit + amount;
               const updateResult = await getUserConnection()
                 .getRepository(ClubMember)
                 .update(
@@ -1236,7 +1236,7 @@ class GameRepositoryImpl {
                     id: clubMember.id,
                   },
                   {
-                    availableCredit: newBalance,
+                    availableCredit: newCredit,
                   }
                 );
 
@@ -1246,43 +1246,23 @@ class GameRepositoryImpl {
                 );
               }
             } else {
-              const updateResult = await getUserConnection()
-                .createQueryBuilder()
-                .update(ClubMember)
-                .set({
-                  availableCredit: () => `available_credit + :amount`,
-                })
-                .setParameter('amount', amount)
-                .where({
-                  id: clubMember.id,
-                })
-                .returning(['availableCredit'])
-                .execute();
-
-              if (updateResult.affected === 0) {
+              try {
+                newCredit = await ClubRepository.updateCredit(
+                  playerUuid,
+                  game.clubCode,
+                  amount
+                );
+              } catch (err) {
                 logger.error(
-                  `Could not update club member balance after game. Club member does not exist. club: ${game.clubCode}, member ID: ${clubMember.id}, game: ${game.gameCode}`
+                  `Could not update club member balance after game. club: ${
+                    game.clubCode
+                  }, member ID: ${clubMember.id}, game: ${
+                    game.gameCode
+                  }: ${errToStr(err)}`
                 );
                 continue;
               }
-
-              newBalance = updateResult.raw[0].available_credit;
-              if (newBalance === null || newBalance === undefined) {
-                // Shouldn't get here. Just guarding against future changes to the column name.
-                const errMsg =
-                  'Could not capture the updated club member credit';
-                logger.error(errMsg);
-                if (
-                  getRunProfile() === RunProfile.TEST ||
-                  getRunProfile() === RunProfile.INT_TEST
-                ) {
-                  throw new Error(errMsg);
-                }
-                continue;
-              }
             }
-
-            await Cache.getClubMember(playerUuid, game.clubCode, true);
 
             const ct = new CreditTracking();
             ct.clubId = game.clubId;
@@ -1290,7 +1270,7 @@ class GameRepositoryImpl {
             ct.updateType = CreditUpdateType.GAME_RESULT;
             ct.gameCode = game.gameCode;
             ct.amount = amount;
-            ct.updatedCredits = newBalance;
+            ct.updatedCredits = newCredit;
             creditChanges.push(ct);
           } else {
             logger.error(

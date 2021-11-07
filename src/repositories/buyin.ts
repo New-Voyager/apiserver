@@ -6,6 +6,7 @@ import {gameLogPrefix, NextHandUpdates, PokerGame} from '@src/entity/game/game';
 import {
   ApprovalStatus,
   ApprovalType,
+  CreditUpdateType,
   GameStatus,
   NextHandUpdate,
   PlayerStatus,
@@ -19,7 +20,7 @@ import {
   NewUpdate,
   RELOAD_APPROVAL_TIMEOUT,
 } from './types';
-import {Club, ClubMember} from '@src/entity/player/club';
+import {Club, ClubMember, CreditTracking} from '@src/entity/player/club';
 import {buyInRequest, pendingApprovalsForClubData} from '@src/types';
 import {fixQuery} from '@src/utils';
 import {Firebase} from '@src/firebase';
@@ -33,6 +34,7 @@ import {
 } from '.';
 import {Nats} from '@src/nats';
 import {PlayersInGameRepository} from './playersingame';
+import {ClubRepository} from './club';
 
 const logger = getLogger('repositories::buyin');
 
@@ -117,7 +119,8 @@ export class BuyIn {
       !gameSettings.buyInApproval ||
       this.player.bot ||
       isHost ||
-      playerInGame.buyIn + amount <= playerInGame.buyInAutoApprovalLimit
+      playerInGame.buyIn + amount <= playerInGame.buyInAutoApprovalLimit ||
+      clubMember.availableCredit - amount > 0
     ) {
       logger.debug(`***** [${this.game.gameCode}] Player: ${this.player.name} buyin approved.
             clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager}
@@ -129,6 +132,19 @@ export class BuyIn {
         playerInGame,
         transactionEntityManager
       );
+      const newCredit = await ClubRepository.updateCredit(
+        this.player.uuid,
+        this.game.clubCode,
+        -amount
+      );
+      const ct = new CreditTracking();
+      ct.clubId = this.game.clubId;
+      ct.playerUuid = this.player.uuid;
+      ct.updateType = CreditUpdateType.BUYIN;
+      ct.gameCode = this.game.gameCode;
+      ct.amount = -amount;
+      ct.updatedCredits = newCredit;
+      await getUserConnection().getRepository(CreditTracking).save(ct);
       playerStatus = updatedPlayerInGame.status;
     } else {
       const query =

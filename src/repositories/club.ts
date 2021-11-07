@@ -1158,6 +1158,55 @@ class ClubRepositoryImpl {
 
     return true;
   }
+
+  public async updateCredit(
+    playerUuid: string,
+    clubCode: string,
+    amount: number
+  ): Promise<number> {
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+    if (!clubMember) {
+      throw new Error(
+        `Could not find club member. Player: ${playerUuid}, club: ${clubCode}`
+      );
+    }
+    const updateResult = await getUserConnection()
+      .createQueryBuilder()
+      .update(ClubMember)
+      .set({
+        availableCredit: () => `available_credit + :amount`,
+      })
+      .setParameter('amount', amount)
+      .where({
+        id: clubMember.id,
+      })
+      .returning(['availableCredit'])
+      .execute();
+
+    if (updateResult.affected === 0) {
+      throw new Error(`Could not find club member with ID ${clubMember.id}`);
+    }
+
+    const newCredit = updateResult.raw[0].available_credit;
+    if (newCredit === null || newCredit === undefined) {
+      // Shouldn't get here. Just guarding against future changes to the column name.
+      const errMsg = 'Could not capture the updated club member credit';
+      logger.error(errMsg);
+      if (
+        getRunProfile() === RunProfile.TEST ||
+        getRunProfile() === RunProfile.INT_TEST
+      ) {
+        throw new Error(errMsg);
+      }
+
+      const m = await Cache.getClubMember(playerUuid, clubCode, true);
+      return m?.availableCredit || clubMember.availableCredit + amount;
+    }
+
+    await Cache.getClubMember(playerUuid, clubCode, true);
+
+    return newCredit;
+  }
 }
 
 export const ClubRepository = new ClubRepositoryImpl();
