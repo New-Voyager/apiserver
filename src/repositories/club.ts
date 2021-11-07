@@ -58,9 +58,7 @@ export interface ClubUpdateInput {
 export interface ClubMemberUpdateInput {
   isManager?: boolean;
   notes?: string;
-  balance?: number;
   status?: ClubMemberStatus;
-  creditLimit?: number;
   autoBuyinApproval?: boolean;
   referredBy?: string;
   contactInfo?: string;
@@ -116,12 +114,6 @@ class ClubRepositoryImpl {
     }
 
     // update data
-    if (updateData.balance) {
-      clubMember.balance = updateData.balance;
-    }
-    if (updateData.creditLimit) {
-      clubMember.creditLimit = updateData.creditLimit;
-    }
     if (updateData.notes) {
       clubMember.notes = updateData.notes.toString();
     }
@@ -1068,7 +1060,7 @@ class ClubRepositoryImpl {
     return res;
   }
 
-  public async setCredit(
+  public async adminSetCredit(
     reqPlayerId: string,
     clubCode: string,
     playerUuid: string,
@@ -1119,18 +1111,41 @@ class ClubRepositoryImpl {
       throw new Error('Invalid player');
     }
 
-    if (amount < MIN_CREDIT || amount > MAX_CREDIT) {
+    await this.setCreditAndTracker(
+      playerUuid,
+      clubCode,
+      amount,
+      reqPlayerId,
+      notes
+    );
+
+    return true;
+  }
+
+  public async setCredit(
+    adminUuid: string,
+    playerUuid: string,
+    clubCode: string,
+    newCredit: number
+  ): Promise<void> {
+    if (newCredit < MIN_CREDIT || newCredit > MAX_CREDIT) {
       logger.error(
-        `Could not set credit. Amount exceeds limit. player: ${reqPlayerId}, club: ${clubCode}, amount: ${amount}`
+        `Could not set credit. Amount exceeds limit. Admin uuid: ${adminUuid}, club: ${clubCode}, newCredit: ${newCredit}`
       );
       throw new Error('Invalid amount');
     }
 
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+    if (!clubMember) {
+      throw new Error(
+        `Could not find club member. Player: ${playerUuid}, club: ${clubCode}`
+      );
+    }
     const updateResult = await getUserConnection()
       .createQueryBuilder()
       .update(ClubMember)
       .set({
-        availableCredit: amount,
+        availableCredit: newCredit,
       })
       .where({
         id: clubMember.id,
@@ -1139,24 +1154,32 @@ class ClubRepositoryImpl {
 
     if (updateResult.affected === 0) {
       logger.error(
-        `Could not update club member balance. Club member does not exist. club: ${clubCode}, member ID: ${clubMember.id}`
+        `Could not set club member credit. Club member does not exist. club: ${clubCode}, member ID: ${clubMember.id}`
       );
       throw new Error('Invalid player');
     }
 
     await Cache.getClubMember(playerUuid, clubCode, true);
+  }
 
+  public async setCreditAndTracker(
+    playerUuid: string,
+    clubCode: string,
+    newCredit: number,
+    adminUuid: string,
+    notes: string
+  ) {
+    await this.setCredit(adminUuid, playerUuid, clubCode, newCredit);
+    const club = await Cache.getClub(clubCode);
     const ct = new CreditTracking();
     ct.clubId = club.id;
     ct.playerUuid = playerUuid;
     ct.updateType = CreditUpdateType.CHANGE;
-    ct.adminUuid = reqPlayerId;
+    ct.adminUuid = adminUuid;
     ct.amount = 0;
-    ct.updatedCredits = amount;
+    ct.updatedCredits = newCredit;
     ct.notes = notes;
     await getUserConnection().getRepository(CreditTracking).save(ct);
-
-    return true;
   }
 
   public async updateCredit(
@@ -1205,6 +1228,30 @@ class ClubRepositoryImpl {
 
     await Cache.getClubMember(playerUuid, clubCode, true);
 
+    return newCredit;
+  }
+
+  public async updateCreditAndTracker(
+    playerUuid: string,
+    clubCode: string,
+    amount: number,
+    updateType: CreditUpdateType,
+    gameCode: string
+  ): Promise<number> {
+    const newCredit = await ClubRepository.updateCredit(
+      playerUuid,
+      clubCode,
+      amount
+    );
+    const club = await Cache.getClub(clubCode);
+    const ct = new CreditTracking();
+    ct.clubId = club.id;
+    ct.playerUuid = playerUuid;
+    ct.updateType = updateType;
+    ct.gameCode = gameCode;
+    ct.amount = amount;
+    ct.updatedCredits = newCredit;
+    await getUserConnection().getRepository(CreditTracking).save(ct);
     return newCredit;
   }
 }

@@ -356,7 +356,7 @@ export async function getClubPlayerInfo(playerId: string, clubCode: string) {
     name: clubMember.club.name,
     description: clubMember.club.description,
     picUrl: clubMember.club.picUrl,
-    myBalance: clubMember.balance,
+    myBalance: clubMember.availableCredit,
     joinedAt: clubMember.joinedDate,
     // gamesPlayed: clubMember.totalGames,
     isManager: clubMember.isManager,

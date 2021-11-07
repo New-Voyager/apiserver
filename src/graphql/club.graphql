@@ -38,7 +38,6 @@ input ClubMemberUpdateInput {
   notes: String
   balance: Float
   status: ClubMemberStatus
-  creditLimit: Float
   autoBuyinApproval: Boolean
   referredBy: String
   contactInfo: String
@@ -64,7 +63,6 @@ type ClubMember {
   contactInfo: String
   referredBy: String
   autoBuyinApproval: Boolean
-  creditLimit: Float
   totalGames: Int
 }
 

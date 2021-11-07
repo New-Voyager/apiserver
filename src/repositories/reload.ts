@@ -5,6 +5,7 @@ import {Player} from '@src/entity/player/player';
 import {NextHandUpdates, PokerGame} from '@src/entity/game/game';
 import {
   ApprovalStatus,
+  CreditUpdateType,
   GameStatus,
   NextHandUpdate,
   TableStatus,
@@ -17,7 +18,14 @@ import {buyInRequest, pendingApprovalsForClubData} from '@src/types';
 import {Firebase} from '@src/firebase';
 import {Nats} from '@src/nats';
 import {v4 as uuidv4} from 'uuid';
-import {getGameConnection, getGameManager, getGameRepository} from '.';
+import {
+  getGameConnection,
+  getGameManager,
+  getGameRepository,
+  getUserConnection,
+} from '.';
+import {CreditTracking} from '@src/entity/player/club';
+import {ClubRepository} from './club';
 
 const logger = getLogger('repositories::reload');
 
@@ -360,37 +368,16 @@ export class Reload {
     ) {
       approved = true;
     } else {
-      const query =
-        'SELECT SUM(buy_in) current_buyin FROM player_game_tracker pgt, poker_game pg WHERE pgt.pgt_player_id = ' +
-        this.player.id +
-        ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
-        GameStatus.ENDED;
-      let resp: any;
-      if (transactionEntityManager) {
-        resp = await transactionEntityManager.query(query);
-      } else {
-        resp = await getGameConnection().query(query);
-      }
-
-      const currentBuyin = resp[0]['current_buyin'];
-
-      let outstandingBalance = playerInGame.buyIn;
-      if (currentBuyin) {
-        outstandingBalance += currentBuyin;
-      }
-      logger.debug(`[${this.game.gameCode}] Player: ${this.player.name} reload request. 
-            clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager} 
-            Auto approval: ${clubMember.autoBuyinApproval} 
-            isHost: {isHost}`);
-
-      let availableCredit = 0.0;
-      if (clubMember.creditLimit >= 0) {
-        availableCredit = clubMember.creditLimit - outstandingBalance;
-      }
-
-      if (amount <= availableCredit) {
+      if (amount <= clubMember.availableCredit) {
         approved = true;
         await this.approve(amount, playerInGame, transactionEntityManager);
+        await ClubRepository.updateCreditAndTracker(
+          this.player.uuid,
+          this.game.clubCode,
+          -amount,
+          CreditUpdateType.BUYIN,
+          this.game.gameCode
+        );
       } else {
         await this.addToNextHand(
           amount,

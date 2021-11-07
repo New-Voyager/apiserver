@@ -119,8 +119,7 @@ export class BuyIn {
       !gameSettings.buyInApproval ||
       this.player.bot ||
       isHost ||
-      playerInGame.buyIn + amount <= playerInGame.buyInAutoApprovalLimit ||
-      clubMember.availableCredit - amount > 0
+      playerInGame.buyIn + amount <= playerInGame.buyInAutoApprovalLimit
     ) {
       logger.debug(`***** [${this.game.gameCode}] Player: ${this.player.name} buyin approved.
             clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager}
@@ -132,53 +131,21 @@ export class BuyIn {
         playerInGame,
         transactionEntityManager
       );
-      const newCredit = await ClubRepository.updateCredit(
-        this.player.uuid,
-        this.game.clubCode,
-        -amount
-      );
-      const ct = new CreditTracking();
-      ct.clubId = this.game.clubId;
-      ct.playerUuid = this.player.uuid;
-      ct.updateType = CreditUpdateType.BUYIN;
-      ct.gameCode = this.game.gameCode;
-      ct.amount = -amount;
-      ct.updatedCredits = newCredit;
-      await getUserConnection().getRepository(CreditTracking).save(ct);
       playerStatus = updatedPlayerInGame.status;
     } else {
-      const query =
-        'SELECT SUM(buy_in) current_buyin FROM player_game_tracker pgt, poker_game pg WHERE pgt.pgt_player_id = ' +
-        this.player.id +
-        ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
-        GameStatus.ENDED;
-      const resp = await transactionEntityManager.query(query);
-
-      const currentBuyin = resp[0]['current_buyin'];
-
-      let outstandingBalance = playerInGame.buyIn;
-      if (currentBuyin) {
-        outstandingBalance += currentBuyin;
-      }
-      logger.debug(`[${this.game.gameCode}] Player: ${this.player.name} buyin request. 
-            clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager} 
-            Auto approval: ${clubMember.autoBuyinApproval} 
-            isHost: {isHost}`);
-      logger.debug(
-        `Game.buyInApproval: ${gameSettings.buyInApproval} creditLimit: ${clubMember.creditLimit} outstandingBalance: ${outstandingBalance}`
-      );
-
-      let availableCredit = 0.0;
-      if (clubMember.creditLimit >= 0) {
-        availableCredit = clubMember.creditLimit - outstandingBalance;
-      }
-
-      if (amount <= availableCredit) {
+      if (amount <= clubMember.availableCredit) {
         approved = true;
         await this.approveBuyInRequest(
           amount,
           playerInGame,
           transactionEntityManager
+        );
+        await ClubRepository.updateCreditAndTracker(
+          this.player.uuid,
+          this.game.clubCode,
+          -amount,
+          CreditUpdateType.BUYIN,
+          this.game.gameCode
         );
       } else {
         await this.addBuyInToNextHand(

@@ -487,7 +487,7 @@ export async function setCredit(
     throw new Error('Invalid argument');
   }
 
-  return ClubRepository.setCredit(
+  return ClubRepository.adminSetCredit(
     playerId,
     clubCode,
     playerUuid,
