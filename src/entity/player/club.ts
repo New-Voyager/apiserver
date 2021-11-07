@@ -156,7 +156,7 @@ export class ClubMember {
   @Column({
     name: 'available_credit',
     type: 'decimal',
-    precision: 8,
+    precision: 12,
     scale: 2,
     default: 0,
   })

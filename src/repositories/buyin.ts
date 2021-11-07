@@ -38,6 +38,9 @@ import {ClubRepository} from './club';
 
 const logger = getLogger('repositories::buyin');
 
+// Stay below the db column precision.
+const MAX_BUYIN = 1000000000;
+
 export class BuyIn {
   private game: PokerGame;
   private player: Player;
@@ -95,6 +98,10 @@ export class BuyIn {
     );
     if (!clubMember) {
       throw new Error(`The player ${this.player.uuid} is not in the club`);
+    }
+
+    if (amount > MAX_BUYIN || playerInGame.buyIn + amount > MAX_BUYIN) {
+      throw new Error('Invalid amount');
     }
 
     const gameSettings = await Cache.getGameSettings(

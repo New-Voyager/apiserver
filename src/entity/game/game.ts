@@ -26,7 +26,13 @@ export class PokerGameUpdates {
   @Column({primary: true, name: 'game_code'})
   public gameCode!: string;
 
-  @Column({name: 'rake', type: 'decimal', precision: 8, scale: 2, default: 0.0})
+  @Column({
+    name: 'rake',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    default: 0.0,
+  })
   public rake!: number;
 
   // json field that stores the players who played in the last hand
