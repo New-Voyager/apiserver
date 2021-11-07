@@ -1226,42 +1226,21 @@ class GameRepositoryImpl {
             const amount = playerInGame.stack - playerInGame.buyIn;
             let newCredit: number;
 
-            if (process.env.DB_USED === 'sqllite') {
-              // RETURNING not supported in sqlite.
-              newCredit = clubMember.availableCredit + amount;
-              const updateResult = await getUserConnection()
-                .getRepository(ClubMember)
-                .update(
-                  {
-                    id: clubMember.id,
-                  },
-                  {
-                    availableCredit: newCredit,
-                  }
-                );
-
-              if (updateResult.affected === 0) {
-                throw new Error(
-                  `Could not update club member balance after game. Club member does not exist. club: ${game.clubCode}, member ID: ${clubMember.id}, game: ${game.gameCode}`
-                );
-              }
-            } else {
-              try {
-                newCredit = await ClubRepository.updateCredit(
-                  playerUuid,
-                  game.clubCode,
-                  amount
-                );
-              } catch (err) {
-                logger.error(
-                  `Could not update club member balance after game. club: ${
-                    game.clubCode
-                  }, member ID: ${clubMember.id}, game: ${
-                    game.gameCode
-                  }: ${errToStr(err)}`
-                );
-                continue;
-              }
+            try {
+              newCredit = await ClubRepository.updateCredit(
+                playerUuid,
+                game.clubCode,
+                amount
+              );
+            } catch (err) {
+              logger.error(
+                `Could not update club member balance after game. club: ${
+                  game.clubCode
+                }, member ID: ${clubMember.id}, game: ${
+                  game.gameCode
+                }: ${errToStr(err)}`
+              );
+              continue;
             }
 
             const ct = new CreditTracking();

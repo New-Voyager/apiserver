@@ -5,7 +5,7 @@ import {
   CreditUpdateType,
 } from '@src/entity/types';
 import {Player} from '@src/entity/player/player';
-import {Not, LessThan, MoreThan, In} from 'typeorm';
+import {Not, LessThan, MoreThan, In, UpdateResult} from 'typeorm';
 import {PokerGame} from '@src/entity/game/game';
 import {
   getClubGamesData,
@@ -1220,24 +1220,43 @@ class ClubRepositoryImpl {
         `Could not find club member. Player: ${playerUuid}, club: ${clubCode}`
       );
     }
-    const updateResult = await getUserConnection()
-      .createQueryBuilder()
-      .update(ClubMember)
-      .set({
-        availableCredit: () => `available_credit + :amount`,
-      })
-      .setParameter('amount', amount)
-      .where({
-        id: clubMember.id,
-      })
-      .returning(['availableCredit'])
-      .execute();
+    const memberId = clubMember.id;
+    let updateResult: UpdateResult;
+    let newCredit: number | undefined = undefined;
+    if (process.env.DB_USED === 'sqllite') {
+      // RETURNING not supported in sqlite.
+      newCredit = clubMember.availableCredit + amount;
+      updateResult = await getUserConnection().getRepository(ClubMember).update(
+        {
+          id: memberId,
+        },
+        {
+          availableCredit: newCredit,
+        }
+      );
+    } else {
+      updateResult = await getUserConnection()
+        .createQueryBuilder()
+        .update(ClubMember)
+        .set({
+          availableCredit: () => `available_credit + :amount`,
+        })
+        .setParameter('amount', amount)
+        .where({
+          id: memberId,
+        })
+        .returning(['availableCredit'])
+        .execute();
 
-    if (updateResult.affected === 0) {
-      throw new Error(`Could not find club member with ID ${clubMember.id}`);
+      if (updateResult.raw.length > 0) {
+        newCredit = updateResult.raw[0].available_credit;
+      }
     }
 
-    const newCredit = updateResult.raw[0].available_credit;
+    if (updateResult.affected === 0) {
+      throw new Error(`Could not find club member with ID ${memberId}`);
+    }
+
     if (newCredit === null || newCredit === undefined) {
       // Shouldn't get here. Just guarding against future changes to the column name.
       const errMsg = 'Could not capture the updated club member credit';
@@ -1248,14 +1267,11 @@ class ClubRepositoryImpl {
       ) {
         throw new Error(errMsg);
       }
-
-      const m = await Cache.getClubMember(playerUuid, clubCode, true);
-      return m?.availableCredit || clubMember.availableCredit + amount;
     }
 
     await Cache.getClubMember(playerUuid, clubCode, true);
 
-    return newCredit;
+    return newCredit || clubMember.availableCredit + amount;
   }
 
   public async addCreditTracker(
