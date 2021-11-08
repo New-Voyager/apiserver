@@ -146,6 +146,19 @@ class ClubRepositoryImpl {
     // Save the data
     const resp = await clubMemberRepository.save(clubMember);
     await Cache.getClubMember(player.uuid, clubCode, true /* update cache */);
+    if (updateData.isManager) {
+      // a player is promoted as manager
+      Nats.sendClubUpdate(
+        clubCode,
+        club.name,
+        ClubUpdateType[ClubUpdateType.PROMOTED],
+        uuidv4(),
+        {
+          playerUuid: player.uuid,
+          name: player.name,
+        }
+      );
+    }
     return clubMember.status;
   }
 

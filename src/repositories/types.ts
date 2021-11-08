@@ -160,6 +160,7 @@ export enum ClubUpdateType {
   ANNOUNCEMENT,
   NEW_GAME,
   MEMBER_LEFT,
+  PROMOTED,
 }
 
 export interface GamePlayerSettings {
