@@ -56,7 +56,7 @@
       "outputCapture": "std",
       "console": "internalConsole",
       "env": {
-        "NATS_URL": "nats://192.168.0.111:4222",
+        "NATS_URL": "nats://localhost:4222",
         "EXTERNAL_ENDPOINTS": "1",
         "INTERNAL_ENDPOINTS": "1",
         "POSTGRES_HOST": "localhost",

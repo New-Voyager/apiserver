@@ -15,6 +15,12 @@ enum ClubStatus {
   DEFUNCT
 }
 
+enum CreditUpdateType {
+  CHANGE
+  BUYIN
+  GAME_RESULT
+}
+
 input ClubCreateInput {
   name: String!
   description: String!
@@ -24,42 +30,33 @@ input ClubUpdateInput {
   name: String
   description: String
   showHighRankStats: Boolean
+  trackMemberCredit: Boolean
   picUrl: String
 }
 
 input ClubMemberUpdateInput {
   isManager: Boolean
   notes: String
-  balance: Float
   status: ClubMemberStatus
-  creditLimit: Float
   autoBuyinApproval: Boolean
   referredBy: String
   contactInfo: String
 }
 
-
 type ClubMember {
   name: String!
-  memberId: Int!
-  playerId: String!
   joinedDate: DateTime!
   status: ClubMemberStatus!
-  lastPlayedDate: DateTime
+  lastGamePlayedDate: String
   imageId: String
   isOwner: Boolean
   isManager: Boolean
   playerId: String
-  balance: Float
+  availableCredit: Float
   totalBuyins: Int
   totalWinnings: Int
-  rakePaid: Float
   notes: String
-  contactInfo: String
-  referredBy: String
-  autoBuyinApproval: Boolean
-  creditLimit: Float
-  totalGames: Int
+  updatedAt: DateTime
 }
 
 type ClubGameInfo {
@@ -112,6 +109,16 @@ type ClubMemberStat {
   rakePaid: Float! 
 }
 
+type CreditHistory {
+  updateType: CreditUpdateType!
+  amount: Float!
+  updatedCredits: Float!
+  gameCode: String
+  adminUuid: String
+  adminName: String
+  notes: String
+}
+
 type Query {
   clubMembers(clubCode: String!, filter: MemberFilterInput): [ClubMember!]
   clubById(clubCode: String!): clubId!
@@ -122,6 +129,7 @@ type Query {
   clubGames(clubCode: String!, page: PageInput, completedGames: Boolean): [ClubGameInfo!]
   clubLeaderBoard(clubCode: String!): [ClubMemberStat]
   clubCoins(clubCode: String!): Int!
+  creditHistory(clubCode: String!, playerUuid: String!): [CreditHistory!]
 }
 
 type Mutation {
@@ -134,4 +142,5 @@ type Mutation {
   deleteClub(clubCode: String!): Boolean!
   updateClubMember(clubCode: String!, playerUuid: String!, update: ClubMemberUpdateInput!): ClubMemberStatus
   sendClubFcmMessage(clubCode: String!, message: Json!): Boolean
+  setCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String): Boolean!
 }

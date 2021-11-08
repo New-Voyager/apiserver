@@ -439,6 +439,63 @@ export async function clubCoins(playerId: string, clubCode: string) {
   return coins;
 }
 
+export async function creditHistory(
+  playerId: string,
+  clubCode: string,
+  playerUuid: string
+) {
+  const errors = new Array<string>();
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  if (clubCode === '') {
+    errors.push('Invalid club');
+  }
+  if (playerUuid === '') {
+    errors.push('Invalid player');
+  }
+  if (errors.length > 0) {
+    logger.error('Invalid argument for creditHistory: ' + errors.join(' '));
+    throw new Error('Invalid argument');
+  }
+
+  return ClubRepository.getCreditHistory(playerId, clubCode, playerUuid);
+}
+
+export async function setCredit(
+  playerId: string,
+  clubCode: string,
+  playerUuid: string,
+  amount: number,
+  notes: string
+) {
+  const errors = new Array<string>();
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  if (clubCode === '') {
+    errors.push('Invalid club');
+  }
+  if (playerUuid === '') {
+    errors.push('Invalid player');
+  }
+  if (amount === null || amount === undefined) {
+    errors.push('Invalid amount');
+  }
+  if (errors.length > 0) {
+    logger.error('Invalid argument for setCredit: ' + errors.join(' '));
+    throw new Error('Invalid argument');
+  }
+
+  return ClubRepository.adminSetCredit(
+    playerId,
+    clubCode,
+    playerUuid,
+    amount,
+    notes
+  );
+}
+
 const resolvers: any = {
   Query: {
     clubMembers: async (parent, args, ctx, info) => {
@@ -464,6 +521,10 @@ const resolvers: any = {
 
     clubCoins: async (parent, args, ctx, info) => {
       return clubCoins(ctx.req.playerId, args.clubCode);
+    },
+
+    creditHistory: async (parent, args, ctx, info) => {
+      return creditHistory(ctx.req.playerId, args.clubCode, args.playerUuid);
     },
   },
   Mutation: {
@@ -510,6 +571,16 @@ const resolvers: any = {
 
     sendClubFcmMessage: async (parent, args, ctx, info) => {
       return sendClubFcmMessage(args.clubCode, args.message);
+    },
+
+    setCredit: async (parent, args, ctx, info) => {
+      return setCredit(
+        ctx.req.playerId,
+        args.clubCode,
+        args.playerUuid,
+        args.amount,
+        args.notes
+      );
     },
   },
 };

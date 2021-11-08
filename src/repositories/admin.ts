@@ -35,7 +35,12 @@ import {
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {Announcement} from '@src/entity/player/announcements';
 import {ChatText} from '@src/entity/player/chat';
-import {Club, ClubMember, ClubMemberStat} from '@src/entity/player/club';
+import {
+  Club,
+  ClubMember,
+  ClubMemberStat,
+  CreditTracking,
+} from '@src/entity/player/club';
 import {
   ClubHostMessages,
   ClubMessageInput,
@@ -103,6 +108,7 @@ class AdminRepositoryImpl {
         ClubHostMessages,
         ClubMember,
         ClubMemberStat,
+        CreditTracking,
         ClubMessageInput,
         CoinConsumeTransaction,
         CoinPurchaseTransaction,

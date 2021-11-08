@@ -13,7 +13,7 @@ import {
   DbAwareUpdateDateColumn,
 } from '../dbaware';
 import {Player} from './player';
-import {ClubMemberStatus, ClubStatus} from '../types';
+import {ClubMemberStatus, ClubStatus, CreditUpdateType} from '../types';
 
 @Entity({name: 'club'})
 export class Club {
@@ -32,15 +32,6 @@ export class Club {
 
   @Column()
   public status!: ClubStatus;
-
-  @Column({
-    name: 'balance',
-    type: 'decimal',
-    precision: 8,
-    scale: 2,
-    default: 0,
-  })
-  public balance!: number;
 
   @DbAwareUpdateDateColumn({
     name: 'updated_at',
@@ -72,6 +63,9 @@ export class Club {
 
   @Column({name: 'show_highrank_stats', default: true})
   public showHighRankStats!: boolean;
+
+  @Column({name: 'track_member_credit', default: false})
+  public trackMemberCredit!: boolean;
 }
 
 @Entity({name: 'club_member'})
@@ -163,60 +157,13 @@ export class ClubMember {
   public autoBuyinApproval!: boolean;
 
   @Column({
-    name: 'credit_limit',
-    type: 'decimal',
-    precision: 8,
-    scale: 2,
-    default: 0,
-  })
-  public creditLimit!: number;
-
-  // TODO: remove commented code on success
-  // @Column({
-  //   name: 'total_buyins',
-  //   type: 'decimal',
-  //   precision: 12,
-  //   scale: 2,
-  //   default: 0,
-  // })
-  // public totalBuyins!: number;
-
-  // @Column({
-  //   name: 'total_winnings',
-  //   type: 'decimal',
-  //   precision: 12,
-  //   scale: 2,
-  //   default: 0,
-  // })
-  // public totalWinnings!: number;
-
-  @Column({
-    name: 'balance',
+    name: 'available_credit',
     type: 'decimal',
     precision: 12,
     scale: 2,
     default: 0,
   })
-  public balance!: number;
-
-  // TODO: remove commented code on success
-  // @Column({name: 'total_games', type: 'int', nullable: true, default: 0})
-  // public totalGames!: number;
-
-  // @Column({name: 'total_hands', type: 'int', nullable: true, default: 0})
-  // public totalHands!: number;
-
-  // @Column({name: 'won_hands', type: 'int', nullable: true, default: 0})
-  // public wonHands!: number;
-
-  // @Column({
-  //   name: 'rake_paid',
-  //   type: 'decimal',
-  //   precision: 12,
-  //   scale: 2,
-  //   default: 0,
-  // })
-  // public rakePaid!: number;
+  public availableCredit!: number;
 }
 
 @Entity({name: 'club_member_stat'})
@@ -266,31 +213,55 @@ export class ClubMemberStat {
   })
   public rakePaid!: number;
 }
-/*
-@Entity({name: 'club_chips_transaction'})
-export class ClubChipsTransaction {
+
+@Entity({name: 'credit_tracking'})
+@Index(['clubId', 'playerUuid'])
+export class CreditTracking {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @ManyToOne(type => Club)
-  @JoinColumn({name: 'club_id'})
-  public club!: Club;
+  @Column({name: 'club_id', type: 'int'})
+  public clubId!: number;
 
-  @Column({name: 'description', type: 'text'})
-  public description!: string;
+  @Column({name: 'player_uuid'})
+  public playerUuid!: string;
 
-  @Column({name: 'amount', type: 'decimal', precision: 8, scale: 2})
+  @Column({name: 'update_type'})
+  public updateType!: CreditUpdateType;
+
+  @Column({name: 'game_code', nullable: true})
+  public gameCode!: string;
+
+  @Column({name: 'admin_uuid', nullable: true})
+  public adminUuid!: string;
+
+  @Column({
+    name: 'amount',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: false,
+  })
   public amount!: number;
 
-  @Column({name: 'balance', type: 'decimal', precision: 8, scale: 2})
-  public balance!: number;
+  @Column({name: 'notes', nullable: true})
+  public notes!: string;
 
-  @DbAwareUpdateDateColumn({
-    name: 'updated_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
+  @Column({
+    name: 'updated_credits',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: false,
   })
-  public updatedAt!: Date;
+  public updatedCredits!: number;
+
+  /**
+   * DB insert time.
+   */
+  @DbAwareCreateDateColumn({
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  public createdAt!: Date;
 }
-*/

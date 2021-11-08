@@ -1,7 +1,11 @@
-import {Club, ClubMember} from '@src/entity/player/club';
-import {ClubMemberStatus, ClubStatus} from '@src/entity/types';
+import {Club, ClubMember, CreditTracking} from '@src/entity/player/club';
+import {
+  ClubMemberStatus,
+  ClubStatus,
+  CreditUpdateType,
+} from '@src/entity/types';
 import {Player} from '@src/entity/player/player';
-import {Not, LessThan, MoreThan, In} from 'typeorm';
+import {Not, LessThan, MoreThan, In, UpdateResult} from 'typeorm';
 import {PokerGame} from '@src/entity/game/game';
 import {
   getClubGamesData,
@@ -35,6 +39,9 @@ import {getRunProfile, RunProfile} from '@src/server';
 
 const logger = getLogger('repositories::club');
 
+const MIN_CREDIT = -1000000000;
+const MAX_CREDIT = 1000000000;
+
 export interface ClubCreateInput {
   ownerUuid: string;
   name: string;
@@ -45,15 +52,14 @@ export interface ClubUpdateInput {
   name: string;
   description: string;
   showHighRankStats: boolean;
+  trackMemberCredit: boolean;
   picUrl: string;
 }
 
 export interface ClubMemberUpdateInput {
   isManager?: boolean;
   notes?: string;
-  balance?: number;
   status?: ClubMemberStatus;
-  creditLimit?: number;
   autoBuyinApproval?: boolean;
   referredBy?: string;
   contactInfo?: string;
@@ -109,12 +115,6 @@ class ClubRepositoryImpl {
     }
 
     // update data
-    if (updateData.balance) {
-      clubMember.balance = updateData.balance;
-    }
-    if (updateData.creditLimit) {
-      clubMember.creditLimit = updateData.creditLimit;
-    }
     if (updateData.notes) {
       clubMember.notes = updateData.notes.toString();
     }
@@ -178,10 +178,15 @@ class ClubRepositoryImpl {
     if (typeof input.showHighRankStats === 'boolean') {
       club.showHighRankStats = input.showHighRankStats;
     }
+    if (typeof input.trackMemberCredit === 'boolean') {
+      club.trackMemberCredit = input.trackMemberCredit;
+    }
     if (typeof input.picUrl === 'string') {
       club.picUrl = input.picUrl;
     }
     await clubRepository.save(club);
+    await Cache.getClub(clubCode, true);
+
     return true;
   }
 
@@ -665,7 +670,7 @@ class ClubRepositoryImpl {
         // nothing to filter
       } else {
         if (filter.unsettled) {
-          where.balance = Not(0);
+          where.availableCredit = LessThan(0);
         }
 
         if (filter.managers) {
@@ -742,7 +747,7 @@ class ClubRepositoryImpl {
       WHERE cm.club_id in (SELECT club_id FROM club_member WHERE player_id=?)
                  GROUP BY cm.club_id)
       SELECT c.club_code as "clubCode", member_count as "memberCount", c.name, p.name as "host", c.owner_id as "ownerId",
-          cm.status as "memberStatus", c.status, c.pic_url as "picUrl", cm.balance balance
+          cm.status as "memberStatus", c.status, c.pic_url as "picUrl", cm.available_credit as "availableCredit"
       FROM club c JOIN my_clubs mc ON c.id = mc.club_id
       JOIN club_member cm ON cm.club_id = c.id AND cm.player_id=?
       JOIN player p ON p.id = c.owner_id`);
@@ -986,6 +991,340 @@ class ClubRepositoryImpl {
     }
 
     return ret;
+  }
+
+  public async getCreditHistory(
+    reqPlayerId: string,
+    clubCode: string,
+    playerUuid: string
+  ): Promise<Array<any>> {
+    const reqPlayer = await Cache.getPlayer(reqPlayerId);
+    if (!reqPlayer) {
+      logger.error(
+        `Could not get credit history. Request player does not exist. player: ${reqPlayerId}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const club = await Cache.getClub(clubCode);
+    if (!club) {
+      logger.error(
+        `Could not get credit history. Club does not exist. club: ${clubCode}`
+      );
+      throw new Error('Invalid club');
+    }
+
+    const owner: Player | undefined = await Promise.resolve(club.owner);
+    if (!owner) {
+      throw new Error('Unexpected. There is no owner for the club');
+    }
+
+    if (reqPlayer.uuid !== playerUuid && reqPlayer.uuid !== owner.uuid) {
+      logger.error(
+        `Credit history requested by unauthorized player. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const player = await Cache.getPlayer(playerUuid);
+    if (!player) {
+      logger.error(
+        `Could not get credit history. Player does not exist. player: ${playerUuid}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+    if (!clubMember) {
+      logger.error(
+        `Could not get credit history. Player is not a club member. player: ${playerUuid}, club: ${clubCode}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    if (!club.trackMemberCredit) {
+      return [];
+    }
+
+    const creditTrackingRepo =
+      getUserRepository<CreditTracking>(CreditTracking);
+    const res: Array<any> = await creditTrackingRepo.find({
+      where: {
+        clubId: club.id,
+        playerUuid: playerUuid,
+      },
+      order: {
+        id: 'DESC',
+      },
+      take: 100,
+    });
+
+    for (const r of res) {
+      r.updateType = CreditUpdateType[r.updateType];
+      if (r.adminUuid) {
+        const admin: Player = await Cache.getPlayer(r.adminUuid);
+        r.adminName = admin?.name;
+      }
+    }
+
+    return res;
+  }
+
+  public async adminSetCredit(
+    reqPlayerId: string,
+    clubCode: string,
+    playerUuid: string,
+    amount: number,
+    notes: string
+  ): Promise<boolean> {
+    const reqPlayer = await Cache.getPlayer(reqPlayerId);
+    if (!reqPlayer) {
+      logger.error(
+        `Could not set credit. Request player does not exist. player: ${reqPlayerId}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const club = await Cache.getClub(clubCode);
+    if (!club) {
+      logger.error(
+        `Could not set credit. Club does not exist. club: ${clubCode}`
+      );
+      throw new Error('Invalid club');
+    }
+
+    const owner: Player | undefined = await Promise.resolve(club.owner);
+    if (!owner) {
+      throw new Error('Unexpected. There is no owner for the club');
+    }
+
+    if (reqPlayer.uuid !== owner.uuid) {
+      logger.error(
+        `Set credit requested by unauthorized user. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const player = await Cache.getPlayer(playerUuid);
+    if (!player) {
+      logger.error(
+        `Could not set credit. Player does not exist. player: ${playerUuid}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+    if (!clubMember) {
+      logger.error(
+        `Could not set credit. Player is not a club member. player: ${playerUuid}, club: ${clubCode}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    if (!club.trackMemberCredit) {
+      logger.error(
+        `Could not set credit. Member credit tracking is not enabled. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+      );
+      throw new Error('Credit tracking not enabled');
+    }
+
+    await this.setCreditAndTracker(
+      playerUuid,
+      clubCode,
+      amount,
+      reqPlayerId,
+      notes
+    );
+
+    return true;
+  }
+
+  public async setCreditAndTracker(
+    playerUuid: string,
+    clubCode: string,
+    newCredit: number,
+    adminUuid: string,
+    notes: string
+  ) {
+    await this.setCredit(adminUuid, playerUuid, clubCode, newCredit);
+    const club = await Cache.getClub(clubCode);
+    await this.addCreditTracker(
+      playerUuid,
+      club.id,
+      0,
+      newCredit,
+      CreditUpdateType.CHANGE,
+      undefined,
+      adminUuid,
+      notes
+    );
+  }
+
+  public async setCredit(
+    adminUuid: string,
+    playerUuid: string,
+    clubCode: string,
+    newCredit: number
+  ): Promise<void> {
+    if (newCredit < MIN_CREDIT || newCredit > MAX_CREDIT) {
+      logger.error(
+        `Could not set credit. Amount exceeds limit. Admin uuid: ${adminUuid}, club: ${clubCode}, newCredit: ${newCredit}`
+      );
+      throw new Error('Invalid amount');
+    }
+
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+    if (!clubMember) {
+      throw new Error(
+        `Could not find club member. Player: ${playerUuid}, club: ${clubCode}`
+      );
+    }
+    const updateResult = await getUserConnection()
+      .createQueryBuilder()
+      .update(ClubMember)
+      .set({
+        availableCredit: newCredit,
+      })
+      .where({
+        id: clubMember.id,
+      })
+      .execute();
+
+    if (updateResult.affected === 0) {
+      logger.error(
+        `Could not set club member credit. Club member does not exist. club: ${clubCode}, member ID: ${clubMember.id}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    await Cache.getClubMember(playerUuid, clubCode, true);
+  }
+
+  public async updateCreditAndTracker(
+    playerUuid: string,
+    clubCode: string,
+    amount: number,
+    updateType: CreditUpdateType,
+    gameCode: string
+  ): Promise<number> {
+    const newCredit = await ClubRepository.updateCredit(
+      playerUuid,
+      clubCode,
+      amount
+    );
+    const club = await Cache.getClub(clubCode);
+    await this.addCreditTracker(
+      playerUuid,
+      club.id,
+      amount,
+      newCredit,
+      updateType,
+      gameCode,
+      undefined,
+      undefined
+    );
+    return newCredit;
+  }
+
+  public async updateCredit(
+    playerUuid: string,
+    clubCode: string,
+    amount: number
+  ): Promise<number> {
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+    if (!clubMember) {
+      throw new Error(
+        `Could not find club member. Player: ${playerUuid}, club: ${clubCode}`
+      );
+    }
+    const memberId = clubMember.id;
+    let updateResult: UpdateResult;
+    let newCredit: number | undefined = undefined;
+    if (process.env.DB_USED === 'sqllite') {
+      // RETURNING not supported in sqlite.
+      newCredit = clubMember.availableCredit + amount;
+      updateResult = await getUserConnection().getRepository(ClubMember).update(
+        {
+          id: memberId,
+        },
+        {
+          availableCredit: newCredit,
+        }
+      );
+    } else {
+      updateResult = await getUserConnection()
+        .createQueryBuilder()
+        .update(ClubMember)
+        .set({
+          availableCredit: () => `available_credit + :amount`,
+        })
+        .setParameter('amount', amount)
+        .where({
+          id: memberId,
+        })
+        .returning(['availableCredit'])
+        .execute();
+
+      if (updateResult.raw.length > 0) {
+        newCredit = updateResult.raw[0].available_credit;
+      }
+    }
+
+    if (updateResult.affected === 0) {
+      throw new Error(`Could not find club member with ID ${memberId}`);
+    }
+
+    if (newCredit === null || newCredit === undefined) {
+      // Shouldn't get here. Just guarding against future changes to the column name.
+      const errMsg = 'Could not capture the updated club member credit';
+      logger.error(errMsg);
+      if (
+        getRunProfile() === RunProfile.TEST ||
+        getRunProfile() === RunProfile.INT_TEST
+      ) {
+        throw new Error(errMsg);
+      }
+    }
+
+    await Cache.getClubMember(playerUuid, clubCode, true);
+
+    return newCredit || clubMember.availableCredit + amount;
+  }
+
+  public async addCreditTracker(
+    playerUuid: string,
+    clubId: number,
+    amount: number,
+    newCredit: number,
+    updateType: CreditUpdateType,
+    gameCode?: string,
+    adminUuid?: string,
+    notes?: string
+  ) {
+    const ct: any = new CreditTracking();
+    ct.clubId = clubId;
+    ct.playerUuid = playerUuid;
+    ct.amount = amount;
+    ct.updatedCredits = newCredit;
+    ct.updateType = updateType;
+
+    if (updateType === CreditUpdateType.CHANGE) {
+      if (!adminUuid) {
+        throw new Error(
+          `adminUuid is required for CreditUpdateType ${CreditUpdateType[updateType]}`
+        );
+      }
+      ct.adminUuid = adminUuid;
+      ct.notes = notes;
+    } else {
+      if (!gameCode) {
+        throw new Error(
+          `gameCode is required for CreditUpdateType ${CreditUpdateType[updateType]}`
+        );
+      }
+      ct.gameCode = gameCode;
+    }
+    await getUserConnection().getRepository(CreditTracking).save(ct);
   }
 }
 

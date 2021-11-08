@@ -5,6 +5,7 @@ import {Player} from '@src/entity/player/player';
 import {NextHandUpdates, PokerGame} from '@src/entity/game/game';
 import {
   ApprovalStatus,
+  CreditUpdateType,
   GameStatus,
   NextHandUpdate,
   TableStatus,
@@ -17,7 +18,14 @@ import {buyInRequest, pendingApprovalsForClubData} from '@src/types';
 import {Firebase} from '@src/firebase';
 import {Nats} from '@src/nats';
 import {v4 as uuidv4} from 'uuid';
-import {getGameConnection, getGameManager, getGameRepository} from '.';
+import {
+  getGameConnection,
+  getGameManager,
+  getGameRepository,
+  getUserConnection,
+} from '.';
+import {CreditTracking} from '@src/entity/player/club';
+import {ClubRepository} from './club';
 
 const logger = getLogger('repositories::reload');
 
@@ -351,6 +359,8 @@ export class Reload {
     if (this.game.hostUuid === this.player.uuid) {
       isHost = true;
     }
+
+    const club = await Cache.getClub(this.game.clubCode);
     if (
       clubMember.isOwner ||
       clubMember.isManager ||
@@ -360,35 +370,25 @@ export class Reload {
     ) {
       approved = true;
     } else {
-      const query =
-        'SELECT SUM(buy_in) current_buyin FROM player_game_tracker pgt, poker_game pg WHERE pgt.pgt_player_id = ' +
-        this.player.id +
-        ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
-        GameStatus.ENDED;
-      let resp: any;
-      if (transactionEntityManager) {
-        resp = await transactionEntityManager.query(query);
+      let isWithinAutoApprovalLimit = false;
+      if (club.trackMemberCredit) {
+        // Club member auto approval credit.
+        const profit = playerInGame.stack - playerInGame.buyIn;
+        const credit = clubMember.availableCredit + profit;
+        if (amount <= credit) {
+          isWithinAutoApprovalLimit = true;
+        }
       } else {
-        resp = await getGameConnection().query(query);
+        // Per-game auto approval limit.
+        if (
+          playerInGame.buyIn + amount <=
+          playerInGame.buyInAutoApprovalLimit
+        ) {
+          isWithinAutoApprovalLimit = true;
+        }
       }
 
-      const currentBuyin = resp[0]['current_buyin'];
-
-      let outstandingBalance = playerInGame.buyIn;
-      if (currentBuyin) {
-        outstandingBalance += currentBuyin;
-      }
-      logger.debug(`[${this.game.gameCode}] Player: ${this.player.name} reload request. 
-            clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager} 
-            Auto approval: ${clubMember.autoBuyinApproval} 
-            isHost: {isHost}`);
-
-      let availableCredit = 0.0;
-      if (clubMember.creditLimit >= 0) {
-        availableCredit = clubMember.creditLimit - outstandingBalance;
-      }
-
-      if (amount <= availableCredit) {
+      if (isWithinAutoApprovalLimit) {
         approved = true;
         await this.approve(amount, playerInGame, transactionEntityManager);
       } else {
@@ -400,6 +400,15 @@ export class Reload {
 
         approved = false;
       }
+    }
+    if (approved) {
+      await ClubRepository.updateCreditAndTracker(
+        this.player.uuid,
+        this.game.clubCode,
+        -amount,
+        CreditUpdateType.BUYIN,
+        this.game.gameCode
+      );
     }
     return approved;
   }

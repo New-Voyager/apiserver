@@ -225,3 +225,9 @@ export enum GameEndReason {
   NOT_ENOUGH_COINS,
   SYSTEM_TERMINATED,
 }
+
+export enum CreditUpdateType {
+  CHANGE,
+  BUYIN,
+  GAME_RESULT,
+}

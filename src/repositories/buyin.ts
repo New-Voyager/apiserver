@@ -6,6 +6,7 @@ import {gameLogPrefix, NextHandUpdates, PokerGame} from '@src/entity/game/game';
 import {
   ApprovalStatus,
   ApprovalType,
+  CreditUpdateType,
   GameStatus,
   NextHandUpdate,
   PlayerStatus,
@@ -33,8 +34,12 @@ import {
 } from '.';
 import {Nats} from '@src/nats';
 import {PlayersInGameRepository} from './playersingame';
+import {ClubRepository} from './club';
 
 const logger = getLogger('repositories::buyin');
+
+// Stay below the db column precision.
+const MAX_BUYIN = 1000000000;
 
 export class BuyIn {
   private game: PokerGame;
@@ -95,6 +100,10 @@ export class BuyIn {
       throw new Error(`The player ${this.player.uuid} is not in the club`);
     }
 
+    if (amount > MAX_BUYIN || playerInGame.buyIn + amount > MAX_BUYIN) {
+      throw new Error('Invalid amount');
+    }
+
     const gameSettings = await Cache.getGameSettings(
       this.game.gameCode,
       false,
@@ -107,17 +116,15 @@ export class BuyIn {
     if (this.game.hostUuid === this.player.uuid) {
       isHost = true;
     }
-    // logger.info(
-    //   `\n\nBuyin approval is required: ${this.game.buyInApproval}\n\n`
-    // );
+
+    const club = await Cache.getClub(this.game.clubCode);
     if (
       clubMember.isOwner ||
       clubMember.isManager ||
       clubMember.autoBuyinApproval ||
       !gameSettings.buyInApproval ||
       this.player.bot ||
-      isHost ||
-      playerInGame.buyIn + amount <= playerInGame.buyInAutoApprovalLimit
+      isHost
     ) {
       logger.debug(`***** [${this.game.gameCode}] Player: ${this.player.name} buyin approved.
             clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager}
@@ -131,39 +138,31 @@ export class BuyIn {
       );
       playerStatus = updatedPlayerInGame.status;
     } else {
-      const query =
-        'SELECT SUM(buy_in) current_buyin FROM player_game_tracker pgt, poker_game pg WHERE pgt.pgt_player_id = ' +
-        this.player.id +
-        ' AND pgt.pgt_game_id = pg.id AND pg.game_status =' +
-        GameStatus.ENDED;
-      const resp = await transactionEntityManager.query(query);
-
-      const currentBuyin = resp[0]['current_buyin'];
-
-      let outstandingBalance = playerInGame.buyIn;
-      if (currentBuyin) {
-        outstandingBalance += currentBuyin;
+      let isWithinAutoApprovalLimit = false;
+      if (club.trackMemberCredit) {
+        // Club member auto approval credit.
+        const profit = playerInGame.stack - playerInGame.buyIn;
+        const credit = clubMember.availableCredit + profit;
+        if (amount <= credit) {
+          isWithinAutoApprovalLimit = true;
+        }
+      } else {
+        // Per-game auto approval limit.
+        if (
+          playerInGame.buyIn + amount <=
+          playerInGame.buyInAutoApprovalLimit
+        ) {
+          isWithinAutoApprovalLimit = true;
+        }
       }
-      logger.debug(`[${this.game.gameCode}] Player: ${this.player.name} buyin request. 
-            clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager} 
-            Auto approval: ${clubMember.autoBuyinApproval} 
-            isHost: {isHost}`);
-      logger.debug(
-        `Game.buyInApproval: ${gameSettings.buyInApproval} creditLimit: ${clubMember.creditLimit} outstandingBalance: ${outstandingBalance}`
-      );
-
-      let availableCredit = 0.0;
-      if (clubMember.creditLimit >= 0) {
-        availableCredit = clubMember.creditLimit - outstandingBalance;
-      }
-
-      if (amount <= availableCredit) {
+      if (isWithinAutoApprovalLimit) {
         approved = true;
-        await this.approveBuyInRequest(
+        updatedPlayerInGame = await this.approveBuyInRequest(
           amount,
           playerInGame,
           transactionEntityManager
         );
+        playerStatus = updatedPlayerInGame.status;
       } else {
         await this.addBuyInToNextHand(
           amount,
@@ -175,6 +174,15 @@ export class BuyIn {
         playerStatus = PlayerStatus.WAIT_FOR_BUYIN_APPROVAL;
         approved = false;
       }
+    }
+    if (approved) {
+      await ClubRepository.updateCreditAndTracker(
+        this.player.uuid,
+        this.game.clubCode,
+        -amount,
+        CreditUpdateType.BUYIN,
+        this.game.gameCode
+      );
     }
     return [playerStatus, approved];
   }
@@ -296,9 +304,6 @@ export class BuyIn {
             playerInGame,
             transactionEntityManager
           );
-          if (this.player.bot) {
-            approved = true;
-          }
           await playerGameTrackerRepository.update(
             {
               game: {id: this.game.id},
@@ -417,7 +422,7 @@ export class BuyIn {
     Array<pendingApprovalsForClubData>
   > {
     let query = `
-    select
+    SELECT
       nhu.id as "requestId",
       pg.game_code as "gameCode", 
       pg.club_id as "clubId",
@@ -426,16 +431,16 @@ export class BuyIn {
       pg.game_type  as "gameType",
       pg.small_blind as "smallBlind",
       pg.big_blind  as "bigBlind",
-      nhu.player_id as "playerId", 
+      nhu.player_id as "playerId",
+      nhu.player_uuid as "playerUuid",
       nhu.player_name as "name",
       nhu.player_uuid as "playerUuid",
       nhu.buyin_amount as "amount", 
       nhu.new_update as "update" 
-      from next_hand_updates nhu
-   join poker_game pg 
-    on pg.id = nhu.game_id 
-   and pg.ended_at is null
-      where pg.host_id = ? AND nhu.new_update in (?, ?)`;
+    FROM next_hand_updates nhu
+    JOIN poker_game pg 
+      ON pg.id = nhu.game_id AND pg.ended_at is null
+    WHERE pg.host_id = ? AND nhu.new_update in (?, ?)`;
     query = fixQuery(query);
 
     const resp1 = await getGameConnection().query(query, [
@@ -446,13 +451,11 @@ export class BuyIn {
 
     const result = new Array<pendingApprovalsForClubData>();
     for await (const data of resp1) {
-      const clubId = data.clubId;
-      let outstandingBalance = 0;
-      if (clubId) {
-        outstandingBalance = await this.calcOutstandingBalance(
-          clubId,
-          data.playerId
-        );
+      const clubCode = data.clubCode;
+      const playerUuid = data.playerUuid;
+      let availableCredit = 0;
+      if (clubCode) {
+        availableCredit = await this.calcAvailableCredit(clubCode, playerUuid);
       }
 
       const player = await Cache.getPlayerById(data.playerId);
@@ -471,7 +474,7 @@ export class BuyIn {
           data.update === NextHandUpdate.WAIT_BUYIN_APPROVAL
             ? ApprovalType[ApprovalType.BUYIN_REQUEST]
             : ApprovalType[ApprovalType.RELOAD_REQUEST],
-        outstandingBalance: outstandingBalance,
+        availableCredit: availableCredit,
       });
     }
 
@@ -501,11 +504,11 @@ export class BuyIn {
     const clubCodes = clubResp.map(row => `'${row.clubCode}'`).join(',');
 
     let query = `
-    select
-    nhu.id as "requestId",
-	  pg.club_name as "clubName",
-    pg.club_id as "clubId",
-	  pg.club_code as "clubCode",
+    SELECT
+      nhu.id as "requestId",
+      pg.club_name as "clubName",
+      pg.club_id as "clubId",
+      pg.club_code as "clubCode",
       pg.game_code as "gameCode", 
       pg.id as "gameId",
       pg.game_type  as "gameType",
@@ -516,11 +519,10 @@ export class BuyIn {
       nhu.player_id as "playerId", 
       nhu.buyin_amount as "amount", 
       nhu.new_update as "update" 
-   from next_hand_updates nhu
-	 join
-	 poker_game pg on pg.id = nhu.game_id 
-       and pg.ended_at  is null
-      where nhu.new_update in (?, ?) and pg.club_code in (${clubCodes})`;
+    FROM next_hand_updates nhu
+    JOIN poker_game pg 
+    ON pg.id = nhu.game_id AND pg.ended_at is null
+    WHERE nhu.new_update in (?, ?) AND pg.club_code in (${clubCodes})`;
     query = fixQuery(query);
 
     const resp1 = await getGameConnection().query(query, [
@@ -530,10 +532,11 @@ export class BuyIn {
 
     const result = new Array<pendingApprovalsForClubData>();
     for await (const data of resp1) {
-      const clubId = data.clubId;
-      const outstandingBalance = await this.calcOutstandingBalance(
-        clubId,
-        data.playerId
+      const clubCode = data.clubCode;
+      const playerUuid = data.playerUuid;
+      const availableCredit = await this.calcAvailableCredit(
+        clubCode,
+        playerUuid
       );
 
       result.push({
@@ -550,7 +553,7 @@ export class BuyIn {
           data.update === NextHandUpdate.WAIT_BUYIN_APPROVAL
             ? ApprovalType[ApprovalType.BUYIN_REQUEST]
             : ApprovalType[ApprovalType.RELOAD_REQUEST],
-        outstandingBalance: outstandingBalance,
+        availableCredit: availableCredit,
       });
     }
 
@@ -587,10 +590,11 @@ export class BuyIn {
     const result = new Array<pendingApprovalsForClubData>();
     for await (const data of resp1) {
       const clubId = data.clubId;
-      const outstandingBalance = await this.calcOutstandingBalance(
-        clubId,
-        data.playerId
-      );
+      // const availableCredit = await this.calcOutstandingBalance(
+      //   clubId,
+      //   data.playerId
+      // );
+      const availableCredit = 0;
 
       result.push({
         requestId: data.requestId,
@@ -606,7 +610,7 @@ export class BuyIn {
           data.update === NextHandUpdate.WAIT_BUYIN_APPROVAL
             ? ApprovalType[ApprovalType.BUYIN_REQUEST]
             : ApprovalType[ApprovalType.RELOAD_REQUEST],
-        outstandingBalance: outstandingBalance,
+        availableCredit: availableCredit,
       });
     }
     return result;
@@ -717,37 +721,21 @@ export class BuyIn {
     return true;
   }
 
-  private async calcOutstandingBalance(clubId: number, playerId: number) {
-    const clubMemberRepository = getUserRepository(ClubMember);
-    const clubMembers = await clubMemberRepository
-      .createQueryBuilder()
-      .where({
-        club: {id: clubId},
-        player: {id: playerId},
-      })
-      .addSelect('balance', 'balance')
-      .execute();
+  private async calcAvailableCredit(clubCode: string, playerUuid: string) {
+    const player: Player = await Cache.getPlayer(playerUuid);
+    const club: Club = await Cache.getClub(clubCode);
 
-    const clubMember = clubMembers[0];
+    const clubMember = await Cache.getClubMember(player.uuid, clubCode, true);
     if (!clubMember) {
-      logger.error(`Player ${playerId} is not in the club: ${clubId}`);
-      throw new Error(`Player ${playerId} is not in the club`);
+      logger.error(`Player ${playerUuid} is not in the club: ${clubCode}`);
+      throw new Error(`Player ${playerUuid} is not in the club`);
     }
 
-    const query =
-      'SELECT SUM(buy_in) current_buyin FROM player_game_tracker pgt, poker_game pg WHERE pgt.pgt_player_id = ' +
-      playerId +
-      ' AND pgt.pgt_game_id = pg.id AND pg.game_status <>' +
-      GameStatus.ENDED;
-    const resp = await getGameConnection().query(query);
+    const preGameCredit = clubMember.availableCredit;
+    const profit = 0; // TODO
+    let availableCredit = preGameCredit + profit;
 
-    const currentBuyin = resp[0]['current_buyin'];
-
-    let outstandingBalance = clubMember.balance;
-    if (currentBuyin) {
-      outstandingBalance += currentBuyin;
-    }
-    return outstandingBalance;
+    return availableCredit;
   }
 
   private async updateNextHandrecord(
