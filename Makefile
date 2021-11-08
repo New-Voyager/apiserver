@@ -50,6 +50,9 @@ else
 	BUILD_NO := $(shell cat build_number.txt)
 endif
 
+INT_TEST_TIMEOUT := 300
+UNIT_TEST_TIMEOUT := 300
+
 .PHONY: build
 build: install_deps
 	npm run compile
@@ -69,7 +72,7 @@ tests: run-redis run-nats run-pg
 
 .PHONY: unit-tests
 unit-tests:
-	npm run unit-tests
+	timeout $(UNIT_TEST_TIMEOUT) npm run unit-tests
 
 .PHONY: tests-local
 tests-local: export NATS_URL=http://localhost:4222
@@ -93,7 +96,7 @@ int-tests-ci: export NATS_URL=nats://nats:4222
 int-tests-ci: export POSTGRES_HOST=mydb
 int-tests-ci: login create-network run-all
 	sleep 10
-	npm run int-test
+	timeout $(INT_TEST_TIMEOUT) npm run int-test
 
 .PHONY: setup-hook
 setup-hook:

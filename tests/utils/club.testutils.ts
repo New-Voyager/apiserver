@@ -78,7 +78,7 @@ export const queryClubMembers = gql`
       name
       joinedDate
       status
-      lastGamePlayedDate
+      lastPlayedDate
       imageId
       isOwner
       isManager

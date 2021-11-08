@@ -240,7 +240,7 @@ class ClubRepositoryImpl {
     clubMember.isOwner = true;
     clubMember.joinedDate = new Date();
     clubMember.status = ClubMemberStatus.ACTIVE;
-    clubMember.lastGamePlayedDate = new Date();
+    clubMember.lastPlayedDate = new Date();
 
     //logger.info('****** STARTING TRANSACTION TO SAVE club and club member');
     await getUserManager().transaction(async transactionEntityManager => {
@@ -369,7 +369,7 @@ class ClubRepositoryImpl {
     clubMember.player = await Cache.getPlayer(playerId);
     clubMember.joinedDate = new Date();
     clubMember.status = ClubMemberStatus.PENDING;
-    clubMember.lastGamePlayedDate = new Date();
+    clubMember.lastPlayedDate = new Date();
 
     const clubMemberStatRepository = getUserRepository(ClubMemberStat);
     let clubMemberStat = await clubMemberStatRepository.findOne({
@@ -685,7 +685,7 @@ class ClubRepositoryImpl {
         if (filter.inactive) {
           const inactiveDate = new Date();
           inactiveDate.setMonth(inactiveDate.getMonth() - 3);
-          where.lastGamePlayedDate = LessThan(inactiveDate);
+          where.lastPlayedDate = LessThan(inactiveDate);
         }
       }
     }
@@ -1051,7 +1051,7 @@ class ClubRepositoryImpl {
     const res: Array<any> = await creditTrackingRepo.find({
       where: {
         clubId: club.id,
-        playerUuid: playerUuid,
+        playerId: player.id,
       },
       order: {
         id: 'DESC',
@@ -1129,7 +1129,7 @@ class ClubRepositoryImpl {
     }
 
     await this.setCreditAndTracker(
-      playerUuid,
+      player,
       clubCode,
       amount,
       reqPlayerId,
@@ -1140,16 +1140,16 @@ class ClubRepositoryImpl {
   }
 
   public async setCreditAndTracker(
-    playerUuid: string,
+    player: Player,
     clubCode: string,
     newCredit: number,
     adminUuid: string,
     notes: string
   ) {
-    await this.setCredit(adminUuid, playerUuid, clubCode, newCredit);
+    await this.setCredit(adminUuid, player.uuid, clubCode, newCredit);
     const club = await Cache.getClub(clubCode);
     await this.addCreditTracker(
-      playerUuid,
+      player.id,
       club.id,
       0,
       newCredit,
@@ -1201,20 +1201,20 @@ class ClubRepositoryImpl {
   }
 
   public async updateCreditAndTracker(
-    playerUuid: string,
+    player: Player,
     clubCode: string,
     amount: number,
     updateType: CreditUpdateType,
     gameCode: string
   ): Promise<number> {
     const newCredit = await ClubRepository.updateCredit(
-      playerUuid,
+      player.uuid,
       clubCode,
       amount
     );
     const club = await Cache.getClub(clubCode);
     await this.addCreditTracker(
-      playerUuid,
+      player.id,
       club.id,
       amount,
       newCredit,
@@ -1292,7 +1292,7 @@ class ClubRepositoryImpl {
   }
 
   public async addCreditTracker(
-    playerUuid: string,
+    playerId: number,
     clubId: number,
     amount: number,
     newCredit: number,
@@ -1303,7 +1303,7 @@ class ClubRepositoryImpl {
   ) {
     const ct: any = new CreditTracking();
     ct.clubId = clubId;
-    ct.playerUuid = playerUuid;
+    ct.playerId = playerId;
     ct.amount = amount;
     ct.updatedCredits = newCredit;
     ct.updateType = updateType;

@@ -46,7 +46,7 @@ export async function getClubMembers(playerId: string, args: any) {
     memberAny.memberId = member.id;
     memberAny.name = member.player.name;
     memberAny.playerId = member.player.uuid;
-    memberAny.lastPlayedDate = member.lastGamePlayedDate;
+    memberAny.lastPlayedDate = member.lastPlayedDate;
     memberAny.contactInfo = member.contactInfo;
     memberAny.status = ClubMemberStatus[member.status];
     const stat = clubMemberStat[member.player.id];

@@ -177,7 +177,7 @@ export class BuyIn {
     }
     if (approved) {
       await ClubRepository.updateCreditAndTracker(
-        this.player.uuid,
+        this.player,
         this.game.clubCode,
         -amount,
         CreditUpdateType.BUYIN,
