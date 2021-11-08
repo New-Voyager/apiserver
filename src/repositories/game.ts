@@ -855,7 +855,7 @@ class GameRepositoryImpl {
               id: clubMember.id,
             },
             {
-              lastGamePlayedDate: new Date(),
+              lastPlayedDate: new Date(),
             }
           );
         }

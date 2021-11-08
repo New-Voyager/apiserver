@@ -106,7 +106,7 @@ export class ClubMember {
     type: 'timestamptz',
     nullable: true,
   })
-  public lastGamePlayedDate!: Date;
+  public lastPlayedDate!: Date;
 
   @DbAwareColumn({
     name: 'join_date',
