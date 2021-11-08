@@ -127,6 +127,7 @@ type ClubInfo {
   liveGameCount: Int
   showHighRankStats: Boolean
   trackMemberCredit: Boolean
+  availableCredit: Int
 }
 
 type SearchClubResult {
