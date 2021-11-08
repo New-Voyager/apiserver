@@ -215,7 +215,7 @@ export class ClubMemberStat {
 }
 
 @Entity({name: 'credit_tracking'})
-@Index(['clubId', 'playerUuid'])
+@Index(['clubId', 'playerId'])
 export class CreditTracking {
   @PrimaryGeneratedColumn()
   public id!: number;
@@ -223,8 +223,8 @@ export class CreditTracking {
   @Column({name: 'club_id', type: 'int'})
   public clubId!: number;
 
-  @Column({name: 'player_uuid'})
-  public playerUuid!: string;
+  @Column({name: 'player_id', type: 'int'})
+  public playerId!: number;
 
   @Column({name: 'update_type'})
   public updateType!: CreditUpdateType;
