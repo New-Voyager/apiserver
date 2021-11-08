@@ -123,6 +123,7 @@ type CreditHistory {
   adminUuid: String
   adminName: String
   notes: String
+  updateDate: DateTime
 }
 
 type Query {

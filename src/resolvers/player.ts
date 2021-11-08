@@ -364,6 +364,7 @@ export async function getClubPlayerInfo(playerId: string, clubCode: string) {
     status: ClubMemberStatus[clubMember.status],
     clubCode: clubCode,
     showHighRankStats: clubMember.club.showHighRankStats,
+    trackMemberCredit: clubMember.club.trackMemberCredit,
   };
 }
 
