@@ -226,10 +226,10 @@ export async function startGame(
         );
       }
 
-      if (!(clubMember.isManager || clubMember.isOwner)) {
-        // this player cannot start this game
+      if (playerUuid !== game.hostUuid) {
+        // only host can start the game
         logger.error(
-          `Player: ${playerUuid} is not manager or owner. The player is not authorized to start the game ${gameCode} in club ${game.clubName}`
+          `Could not start game. Request player is not the game host. Player: ${playerUuid}, game ${gameCode}`
         );
         throw new UnauthorizedError();
       }
