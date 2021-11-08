@@ -126,6 +126,7 @@ type ClubInfo {
   hostUnreadMessageCount: Int
   liveGameCount: Int
   showHighRankStats: Boolean
+  trackMemberCredit: Boolean
 }
 
 type SearchClubResult {

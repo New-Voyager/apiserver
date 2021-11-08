@@ -313,7 +313,7 @@ describe.skip('Game APIs', () => {
     expect(data4).toBe('PLAYING');
   });
 
-  test('gametest: Buyin for a game', async () => {
+  test.skip('gametest: Buyin for a game', async () => {
     await createGameServer(gameServer1);
     const [owner, club, players] = await createClubWithMembers(
       {
@@ -350,8 +350,6 @@ describe.skip('Game APIs', () => {
 
     // setting autoBuyinApproval false and creditLimit
     const resp1 = await updateClubMember(owner, players[0], club, {
-      balance: 10,
-      creditLimit: 200,
       notes: 'Added credit limit',
       status: ClubMemberStatus['ACTIVE'],
       isManager: false,
@@ -368,7 +366,7 @@ describe.skip('Game APIs', () => {
     expect(resp3.approved).toBe(false);
   });
 
-  test('gametest: Reload for a game', async () => {
+  test.skip('gametest: Reload for a game', async () => {
     await createGameServer(gameServer1);
     const [owner, club, players] = await createClubWithMembers(
       {
@@ -405,8 +403,6 @@ describe.skip('Game APIs', () => {
 
     // setting autoBuyinApproval false and creditLimit
     const resp1 = await updateClubMember(owner, players[0], club, {
-      balance: 10,
-      creditLimit: 200,
       notes: 'Added credit limit',
       status: ClubMemberStatus['ACTIVE'],
       isManager: false,
@@ -423,7 +419,7 @@ describe.skip('Game APIs', () => {
     expect(resp3.approved).toBe(false);
   });
 
-  test('gametest: Approve Buyin for a game', async () => {
+  test.skip('gametest: Approve Buyin for a game', async () => {
     await createGameServer(gameServer1);
     const [owner, club, players] = await createClubWithMembers(
       {
@@ -456,8 +452,6 @@ describe.skip('Game APIs', () => {
 
     // setting autoBuyinApproval false and creditLimit
     const resp1 = await updateClubMember(owner, players[0], club, {
-      balance: 0,
-      creditLimit: 0,
       notes: 'Added credit limit',
       status: ClubMemberStatus['ACTIVE'],
       isManager: false,
@@ -992,7 +986,7 @@ describe.skip('Game APIs', () => {
     expect(waitlist3[0].status).toBe('WAITLIST_SEATING');
   });
 
-  test('gametest: pending approvals for a club and game', async () => {
+  test.skip('gametest: pending approvals for a club and game', async () => {
     await createGameServer(gameServer1);
     const [owner, club, players] = await createClubWithMembers(
       {
@@ -1029,8 +1023,6 @@ describe.skip('Game APIs', () => {
 
     // setting autoBuyinApproval false and creditLimit
     const resp1 = await updateClubMember(owner, players[0], club, {
-      balance: 0,
-      creditLimit: 0,
       notes: 'Added credit limit',
       status: ClubMemberStatus['ACTIVE'],
       isManager: false,
@@ -1039,8 +1031,6 @@ describe.skip('Game APIs', () => {
     expect(resp1).toBe(ClubMemberStatus['ACTIVE']);
 
     const resp2 = await updateClubMember(owner, players[1], club, {
-      balance: 0,
-      creditLimit: 0,
       notes: 'Added credit limit',
       status: ClubMemberStatus['ACTIVE'],
       isManager: false,

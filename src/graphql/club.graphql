@@ -45,17 +45,23 @@ input ClubMemberUpdateInput {
 
 type ClubMember {
   name: String!
+  memberId: Int!
+  playerId: String!
   joinedDate: DateTime!
   status: ClubMemberStatus!
-  lastGamePlayedDate: String
+  lastPlayedDate: String
   imageId: String
   isOwner: Boolean
   isManager: Boolean
-  playerId: String
-  availableCredit: Float
   totalBuyins: Int
   totalWinnings: Int
+  rakePaid: Float
   notes: String
+  contactInfo: String
+  referredBy: String
+  autoBuyinApproval: Boolean
+  totalGames: Int
+  availableCredit: Float
   updatedAt: DateTime
 }
 
@@ -117,6 +123,7 @@ type CreditHistory {
   adminUuid: String
   adminName: String
   notes: String
+  updateDate: DateTime
 }
 
 type Query {

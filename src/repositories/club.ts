@@ -1078,6 +1078,7 @@ class ClubRepositoryImpl {
         const admin: Player = await Cache.getPlayer(r.adminUuid);
         r.adminName = admin?.name;
       }
+      r.updateDate = r.createdAt.toISOString();
     }
 
     return res;
