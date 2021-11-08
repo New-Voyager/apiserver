@@ -1042,6 +1042,10 @@ class ClubRepositoryImpl {
       throw new Error('Invalid player');
     }
 
+    if (!club.trackMemberCredit) {
+      return [];
+    }
+
     const creditTrackingRepo =
       getUserRepository<CreditTracking>(CreditTracking);
     const res: Array<any> = await creditTrackingRepo.find({
@@ -1115,6 +1119,13 @@ class ClubRepositoryImpl {
         `Could not set credit. Player is not a club member. player: ${playerUuid}, club: ${clubCode}`
       );
       throw new Error('Invalid player');
+    }
+
+    if (!club.trackMemberCredit) {
+      logger.error(
+        `Could not set credit. Member credit tracking is not enabled. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+      );
+      throw new Error('Credit tracking not enabled');
     }
 
     await this.setCreditAndTracker(
