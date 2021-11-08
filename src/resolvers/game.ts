@@ -63,6 +63,25 @@ export async function configureGame(
   try {
     createGameTime = new Date().getTime();
     const club = await Cache.getClub(clubCode);
+    if (!club) {
+      logger.error(
+        `Could not configure game. Club does not exist. Club: ${clubCode}`
+      );
+      throw new Error('Unauthorized');
+    }
+    const clubMember = await Cache.getClubMember(playerId, clubCode);
+    if (!clubMember) {
+      logger.error(
+        `Could not configure game. Player is not a member. Player: ${playerId}, club: ${clubCode}`
+      );
+      throw new Error('Unauthorized');
+    }
+    if (!clubMember.isOwner && !clubMember.isManager) {
+      logger.error(
+        `Could not configure game. Player is not an owner or a manager. Player: ${playerId}, club: ${clubCode}`
+      );
+      throw new Error('Unauthorized');
+    }
     const player = await Cache.getPlayer(playerId, true);
     const gameInfo = await GameRepository.createPrivateGame(club, player, game);
     const cachedGame = await Cache.getGame(gameInfo.gameCode, true);

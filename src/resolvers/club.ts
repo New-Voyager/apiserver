@@ -194,9 +194,10 @@ export async function updateClub(
     }
     if (playerId !== owner.uuid) {
       const a = JSON.stringify(club.owner);
-      throw new Error(
+      logger.error(
         `Unauthorized. ${playerId} is not the owner of the club ${clubCode}, ${a}`
       );
+      throw new Error('Unauthorized');
     }
     // const input = club as ClubUpdateInput;
     return await ClubRepository.updateClub(clubCode, clubUpdateInput);
