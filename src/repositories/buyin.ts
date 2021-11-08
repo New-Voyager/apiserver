@@ -120,7 +120,6 @@ export class BuyIn {
     const club = await Cache.getClub(this.game.clubCode);
     if (
       clubMember.isOwner ||
-      clubMember.isManager ||
       clubMember.autoBuyinApproval ||
       !gameSettings.buyInApproval ||
       this.player.bot ||
