@@ -157,11 +157,12 @@ export class BuyIn {
       }
       if (isWithinAutoApprovalLimit) {
         approved = true;
-        await this.approveBuyInRequest(
+        updatedPlayerInGame = await this.approveBuyInRequest(
           amount,
           playerInGame,
           transactionEntityManager
         );
+        playerStatus = updatedPlayerInGame.status;
       } else {
         await this.addBuyInToNextHand(
           amount,
