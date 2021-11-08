@@ -30,6 +30,7 @@ input ClubUpdateInput {
   name: String
   description: String
   showHighRankStats: Boolean
+  trackMemberCredit: Boolean
   picUrl: String
 }
 

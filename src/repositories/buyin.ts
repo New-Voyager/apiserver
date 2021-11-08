@@ -117,7 +117,7 @@ export class BuyIn {
       isHost = true;
     }
 
-    const isMemberCreditTrackingEnabled = false;
+    const club = await Cache.getClub(this.game.clubCode);
     if (
       clubMember.isOwner ||
       clubMember.isManager ||
@@ -139,7 +139,7 @@ export class BuyIn {
       playerStatus = updatedPlayerInGame.status;
     } else {
       let isWithinAutoApprovalLimit = false;
-      if (isMemberCreditTrackingEnabled) {
+      if (club.trackMemberCredit) {
         // Club member auto approval credit.
         const profit = playerInGame.stack - playerInGame.buyIn;
         const credit = clubMember.availableCredit + profit;

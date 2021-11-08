@@ -3,7 +3,7 @@ import {createGameServer} from '@src/internal/gameserver';
 import {getLogger} from '../src/utils/log';
 import {resetDB} from '@src/dev/resolvers/reset';
 import {createPlayer, getPlayerById} from '@src/resolvers/player';
-import {createClub, updateClubMember, joinClub, setCredit} from '@src/resolvers/club';
+import {createClub, updateClub, updateClubMember, joinClub, setCredit} from '../src/resolvers/club';
 import {
   configureGame,
   startGame,
@@ -185,7 +185,7 @@ describe('BuyIn APIs', () => {
     await endGame(owner, game.gameCode);
   });
 
-  test.skip('club_member_buyin_auto_approval_credit: auto-approve up to club member credit', async () => {
+  test('club_member_buyin_auto_approval_credit: auto-approve up to club member credit', async () => {
 
     // We need to implement and enable member credit tracking flag for this to work.
 
@@ -223,6 +223,10 @@ describe('BuyIn APIs', () => {
       clubInput,
       playersInput
     );
+
+    const res = await updateClub(owner, club, {trackMemberCredit: true});
+    expect(res).not.toBeNull();
+
     const player1 = playerUuids[0];
     const player2 = playerUuids[1];
     const player3 = playerUuids[2];
@@ -230,6 +234,12 @@ describe('BuyIn APIs', () => {
     await setCredit(owner, club, player1, 50, 'Club credit for player 1');
     await setCredit(owner, club, player2, 100, 'Club credit for player 2');
     await setCredit(owner, club, player3, 150, 'Club credit for player 3');
+
+    // Only the owner can set member credit limit.
+    const t = async () => {
+      await setCredit(player1, club, player3, 150, 'Club credit for player 3');
+    };
+    await expect(t).rejects.toThrowError();
 
     // start a game
     const gameInput = holdemGameInput;
@@ -240,12 +250,6 @@ describe('BuyIn APIs', () => {
     await joinGame(player1, game.gameCode, 1);
     await joinGame(player2, game.gameCode, 2);
     await joinGame(player3, game.gameCode, 3);
-
-    // Only the host can set buy-in limit.
-    const t = async () => {
-      await setBuyInLimit(player1, game.gameCode, player2, 0, 100);
-    };
-    await expect(t).rejects.toThrowError();
 
     // Player 1 - exceeds limit (not auto approved)
     const resp1 = await buyIn(player1, game.gameCode, 100);

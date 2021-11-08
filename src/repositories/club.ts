@@ -52,6 +52,7 @@ export interface ClubUpdateInput {
   name: string;
   description: string;
   showHighRankStats: boolean;
+  trackMemberCredit: boolean;
   picUrl: string;
 }
 
@@ -177,10 +178,15 @@ class ClubRepositoryImpl {
     if (typeof input.showHighRankStats === 'boolean') {
       club.showHighRankStats = input.showHighRankStats;
     }
+    if (typeof input.trackMemberCredit === 'boolean') {
+      club.trackMemberCredit = input.trackMemberCredit;
+    }
     if (typeof input.picUrl === 'string') {
       club.picUrl = input.picUrl;
     }
     await clubRepository.save(club);
+    await Cache.getClub(clubCode, true);
+
     return true;
   }
 

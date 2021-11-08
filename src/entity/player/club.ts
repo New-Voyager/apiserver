@@ -63,6 +63,9 @@ export class Club {
 
   @Column({name: 'show_highrank_stats', default: true})
   public showHighRankStats!: boolean;
+
+  @Column({name: 'track_member_credit', default: false})
+  public trackMemberCredit!: boolean;
 }
 
 @Entity({name: 'club_member'})
