@@ -657,8 +657,7 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
       player.id
     );
     ret.gameChatChannel = Nats.getChatChannel(game.gameCode);
-    ret.pingChannel = Nats.getPingChannel(game.gameCode, player.id);
-    ret.pongChannel = Nats.getPongChannel(game.gameCode);
+    ret.clientAliveChannel = Nats.getClientAliveChannel(game.gameCode);
 
     // player's role
     ret.isManager = isManager;
