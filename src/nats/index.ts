@@ -894,12 +894,8 @@ class NatsClass {
     return `game.${gameCode}.chat`;
   }
 
-  public getPingChannel(gameCode: string): string {
-    return `ping.${gameCode}`;
-  }
-
-  public getPongChannel(gameCode: string): string {
-    return `pong.${gameCode}`;
+  public getClientAliveChannel(gameCode: string): string {
+    return `clientalive.${gameCode}`;
   }
 }
 

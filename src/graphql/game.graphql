@@ -241,8 +241,7 @@ type GameInfo {
   handToPlayerChannel: String
   handToPlayerTextChannel: String
   gameChatChannel: String
-  pingChannel: String
-  pongChannel: String
+  clientAliveChannel: String
 
   # current player status
   playerGameStatus: PlayerGameStatus
