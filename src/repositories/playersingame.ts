@@ -452,6 +452,7 @@ class PlayersInGameRepositoryImpl {
     if (gameSettings) {
       timeout = gameSettings.buyInTimeout;
     }
+    // timeout = 10;
     const buyinTimeExp = new Date();
     buyinTimeExp.setSeconds(buyinTimeExp.getSeconds() + timeout);
     const exp = utcTime(buyinTimeExp);

@@ -35,6 +35,7 @@ import {
 import {Nats} from '@src/nats';
 import {PlayersInGameRepository} from './playersingame';
 import {ClubRepository} from './club';
+import {v4 as uuidv4} from 'uuid';
 
 const logger = getLogger('repositories::buyin');
 
@@ -341,7 +342,17 @@ export class BuyIn {
             );
             // notify game host that the player is waiting for buyin
             const host = await Cache.getPlayerById(this.game.hostId, true);
+            const messageId = uuidv4();
             await Firebase.notifyBuyInRequest(
+              messageId,
+              this.game,
+              this.player,
+              host,
+              amount
+            );
+
+            await Nats.notifyBuyInRequest(
+              messageId,
               this.game,
               this.player,
               host,

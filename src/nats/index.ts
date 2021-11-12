@@ -14,7 +14,6 @@ import {Cache} from '@src/cache';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import * as Constants from '../const';
 import {SeatMove, SeatUpdate} from '@src/types';
-import {SageMakerFeatureStoreRuntime} from 'aws-sdk';
 import {getAppSettings} from '@src/firebase';
 
 const logger = getLogger('nats');
@@ -484,6 +483,26 @@ class NatsClass {
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
     this.sendMessage(subject, messageStr);
+  }
+
+  public async notifyBuyInRequest(
+    messageId: string,
+    game: PokerGame,
+    requestingPlayer: Player,
+    host: Player,
+    amount: number
+  ) {
+    const data: any = {
+      requestId: messageId,
+      amount: amount.toString(),
+      gameCode: game.gameCode,
+      playerName: requestingPlayer.name,
+      playerUuid: requestingPlayer.uuid,
+      type: 'BUYIN_REQUEST',
+    };
+    const channel = this.getPlayerChannel(host);
+    const messageStr = JSON.stringify(data);
+    this.sendMessage(channel, messageStr);
   }
 
   public async notifyPlayerSeatReserve(
