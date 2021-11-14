@@ -378,6 +378,9 @@ class HistoryRepositoryImpl {
       where: {
         playerId: player.id,
       },
+      order: {
+        id: 'DESC',
+      },
       take: 20,
     });
     if (playedGames.length === 0) {
