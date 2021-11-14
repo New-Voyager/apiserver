@@ -380,15 +380,23 @@ class HistoryRepositoryImpl {
       },
       take: 20,
     });
-
-    const pastGames = new Array<any>();
+    if (playedGames.length === 0) {
+      return [];
+    }
 
     const gameRepo = getHistoryRepository(GameHistory);
-    for (const row of playedGames) {
-      const game = await gameRepo.findOne({
-        gameId: row.gameId,
+    const pastGames = new Array<any>();
+    const gameIds: Array<number> = playedGames.map(row => row.gameId);
+    const res: Array<GameHistory> = await gameRepo.find({
+      where: {
+        gameId: In(gameIds),
         endedAt: Not(IsNull()),
-      });
+      },
+    });
+    const gamesById = _.keyBy(res, 'gameId');
+
+    for (const row of playedGames) {
+      const game = gamesById[row.gameId];
       if (game) {
         let balance: number | null = null;
         if (row.buyIn && row.stack) {
@@ -436,7 +444,9 @@ class HistoryRepositoryImpl {
         pastGames.push(pastGame);
       }
     }
-    return pastGames;
+
+    const orderedPastGames = _.orderBy(pastGames, ['endedAt'], ['desc']);
+    return orderedPastGames;
   }
 
   public async getHistoryGame(
