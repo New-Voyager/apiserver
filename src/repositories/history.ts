@@ -14,7 +14,7 @@ import {
 import {HighHand} from '@src/entity/game/reward';
 import {Club, ClubMember} from '@src/entity/player/club';
 import {ClubRepository} from './club';
-import {In} from 'typeorm';
+import {In, IsNull, Not} from 'typeorm';
 import _ from 'lodash';
 import {Player} from '@src/entity/player/player';
 import {GameEndReason, GameStatus} from '@src/entity/types';
@@ -385,7 +385,10 @@ class HistoryRepositoryImpl {
 
     const gameRepo = getHistoryRepository(GameHistory);
     for (const row of playedGames) {
-      const game = await gameRepo.findOne({gameId: row.gameId});
+      const game = await gameRepo.findOne({
+        gameId: row.gameId,
+        endedAt: Not(IsNull()),
+      });
       if (game) {
         let balance: number | null = null;
         if (row.buyIn && row.stack) {
