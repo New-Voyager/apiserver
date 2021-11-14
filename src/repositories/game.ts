@@ -27,7 +27,7 @@ import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery, getDistanceInMeters} from '@src/utils';
 import {WaitListMgmt} from './waitlist';
 import {Reward} from '@src/entity/player/reward';
-import {DEALER_CHOICE_TIMEOUT} from './types';
+import {ClubUpdateType, DEALER_CHOICE_TIMEOUT} from './types';
 import {Cache} from '@src/cache/index';
 import {StatsRepository} from './stats';
 import {utcTime} from '@src/utils';
@@ -61,6 +61,7 @@ import {NextHandUpdatesRepository} from './nexthand_update';
 import {processPendingUpdates} from './pendingupdates';
 import {AppCoinRepository} from './appcoin';
 import {GameNotFoundError} from '@src/errors';
+import {Firebase} from '@src/firebase';
 const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
@@ -1382,6 +1383,17 @@ class GameRepositoryImpl {
         TableStatus.WAITING_TO_BE_STARTED,
         forced
       );
+      if (game.clubCode) {
+        const messageId = uuidv4();
+        Nats.sendClubUpdate(
+          game.clubCode,
+          game.clubName,
+          ClubUpdateType[ClubUpdateType.GAME_ENDED],
+          messageId
+        );
+        const club = await Cache.getClub(game.clubCode);
+        Firebase.gameEnded(club, game.gameCode, messageId);
+      }
       return status;
     } else {
       if (status === GameStatus.ACTIVE) {
