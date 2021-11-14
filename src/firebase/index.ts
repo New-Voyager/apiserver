@@ -342,6 +342,24 @@ class FirebaseClass {
     });
   }
 
+  public gameEnded(club: Club, gameCode: string, messageId: string) {
+    const msgType = 'GAME_ENDED';
+    const message: any = {
+      type: msgType,
+      clubCode: club.clubCode,
+      clubName: club.name,
+      gameCode: gameCode,
+      requestId: messageId,
+    };
+    this.sendClubMsg(club, message).catch(err => {
+      logger.error(
+        `Failed to send club firebase message. Club: ${
+          club.clubCode
+        }, type: ${msgType}, err: ${errToStr(err)}`
+      );
+    });
+  }
+
   public async sendClubMsg(club: Club, message: any) {
     if (!this.firebaseInitialized) {
       return;
