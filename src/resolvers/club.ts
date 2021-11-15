@@ -35,6 +35,16 @@ export async function getClubMembers(playerId: string, args: any) {
     throw new Error('Unauthorized');
   }
 
+  const club = await Cache.getClub(args.clubCode);
+  if (args.filter?.unsettled) {
+    if (!club.trackMemberCredit) {
+      logger.warn(
+        `Ignoring filter.unsettled for club not tracking member credit. Club: ${args.clubCode}`
+      );
+      delete args.filter.unsettled;
+    }
+  }
+
   const clubMembers = await ClubRepository.getMembers(
     args.clubCode,
     args.filter
@@ -56,6 +66,9 @@ export async function getClubMembers(playerId: string, args: any) {
       memberAny.totalWinnings = stat.totalWinnings;
       memberAny.totalHands = stat.totalHands;
       memberAny.rakePaid = stat.rakePaid;
+    }
+    if (!club.trackMemberCredit) {
+      memberAny.availableCredit = 0;
     }
     members.push(memberAny);
   }
