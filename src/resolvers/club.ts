@@ -11,6 +11,7 @@ import * as _ from 'lodash';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
 import {AppCoinRepository} from '@src/repositories/appcoin';
+import moment from 'moment-timezone';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -476,6 +477,56 @@ export async function creditHistory(
   return ClubRepository.getCreditHistory(playerId, clubCode, playerUuid);
 }
 
+export async function clubMemberActivityGrouped(
+  playerId: string,
+  clubCode: string,
+  startDate: Date,
+  endDate: Date,
+  playerTimeZone: string
+) {
+  const errors = new Array<string>();
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  if (clubCode === '') {
+    errors.push('Invalid club');
+  }
+  if (!startDate) {
+    errors.push('Invalid startDate');
+  }
+  if (!endDate) {
+    errors.push('Invalid endDate');
+  }
+  if (playerTimeZone === '') {
+    errors.push('Invalid playerTimeZone');
+  }
+  if (errors.length > 0) {
+    logger.error(
+      'Invalid argument for clubMemberActivityGrouped: ' + errors.join(' ')
+    );
+    throw new Error('Invalid argument');
+  }
+
+  const startUtc: Date = toUtcDate(startDate.toString(), playerTimeZone);
+  const endUtc: Date = toUtcDate(endDate.toString(), playerTimeZone);
+  logger.info(
+    `clubMemberActivityGrouped start (UTC): ${startUtc.toISOString()}`
+  );
+  logger.info(`clubMemberActivityGrouped   end (UTC): ${endUtc.toISOString()}`);
+
+  return ClubRepository.clubMemberActivityGrouped(
+    playerId,
+    clubCode,
+    startUtc,
+    endUtc
+  );
+}
+
+function toUtcDate(timeStr: string, timeZoneStr: string): Date {
+  const d: Date = moment.tz(timeStr, timeZoneStr).utc().toDate();
+  return d;
+}
+
 export async function setCredit(
   playerId: string,
   clubCode: string,
@@ -539,6 +590,15 @@ const resolvers: any = {
 
     creditHistory: async (parent, args, ctx, info) => {
       return creditHistory(ctx.req.playerId, args.clubCode, args.playerUuid);
+    },
+    clubMemberActivityGrouped: async (parent, args, ctx, info) => {
+      return clubMemberActivityGrouped(
+        ctx.req.playerId,
+        args.clubCode,
+        args.startDate,
+        args.endDate,
+        args.playerTimeZone
+      );
     },
   },
   Mutation: {

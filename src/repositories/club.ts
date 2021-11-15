@@ -63,6 +63,7 @@ export interface ClubMemberUpdateInput {
   autoBuyinApproval?: boolean;
   referredBy?: string;
   contactInfo?: string;
+  tipsBack?: number;
 }
 
 class ClubRepositoryImpl {
@@ -141,6 +142,10 @@ class ClubRepositoryImpl {
 
     if (updateData.contactInfo) {
       clubMember.contactInfo = updateData.contactInfo.toString();
+    }
+
+    if (typeof updateData.tipsBack === 'number') {
+      clubMember.tipsBack = updateData.tipsBack;
     }
 
     // Save the data
@@ -1079,6 +1084,78 @@ class ClubRepositoryImpl {
         r.adminName = admin?.name;
       }
       r.updateDate = r.createdAt.toISOString();
+    }
+
+    return res;
+  }
+
+  public async clubMemberActivityGrouped(
+    playerId: string,
+    clubCode: string,
+    startDate: Date,
+    endDate: Date
+  ) {
+    const reqPlayer = await Cache.getPlayer(playerId);
+    if (!reqPlayer) {
+      logger.error(
+        `Could not get aggregated member activity. Request player does not exist. player: ${playerId}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const club = await Cache.getClub(clubCode);
+    if (!club) {
+      logger.error(
+        `Could not get aggregated member activity. Club does not exist. club: ${clubCode}`
+      );
+      throw new Error('Invalid club');
+    }
+
+    const owner: Player | undefined = await Promise.resolve(club.owner);
+    if (!owner) {
+      throw new Error('Unexpected. There is no owner for the club');
+    }
+
+    if (reqPlayer.uuid !== owner.uuid) {
+      logger.error(
+        `Aggregated member activity requested by unauthorized player. Request player: ${reqPlayer.uuid}, club: ${clubCode}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const repo = getUserRepository(CreditTracking);
+    const aggTips = await repo
+      .createQueryBuilder()
+      .select(['player_id AS "playerId"', 'SUM(tips) AS tips'])
+      .where('"createdAt" >= :startTime', {startTime: startDate})
+      .andWhere(`"createdAt" < (:endTime::timestamp + INTERVAL '1 day')`, {
+        endTime: endDate,
+      })
+      .andWhere('tips IS NOT NULL')
+      .groupBy('player_id')
+      .getRawMany();
+
+    const res: Array<any> = [];
+    for (const t of aggTips) {
+      const player: Player = await Cache.getPlayerById(t.playerId);
+      const clubMember: ClubMember | null = await Cache.getClubMember(
+        player.uuid,
+        clubCode
+      );
+      if (!clubMember) {
+        continue;
+      }
+      const activity = {
+        playerId: t.playerId,
+        playerUuid: player.uuid,
+        playerName: player.name,
+        credits: clubMember.availableCredit,
+        tips: t.tips,
+        tipsBack: clubMember.tipsBack,
+        tipsBackAmount: t.tips * clubMember.tipsBack * 0.01,
+        lastPlayedDate: clubMember.lastPlayedDate,
+      };
+      res.push(activity);
     }
 
     return res;

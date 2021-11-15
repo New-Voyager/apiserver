@@ -101,6 +101,9 @@ export class ClubMember {
   @Column({name: 'owner_notes', default: ''})
   public ownerNotes!: string;
 
+  @Column({name: 'tips_back', type: 'int', nullable: true, default: 0})
+  public tipsBack!: number;
+
   @DbAwareColumn({
     name: 'last_played_date',
     type: 'timestamptz',
@@ -255,6 +258,16 @@ export class CreditTracking {
     nullable: false,
   })
   public updatedCredits!: number;
+
+  @Column({
+    name: 'tips',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    default: 0,
+  })
+  public tips!: number;
 
   /**
    * DB insert time.
