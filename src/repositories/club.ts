@@ -1229,27 +1229,190 @@ class ClubRepositoryImpl {
       clubCode,
       amount,
       reqPlayerId,
-      notes
+      notes,
+      CreditUpdateType.CHANGE
     );
 
     return true;
   }
 
+  public async adminDeductCredit(
+    reqPlayerId: string,
+    clubCode: string,
+    playerUuid: string,
+    amount: number,
+    notes: string
+  ): Promise<boolean> {
+    const reqPlayer = await Cache.getPlayer(reqPlayerId);
+    if (!reqPlayer) {
+      logger.error(
+        `Could not set credit. Request player does not exist. player: ${reqPlayerId}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const club = await Cache.getClub(clubCode);
+    if (!club) {
+      logger.error(
+        `Could not set credit. Club does not exist. club: ${clubCode}`
+      );
+      throw new Error('Invalid club');
+    }
+
+    const owner: Player | undefined = await Promise.resolve(club.owner);
+    if (!owner) {
+      throw new Error('Unexpected. There is no owner for the club');
+    }
+
+    if (reqPlayer.uuid !== owner.uuid) {
+      logger.error(
+        `Set credit requested by unauthorized user. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const player = await Cache.getPlayer(playerUuid);
+    if (!player) {
+      logger.error(
+        `Could not set credit. Player does not exist. player: ${playerUuid}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+    if (!clubMember) {
+      logger.error(
+        `Could not set credit. Player is not a club member. player: ${playerUuid}, club: ${clubCode}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    if (!club.trackMemberCredit) {
+      logger.error(
+        `Could not set credit. Member credit tracking is not enabled. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+      );
+      throw new Error('Credit tracking not enabled');
+    }
+
+    await this.setCreditAndTracker(
+      player,
+      clubCode,
+      amount,
+      reqPlayerId,
+      notes,
+      CreditUpdateType.DEDUCT
+    );
+
+    return true;
+  }
+
+  public async adminAddCredit(
+    reqPlayerId: string,
+    clubCode: string,
+    playerUuid: string,
+    amount: number,
+    notes: string
+  ): Promise<boolean> {
+    const reqPlayer = await Cache.getPlayer(reqPlayerId);
+    if (!reqPlayer) {
+      logger.error(
+        `Could not set credit. Request player does not exist. player: ${reqPlayerId}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const club = await Cache.getClub(clubCode);
+    if (!club) {
+      logger.error(
+        `Could not set credit. Club does not exist. club: ${clubCode}`
+      );
+      throw new Error('Invalid club');
+    }
+
+    const owner: Player | undefined = await Promise.resolve(club.owner);
+    if (!owner) {
+      throw new Error('Unexpected. There is no owner for the club');
+    }
+
+    if (reqPlayer.uuid !== owner.uuid) {
+      logger.error(
+        `Set credit requested by unauthorized user. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const player = await Cache.getPlayer(playerUuid);
+    if (!player) {
+      logger.error(
+        `Could not set credit. Player does not exist. player: ${playerUuid}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+    if (!clubMember) {
+      logger.error(
+        `Could not set credit. Player is not a club member. player: ${playerUuid}, club: ${clubCode}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    if (!club.trackMemberCredit) {
+      logger.error(
+        `Could not set credit. Member credit tracking is not enabled. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+      );
+      throw new Error('Credit tracking not enabled');
+    }
+
+    await this.setCreditAndTracker(
+      player,
+      clubCode,
+      amount,
+      reqPlayerId,
+      notes,
+      CreditUpdateType.ADD
+    );
+
+    return true;
+  }
   public async setCreditAndTracker(
     player: Player,
     clubCode: string,
-    newCredit: number,
+    amount: number,
     adminUuid: string,
-    notes: string
+    notes: string,
+    creditType: CreditUpdateType
   ) {
-    await this.setCredit(adminUuid, player.uuid, clubCode, newCredit);
+    let newCredit = 0;
+    if (creditType === CreditUpdateType.CHANGE) {
+      await this.setCredit(adminUuid, player.uuid, clubCode, amount);
+      newCredit = amount;
+      amount = 0;
+    }
+    if (creditType === CreditUpdateType.ADD) {
+      newCredit = await this.addCredit(
+        adminUuid,
+        player.uuid,
+        clubCode,
+        amount
+      );
+    }
+    if (creditType === CreditUpdateType.DEDUCT) {
+      newCredit = await this.deductCredit(
+        adminUuid,
+        player.uuid,
+        clubCode,
+        amount
+      );
+    }
+
     const club = await Cache.getClub(clubCode);
     await this.addCreditTracker(
       player.id,
       club.id,
-      0,
+      amount,
       newCredit,
-      CreditUpdateType.CHANGE,
+      creditType,
       undefined,
       adminUuid,
       notes
@@ -1294,6 +1457,100 @@ class ClubRepositoryImpl {
     }
 
     await Cache.getClubMember(playerUuid, clubCode, true);
+  }
+
+  public async addCredit(
+    adminUuid: string,
+    playerUuid: string,
+    clubCode: string,
+    addCredit: number
+  ): Promise<number> {
+    if (addCredit < MIN_CREDIT || addCredit > MAX_CREDIT) {
+      logger.error(
+        `Could not set credit. Amount exceeds limit. Admin uuid: ${adminUuid}, club: ${clubCode}, newCredit: ${addCredit}`
+      );
+      throw new Error('Invalid amount');
+    }
+
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+    if (!clubMember) {
+      throw new Error(
+        `Could not find club member. Player: ${playerUuid}, club: ${clubCode}`
+      );
+    }
+    const updateResult = await getUserConnection()
+      .createQueryBuilder()
+      .update(ClubMember)
+      .set({
+        availableCredit: () => `available_credit + ${addCredit}`,
+      })
+      .where({
+        id: clubMember.id,
+      })
+      .execute();
+
+    if (updateResult.affected === 0) {
+      logger.error(
+        `Could not set club member credit. Club member does not exist. club: ${clubCode}, member ID: ${clubMember.id}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    const member = await Cache.getClubMember(playerUuid, clubCode, true);
+    if (!member) {
+      logger.error(
+        `Could not set club member credit. Club member does not exist. club: ${clubCode}, member ID: ${clubMember.id}`
+      );
+      throw new Error('Invalid player');
+    }
+    return member.availableCredit;
+  }
+
+  public async deductCredit(
+    adminUuid: string,
+    playerUuid: string,
+    clubCode: string,
+    deductCredit: number
+  ): Promise<number> {
+    if (deductCredit < MIN_CREDIT || deductCredit > MAX_CREDIT) {
+      logger.error(
+        `Could not set credit. Amount exceeds limit. Admin uuid: ${adminUuid}, club: ${clubCode}, newCredit: ${deductCredit}`
+      );
+      throw new Error('Invalid amount');
+    }
+
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+    if (!clubMember) {
+      throw new Error(
+        `Could not find club member. Player: ${playerUuid}, club: ${clubCode}`
+      );
+    }
+    const updateResult = await getUserConnection()
+      .createQueryBuilder()
+      .update(ClubMember)
+      .set({
+        availableCredit: () => `available_credit - ${deductCredit}`,
+      })
+      .where({
+        id: clubMember.id,
+      })
+      .execute();
+
+    if (updateResult.affected === 0) {
+      logger.error(
+        `Could not set club member credit. Club member does not exist. club: ${clubCode}, member ID: ${clubMember.id}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    const member = await Cache.getClubMember(playerUuid, clubCode, true);
+    if (!member) {
+      logger.error(
+        `Could not set club member credit. Club member does not exist. club: ${clubCode}, member ID: ${clubMember.id}`
+      );
+      throw new Error('Invalid player');
+    }
+    return member.availableCredit;
   }
 
   public async updateCreditAndTracker(
@@ -1404,7 +1661,11 @@ class ClubRepositoryImpl {
     ct.updatedCredits = newCredit;
     ct.updateType = updateType;
 
-    if (updateType === CreditUpdateType.CHANGE) {
+    if (
+      updateType === CreditUpdateType.CHANGE ||
+      updateType === CreditUpdateType.ADD ||
+      updateType === CreditUpdateType.DEDUCT
+    ) {
       if (!adminUuid) {
         throw new Error(
           `adminUuid is required for CreditUpdateType ${CreditUpdateType[updateType]}`

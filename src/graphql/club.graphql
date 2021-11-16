@@ -19,6 +19,8 @@ enum CreditUpdateType {
   CHANGE
   BUYIN
   GAME_RESULT
+  ADD
+  DEDUCT
 }
 
 input ClubCreateInput {
@@ -165,4 +167,6 @@ type Mutation {
   updateClubMember(clubCode: String!, playerUuid: String!, update: ClubMemberUpdateInput!): ClubMemberStatus
   sendClubFcmMessage(clubCode: String!, message: Json!): Boolean
   setCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String): Boolean!
+  addCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String): Boolean!
+  deductCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String): Boolean!
 }
