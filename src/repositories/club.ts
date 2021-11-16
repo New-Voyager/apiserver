@@ -63,6 +63,7 @@ export interface ClubMemberUpdateInput {
   autoBuyinApproval?: boolean;
   referredBy?: string;
   contactInfo?: string;
+  tipsBack?: number;
 }
 
 class ClubRepositoryImpl {
@@ -141,6 +142,10 @@ class ClubRepositoryImpl {
 
     if (updateData.contactInfo) {
       clubMember.contactInfo = updateData.contactInfo.toString();
+    }
+
+    if (typeof updateData.tipsBack === 'number') {
+      clubMember.tipsBack = updateData.tipsBack;
     }
 
     // Save the data
@@ -1079,6 +1084,83 @@ class ClubRepositoryImpl {
         r.adminName = admin?.name;
       }
       r.updateDate = r.createdAt.toISOString();
+    }
+
+    return res;
+  }
+
+  public async clubMemberActivityGrouped(
+    playerId: string,
+    clubCode: string,
+    startDate: Date,
+    endDate: Date
+  ) {
+    const reqPlayer = await Cache.getPlayer(playerId);
+    if (!reqPlayer) {
+      logger.error(
+        `Could not get aggregated member activity. Request player does not exist. player: ${playerId}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const club = await Cache.getClub(clubCode);
+    if (!club) {
+      logger.error(
+        `Could not get aggregated member activity. Club does not exist. club: ${clubCode}`
+      );
+      throw new Error('Invalid club');
+    }
+
+    const owner: Player | undefined = await Promise.resolve(club.owner);
+    if (!owner) {
+      throw new Error('Unexpected. There is no owner for the club');
+    }
+
+    if (reqPlayer.uuid !== owner.uuid) {
+      logger.error(
+        `Aggregated member activity requested by unauthorized player. Request player: ${reqPlayer.uuid}, club: ${clubCode}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const query = fixQuery(`
+        SELECT cm.player_id AS "playerId", cm.available_credit AS "availableCredit",
+            cm.tips_back AS "tipsBack", cm.last_played_date AS "lastPlayedDate",
+            p.uuid AS "playerUuid", p.name AS "playerName", aggtips.tips AS "tips"
+        FROM club_member cm
+        INNER JOIN player p ON cm.player_id = p.id
+        LEFT OUTER JOIN (
+            SELECT player_id, sum(tips) AS tips FROM credit_tracking ct
+            WHERE club_id = ?
+            AND "createdAt" >= ?
+            AND "createdAt" < (?::timestamp + INTERVAL '1 day')
+            AND tips IS NOT NULL
+            GROUP BY player_id
+        ) aggtips ON cm.player_id = aggtips.player_id
+        WHERE cm.club_id = ?;
+    `);
+    const dbResult = await getUserConnection().query(query, [
+      club.id,
+      startDate,
+      endDate,
+      club.id,
+    ]);
+
+    const res: Array<any> = [];
+    for (const row of dbResult) {
+      const activity = {...row};
+      if (activity.credits === null || activity.credits === undefined) {
+        activity.credits = 0;
+      }
+      if (activity.tips === null || activity.tips === undefined) {
+        activity.tips = 0;
+      }
+      if (activity.tipsBack === null || activity.tipsBack === undefined) {
+        activity.tipsBack = 0;
+      }
+      activity.tipsBackAmount = activity.tips * activity.tipsBack * 0.01;
+      activity.lastPlayedDate = activity.lastPlayedDate?.toISOString();
+      res.push(activity);
     }
 
     return res;

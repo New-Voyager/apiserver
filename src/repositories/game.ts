@@ -1251,10 +1251,11 @@ class GameRepositoryImpl {
             ct.gameCode = game.gameCode;
             ct.amount = amount;
             ct.updatedCredits = newCredit;
+            ct.tips = playerInGame.rakePaid;
             creditChanges.push(ct);
           } else {
             logger.error(
-              `Could not find club member in cache. club: ${game.clubCode}, player: ${playerUuid}`
+              `Could not find club member in cache while updating credit tracker. club: ${game.clubCode}, player: ${playerUuid}`
             );
           }
         }

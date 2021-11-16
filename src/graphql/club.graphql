@@ -41,6 +41,7 @@ input ClubMemberUpdateInput {
   autoBuyinApproval: Boolean
   referredBy: String
   contactInfo: String
+  tipsBack: Int
 }
 
 type ClubMember {
@@ -126,6 +127,17 @@ type CreditHistory {
   updateDate: DateTime
 }
 
+type ClubMemberActivityGrouped {
+  playerName: String!
+  playerId: Int!
+  playerUuid: String!
+  credits: Float!
+  tips: Float!
+  tipsBack: Float!
+  tipsBackAmount: Float!
+  lastPlayedDate: String
+}
+
 type Query {
   clubMembers(clubCode: String!, filter: MemberFilterInput): [ClubMember!]
   clubById(clubCode: String!): clubId!
@@ -137,6 +149,8 @@ type Query {
   clubLeaderBoard(clubCode: String!): [ClubMemberStat]
   clubCoins(clubCode: String!): Int!
   creditHistory(clubCode: String!, playerUuid: String!): [CreditHistory!]
+  # Dates are in UTC.
+  clubMemberActivityGrouped(clubCode: String!, startDate: DateTime!, endDate: DateTime!): [ClubMemberActivityGrouped]
 }
 
 type Mutation {
