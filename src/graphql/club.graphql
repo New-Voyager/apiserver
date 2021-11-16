@@ -50,9 +50,10 @@ type ClubMember {
   name: String!
   memberId: Int!
   playerId: String!
+  playerUuid: String!
   joinedDate: DateTime!
   status: ClubMemberStatus!
-  lastPlayedDate: String
+  lastPlayedDate: DateTime
   imageId: String
   isOwner: Boolean
   isManager: Boolean
@@ -66,6 +67,7 @@ type ClubMember {
   totalGames: Int
   availableCredit: Float
   updatedAt: DateTime
+  tipsBack: Float
 }
 
 type ClubGameInfo {
@@ -103,8 +105,11 @@ input MemberFilterInput {
   all: Boolean              # added this to make it easy to build queries in the client
   inactive: Boolean
   unsettled: Boolean
+  negative: Boolean
+  positive: Boolean
   managers: Boolean
   playerId: String
+  inactiveFrom: DateTime
 }
 
 type ClubMemberStat {
@@ -134,11 +139,14 @@ type ClubMemberActivityGrouped {
   playerName: String!
   playerId: Int!
   playerUuid: String!
-  credits: Float!
+  availableCredit: Float!
   tips: Float!
   tipsBack: Float!
   tipsBackAmount: Float!
-  lastPlayedDate: String
+  lastPlayedDate: DateTime
+  buyIn: Float!
+  profit: Float!
+  gamesPlayed: Int!
 }
 
 type Query {

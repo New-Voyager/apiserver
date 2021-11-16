@@ -46,6 +46,11 @@ export async function getClubMembers(playerId: string, args: any) {
     }
   }
 
+  if (args.filter?.inactiveFrom) {
+    const date = new Date(Date.parse(args.filter.inactiveFrom));
+    args.filter.inactiveFrom = date;
+  }
+
   const clubMembers = await ClubRepository.getMembers(
     args.clubCode,
     args.filter
@@ -57,7 +62,8 @@ export async function getClubMembers(playerId: string, args: any) {
     memberAny.memberId = member.id;
     memberAny.name = member.player.name;
     memberAny.playerId = member.player.uuid;
-    memberAny.lastPlayedDate = member.lastPlayedDate;
+    memberAny.playerUuid = member.player.uuid;
+    memberAny.lastPlayedDate = member.lastPlayedDate.toISOString();
     memberAny.contactInfo = member.contactInfo;
     memberAny.status = ClubMemberStatus[member.status];
     const stat = clubMemberStat[member.player.id];
