@@ -481,8 +481,7 @@ export async function clubMemberActivityGrouped(
   playerId: string,
   clubCode: string,
   startDate: Date,
-  endDate: Date,
-  playerTimeZone: string
+  endDate: Date
 ) {
   const errors = new Array<string>();
   if (!playerId) {
@@ -497,8 +496,8 @@ export async function clubMemberActivityGrouped(
   if (!endDate) {
     errors.push('Invalid endDate');
   }
-  if (playerTimeZone === '') {
-    errors.push('Invalid playerTimeZone');
+  if (startDate >= endDate) {
+    errors.push('Invalid dates');
   }
   if (errors.length > 0) {
     logger.error(
@@ -507,24 +506,12 @@ export async function clubMemberActivityGrouped(
     throw new Error('Invalid argument');
   }
 
-  const startUtc: Date = toUtcDate(startDate.toString(), playerTimeZone);
-  const endUtc: Date = toUtcDate(endDate.toString(), playerTimeZone);
-  logger.info(
-    `clubMemberActivityGrouped start (UTC): ${startUtc.toISOString()}`
-  );
-  logger.info(`clubMemberActivityGrouped   end (UTC): ${endUtc.toISOString()}`);
-
   return ClubRepository.clubMemberActivityGrouped(
     playerId,
     clubCode,
-    startUtc,
-    endUtc
+    startDate,
+    endDate
   );
-}
-
-function toUtcDate(timeStr: string, timeZoneStr: string): Date {
-  const d: Date = moment.tz(timeStr, timeZoneStr).utc().toDate();
-  return d;
 }
 
 export async function setCredit(
@@ -596,8 +583,7 @@ const resolvers: any = {
         ctx.req.playerId,
         args.clubCode,
         args.startDate,
-        args.endDate,
-        args.playerTimeZone
+        args.endDate
       );
     },
   },
