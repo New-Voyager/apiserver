@@ -496,7 +496,7 @@ export async function clubMemberActivityGrouped(
   if (!endDate) {
     errors.push('Invalid endDate');
   }
-  if (startDate >= endDate) {
+  if (startDate > endDate) {
     errors.push('Invalid dates');
   }
   if (errors.length > 0) {
