@@ -1123,38 +1123,39 @@ class ClubRepositoryImpl {
       throw new Error('Unauthorized');
     }
 
-    const repo = getUserRepository(CreditTracking);
-    const aggTips = await repo
-      .createQueryBuilder()
-      .select(['player_id AS "playerId"', 'SUM(tips) AS tips'])
-      .where('"createdAt" >= :startTime', {startTime: startDate})
-      .andWhere(`"createdAt" < (:endTime::timestamp + INTERVAL '1 day')`, {
-        endTime: endDate,
-      })
-      .andWhere('tips IS NOT NULL')
-      .groupBy('player_id')
-      .getRawMany();
+    const query = fixQuery(`
+        SELECT cm.player_id AS "playerId", cm.available_credit AS "availableCredit",
+            cm.tips_back AS "tipsBack", cm.last_played_date AS "lastPlayedDate",
+            p.uuid AS "playerUuid", p.name AS "playerName", aggtips.tips AS "tips"
+        FROM club_member cm
+        INNER JOIN player p ON cm.player_id = p.id
+        LEFT OUTER JOIN (
+            SELECT player_id, sum(tips) AS tips FROM credit_tracking ct
+            WHERE club_id = ?
+            AND "createdAt" >= ?
+            AND "createdAt" < (?::timestamp + INTERVAL '1 day')
+            AND tips IS NOT NULL
+            GROUP BY player_id
+        ) aggtips ON cm.player_id = aggtips.player_id
+        WHERE cm.club_id = ?;
+    `);
+    const dbResult = await getUserConnection().query(query, [
+      club.id,
+      startDate,
+      endDate,
+      club.id,
+    ]);
 
     const res: Array<any> = [];
-    for (const t of aggTips) {
-      const player: Player = await Cache.getPlayerById(t.playerId);
-      const clubMember: ClubMember | null = await Cache.getClubMember(
-        player.uuid,
-        clubCode
-      );
-      if (!clubMember) {
-        continue;
+    for (const row of dbResult) {
+      const activity = {...row};
+      if (
+        typeof activity.tips === 'number' &&
+        typeof activity.tipsBack === 'number'
+      ) {
+        activity.tipsBackAmount = activity.tips * activity.tipsBack * 0.01;
       }
-      const activity = {
-        playerId: t.playerId,
-        playerUuid: player.uuid,
-        playerName: player.name,
-        credits: clubMember.availableCredit,
-        tips: t.tips,
-        tipsBack: clubMember.tipsBack,
-        tipsBackAmount: t.tips * clubMember.tipsBack * 0.01,
-        lastPlayedDate: clubMember.lastPlayedDate,
-      };
+      activity.lastPlayedDate = activity.lastPlayedDate.toISOString();
       res.push(activity);
     }
 
