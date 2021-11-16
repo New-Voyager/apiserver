@@ -5,7 +5,14 @@ import {
   CreditUpdateType,
 } from '@src/entity/types';
 import {Player} from '@src/entity/player/player';
-import {Not, LessThan, MoreThan, In, UpdateResult} from 'typeorm';
+import {
+  Not,
+  LessThan,
+  MoreThan,
+  In,
+  UpdateResult,
+  LessThanOrEqual,
+} from 'typeorm';
 import {PokerGame} from '@src/entity/game/game';
 import {
   getClubGamesData,
@@ -688,7 +695,19 @@ class ClubRepositoryImpl {
         // nothing to filter
       } else {
         if (filter.unsettled) {
+          where.availableCredit = Not(0);
+        }
+
+        if (filter.negative) {
           where.availableCredit = LessThan(0);
+        }
+
+        if (filter.positive) {
+          where.availableCredit = MoreThan(0);
+        }
+
+        if (filter.inactiveFrom) {
+          where.lastPlayedDate = LessThanOrEqual(filter.inactiveFrom);
         }
 
         if (filter.managers) {
@@ -1129,7 +1148,7 @@ class ClubRepositoryImpl {
             p.uuid AS "playerUuid", p.name AS "playerName", aggtips.tips AS "tips"
         FROM club_member cm
         INNER JOIN player p ON cm.player_id = p.id
-        LEFT OUTER JOIN (
+        JOIN (
             SELECT player_id, sum(tips) AS tips FROM credit_tracking ct
             WHERE club_id = ?
             AND "createdAt" >= ?
@@ -1163,6 +1182,27 @@ class ClubRepositoryImpl {
       res.push(activity);
     }
 
+    const playersActivity = _.keyBy(res, 'playerId');
+
+    // get buyin and profit data from players_in_game
+    const buyInQuery = fixQuery(`
+        select player_id "playerId", count(*) "gamesPlayed", sum(buy_in) "buyIn", sum(stack) - sum(buy_in) profit, 
+          sum(rake_paid) from players_in_game pig join game_history gh ON 
+            pig.game_id = gh.game_id  
+        where gh.club_code  = ? and 
+            gh.ended_at > ? and 
+            gh.ended_at < ?
+        group by pig.player_id`);
+    const buyInResult = await getHistoryConnection().query(buyInQuery, [
+      club.clubCode,
+      startDate,
+      endDate,
+    ]);
+    for (const row of buyInResult) {
+      playersActivity[row.playerId].buyIn = row.buyIn;
+      playersActivity[row.playerId].profit = row.profit;
+      playersActivity[row.playerId].gamesPlayed = row.gamesPlayed;
+    }
     return res;
   }
 

@@ -57,6 +57,9 @@ export interface getMembersFilterData {
   managers?: boolean;
   playerId?: string;
   inactive?: boolean;
+  negative?: boolean;
+  positive?: boolean;
+  inactiveFrom?: Date;
 }
 
 export interface getPlayerClubsData {
