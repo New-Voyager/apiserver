@@ -131,10 +131,10 @@ type ClubMemberActivityGrouped {
   playerName: String!
   playerId: Int!
   playerUuid: String!
-  credits: Float
-  tips: Float
-  tipsBack: Float
-  tipsBackAmount: Float
+  credits: Float!
+  tips: Float!
+  tipsBack: Float!
+  tipsBackAmount: Float!
   lastPlayedDate: String
 }
 

@@ -1149,13 +1149,17 @@ class ClubRepositoryImpl {
     const res: Array<any> = [];
     for (const row of dbResult) {
       const activity = {...row};
-      if (
-        typeof activity.tips === 'number' &&
-        typeof activity.tipsBack === 'number'
-      ) {
-        activity.tipsBackAmount = activity.tips * activity.tipsBack * 0.01;
+      if (activity.credits === null || activity.credits === undefined) {
+        activity.credits = 0;
       }
-      activity.lastPlayedDate = activity.lastPlayedDate.toISOString();
+      if (activity.tips === null || activity.tips === undefined) {
+        activity.tips = 0;
+      }
+      if (activity.tipsBack === null || activity.tipsBack === undefined) {
+        activity.tipsBack = 0;
+      }
+      activity.tipsBackAmount = activity.tips * activity.tipsBack * 0.01;
+      activity.lastPlayedDate = activity.lastPlayedDate?.toISOString();
       res.push(activity);
     }
 
