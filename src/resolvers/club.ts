@@ -548,6 +548,74 @@ export async function setCredit(
   );
 }
 
+export async function addCredit(
+  playerId: string,
+  clubCode: string,
+  playerUuid: string,
+  amount: number,
+  notes: string
+) {
+  const errors = new Array<string>();
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  if (clubCode === '') {
+    errors.push('Invalid club');
+  }
+  if (playerUuid === '') {
+    errors.push('Invalid player');
+  }
+  if (amount === null || amount === undefined) {
+    errors.push('Invalid amount');
+  }
+  if (errors.length > 0) {
+    logger.error('Invalid argument for addCredit: ' + errors.join(' '));
+    throw new Error('Invalid argument');
+  }
+
+  return ClubRepository.adminAddCredit(
+    playerId,
+    clubCode,
+    playerUuid,
+    amount,
+    notes
+  );
+}
+
+export async function deductCredit(
+  playerId: string,
+  clubCode: string,
+  playerUuid: string,
+  amount: number,
+  notes: string
+) {
+  const errors = new Array<string>();
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  if (clubCode === '') {
+    errors.push('Invalid club');
+  }
+  if (playerUuid === '') {
+    errors.push('Invalid player');
+  }
+  if (amount === null || amount === undefined) {
+    errors.push('Invalid amount');
+  }
+  if (errors.length > 0) {
+    logger.error('Invalid argument for addCredit: ' + errors.join(' '));
+    throw new Error('Invalid argument');
+  }
+
+  return ClubRepository.adminDeductCredit(
+    playerId,
+    clubCode,
+    playerUuid,
+    amount,
+    notes
+  );
+}
+
 const resolvers: any = {
   Query: {
     clubMembers: async (parent, args, ctx, info) => {
@@ -635,6 +703,26 @@ const resolvers: any = {
 
     setCredit: async (parent, args, ctx, info) => {
       return setCredit(
+        ctx.req.playerId,
+        args.clubCode,
+        args.playerUuid,
+        args.amount,
+        args.notes
+      );
+    },
+
+    addCredit: async (parent, args, ctx, info) => {
+      return addCredit(
+        ctx.req.playerId,
+        args.clubCode,
+        args.playerUuid,
+        args.amount,
+        args.notes
+      );
+    },
+
+    deductCredit: async (parent, args, ctx, info) => {
+      return deductCredit(
         ctx.req.playerId,
         args.clubCode,
         args.playerUuid,

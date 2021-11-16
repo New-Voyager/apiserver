@@ -230,4 +230,6 @@ export enum CreditUpdateType {
   CHANGE,
   BUYIN,
   GAME_RESULT,
+  ADD,
+  DEDUCT,
 }
