@@ -1,8 +1,10 @@
+import {v4 as uuidv4} from 'uuid';
 import {Club} from '@src/entity/player/club';
 import {Announcement} from '@src/entity/player/announcements';
 import {AnnouncementLevel, AnnouncementType} from '@src/entity/types';
 import {AnnouncementData} from '@src/types';
 import {getUserRepository} from '.';
+import {Firebase} from '@src/firebase';
 
 class AnnouncementRepositoryImpl {
   public async addClubAnnouncement(
@@ -20,6 +22,9 @@ class AnnouncementRepositoryImpl {
     newAnnouncement.announcementType = AnnouncementType.CLUB;
 
     await announcementRepo.save(newAnnouncement);
+
+    const messageId = uuidv4();
+    Firebase.newClubAnnouncement(club, newAnnouncement, messageId);
     return true;
   }
 
@@ -37,6 +42,9 @@ class AnnouncementRepositoryImpl {
     newAnnouncement.announcementType = AnnouncementType.SYSTEM;
 
     await announcementRepo.save(newAnnouncement);
+
+    const messageId = uuidv4();
+    Firebase.newSystemAnnouncement(newAnnouncement, messageId);
     return true;
   }
 
