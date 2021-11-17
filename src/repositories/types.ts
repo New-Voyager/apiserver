@@ -179,7 +179,7 @@ export interface SitBackResponse {
   status: string;
 }
 
-export interface ClubMemberFirebaseToken {
+export interface FirebaseToken {
   playerId: number;
   firebaseToken: string;
 }
