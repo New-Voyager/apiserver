@@ -1,4 +1,9 @@
-import {Club, ClubMember, CreditTracking} from '@src/entity/player/club';
+import {
+  Club,
+  ClubManagerRoles,
+  ClubMember,
+  CreditTracking,
+} from '@src/entity/player/club';
 import {
   ClubMemberStatus,
   ClubStatus,
@@ -283,7 +288,12 @@ class ClubRepositoryImpl {
       }
 
       const clubRepo = transactionEntityManager.getRepository(Club);
+      const clubManagerRolesRepo =
+        transactionEntityManager.getRepository(ClubManagerRoles);
+      const role = new ClubManagerRoles();
       await clubRepo.save(club);
+      role.clubId = club.id;
+      await clubManagerRolesRepo.save(role);
       await clubMemberRepo.save(clubMember);
 
       if (clubCount === 0) {
@@ -1722,6 +1732,42 @@ class ClubRepositoryImpl {
       ct.gameCode = gameCode;
     }
     await getUserConnection().getRepository(CreditTracking).save(ct);
+  }
+
+  public async getManagerRole(clubCode: string) {
+    const club = await Cache.getClub(clubCode);
+    const clubManagerRolesRepo = getUserRepository(ClubManagerRoles);
+    let roleObj = await clubManagerRolesRepo.findOne({
+      clubId: club.id,
+    });
+    if (roleObj) {
+      return roleObj;
+    }
+    roleObj = new ClubManagerRoles();
+    roleObj.clubId = club.id;
+    await clubManagerRolesRepo.save(roleObj);
+    return roleObj;
+  }
+
+  public async updateManageRole(clubCode: string, role: any) {
+    const club = await Cache.getClub(clubCode);
+    const clubManagerRolesRepo = getUserRepository(ClubManagerRoles);
+    let roleObj = await clubManagerRolesRepo.findOne({
+      clubId: club.id,
+    });
+    if (!roleObj) {
+      roleObj = new ClubManagerRoles();
+      roleObj.clubId = club.id;
+    }
+    roleObj.approveBuyin = role.approveBuyin;
+    roleObj.approveMembers = role.approveMembers;
+    roleObj.canUpdateCredits = role.canUpdateCredits;
+    roleObj.hostGames = role.hostGames;
+    roleObj.makeAnnouncement = role.makeAnnouncement;
+    roleObj.seeTips = role.seeTips;
+    roleObj.sendPrivateMessage = role.sendPrivateMessage;
+    roleObj.viewMemberActivities = role.viewMemberActivities;
+    await clubManagerRolesRepo.save(roleObj);
   }
 }
 

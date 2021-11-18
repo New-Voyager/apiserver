@@ -177,4 +177,5 @@ type Mutation {
   setCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String): Boolean!
   addCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String): Boolean!
   deductCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String): Boolean!
+  updateManageRole(clubCode: String!, role: ManagerRole!): Boolean
 }

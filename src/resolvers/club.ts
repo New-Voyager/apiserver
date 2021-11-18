@@ -622,6 +622,27 @@ export async function deductCredit(
   );
 }
 
+export async function updateManageRole(
+  playerId: string,
+  clubCode: string,
+  role: any
+) {
+  const errors = new Array<string>();
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  if (clubCode === '') {
+    errors.push('Invalid club');
+  }
+  if (errors.length > 0) {
+    logger.error('Invalid argument for updateManageRole: ' + errors.join(' '));
+    throw new Error('Invalid argument');
+  }
+
+  await ClubRepository.updateManageRole(clubCode, role);
+  return true;
+}
+
 const resolvers: any = {
   Query: {
     clubMembers: async (parent, args, ctx, info) => {
@@ -735,6 +756,10 @@ const resolvers: any = {
         args.amount,
         args.notes
       );
+    },
+
+    updateManageRole: async (parent, args, ctx, info) => {
+      return updateManageRole(ctx.req.playerId, args.clubCode, args.role);
     },
   },
 };

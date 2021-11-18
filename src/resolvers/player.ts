@@ -352,10 +352,14 @@ export async function getClubPlayerInfo(playerId: string, clubCode: string) {
     throw new Error(`Player ${playerId} is not a club member`);
   }
 
-  return {
-    name: clubMember.club.name,
-    description: clubMember.club.description,
-    picUrl: clubMember.club.picUrl,
+  const club = await Cache.getClub(clubCode);
+  if (!club) {
+    throw new Error(`Club code: ${clubCode} is not found`);
+  }
+  let ret: any = {
+    name: club.name,
+    description: club.description,
+    picUrl: club.picUrl,
     myBalance: clubMember.availableCredit,
     joinedAt: clubMember.joinedDate,
     // gamesPlayed: clubMember.totalGames,
@@ -363,12 +367,15 @@ export async function getClubPlayerInfo(playerId: string, clubCode: string) {
     isOwner: clubMember.isOwner,
     status: ClubMemberStatus[clubMember.status],
     clubCode: clubCode,
-    showHighRankStats: clubMember.club.showHighRankStats,
-    trackMemberCredit: clubMember.club.trackMemberCredit,
-    availableCredit: clubMember.club.trackMemberCredit
-      ? clubMember.availableCredit
-      : 0,
+    showHighRankStats: club.showHighRankStats,
+    trackMemberCredit: club.trackMemberCredit,
+    availableCredit: club.trackMemberCredit ? clubMember.availableCredit : 0,
   };
+  if (clubMember.isManager) {
+    ret.managerRole = ClubRepository.getManagerRole(clubCode);
+  }
+
+  return ret;
 }
 
 export async function searchClub(playerId: string, clubCode: string) {
