@@ -830,6 +830,13 @@ class HandRepositoryImpl {
             saveResult,
             transactionEntityManager
           );
+          await this.handleHighRanks(
+            game,
+            result,
+            handHistory.timeEnded,
+            saveResult,
+            transactionEntityManager
+          );
           // TODO: save hand stats will be handled differently
           // await StatsRepository.saveHandStats(game, result, handNum);
           return saveResult;
@@ -900,6 +907,16 @@ class HandRepositoryImpl {
         error: errToStr(err),
       };
     }
+  }
+
+  private async handleHighRanks(
+    game: PokerGame,
+    result: any,
+    timeEnded: Date,
+    saveResult: any,
+    transactionEntityManager: EntityManager
+  ) {
+    await RewardRepository.handleHighRanks(game, result, timeEnded);
   }
 
   private async handleHighHand(

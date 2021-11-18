@@ -28,7 +28,7 @@ import {
   GameRewardTracking,
   HighHand,
 } from '@src/entity/game/reward';
-import {HighHandHistory} from '@src/entity/history/hand';
+import {HighHandHistory, HighRank} from '@src/entity/history/hand';
 import {Metrics} from '@src/internal/metrics';
 import {GameNotFoundError} from '@src/errors';
 import {GameHistory} from '@src/entity/history/game';
@@ -102,6 +102,66 @@ class RewardRepositoryImpl {
     }
 
     return await this.handleHighHand(game, input, handTime);
+  }
+
+  private async logHighRank(
+    gameId: number,
+    handNum: number,
+    handTime: Date,
+    highRank: number,
+    secondRank: number
+  ) {
+    if (highRank > MIN_FULLHOUSE_RANK) {
+      return;
+    }
+    const highRankRepo = getHistoryRepository(HighRank);
+    const record = new HighRank();
+    record.gameId = gameId;
+    record.handNum = handNum;
+    record.handTime = handTime;
+    record.rank = highRank;
+    if (secondRank) {
+      record.secondRank = secondRank;
+    }
+    await highRankRepo.save(record);
+  }
+
+  public async handleHighRanks(game: PokerGame, input: any, handTime: Date) {
+    const boards = input.result.boards;
+    if (boards.length === 0) {
+      return;
+    }
+
+    // get rank for all the players from all the board
+    const ranks = new Array<number>();
+    for (const board of boards) {
+      const playerRank = board.playerRank;
+      for (const seatNo of Object.keys(playerRank)) {
+        const player = playerRank[seatNo];
+        if (player.hhRank && player.hhRank <= MIN_FULLHOUSE_RANK) {
+          ranks.push(player.hhRank);
+        }
+      }
+    }
+    if (ranks.length === 0) {
+      return;
+    }
+
+    // Sort the numbers in ascending order.
+    ranks.sort((a, b) => a - b);
+    const highRank = ranks[0];
+    const secondRank = ranks[1];
+    if (!highRank) {
+      return;
+    }
+
+    await this.logHighRank(
+      game.id,
+      input.handNum,
+      handTime,
+      highRank,
+      secondRank
+    );
   }
 
   public async handleHighHand(
