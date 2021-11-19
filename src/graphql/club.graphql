@@ -46,6 +46,17 @@ input ClubMemberUpdateInput {
   tipsBack: Int
 }
 
+input ManagerRoleInput {
+  approveMembers: Boolean
+  seeTips: Boolean
+  makeAnnouncement: Boolean
+  sendPrivateMessage: Boolean
+  hostGames: Boolean
+  approveBuyin: Boolean
+  viewMemberActivities: Boolean
+  canUpdateCredits: Boolean
+}
+
 type ClubMember {
   name: String!
   memberId: Int!
@@ -177,5 +188,5 @@ type Mutation {
   setCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String): Boolean!
   addCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String): Boolean!
   deductCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String): Boolean!
-  updateManageRole(clubCode: String!, role: ManagerRole!): Boolean
+  updateManageRole(clubCode: String!, role: ManagerRoleInput!): Boolean
 }
