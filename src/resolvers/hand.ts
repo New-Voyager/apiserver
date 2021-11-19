@@ -666,7 +666,7 @@ export async function searchHands(playerId: string, args: any) {
     args.startDate,
     args.endDate,
     args.minRank,
-    args.gameType
+    args.gameTypes
   );
   return resp;
 }

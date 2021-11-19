@@ -119,27 +119,35 @@ class RewardRepositoryImpl {
     startDate: Date,
     endDate: Date,
     minRank: number,
-    gameType: GameType
+    gameTypes: Array<GameType>
   ) {
+    let gameTypeInClause: string;
+    let args: Array<any> = [clubCode, startDate, endDate, minRank];
+    if (!gameTypes) {
+      gameTypeInClause = '';
+    } else {
+      gameTypeInClause = 'AND hr.game_type = ANY(?)';
+      const gameTypeNums = gameTypes.map(g => parseInt(GameType[g]));
+      args.push(gameTypeNums);
+    }
     const query = fixQuery(`
         SELECT game_code AS "gameCode", hand_num AS "handNum", hand_time AS "handTime",
-            high_rank AS rank
+            high_rank AS rank, game_type AS "gameType"
         FROM high_rank hr
         WHERE hr.club_code = ?
         AND hr.hand_time >= ?
         AND hr.hand_time < (?::TIMESTAMP + INTERVAL '1 day')
-        AND hr.game_type = ?
-        AND hr.high_rank <= ?;
+        AND hr.high_rank <= ?
+        ${gameTypeInClause};
     `);
-    const gameTypeNum: number = parseInt(GameType[gameType]);
-    const dbResult = await getHistoryConnection().query(query, [
-      clubCode,
-      startDate,
-      endDate,
-      gameTypeNum,
-      minRank,
-    ]);
-    return dbResult;
+    const dbResult = await getHistoryConnection().query(query, args);
+    const result: Array<any> = [];
+    for (const r of dbResult) {
+      const hand = {...r};
+      hand.gameType = GameType[r.gameType];
+      result.push(hand);
+    }
+    return result;
   }
 
   private async logHighRank(
