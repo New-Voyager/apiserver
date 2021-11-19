@@ -29,7 +29,7 @@ import {errToStr, getLogger} from '@src/utils/log';
 import {getClubCode} from '@src/utils/uniqueid';
 import {fixQuery} from '@src/utils';
 import {Cache} from '@src/cache';
-import {ClubMemberFirebaseToken, ClubUpdateType} from './types';
+import {FirebaseToken, ClubUpdateType} from './types';
 import {Nats} from '@src/nats';
 import {v4 as uuidv4} from 'uuid';
 import {StatsRepository} from './stats';
@@ -1024,12 +1024,27 @@ class ClubRepositoryImpl {
 
   public async getClubMembersForFirebase(
     club: Club
-  ): Promise<Array<ClubMemberFirebaseToken>> {
+  ): Promise<Array<FirebaseToken>> {
     const sql = `select player.id, firebase_token "firebaseToken" from player join club_member cm 
-            on player.id = cm.player_id where cm.club_id = ? order by player.id`;
-    const ret = new Array<ClubMemberFirebaseToken>();
+            on player.id = cm.player_id where firebase_token is not null and cm.club_id = ? order by player.id`;
+    const ret = new Array<FirebaseToken>();
     const query = fixQuery(sql);
     const resp = await getUserConnection().query(query, [club.id]);
+    for (const r of resp) {
+      ret.push({
+        playerId: r.id,
+        firebaseToken: r.firebaseToken,
+      });
+    }
+
+    return ret;
+  }
+
+  public async getPlayersForFirebase(): Promise<Array<FirebaseToken>> {
+    const sql = `select player.id, firebase_token "firebaseToken" from player where firebase_token is not null`;
+    const ret = new Array<FirebaseToken>();
+    const query = fixQuery(sql);
+    const resp = await getUserConnection().query(query);
     for (const r of resp) {
       ret.push({
         playerId: r.id,

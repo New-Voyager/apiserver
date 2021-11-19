@@ -1,6 +1,11 @@
 import {Club} from '@src/entity/player/club';
 import {EntityManager, Not, Repository} from 'typeorm';
-import {GameStatus, RewardType, ScheduleType} from '@src/entity/types';
+import {
+  GameStatus,
+  GameType,
+  RewardType,
+  ScheduleType,
+} from '@src/entity/types';
 import {Reward} from '@src/entity/player/reward';
 export interface RewardInputFormat {
   name: string;
@@ -21,14 +26,19 @@ import {Cache} from '@src/cache';
 import _ from 'lodash';
 import {Player} from '@src/entity/player/player';
 import {PokerGame} from '@src/entity/game/game';
-import {stringCards} from '@src/utils';
-import {getGameRepository, getHistoryRepository, getUserRepository} from '.';
+import {fixQuery, stringCards} from '@src/utils';
+import {
+  getGameRepository,
+  getHistoryConnection,
+  getHistoryRepository,
+  getUserRepository,
+} from '.';
 import {
   GameReward,
   GameRewardTracking,
   HighHand,
 } from '@src/entity/game/reward';
-import {HighHandHistory} from '@src/entity/history/hand';
+import {HighHandHistory, HighRank} from '@src/entity/history/hand';
 import {Metrics} from '@src/internal/metrics';
 import {GameNotFoundError} from '@src/errors';
 import {GameHistory} from '@src/entity/history/game';
@@ -102,6 +112,111 @@ class RewardRepositoryImpl {
     }
 
     return await this.handleHighHand(game, input, handTime);
+  }
+
+  public async searchHighRankHands(
+    clubCode: string,
+    startDate: Date,
+    endDate: Date,
+    minRank: number,
+    gameTypes: Array<GameType>
+  ) {
+    let gameTypeInClause: string;
+    let args: Array<any> = [clubCode, startDate, endDate, minRank];
+    if (!gameTypes) {
+      gameTypeInClause = '';
+    } else {
+      gameTypeInClause = 'AND hr.game_type = ANY(?)';
+      const gameTypeNums = gameTypes.map(g => parseInt(GameType[g]));
+      args.push(gameTypeNums);
+    }
+    const query = fixQuery(`
+        SELECT game_code AS "gameCode", hand_num AS "handNum", hand_time AS "handTime",
+            high_rank AS rank, game_type AS "gameType"
+        FROM high_rank hr
+        WHERE hr.club_code = ?
+        AND hr.hand_time >= ?
+        AND hr.hand_time < (?::TIMESTAMP + INTERVAL '1 day')
+        AND hr.high_rank <= ?
+        ${gameTypeInClause};
+    `);
+    const dbResult = await getHistoryConnection().query(query, args);
+    const result: Array<any> = [];
+    for (const r of dbResult) {
+      const hand = {...r};
+      hand.gameType = GameType[r.gameType];
+      result.push(hand);
+    }
+    return result;
+  }
+
+  private async logHighRank(
+    gameId: number,
+    gameCode: string,
+    clubCode: string,
+    gameType: GameType,
+    handNum: number,
+    handTime: Date,
+    highRank: number,
+    secondRank: number
+  ) {
+    if (highRank > MIN_FULLHOUSE_RANK) {
+      return;
+    }
+    const highRankRepo = getHistoryRepository(HighRank);
+    const record = new HighRank();
+    record.gameId = gameId;
+    record.gameCode = gameCode;
+    record.clubCode = clubCode;
+    record.gameType = gameType;
+    record.handNum = handNum;
+    record.handTime = handTime;
+    record.rank = highRank;
+    if (secondRank) {
+      record.secondRank = secondRank;
+    }
+    await highRankRepo.save(record);
+  }
+
+  public async handleHighRanks(game: PokerGame, input: any, handTime: Date) {
+    const boards = input.result.boards;
+    if (boards.length === 0) {
+      return;
+    }
+
+    // get rank for all the players from all the board
+    const ranks = new Array<number>();
+    for (const board of boards) {
+      const playerRank = board.playerRank;
+      for (const seatNo of Object.keys(playerRank)) {
+        const player = playerRank[seatNo];
+        if (player.hhRank && player.hhRank <= MIN_FULLHOUSE_RANK) {
+          ranks.push(player.hhRank);
+        }
+      }
+    }
+    if (ranks.length === 0) {
+      return;
+    }
+
+    // Sort the numbers in ascending order.
+    ranks.sort((a, b) => a - b);
+    const highRank = ranks[0];
+    const secondRank = ranks[1];
+    if (!highRank) {
+      return;
+    }
+
+    await this.logHighRank(
+      game.id,
+      game.gameCode,
+      game.clubCode,
+      game.gameType,
+      input.handNum,
+      handTime,
+      highRank,
+      secondRank
+    );
   }
 
   public async handleHighHand(

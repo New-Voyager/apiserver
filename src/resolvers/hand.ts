@@ -14,6 +14,7 @@ import {HistoryRepository} from '@src/repositories/history';
 import {GameNotFoundError, UnauthorizedError} from '@src/errors';
 import {GameRepository} from '@src/repositories/game';
 import {GameHistory} from '@src/entity/history/game';
+import {RewardRepository} from '@src/repositories/reward';
 
 const logger = getLogger('resolvers::hand');
 
@@ -42,6 +43,9 @@ const resolvers: any = {
     },
     bookmarkedHandsByGame: async (parent, args, ctx, info) => {
       return await bookmarkedHandsByGame(ctx.req.playerId, args);
+    },
+    searchHands: async (parent, args, ctx, info) => {
+      return await searchHands(ctx.req.playerId, args);
     },
   },
   Mutation: {
@@ -624,6 +628,45 @@ export async function bookmarkedHandsByGame(playerId: string, args: any) {
   const resp = await HandRepository.bookmarkedHandsByGame(
     player,
     args.gameCode
+  );
+  return resp;
+}
+
+export async function searchHands(playerId: string, args: any) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+
+  const player = await Cache.getPlayer(playerId);
+  if (!player) {
+    logger.error(`Player ${playerId} is not found`);
+    throw new Error('Unauthorized');
+  }
+
+  if (!args.clubCode) {
+    logger.error(`clubCode not provided`);
+    throw new Error(`Invalid argument`);
+  }
+
+  const clubMember = await Cache.getClubMember(playerId, args.clubCode);
+  if (!clubMember) {
+    logger.error(`Player ${playerId} is not a member of club ${args.clubCode}`);
+    throw new Error(`Unauthorized`);
+  }
+
+  if (!(clubMember.isOwner || clubMember.isManager)) {
+    logger.error(
+      `Player ${playerId} is not owner or manager of club ${args.clubCode}`
+    );
+    throw new Error(`Unauthorized`);
+  }
+
+  const resp = await RewardRepository.searchHighRankHands(
+    args.clubCode,
+    args.startDate,
+    args.endDate,
+    args.minRank,
+    args.gameTypes
   );
   return resp;
 }

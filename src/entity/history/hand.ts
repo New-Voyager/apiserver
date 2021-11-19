@@ -142,3 +142,34 @@ export class HighHandHistory {
   @Column({name: 'end_hour', nullable: true})
   public endHour!: boolean;
 }
+
+@Entity({name: 'high_rank'})
+export class HighRank {
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @Index()
+  @Column({name: 'club_code', nullable: true})
+  public clubCode!: string;
+
+  @Column({name: 'game_id', nullable: false, type: 'int'})
+  public gameId!: number;
+
+  @Column({name: 'game_code', nullable: false})
+  public gameCode!: string;
+
+  @Column({name: 'game_type'})
+  public gameType!: GameType;
+
+  @Column({name: 'hand_num', nullable: false, type: 'int'})
+  public handNum!: number;
+
+  @Column({name: 'hand_time', nullable: false})
+  public handTime!: Date;
+
+  @Column({name: 'high_rank', nullable: false, type: 'int'})
+  public rank!: number;
+
+  @Column({name: 'second_high_rank', nullable: true, type: 'int'})
+  public secondRank!: number;
+}

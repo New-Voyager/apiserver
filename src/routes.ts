@@ -164,10 +164,6 @@ export function addInternalRoutes(app: any) {
   // curl http://apiserver-internal:9502/internal/game-servers
   app.get('/internal/game-servers', GameServerAPI.getGameServers);
   app.post(
-    '/internal/post-hand/gameId/:gameId/handNum/:handNum',
-    HandServerAPI.postHand
-  );
-  app.post(
     '/internal/save-hand/gameId/:gameId/handNum/:handNum',
     HandServerAPI.saveHand
   );
