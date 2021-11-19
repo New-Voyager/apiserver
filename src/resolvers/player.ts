@@ -371,9 +371,7 @@ export async function getClubPlayerInfo(playerId: string, clubCode: string) {
     trackMemberCredit: club.trackMemberCredit,
     availableCredit: club.trackMemberCredit ? clubMember.availableCredit : 0,
   };
-  if (clubMember.isManager) {
-    ret.managerRole = ClubRepository.getManagerRole(clubCode);
-  }
+  ret.managerRole = ClubRepository.getManagerRole(clubCode);
 
   return ret;
 }

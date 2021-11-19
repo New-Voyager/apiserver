@@ -622,7 +622,7 @@ export async function deductCredit(
   );
 }
 
-export async function updateManageRole(
+export async function updateManagerRole(
   playerId: string,
   clubCode: string,
   role: any
@@ -635,11 +635,11 @@ export async function updateManageRole(
     errors.push('Invalid club');
   }
   if (errors.length > 0) {
-    logger.error('Invalid argument for updateManageRole: ' + errors.join(' '));
+    logger.error('Invalid argument for updateManagerRole: ' + errors.join(' '));
     throw new Error('Invalid argument');
   }
 
-  await ClubRepository.updateManageRole(clubCode, role);
+  await ClubRepository.updateManagerRole(clubCode, role);
   return true;
 }
 
@@ -758,8 +758,8 @@ const resolvers: any = {
       );
     },
 
-    updateManageRole: async (parent, args, ctx, info) => {
-      return updateManageRole(ctx.req.playerId, args.clubCode, args.role);
+    updateManagerRole: async (parent, args, ctx, info) => {
+      return updateManagerRole(ctx.req.playerId, args.clubCode, args.role);
     },
   },
 };

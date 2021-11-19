@@ -1764,7 +1764,7 @@ class ClubRepositoryImpl {
     return roleObj;
   }
 
-  public async updateManageRole(clubCode: string, role: any) {
+  public async updateManagerRole(clubCode: string, role: any) {
     const club = await Cache.getClub(clubCode);
     const clubManagerRolesRepo = getUserRepository(ClubManagerRoles);
     let roleObj = await clubManagerRolesRepo.findOne({
@@ -1774,14 +1774,30 @@ class ClubRepositoryImpl {
       roleObj = new ClubManagerRoles();
       roleObj.clubId = club.id;
     }
-    roleObj.approveBuyin = role.approveBuyin;
-    roleObj.approveMembers = role.approveMembers;
-    roleObj.canUpdateCredits = role.canUpdateCredits;
-    roleObj.hostGames = role.hostGames;
-    roleObj.makeAnnouncement = role.makeAnnouncement;
-    roleObj.seeTips = role.seeTips;
-    roleObj.sendPrivateMessage = role.sendPrivateMessage;
-    roleObj.viewMemberActivities = role.viewMemberActivities;
+    if (role.approveBuyin !== undefined) {
+      roleObj.approveBuyin = role.approveBuyin;
+    }
+    if (role.approveMembers !== undefined) {
+      roleObj.approveMembers = role.approveMembers;
+    }
+    if (role.canUpdateCredits !== undefined) {
+      roleObj.canUpdateCredits = role.canUpdateCredits;
+    }
+    if (role.hostGames !== undefined) {
+      roleObj.hostGames = role.hostGames;
+    }
+    if (role.makeAnnouncement !== undefined) {
+      roleObj.makeAnnouncement = role.makeAnnouncement;
+    }
+    if (role.seeTips !== undefined) {
+      roleObj.seeTips = role.seeTips;
+    }
+    if (role.sendPrivateMessage !== undefined) {
+      roleObj.sendPrivateMessage = role.sendPrivateMessage;
+    }
+    if (role.viewMemberActivities !== undefined) {
+      roleObj.viewMemberActivities = role.viewMemberActivities;
+    }
     await clubManagerRolesRepo.save(roleObj);
   }
 }
