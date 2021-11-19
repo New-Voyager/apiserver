@@ -110,6 +110,17 @@ type Privileges {
   gameHost: Boolean
 }
 
+type ManagerRole {
+  approveMembers: Boolean
+  seeTips: Boolean
+  makeAnnouncement: Boolean
+  sendPrivateMessage: Boolean
+  hostGames: Boolean
+  approveBuyin: Boolean
+  viewMemberActivities: Boolean
+  canUpdateCredits: Boolean
+}
+
 type ClubInfo {
   name: String! # name of the club
   myBalance: Float!
@@ -128,6 +139,7 @@ type ClubInfo {
   showHighRankStats: Boolean
   trackMemberCredit: Boolean
   availableCredit: Int
+  managerRole: ManagerRole
 }
 
 type SearchClubResult {

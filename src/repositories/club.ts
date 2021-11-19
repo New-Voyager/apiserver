@@ -1,4 +1,9 @@
-import {Club, ClubMember, CreditTracking} from '@src/entity/player/club';
+import {
+  Club,
+  ClubManagerRoles,
+  ClubMember,
+  CreditTracking,
+} from '@src/entity/player/club';
 import {
   ClubMemberStatus,
   ClubStatus,
@@ -283,7 +288,12 @@ class ClubRepositoryImpl {
       }
 
       const clubRepo = transactionEntityManager.getRepository(Club);
+      const clubManagerRolesRepo =
+        transactionEntityManager.getRepository(ClubManagerRoles);
+      const role = new ClubManagerRoles();
       await clubRepo.save(club);
+      role.clubId = club.id;
+      await clubManagerRolesRepo.save(role);
       await clubMemberRepo.save(clubMember);
 
       if (clubCount === 0) {
@@ -1737,6 +1747,58 @@ class ClubRepositoryImpl {
       ct.gameCode = gameCode;
     }
     await getUserConnection().getRepository(CreditTracking).save(ct);
+  }
+
+  public async getManagerRole(clubCode: string) {
+    const club = await Cache.getClub(clubCode);
+    const clubManagerRolesRepo = getUserRepository(ClubManagerRoles);
+    let roleObj = await clubManagerRolesRepo.findOne({
+      clubId: club.id,
+    });
+    if (roleObj) {
+      return roleObj;
+    }
+    roleObj = new ClubManagerRoles();
+    roleObj.clubId = club.id;
+    await clubManagerRolesRepo.save(roleObj);
+    return roleObj;
+  }
+
+  public async updateManagerRole(clubCode: string, role: any) {
+    const club = await Cache.getClub(clubCode);
+    const clubManagerRolesRepo = getUserRepository(ClubManagerRoles);
+    let roleObj = await clubManagerRolesRepo.findOne({
+      clubId: club.id,
+    });
+    if (!roleObj) {
+      roleObj = new ClubManagerRoles();
+      roleObj.clubId = club.id;
+    }
+    if (role.approveBuyin !== undefined) {
+      roleObj.approveBuyin = role.approveBuyin;
+    }
+    if (role.approveMembers !== undefined) {
+      roleObj.approveMembers = role.approveMembers;
+    }
+    if (role.canUpdateCredits !== undefined) {
+      roleObj.canUpdateCredits = role.canUpdateCredits;
+    }
+    if (role.hostGames !== undefined) {
+      roleObj.hostGames = role.hostGames;
+    }
+    if (role.makeAnnouncement !== undefined) {
+      roleObj.makeAnnouncement = role.makeAnnouncement;
+    }
+    if (role.seeTips !== undefined) {
+      roleObj.seeTips = role.seeTips;
+    }
+    if (role.sendPrivateMessage !== undefined) {
+      roleObj.sendPrivateMessage = role.sendPrivateMessage;
+    }
+    if (role.viewMemberActivities !== undefined) {
+      roleObj.viewMemberActivities = role.viewMemberActivities;
+    }
+    await clubManagerRolesRepo.save(roleObj);
   }
 }
 

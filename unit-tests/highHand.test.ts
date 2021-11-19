@@ -13,7 +13,6 @@ import {
   getHighHandWinners,
   getRewardTrack,
 } from '../src/resolvers/reward';
-import {postHand} from '../src/internal/hand';
 import _ from 'lodash';
 
 import {
@@ -191,7 +190,7 @@ describe.skip('HighHand APIs', () => {
           wonId.push(player.id);
         }
       }
-      await postHand(gameId, data.handNum, data);
+      // await postHand(gameId, data.handNum, data);
     }
     const resp1 = await getHighHandsByGame(
       ownerUuid.toString(),

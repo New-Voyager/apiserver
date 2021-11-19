@@ -278,3 +278,33 @@ export class CreditTracking {
   })
   public createdAt!: Date;
 }
+
+@Entity({name: 'club_manager_roles'})
+export class ClubManagerRoles {
+  @Column({name: 'club_id', primary: true})
+  public clubId!: number;
+
+  @Column({name: 'approve_members', default: false})
+  public approveMembers!: boolean;
+
+  @Column({name: 'see_tips', default: false})
+  public seeTips!: boolean;
+
+  @Column({name: 'make_annoucement', default: false})
+  public makeAnnouncement!: boolean;
+
+  @Column({name: 'private_msg', default: false})
+  public sendPrivateMessage!: boolean;
+
+  @Column({name: 'host_games', default: true})
+  public hostGames!: boolean;
+
+  @Column({name: 'approve_buyin', default: true})
+  public approveBuyin!: boolean;
+
+  @Column({name: 'view_member_activities', default: false})
+  public viewMemberActivities!: boolean;
+
+  @Column({name: 'can_update_credits', default: false})
+  public canUpdateCredits!: boolean;
+}
