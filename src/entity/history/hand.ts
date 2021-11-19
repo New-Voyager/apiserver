@@ -149,8 +149,17 @@ export class HighRank {
   public id!: number;
 
   @Index()
+  @Column({name: 'club_code', nullable: true})
+  public clubCode!: string;
+
   @Column({name: 'game_id', nullable: false, type: 'int'})
   public gameId!: number;
+
+  @Column({name: 'game_code', nullable: false})
+  public gameCode!: string;
+
+  @Column({name: 'game_type'})
+  public gameType!: GameType;
 
   @Column({name: 'hand_num', nullable: false, type: 'int'})
   public handNum!: number;

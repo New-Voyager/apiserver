@@ -1,6 +1,11 @@
 import {Club} from '@src/entity/player/club';
 import {EntityManager, Not, Repository} from 'typeorm';
-import {GameStatus, RewardType, ScheduleType} from '@src/entity/types';
+import {
+  GameStatus,
+  GameType,
+  RewardType,
+  ScheduleType,
+} from '@src/entity/types';
 import {Reward} from '@src/entity/player/reward';
 export interface RewardInputFormat {
   name: string;
@@ -21,8 +26,13 @@ import {Cache} from '@src/cache';
 import _ from 'lodash';
 import {Player} from '@src/entity/player/player';
 import {PokerGame} from '@src/entity/game/game';
-import {stringCards} from '@src/utils';
-import {getGameRepository, getHistoryRepository, getUserRepository} from '.';
+import {fixQuery, stringCards} from '@src/utils';
+import {
+  getGameRepository,
+  getHistoryConnection,
+  getHistoryRepository,
+  getUserRepository,
+} from '.';
 import {
   GameReward,
   GameRewardTracking,
@@ -104,8 +114,39 @@ class RewardRepositoryImpl {
     return await this.handleHighHand(game, input, handTime);
   }
 
+  public async searchHighRankHands(
+    clubCode: string,
+    startDate: Date,
+    endDate: Date,
+    minRank: number,
+    gameType: GameType
+  ) {
+    const query = fixQuery(`
+        SELECT game_code AS "gameCode", hand_num AS "handNum", hand_time AS "handTime",
+            high_rank AS rank
+        FROM high_rank hr
+        WHERE hr.club_code = ?
+        AND hr.hand_time >= ?
+        AND hr.hand_time < (?::TIMESTAMP + INTERVAL '1 day')
+        AND hr.game_type = ?
+        AND hr.high_rank <= ?;
+    `);
+    const gameTypeNum: number = parseInt(GameType[gameType]);
+    const dbResult = await getHistoryConnection().query(query, [
+      clubCode,
+      startDate,
+      endDate,
+      gameTypeNum,
+      minRank,
+    ]);
+    return dbResult;
+  }
+
   private async logHighRank(
     gameId: number,
+    gameCode: string,
+    clubCode: string,
+    gameType: GameType,
     handNum: number,
     handTime: Date,
     highRank: number,
@@ -117,6 +158,9 @@ class RewardRepositoryImpl {
     const highRankRepo = getHistoryRepository(HighRank);
     const record = new HighRank();
     record.gameId = gameId;
+    record.gameCode = gameCode;
+    record.clubCode = clubCode;
+    record.gameType = gameType;
     record.handNum = handNum;
     record.handTime = handTime;
     record.rank = highRank;
@@ -157,6 +201,9 @@ class RewardRepositoryImpl {
 
     await this.logHighRank(
       game.id,
+      game.gameCode,
+      game.clubCode,
+      game.gameType,
       input.handNum,
       handTime,
       highRank,
