@@ -114,15 +114,19 @@ class RewardRepositoryImpl {
     return await this.handleHighHand(game, input, handTime);
   }
 
+  /*
+  startTime is inclusive.
+  endTime is not inclusive.
+  */
   public async searchHighRankHands(
     clubCode: string,
-    startDate: Date,
-    endDate: Date,
+    startTime: Date,
+    endTime: Date,
     minRank: number,
     gameTypes: Array<GameType>
   ) {
     let gameTypeInClause: string;
-    let args: Array<any> = [clubCode, startDate, endDate, minRank];
+    let args: Array<any> = [clubCode, startTime, endTime, minRank];
     if (!gameTypes) {
       gameTypeInClause = '';
     } else {
@@ -136,7 +140,7 @@ class RewardRepositoryImpl {
         FROM high_rank hr
         WHERE hr.club_code = ?
         AND hr.hand_time >= ?
-        AND hr.hand_time < (?::TIMESTAMP + INTERVAL '1 day')
+        AND hr.hand_time < ?
         AND hr.high_rank <= ?
         ${gameTypeInClause};
     `);
