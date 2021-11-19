@@ -87,6 +87,7 @@ type MatchingHand {
   handNum: Int!
   rank: Int!
   handTime: DateTime!
+  gameType: GameType!
 }
 
 type Mutation {
@@ -121,5 +122,5 @@ type Query {
   sharedHands(clubCode: String!): [SavedHand!]
   bookmarkedHands: [SavedHand!]
   bookmarkedHandsByGame(gameCode: String!): [SavedHand!]
-  searchHands(clubCode: String!, startDate: DateTime!, endDate: DateTime!, gameType: GameType!, minRank: Int!): [MatchingHand]
+  searchHands(clubCode: String!, startDate: DateTime!, endDate: DateTime!, gameTypes: [GameType!], minRank: Int!): [MatchingHand]
 }
