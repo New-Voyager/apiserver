@@ -170,13 +170,18 @@ class GameSettingsRepositoryImpl {
     ) {
       gameSettingsProps.dealerChoiceGames = input.dealerChoiceGames.join(',');
     }
-    const gameSettingsRepo = getGameRepository(PokerGameSettings);
-    await gameSettingsRepo.update(
-      {
-        gameCode: gameCode,
-      },
-      gameSettingsProps
-    );
+    if (Object.keys(gameSettingsProps).length !== 0) {
+      const gameSettingsRepo = getGameRepository(PokerGameSettings);
+      await gameSettingsRepo.update(
+        {
+          gameCode: gameCode,
+        },
+        gameSettingsProps
+      );
+    }
+    if (input.bombPotNextHand !== undefined) {
+      await Cache.updateNextHandBombPot(game.gameCode, input.bombPotNextHand);
+    }
     const gameSettingsUpdated = await Cache.getGameSettings(gameCode, true);
     Nats.gameSettingsChanged(game);
     logger.info(JSON.stringify(gameSettingsUpdated));
