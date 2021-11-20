@@ -189,11 +189,17 @@ class RewardRepositoryImpl {
     }
 
     // get rank for all the players from all the board
+    const activeSeats: Array<number> = input.result.activeSeats;
     const ranks = new Array<number>();
     for (const board of boards) {
       const playerRank = board.playerRank;
-      for (const seatNo of Object.keys(playerRank)) {
-        const player = playerRank[seatNo];
+      for (const seatNoStr of Object.keys(playerRank)) {
+        const seatNo: number = parseInt(seatNoStr);
+        if (!activeSeats.includes(seatNo)) {
+          // Must be one of the active seats to be counted as the high rank.
+          continue;
+        }
+        const player = playerRank[seatNoStr];
         if (player.hhRank && player.hhRank <= MIN_FULLHOUSE_RANK) {
           ranks.push(player.hhRank);
         }
