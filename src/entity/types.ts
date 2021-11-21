@@ -9,6 +9,11 @@ export enum GameType {
   DEALER_CHOICE,
 }
 
+export enum ChipUnit {
+  DOLLAR,
+  CENT,
+}
+
 // Game status track the host actions on a game
 // This information is updated by the host/manager
 export enum GameStatus {

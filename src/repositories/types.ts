@@ -1,4 +1,5 @@
 import {
+  ChipUnit,
   GameStatus,
   GameType,
   PlayerStatus,
@@ -99,6 +100,7 @@ export interface NewHandInfo {
   handNum: number;
   actionTime: number;
   straddleBet: number;
+  chipUnit: ChipUnit;
   rakePercentage: number;
   rakeCap: number;
   announceGameType: boolean;

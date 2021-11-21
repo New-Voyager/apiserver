@@ -19,6 +19,7 @@ import {
   SeatChangeProcessType,
   SeatStatus,
   GameEndReason,
+  ChipUnit,
 } from '../types';
 
 @Entity({name: 'poker_game_updates'})
@@ -381,6 +382,9 @@ export class PokerGame {
     default: 2,
   })
   public buttonStraddleBet!: number; // max bet value (in big blinds)
+
+  @Column({name: 'chip_unit', nullable: false, default: ChipUnit.DOLLAR})
+  public chipUnit!: ChipUnit;
 
   @Column({name: 'max_players', type: 'int'})
   public maxPlayers!: number;
