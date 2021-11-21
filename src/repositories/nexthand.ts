@@ -120,7 +120,7 @@ class MoveToNextHand {
     if (!game) {
       throw new GameNotFoundError(this.game.gameCode);
     }
-    this.gameSettings = await GameSettingsRepository.get(game.gameCode);
+    this.gameSettings = await Cache.getGameSettings(game.gameCode);
     if (!this.gameSettings) {
       throw new Error(
         `Game ${this.game.gameCode} is not found in PokerGameSettings`
@@ -233,6 +233,12 @@ class MoveToNextHand {
             gameCode: game.gameCode,
           })
           .execute();
+
+        // reset this one-time flag
+        if (this.gameSettings && this.gameSettings.nextHandBombPot === true) {
+          this.gameSettings.nextHandBombPot = false;
+          await Cache.updateNextHandBombPot(game.gameCode, false);
+        }
 
         if (game.gameType === GameType.DEALER_CHOICE) {
           let promptChoice = false;
@@ -567,30 +573,34 @@ class MoveToNextHand {
       return;
     }
     this.bombPotThisHand = false;
-    if (!this.gameSettings.bombPotEnabled) {
-      return;
-    }
-    if (this.handNum === 1) {
+    if (this.gameSettings.nextHandBombPot === true) {
       this.bombPotThisHand = true;
-      this.gameUpdate.lastBombPotTime = new Date();
     } else {
-      const now = new Date();
-      const intervalInMs = this.gameSettings.bombPotInterval * 1000;
-      if (this.gameUpdate.lastBombPotTime === null) {
-        this.gameUpdate.lastBombPotTime = new Date();
+      if (!this.gameSettings.bombPotEnabled) {
+        return;
       }
-      const nextBombPotTime = new Date(
-        this.gameUpdate.lastBombPotTime.getTime() + intervalInMs
-      );
-      logger.debug(
-        `Next bomb time: ${nextBombPotTime.toISOString()} now: ${now.toISOString()}`
-      );
-      if (
-        now.getTime() > nextBombPotTime.getTime() ||
-        this.gameSettings.bombPotEveryHand
-      ) {
-        logger.debug(`Game: ${this.game.gameCode} Time for next bomb pot`);
+      if (this.handNum === 1) {
         this.bombPotThisHand = true;
+        this.gameUpdate.lastBombPotTime = new Date();
+      } else {
+        const now = new Date();
+        const intervalInMs = this.gameSettings.bombPotInterval * 1000;
+        if (this.gameUpdate.lastBombPotTime === null) {
+          this.gameUpdate.lastBombPotTime = new Date();
+        }
+        const nextBombPotTime = new Date(
+          this.gameUpdate.lastBombPotTime.getTime() + intervalInMs
+        );
+        logger.debug(
+          `Next bomb time: ${nextBombPotTime.toISOString()} now: ${now.toISOString()}`
+        );
+        if (
+          now.getTime() > nextBombPotTime.getTime() ||
+          this.gameSettings.bombPotEveryHand
+        ) {
+          logger.debug(`Game: ${this.game.gameCode} Time for next bomb pot`);
+          this.bombPotThisHand = true;
+        }
       }
     }
 

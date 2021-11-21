@@ -355,6 +355,7 @@ input GameSettingsUpdateInput {
   bombPotInterval: Int        
   bombPotIntervalInSecs: Int 
   bombPotEveryHand: Boolean
+  bombPotNextHand: Boolean
 
   seatChangeAllowed: Boolean
   seatChangeTimeout: Int    # default 10 seconds

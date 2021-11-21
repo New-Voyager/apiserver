@@ -297,6 +297,9 @@ export class PokerGameSettings {
 
   @Column({name: 'show_result', default: true})
   public showResult!: boolean;
+
+  // cache only
+  public nextHandBombPot = false;
 }
 
 @Entity({name: 'poker_game'})

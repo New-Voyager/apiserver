@@ -218,6 +218,26 @@ class GameCache {
     }
   }
 
+  // from the api
+  // read in moveToNextHand
+  // once read, reset to false
+  public async updateNextHandBombPot(
+    gameCode: string,
+    isBombPotNextHand: boolean
+  ) {
+    const getResp = await this.getCache(`gameSettingsCache-${gameCode}`);
+    if (getResp.success && getResp.data) {
+      const game: PokerGameSettings = JSON.parse(
+        getResp.data
+      ) as PokerGameSettings;
+      game.nextHandBombPot = isBombPotNextHand;
+      await this.setCache(
+        `gameSettingsCache-${gameCode}`,
+        JSON.stringify(game)
+      );
+    }
+  }
+
   /**
    * Update the cache there is a pending updates for this game.
    * e.g. When a player's stack goes to 0, we need to start the buyin timer,
@@ -334,6 +354,11 @@ class GameCache {
         throw new Error(
           `Cannot find with game code [${gameCode}] in poker game settings repo`
         );
+      }
+
+      if (getResp.data) {
+        const oldGameSettings = JSON.parse(getResp.data) as PokerGameSettings;
+        gameSettings.nextHandBombPot = oldGameSettings.nextHandBombPot;
       }
 
       await this.setCache(
