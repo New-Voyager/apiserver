@@ -186,6 +186,7 @@ type GameInfo {
   utgStraddleAllowed: Boolean
   buttonStraddleAllowed: Boolean
   buttonStraddleBet: Int
+  chipUnit: ChipUnit
   minPlayers: Int
   maxPlayers: Int
   gameLength: Int

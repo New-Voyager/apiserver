@@ -10,6 +10,7 @@ import {
   ApprovalStatus,
   SeatStatus,
   GameEndReason,
+  ChipUnit,
 } from '@src/entity/types';
 import {getLogger, errToStr} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
@@ -582,6 +583,7 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.gameType = GameType[game.gameType];
     ret.tableStatus = TableStatus[game.tableStatus];
     ret.status = GameStatus[game.status];
+    ret.chipUnit = ChipUnit[game.chipUnit];
     ret.gameID = game.id;
     ret.agoraAppId = getAgoraAppId();
 
