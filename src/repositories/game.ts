@@ -17,6 +17,7 @@ import {
   GameEndReason,
   NextHandUpdate,
   CreditUpdateType,
+  ChipUnit,
 } from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
 import {errToStr, getLogger} from '@src/utils/log';
@@ -111,6 +112,11 @@ class GameRepositoryImpl {
     }
     const game: PokerGame = {...input} as PokerGame;
     game.gameType = gameType;
+
+    const chipUnitStr: string = input['chipUnit'];
+    const chipUnit: ChipUnit = ChipUnit[chipUnitStr];
+    game.chipUnit = chipUnit;
+
     game.isTemplate = template;
     game.status = GameStatus.CONFIGURED;
     if (!game.title) {

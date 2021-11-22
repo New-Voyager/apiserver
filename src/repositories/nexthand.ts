@@ -868,6 +868,7 @@ export class NextHandProcess {
           handNum: gameUpdate.handNum,
           actionTime: game.actionTime,
           straddleBet: game.straddleBet,
+          chipUnit: game.chipUnit,
           rakePercentage: game.rakePercentage,
           rakeCap: game.rakeCap,
           gameStatus: game.status,
