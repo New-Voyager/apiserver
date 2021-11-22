@@ -739,7 +739,11 @@ class NatsClass {
     this.sendMessage(subject, messageStr);
   }
 
-  public gameSettingsChanged(game: PokerGame, nextHandBombPot?: boolean, messageId?: string) {
+  public gameSettingsChanged(
+    game: PokerGame,
+    nextHandBombPot?: boolean,
+    messageId?: string
+  ) {
     if (this.client === null) {
       return;
     }
