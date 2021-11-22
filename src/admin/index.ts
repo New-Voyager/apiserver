@@ -86,7 +86,7 @@ export async function createAnnouncement(req: any, resp: any) {
     errors.push('text is required');
   }
   let expiresAtDate: Date;
-  if (!expiresAt) {
+  if (expiresAt) {
     expiresAtDate = new Date(Date.parse(expiresAt));
   }
 
