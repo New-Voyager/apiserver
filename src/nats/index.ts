@@ -739,7 +739,7 @@ class NatsClass {
     this.sendMessage(subject, messageStr);
   }
 
-  public gameSettingsChanged(game: PokerGame, messageId?: string) {
+  public gameSettingsChanged(game: PokerGame, nextHandBombPot?: boolean, messageId?: string) {
     if (this.client === null) {
       return;
     }
@@ -748,11 +748,14 @@ class NatsClass {
       messageId = uuidv4();
     }
 
-    const message = {
+    const message: any = {
       type: 'GAME_SETTINGS_CHANGED',
       gameId: game.id,
       gameCode: game.gameCode,
     };
+    if (nextHandBombPot !== undefined) {
+      message.nextHandBombPot = nextHandBombPot;
+    }
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
     this.sendMessage(subject, messageStr);

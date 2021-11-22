@@ -183,7 +183,7 @@ class GameSettingsRepositoryImpl {
       await Cache.updateNextHandBombPot(game.gameCode, input.bombPotNextHand);
     }
     const gameSettingsUpdated = await Cache.getGameSettings(gameCode, true);
-    Nats.gameSettingsChanged(game);
+    Nats.gameSettingsChanged(game, gameSettingsUpdated.nextHandBombPot);
     logger.info(JSON.stringify(gameSettingsUpdated));
   }
 
