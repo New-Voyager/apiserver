@@ -43,7 +43,7 @@ input ClubMemberUpdateInput {
   autoBuyinApproval: Boolean
   referredBy: String
   contactInfo: String
-  tipsBack: Int
+  tipsBack: Float
 }
 
 input ManagerRoleInput {
@@ -68,8 +68,8 @@ type ClubMember {
   imageId: String
   isOwner: Boolean
   isManager: Boolean
-  totalBuyins: Int
-  totalWinnings: Int
+  totalBuyins: Float
+  totalWinnings: Float
   rakePaid: Float
   notes: String
   contactInfo: String
@@ -99,7 +99,7 @@ type ClubGameInfo {
   sessionTime: Int
   sessionTimeStr: String
   handsPlayed: Int
-  balance: Int  
+  balance: Float  
 }
 
 input PageInput {
