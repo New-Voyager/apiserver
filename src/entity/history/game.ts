@@ -23,14 +23,26 @@ export class GameHistory {
   @Column({name: 'game_type'})
   public gameType!: GameType;
 
-  @Column({name: 'small_blind'})
+  @Column({
+    name: 'small_blind',
+    type: 'decimal',
+    precision: 7,
+    scale: 2,
+    nullable: false,
+  })
   public smallBlind!: number;
+
+  @Column({
+    name: 'big_blind',
+    type: 'decimal',
+    precision: 7,
+    scale: 2,
+    nullable: false,
+  })
+  public bigBlind!: number;
 
   @Column({name: 'game_status', nullable: true, default: GameStatus.UNKNOWN})
   public status!: GameStatus;
-
-  @Column({name: 'big_blind'})
-  public bigBlind!: number;
 
   @Column({name: 'hands_dealt', default: 0})
   public handsDealt!: number;
