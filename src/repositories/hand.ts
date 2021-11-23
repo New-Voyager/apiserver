@@ -3,6 +3,7 @@ import * as zlib from 'zlib';
 import {SavedHands} from '@src/entity/player/player';
 import {HandHistory} from '@src/entity/history/hand';
 import {
+  ChipUnit,
   ClubMessageType,
   GameType,
   HandDataType,
@@ -776,6 +777,60 @@ class HandRepositoryImpl {
             return saveResult;
           }
 
+          let playerRakes = {};
+          for (const seatNo of Object.keys(playersInHand)) {
+            playerRakes[seatNo] = 0;
+          }
+
+          if (handRake > 0) {
+            let sumPotContributions: number = 0;
+            for (const seatNo of Object.keys(playersInHand)) {
+              const player = playersInHand[seatNo];
+              if (player.potContribution) {
+                sumPotContributions += player.potContribution;
+              }
+            }
+            let rakeAccountedFor: number = 0;
+            for (const seatNo of Object.keys(playersInHand)) {
+              const player = playersInHand[seatNo];
+              let rakePaidByPlayer = 0.0;
+              if (typeof player.potContribution === 'number') {
+                const playerRakeRaw =
+                  handRake * (player.potContribution / sumPotContributions);
+                if (game.chipUnit === ChipUnit.CENT) {
+                  rakePaidByPlayer = this.floorDecimal(playerRakeRaw, 2);
+                } else {
+                  rakePaidByPlayer = this.floorDecimal(playerRakeRaw, 0);
+                }
+                playerRakes[seatNo] = rakePaidByPlayer;
+                rakeAccountedFor += rakePaidByPlayer;
+              }
+            }
+
+            rakeAccountedFor = this.roundDecimal(rakeAccountedFor, 2);
+            if (rakeAccountedFor < handRake) {
+              for (const seatNo of Object.keys(playersInHand)) {
+                if (game.chipUnit === ChipUnit.CENT) {
+                  playerRakes[seatNo] += 0.01;
+                  rakeAccountedFor = this.roundDecimal(
+                    rakeAccountedFor + 0.01,
+                    2
+                  );
+                } else {
+                  playerRakes[seatNo] += 1;
+                  rakeAccountedFor += 1;
+                }
+                if (rakeAccountedFor >= handRake) {
+                  break;
+                }
+              }
+            }
+
+            for (const seatNo of Object.keys(playerRakes)) {
+              playerRakes[seatNo] = this.roundDecimal(playerRakes[seatNo], 2);
+            }
+          }
+
           /**
            * Assigning player chips values
            */
@@ -787,10 +842,7 @@ class HandRepositoryImpl {
             if (winners[playerId]) {
               wonHand = 1;
             }
-            let rakePaidByPlayer = 0.0;
-            if (player.rakePaid) {
-              rakePaidByPlayer = player.rakePaid;
-            }
+            const rakePaidByPlayer = playerRakes[seatNo];
             await transactionEntityManager
               .getRepository(PlayerGameTracker)
               .createQueryBuilder()
@@ -907,6 +959,26 @@ class HandRepositoryImpl {
         error: errToStr(err),
       };
     }
+  }
+
+  private floorDecimal(num: number, digits: number): number {
+    if (digits === 0) {
+      return Math.floor(num);
+    }
+    if (digits === 2) {
+      return Math.floor(num * 100) / 100;
+    }
+    throw new Error(`Unsupported digits in floorDecimal: ${digits}`);
+  }
+
+  private roundDecimal(num: number, digits: number): number {
+    if (digits === 0) {
+      return Math.round(num);
+    }
+    if (digits === 2) {
+      return Math.round(num * 100) / 100;
+    }
+    throw new Error(`Unsupported digits in roundDecimal: ${digits}`);
   }
 
   private async handleHighRanks(
