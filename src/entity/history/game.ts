@@ -32,9 +32,6 @@ export class GameHistory {
   })
   public smallBlind!: number;
 
-  @Column({name: 'game_status', nullable: true, default: GameStatus.UNKNOWN})
-  public status!: GameStatus;
-
   @Column({
     name: 'big_blind',
     type: 'decimal',
@@ -43,6 +40,9 @@ export class GameHistory {
     nullable: false,
   })
   public bigBlind!: number;
+
+  @Column({name: 'game_status', nullable: true, default: GameStatus.UNKNOWN})
+  public status!: GameStatus;
 
   @Column({name: 'hands_dealt', default: 0})
   public handsDealt!: number;
