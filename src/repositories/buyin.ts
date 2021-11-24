@@ -22,7 +22,7 @@ import {
 } from './types';
 import {Club, ClubMember} from '@src/entity/player/club';
 import {buyInRequest, pendingApprovalsForClubData} from '@src/types';
-import {fixQuery} from '@src/utils';
+import {chipsToCents, fixQuery} from '@src/utils';
 import {Firebase} from '@src/firebase';
 import {PlayerRepository} from './player';
 import {
@@ -254,7 +254,8 @@ export class BuyIn {
     );
   }
 
-  public async request(amount: number): Promise<buyInRequest> {
+  public async request(chips: number): Promise<buyInRequest> {
+    const amount = chipsToCents(chips);
     const timeout = 60;
 
     const startTime = new Date().getTime();

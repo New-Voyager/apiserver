@@ -18,7 +18,7 @@ import {Cache} from '@src/cache';
 import {NextHandUpdate, PlayerStatus, TableStatus} from '@src/entity/types';
 import {Nats} from '@src/nats';
 import {startTimer} from '@src/timer';
-import {utcTime} from '@src/utils';
+import {chipsToCents, utcTime} from '@src/utils';
 import _ from 'lodash';
 import {BUYIN_TIMEOUT, GamePlayerSettings} from './types';
 import {getAgoraToken} from '@src/3rdparty/agora';
@@ -175,7 +175,8 @@ class PlayersInGameRepositoryImpl {
     });
   }
 
-  public async setBuyInLimit(gameCode: string, player: Player, limit: number) {
+  public async setBuyInLimit(gameCode: string, player: Player, chips: number) {
+    const limit = chipsToCents(chips);
     await getGameManager().transaction(async transactionEntityManager => {
       // find game
       const game = await Cache.getGame(
@@ -189,7 +190,7 @@ class PlayersInGameRepositoryImpl {
       const playerGameTrackerRepository =
         transactionEntityManager.getRepository(PlayerGameTracker);
       logger.info(
-        `Setting buy-in limit to ${limit} for player ${player?.id}/${player?.name} in game ${gameCode}`
+        `Setting buy-in limit to ${limit} cents (${chips} chips) for player ${player?.id}/${player?.name} in game ${gameCode}`
       );
       const playerInGame = await playerGameTrackerRepository.findOne({
         where: {

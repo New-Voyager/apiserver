@@ -131,3 +131,17 @@ export function cardNumber(card: number) {
   }
   return 0;
 }
+
+export function chipsToCents(chips: number): number {
+  if (chips) {
+    return chips * 100;
+  }
+  return chips;
+}
+
+export function centsToChips(cents: number): number {
+  if (cents) {
+    return cents / 100;
+  }
+  return cents;
+}

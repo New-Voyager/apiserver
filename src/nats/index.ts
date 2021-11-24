@@ -16,6 +16,7 @@ import * as Constants from '../const';
 import {SeatMove, SeatUpdate} from '@src/types';
 import {SageMakerFeatureStoreRuntime} from 'aws-sdk';
 import {getAppSettings} from '@src/firebase';
+import {centsToChips} from '@src/utils';
 
 const logger = getLogger('nats');
 
@@ -528,9 +529,9 @@ class NatsClass {
       playerUuid: player.uuid,
       playerName: player.name,
       seatNo: seatNo,
-      stack: playerGameInfo.stack,
       status: PlayerStatus[playerGameInfo.status],
-      buyIn: playerGameInfo.buyIn,
+      stack: centsToChips(playerGameInfo.stack),
+      buyIn: centsToChips(playerGameInfo.buyIn),
       gameToken: playerGameInfo.gameToken,
       newUpdate: NewUpdate[NewUpdate.NEW_PLAYER],
     };
@@ -556,9 +557,9 @@ class NatsClass {
       playerUuid: player.uuid,
       playerName: player.name,
       seatNo: playerGameInfo.seatNo,
-      stack: playerGameInfo.stack,
       status: PlayerStatus[playerGameInfo.status],
-      buyIn: playerGameInfo.buyIn,
+      stack: centsToChips(playerGameInfo.stack),
+      buyIn: centsToChips(playerGameInfo.buyIn),
       newUpdate: NewUpdate[NewUpdate.NEW_BUYIN],
     };
     const messageStr = JSON.stringify(message);
@@ -632,7 +633,7 @@ class NatsClass {
       playerUuid: player.uuid,
       playerName: player.name,
       seatNo: seatNo,
-      stack: stack,
+      stack: centsToChips(stack),
       status: PlayerStatus[oldStatus],
       newUpdate: NewUpdate[newStatus],
     };

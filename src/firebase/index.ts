@@ -16,6 +16,7 @@ import {PlayerRepository} from '@src/repositories/player';
 import {Cache} from '@src/cache';
 import {Announcement} from '@src/entity/player/announcements';
 import {FirebaseToken} from '@src/repositories/types';
+import {centsToChips} from '@src/utils';
 
 //import {default as google} from 'googleapis';
 let MESSAGE_BATCH_SIZE = 100;
@@ -197,7 +198,7 @@ class FirebaseClass {
     if (host.firebaseToken !== null && host.firebaseToken.length > 0) {
       const message: firebase.messaging.TokenMessage = {
         data: {
-          amount: amount.toString(),
+          amount: centsToChips(amount).toString(),
           gameCode: game.gameCode,
           playerName: requestingPlayer.name,
           playerUuid: requestingPlayer.uuid,
@@ -223,7 +224,7 @@ class FirebaseClass {
     if (host.firebaseToken !== null && host.firebaseToken.length > 0) {
       const message: firebase.messaging.TokenMessage = {
         data: {
-          amount: amount.toString(),
+          amount: centsToChips(amount).toString(),
           gameCode: game.gameCode,
           playerName: requestingPlayer.name,
           playerUuid: requestingPlayer.uuid,
