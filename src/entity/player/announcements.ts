@@ -12,6 +12,7 @@ import {
   DbAwareUpdateDateColumn,
 } from '../dbaware';
 import {AnnouncementLevel, AnnouncementType} from '../types';
+import {Player} from './player';
 
 @Entity({name: 'announcement'})
 export class Announcement {
@@ -30,6 +31,10 @@ export class Announcement {
 
   @Column({name: 'level', default: AnnouncementLevel.INFO})
   public announcementLevel!: AnnouncementLevel;
+
+  @ManyToOne(type => Player, {nullable: true, eager: true})
+  @JoinColumn({name: 'player_id'})
+  public user!: Player;
 
   @DbAwareColumn({
     name: 'expires_at',

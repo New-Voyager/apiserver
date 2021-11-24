@@ -61,7 +61,7 @@ export async function addClubAnnouncement(
     throw new Error(`Club ${clubCode} is not found`);
   }
   const clubMember = await Cache.getClubMember(player.uuid, club.clubCode);
-  if (!clubMember || !clubMember.isOwner) {
+  if (!clubMember || !(clubMember.isOwner || clubMember.isManager)) {
     logger.error(`Player: ${player.uuid} is not a host in club ${club.name}`);
     throw new Error(
       `Player: ${player.uuid} is not a host in club ${club.name}`
@@ -69,7 +69,12 @@ export async function addClubAnnouncement(
   }
 
   try {
-    await AnnouncementsRepository.addClubAnnouncement(club, text, expiresAt);
+    await AnnouncementsRepository.addClubAnnouncement(
+      clubMember.player,
+      club,
+      text,
+      expiresAt
+    );
     return true;
   } catch (error) {
     logger.error(`Failed with error: ${errToStr(error)}`);
