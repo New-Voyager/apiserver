@@ -373,7 +373,7 @@ export async function pendingApprovalsForGame(
       ret.push(itemRet);
     }
 
-    return ret;
+    return pendingApprovalsToClientUnits(ret);
   } catch (err) {
     logger.error(
       `Error in pendingApprovalsForGame. hostUuid: ${hostUuid}, gameCode: ${gameCode}: ${errToStr(
@@ -417,7 +417,7 @@ export async function pendingApprovalsForClub(
       ret.push(itemRet);
     }
 
-    return ret;
+    return pendingApprovalsToClientUnits(ret);
   } catch (err) {
     logger.error(
       `Error in pendingApprovalsForClub. hostUuid: ${hostUuid}, clubCode: ${clubCode}: ${errToStr(
@@ -428,6 +428,20 @@ export async function pendingApprovalsForClub(
       `Failed to fetch approval requests. ${JSON.stringify(err)}`
     );
   }
+}
+
+function pendingApprovalsToClientUnits(input: Array<any>): any {
+  const resp = new Array<any>();
+  for (const i of input) {
+    const r = {...i};
+    r.amount = centsToChips(r.amount);
+    r.availableCredit = centsToChips(r.availableCredit);
+    r.smallBlind = centsToChips(r.smallBlind);
+    r.bigBlind = centsToChips(r.bigBlind);
+    resp.push(r);
+  }
+
+  return resp;
 }
 
 export async function approveRequest(
@@ -531,7 +545,7 @@ export async function myGameState(playerUuid: string, gameCode: string) {
       seatNo: data.seatNo,
     };
 
-    return gameState;
+    return gameStateToClientUnits(gameState);
   } catch (err) {
     logger.error(
       `Error in myGameState. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToStr(
@@ -540,6 +554,13 @@ export async function myGameState(playerUuid: string, gameCode: string) {
     );
     throw new Error(`Failed to get game state. ${JSON.stringify(err)}`);
   }
+}
+
+function gameStateToClientUnits(input: any): any {
+  const r = {...input};
+  r.buyIn = centsToChips(r.buyIn);
+  r.stack = centsToChips(r.stack);
+  return r;
 }
 
 export async function tableGameState(playerUuid: string, gameCode: string) {
@@ -578,7 +599,7 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
         playingFrom: data.satAt,
         seatNo: data.seatNo,
       };
-      tableGameState.push(gameState);
+      tableGameState.push(gameStateToClientUnits(gameState));
     });
 
     return tableGameState;

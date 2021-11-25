@@ -25,7 +25,7 @@ export async function completedGame(playerId: string, gameCode: string) {
         };
       });
     }
-    return gameHistoryData;
+    return gameHistoryToClientUnits(gameHistoryData);
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error('Failed to retreive game history data');
@@ -66,29 +66,34 @@ export async function gameHistory(playerId: string, clubCode: string) {
       return res;
     });
 
-    return gameHistoryToClientUnits(gameHistory);
+    return gameHistoriesToClientUnits(gameHistory);
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error('Failed to retreive game history data');
   }
 }
 
-function gameHistoryToClientUnits(input: Array<any>): any {
-  const gh = new Array<any>();
-  for (const r of input) {
-    const h = {...r};
-    h.smallBlind = centsToChips(h.smallBlind);
-    h.bigBlind = centsToChips(h.bigBlind);
-    h.buyIn = centsToChips(h.buyIn);
-    h.profit = centsToChips(h.profit);
-    h.stack = centsToChips(h.stack);
-    if (h.stackStat) {
-      h.stackStat.before = centsToChips(h.stackStat.before);
-      h.stackStat.after = centsToChips(h.stackStat.after);
-    }
-    gh.push(h);
+function gameHistoryToClientUnits(input: any): any {
+  const h = {...input};
+  h.smallBlind = centsToChips(h.smallBlind);
+  h.bigBlind = centsToChips(h.bigBlind);
+  h.buyIn = centsToChips(h.buyIn);
+  h.profit = centsToChips(h.profit);
+  h.stack = centsToChips(h.stack);
+  if (h.stackStat) {
+    h.stackStat.before = centsToChips(h.stackStat.before);
+    h.stackStat.after = centsToChips(h.stackStat.after);
   }
-  return gh;
+  return h;
+}
+
+function gameHistoriesToClientUnits(input: Array<any>): any {
+  const resp = new Array<any>();
+  for (const i of input) {
+    const h = gameHistoryToClientUnits(i);
+    resp.push(h);
+  }
+  return resp;
 }
 
 export async function playersInGame(playerId: string, gameCode: string) {
