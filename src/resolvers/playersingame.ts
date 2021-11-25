@@ -19,6 +19,7 @@ import {
 } from '@src/errors';
 import {gameLogPrefix} from '@src/entity/game/game';
 import {HistoryRepository} from '@src/repositories/history';
+import {chipsToCents} from '@src/utils';
 
 const logger = getLogger('resolvers::players_in_game');
 
@@ -500,7 +501,7 @@ export async function takeSeat(
 export async function buyIn(
   playerUuid: string,
   gameCode: string,
-  amount: number
+  chips: number
 ) {
   if (!playerUuid) {
     throw new UnauthorizedError();
@@ -528,11 +529,12 @@ export async function buyIn(
     logger.info(
       `${gameLogPrefix(game)} Player: ${player.uuid}/${
         player.name
-      } is buying for ${amount}`
+      } is buying for ${chips}`
     );
 
     const buyin = new BuyIn(game, player);
-    const status = await buyin.request(amount);
+    const cents = chipsToCents(chips);
+    const status = await buyin.request(cents);
 
     const timeTaken = new Date().getTime() - startTime;
     logger.info(`Buyin took ${timeTaken}ms`);
@@ -565,7 +567,7 @@ export async function buyIn(
   } catch (err) {
     const timeTaken = new Date().getTime() - startTime;
     logger.error(
-      `Error while buying in. playerUuid: ${playerUuid}, gameCode: ${gameCode}, amount: ${amount}: ${errToStr(
+      `Error while buying in. playerUuid: ${playerUuid}, gameCode: ${gameCode}, amount: ${chips}: ${errToStr(
         err
       )}`
     );
@@ -576,7 +578,7 @@ export async function buyIn(
 export async function reload(
   playerUuid: string,
   gameCode: string,
-  amount: number
+  chips: number
 ) {
   if (!playerUuid) {
     throw new UnauthorizedError();
@@ -604,16 +606,17 @@ export async function reload(
     logger.info(
       `${gameLogPrefix(game)} Player: ${player.uuid}/${
         player.name
-      } is reloading for ${amount}`
+      } is reloading for ${chips}`
     );
 
     const buyin = new Reload(game, player);
-    const status = await buyin.request(amount);
+    const cents = chipsToCents(chips);
+    const status = await buyin.request(cents);
     // player is good to go
     return status;
   } catch (err) {
     logger.error(
-      `Error while reloading. playerUuid: ${playerUuid}, gameCode: ${gameCode}, amount: ${amount}: ${errToStr(
+      `Error while reloading. playerUuid: ${playerUuid}, gameCode: ${gameCode}, amount: ${chips}: ${errToStr(
         err
       )}`
     );
@@ -809,7 +812,7 @@ export async function setBuyInLimit(
   gameCode: string,
   targetPlayerUuid: string,
   targetPlayerId: number,
-  limit: number
+  chipsLimit: number
 ): Promise<boolean> {
   if (!requestUser) {
     throw new UnauthorizedError();
@@ -841,7 +844,8 @@ export async function setBuyInLimit(
         `Player ${targetPlayerUuid}:${targetPlayerId} is missing`
       );
     }
-    await PlayersInGameRepository.setBuyInLimit(gameCode, player, limit);
+    const centsLimit = chipsToCents(chipsLimit);
+    await PlayersInGameRepository.setBuyInLimit(gameCode, player, centsLimit);
     return true;
   } catch (err) {
     logger.error(

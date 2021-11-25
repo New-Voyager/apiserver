@@ -254,8 +254,7 @@ export class BuyIn {
     );
   }
 
-  public async request(chips: number): Promise<buyInRequest> {
-    const amount = chipsToCents(chips);
+  public async request(cents: number): Promise<buyInRequest> {
     const timeout = 60;
 
     const startTime = new Date().getTime();
@@ -290,8 +289,8 @@ export class BuyIn {
 
         // check amount should be between game.minBuyIn and game.maxBuyIn
         if (
-          playerInGame.stack + amount < this.game.buyInMin ||
-          playerInGame.stack + amount > this.game.buyInMax
+          playerInGame.stack + cents < this.game.buyInMin ||
+          playerInGame.stack + cents > this.game.buyInMax
         ) {
           throw new Error(
             `Buyin must be between ${this.game.buyInMin} and ${this.game.buyInMax}`
@@ -300,7 +299,7 @@ export class BuyIn {
         if (this.game.clubCode) {
           // club game
           [playerStatus, approved] = await this.clubMemberBuyInApproval(
-            amount,
+            cents,
             playerInGame,
             transactionEntityManager
           );
@@ -346,7 +345,7 @@ export class BuyIn {
               this.game,
               this.player,
               host,
-              amount
+              cents
             );
 
             // refresh the screen
@@ -365,7 +364,7 @@ export class BuyIn {
             // approved
             approved = true;
           } else if (
-            playerInGame.buyIn + amount <=
+            playerInGame.buyIn + cents <=
             playerInGame.buyInAutoApprovalLimit
           ) {
             approved = true;
@@ -376,7 +375,7 @@ export class BuyIn {
           playerStatus = PlayerStatus.WAIT_FOR_BUYIN_APPROVAL;
           if (approved) {
             const updatedPlayerInGame = await this.approveBuyInRequest(
-              amount,
+              cents,
               playerInGame,
               transactionEntityManager
             );

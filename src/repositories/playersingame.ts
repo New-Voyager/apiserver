@@ -175,8 +175,7 @@ class PlayersInGameRepositoryImpl {
     });
   }
 
-  public async setBuyInLimit(gameCode: string, player: Player, chips: number) {
-    const limit = chipsToCents(chips);
+  public async setBuyInLimit(gameCode: string, player: Player, cents: number) {
     await getGameManager().transaction(async transactionEntityManager => {
       // find game
       const game = await Cache.getGame(
@@ -190,7 +189,7 @@ class PlayersInGameRepositoryImpl {
       const playerGameTrackerRepository =
         transactionEntityManager.getRepository(PlayerGameTracker);
       logger.info(
-        `Setting buy-in limit to ${limit} cents (${chips} chips) for player ${player?.id}/${player?.name} in game ${gameCode}`
+        `Setting buy-in limit to ${cents} cents for player ${player?.id}/${player?.name} in game ${gameCode}`
       );
       const playerInGame = await playerGameTrackerRepository.findOne({
         where: {
@@ -210,7 +209,7 @@ class PlayersInGameRepositoryImpl {
           playerId: player.id,
         },
         {
-          buyInAutoApprovalLimit: limit,
+          buyInAutoApprovalLimit: cents,
         }
       );
     });

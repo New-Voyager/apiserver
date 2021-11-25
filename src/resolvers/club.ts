@@ -12,6 +12,7 @@ import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
 import {AppCoinRepository} from '@src/repositories/appcoin';
 import moment from 'moment-timezone';
+import {centsToChips, chipsToCents} from '@src/utils';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
 
@@ -512,19 +513,37 @@ export async function clubMemberActivityGrouped(
     throw new Error('Invalid argument');
   }
 
-  return ClubRepository.clubMemberActivityGrouped(
+  const a = await ClubRepository.clubMemberActivityGrouped(
     playerId,
     clubCode,
     startDate,
     endDate
   );
+
+  return activityToClientUnits(a);
+}
+
+function activityToClientUnits(input: Array<any>): any {
+  const resp = new Array<any>();
+  for (const a of input) {
+    const activity = {...a};
+    activity.availableCredit = centsToChips(activity.availableCredit);
+    activity.tips = centsToChips(activity.tips);
+    activity.tipsBack = centsToChips(activity.tipsBack);
+    activity.tipsBackAmount = centsToChips(activity.tipsBackAmount);
+    activity.buyIn = centsToChips(activity.buyIn);
+    activity.profit = centsToChips(activity.profit);
+    resp.push(activity);
+  }
+
+  return resp;
 }
 
 export async function setCredit(
   playerId: string,
   clubCode: string,
   playerUuid: string,
-  amount: number,
+  chips: number,
   notes: string
 ) {
   const errors = new Array<string>();
@@ -537,7 +556,7 @@ export async function setCredit(
   if (playerUuid === '') {
     errors.push('Invalid player');
   }
-  if (amount === null || amount === undefined) {
+  if (chips === null || chips === undefined) {
     errors.push('Invalid amount');
   }
   if (errors.length > 0) {
@@ -545,11 +564,12 @@ export async function setCredit(
     throw new Error('Invalid argument');
   }
 
+  const cents = chipsToCents(chips);
   return ClubRepository.adminSetCredit(
     playerId,
     clubCode,
     playerUuid,
-    amount,
+    cents,
     notes
   );
 }
