@@ -131,3 +131,45 @@ export function cardNumber(card: number) {
   }
   return 0;
 }
+
+export function chipsToCents(chips: number): number {
+  if (chips) {
+    return chips * 100;
+  }
+  return chips;
+}
+
+export function centsToChips(cents: number): number {
+  if (cents) {
+    return cents / 100;
+  }
+  return cents;
+}
+
+export function floorToNearest(num: number, nearest: number): number {
+  if (nearest === 1) {
+    return Math.floor(num);
+  }
+  num = Math.floor(num);
+  return num - (num % nearest);
+}
+
+export function floorDecimal(num: number, digits: number): number {
+  if (digits === 0) {
+    return Math.floor(num);
+  }
+  if (digits === 2) {
+    return Math.floor(num * 100) / 100;
+  }
+  throw new Error(`Unsupported digits in floorDecimal: ${digits}`);
+}
+
+export function roundDecimal(num: number, digits: number): number {
+  if (digits === 0) {
+    return Math.round(num);
+  }
+  if (digits === 2) {
+    return Math.round(num * 100) / 100;
+  }
+  throw new Error(`Unsupported digits in roundDecimal: ${digits}`);
+}

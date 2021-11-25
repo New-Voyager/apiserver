@@ -42,6 +42,7 @@ import {
   UnauthorizedError,
 } from '@src/errors';
 import {Firebase} from '@src/firebase';
+import {centsToChips, chipsToCents} from '@src/utils';
 
 const logger = getLogger('resolvers::game');
 
@@ -84,7 +85,13 @@ export async function configureGame(
       throw new Error('Unauthorized');
     }
     const player = await Cache.getPlayer(playerId, true);
-    const gameInfo = await GameRepository.createPrivateGame(club, player, game);
+    const gameInServerUnits = gameInputToServerUnits(game);
+
+    const gameInfo = await GameRepository.createPrivateGame(
+      club,
+      player,
+      gameInServerUnits
+    );
     const cachedGame = await Cache.getGame(gameInfo.gameCode, true);
     if (!cachedGame) {
       throw new GameNotFoundError(gameInfo.gameCode);
@@ -114,7 +121,7 @@ export async function configureGame(
       gameInfo.bigBlind,
       messageId
     );
-    return ret;
+    return gameInfoToClientUnits(ret);
   } catch (err) {
     logger.error(
       `Error while configuring game. playerId: ${playerId}, clubCode: ${clubCode}, game: ${JSON.stringify(
@@ -123,6 +130,55 @@ export async function configureGame(
     );
     throw new GameCreationError('UNKNOWN');
   }
+}
+
+function gameInputToServerUnits(input: any) {
+  const game = {...input};
+  if (game.smallBlind) {
+    game.smallBlind = chipsToCents(game.smallBlind);
+  }
+  if (game.bigBlind) {
+    game.bigBlind = chipsToCents(game.bigBlind);
+  }
+  if (game.straddleBet) {
+    game.straddleBet = chipsToCents(game.straddleBet);
+  }
+  if (game.rakeCap) {
+    game.rakeCap = chipsToCents(game.rakeCap);
+  }
+  if (game.buyInMin) {
+    game.buyInMin = chipsToCents(game.buyInMin);
+  }
+  if (game.buyInMax) {
+    game.buyInMax = chipsToCents(game.buyInMax);
+  }
+  return game;
+}
+
+function gameInfoToClientUnits(input: any) {
+  const resp = {...input};
+  if (resp.smallBlind) {
+    resp.smallBlind = centsToChips(resp.smallBlind);
+  }
+  if (resp.bigBlind) {
+    resp.bigBlind = centsToChips(resp.bigBlind);
+  }
+  if (resp.straddleBet) {
+    resp.straddleBet = centsToChips(resp.straddleBet);
+  }
+  if (resp.rakeCap) {
+    resp.rakeCap = centsToChips(resp.rakeCap);
+  }
+  if (resp.buyInMin) {
+    resp.buyInMin = centsToChips(resp.buyInMin);
+  }
+  if (resp.buyInMax) {
+    resp.buyInMax = centsToChips(resp.buyInMax);
+  }
+  if (resp.rakeCollected) {
+    resp.rakeCollected = centsToChips(resp.rakeCollected);
+  }
+  return resp;
 }
 
 export async function configureGameByPlayer(playerId: string, game: any) {
@@ -317,7 +373,7 @@ export async function pendingApprovalsForGame(
       ret.push(itemRet);
     }
 
-    return ret;
+    return pendingApprovalsToClientUnits(ret);
   } catch (err) {
     logger.error(
       `Error in pendingApprovalsForGame. hostUuid: ${hostUuid}, gameCode: ${gameCode}: ${errToStr(
@@ -361,7 +417,7 @@ export async function pendingApprovalsForClub(
       ret.push(itemRet);
     }
 
-    return ret;
+    return pendingApprovalsToClientUnits(ret);
   } catch (err) {
     logger.error(
       `Error in pendingApprovalsForClub. hostUuid: ${hostUuid}, clubCode: ${clubCode}: ${errToStr(
@@ -372,6 +428,20 @@ export async function pendingApprovalsForClub(
       `Failed to fetch approval requests. ${JSON.stringify(err)}`
     );
   }
+}
+
+function pendingApprovalsToClientUnits(input: Array<any>): any {
+  const resp = new Array<any>();
+  for (const i of input) {
+    const r = {...i};
+    r.amount = centsToChips(r.amount);
+    r.availableCredit = centsToChips(r.availableCredit);
+    r.smallBlind = centsToChips(r.smallBlind);
+    r.bigBlind = centsToChips(r.bigBlind);
+    resp.push(r);
+  }
+
+  return resp;
 }
 
 export async function approveRequest(
@@ -475,7 +545,7 @@ export async function myGameState(playerUuid: string, gameCode: string) {
       seatNo: data.seatNo,
     };
 
-    return gameState;
+    return gameStateToClientUnits(gameState);
   } catch (err) {
     logger.error(
       `Error in myGameState. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToStr(
@@ -484,6 +554,13 @@ export async function myGameState(playerUuid: string, gameCode: string) {
     );
     throw new Error(`Failed to get game state. ${JSON.stringify(err)}`);
   }
+}
+
+function gameStateToClientUnits(input: any): any {
+  const r = {...input};
+  r.buyIn = centsToChips(r.buyIn);
+  r.stack = centsToChips(r.stack);
+  return r;
 }
 
 export async function tableGameState(playerUuid: string, gameCode: string) {
@@ -522,7 +599,7 @@ export async function tableGameState(playerUuid: string, gameCode: string) {
         playingFrom: data.satAt,
         seatNo: data.seatNo,
       };
-      tableGameState.push(gameState);
+      tableGameState.push(gameStateToClientUnits(gameState));
     });
 
     return tableGameState;
@@ -670,7 +747,9 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.janusUrl = JanusSession.janusUrl();
     ret.janusSecret = JANUS_SECRET;
     ret.janusToken = JANUS_TOKEN;
-    return ret;
+
+    const resp = gameInfoToClientUnits(ret);
+    return resp;
   } catch (err) {
     logger.error(
       `Error while getting game info. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToStr(
@@ -1101,11 +1180,13 @@ const resolvers: any = {
           }
         }
       }
-      return {
+
+      const resp = seatInfoToClientUnits({
         playersInSeats: playersInSeats,
         availableSeats: availableSeats,
         seats: seats,
-      };
+      });
+      return resp;
     },
     gameToken: async (parent, args, ctx, info) => {
       const game = await Cache.getGame(parent.gameCode);
@@ -1187,6 +1268,36 @@ const resolvers: any = {
     },
   },
 };
+
+function seatInfoToClientUnits(input: any): any {
+  const seatInfo = {...input};
+  for (const s of seatInfo.seats) {
+    if (s.buyIn) {
+      s.buyIn = centsToChips(s.buyIn);
+    }
+    if (s.stack) {
+      s.stack = centsToChips(s.stack);
+    }
+  }
+  for (const s of seatInfo.playersInSeats) {
+    if (s.buyIn) {
+      s.buyIn = centsToChips(s.buyIn);
+    }
+    if (s.stack) {
+      s.stack = centsToChips(s.stack);
+    }
+  }
+  for (const s of seatInfo.availableSeats) {
+    if (s.buyIn) {
+      s.buyIn = centsToChips(s.buyIn);
+    }
+    if (s.stack) {
+      s.stack = centsToChips(s.stack);
+    }
+  }
+
+  return seatInfo;
+}
 
 export async function pendingApprovals(hostUuid: string) {
   if (!hostUuid) {

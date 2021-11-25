@@ -38,6 +38,7 @@ import {GameUpdatesRepository} from './gameupdates';
 import {GameHistory} from '@src/entity/history/game';
 import {GameNotFoundError} from '@src/errors';
 import Axios from 'axios';
+import {floorToNearest} from '@src/utils';
 const logger = getLogger('repositories::hand');
 
 const MAX_STARRED_HAND = 25;
@@ -798,36 +799,28 @@ class HandRepositoryImpl {
                 const playerRakeRaw =
                   handRake * (player.potContribution / sumPotContributions);
                 if (game.chipUnit === ChipUnit.CENT) {
-                  rakePaidByPlayer = this.floorDecimal(playerRakeRaw, 2);
+                  rakePaidByPlayer = floorToNearest(playerRakeRaw, 1);
                 } else {
-                  rakePaidByPlayer = this.floorDecimal(playerRakeRaw, 0);
+                  rakePaidByPlayer = floorToNearest(playerRakeRaw, 100);
                 }
                 playerRakes[seatNo] = rakePaidByPlayer;
                 rakeAccountedFor += rakePaidByPlayer;
               }
             }
 
-            rakeAccountedFor = this.roundDecimal(rakeAccountedFor, 2);
             if (rakeAccountedFor < handRake) {
               for (const seatNo of Object.keys(playersInHand)) {
                 if (game.chipUnit === ChipUnit.CENT) {
-                  playerRakes[seatNo] += 0.01;
-                  rakeAccountedFor = this.roundDecimal(
-                    rakeAccountedFor + 0.01,
-                    2
-                  );
-                } else {
                   playerRakes[seatNo] += 1;
-                  rakeAccountedFor += 1;
+                  rakeAccountedFor = rakeAccountedFor + 1;
+                } else {
+                  playerRakes[seatNo] += 100;
+                  rakeAccountedFor += 100;
                 }
                 if (rakeAccountedFor >= handRake) {
                   break;
                 }
               }
-            }
-
-            for (const seatNo of Object.keys(playerRakes)) {
-              playerRakes[seatNo] = this.roundDecimal(playerRakes[seatNo], 2);
             }
           }
 
@@ -959,26 +952,6 @@ class HandRepositoryImpl {
         error: errToStr(err),
       };
     }
-  }
-
-  private floorDecimal(num: number, digits: number): number {
-    if (digits === 0) {
-      return Math.floor(num);
-    }
-    if (digits === 2) {
-      return Math.floor(num * 100) / 100;
-    }
-    throw new Error(`Unsupported digits in floorDecimal: ${digits}`);
-  }
-
-  private roundDecimal(num: number, digits: number): number {
-    if (digits === 0) {
-      return Math.round(num);
-    }
-    if (digits === 2) {
-      return Math.round(num * 100) / 100;
-    }
-    throw new Error(`Unsupported digits in roundDecimal: ${digits}`);
   }
 
   private async handleHighRanks(

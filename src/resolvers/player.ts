@@ -20,6 +20,7 @@ import {HostMessageRepository} from '@src/repositories/hostmessage';
 import {HistoryRepository} from '@src/repositories/history';
 import {PromotionRepository} from '@src/repositories/promotion';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
+import {centsToChips} from '@src/utils';
 const logger = getLogger('resolvers::player');
 
 async function getClubs(playerId: string): Promise<Array<any>> {
@@ -250,7 +251,19 @@ export async function getMyClubs(playerId: string) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  return getClubs(playerId);
+  const clubs = await getClubs(playerId);
+  return myClubsToClientUnits(clubs);
+}
+
+function myClubsToClientUnits(input: Array<any>): any {
+  const resp = new Array<any>();
+  for (const i of input) {
+    const r = {...i};
+    r.availableCredit = centsToChips(r.availableCredit);
+    resp.push(r);
+  }
+
+  return resp;
 }
 
 /**
@@ -373,7 +386,14 @@ export async function getClubPlayerInfo(playerId: string, clubCode: string) {
   };
   ret.managerRole = ClubRepository.getManagerRole(clubCode);
 
-  return ret;
+  return clubInfoToClientUnits(ret);
+}
+
+function clubInfoToClientUnits(input: any): any {
+  const resp = {...input};
+  resp.myBalance = centsToChips(resp.myBalance);
+  resp.availableCredit = centsToChips(resp.availableCredit);
+  return resp;
 }
 
 export async function searchClub(playerId: string, clubCode: string) {
@@ -488,7 +508,8 @@ export async function getPlayerClubs(playerId: string, parent: any) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  return getClubs(parent.playerId);
+  const clubs = await getClubs(parent.playerId);
+  return myClubsToClientUnits(clubs);
 }
 
 async function getLiveGames(playerId: string, clubCode: string) {
@@ -521,7 +542,21 @@ async function getLiveGames(playerId: string, clubCode: string) {
     }
     ret.push(game);
   }
-  return ret;
+  return liveGamesToClientUnits(ret);
+}
+
+function liveGamesToClientUnits(input: Array<any>): any {
+  const resp = new Array<any>();
+  for (const i of input) {
+    const r = {...i};
+    r.buyInMin = centsToChips(r.buyInMin);
+    r.buyInMax = centsToChips(r.buyInMax);
+    r.smallBlind = centsToChips(r.smallBlind);
+    r.bigBlind = centsToChips(r.bigBlind);
+    resp.push(r);
+  }
+
+  return resp;
 }
 
 async function getPastGames(playerId: string) {
@@ -537,7 +572,23 @@ async function getPastGames(playerId: string) {
     game.gameType = GameType[game['gameType']];
     game.playerStatus = PlayerStatus[game['playerStatus']];
   }
-  return pastGames;
+  return pastGamesToClientUnits(pastGames);
+}
+
+function pastGamesToClientUnits(input: Array<any>): any {
+  const resp = new Array<any>();
+  for (const i of input) {
+    const r = {...i};
+    r.smallBlind = centsToChips(r.smallBlind);
+    r.bigBlind = centsToChips(r.bigBlind);
+    r.buyIn = centsToChips(r.buyIn);
+    r.stack = centsToChips(r.stack);
+    r.balance = centsToChips(r.balance);
+
+    resp.push(r);
+  }
+
+  return resp;
 }
 
 async function getAudioToken(

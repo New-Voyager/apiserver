@@ -6,6 +6,7 @@ import {GameStatus} from '@src/entity/types';
 import {HistoryRepository} from '@src/repositories/history';
 import {GameRepository} from '@src/repositories/game';
 import {Player} from '@src/entity/player/player';
+import {centsToChips} from '@src/utils';
 
 const logger = getLogger('resolvers::history_game');
 
@@ -47,7 +48,8 @@ export async function getGameResultTable(gameCode: string) {
       r.sessionTimeStr = getSessionTimeStr(r.sessionTime);
     }
 
-    return resp;
+    const converted = resultTableToClientUnits(resp);
+    return converted;
   } catch (err) {
     logger.error(
       `Error in getting game result table. gameCode: ${gameCode}: ${errToStr(
@@ -56,6 +58,19 @@ export async function getGameResultTable(gameCode: string) {
     );
     throw new Error(`Failed to get game result table. ${JSON.stringify(err)}`);
   }
+}
+
+function resultTableToClientUnits(input: any): any {
+  const resultTable: Array<any> = [];
+  for (const r of input) {
+    const t = {...r};
+    t.buyIn = centsToChips(t.buyIn);
+    t.profit = centsToChips(t.profit);
+    t.stack = centsToChips(t.stack);
+    t.rakePaid = centsToChips(t.rakePaid);
+    resultTable.push(t);
+  }
+  return resultTable;
 }
 
 export async function downloadResult(playerId: string, gameCode: string) {

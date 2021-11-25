@@ -2,6 +2,7 @@ import * as _ from 'lodash';
 import {RewardRepository} from '@src/repositories/reward';
 import {getLogger} from '@src/utils/log';
 import {RewardType, ScheduleType} from '@src/entity/types';
+import {centsToChips, chipsToCents} from '@src/utils';
 
 const logger = getLogger('resolvers::reward');
 
@@ -24,6 +25,7 @@ export async function saveReward(
     throw new Error(errors.join('\n'));
   }
   try {
+    reward = rewardToServerUnits(reward);
     return RewardRepository.createReward(clubCode, reward);
   } catch (err) {
     logger.error(err);
@@ -31,12 +33,18 @@ export async function saveReward(
   }
 }
 
+function rewardToServerUnits(input: any): any {
+  const r = {...input};
+  r.amount = chipsToCents(r.amount);
+  return r;
+}
+
 export async function getRewards(playerId: string, clubCode: string) {
   if (!playerId) {
     throw new Error('Unauthorized');
   }
   const messages = await RewardRepository.getRewards(clubCode);
-  return _.map(messages, x => {
+  const rewards = _.map(messages, x => {
     return {
       id: x.id,
       name: x.name,
@@ -48,6 +56,18 @@ export async function getRewards(playerId: string, clubCode: string) {
       schedule: ScheduleType[x.schedule],
     };
   });
+  return rewardsToClientUnits(rewards);
+}
+
+function rewardsToClientUnits(input: Array<any>): any {
+  const resp = new Array<any>();
+  for (const i of input) {
+    const r = {...i};
+    r.amount = centsToChips(r.amount);
+    resp.push(r);
+  }
+
+  return resp;
 }
 
 export async function getHighHandsByGame(playerId: string, gameCode: string) {

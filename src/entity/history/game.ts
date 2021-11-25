@@ -1,6 +1,6 @@
 import {Entity, Column, Index} from 'typeorm';
 import {DbAwareColumn} from '../dbaware';
-import {GameEndReason, GameStatus, GameType} from '../types';
+import {ChipUnit, GameEndReason, GameStatus, GameType} from '../types';
 
 @Entity({name: 'game_history'})
 export class GameHistory {
@@ -22,6 +22,9 @@ export class GameHistory {
 
   @Column({name: 'game_type'})
   public gameType!: GameType;
+
+  @Column({name: 'chip_unit', nullable: false, default: ChipUnit.DOLLAR})
+  public chipUnit!: ChipUnit;
 
   @Column({
     name: 'small_blind',
