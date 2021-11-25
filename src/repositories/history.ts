@@ -17,7 +17,7 @@ import {ClubRepository} from './club';
 import {In, IsNull, Not} from 'typeorm';
 import _ from 'lodash';
 import {Player} from '@src/entity/player/player';
-import {GameEndReason, GameStatus} from '@src/entity/types';
+import {ChipUnit, GameEndReason, GameStatus} from '@src/entity/types';
 import {stat, Stats} from 'fs';
 import {StatsRepository} from './stats';
 import {GameNotFoundError} from '@src/errors';
@@ -45,6 +45,7 @@ class HistoryRepositoryImpl {
     gameHistory.smallBlind = game.smallBlind;
     gameHistory.bigBlind = game.bigBlind;
     gameHistory.gameCode = game.gameCode;
+    gameHistory.chipUnit = game.chipUnit;
     gameHistory.gameType = game.gameType;
     gameHistory.startedBy = game.startedBy;
     gameHistory.startedByName = game.startedByName;
@@ -242,6 +243,7 @@ class HistoryRepositoryImpl {
         handsDealt: game.handsDealt,
         dataAggregated: game.dataAggregated,
         handDataLink: game.handDataLink,
+        chipUnit: ChipUnit[game.chipUnit],
       };
       dataAggregated = game.dataAggregated;
       gameData.isHost = false;
