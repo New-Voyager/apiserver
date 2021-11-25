@@ -468,6 +468,7 @@ type CompletedGame {
   gameCode: String!
   gameNum: Int
   smallBlind: Float
+  chipUnit: ChipUnit
   bigBlind: Float
   startedBy: String
   startedAt: DateTime
