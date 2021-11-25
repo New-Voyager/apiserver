@@ -5,9 +5,11 @@ import {AnnouncementLevel, AnnouncementType} from '@src/entity/types';
 import {AnnouncementData} from '@src/types';
 import {getUserRepository} from '.';
 import {Firebase} from '@src/firebase';
+import {Player} from '@src/entity/player/player';
 
 class AnnouncementRepositoryImpl {
   public async addClubAnnouncement(
+    player: Player,
     club: Club,
     text: string,
     expiresAt: string
@@ -20,6 +22,7 @@ class AnnouncementRepositoryImpl {
     newAnnouncement.announcementLevel = AnnouncementLevel.INFO;
     newAnnouncement.expiresAt = new Date(expiresAt);
     newAnnouncement.announcementType = AnnouncementType.CLUB;
+    newAnnouncement.user = player;
 
     await announcementRepo.save(newAnnouncement);
 
@@ -58,11 +61,16 @@ class AnnouncementRepositoryImpl {
     });
     const announcements = new Array<AnnouncementData>();
     for await (const data of resp) {
+      let playerName = '';
+      if (data.user) {
+        playerName = data.user.name;
+      }
       announcements.push({
         text: data.text,
         createdAt: data.createdAt,
         expiresAt: data.expiresAt,
         level: AnnouncementLevel[data.announcementLevel],
+        playerName: playerName,
       });
     }
     return announcements;

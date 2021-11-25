@@ -334,7 +334,7 @@ class FirebaseClass {
       clubName: club.name,
       level: AnnouncementLevel[announcement.announcementLevel],
       expiresAt: announcement.expiresAt.toISOString(),
-      shortText: announcement.text.substr(0, 50),
+      shortText: announcement.text.substr(0, 128),
       requestId: messageId,
     };
     this.sendClubMsg(club, message).catch(err => {
@@ -354,7 +354,7 @@ class FirebaseClass {
       type: 'SYSTEM_ANNOUNCEMENT',
       level: AnnouncementLevel[announcement.announcementLevel],
       expiresAt: announcement.expiresAt.toISOString(),
-      shortText: announcement.text.substr(0, 50),
+      shortText: announcement.text.substr(0, 128),
       requestId: messageId,
     };
     this.sendSystemMsg(message).catch(err => {
@@ -506,12 +506,95 @@ class FirebaseClass {
       return;
     }
     try {
-      await this.app.messaging().sendToDevice(host.firebaseToken, {
-        data: {
-          message: `Player '${oldName}' changed name to '${newName}'`,
-          type: 'PLAYER_RENAMED',
-        },
-      });
+      this.app
+        .messaging()
+        .sendToDevice(host.firebaseToken, {
+          data: {
+            message: `Player '${oldName}' changed name to '${newName}'`,
+            type: 'PLAYER_RENAMED',
+          },
+        })
+        .catch(err => {
+          logger.error(`Sending to device group failed. ${errToStr(err)}`);
+        });
+    } catch (err) {
+      logger.error(`Sending to device group failed. ${errToStr(err)}`);
+    }
+  }
+
+  public async sendHostToMemberMessage(
+    messageId: string,
+    club: Club,
+    member: Player,
+    text: string
+  ) {
+    if (!this.firebaseInitialized) {
+      return;
+    }
+    if (!this.app) {
+      logger.error('Firebase is not initialized');
+      return;
+    }
+
+    if (!member.firebaseToken) {
+      return;
+    }
+
+    try {
+      this.app
+        .messaging()
+        .sendToDevice(member.firebaseToken, {
+          data: {
+            requestId: messageId,
+            type: 'HOST_TO_MEMBER',
+            clubCode: club.clubCode,
+            clubName: club.name,
+            text: text,
+          },
+        })
+        .catch(err => {
+          logger.error(`Sending to device group failed. ${errToStr(err)}`);
+        });
+    } catch (err) {
+      logger.error(`Sending to device group failed. ${errToStr(err)}`);
+    }
+  }
+
+  public async sendMemberToHostMessage(
+    messageId: string,
+    club: Club,
+    owner: Player,
+    member: Player,
+    text: string
+  ) {
+    if (!this.firebaseInitialized) {
+      return;
+    }
+    if (!this.app) {
+      logger.error('Firebase is not initialized');
+      return;
+    }
+
+    if (!owner.firebaseToken) {
+      return;
+    }
+
+    try {
+      this.app
+        .messaging()
+        .sendToDevice(owner.firebaseToken, {
+          data: {
+            requestId: messageId,
+            type: 'MEMBER_TO_HOST',
+            clubCode: club.clubCode,
+            clubName: club.name,
+            sender: member.name,
+            text: text,
+          },
+        })
+        .catch(err => {
+          logger.error(`Sending to device group failed. ${errToStr(err)}`);
+        });
     } catch (err) {
       logger.error(`Sending to device group failed. ${errToStr(err)}`);
     }
