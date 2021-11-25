@@ -2,6 +2,7 @@ import {HistoryRepository} from '@src/repositories/history';
 import {GameType} from '@src/entity/types';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
+import {centsToChips} from '@src/utils';
 
 const logger = getLogger('resolvers::history');
 export async function completedGame(playerId: string, gameCode: string) {
@@ -64,11 +65,30 @@ export async function gameHistory(playerId: string, clubCode: string) {
       }
       return res;
     });
-    return gameHistory;
+
+    return gameHistoryToClientUnits(gameHistory);
   } catch (err) {
     logger.error(JSON.stringify(err));
     throw new Error('Failed to retreive game history data');
   }
+}
+
+function gameHistoryToClientUnits(input: Array<any>): any {
+  const gh = new Array<any>();
+  for (const r of input) {
+    const h = {...r};
+    h.smallBlind = centsToChips(h.smallBlind);
+    h.bigBlind = centsToChips(h.bigBlind);
+    h.buyIn = centsToChips(h.buyIn);
+    h.profit = centsToChips(h.profit);
+    h.stack = centsToChips(h.stack);
+    if (h.stackStat) {
+      h.stackStat.before = centsToChips(h.stackStat.before);
+      h.stackStat.after = centsToChips(h.stackStat.after);
+    }
+    gh.push(h);
+  }
+  return gh;
 }
 
 export async function playersInGame(playerId: string, gameCode: string) {

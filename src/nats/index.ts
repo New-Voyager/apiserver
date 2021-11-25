@@ -82,8 +82,8 @@ class NatsClass {
       type: 'WAITLIST_SEATING',
       gameCode: gameCode,
       gameType: GameType[gameType],
-      smallBlind: game.smallBlind,
-      bigBlind: game.bigBlind,
+      smallBlind: centsToChips(game.smallBlind),
+      bigBlind: centsToChips(game.bigBlind),
       title: title,
       clubName: clubName,
       waitlistPlayerId: player.id,
@@ -366,9 +366,9 @@ class NatsClass {
       playerId: playerId,
       playerUuid: playerUuid,
       requestId: messageId,
-      oldStack: oldStack,
-      newStack: newStack,
-      reloadAmount: reloadAmount,
+      oldStack: centsToChips(oldStack),
+      newStack: centsToChips(newStack),
+      reloadAmount: centsToChips(reloadAmount),
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(gameCode);
@@ -386,8 +386,8 @@ class NatsClass {
       type: 'RELOAD_REQUEST',
       gameCode: game.gameCode,
       gameType: GameType[game.gameType],
-      smallBlind: game.smallBlind,
-      bigBlind: game.bigBlind,
+      smallBlind: centsToChips(game.smallBlind),
+      bigBlind: centsToChips(game.bigBlind),
       clubName: clubName,
       requestingPlayerId: requestingPlayer.id,
       requestingname: requestingPlayer.name,
@@ -478,9 +478,9 @@ class NatsClass {
       playerName: player.name,
       oldSeatNo: oldSeatNo,
       seatNo: playerGameInfo.seatNo,
-      stack: playerGameInfo.stack,
+      stack: centsToChips(playerGameInfo.stack),
       status: PlayerStatus[playerGameInfo.status],
-      buyIn: playerGameInfo.buyIn,
+      buyIn: centsToChips(playerGameInfo.buyIn),
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);
@@ -803,6 +803,9 @@ class NatsClass {
       const seatUpdatesAny = update as any;
       if (update.status) {
         seatUpdatesAny.status = PlayerStatus[update.status];
+        if (update.stack) {
+          seatUpdatesAny.stack = centsToChips(update.stack);
+        }
       }
       seatUpdatesArray.push(seatUpdatesAny);
     }
@@ -828,11 +831,17 @@ class NatsClass {
     if (!messageId) {
       messageId = uuidv4();
     }
+    const seatMoveArray = new Array<any>();
+    for (const update of updates) {
+      const seatMoveAny = update as any;
+      seatMoveAny.stack = centsToChips(update.stack);
+      seatMoveArray.push(seatMoveAny);
+    }
     const message = {
       type: 'TABLE_UPDATE',
       subType: Constants.TableHostSeatChangeMove,
       gameId: game.id,
-      seatMoves: updates,
+      seatMoves: seatMoveArray,
     };
     const messageStr = JSON.stringify(message);
     const subject = this.getGameChannel(game.gameCode);

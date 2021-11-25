@@ -808,7 +808,6 @@ class HandRepositoryImpl {
               }
             }
 
-            // rakeAccountedFor = this.roundDecimal(rakeAccountedFor, 2);
             if (rakeAccountedFor < handRake) {
               for (const seatNo of Object.keys(playersInHand)) {
                 if (game.chipUnit === ChipUnit.CENT) {

@@ -374,8 +374,8 @@ class FirebaseClass {
       clubCode: club.clubCode,
       clubName: club.name,
       gameType: gameType,
-      sb: sb.toString(),
-      bb: bb.toString(),
+      sb: centsToChips(sb).toString(),
+      bb: centsToChips(bb).toString(),
       requestId: messageId,
     };
     this.sendClubMsg(club, message).catch(err => {
