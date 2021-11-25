@@ -84,9 +84,9 @@ describe('hand game APIs', () => {
 
       const finalStackData = rawData.seatInfo.playersInSeats;
 
-      const playersHandBalance = _.sortBy(Object.values(handData.result.playerInfo).map((info: any) => {
+      const expectedBalance = _.sortBy(Object.values(handData.result.playerInfo).map((info: any) => {
         return {
-          balance: info.balance.after,
+          balance: info.balance.after / 100,  // cents to chips since we used internal save-hand api to seed cents
           playerId: info.id,
         }
       }), 'playerId')
@@ -97,7 +97,7 @@ describe('hand game APIs', () => {
         };
       }), 'playerId')
       
-      expect(playersHandBalance).toEqual(playersInfoBalance)
+      expect(playersInfoBalance).toEqual(expectedBalance)
 
       await axios.get(`${SERVER_API}/any-pending-updates/gameId/${gameId}`)
       await axios.post(`${SERVER_API}/process-pending-updates/gameId/${gameId}`)
