@@ -13,6 +13,7 @@ type Announcement {
   createdAt: DateTime!
   expiresAt: DateTime
   level: AnnouncementLevel
+  playerName: String
 }
 
 type Query {

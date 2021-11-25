@@ -30,6 +30,7 @@ export interface AnnouncementData {
   createdAt: Date;
   expiresAt?: Date;
   level: string;
+  playerName?: string;
 }
 
 export interface buyInRequest {
