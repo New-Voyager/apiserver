@@ -11,6 +11,10 @@ import {
 import {PageOptions} from '@src/types';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
+import {Firebase} from '@src/firebase';
+import {Nats} from '@src/nats';
+import {v4 as uuidv4} from 'uuid';
+
 const logger = getLogger('resolvers::clubmessage');
 
 export async function getClubMsg(
@@ -151,28 +155,34 @@ export async function sendMessageToMember(
   if (!club) {
     throw new Error(`Club ${clubCode} is not found`);
   }
-  const clubMember = await Cache.getClubMember(player.uuid, club.clubCode);
-  if (!clubMember || !clubMember.isOwner) {
+  const from = await Cache.getClubMember(player.uuid, club.clubCode);
+  if (!from || !(from.isOwner || from.isManager)) {
     logger.error(`Player: ${player.uuid} is not a host in club ${club.name}`);
     throw new Error(
       `Player: ${player.uuid} is not a host in club ${club.name}`
     );
   }
 
-  const clubMember1 = await Cache.getClubMember(member.uuid, club.clubCode);
-  if (!clubMember1) {
+  const to = await Cache.getClubMember(member.uuid, club.clubCode);
+  if (!to) {
     logger.error(`Member: ${memberUuid} is not a member in club ${club.name}`);
     throw new Error(
       `Member: ${memberUuid} is not a member in club ${club.name}`
     );
   }
   try {
-    return HostMessageRepository.sendHostMessage(
+    const ret = HostMessageRepository.sendHostMessage(
       club,
-      clubMember1,
+      to,
       text,
       HostMessageType.FROM_HOST
     );
+
+    // send a firebase notification
+    const messageId = uuidv4();
+    Firebase.sendHostToMemberMessage(messageId, club, to.player, text);
+    return ret;
+    //Nats.sendHostToMemberMessage(messageId, club, to, text);
   } catch (err) {
     logger.error(err);
     throw new Error('Failed to send host message');
@@ -195,20 +205,33 @@ export async function sendMessageToHost(
   if (!club) {
     throw new Error(`Club ${clubCode} is not found`);
   }
+
+  const clubOwner = await Promise.resolve(club.owner);
   const clubMember = await Cache.getClubMember(player.uuid, club.clubCode);
-  if (!clubMember) {
+  if (!clubMember || !clubOwner) {
     logger.error(`Player: ${player.uuid} is not a member in club ${club.name}`);
     throw new Error(
       `Player: ${player.uuid} is not a member in club ${club.name}`
     );
   }
   try {
-    return HostMessageRepository.sendHostMessage(
+    const ret = HostMessageRepository.sendHostMessage(
       club,
       clubMember,
       text,
       HostMessageType.TO_HOST
     );
+    // send a firebase notification
+    const messageId = uuidv4();
+    Firebase.sendMemberToHostMessage(
+      messageId,
+      club,
+      clubOwner,
+      clubMember.player,
+      text
+    );
+
+    return ret;
   } catch (err) {
     logger.error(err);
     throw new Error('Failed to send host message');
