@@ -121,7 +121,7 @@ export async function configureGame(
       gameInfo.bigBlind,
       messageId
     );
-    return ret;
+    return gameInfoToClientUnits(ret);
   } catch (err) {
     logger.error(
       `Error while configuring game. playerId: ${playerId}, clubCode: ${clubCode}, game: ${JSON.stringify(
