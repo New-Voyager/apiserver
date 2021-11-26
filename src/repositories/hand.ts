@@ -898,7 +898,7 @@ class HandRepositoryImpl {
       let pendingUpdates = false;
       for (const seatNo of Object.keys(playersInHand)) {
         const player = playersInHand[seatNo];
-        if (player.balance.after === 0) {
+        if (player.balance.after <= game.ante) {
           await Cache.updateGamePendingUpdates(game.gameCode, true);
           pendingUpdates = true;
           break;

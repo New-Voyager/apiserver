@@ -331,6 +331,12 @@ class MoveToNextHand {
     // update the players who are in this hand
     for (const player of Object.values(this.playersInThisHand)) {
       if (player) {
+        let inHandNextHand = true;
+        // if the player has less than ante, don't include the player
+        if (player.stack <= this.game.ante) {
+          inHandNextHand = false;
+        }
+
         // this player is in the hand
         await playerGameTrackerRepo.update(
           {
@@ -338,7 +344,7 @@ class MoveToNextHand {
             playerId: player.playerId,
           },
           {
-            inHandNextHand: true,
+            inHandNextHand: inHandNextHand,
           }
         );
 
@@ -863,6 +869,7 @@ export class NextHandProcess {
           playersInSeats: seats,
           smallBlind: game.smallBlind,
           bigBlind: game.bigBlind,
+          ante: game.ante,
           maxPlayers: game.maxPlayers,
           buttonPos: gameUpdate.buttonPos,
           handNum: gameUpdate.handNum,

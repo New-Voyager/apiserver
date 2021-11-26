@@ -85,6 +85,8 @@ input GameCreateInput {
   title: String
   smallBlind: Float!
   bigBlind: Float!
+  ante: Float
+  mandatoryStraddle: Boolean
   straddleBet: Float
   utgStraddleAllowed: Boolean
   buttonStraddleAllowed: Boolean
@@ -183,6 +185,8 @@ type GameInfo {
   smallBlind: Float
   bigBlind: Float
   straddleBet: Float
+  ante: Float
+  mandatoryStraddle: Boolean
   utgStraddleAllowed: Boolean
   buttonStraddleAllowed: Boolean
   buttonStraddleBet: Int

@@ -152,6 +152,9 @@ function gameInputToServerUnits(input: any) {
   if (game.buyInMax) {
     game.buyInMax = chipsToCents(game.buyInMax);
   }
+  if (game.ante) {
+    game.ante = chipsToCents(game.ante);
+  }
   return game;
 }
 

@@ -817,7 +817,7 @@ class GameRepositoryImpl {
         }
 
         // we need 5 bytes to scramble 5 cards
-        if (playerInGame.stack > 0) {
+        if (playerInGame.stack > game.ante) {
           playerInGame.status = PlayerStatus.PLAYING;
         } else {
           playerInGame.status = PlayerStatus.WAIT_FOR_BUYIN;

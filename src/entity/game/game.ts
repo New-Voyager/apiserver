@@ -364,6 +364,16 @@ export class PokerGame {
   public bigBlind!: number;
 
   @Column({
+    name: 'ante',
+    type: 'decimal',
+    precision: 7,
+    scale: 2,
+    nullable: false,
+    default: 0,
+  })
+  public ante!: number;
+
+  @Column({
     name: 'straddle_bet',
     type: 'decimal',
   })
