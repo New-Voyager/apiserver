@@ -540,6 +540,29 @@ class NatsClass {
     this.sendMessage(subject, messageStr);
   }
 
+  public async notifyBuyInRequest(
+    messageId: string,
+    game: PokerGame,
+    requestingPlayer: Player,
+    host: Player,
+    amount: number
+  ) {
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+    const message = {
+      type: 'BUYIN_REQUEST',
+      amount: centsToChips(amount).toString(),
+      gameCode: game.gameCode,
+      playerName: requestingPlayer.name,
+      playerUuid: requestingPlayer.uuid,
+      hostUuid: host.uuid,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getPlayerChannel(host);
+    this.sendMessage(subject, messageStr);
+  }
+
   public playerBuyIn(
     game: PokerGame,
     player: Player,

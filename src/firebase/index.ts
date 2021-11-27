@@ -187,6 +187,7 @@ class FirebaseClass {
   }
 
   public async notifyBuyInRequest(
+    messageId: string,
     game: PokerGame,
     requestingPlayer: Player,
     host: Player,
@@ -198,6 +199,7 @@ class FirebaseClass {
     if (host.firebaseToken !== null && host.firebaseToken.length > 0) {
       const message: firebase.messaging.TokenMessage = {
         data: {
+          requestId: messageId,
           amount: centsToChips(amount).toString(),
           gameCode: game.gameCode,
           playerName: requestingPlayer.name,
