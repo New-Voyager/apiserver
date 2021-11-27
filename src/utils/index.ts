@@ -134,7 +134,7 @@ export function cardNumber(card: number) {
 
 export function chipsToCents(chips: number): number {
   if (chips) {
-    return chips * 100;
+    return roundDecimal(chips * 100, 0);
   }
   return chips;
 }
