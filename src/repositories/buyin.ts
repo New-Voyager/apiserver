@@ -1,4 +1,10 @@
-import {EntityManager, In, UpdateResult} from 'typeorm';
+import {
+  EntityManager,
+  In,
+  LessThan,
+  LessThanOrEqual,
+  UpdateResult,
+} from 'typeorm';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player/player';
@@ -874,7 +880,7 @@ export class BuyIn {
       const emptyStackPlayers = await playerGameTrackerRepo.find({
         game: {id: game.id},
         status: PlayerStatus.PLAYING,
-        stack: 0,
+        stack: LessThanOrEqual(game.ante),
       });
       for (const player of emptyStackPlayers) {
         logger.info(

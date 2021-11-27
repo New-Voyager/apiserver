@@ -96,6 +96,7 @@ export interface NewHandInfo {
   maxPlayers: number;
   smallBlind: number;
   bigBlind: number;
+  ante: number;
   buttonPos: number;
   handNum: number;
   actionTime: number;
