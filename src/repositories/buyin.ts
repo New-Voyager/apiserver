@@ -5,6 +5,7 @@ import {
   LessThanOrEqual,
   UpdateResult,
 } from 'typeorm';
+import {v4 as uuidv4} from 'uuid';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
 import {Player} from '@src/entity/player/player';
@@ -347,7 +348,17 @@ export class BuyIn {
             );
             // notify game host that the player is waiting for buyin
             const host = await Cache.getPlayerById(this.game.hostId, true);
+            const messageId = uuidv4();
             await Firebase.notifyBuyInRequest(
+              messageId,
+              this.game,
+              this.player,
+              host,
+              cents
+            );
+
+            Nats.notifyBuyInRequest(
+              messageId,
               this.game,
               this.player,
               host,

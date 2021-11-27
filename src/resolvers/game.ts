@@ -443,7 +443,9 @@ function pendingApprovalsToClientUnits(input: Array<any>): any {
   for (const i of input) {
     const r = {...i};
     r.amount = centsToChips(r.amount);
-    r.availableCredit = centsToChips(r.availableCredit);
+    if (r.availableCredit) {
+      r.availableCredit = centsToChips(r.availableCredit);
+    }
     r.smallBlind = centsToChips(r.smallBlind);
     r.bigBlind = centsToChips(r.bigBlind);
     resp.push(r);
@@ -1339,7 +1341,7 @@ export async function pendingApprovals(hostUuid: string) {
       }
     }
 
-    return ret;
+    return pendingApprovalsToClientUnits(ret);
   } catch (err) {
     logger.error(
       `Error in pendingApprovals. hostUuid: ${hostUuid}: ${errToStr(err)}`
