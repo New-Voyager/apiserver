@@ -194,7 +194,8 @@ export async function configureGameByPlayer(playerId: string, game: any) {
   }
   try {
     const player = await Cache.getPlayer(playerId);
-    const gameInfo = await GameRepository.createPrivateGame(null, player, game);
+    const gameInServerUnits = gameInputToServerUnits(game);
+    const gameInfo = await GameRepository.createPrivateGame(null, player, gameInServerUnits);
     const cachedGame = await Cache.getGame(gameInfo.gameCode, true);
     if (!cachedGame) {
       throw new GameNotFoundError(gameInfo.gameCode);
@@ -205,7 +206,7 @@ export async function configureGameByPlayer(playerId: string, game: any) {
     Metrics.newGame();
     const ret: any = gameInfo as any;
     ret.gameType = GameType[gameInfo.gameType];
-    return ret;
+    return gameInfoToClientUnits(ret);;
   } catch (err) {
     logger.error(
       `Error while configuring game by player. playerId: ${playerId}, game: ${JSON.stringify(
