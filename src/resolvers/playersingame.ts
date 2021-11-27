@@ -19,7 +19,7 @@ import {
 } from '@src/errors';
 import {gameLogPrefix} from '@src/entity/game/game';
 import {HistoryRepository} from '@src/repositories/history';
-import {chipsToCents} from '@src/utils';
+import {centsToChips, chipsToCents} from '@src/utils';
 
 const logger = getLogger('resolvers::players_in_game');
 
@@ -477,6 +477,7 @@ export async function takeSeat(
     playerInSeat.name = playerInSeat.playerName;
     playerInSeat.buyInExpTime = playerInSeat.buyInExpAt;
     playerInSeat.breakExpTime = playerInSeat.breakTimeExpAt;
+    playerInSeat.stack = centsToChips(playerInSeat.stack);
     return playerInSeat;
   } catch (err) {
     logger.error(
