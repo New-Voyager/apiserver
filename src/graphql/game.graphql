@@ -261,6 +261,8 @@ type GameInfo {
   sessionTime: Int
   noHandsPlayed: Int
   noHandsWon: Int
+  buyin: Float
+  stack: Float
 
   # updates
   handNum: Int

@@ -15,7 +15,12 @@ import {
 } from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {Cache} from '@src/cache';
-import {NextHandUpdate, PlayerStatus, TableStatus} from '@src/entity/types';
+import {
+  GameStatus,
+  NextHandUpdate,
+  PlayerStatus,
+  TableStatus,
+} from '@src/entity/types';
 import {Nats} from '@src/nats';
 import {startTimer} from '@src/timer';
 import {chipsToCents, utcTime} from '@src/utils';
@@ -131,7 +136,11 @@ class PlayersInGameRepositoryImpl {
         throw new Error(`Player ${player.name} is not in the game`);
       }
 
-      if (game.tableStatus !== TableStatus.GAME_RUNNING) {
+      if (
+        game.status === GameStatus.CONFIGURED ||
+        game.status === GameStatus.PAUSED ||
+        game.tableStatus !== TableStatus.GAME_RUNNING
+      ) {
         // we can mark the user as KICKED_OUT from the player game tracker
         await playerGameTrackerRepository.update(
           {
