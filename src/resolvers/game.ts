@@ -730,6 +730,8 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
       }
       ret.noHandsPlayed = playerState.noHandsPlayed;
       ret.noHandsWon = playerState.noHandsWon;
+      ret.buyin = centsToChips(playerState.buyIn);
+      ret.stack = centsToChips(playerState.stack);
     }
     const runningTime = Math.round((now - game.startedAt.getTime()) / 1000);
     ret.runningTime = runningTime;

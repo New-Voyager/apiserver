@@ -1208,6 +1208,11 @@ class ClubRepositoryImpl {
     }
 
     const playersActivity = _.keyBy(res, 'playerId');
+    for (const key of Object.keys(playersActivity)) {
+      playersActivity[key].buyIn = 0;
+      playersActivity[key].profit = 0;
+      playersActivity[key].gamesPlayed = 0;
+    }
 
     // get buyin and profit data from players_in_game
     const buyInQuery = fixQuery(`
