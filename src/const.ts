@@ -6,3 +6,4 @@ export const TableHostSeatChangeProcessStart = 'HostSeatChangeInProcessStart';
 export const TableHostSeatChangeProcessEnd = 'HostSeatChangeInProcessEnd';
 export const TableHostSeatChangeMove = 'HostSeatChangeMove';
 export const TableUpdatePlayerSeats = 'UpdatePlayerSeats';
+export const TableUpdateReserveSeat = 'ReserveSeat';

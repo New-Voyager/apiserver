@@ -210,6 +210,9 @@ class ClubRepositoryImpl {
     }
     if (typeof input.trackMemberCredit === 'boolean') {
       club.trackMemberCredit = input.trackMemberCredit;
+      if (!club.creditTrackingEnabled) {
+        club.creditTrackingEnabled = true;
+      }
     }
     if (typeof input.picUrl === 'string') {
       club.picUrl = input.picUrl;
@@ -304,6 +307,14 @@ class ClubRepositoryImpl {
         }
         await AppCoinRepository.addCoins(0, firstClubCoins, ownerObj.uuid);
       }
+
+      const clubMemberStatRepository =
+        transactionEntityManager.getRepository(ClubMemberStat);
+      const clubMemberStat = new ClubMemberStat();
+      clubMemberStat.clubId = club.id;
+      clubMemberStat.playerId = clubMember.player.id;
+      await clubMemberStatRepository.save(clubMemberStat);
+
       await StatsRepository.newClubStats(club);
     });
 

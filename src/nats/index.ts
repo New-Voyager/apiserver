@@ -17,6 +17,7 @@ import {SeatMove, SeatUpdate} from '@src/types';
 import {SageMakerFeatureStoreRuntime} from 'aws-sdk';
 import {getAppSettings} from '@src/firebase';
 import {centsToChips} from '@src/utils';
+import {TableUpdateReserveSeat} from '../const';
 
 const logger = getLogger('nats');
 
@@ -499,7 +500,7 @@ class NatsClass {
 
     const message = {
       type: 'TABLE_UPDATE',
-      subType: NewUpdate.RESERVE_SEAT[NewUpdate.RESERVE_SEAT],
+      subType: TableUpdateReserveSeat,
       gameId: game.id,
       playerId: player.id,
       playerUuid: player.uuid,
