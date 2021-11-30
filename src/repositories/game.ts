@@ -61,7 +61,7 @@ import {getRunProfile, notifyScheduler, RunProfile} from '@src/server';
 import {NextHandUpdatesRepository} from './nexthand_update';
 import {processPendingUpdates} from './pendingupdates';
 import {AppCoinRepository} from './appcoin';
-import {GameNotFoundError} from '@src/errors';
+import {GameNotFoundError, SeatReservedError} from '@src/errors';
 import {Firebase} from '@src/firebase';
 const logger = getLogger('repositories::game');
 
@@ -670,6 +670,17 @@ class GameRepositoryImpl {
             `Seat change is in progress for game: ${game.gameCode}`
           );
         }
+        // check to see whether this seat is reserved
+        const nextHandUpdatesRepo =
+          transactionEntityManager.getRepository(NextHandUpdates);
+        const row = await nextHandUpdatesRepo.findOne({
+          game: {id: game.id},
+          newSeat: seatNo,
+        });
+        if (row) {
+          throw new SeatReservedError(game.gameCode, seatNo);
+        }
+
         const gameSettings = await GameSettingsRepository.get(
           game.gameCode,
           false,

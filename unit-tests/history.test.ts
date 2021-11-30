@@ -263,7 +263,7 @@ describe('History APIs', () => {
     await endGame(owner, game.gameCode);
 
     const resp = await clubLeaderBoard(owner, club);
-    expect(resp).toHaveLength(4);
+    expect(resp).toHaveLength(5);
   });
 
   test('history test: get players in game', async () => {

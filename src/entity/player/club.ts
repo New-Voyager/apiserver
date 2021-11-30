@@ -66,6 +66,9 @@ export class Club {
 
   @Column({name: 'track_member_credit', default: false})
   public trackMemberCredit!: boolean;
+
+  @Column({name: 'credit_tracking_enabled', default: false})
+  public creditTrackingEnabled!: boolean;
 }
 
 @Entity({name: 'club_member'})
