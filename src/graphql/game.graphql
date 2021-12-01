@@ -80,6 +80,12 @@ enum ChipUnit {
   CENT,
 }
 
+enum BuyInApprovalLimit {
+  BUYIN_NO_LIMIT,
+  BUYIN_CREDIT_LIMIT,
+  BUYIN_HOST_APPROVAL
+}
+
 input GameCreateInput {
   gameType: GameType!
   title: String
@@ -96,6 +102,7 @@ input GameCreateInput {
   maxPlayers: Int! # 2-9
   gameLength: Int! # in minutes
   buyInApproval: Boolean
+  buyInLimit: BuyInApprovalLimit
   autoKickAfterBreak: Boolean
   sitInApproval: Boolean
   highHandTracked: Boolean
@@ -195,6 +202,7 @@ type GameInfo {
   maxPlayers: Int
   gameLength: Int
   buyInApproval: Boolean
+  buyInLimit: BuyInApprovalLimit
   breakAllowed: Boolean
   waitlistAllowed: Boolean
   breakLength: Int
@@ -316,6 +324,7 @@ type GameSettings {
   resultPauseTime: Int
     
   buyInApproval: Boolean
+  buyInLimit: BuyInApprovalLimit
   runItTwiceAllowed: Boolean
   funAnimations: Boolean
   chat: Boolean
@@ -545,6 +554,8 @@ type BuyInResponse {
   status: PlayerGameStatus
   approved: Boolean!
   expireSeconds: Int
+  availableCredits: Float
+  insufficientCredits: Boolean
 }
 
 type Mutation {
@@ -561,7 +572,7 @@ type Mutation {
   joinGame(gameCode: String!, seatNo: Int!, location: LocationInput): JoinResponse!
   takeSeat(gameCode: String!, seatNo: Int!, location: LocationInput): SeatInfo!
   buyIn(gameCode: String!, amount: Float!): BuyInResponse!
-  reload(gameCode: String!, amount: Float!): BuyInStatus!
+  reload(gameCode: String!, amount: Float!): BuyInResponse!
   approveRequest(
     gameCode: String!, 
     playerUuid: String!,

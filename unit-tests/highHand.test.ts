@@ -21,6 +21,7 @@ import {
 } from '../src/resolvers/reward';
 import * as fs from 'fs';
 import * as glob from 'glob';
+import { BuyInApprovalLimit } from '../src/entity/types';
 
 const logger = getLogger('High-hand unit-test');
 
@@ -35,7 +36,7 @@ const holdemGameInput = {
   minPlayers: 3,
   maxPlayers: 9,
   gameLength: 60,
-  buyInApproval: true,
+  buyInLimit: BuyInApprovalLimit.BUYIN_HOST_APPROVAL,
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,

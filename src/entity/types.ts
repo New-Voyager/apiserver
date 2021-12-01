@@ -238,3 +238,9 @@ export enum CreditUpdateType {
   ADD,
   DEDUCT,
 }
+
+export enum BuyInApprovalLimit {
+  BUYIN_NO_LIMIT,
+  BUYIN_CREDIT_LIMIT,
+  BUYIN_HOST_APPROVAL,
+}

@@ -17,6 +17,7 @@ import {configureGame} from '../src/resolvers/game';
 import {saveReward} from '../src/resolvers/reward';
 import {createGameServer} from '../src/internal/gameserver';
 import {errToStr, getLogger} from '../src/utils/log';
+import { BuyInApprovalLimit } from '../src/entity/types';
 
 const logger = getLogger('club unit-test');
 
@@ -40,7 +41,7 @@ const holdemGameInput = {
   minPlayers: 3,
   maxPlayers: 9,
   gameLength: 60,
-  buyInApproval: true,
+  buyInLimit: BuyInApprovalLimit.BUYIN_HOST_APPROVAL,
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,

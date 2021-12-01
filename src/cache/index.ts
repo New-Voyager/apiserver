@@ -15,7 +15,7 @@ import {
   isRunningUnitTest,
 } from '@src/utils';
 import {getGameRepository, getUserRepository} from '@src/repositories';
-import {PlayerLocation} from '@src/entity/types';
+import {BuyInApprovalLimit, PlayerLocation} from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
 import {getLogger, errToStr} from '@src/utils/log';
 
@@ -338,7 +338,10 @@ class GameCache {
   ): Promise<PokerGameSettings> {
     const getResp = await this.getCache(`gameSettingsCache-${gameCode}`);
     if (getResp.success && getResp.data && !update) {
-      const ret = JSON.parse(getResp.data) as PokerGameSettings;
+      const data = JSON.parse(getResp.data);
+      const ret = data as PokerGameSettings;
+      const buyInLimit: string = data.buyInLimit;
+      ret.buyInLimit = BuyInApprovalLimit[buyInLimit];
       return ret;
     } else {
       let repo: Repository<PokerGameSettings>;

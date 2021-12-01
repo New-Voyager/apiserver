@@ -11,6 +11,7 @@ import {
   SeatStatus,
   GameEndReason,
   ChipUnit,
+  BuyInApprovalLimit,
 } from '@src/entity/types';
 import {getLogger, errToStr} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
@@ -677,6 +678,7 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     const updates = await GameUpdatesRepository.get(game.gameCode);
     const settings = await GameSettingsRepository.get(game.gameCode);
     if (updates && settings) {
+      ret.buyInLimit = BuyInApprovalLimit[settings.buyInLimit];
       ret.waitlistAllowed = settings.waitlistAllowed;
       ret.useAgora = settings.useAgora;
       ret.audioConfEnabled = settings.audioConfEnabled;

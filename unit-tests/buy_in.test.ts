@@ -12,6 +12,7 @@ import {
 import {buyIn, joinGame, setBuyInLimit} from '../src/resolvers/playersingame';
 
 import {approveMember, clubLeaderBoard} from '../src/resolvers/club';
+import { BuyInApprovalLimit } from '../src/entity/types';
 
 const logger = getLogger('buy-in unit-test');
 const holdemGameInput = {
@@ -25,7 +26,7 @@ const holdemGameInput = {
   minPlayers: 3,
   maxPlayers: 9,
   gameLength: 60,
-  buyInApproval: true,
+  buyInLimit: BuyInApprovalLimit.BUYIN_HOST_APPROVAL,
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,
@@ -243,6 +244,7 @@ describe('BuyIn APIs', () => {
 
     // start a game
     const gameInput = holdemGameInput;
+    gameInput.buyInLimit = BuyInApprovalLimit.BUYIN_CREDIT_LIMIT;
     const game = await configureGame(owner, club, gameInput);
     await startGame(owner, game.gameCode);
 
@@ -254,7 +256,7 @@ describe('BuyIn APIs', () => {
     // Player 1 - exceeds limit (not auto approved)
     const resp1 = await buyIn(player1, game.gameCode, 100);
     expect(resp1.approved).toBe(false);
-    expect(resp1.status).toBe('WAIT_FOR_BUYIN_APPROVAL');
+    expect(resp1.status).toBe('WAIT_FOR_BUYIN');
 
     // Player 2 - below limit (auto approved)
     const resp2 = await buyIn(player2, game.gameCode, 100);
@@ -269,7 +271,7 @@ describe('BuyIn APIs', () => {
     // Player 3 - additional buy-in exceeds limit (not auto approved)
     const resp3b = await buyIn(player3, game.gameCode, 100);
     expect(resp3b.approved).toBe(false);
-    expect(resp3b.status).toBe('WAIT_FOR_BUYIN_APPROVAL');
+    expect(resp3b.status).toBe('WAIT_FOR_BUYIN');
 
     await endGame(owner, game.gameCode);
   });

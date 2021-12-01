@@ -13,7 +13,7 @@ import {Cache} from '../src/cache/index';
 import {saveReward} from '../src/resolvers/reward';
 import {approveMember} from '../src/resolvers/club';
 import {getGameInfo} from '../src/resolvers/game';
-import { PlayerStatus } from '../src/entity/types';
+import { BuyInApprovalLimit, PlayerStatus } from '../src/entity/types';
 
 // Create a game with double board bomb pot
 // setup to run a bomb pot every 10 seconds
@@ -57,7 +57,7 @@ const holdemGameInput = {
   minPlayers: 3,
   maxPlayers: 9,
   gameLength: 60,
-  buyInApproval: false,
+  buyInLimit: BuyInApprovalLimit.BUYIN_NO_LIMIT,
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,
@@ -151,7 +151,6 @@ describe('Game APIs', () => {
     expect(startedGame.minPlayers).toEqual(3);
     expect(startedGame.maxPlayers).toEqual(9);
     expect(startedGame.gameLength).toEqual(60);
-    expect(startedGame.buyInApproval).toEqual(false);
     expect(startedGame.breakLength).toEqual(20);
     expect(startedGame.autoKickAfterBreak).toEqual(true);
     expect(startedGame.waitForBigBlind).toEqual(true);

@@ -1296,7 +1296,6 @@ class GameRepositoryImpl {
 
     const updatedGame = await Cache.getGame(game.gameCode, true);
     let updates = await GameUpdatesRepository.get(game.gameCode);
-
     await PlayersInGameRepository.gameEnded(game);
     await HistoryRepository.gameEnded(game, updates.handNum, endReason);
     const ret = this.markGameStatus(

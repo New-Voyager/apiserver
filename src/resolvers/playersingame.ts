@@ -5,7 +5,7 @@ import {Cache} from '@src/cache/index';
 import {default as _} from 'lodash';
 import {BuyIn} from '@src/repositories/buyin';
 import {ApolloError} from 'apollo-server-express';
-import {SitBackResponse} from '@src/repositories/types';
+import {BuyInResponse, SitBackResponse} from '@src/repositories/types';
 import {TakeBreak} from '@src/repositories/takebreak';
 import {Player} from '@src/entity/player/player';
 import {Reload} from '@src/repositories/reload';
@@ -64,7 +64,8 @@ const resolvers: any = {
       return status;
     },
     reload: async (parent, args, ctx, info) => {
-      return reload(ctx.req.playerId, args.gameCode, args.amount);
+      const ret = reload(ctx.req.playerId, args.gameCode, args.amount);
+      return ret;
     },
     takeBreak: async (parent, args, ctx, info) => {
       return takeBreak(ctx.req.playerId, args.gameCode);
@@ -557,6 +558,10 @@ export async function buyIn(
       resp.status = PlayerStatus[playerInGame.status];
       resp.approved = status.approved;
       resp.expireSeconds = status.expireSeconds;
+      if (status.availableCredits) {
+        resp.availableCredits = centsToChips(status.availableCredits);
+      }
+      resp.insufficientCredits = status.insufficientCredits;
       return resp;
     }
     return {
@@ -564,6 +569,10 @@ export async function buyIn(
       status: PlayerStatus[PlayerStatus.NOT_PLAYING],
       approved: false,
       expireSeconds: status.expireSeconds,
+      availableCredits: status.availableCredits
+        ? centsToChips(status.availableCredits)
+        : undefined,
+      insuffcientCredits: status.insufficientCredits,
     };
   } catch (err) {
     const timeTaken = new Date().getTime() - startTime;
@@ -580,7 +589,7 @@ export async function reload(
   playerUuid: string,
   gameCode: string,
   chips: number
-) {
+): Promise<any> {
   if (!playerUuid) {
     throw new UnauthorizedError();
   }
@@ -610,11 +619,18 @@ export async function reload(
       } is reloading for ${chips}`
     );
 
-    const buyin = new Reload(game, player);
+    const reload = new Reload(game, player);
     const cents = chipsToCents(chips);
-    const status = await buyin.request(cents);
+    const ret = (await reload.request(cents)) as any;
+    if (ret.availableCredits) {
+      ret.availableCredits = centsToChips(ret.availableCredits);
+    }
+    if (ret.status) {
+      ret.status = PlayerStatus[ret.status];
+    }
+
     // player is good to go
-    return status;
+    return ret;
   } catch (err) {
     logger.error(
       `Error while reloading. playerUuid: ${playerUuid}, gameCode: ${gameCode}, amount: ${chips}: ${errToStr(

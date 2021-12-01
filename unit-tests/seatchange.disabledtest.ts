@@ -12,6 +12,7 @@ import {saveReward} from '../src/resolvers/reward';
 import {approveMember} from '../src/resolvers/club';
 import {SeatChangeProcess} from '../src/repositories/seatchange';
 import {Cache} from '../src/cache/index';
+import { BuyInApprovalLimit } from '../src/entity/types';
 
 const logger = getLogger('game unit-test');
 const holdemGameInput = {
@@ -25,7 +26,7 @@ const holdemGameInput = {
   minPlayers: 3,
   maxPlayers: 9,
   gameLength: 60,
-  buyInApproval: false,
+  buyInLimit: BuyInApprovalLimit.BUYIN_NO_LIMIT,
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,

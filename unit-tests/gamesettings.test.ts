@@ -5,6 +5,7 @@ import {resetDB} from '../src/dev/resolvers/reset';
 import {Cache} from '../src/cache/index';
 import _ from 'lodash';
 import { GameSettingsRepository } from '../src/repositories/gamesettings';
+import { BuyInApprovalLimit } from '../src/entity/types';
 
 
 // default player, game and club inputs
@@ -76,8 +77,7 @@ const holdemGameInput = {
   actionTime: 30,
   muckLosingHand: true,
   rewardIds: [] as any,
-
-  buyInApproval: false,
+  buyInLimit: BuyInApprovalLimit.BUYIN_NO_LIMIT,
   breakLength: 20,
   breakAllowed: true,
   waitlistAllowed: true,
@@ -144,7 +144,6 @@ describe('Game APIs', () => {
     }
     const gameSettings = await GameSettingsRepository.get(gameCode);
 
-    expect(gameSettings.buyInApproval).toEqual(false);
     expect(gameSettings.breakLength).toEqual(20);
     expect(gameSettings.breakAllowed).toEqual(true);
     expect(gameSettings.waitlistAllowed).toEqual(true);
@@ -183,7 +182,6 @@ describe('Game APIs', () => {
     }
     let gameSettings = await GameSettingsRepository.get(gameCode);
 
-    expect(gameSettings.buyInApproval).toEqual(false);
     expect(gameSettings.breakLength).toEqual(20);
     expect(gameSettings.breakAllowed).toEqual(true);
     expect(gameSettings.waitlistAllowed).toEqual(true);
@@ -193,13 +191,11 @@ describe('Game APIs', () => {
     expect(gameSettings.allowRabbitHunt).toEqual(false);
 
     const updateGameSettings: any = {
-      buyInApproval: true,
       showHandRank: true,
       allowRabbitHunt: true,
     };
     await GameSettingsRepository.update(game, gameCode, updateGameSettings);
     gameSettings = await GameSettingsRepository.get(gameCode);
-    expect(gameSettings.buyInApproval).toEqual(true);
     expect(gameSettings.breakLength).toEqual(20);
     expect(gameSettings.breakAllowed).toEqual(true);
     expect(gameSettings.waitlistAllowed).toEqual(true);

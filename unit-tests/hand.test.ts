@@ -32,6 +32,7 @@ import {
 import {getRewardTrack} from '../src/resolvers/reward';
 import {getAppSettings} from '../src/firebase/index'
 import { defaultHandData } from '../tests/utils/hand.testutils';
+import { BuyInApprovalLimit } from '../src/entity/types';
 const logger = getLogger('Hand server unit-test');
 
 // default player, game and club inputs
@@ -71,7 +72,7 @@ const holdemGameInput = {
   minPlayers: 3,
   maxPlayers: 9,
   gameLength: 60,
-  buyInApproval: true,
+  buyInLimit: BuyInApprovalLimit.BUYIN_HOST_APPROVAL,
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,

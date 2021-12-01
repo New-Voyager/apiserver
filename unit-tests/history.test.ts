@@ -16,6 +16,7 @@ import {buyIn, joinGame, setBuyInLimit, reload,   takeBreak,
 import {gameHistory, playersInGame, completedGame} from '../src/resolvers/history';
 import {saveReward} from '../src/resolvers/reward';
 import {approveMember, clubLeaderBoard} from '../src/resolvers/club';
+import { BuyInApprovalLimit } from '../src/entity/types';
 
 const logger = getLogger('game unit-test');
 const holdemGameInput = {
@@ -29,7 +30,7 @@ const holdemGameInput = {
   minPlayers: 3,
   maxPlayers: 9,
   gameLength: 60,
-  buyInApproval: false,
+  buyInLimit: BuyInApprovalLimit.BUYIN_NO_LIMIT,
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,

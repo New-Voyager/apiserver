@@ -18,6 +18,7 @@ import {
 import {buyIn, joinGame, setBuyInLimit, reload,   takeBreak,
   sitBack,
   leaveGame} from '../src/resolvers/playersingame';
+import { BuyInApprovalLimit } from '../src/entity/types';
 const ownerInput = {
   name: 'player_name',
   deviceId: 'abc123',
@@ -61,7 +62,7 @@ const holdemGameInput = {
   minPlayers: 3,
   maxPlayers: 9,
   gameLength: 60,
-  buyInApproval: true,
+  buyInLimit: BuyInApprovalLimit.BUYIN_NO_LIMIT,
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,

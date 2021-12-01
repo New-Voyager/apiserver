@@ -5,15 +5,22 @@ import {Player} from '@src/entity/player/player';
 import {NextHandUpdates, PokerGame} from '@src/entity/game/game';
 import {
   ApprovalStatus,
+  BuyInApprovalLimit,
   CreditUpdateType,
   GameStatus,
   NextHandUpdate,
+  PlayerStatus,
   TableStatus,
 } from '@src/entity/types';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {GameRepository} from './game';
 import {startTimer, cancelTimer} from '@src/timer';
-import {NewUpdate, RELOAD_APPROVAL_TIMEOUT, RELOAD_TIMEOUT} from './types';
+import {
+  BuyInResponse,
+  NewUpdate,
+  RELOAD_APPROVAL_TIMEOUT,
+  RELOAD_TIMEOUT,
+} from './types';
 import {buyInRequest, pendingApprovalsForClubData} from '@src/types';
 import {Firebase} from '@src/firebase';
 import {Nats} from '@src/nats';
@@ -26,6 +33,8 @@ import {
 } from '.';
 import {CreditTracking} from '@src/entity/player/club';
 import {ClubRepository} from './club';
+import {ReloadError} from '@src/errors';
+import {getGameCodeForClub} from '@src/utils/uniqueid';
 
 const logger = getLogger('repositories::reload');
 
@@ -84,7 +93,10 @@ export class Reload {
     this.player = player;
   }
 
-  public async request(amount: number): Promise<buyInRequest> {
+  public async request(amount: number): Promise<BuyInResponse> {
+    let ret: BuyInResponse = {
+      approved: false,
+    };
     const timeout = 60;
 
     const startTime = new Date().getTime();
@@ -123,11 +135,15 @@ export class Reload {
           );
           throw new Error(`Player ${this.player.uuid} is not in the game`);
         }
+        ret.status = playerInGame.status;
 
         // check amount should be between game.minBuyIn and game.maxBuyIn
         if (playerInGame.stack + amount < this.game.buyInMin) {
-          throw new Error(
-            `Buyin must be between ${this.game.buyInMin} and ${this.game.buyInMax}`
+          throw new ReloadError(
+            `Reload must be between ${this.game.buyInMin} and ${this.game.buyInMax}`,
+            this.game.gameCode,
+            playerInGame.seatNo,
+            amount
           );
         }
 
@@ -146,14 +162,14 @@ export class Reload {
           }
 
           // club game
-          approved = await this.clubMemberAutoApproval(
+          ret = await this.clubMemberAutoApproval(
             amount,
             playerInGame,
             transactionEntityManager
           );
 
           databaseTime = new Date().getTime() - databaseTime;
-          if (!approved) {
+          if (!ret.approved) {
             const reloadTimeExp = new Date();
             const timeout = gameSettings.buyInTimeout;
             reloadTimeExp.setSeconds(reloadTimeExp.getSeconds() + timeout);
@@ -209,7 +225,7 @@ export class Reload {
           // individual game
           throw new Error('Individual game is not implemented yet');
         }
-        if (approved) {
+        if (ret.approved) {
           logger.debug(
             `************ [${this.game.gameCode}]: Player ${this.player.name} bot: ${this.player.bot} buyin is approved`
           );
@@ -218,7 +234,7 @@ export class Reload {
           buyInApprovedTime = new Date().getTime() - buyInApprovedTime;
         }
 
-        return approved;
+        return ret;
       }
     );
     const timeTaken = new Date().getTime() - startTime;
@@ -226,10 +242,7 @@ export class Reload {
       `Reload process total time: ${timeTaken} reload: ${buyInApprovedTime} databaseTime: ${databaseTime}`
     );
 
-    return {
-      expireSeconds: timeout,
-      approved: approved,
-    };
+    return ret;
   }
 
   protected async approve(
@@ -334,7 +347,7 @@ export class Reload {
     amount: number,
     playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
-  ): Promise<boolean> {
+  ): Promise<BuyInResponse> {
     let approved = false;
     const clubMember = await Cache.getClubMember(
       this.player.uuid,
@@ -359,46 +372,62 @@ export class Reload {
     if (this.game.hostUuid === this.player.uuid) {
       isHost = true;
     }
-
+    const ret: BuyInResponse = {
+      approved: false,
+      status: playerInGame.status,
+    };
     const club = await Cache.getClub(this.game.clubCode);
     if (
-      clubMember.isOwner ||
-      clubMember.isManager ||
-      clubMember.autoBuyinApproval ||
-      !gameSettings.buyInApproval ||
-      isHost
+      gameSettings.buyInLimit != BuyInApprovalLimit.BUYIN_CREDIT_LIMIT &&
+      (gameSettings.buyInLimit == BuyInApprovalLimit.BUYIN_NO_LIMIT ||
+        clubMember.isOwner ||
+        clubMember.isManager ||
+        clubMember.autoBuyinApproval ||
+        !gameSettings.buyInApproval ||
+        isHost)
     ) {
+      ret.approved = true;
       approved = true;
     } else {
       let isWithinAutoApprovalLimit = false;
-      if (club.trackMemberCredit) {
+      if (gameSettings.buyInLimit === BuyInApprovalLimit.BUYIN_CREDIT_LIMIT) {
         // Club member auto approval credit.
         const profit = playerInGame.stack - playerInGame.buyIn;
         const credit = clubMember.availableCredit + profit;
+        approved = false;
         if (amount <= credit) {
+          ret.approved = true;
+          approved = true;
           isWithinAutoApprovalLimit = true;
+        } else {
+          ret.approved = false;
+          ret.insufficientCredits = true;
+          ret.availableCredits = credit;
         }
       } else {
+        //
         // Per-game auto approval limit.
         if (
-          playerInGame.buyIn + amount <=
-          playerInGame.buyInAutoApprovalLimit
+          playerInGame.buyInAutoApprovalLimit &&
+          playerInGame.buyIn + amount <= playerInGame.buyInAutoApprovalLimit
         ) {
           isWithinAutoApprovalLimit = true;
         }
       }
 
-      if (isWithinAutoApprovalLimit) {
-        approved = true;
-        await this.approve(amount, playerInGame, transactionEntityManager);
-      } else {
-        await this.addToNextHand(
-          amount,
-          NextHandUpdate.WAIT_RELOAD_APPROVAL,
-          transactionEntityManager
-        );
+      if (gameSettings.buyInLimit === BuyInApprovalLimit.BUYIN_HOST_APPROVAL) {
+        if (isWithinAutoApprovalLimit) {
+          approved = true;
+          await this.approve(amount, playerInGame, transactionEntityManager);
+        } else {
+          await this.addToNextHand(
+            amount,
+            NextHandUpdate.WAIT_RELOAD_APPROVAL,
+            transactionEntityManager
+          );
 
-        approved = false;
+          approved = false;
+        }
       }
     }
     if (approved) {
@@ -410,7 +439,7 @@ export class Reload {
         this.game.gameCode
       );
     }
-    return approved;
+    return ret;
   }
 
   protected async denied(
