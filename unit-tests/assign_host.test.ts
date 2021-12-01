@@ -7,6 +7,7 @@ import _ from 'lodash';
 import { GameSettingsRepository } from '../src/repositories/gamesettings';
 import { assignHost, startGame } from '../src/resolvers/game';
 import { PokerGame } from '../src/entity/game/game';
+import { BuyInApprovalLimit } from '../src/entity/types';
 
 
 // default player, game and club inputs
@@ -78,8 +79,7 @@ const holdemGameInput = {
   actionTime: 30,
   muckLosingHand: true,
   rewardIds: [] as any,
-
-  buyInApproval: false,
+  buyInLimit: BuyInApprovalLimit.BUYIN_NO_LIMIT,
   breakLength: 20,
   breakAllowed: true,
   waitlistAllowed: true,

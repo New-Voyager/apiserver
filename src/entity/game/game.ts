@@ -20,6 +20,7 @@ import {
   SeatStatus,
   GameEndReason,
   ChipUnit,
+  BuyInApprovalLimit,
 } from '../types';
 
 @Entity({name: 'poker_game_updates'})
@@ -228,6 +229,9 @@ export class PokerGameSettings {
 
   @Column({name: 'buy_in_approval', default: false})
   public buyInApproval!: boolean;
+
+  @Column({name: 'buyin_limit', default: BuyInApprovalLimit.BUYIN_NO_LIMIT})
+  public buyInLimit!: BuyInApprovalLimit;
 
   @Column({name: 'buyin_timeout', type: 'int', default: 60})
   public buyInTimeout!: number;

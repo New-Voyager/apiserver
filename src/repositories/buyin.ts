@@ -13,6 +13,7 @@ import {gameLogPrefix, NextHandUpdates, PokerGame} from '@src/entity/game/game';
 import {
   ApprovalStatus,
   ApprovalType,
+  BuyInApprovalLimit,
   CreditUpdateType,
   GameStatus,
   NextHandUpdate,
@@ -22,6 +23,7 @@ import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {GameRepository} from './game';
 import {startTimer, cancelTimer} from '@src/timer';
 import {
+  BuyInResponse,
   BUYIN_APPROVAL_TIMEOUT,
   BUYIN_TIMEOUT,
   NewUpdate,
@@ -97,7 +99,7 @@ export class BuyIn {
     amount: number,
     playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
-  ): Promise<[PlayerStatus, boolean]> {
+  ): Promise<BuyInResponse> {
     let approved = false;
     const clubMember = await Cache.getClubMember(
       this.player.uuid,
@@ -126,11 +128,13 @@ export class BuyIn {
 
     const club = await Cache.getClub(this.game.clubCode);
     if (
-      clubMember.isOwner ||
-      clubMember.autoBuyinApproval ||
-      !gameSettings.buyInApproval ||
-      this.player.bot ||
-      isHost
+      gameSettings.buyInLimit != BuyInApprovalLimit.BUYIN_CREDIT_LIMIT &&
+      (clubMember.isOwner ||
+        clubMember.autoBuyinApproval ||
+        gameSettings.buyInLimit == BuyInApprovalLimit.BUYIN_NO_LIMIT ||
+        // !gameSettings.buyInApproval ||
+        this.player.bot ||
+        isHost)
     ) {
       logger.debug(`***** [${this.game.gameCode}] Player: ${this.player.name} buyin approved.
             clubMember: isOwner: ${clubMember.isOwner} isManager: ${clubMember.isManager}
@@ -145,12 +149,20 @@ export class BuyIn {
       playerStatus = updatedPlayerInGame.status;
     } else {
       let isWithinAutoApprovalLimit = false;
-      if (club.trackMemberCredit) {
+      //if (club.trackMemberCredit) {
+      if (gameSettings.buyInLimit == BuyInApprovalLimit.BUYIN_CREDIT_LIMIT) {
         // Club member auto approval credit.
         const profit = playerInGame.stack - playerInGame.buyIn;
         const credit = clubMember.availableCredit + profit;
         if (amount <= credit) {
           isWithinAutoApprovalLimit = true;
+        } else {
+          return {
+            approved: false,
+            status: playerStatus,
+            availableCredits: credit,
+            insufficientCredits: true,
+          };
         }
       } else {
         // Per-game auto approval limit.
@@ -190,7 +202,10 @@ export class BuyIn {
         this.game.gameCode
       );
     }
-    return [playerStatus, approved];
+    return {
+      approved: approved,
+      status: playerStatus,
+    };
   }
 
   public async buyInApproved(
@@ -261,7 +276,7 @@ export class BuyIn {
     );
   }
 
-  public async request(cents: number): Promise<buyInRequest> {
+  public async request(cents: number): Promise<BuyInResponse> {
     const timeout = 60;
 
     const startTime = new Date().getTime();
@@ -269,7 +284,7 @@ export class BuyIn {
     let buyInApprovedTime = 0;
     const firebaseTime = 0;
 
-    const [status, approved] = await getGameManager().transaction(
+    const ret = await getGameManager().transaction(
       async transactionEntityManager => {
         databaseTime = new Date().getTime();
         let playerStatus: PlayerStatus;
@@ -293,6 +308,10 @@ export class BuyIn {
           throw new Error(`Player ${this.player.uuid} is not in the game`);
         }
         const prevStatus = playerInGame;
+        let ret: BuyInResponse = {
+          approved: false,
+          status: playerInGame.status,
+        };
 
         // check amount should be between game.minBuyIn and game.maxBuyIn
         if (
@@ -305,7 +324,7 @@ export class BuyIn {
         }
         if (this.game.clubCode) {
           // club game
-          [playerStatus, approved] = await this.clubMemberBuyInApproval(
+          ret = await this.clubMemberBuyInApproval(
             cents,
             playerInGame,
             transactionEntityManager
@@ -316,7 +335,7 @@ export class BuyIn {
               playerId: this.player.id,
             },
             {
-              status: playerStatus,
+              status: ret.status,
             }
           );
 
@@ -326,9 +345,9 @@ export class BuyIn {
           }
           let stack = playerInGame.stack;
           let newUpdate: NewUpdate = NewUpdate.UNKNOWN_PLAYER_UPDATE;
-          if (playerStatus === PlayerStatus.WAIT_FOR_BUYIN_APPROVAL) {
+          if (ret.status === PlayerStatus.WAIT_FOR_BUYIN_APPROVAL) {
             newUpdate = NewUpdate.WAIT_FOR_BUYIN_APPROVAL;
-          } else if (approved) {
+          } else if (ret.approved) {
             newUpdate = NewUpdate.NEW_BUYIN;
 
             // get current stack
@@ -342,38 +361,46 @@ export class BuyIn {
             stack = updated?.stack;
           }
           databaseTime = new Date().getTime() - databaseTime;
-          if (!approved) {
+          if (!ret.approved) {
             logger.debug(
               `************ [${this.game.gameCode}]: Player ${this.player.name} is waiting for approval`
             );
-            // notify game host that the player is waiting for buyin
-            const host = await Cache.getPlayerById(this.game.hostId, true);
-            const messageId = uuidv4();
-            await Firebase.notifyBuyInRequest(
-              messageId,
-              this.game,
-              this.player,
-              host,
-              cents
-            );
 
-            Nats.notifyBuyInRequest(
-              messageId,
-              this.game,
-              this.player,
-              host,
-              cents
+            const gameSettings = await Cache.getGameSettings(
+              this.game.gameCode
             );
+            if (
+              gameSettings.buyInLimit == BuyInApprovalLimit.BUYIN_HOST_APPROVAL
+            ) {
+              // notify game host that the player is waiting for buyin
+              const host = await Cache.getPlayerById(this.game.hostId, true);
+              const messageId = uuidv4();
+              await Firebase.notifyBuyInRequest(
+                messageId,
+                this.game,
+                this.player,
+                host,
+                cents
+              );
 
-            // refresh the screen
-            Nats.playerStatusChanged(
-              this.game,
-              this.player,
-              prevStatus.status,
-              newUpdate,
-              stack,
-              seatNo
-            );
+              Nats.notifyBuyInRequest(
+                messageId,
+                this.game,
+                this.player,
+                host,
+                cents
+              );
+
+              // refresh the screen
+              Nats.playerStatusChanged(
+                this.game,
+                this.player,
+                prevStatus.status,
+                newUpdate,
+                stack,
+                seatNo
+              );
+            }
           }
         } else {
           // individual game
@@ -388,14 +415,16 @@ export class BuyIn {
           } else {
             approved = false;
           }
-
+          ret.approved = approved;
           playerStatus = PlayerStatus.WAIT_FOR_BUYIN_APPROVAL;
+          ret.status = PlayerStatus.WAIT_FOR_BUYIN_APPROVAL;
           if (approved) {
             const updatedPlayerInGame = await this.approveBuyInRequest(
               cents,
               playerInGame,
               transactionEntityManager
             );
+            ret.status = updatedPlayerInGame.status;
             let stack = updatedPlayerInGame.stack;
             let newUpdate: NewUpdate = NewUpdate.UNKNOWN_PLAYER_UPDATE;
             newUpdate = NewUpdate.NEW_BUYIN;
@@ -411,7 +440,7 @@ export class BuyIn {
           }
         }
 
-        if (approved) {
+        if (ret.approved) {
           logger.debug(
             `************ [${this.game.gameCode}]: Player ${this.player.name} bot: ${this.player.bot} buyin is approved`
           );
@@ -420,7 +449,7 @@ export class BuyIn {
           buyInApprovedTime = new Date().getTime() - buyInApprovedTime;
         }
 
-        return [playerStatus, approved];
+        return ret;
       }
     );
     const timeTaken = new Date().getTime() - startTime;
@@ -428,10 +457,7 @@ export class BuyIn {
       `Buyin process total time: ${timeTaken} buyInApprovedTime: ${buyInApprovedTime} databaseTime: ${databaseTime}`
     );
 
-    return {
-      expireSeconds: timeout,
-      approved: approved,
-    };
+    return ret;
   }
 
   public async pendingApprovalsForPlayer(): Promise<

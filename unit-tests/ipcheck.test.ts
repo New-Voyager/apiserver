@@ -9,7 +9,7 @@ import {buyIn, joinGame, setBuyInLimit, reload,   takeBreak,
   leaveGame} from '../src/resolvers/playersingame';
 import {Cache} from '../src/cache/index';
 import {getGameInfo} from '../src/resolvers/game';
-import { PlayerStatus } from '../src/entity/types';
+import { BuyInApprovalLimit, PlayerStatus } from '../src/entity/types';
 import _ from 'lodash';
 import { processPendingUpdates } from '../src/repositories/pendingupdates';
 import {getAppSettings, resetAppSettings} from '../src/firebase';
@@ -82,7 +82,7 @@ const holdemGameInput = {
   minPlayers: 3,
   maxPlayers: 9,
   gameLength: 60,
-  buyInApproval: false,
+  buyInLimit: BuyInApprovalLimit.BUYIN_NO_LIMIT,
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,

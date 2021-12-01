@@ -26,6 +26,7 @@ export enum Errors {
   POSTBLIND_FAILED,
   MAXCLUB_REACHED,
   SEAT_RESERVED,
+  INSUFFICIENT_CREDITS,
 }
 
 export class WaitlistSeatError extends ApolloError {
@@ -126,5 +127,31 @@ export class SeatReservedError extends ApolloError {
     extensions['gameCode'] = gameCode;
     extensions['seatNo'] = seatNo;
     super(message, Errors[Errors.SEAT_RESERVED], extensions);
+  }
+}
+
+export class ReloadError extends ApolloError {
+  constructor(
+    message: string,
+    gameCode: string,
+    seatNo: number,
+    amount: number
+  ) {
+    const extensions: any = {};
+    extensions['gameCode'] = gameCode;
+    extensions['seatNo'] = seatNo;
+    extensions['amount'] = amount;
+    super(message, Errors[Errors.RELOAD_FAILED], extensions);
+  }
+}
+
+export class InsufficientCreditsError extends ApolloError {
+  constructor(gameCode: string, seatNo: number, availableCredits: number) {
+    const message = `Game ${gameCode} Seat: ${seatNo} Failed to reload $amount`;
+    const extensions: any = {};
+    extensions['gameCode'] = gameCode;
+    extensions['seatNo'] = seatNo;
+    extensions['availableCredits'] = availableCredits;
+    super(message, Errors[Errors.INSUFFICIENT_CREDITS], extensions);
   }
 }

@@ -5,6 +5,7 @@ import {getGameRepository} from '.';
 import {getLogger} from '@src/utils/log';
 import {JanusSession} from '@src/janus';
 import {Nats} from '@src/nats';
+import {BuyInApprovalLimit} from '@src/entity/types';
 
 const logger = getLogger('repositories::gamesettings');
 class GameSettingsRepositoryImpl {
@@ -25,6 +26,9 @@ class GameSettingsRepositoryImpl {
     gameSettings.gameCode = gameCode;
     gameSettings.useAgora = input.useAgora;
     gameSettings.doubleBoardEveryHand = input.doubleBoardEveryHand;
+    const buyInLimitStr: string = input['buyInLimit'];
+    const buyInLimit: BuyInApprovalLimit = BuyInApprovalLimit[buyInLimitStr];
+    gameSettings.buyInLimit = buyInLimit;
 
     // setup bomb pot settings
     gameSettings.bombPotEnabled = input.bombPotEnabled;

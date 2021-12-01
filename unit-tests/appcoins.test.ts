@@ -20,7 +20,7 @@ import * as fs from 'fs';
 import * as glob from 'glob';
 import _ from 'lodash';
 import {getAppSettings} from '../src/firebase/index';
-import {GameStatus, TableStatus} from '../src/entity/types';
+import {BuyInApprovalLimit, GameStatus, TableStatus} from '../src/entity/types';
 
 const logger = getLogger('Hand server unit-test');
 
@@ -69,7 +69,7 @@ const holdemGameInput = {
   minPlayers: 3,
   maxPlayers: 9,
   gameLength: 60,
-  buyInApproval: false,
+  buyInLimit: BuyInApprovalLimit.BUYIN_NO_LIMIT,
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,

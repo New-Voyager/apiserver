@@ -186,3 +186,12 @@ export interface FirebaseToken {
   playerId: number;
   firebaseToken: string;
 }
+
+export interface BuyInResponse {
+  missedBlind?: boolean;
+  status?: PlayerStatus;
+  approved: boolean;
+  expireSeconds?: number;
+  availableCredits?: number;
+  insufficientCredits?: boolean;
+}

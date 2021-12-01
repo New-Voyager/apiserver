@@ -6,6 +6,7 @@ import {Cache} from '../src/cache/index';
 import _ from 'lodash';
 import {PlayersInGameRepository} from '../src/repositories/playersingame';
 import { GamePlayerSettings } from '../src/repositories/types';
+import { BuyInApprovalLimit } from '../src/entity/types';
 // import {GamePlayerSettings} from '../src/repositories/types';
 
 
@@ -78,8 +79,7 @@ const holdemGameInput = {
   actionTime: 30,
   muckLosingHand: true,
   rewardIds: [] as any,
-
-  buyInApproval: false,
+  buyInLimit: BuyInApprovalLimit.BUYIN_NO_LIMIT,
   breakLength: 20,
   breakAllowed: true,
   waitlistAllowed: true,
