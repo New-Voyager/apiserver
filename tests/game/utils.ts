@@ -487,7 +487,7 @@ export const holdemGameInput = {
   minPlayers: 3,
   maxPlayers: 9,
   gameLength: 60,
-  buyInApproval: false,
+  buyInLimit: 'BUYIN_NO_LIMIT',
   breakLength: 20,
   autoKickAfterBreak: true,
   waitForBigBlind: true,

@@ -56,7 +56,8 @@ describe('endGame APIs', () => {
         long: 100,
       },
     });
-    await buyIn({ownerId: playerId, gameCode: resp.data.configuredGame.gameCode, amount: 1000});
+    const buyInResp1 = await buyIn({ownerId: playerId, gameCode: resp.data.configuredGame.gameCode, amount: 1000});
+    console.log(JSON.stringify(buyInResp1));
     await joinGame({
       ownerId: playerId2,
       gameCode: resp.data.configuredGame.gameCode,
@@ -66,7 +67,8 @@ describe('endGame APIs', () => {
         long: 100,
       },
     });
-    await buyIn({ownerId: playerId2, gameCode: resp.data.configuredGame.gameCode, amount: 1000});
+    const buyInResp2 = await buyIn({ownerId: playerId2, gameCode: resp.data.configuredGame.gameCode, amount: 1000});
+    console.log(JSON.stringify(buyInResp2));
     await joinGame({
       ownerId: playerId3,
       gameCode: resp.data.configuredGame.gameCode,
@@ -88,6 +90,8 @@ describe('endGame APIs', () => {
     });
     await buyIn({ownerId: playerId4, gameCode: resp.data.configuredGame.gameCode, amount: 1000});
     await startGame({ ownerId: playerId, gameCode: resp.data.configuredGame.gameCode })
+    const gameInfoStart = await gameutils.gameInfo(playerId, resp.data.configuredGame.gameCode)
+    expect(gameInfoStart.status).toEqual('ACTIVE')
     await axios.post(`${SERVER_API}/process-pending-updates/gameId/${gameId}`)
     
     await endGame(playerId, resp.data.configuredGame.gameCode);

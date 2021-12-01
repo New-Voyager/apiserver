@@ -340,8 +340,12 @@ class GameCache {
     if (getResp.success && getResp.data && !update) {
       const data = JSON.parse(getResp.data);
       const ret = data as PokerGameSettings;
-      const buyInLimit: string = data.buyInLimit;
-      ret.buyInLimit = BuyInApprovalLimit[buyInLimit];
+      if (typeof data.buyInLimit === 'number') {
+        
+      } else {
+        const buyInLimit: string = data.buyInLimit;
+        ret.buyInLimit = BuyInApprovalLimit[buyInLimit];
+      }
       return ret;
     } else {
       let repo: Repository<PokerGameSettings>;
