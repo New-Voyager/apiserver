@@ -341,7 +341,6 @@ class GameCache {
       const data = JSON.parse(getResp.data);
       const ret = data as PokerGameSettings;
       if (typeof data.buyInLimit === 'number') {
-        
       } else {
         const buyInLimit: string = data.buyInLimit;
         ret.buyInLimit = BuyInApprovalLimit[buyInLimit];
