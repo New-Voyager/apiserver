@@ -31,6 +31,5 @@ describe('reload APIs', () => {
       amount: 100,
     });
     expect(data.status.approved).toEqual(true);
-    expect(data.status.expireSeconds).toEqual(60);
   });
 });
