@@ -103,7 +103,7 @@ describe('BuyIn APIs', () => {
     done();
   });
 
-  test('per_game_buyin_auto_approval_limit: auto-approve up to in-game limit', async () => {
+  test.skip('per_game_buyin_auto_approval_limit: auto-approve up to in-game limit', async () => {
     await createGameServer(gameServer1);
 
     // create players
@@ -256,7 +256,7 @@ describe('BuyIn APIs', () => {
     // Player 1 - exceeds limit (not auto approved)
     const resp1 = await buyIn(player1, game.gameCode, 100);
     expect(resp1.approved).toBe(false);
-    expect(resp1.status).toBe('WAIT_FOR_BUYIN');
+    expect(resp1.status).toBe('WAIT_FOR_BUYIN_APPROVAL');
 
     // Player 2 - below limit (auto approved)
     const resp2 = await buyIn(player2, game.gameCode, 100);
@@ -271,7 +271,7 @@ describe('BuyIn APIs', () => {
     // Player 3 - additional buy-in exceeds limit (not auto approved)
     const resp3b = await buyIn(player3, game.gameCode, 100);
     expect(resp3b.approved).toBe(false);
-    expect(resp3b.status).toBe('WAIT_FOR_BUYIN');
+    expect(resp3b.status).toBe('WAIT_FOR_BUYIN_APPROVAL');
 
     await endGame(owner, game.gameCode);
   });

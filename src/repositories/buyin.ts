@@ -101,6 +101,9 @@ export class BuyIn {
     transactionEntityManager: EntityManager
   ): Promise<BuyInResponse> {
     let approved = false;
+    let ret: BuyInResponse = {
+      approved: approved,
+    };
     const clubMember = await Cache.getClubMember(
       this.player.uuid,
       this.game.clubCode
@@ -157,12 +160,14 @@ export class BuyIn {
         if (amount <= credit) {
           isWithinAutoApprovalLimit = true;
         } else {
-          return {
-            approved: false,
-            status: playerStatus,
-            availableCredits: credit,
-            insufficientCredits: true,
-          };
+          ret.hostConfirmation = true;
+          // let the player to go through regular host approval process
+          // return {
+          //   approved: false,
+          //   status: playerStatus,
+          //   availableCredits: credit,
+          //   insufficientCredits: true,
+          // };
         }
       } else {
         // Per-game auto approval limit.
@@ -202,10 +207,9 @@ export class BuyIn {
         this.game.gameCode
       );
     }
-    return {
-      approved: approved,
-      status: playerStatus,
-    };
+    ret.approved = approved;
+    ret.status = playerStatus;
+    return ret;
   }
 
   public async buyInApproved(
@@ -370,6 +374,7 @@ export class BuyIn {
               this.game.gameCode
             );
             if (
+              ret.hostConfirmation ||
               gameSettings.buyInLimit == BuyInApprovalLimit.BUYIN_HOST_APPROVAL
             ) {
               // notify game host that the player is waiting for buyin
