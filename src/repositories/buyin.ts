@@ -207,6 +207,7 @@ export class BuyIn {
         this.game.gameCode
       );
     }
+    ret.approved = approved;
     ret.status = playerStatus;
     return ret;
   }
