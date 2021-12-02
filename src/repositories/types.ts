@@ -194,4 +194,5 @@ export interface BuyInResponse {
   expireSeconds?: number;
   availableCredits?: number;
   insufficientCredits?: boolean;
+  hostConfirmation?: boolean;
 }
