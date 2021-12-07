@@ -9,6 +9,7 @@ import {
   hostSeatChangePlayers,
   SeatChangeProcess,
 } from '@src/repositories/seatchange';
+import {centsToChips} from '@src/utils';
 import {errToStr, getLogger} from '@src/utils/log';
 import {argsToArgsConfig} from 'graphql/type/definition';
 import _ from 'lodash';
@@ -228,6 +229,7 @@ export async function seatPositions(
   gameCode: string,
   seatChange: boolean
 ) {
+  let resp: Array<any>;
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }
@@ -259,7 +261,7 @@ export async function seatPositions(
           player.playerUuid = 'open';
         }
       }
-      return playersInSeats;
+      resp = playersInSeats;
     } else {
       // get seat positions from table
       const playersInTable = await PlayersInGameRepository.getPlayersInSeats(
@@ -270,7 +272,7 @@ export async function seatPositions(
         const player = playerInSeat as any;
         player.openSeat = false;
         player.status = PlayerStatus[player.status];
-        player.push(player);
+        players.push(player);
       }
       const playersMap = _.keyBy(players, 'seatNo');
       const playersInSeats: Array<any> = [];
@@ -287,7 +289,7 @@ export async function seatPositions(
           playersInSeats[seatNo - 1] = playersMap[seatNo];
         }
       }
-      return playersInSeats;
+      resp = playersInSeats;
     }
   } catch (err) {
     logger.error(JSON.stringify(err));
@@ -295,6 +297,19 @@ export async function seatPositions(
       `Failed to get seat change requests. ${JSON.stringify(err)}`
     );
   }
+  return seatPositionsToClientUnits(resp);
+}
+
+function seatPositionsToClientUnits(input: Array<any>): any {
+  const resp = new Array<any>();
+  for (const i of input) {
+    const r = {...i};
+    r.stack = centsToChips(r.stack);
+    r.buyIn = centsToChips(r.buyIn);
+    resp.push(r);
+  }
+
+  return resp;
 }
 
 export async function beginHostSeatChange(
