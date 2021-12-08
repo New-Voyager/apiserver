@@ -231,7 +231,7 @@ describe('Tests: waitlist seating APIs', () => {
 
     // verify waitlist count
     const waitlist1 = await gameutils.waitingList(ownerId, game.gameCode);
-    expect(waitlist1).toHaveLength(1);
+    expect(waitlist1).toHaveLength(2);
     waitlist1.forEach(element => {
       expect(element.status).toBe('IN_QUEUE');
     });
