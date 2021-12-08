@@ -17,6 +17,8 @@ import {
   In,
   UpdateResult,
   LessThanOrEqual,
+  EntityManager,
+  Repository,
 } from 'typeorm';
 import {PokerGame} from '@src/entity/game/game';
 import {
@@ -1663,8 +1665,15 @@ class ClubRepositoryImpl {
   public async updateCredit(
     playerUuid: string,
     clubCode: string,
-    amount: number
+    amount: number,
+    entityManager?: EntityManager
   ): Promise<number> {
+    let clubMemberRepo: Repository<ClubMember>;
+    if (entityManager) {
+      clubMemberRepo = entityManager.getRepository(ClubMember);
+    } else {
+      clubMemberRepo = getUserConnection().getRepository(ClubMember);
+    }
     const clubMember = await Cache.getClubMember(playerUuid, clubCode);
     if (!clubMember) {
       throw new Error(
@@ -1677,7 +1686,7 @@ class ClubRepositoryImpl {
     if (process.env.DB_USED === 'sqllite') {
       // RETURNING not supported in sqlite.
       newCredit = clubMember.availableCredit + amount;
-      updateResult = await getUserConnection().getRepository(ClubMember).update(
+      updateResult = await clubMemberRepo.update(
         {
           id: memberId,
         },
@@ -1686,9 +1695,9 @@ class ClubRepositoryImpl {
         }
       );
     } else {
-      updateResult = await getUserConnection()
+      updateResult = await clubMemberRepo
         .createQueryBuilder()
-        .update(ClubMember)
+        .update()
         .set({
           availableCredit: () => `available_credit + :amount`,
         })

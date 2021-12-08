@@ -111,6 +111,9 @@ export class GameHistory {
   @Column({name: 'data_aggregated', nullable: false, default: false})
   public dataAggregated!: boolean;
 
+  @Column({name: 'credits_aggregated', nullable: false, default: false})
+  public creditsAggregated!: boolean;
+
   @Column({name: 'hands_data_compressed', default: false})
   public handsDataCompressed!: boolean;
 

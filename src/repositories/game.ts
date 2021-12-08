@@ -1063,7 +1063,6 @@ class GameRepositoryImpl {
       game: {id: game.id},
     });
 
-    const creditChanges = new Array<CreditTracking>();
     for (const playerInGame of players) {
       if (playerInGame.satAt) {
         const satAt = new Date(Date.parse(playerInGame.satAt.toString()));
@@ -1085,56 +1084,7 @@ class GameRepositoryImpl {
             satAt: undefined,
           }
         );
-
-        if (game.clubId) {
-          const playerUuid = playerInGame.playerUuid;
-          const clubMember = await Cache.getClubMember(
-            playerUuid,
-            game.clubCode
-          );
-          if (clubMember) {
-            const amount = playerInGame.stack;
-            let newCredit: number;
-
-            try {
-              newCredit = await ClubRepository.updateCredit(
-                playerUuid,
-                game.clubCode,
-                amount
-              );
-            } catch (err) {
-              logger.error(
-                `Could not update club member credit after game. club: ${
-                  game.clubCode
-                }, member ID: ${clubMember.id}, game: ${
-                  game.gameCode
-                }: ${errToStr(err)}`
-              );
-              continue;
-            }
-
-            const ct = new CreditTracking();
-            ct.clubId = game.clubId;
-            ct.playerId = playerInGame.playerId;
-            ct.updateType = CreditUpdateType.GAME_RESULT;
-            ct.gameCode = game.gameCode;
-            ct.amount = amount;
-            ct.updatedCredits = newCredit;
-            ct.tips = playerInGame.rakePaid;
-            creditChanges.push(ct);
-          } else {
-            logger.error(
-              `Could not find club member in cache while updating credit tracker. club: ${game.clubCode}, player: ${playerUuid}`
-            );
-          }
-        }
       }
-    }
-
-    if (creditChanges.length > 0) {
-      await getUserConnection()
-        .getRepository(CreditTracking)
-        .save(creditChanges);
     }
 
     await getGameConnection()
