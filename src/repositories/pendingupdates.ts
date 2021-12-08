@@ -131,26 +131,6 @@ export async function processPendingUpdates(gameId: number) {
     return;
   }
 
-  // did the host paused the game?
-  resp = await getGameConnection().query(query, [
-    gameId,
-    NextHandUpdate.PAUSE_GAME,
-  ]);
-  if (resp[0]['updates'] > 0) {
-    logger.info(`[${gameLogPrefix(game)}] game is paused`);
-    // game paused
-    await GameRepository.markGameStatus(gameId, GameStatus.PAUSED);
-
-    // delete hand updates for the game
-    await getGameConnection().query(
-      fixQuery(
-        'DELETE FROM next_hand_updates WHERE game_id=? AND new_update = ?'
-      ),
-      [gameId, NextHandUpdate.PAUSE_GAME]
-    );
-    return;
-  }
-
   const pendingUpdatesRepo = getGameRepository(NextHandUpdates);
   const updates = await pendingUpdatesRepo.find({
     where: {
@@ -228,6 +208,26 @@ export async function processPendingUpdates(gameId: number) {
         }
       }
     }
+  }
+
+  // did the host paused the game?
+  resp = await getGameConnection().query(query, [
+    gameId,
+    NextHandUpdate.PAUSE_GAME,
+  ]);
+  if (resp[0]['updates'] > 0) {
+    logger.info(`[${gameLogPrefix(game)}] game is paused`);
+    // game paused
+    await GameRepository.markGameStatus(gameId, GameStatus.PAUSED);
+
+    // delete hand updates for the game
+    await getGameConnection().query(
+      fixQuery(
+        'DELETE FROM next_hand_updates WHERE game_id=? AND new_update = ?'
+      ),
+      [gameId, NextHandUpdate.PAUSE_GAME]
+    );
+    return;
   }
 
   if (!seatChangeInProgress && gameSettings.waitlistAllowed) {

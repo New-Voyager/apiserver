@@ -44,6 +44,24 @@ export class GameHistory {
   })
   public bigBlind!: number;
 
+  @Column({
+    name: 'rake_percentage',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    default: 0,
+  })
+  public rakePercentage!: number;
+
+  @Column({
+    name: 'rake_cap',
+    type: 'decimal',
+    precision: 7,
+    scale: 2,
+    default: 0,
+  })
+  public rakeCap!: number;
+
   @Column({name: 'game_status', nullable: true, default: GameStatus.UNKNOWN})
   public status!: GameStatus;
 

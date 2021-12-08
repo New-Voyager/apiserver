@@ -1004,17 +1004,7 @@ export async function openSeats(playerId: string, gameCode: string) {
       throw new GameNotFoundError(gameCode);
     }
 
-    const playersInSeats = await PlayersInGameRepository.getPlayersInSeats(
-      game.id
-    );
-    const takenSeats = playersInSeats.map(x => x.seatNo);
-    const availableSeats: Array<number> = [];
-    for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
-      if (takenSeats.indexOf(seatNo) === -1) {
-        availableSeats.push(seatNo);
-      }
-    }
-    return availableSeats;
+    return PlayersInGameRepository.openSeats(game);
   } catch (err) {
     logger.error(
       `Error while getting open seats. playerId: ${playerId}, gameCode: ${gameCode}: ${errToStr(

@@ -653,7 +653,7 @@ class GameRepositoryImpl {
     }
     const waitlistMgmt = new WaitListMgmt(game);
     let startTime = new Date().getTime();
-    const [playerInGame, newPlayer] = await getGameManager().transaction(
+    const playerInGame = await getGameManager().transaction(
       async transactionEntityManager => {
         const gameSeatInfoRepo =
           transactionEntityManager.getRepository(PokerGameSeatInfo);
@@ -732,7 +732,7 @@ class GameRepositoryImpl {
 
         // if the current player in seat tried to sit in the same seat, do nothing
         if (playerInSeat && playerInSeat.playerId === player.id) {
-          return [playerInSeat, false];
+          return playerInSeat;
         }
 
         if (playerInSeat && playerInSeat.playerId !== player.id) {
@@ -741,168 +741,20 @@ class GameRepositoryImpl {
             `A player ${playerInSeat.playerName}:${playerInSeat.playerUuid} is sitting in seat: ${seatNo}`
           );
         }
-        // if this player has already played this game before, we should have his record
-        const playerInGames = await playerGameTrackerRepository
-          .createQueryBuilder()
-          .where({
-            game: {id: game.id},
-            playerId: player.id,
-          })
-          .select('stack')
-          .addSelect('status')
-          .addSelect('buy_in', 'buyIn')
-          .addSelect('game_token', 'gameToken')
-          .addSelect('missed_blind', 'missedBlind')
-          .addSelect('posted_blind', 'postedBlind')
-          .execute();
 
-        let playerInGame: PlayerGameTracker | null = null;
-        if (playerInGames.length > 0) {
-          playerInGame = playerInGames[0];
-        }
-
-        if (playerInGame) {
-          playerInGame.seatNo = seatNo;
-          playerInGame.playerIp = ip;
-          if (location) {
-            playerInGame.playerLocation = `${location.lat},${location.long}`;
-          }
-        } else {
-          playerInGame = new PlayerGameTracker();
-          playerInGame.playerId = player.id;
-          playerInGame.playerUuid = player.uuid;
-          playerInGame.playerName = player.name;
-          playerInGame.game = game;
-          playerInGame.stack = 0;
-          playerInGame.buyIn = 0;
-          playerInGame.seatNo = seatNo;
-          playerInGame.noOfBuyins = 0;
-          playerInGame.buyinNotes = '';
-          playerInGame.satAt = new Date();
-          const randomBytes = Buffer.from(crypto.randomBytes(5));
-          playerInGame.gameToken = randomBytes.toString('hex');
-          playerInGame.status = PlayerStatus.NOT_PLAYING;
-          playerInGame.runItTwiceEnabled = gameSettings.runItTwiceAllowed;
-          playerInGame.muckLosingHand = game.muckLosingHand;
-          playerInGame.playerIp = ip;
-          if (location) {
-            playerInGame.playerLocation = `${location.lat},${location.long}`;
-          }
-
-          if (
-            game.status === GameStatus.ACTIVE &&
-            game.tableStatus === TableStatus.GAME_RUNNING
-          ) {
-            // player must post blind
-            playerInGame.missedBlind = true;
-          }
-
-          try {
-            if (gameSettings.useAgora) {
-              playerInGame.audioToken =
-                await PlayersInGameRepository.getAudioToken(
-                  player,
-                  game,
-                  transactionEntityManager
-                );
-            }
-          } catch (err) {
-            logger.error(
-              `Failed to get agora token ${errToStr(err)} Game: ${game.id}`
-            );
-          }
-
-          try {
-            await playerGameTrackerRepository.save(playerInGame);
-            await StatsRepository.joinedNewGame(player);
-            // create a row in stats table
-            await StatsRepository.newGameStatsRow(game, player);
-          } catch (err) {
-            logger.error(
-              `Failed to update player_game_tracker and player_game_stats table ${errToStr(
-                err
-              )} Game: ${game.id}`
-            );
-            throw err;
-          }
-        }
-
-        // we need 5 bytes to scramble 5 cards
-        if (playerInGame.stack > game.ante) {
-          playerInGame.status = PlayerStatus.PLAYING;
-        } else {
-          playerInGame.status = PlayerStatus.WAIT_FOR_BUYIN;
-        }
-
-        await playerGameTrackerRepository.update(
-          {
-            game: {id: game.id},
-            playerId: player.id,
-          },
-          {
-            seatNo: seatNo,
-            status: playerInGame.status,
-            waitingFrom: null,
-            waitlistNum: 0,
-            satAt: new Date(),
-          }
+        const seatedPlayer = await PlayersInGameRepository.seatPlayer(
+          game,
+          gameSettings,
+          player,
+          seatNo,
+          ip,
+          location,
+          false,
+          transactionEntityManager
         );
-        await this.seatOccupied(game, seatNo, transactionEntityManager);
-        if (playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN) {
-          await PlayersInGameRepository.startBuyinTimer(
-            game,
-            player.id,
-            player.name,
-            {},
-            transactionEntityManager
-          );
-        }
-        return [playerInGame, true];
+        return seatedPlayer;
       }
     );
-    try {
-      if (game.clubCode) {
-        const clubMember = await Cache.getClubMember(
-          player.uuid,
-          game.clubCode
-        );
-        if (clubMember) {
-          const clubMemberRepo = getUserRepository(ClubMember);
-          await clubMemberRepo.update(
-            {
-              id: clubMember.id,
-            },
-            {
-              lastPlayedDate: new Date(),
-            }
-          );
-        }
-      }
-    } catch (err) {
-      // ignore this error (not critical)
-    }
-    let timeTaken = new Date().getTime() - startTime;
-    logger.debug(`joingame database time taken: ${timeTaken}`);
-    startTime = new Date().getTime();
-    if (newPlayer) {
-      await Cache.removeGameObserver(game.gameCode, player);
-      // send a message to gameserver
-      //newPlayerSat(game, player, seatNo, playerInGame);
-      Nats.newPlayerSat(game, player, playerInGame, seatNo);
-
-      // continue to run wait list seating
-      waitlistMgmt.runWaitList().catch(e => {
-        logger.error(`Failed to run waitlist processing. Error: ${e.message}`);
-      });
-    }
-
-    if (playerInGame.status === PlayerStatus.PLAYING) {
-      await GameRepository.restartGameIfNeeded(game, true, false);
-    }
-
-    timeTaken = new Date().getTime() - startTime;
-    logger.debug(`joingame server notification time taken: ${timeTaken}`);
-    startTime = new Date().getTime();
     return playerInGame.status;
   }
 

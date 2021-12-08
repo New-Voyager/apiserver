@@ -1,4 +1,12 @@
-import {EntityManager, IsNull, Not, Repository, UpdateResult} from 'typeorm';
+import * as crypto from 'crypto';
+import {
+  EntityManager,
+  getRepository,
+  IsNull,
+  Not,
+  Repository,
+  UpdateResult,
+} from 'typeorm';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {
   getGameManager,
@@ -6,7 +14,7 @@ import {
   getHistoryRepository,
   getUserRepository,
 } from '.';
-import {getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {
   NextHandUpdates,
   PokerGame,
@@ -29,7 +37,9 @@ import {BUYIN_TIMEOUT, GamePlayerSettings} from './types';
 import {getAgoraToken} from '@src/3rdparty/agora';
 import {playersInGame} from '@src/resolvers/history';
 import {HandHistory} from '@src/entity/history/hand';
-import {ClubMemberStat} from '@src/entity/player/club';
+import {ClubMember, ClubMemberStat} from '@src/entity/player/club';
+import {StatsRepository} from './stats';
+import {GameRepository} from './game';
 
 const logger = getLogger('players_in_game');
 
@@ -606,6 +616,189 @@ class PlayersInGameRepositoryImpl {
     } catch (err) {
       logger.error(`[${game.gameCode}] Failed to update players in game stats`);
     }
+  }
+
+  public async openSeats(game: PokerGame): Promise<Array<number>> {
+    const playersInSeats = await this.getPlayersInSeats(game.id);
+    const takenSeats = playersInSeats.map(x => x.seatNo);
+    const availableSeats: Array<number> = [];
+    for (let seatNo = 1; seatNo <= game.maxPlayers; seatNo++) {
+      if (takenSeats.indexOf(seatNo) === -1) {
+        availableSeats.push(seatNo);
+      }
+    }
+    return availableSeats;
+  }
+
+  public async seatPlayer(
+    game: PokerGame,
+    gameSettings: PokerGameSettings,
+    player: Player,
+    seatNo: number,
+    ip: string,
+    location: any,
+    waitlistPlayer: boolean,
+    entityManager: EntityManager | undefined
+  ): Promise<PlayerGameTracker> {
+    let playerGameTrackerRepository: Repository<PlayerGameTracker>;
+    if (entityManager) {
+      playerGameTrackerRepository =
+        entityManager.getRepository(PlayerGameTracker);
+    } else {
+      playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+    }
+    // if this player has already played this game before, we should have his record
+    const playerInGames = await playerGameTrackerRepository
+      .createQueryBuilder()
+      .where({
+        game: {id: game.id},
+        playerId: player.id,
+      })
+      .select('stack')
+      .addSelect('status')
+      .addSelect('buy_in', 'buyIn')
+      .addSelect('game_token', 'gameToken')
+      .addSelect('missed_blind', 'missedBlind')
+      .addSelect('posted_blind', 'postedBlind')
+      .execute();
+
+    let playerInGame: PlayerGameTracker | null = null;
+    if (playerInGames.length > 0) {
+      playerInGame = playerInGames[0];
+    }
+
+    if (playerInGame) {
+      playerInGame.seatNo = seatNo;
+      playerInGame.playerIp = ip;
+      if (location) {
+        playerInGame.playerLocation = `${location.lat},${location.long}`;
+      }
+    } else {
+      playerInGame = new PlayerGameTracker();
+      playerInGame.playerId = player.id;
+      playerInGame.playerUuid = player.uuid;
+      playerInGame.playerName = player.name;
+      playerInGame.game = game;
+      playerInGame.stack = 0;
+      playerInGame.buyIn = 0;
+      playerInGame.seatNo = seatNo;
+      playerInGame.noOfBuyins = 0;
+      playerInGame.buyinNotes = '';
+      playerInGame.satAt = new Date();
+      const randomBytes = Buffer.from(crypto.randomBytes(5));
+      playerInGame.gameToken = randomBytes.toString('hex');
+      playerInGame.status = PlayerStatus.NOT_PLAYING;
+      playerInGame.runItTwiceEnabled = gameSettings.runItTwiceAllowed;
+      playerInGame.muckLosingHand = game.muckLosingHand;
+      playerInGame.playerIp = ip;
+      if (location) {
+        playerInGame.playerLocation = `${location.lat},${location.long}`;
+      }
+
+      if (
+        game.status === GameStatus.ACTIVE &&
+        game.tableStatus === TableStatus.GAME_RUNNING
+      ) {
+        // player must post blind
+        playerInGame.missedBlind = true;
+      }
+
+      try {
+        if (gameSettings.useAgora) {
+          playerInGame.audioToken = await PlayersInGameRepository.getAudioToken(
+            player,
+            game,
+            entityManager
+          );
+        }
+      } catch (err) {
+        logger.error(
+          `Failed to get agora token ${errToStr(err)} Game: ${game.id}`
+        );
+      }
+
+      try {
+        await playerGameTrackerRepository.save(playerInGame);
+        await StatsRepository.joinedNewGame(player);
+        // create a row in stats table
+        await StatsRepository.newGameStatsRow(game, player);
+      } catch (err) {
+        logger.error(
+          `Failed to update player_game_tracker and player_game_stats table ${errToStr(
+            err
+          )} Game: ${game.id}`
+        );
+        throw err;
+      }
+    }
+
+    // we need 5 bytes to scramble 5 cards
+    if (playerInGame.stack > game.ante) {
+      playerInGame.status = PlayerStatus.PLAYING;
+    } else {
+      playerInGame.status = PlayerStatus.WAIT_FOR_BUYIN;
+    }
+
+    await playerGameTrackerRepository.update(
+      {
+        game: {id: game.id},
+        playerId: player.id,
+      },
+      {
+        seatNo: seatNo,
+        status: playerInGame.status,
+        waitingFrom: null,
+        waitlistNum: 0,
+        satAt: new Date(),
+      }
+    );
+    await GameRepository.seatOccupied(game, seatNo, entityManager);
+    if (playerInGame.status === PlayerStatus.WAIT_FOR_BUYIN) {
+      await PlayersInGameRepository.startBuyinTimer(
+        game,
+        player.id,
+        player.name,
+        {},
+        entityManager
+      );
+    }
+    try {
+      if (game.clubCode) {
+        const clubMember = await Cache.getClubMember(
+          player.uuid,
+          game.clubCode
+        );
+        if (clubMember) {
+          const clubMemberRepo = getUserRepository(ClubMember);
+          await clubMemberRepo.update(
+            {
+              id: clubMember.id,
+            },
+            {
+              lastPlayedDate: new Date(),
+            }
+          );
+        }
+      }
+    } catch (err) {
+      // ignore this error (not critical)
+    }
+    await Cache.removeGameObserver(game.gameCode, player);
+    // send a message to gameserver
+    //newPlayerSat(game, player, seatNo, playerInGame);
+    Nats.newPlayerSat(game, player, playerInGame, seatNo);
+
+    if (playerInGame.status === PlayerStatus.PLAYING) {
+      await GameRepository.restartGameIfNeeded(game, true, false);
+    }
+    const updatedPlayer = await playerGameTrackerRepository.findOne({
+      game: {id: game.id},
+      playerId: player.id,
+    });
+    if (!updatedPlayer) {
+      throw new Error('Could not find player');
+    }
+    return updatedPlayer;
   }
 }
 

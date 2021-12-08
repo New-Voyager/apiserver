@@ -56,6 +56,8 @@ class HistoryRepositoryImpl {
     gameHistory.status = game.status;
     gameHistory.clubCode = game.clubCode;
     gameHistory.gameNum = game.gameNum;
+    gameHistory.rakePercentage = game.rakePercentage;
+    gameHistory.rakeCap = game.rakeCap;
 
     await gameHistoryRepo.save(gameHistory);
   }

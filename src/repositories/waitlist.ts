@@ -12,13 +12,15 @@ import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery} from '@src/utils';
 import {getLogger} from '@src/utils/log';
 import {EntityManager, Equal, IsNull, Not, Repository} from 'typeorm';
-import {WAITLIST_SEATING} from './types';
+import {BUYIN_TIMEOUT, NewUpdate, WAITLIST_SEATING} from './types';
 import * as crypto from 'crypto';
 import {v4 as uuidv4} from 'uuid';
 import {Nats} from '@src/nats';
 import {WaitlistSeatError} from '@src/errors';
 import {getGameConnection, getGameManager, getGameRepository} from '.';
 import {Firebase} from '@src/firebase';
+import {PlayersInGameRepository} from './playersingame';
+import {GameRepository} from './game';
 
 const logger = getLogger('repositories::waitlist');
 
@@ -54,6 +56,9 @@ export class WaitListMgmt {
       gameSeatInfoRepo = getGameRepository(PokerGameSeatInfo);
     }
 
+    // PUT THE PLAYER IN AN OPEN SEAT
+
+    let waitlistToSeatState = true;
     // join game waitlist seating in progress flag
     // if set to true, only the player with WAITLIST_SEATING is allowed to sit
     // if WAITLIST_SEATING player is sitting, change status to PLAYING, update waitingFrom, waitlist_sitting_exp
@@ -120,12 +125,19 @@ export class WaitListMgmt {
     const playerAskedToSit = await playerGameTrackerRepository.findOne({
       where: {
         game: {id: this.game.id},
-        status: PlayerStatus.WAITLIST_SEATING,
+        playerId: player.id,
       },
     });
 
     if (playerAskedToSit && playerAskedToSit.playerId === player.id) {
       cancelTimer(this.game.id, player.id, WAITLIST_SEATING).catch(e => {
+        logger.error(
+          `[${gameLogPrefix(
+            this.game
+          )}] Canceling wait list timer failed. Error: ${e.message}`
+        );
+      });
+      cancelTimer(this.game.id, player.id, BUYIN_TIMEOUT).catch(e => {
         logger.error(
           `[${gameLogPrefix(
             this.game
@@ -140,9 +152,24 @@ export class WaitListMgmt {
           playerId: player.id,
         },
         {
-          status: PlayerStatus.NOT_PLAYING,
+          status: PlayerStatus.LEFT,
+          seatNo: 0,
         }
       );
+
+      // remove the player from the seat
+      if (playerAskedToSit.seatNo) {
+        await GameRepository.seatOpened(this.game, playerAskedToSit.seatNo);
+        // update the clients with new status
+        await Nats.playerStatusChanged(
+          this.game,
+          player,
+          playerAskedToSit.status,
+          NewUpdate.LEFT_THE_GAME,
+          playerAskedToSit.stack,
+          playerAskedToSit.seatNo
+        );
+      }
     }
 
     const count = await playerGameTrackerRepository.count({
@@ -190,6 +217,107 @@ export class WaitListMgmt {
     );
   }
 
+  // get list of open seats
+  // walk through the waiting list and put the player in open seats
+  public async runWaitList() {
+    const gameId = this.game.id;
+    const seatsTaken = await occupiedSeats(gameId);
+    if (seatsTaken === this.game.maxPlayers) {
+      logger.debug(`No open seats in game: ${this.game.gameCode}`);
+      return;
+    }
+    const openSeats = await PlayersInGameRepository.openSeats(this.game);
+    if (openSeats.length === 0) {
+      return;
+    }
+    await this.resetExistingWaitingList();
+
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+
+    // eslint-disable-next-line no-constant-condition
+    // get the first guy from the wait list
+    const waitingPlayers = await playerGameTrackerRepository.find({
+      relations: ['game'],
+      where: {
+        game: {id: gameId},
+        waitingFrom: Not(IsNull()),
+        waitlistNum: Not(Equal(0)),
+        status: PlayerStatus.IN_QUEUE,
+      },
+      order: {
+        waitlistNum: 'ASC',
+      },
+    });
+    if (waitingPlayers.length === 0) {
+      // logger.info(`Game: ${this.game.gameCode} No players in the waiting list`);
+      return;
+    }
+    const gameSettings = await Cache.getGameSettings(this.game.gameCode);
+    let nextPlayer: PlayerGameTracker | null = null;
+    for (const player of waitingPlayers) {
+      if (openSeats.length === 0) {
+        break;
+      }
+      // check the player status
+      if (player.status === PlayerStatus.IN_QUEUE) {
+        const openSeat = openSeats.pop();
+        if (!openSeat) {
+          continue;
+        }
+        const cachedPlayer = await Cache.getPlayer(player.playerUuid);
+        logger.info(
+          `[${this.game.gameCode}]: ${cachedPlayer.name} seated at ${openSeat} from waiting list`
+        );
+        await PlayersInGameRepository.seatPlayer(
+          this.game,
+          gameSettings,
+          cachedPlayer,
+          openSeat,
+          '',
+          null,
+          true,
+          undefined
+        );
+
+        // we will send a notification which player is coming to the table
+        // await waitlistSeating(nextPlayer.game, player, timeout);
+        let clubName = '';
+        if (this.game.clubName !== null) {
+          clubName = this.game.clubName;
+        }
+        const messageId = uuidv4();
+        const title = `${GameType[this.game.gameType]} ${
+          this.game.smallBlind
+        }/${this.game.bigBlind}`;
+        logger.info(
+          `[${this.game.gameCode}] Player: ${cachedPlayer.name}/${cachedPlayer.uuid} is requested to take open seat`
+        );
+        let waitingListTimeExp = new Date(Date.now());
+        waitingListTimeExp.setMinutes(waitingListTimeExp.getMinutes() + 1);
+        Nats.sendWaitlistMessage(
+          this.game.gameCode,
+          this.game.gameType,
+          this.game,
+          title,
+          clubName,
+          cachedPlayer,
+          waitingListTimeExp,
+          messageId
+        );
+        Firebase.sendWaitlistNotification(
+          messageId,
+          this.game,
+          cachedPlayer,
+          waitingListTimeExp
+        ).catch(err => {
+          logger.error(
+            `Error sending waiting list notification. Game: ${this.game.gameCode} Player: ${cachedPlayer.name}`
+          );
+        });
+      }
+    }
+  }
+
   // get the first guy from the wait list
   // if the timer expired, cancel the timer and change the user to status, NOT_PLAYING, waitingFrom: null, waitlist_sitting_exp: null
   // if no-one is in the wait list, set waitlist seating in progress to false
@@ -197,7 +325,7 @@ export class WaitListMgmt {
   // update status: WAITLIST_SEATING waitlist_sitting_exp timeout
   // start the timer
   // notify game server to send message to players
-  public async runWaitList() {
+  public async runWaitList1() {
     const gameId = this.game.id;
     const seatsTaken = await occupiedSeats(gameId);
     if (seatsTaken === this.game.maxPlayers) {
