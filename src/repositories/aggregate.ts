@@ -2,16 +2,18 @@ import {Cache} from '@src/cache';
 
 import {
   getDebugRepository,
+  getGameConnection,
   getGameManager,
   getGameRepository,
   getHistoryConnection,
   getHistoryManager,
   getHistoryRepository,
+  getUserManager,
 } from '.';
 import {GameHistory} from '@src/entity/history/game';
 import {PlayerGameStats} from '@src/entity/history/stats';
 import {HandHistory} from '@src/entity/history/hand';
-import {GameStatus} from '@src/entity/types';
+import {CreditUpdateType, GameStatus} from '@src/entity/types';
 import {PlayersInGame} from '@src/entity/history/player';
 import {getLogger, errToStr} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
@@ -32,10 +34,13 @@ import {
   PlayerSeatChangeProcess,
 } from '@src/entity/game/seatchange';
 import {HighHand} from '@src/entity/game/reward';
-import {EntityManager} from 'typeorm';
+import {EntityManager, UpdateResult} from 'typeorm';
 import {getRunProfile, getStoreHandAnalysis, RunProfile} from '@src/server';
 import {AdminRepository} from './admin';
 import {HandAnalysis} from '@src/entity/debug/handanalyze';
+import {GameRepository} from './game';
+import {ClubMember, CreditTracking} from '@src/entity/player/club';
+import {ClubRepository} from './club';
 
 const BATCH_SIZE = 10;
 const logger = getLogger('repositories::aggregate');
@@ -104,6 +109,10 @@ class AggregationImpl {
       logger.info(
         `Aggregating game results for game: ${game.gameId}:${game.gameCode}`
       );
+
+      // update credit history
+      this.updateCreditHistory(game);
+
       await getHistoryManager().transaction(
         async transactionalEntityManager => {
           const gameHistoryRepo =
@@ -367,6 +376,80 @@ class AggregationImpl {
       gameId: game.gameId,
     });
     return handDataUrl;
+  }
+
+  private async updateCreditHistory(gameHistory: GameHistory) {
+    if (gameHistory.creditsAggregated) {
+      return;
+    }
+    const game = await GameRepository.getGameByCode(gameHistory.gameCode);
+    if (!game) {
+      return;
+    }
+
+    if (!game.clubId) {
+      return;
+    }
+    const creditChanges = new Array<CreditTracking>();
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+    const players = await playerGameTrackerRepository.find({
+      game: {id: game.id},
+    });
+
+    await getUserManager().transaction(async tranManager => {
+      for (const playerInGame of players) {
+        const playerUuid = playerInGame.playerUuid;
+        const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
+        if (clubMember) {
+          const amount = playerInGame.stack;
+          let newCredit: number;
+
+          try {
+            newCredit = await ClubRepository.updateCredit(
+              playerUuid,
+              game.clubCode,
+              amount,
+              tranManager
+            );
+          } catch (err) {
+            logger.error(
+              `Could not update club member credit after game. club: ${
+                game.clubCode
+              }, member ID: ${clubMember.id}, game: ${
+                game.gameCode
+              }: ${errToStr(err)}`
+            );
+            continue;
+          }
+
+          const ct = new CreditTracking();
+          ct.clubId = game.clubId;
+          ct.playerId = playerInGame.playerId;
+          ct.updateType = CreditUpdateType.GAME_RESULT;
+          ct.gameCode = game.gameCode;
+          ct.amount = amount;
+          ct.updatedCredits = newCredit;
+          ct.tips = playerInGame.rakePaid;
+          creditChanges.push(ct);
+        } else {
+          logger.error(
+            `Could not find club member in cache while updating credit tracker. club: ${game.clubCode}, player: ${playerUuid}`
+          );
+        }
+      }
+      if (creditChanges.length > 0) {
+        await tranManager.getRepository(CreditTracking).save(creditChanges);
+      }
+    });
+
+    await getHistoryRepository(GameHistory).update(
+      {
+        gameId: gameHistory.gameId,
+      },
+      {
+        creditsAggregated: true,
+      }
+    );
   }
 
   private async removeLiveGamesData(gameCode: string) {
