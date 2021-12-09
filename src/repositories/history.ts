@@ -4,7 +4,6 @@ import {GameHistory} from '@src/entity/history/game';
 import {HighHandHistory} from '@src/entity/history/hand';
 import {PlayersInGame} from '@src/entity/history/player';
 import {Cache} from '@src/cache/index';
-import {PlayerGameStats} from '@src/entity/history/stats';
 import {
   getGameRepository,
   getHistoryConnection,

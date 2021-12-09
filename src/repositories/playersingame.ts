@@ -648,30 +648,19 @@ class PlayersInGameRepositoryImpl {
       playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     }
     // if this player has already played this game before, we should have his record
-    const playerInGames = await playerGameTrackerRepository
-      .createQueryBuilder()
-      .where({
-        game: {id: game.id},
-        playerId: player.id,
-      })
-      .select('stack')
-      .addSelect('status')
-      .addSelect('buy_in', 'buyIn')
-      .addSelect('game_token', 'gameToken')
-      .addSelect('missed_blind', 'missedBlind')
-      .addSelect('posted_blind', 'postedBlind')
-      .execute();
-
-    let playerInGame: PlayerGameTracker | null = null;
-    if (playerInGames.length > 0) {
-      playerInGame = playerInGames[0];
-    }
-
+    let playerInGame = await playerGameTrackerRepository.findOne({
+      game: {id: game.id},
+      playerId: player.id,
+    });
+    let newPlayer = false;
     if (playerInGame) {
       playerInGame.seatNo = seatNo;
       playerInGame.playerIp = ip;
       if (location) {
         playerInGame.playerLocation = `${location.lat},${location.long}`;
+      }
+      if (playerInGame.noHandsPlayed == 0) {
+        newPlayer = true;
       }
     } else {
       playerInGame = new PlayerGameTracker();
@@ -716,9 +705,21 @@ class PlayersInGameRepositoryImpl {
           `Failed to get agora token ${errToStr(err)} Game: ${game.id}`
         );
       }
-
       try {
         await playerGameTrackerRepository.save(playerInGame);
+      } catch (err) {
+        logger.error(
+          `Failed to update player_game_tracker and player_game_stats table ${errToStr(
+            err
+          )} Game: ${game.id}`
+        );
+        throw err;
+      }
+      newPlayer = true;
+    }
+
+    if (newPlayer) {
+      try {
         await StatsRepository.joinedNewGame(player);
         // create a row in stats table
         await StatsRepository.newGameStatsRow(game, player);
