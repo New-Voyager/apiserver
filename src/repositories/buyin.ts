@@ -156,7 +156,7 @@ export class BuyIn {
       if (gameSettings.buyInLimit == BuyInApprovalLimit.BUYIN_CREDIT_LIMIT) {
         // Club member auto approval credit.
         const profit = playerInGame.stack - playerInGame.buyIn;
-        const credit = clubMember.availableCredit + profit;
+        const credit = clubMember.availableCredit; // + profit; // SOMA:  buyin is already updated available credit
         if (amount <= credit) {
           isWithinAutoApprovalLimit = true;
         } else {

@@ -804,13 +804,14 @@ class ClubRepositoryImpl {
 
     const query = fixQuery(`WITH my_clubs as (
       SELECT cm.club_id, count(*) member_count FROM club_member cm
-      WHERE cm.club_id in (SELECT club_id FROM club_member WHERE player_id=?)
+      WHERE cm.club_id in (SELECT club_id FROM club_member WHERE player_id=?) AND cm.status = 4
                  GROUP BY cm.club_id)
       SELECT c.club_code as "clubCode", member_count as "memberCount", c.name, p.name as "host", c.owner_id as "ownerId",
           cm.status as "memberStatus", c.status, c.pic_url as "picUrl", cm.available_credit as "availableCredit"
       FROM club c JOIN my_clubs mc ON c.id = mc.club_id
       JOIN club_member cm ON cm.club_id = c.id AND cm.player_id=?
-      JOIN player p ON p.id = c.owner_id`);
+      JOIN player p ON p.id = c.owner_id
+      WHERE cm.status = 4`);
     const result = await getUserConnection().query(query, [
       player.id,
       player.id,
