@@ -12,6 +12,7 @@ import {
 } from '@src/resolvers/player';
 import {createClub, joinClub} from '@src/resolvers/club';
 import {messagesFromMember} from '@src/resolvers/clubmessage';
+import { approveMember } from '../src/resolvers/club';
 
 const logger = getLogger('Player unit-test');
 
@@ -108,8 +109,11 @@ describe('Player APIs', () => {
       });
       expect(club2).not.toBeNull();
       await joinClub(player1, club1);
+      await approveMember(owner, club1, player1);     
       await joinClub(player2, club1);
+      await approveMember(owner, club1, player2);     
       await joinClub(player1, club2);
+      await approveMember(owner, club2, player1);     
       const resp1 = await getMyClubs(player1);
       const resp2 = await getMyClubs(player2);
       expect(resp1).toHaveLength(2);
@@ -238,10 +242,14 @@ describe('Player APIs', () => {
       });
       expect(club2).not.toBeNull();
       await joinClub(player1, club1);
+      await approveMember(owner, club1, player1);     
       await joinClub(player2, club1);
+      await approveMember(owner, club1, player2);      
       await joinClub(player1, club2);
+      await approveMember(owner, club2, player1);
       const resp1 = await getPlayerClubs(player1, {playerId: player1});
       const resp2 = await getPlayerClubs(player2, {playerId: player2});
+      // not approved yet
       expect(resp1).toHaveLength(2);
       expect(resp2).toHaveLength(1);
     } catch (err) {
@@ -279,7 +287,9 @@ describe('Player APIs', () => {
       });
       expect(club2).not.toBeNull();
       await joinClub(player1, club1);
+      await approveMember(owner, club1, player1);     
       await joinClub(player1, club2);
+      await approveMember(owner, club2, player1);     
       const resp1 = await getPlayerClubs(player1, {playerId: player1});
       expect(resp1).toHaveLength(2);
 
