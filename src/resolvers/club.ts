@@ -300,9 +300,9 @@ export async function approveMember(
   playerUuid: string
 ) {
   const errors = new Array<string>();
-  if (!playerId) {
-    throw new Error('Unauthorized');
-  }
+  // if (!playerId) {
+  //   throw new Error('Unauthorized');
+  // }
   if (clubCode === '') {
     errors.push('clubCode is a required field');
   }

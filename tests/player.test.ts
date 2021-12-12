@@ -1,4 +1,4 @@
-import {resetDatabase, getClient, startGqlServer} from './utils/utils';
+import {resetDatabase, getClient, startGqlServer, signup} from './utils/utils';
 import {gql} from 'apollo-boost';
 import * as clubutils from './utils/club.testutils';
 
@@ -67,16 +67,19 @@ describe('Player APIs', () => {
   });
 
   test('get my clubs', async () => {
-    const [clubCode1] = await clubutils.createClub();
-    const [club2Code] = await clubutils.createClub('owner', 'test');
+    let resp = await signup('clubowner', 'abc123');
+    const ownerId = resp['uuid'];
+  
+    const [clubCode1] = await clubutils.createClubByOwner(ownerId, 'club1');
+    const [club2Code] = await clubutils.createClubByOwner(ownerId, 'club2');
     const player1 = await clubutils.createPlayer('player1', 'ABCDE');
     await clubutils.playerJoinsClub(clubCode1, player1);
-    await clubutils.approvePlayer(clubCode1, 'owner', player1);
+    await clubutils.approvePlayer(clubCode1, ownerId, player1);
     await clubutils.playerJoinsClub(club2Code, player1);
-    await clubutils.approvePlayer(club2Code, 'owner', player1);
+    await clubutils.approvePlayer(club2Code, ownerId, player1);
     const player2 = await clubutils.createPlayer('player2', '12345');
     await clubutils.playerJoinsClub(club2Code, player2);
-    await clubutils.approvePlayer(club2Code, 'owner', player2);
+    await clubutils.approvePlayer(club2Code, ownerId, player2);
     const player1Clubs = await clubutils.getMyClubs(player1);
     expect(player1Clubs).toHaveLength(2);
     const player2Clubs = await clubutils.getMyClubs(player2);
@@ -87,14 +90,7 @@ describe('Player APIs', () => {
   });
 
   test('change display name', async () => {
-    const [clubCode1, owner1] = await clubutils.createClub('owner1', 'test1');
-    const [clubCode2, owner2] = await clubutils.createClub('owner2', 'test2');
     const player1 = await clubutils.createPlayer('player1', 'ABCDEnew');
-    await clubutils.playerJoinsClub(clubCode1, player1);
-    await clubutils.playerJoinsClub(clubCode2, player1);
-    const player1Clubs = await clubutils.getMyClubs(player1);
-    expect(player1Clubs).toHaveLength(2);
-
     await clubutils.changeDisplayName(player1, 'sanjay');
   });
 });

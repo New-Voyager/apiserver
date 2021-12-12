@@ -162,7 +162,6 @@ export async function createClub(
   if (!club) {
     club = 'bbc';
   }
-  const client = getClient();
   // let resp = await client.mutate({
   //   variables: ownerInput,
   //   mutation: createPlayerQuery,
@@ -183,6 +182,35 @@ export async function createClub(
 
   // use the player in the auth header
   resp = await ownerClient.mutate({
+    variables: clubInput,
+    mutation: createClubQuery,
+  });
+  const clubCode = resp.data.clubCode;
+
+  return [clubCode, ownerId];
+}
+
+/**
+ * Creates a club and returns clubId and owner id
+ */
+ export async function createClubByOwner(
+  ownerId: string,
+  club: string
+): Promise<[string, string]> {
+  const ownerClient = getClient(ownerId);
+  const clubInput = {
+    input: {
+      name: club,
+      description: 'poker players gather',
+    },
+  };
+
+  // get my clubs
+  const myClubs = await getMyClubs(ownerId);
+  console.log(`My clubs: ${JSON.stringify(myClubs)}`);
+
+  // use the player in the auth header
+  let resp = await ownerClient.mutate({
     variables: clubInput,
     mutation: createClubQuery,
   });
