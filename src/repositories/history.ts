@@ -66,10 +66,14 @@ class HistoryRepositoryImpl {
     handsDealt: number,
     endReason: GameEndReason
   ) {
+    let endedAt: Date = game.endedAt;
+    if (!endedAt) {
+      endedAt = new Date();
+    }
     const values: any = {
       status: GameStatus.ENDED,
       startedAt: game.startedAt,
-      endedAt: game.endedAt,
+      endedAt: endedAt,
       endedBy: game.endedBy,
       endedByName: game.endedByName,
       endReason: endReason,

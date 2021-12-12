@@ -310,8 +310,10 @@ class AggregationImpl {
         }
         break;
       }
-      // save hand analysis data
-      await this.saveHandAnalysis(game.gameCode, handDataLink);
+      try {
+        // save hand analysis data
+        await this.saveHandAnalysis(game.gameCode, handDataLink);
+      } catch (err) {}
     }
 
     const more = allGames.length > processedGameIds.length;
