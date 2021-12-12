@@ -71,9 +71,12 @@ describe('Player APIs', () => {
     const [club2Code] = await clubutils.createClub('owner', 'test');
     const player1 = await clubutils.createPlayer('player1', 'ABCDE');
     await clubutils.playerJoinsClub(clubCode1, player1);
+    await clubutils.approvePlayer(clubCode1, 'owner', player1);
     await clubutils.playerJoinsClub(club2Code, player1);
+    await clubutils.approvePlayer(club2Code, 'owner', player1);
     const player2 = await clubutils.createPlayer('player2', '12345');
     await clubutils.playerJoinsClub(club2Code, player2);
+    await clubutils.approvePlayer(club2Code, 'owner', player2);
     const player1Clubs = await clubutils.getMyClubs(player1);
     expect(player1Clubs).toHaveLength(2);
     const player2Clubs = await clubutils.getMyClubs(player2);
