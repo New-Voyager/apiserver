@@ -556,6 +556,7 @@ type BuyInResponse {
   expireSeconds: Int
   availableCredits: Float
   insufficientCredits: Boolean
+  appliedNextHand: Boolean
 }
 
 type Mutation {

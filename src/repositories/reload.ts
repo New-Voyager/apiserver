@@ -18,6 +18,7 @@ import {startTimer, cancelTimer} from '@src/timer';
 import {
   BuyInResponse,
   NewUpdate,
+  ReloadApproval,
   RELOAD_APPROVAL_TIMEOUT,
   RELOAD_TIMEOUT,
 } from './types';
@@ -35,6 +36,7 @@ import {CreditTracking} from '@src/entity/player/club';
 import {ClubRepository} from './club';
 import {ReloadError} from '@src/errors';
 import {getGameCodeForClub} from '@src/utils/uniqueid';
+import {retail} from 'googleapis/build/src/apis/retail';
 
 const logger = getLogger('repositories::reload');
 
@@ -230,7 +232,12 @@ export class Reload {
             `************ [${this.game.gameCode}]: Player ${this.player.name} bot: ${this.player.bot} buyin is approved`
           );
           buyInApprovedTime = new Date().getTime();
-          await this.approve(amount, playerInGame, transactionEntityManager);
+          const reloadStatus = await this.approve(
+            amount,
+            playerInGame,
+            transactionEntityManager
+          );
+          ret.appliedNextHand = reloadStatus.appliedNextHand;
           buyInApprovedTime = new Date().getTime() - buyInApprovedTime;
         }
 
@@ -249,7 +256,12 @@ export class Reload {
     amount: number,
     playerInGame: PlayerGameTracker,
     transactionEntityManager: EntityManager
-  ): Promise<PlayerGameTracker> {
+  ): Promise<ReloadApproval> {
+    let ret: ReloadApproval = {
+      approved: false,
+      appliedNextHand: false,
+      applied: false,
+    };
     if (
       this.game.status === GameStatus.ACTIVE &&
       (this.game.tableStatus === null || // test mode
@@ -261,14 +273,18 @@ export class Reload {
         NextHandUpdate.RELOAD_APPROVED,
         transactionEntityManager
       );
+      ret.appliedNextHand = true;
+      ret.approved = true;
     } else {
       await this.approvedAndUpdateStack(
         amount,
         playerInGame,
         transactionEntityManager
       );
+      ret.applied = true;
+      ret.approved = true;
     }
-    return playerInGame;
+    return ret;
   }
 
   public async approvedAndUpdateStack(
@@ -393,7 +409,7 @@ export class Reload {
       if (gameSettings.buyInLimit === BuyInApprovalLimit.BUYIN_CREDIT_LIMIT) {
         // Club member auto approval credit.
         const profit = playerInGame.stack - playerInGame.buyIn;
-        const credit = clubMember.availableCredit + profit;
+        const credit = clubMember.availableCredit; // + profit;
         approved = false;
         if (amount <= credit) {
           ret.approved = true;
@@ -418,7 +434,12 @@ export class Reload {
       if (gameSettings.buyInLimit === BuyInApprovalLimit.BUYIN_HOST_APPROVAL) {
         if (isWithinAutoApprovalLimit) {
           approved = true;
-          await this.approve(amount, playerInGame, transactionEntityManager);
+          const resp = await this.approve(
+            amount,
+            playerInGame,
+            transactionEntityManager
+          );
+          ret.appliedNextHand = resp.appliedNextHand;
         } else {
           await this.addToNextHand(
             amount,

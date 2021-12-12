@@ -122,7 +122,7 @@ export class BuyIn {
       transactionEntityManager
     );
 
-    let playerStatus: PlayerStatus = PlayerStatus.WAIT_FOR_BUYIN;
+    let playerStatus: PlayerStatus = playerInGame.status;
     let updatedPlayerInGame: PlayerGameTracker;
     let isHost = false;
     if (this.game.hostUuid === this.player.uuid) {
@@ -160,14 +160,15 @@ export class BuyIn {
         if (amount <= credit) {
           isWithinAutoApprovalLimit = true;
         } else {
-          ret.hostConfirmation = true;
+          //ret.hostConfirmation = false;
           // let the player to go through regular host approval process
-          // return {
-          //   approved: false,
-          //   status: playerStatus,
-          //   availableCredits: credit,
-          //   insufficientCredits: true,
-          // };
+          return {
+            approved: false,
+            hostConfirmation: false,
+            status: playerStatus,
+            availableCredits: credit,
+            insufficientCredits: true,
+          };
         }
       } else {
         // Per-game auto approval limit.

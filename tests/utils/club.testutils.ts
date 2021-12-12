@@ -148,6 +148,20 @@ export const updateClubMemberQuery = gql`
   }
 `;
 
+
+export const setCreditLimitQuery = gql`
+  mutation(
+    $clubCode: String!
+    $playerUuid: String!
+    $amount: Float!
+  ) {
+    status: setCredit(
+      clubCode: $clubCode
+      playerUuid: $playerUuid
+      amount: $amount
+    )
+  }
+`;
 /**
  * Creates a club and returns clubId and owner id
  */
@@ -452,3 +466,41 @@ export const leaderboard = async ({ownerId, clubCode}) => {
   });
   return resp.data;
 };
+
+export async function setCreditLimit(
+  clubCode: string,
+  ownerId: string,
+  playerId: string,
+  amount: number
+) {
+  const ownerClient = getClient(ownerId);
+  const variables = {
+    clubCode: clubCode,
+    playerUuid: playerId,
+    amount: amount,
+  };
+  const resp = await ownerClient.mutate({
+    variables: variables,
+    mutation: setCreditLimitQuery,
+  });
+  return resp.data;
+}
+
+export async function setTrackCredit(
+  clubCode: string,
+  ownerId: string,
+  track: boolean,
+) {
+  const ownerClient = getClient(ownerId);
+  const variables = {
+    clubCode: clubCode,
+    input: {
+      trackMemberCredit: track
+    }
+  };
+  const resp = await ownerClient.mutate({
+    variables: variables,
+    mutation: updateClubQuery,
+  });
+  return resp.data;
+}
