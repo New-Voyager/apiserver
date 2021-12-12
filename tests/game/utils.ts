@@ -100,6 +100,10 @@ const buyinQuery = gql`
     status: buyIn(gameCode: $gameCode, amount: $amount) {
       expireSeconds
       approved
+      missedBlind
+      status
+      availableCredits
+      insufficientCredits
     }
   }
 `;
@@ -172,6 +176,10 @@ const reloadQuery = gql`
     status: reload(gameCode: $gameCode, amount: $amount) {
       expireSeconds
       approved
+      status
+      availableCredits
+      insufficientCredits
+      appliedNextHand
     }
   }
 `;

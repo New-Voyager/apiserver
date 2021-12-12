@@ -195,4 +195,13 @@ export interface BuyInResponse {
   availableCredits?: number;
   insufficientCredits?: boolean;
   hostConfirmation?: boolean;
+  appliedNextHand?: boolean;
+}
+
+export interface ReloadApproval {
+  approved: boolean;
+  appliedNextHand: boolean;
+  applied: boolean;
+  reloadAmount?: number;
+  stack?: number;
 }
