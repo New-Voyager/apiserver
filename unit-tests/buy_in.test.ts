@@ -271,7 +271,7 @@ describe('BuyIn APIs', () => {
     // Player 3 - additional buy-in exceeds limit (not auto approved)
     const resp3b = await buyIn(player3, game.gameCode, 100);
     expect(resp3b.approved).toBe(false);
-    expect(resp3b.status).toBe('WAIT_FOR_BUYIN');
+    expect(resp3b.status).toBe('PLAYING');
 
     await endGame(owner, game.gameCode);
   });
