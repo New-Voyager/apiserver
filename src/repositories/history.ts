@@ -293,7 +293,7 @@ class HistoryRepositoryImpl {
       },
     });
     if (playerInGame) {
-      if (playerInGame.stack && playerInGame.buyIn) {
+      if (playerInGame.buyIn) {
         if (gamesById[playerInGame.gameId]) {
           const game = gamesById[playerInGame.gameId];
           game.stack = playerInGame.stack;
