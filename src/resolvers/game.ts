@@ -98,7 +98,7 @@ export async function configureGame(
       throw new GameNotFoundError(gameInfo.gameCode);
     }
 
-    Metrics.newGame();
+    Metrics.incNewGame();
     createGameTime = new Date().getTime() - createGameTime;
     logger.info(
       `[${gameLogPrefix(cachedGame)}] Game ${gameInfo.gameCode} is created.`
@@ -208,7 +208,7 @@ export async function configureGameByPlayer(playerId: string, game: any) {
     logger.info(
       `[${gameLogPrefix(cachedGame)}] Game ${gameInfo.gameCode} is created.`
     );
-    Metrics.newGame();
+    Metrics.incNewGame();
     const ret: any = gameInfo as any;
     ret.gameType = GameType[gameInfo.gameType];
     return gameInfoToClientUnits(ret);

@@ -504,7 +504,7 @@ class RewardRepositoryImpl {
     highhand.winner = winner;
     highhand.highHandCards = JSON.stringify(stringCards(highhandCards));
     await logHighHandRepo.save(highhand);
-    Metrics.highHand();
+    Metrics.incHighHand();
   }
 
   public async highHandByGame(gameCode: string) {

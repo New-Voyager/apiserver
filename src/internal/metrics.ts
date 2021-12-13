@@ -1,5 +1,6 @@
 import {errToStr, getLogger} from '@src/utils/log';
 import * as client from 'prom-client';
+import {Cache} from '@src/cache';
 
 const logger = getLogger('internal::metrics');
 
@@ -16,12 +17,30 @@ class MetricsCollector {
     help: 'Number of high hands logged',
   });
 
-  public newGame() {
+  private numLiveGames = new client.Gauge({
+    name: 'live_games',
+    help: 'Number of live games',
+  });
+
+  private numActivePlayers = new client.Gauge({
+    name: 'active_players',
+    help: 'Number of active players',
+  });
+
+  public incNewGame() {
     this.numNewGames.inc();
   }
 
-  public highHand() {
+  public incHighHand() {
     this.numHighHands.inc();
+  }
+
+  public setLiveGames(val: number) {
+    this.numLiveGames.set(val);
+  }
+
+  public setActivePlayers(val: number) {
+    this.numActivePlayers.set(val);
   }
 }
 
@@ -32,6 +51,10 @@ class MetricsAPIs {
    */
   public async getMetrics(req: any, resp: any) {
     try {
+      const numLiveGames: number = await getNumLiveGames();
+      Metrics.setLiveGames(numLiveGames);
+      const numActivePlayers: number = await getNumActivePlayers();
+      Metrics.setActivePlayers(numActivePlayers);
       const metrics = await client.register.metrics();
       resp.status(200).send(metrics);
     } catch (err) {
@@ -40,6 +63,14 @@ class MetricsAPIs {
       return;
     }
   }
+}
+
+async function getNumLiveGames(): Promise<number> {
+  return Cache.getNumLiveGames();
+}
+
+async function getNumActivePlayers(): Promise<number> {
+  return Cache.getNumActivePlayers();
 }
 
 export const Metrics = new MetricsCollector();
