@@ -68,6 +68,7 @@ export interface ClubUpdateInput {
   showHighRankStats: boolean;
   trackMemberCredit: boolean;
   picUrl: string;
+  showGameResult: boolean;
 }
 
 export interface ClubMemberUpdateInput {
@@ -215,6 +216,9 @@ class ClubRepositoryImpl {
       if (!club.creditTrackingEnabled) {
         club.creditTrackingEnabled = true;
       }
+    }
+    if (typeof input.showGameResult === 'boolean') {
+      club.showGameResult = input.showGameResult;
     }
     if (typeof input.picUrl === 'string') {
       club.picUrl = input.picUrl;

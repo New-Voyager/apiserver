@@ -34,6 +34,7 @@ input ClubUpdateInput {
   showHighRankStats: Boolean
   trackMemberCredit: Boolean
   picUrl: String
+  showGameResult: Boolean
 }
 
 input ClubMemberUpdateInput {

@@ -122,4 +122,7 @@ export class GameHistory {
 
   @Column({name: 'hand_data_link', default: ''})
   public handDataLink!: string;
+
+  @Column({name: 'show_result', default: true})
+  public showResult!: boolean;
 }

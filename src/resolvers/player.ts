@@ -383,6 +383,7 @@ export async function getClubPlayerInfo(playerId: string, clubCode: string) {
     showHighRankStats: club.showHighRankStats,
     trackMemberCredit: club.trackMemberCredit,
     availableCredit: club.trackMemberCredit ? clubMember.availableCredit : 0,
+    showGameResult: club.showGameResult,
   };
   ret.managerRole = ClubRepository.getManagerRole(clubCode);
 
