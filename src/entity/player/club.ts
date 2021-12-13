@@ -69,6 +69,12 @@ export class Club {
 
   @Column({name: 'credit_tracking_enabled', default: false})
   public creditTrackingEnabled!: boolean;
+
+  @Column({name: 'referred_by', default: ''})
+  public referredBy!: string;
+
+  @Column({name: 'show_game_result', default: true})
+  public showGameResult!: boolean;
 }
 
 @Entity({name: 'club_member'})
@@ -310,4 +316,16 @@ export class ClubManagerRoles {
 
   @Column({name: 'can_update_credits', default: false})
   public canUpdateCredits!: boolean;
+}
+
+@Entity({name: 'club_invitations'})
+export class ClubInvitations {
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @Column({name: 'invitation_code', unique: true})
+  public invitationCode!: string;
+
+  @Column({name: 'used', default: false})
+  public used!: boolean;
 }

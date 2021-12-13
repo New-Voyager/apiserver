@@ -138,6 +138,7 @@ type ClubInfo {
   liveGameCount: Int
   showHighRankStats: Boolean
   trackMemberCredit: Boolean
+  showGameResult: Boolean
   availableCredit: Float
   managerRole: ManagerRole
 }
