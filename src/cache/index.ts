@@ -13,11 +13,17 @@ import {
   redisUser,
   redisPassword,
   isRunningUnitTest,
+  fixQuery,
 } from '@src/utils';
-import {getGameRepository, getUserRepository} from '@src/repositories';
+import {
+  getGameConnection,
+  getGameRepository,
+  getUserRepository,
+} from '@src/repositories';
 import {BuyInApprovalLimit, PlayerLocation} from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
 import {getLogger, errToStr} from '@src/utils/log';
+import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 
 const logger = getLogger('cache');
 
@@ -98,7 +104,7 @@ class GameCache {
     );
   }
 
-  public async setCache(key: string, value: string) {
+  public async setCache(key: string, value: string, ex?: number) {
     if (isRunningUnitTest()) {
       const ret = {success: true, data: value};
       unitTestCache[key] = ret;
@@ -112,17 +118,23 @@ class GameCache {
     }
 
     return new Promise<{success: boolean}>(async (resolve, reject) => {
+      const callback = (err: any, object: any) => {
+        if (err) {
+          logger.error(
+            `Error from Redis client.set (key: ${key}): ${errToStr(err)}`
+          );
+          resolve({success: false});
+        } else {
+          resolve({success: true});
+        }
+      };
+
       try {
-        client.set(key, value, (err: any, object: any) => {
-          if (err) {
-            logger.error(
-              `Error from Redis client.set (key: ${key}): ${errToStr(err)}`
-            );
-            resolve({success: false});
-          } else {
-            resolve({success: true});
-          }
-        });
+        if (typeof ex === 'number') {
+          client.set(key, value, 'EX', ex, callback);
+        } else {
+          client.set(key, value, callback);
+        }
       } catch (error) {
         logger.error(
           `Error while calling redis client.set (key: ${key}): ${errToStr(
@@ -641,6 +653,37 @@ class GameCache {
       return game;
     } else {
       return this.getGame(gameCode);
+    }
+  }
+
+  public async getNumLiveGames(update = false): Promise<number> {
+    const getResp = await this.getCache('numLiveGames');
+    if (getResp.success && getResp.data && !update) {
+      return parseInt(getResp.data);
+    } else {
+      const numGames: number = await getGameRepository(PokerGame).count();
+      await this.setCache('numLiveGames', numGames.toString(), 300);
+      return numGames;
+    }
+  }
+
+  public async getNumActivePlayers(update = false): Promise<number> {
+    const getResp = await this.getCache('numActivePlayers');
+    if (getResp.success && getResp.data && !update) {
+      return parseInt(getResp.data);
+    } else {
+      const query = fixQuery(
+        `SELECT count(DISTINCT pgt_player_id) AS distinct_players FROM player_game_tracker;`
+      );
+      const dbResult = await getGameConnection().query(query);
+      if (dbResult.length === 0) {
+        logger.error(`Could not get player count`);
+        return 0;
+      }
+
+      const numPlayers = dbResult[0]['distinct_players'];
+      await this.setCache('numActivePlayers', numPlayers.toString(), 300);
+      return numPlayers;
     }
   }
 
