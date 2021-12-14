@@ -75,6 +75,9 @@ export class Club {
 
   @Column({name: 'show_game_result', default: true})
   public showGameResult!: boolean;
+
+  @Column({name: 'invitation_code', nullable: true})
+  public invitationCode!: string;
 }
 
 @Entity({name: 'club_member'})
@@ -328,4 +331,16 @@ export class ClubInvitations {
 
   @Column({name: 'used', default: false})
   public used!: boolean;
+
+  @Column({name: 'never_expires', default: false})
+  public neverExpires!: boolean;
+
+  /**
+   * DB insert time.
+   */
+  @DbAwareCreateDateColumn({
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  public createdAt!: Date;
 }

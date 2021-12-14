@@ -443,7 +443,8 @@ export async function updateClubMember(
 
 function clubMemberUpdateInputToServerUnits(input: any): any {
   const r = {...input};
-  r.tipsBack = chipsToCents(r.tipsBack);
+  // tipsBack should be in percent (not in chips)
+  //r.tipsBack = chipsToCents(r.tipsBack);
 
   return r;
 }
@@ -730,6 +731,10 @@ export async function updateManagerRole(
   return true;
 }
 
+async function checkInvitation(code: string): Promise<any> {
+  return ClubRepository.checkInvitation(code);
+}
+
 const resolvers: any = {
   Query: {
     clubMembers: async (parent, args, ctx, info) => {
@@ -847,6 +852,10 @@ const resolvers: any = {
 
     updateManagerRole: async (parent, args, ctx, info) => {
       return updateManagerRole(ctx.req.playerId, args.clubCode, args.role);
+    },
+
+    checkInvitation: async (parent, args, ctx, info) => {
+      return checkInvitation(args.code);
     },
   },
 };

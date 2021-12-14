@@ -3,6 +3,11 @@ export async function getClubCode(name: string): Promise<string> {
   return 'c' + clubCode.toLowerCase();
 }
 
+export async function getInviteCode(): Promise<string> {
+  const code = getCode(5, {includeAlpha: true, includeNumbers: false});
+  return code.toLowerCase();
+}
+
 export async function getGameCodeForClub(): Promise<string> {
   const gameCode = getCode(6, {includeAlpha: true, includeNumbers: false});
   return 'cg' + gameCode.toLowerCase();

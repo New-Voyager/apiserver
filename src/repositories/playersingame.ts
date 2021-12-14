@@ -790,7 +790,12 @@ class PlayersInGameRepositoryImpl {
     Nats.newPlayerSat(game, player, playerInGame, seatNo);
 
     if (playerInGame.status === PlayerStatus.PLAYING) {
-      await GameRepository.restartGameIfNeeded(game, true, false);
+      await GameRepository.restartGameIfNeeded(
+        game,
+        true,
+        false,
+        entityManager
+      );
     }
     const updatedPlayer = await playerGameTrackerRepository.findOne({
       game: {id: game.id},

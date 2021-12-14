@@ -1,5 +1,6 @@
 import {
   Club,
+  ClubInvitations,
   ClubManagerRoles,
   ClubMember,
   CreditTracking,
@@ -28,7 +29,7 @@ import {
   PageOptions,
 } from '@src/types';
 import {errToStr, getLogger} from '@src/utils/log';
-import {getClubCode} from '@src/utils/uniqueid';
+import {getClubCode, getInviteCode} from '@src/utils/uniqueid';
 import {fixQuery} from '@src/utils';
 import {Cache} from '@src/cache';
 import {FirebaseToken, ClubUpdateType} from './types';
@@ -60,6 +61,7 @@ export interface ClubCreateInput {
   ownerUuid: string;
   name: string;
   description: string;
+  invitationCode?: string;
 }
 
 export interface ClubUpdateInput {
@@ -259,6 +261,24 @@ class ClubRepositoryImpl {
     if (!owner) {
       throw new Error(`Owner ${input.ownerUuid} is not found`);
     }
+
+    let invitationRow: ClubInvitations;
+    if (input.invitationCode) {
+      const invitationRepo = getUserRepository(ClubInvitations);
+      const ret = await invitationRepo.findOne({
+        invitationCode: input.invitationCode,
+      });
+      if (!ret) {
+        throw new Error('Invitation code is not found');
+      }
+      if (!ret.neverExpires) {
+        if (ret.used) {
+          throw new Error('Invitation is used');
+        }
+      }
+      invitationRow = ret;
+    }
+
     const club = new Club();
     club.name = input.name;
     club.description = input.description;
@@ -300,6 +320,10 @@ class ClubRepositoryImpl {
       const clubManagerRolesRepo =
         transactionEntityManager.getRepository(ClubManagerRoles);
       const role = new ClubManagerRoles();
+      if (invitationRow) {
+        club.invitationCode = invitationRow.invitationCode;
+      }
+
       await clubRepo.save(club);
       role.clubId = club.id;
       await clubManagerRolesRepo.save(role);
@@ -313,6 +337,20 @@ class ClubRepositoryImpl {
         }
         await AppCoinRepository.addCoins(0, firstClubCoins, ownerObj.uuid);
       }
+      if (invitationRow) {
+        const invitationRepo =
+          transactionEntityManager.getRepository(ClubInvitations);
+        if (!invitationRow.neverExpires) {
+          await invitationRepo.update(
+            {
+              id: invitationRow.id,
+            },
+            {
+              used: true,
+            }
+          );
+        }
+      }
 
       const clubMemberStatRepository =
         transactionEntityManager.getRepository(ClubMemberStat);
@@ -320,7 +358,6 @@ class ClubRepositoryImpl {
       clubMemberStat.clubId = club.id;
       clubMemberStat.playerId = clubMember.player.id;
       await clubMemberStatRepository.save(clubMemberStat);
-
       await StatsRepository.newClubStats(club);
     });
 
@@ -1829,6 +1866,40 @@ class ClubRepositoryImpl {
       roleObj.viewMemberActivities = role.viewMemberActivities;
     }
     await clubManagerRolesRepo.save(roleObj);
+  }
+
+  public async createInviteCode(): Promise<string> {
+    const code = await getInviteCode();
+    const clubInviteRepo = getUserRepository(ClubInvitations);
+    const clubInvite = new ClubInvitations();
+    clubInvite.invitationCode = code;
+    await clubInviteRepo.save(clubInvite);
+    return code;
+  }
+
+  public async checkInvitation(code: string): Promise<any> {
+    code = code.toLowerCase();
+    const clubInviteRepo = getUserRepository(ClubInvitations);
+    const ret = await clubInviteRepo.findOne({
+      invitationCode: code,
+    });
+    if (!ret) {
+      return {
+        code: code,
+        valid: false,
+        used: false,
+      };
+    } else {
+      let used = ret.used;
+      if (ret.neverExpires) {
+        used = false;
+      }
+      return {
+        code: code,
+        valid: true,
+        used: used,
+      };
+    }
   }
 }
 
