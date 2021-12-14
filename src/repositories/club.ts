@@ -61,7 +61,7 @@ export interface ClubCreateInput {
   ownerUuid: string;
   name: string;
   description: string;
-  invitationCode: string;
+  invitationCode?: string;
 }
 
 export interface ClubUpdateInput {
