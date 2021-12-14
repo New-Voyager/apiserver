@@ -1,6 +1,7 @@
 import {Announcement} from '@src/entity/player/announcements';
 import {AnnouncementLevel} from '@src/entity/types';
 import {AnnouncementsRepository} from '@src/repositories/announcements';
+import {ClubRepository} from '@src/repositories/club';
 import {PromotionRepository} from '@src/repositories/promotion';
 import {errToStr, getLogger} from '@src/utils/log';
 import {max} from 'lodash';
@@ -111,6 +112,17 @@ export async function createAnnouncement(req: any, resp: any) {
       expiresAt
     );
     resp.status(200).send({result: result});
+  } catch (error) {
+    logger.error(errToStr(error));
+    resp.contentType('application/json');
+    resp.status(501).send({error: errToStr(error)});
+  }
+}
+
+export async function createInviteCode(req: any, resp: any) {
+  try {
+    const code = await ClubRepository.createInviteCode();
+    resp.status(200).send({code: code});
   } catch (error) {
     logger.error(errToStr(error));
     resp.contentType('application/json');

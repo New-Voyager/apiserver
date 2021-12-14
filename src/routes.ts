@@ -27,6 +27,7 @@ import {DevRepository} from './repositories/dev';
 import {Firebase} from './firebase';
 import {
   createAnnouncement,
+  createInviteCode,
   createPromotion,
   deleteAll,
   getAllPromotion,
@@ -235,6 +236,7 @@ export function addInternalRoutes(app: any) {
   app.get('/admin/promotion', getAllPromotion);
   app.get('/admin/delete', deleteAll);
   app.post('/admin/post-process-games', GameAPI.aggregateGameData);
+  app.post('/admin/create-invite-code', createInviteCode);
 
   /*
   curl -i -X POST 'http://localhost:9502/admin/set-max-games' \

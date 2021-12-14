@@ -26,6 +26,7 @@ enum CreditUpdateType {
 input ClubCreateInput {
   name: String!
   description: String!
+  invitationCode: String
 }
 
 input ClubUpdateInput {
@@ -161,6 +162,12 @@ type ClubMemberActivityGrouped {
   gamesPlayed: Int!
 }
 
+type ClubInvitation {
+  code: String!
+  used: Boolean!
+  valid: Boolean!
+}
+
 type Query {
   clubMembers(clubCode: String!, filter: MemberFilterInput): [ClubMember!]
   clubById(clubCode: String!): clubId!
@@ -190,4 +197,5 @@ type Mutation {
   addCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String): Boolean!
   deductCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String): Boolean!
   updateManagerRole(clubCode: String!, role: ManagerRoleInput!): Boolean
+  checkInvitation(code: String!): ClubInvitation!
 }
