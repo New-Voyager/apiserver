@@ -140,6 +140,7 @@ input GameCreateInput {
   audioConfEnabled: Boolean
 
   allowRabbitHunt: Boolean
+  funAnimations: Boolean
   roeGames: [GameType!]
   dealerChoiceGames: [GameType!]
   runItTwiceAllowed: Boolean
@@ -235,6 +236,7 @@ type GameInfo {
   showHandRank: Boolean
   doubleBoardEveryHand: Boolean
   dealerChoiceOrbit: Boolean
+  funAnimations: Boolean
 
   # bomb pot (comes from PokerGameUpdates)
   bombPotEnabled: Boolean

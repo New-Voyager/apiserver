@@ -80,6 +80,7 @@ class GameSettingsRepositoryImpl {
     if (input.showResult === undefined) {
       gameSettings.showResult = true;
     }
+    gameSettings.showHandRank = input.showHandRank;
 
     // ion sfu url (TODO: needs to be changed to handle multiple servers pion1, pion2, pion3)
     if (process.env.ION_SFU_URL) {
