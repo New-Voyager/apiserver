@@ -55,7 +55,7 @@ export function addExternalRoutes(app: any) {
   const profile = getRunProfile();
   if (profile != RunProfile.PROD) {
     app.post('/auth/login-bot/:botName', loginBot);
-    app.post('/auth/login-bot/:playerId', loginPlayer);
+    app.post('/auth/login-player/:playerId', loginPlayer);
     app.get('/bot-script/game-code/:gameCode/hand/:handNum', generateBotScript);
     app.get(
       '/bot-script/debug/game-code/:gameCode/hand/:handNum',
