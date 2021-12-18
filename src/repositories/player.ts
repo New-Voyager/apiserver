@@ -459,6 +459,17 @@ class PlayerRepositoryImpl {
     return player;
   }
 
+  public async loginPlayer(playerId: string): Promise<Player> {
+    const repository = getUserRepository(Player);
+    const id = parseInt(playerId);
+    let player = await repository.findOne({
+      id: id,
+    });
+    if (!player) {
+      throw new Error(`${playerId} is not found`);
+    }
+    return player;
+  }
   public async updatePic(playerId: string, url: string) {}
 }
 
