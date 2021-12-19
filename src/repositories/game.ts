@@ -1686,7 +1686,10 @@ class GameRepositoryImpl {
         }
       }
 
-      if (game.status === GameStatus.CONFIGURED) {
+      if (
+        game.status === GameStatus.CONFIGURED ||
+        game.status === GameStatus.PAUSED
+      ) {
         gameRunning = false;
       }
 

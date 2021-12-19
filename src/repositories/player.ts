@@ -349,6 +349,21 @@ class PlayerRepositoryImpl {
       }
     }
 
+    if (register.deviceId && register.deviceId.length > 0) {
+      // make sure the recovery email address is not reused
+      player = await repository.findOne({
+        deviceId: register.deviceId,
+      });
+      if (player) {
+        if (player.deviceId === register.deviceId) {
+          return player;
+        }
+        throw new Error(
+          'Another device is registered with this recovery email address'
+        );
+      }
+    }
+
     let newUser = false;
     if (!player) {
       player = new Player();
