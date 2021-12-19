@@ -349,6 +349,21 @@ class PlayerRepositoryImpl {
       }
     }
 
+    if (register.deviceId && register.deviceId.length > 0) {
+      // make sure the recovery email address is not reused
+      player = await repository.findOne({
+        deviceId: register.deviceId,
+      });
+      if (player) {
+        if (player.deviceId === register.deviceId) {
+          return player;
+        }
+        throw new Error(
+          'Another device is registered with this recovery email address'
+        );
+      }
+    }
+
     let newUser = false;
     if (!player) {
       player = new Player();
@@ -459,6 +474,17 @@ class PlayerRepositoryImpl {
     return player;
   }
 
+  public async loginPlayer(playerId: string): Promise<Player> {
+    const repository = getUserRepository(Player);
+    const id = parseInt(playerId);
+    let player = await repository.findOne({
+      id: id,
+    });
+    if (!player) {
+      throw new Error(`${playerId} is not found`);
+    }
+    return player;
+  }
   public async updatePic(playerId: string, url: string) {}
 }
 

@@ -481,3 +481,62 @@ export async function loginBot(req: any, resp: any) {
     resp.status(500).send({errors: errToStr(e)});
   }
 }
+
+/**
+ * Logs in using bot name
+ * @param resp
+ * {
+ *   "device-secret": device secret,
+ *   "jwt": jwt for the user
+ * }
+ */
+export async function loginPlayer(req: any, resp: any) {
+  try {
+    const playerId = req.params.playerId;
+    if (!playerId) {
+      const res = {error: 'Player id should be specified'};
+      resp.status(500).send(JSON.stringify(res));
+      return;
+    }
+
+    let player: Player | null;
+    try {
+      player = await PlayerRepository.loginPlayer(playerId);
+      if (!player) {
+        resp.status(403).send({
+          status: 'FAIL',
+          error: `Player ${playerId} is not found`,
+        });
+        return;
+      }
+    } catch (err) {
+      logger.error(`Failed to login player ${playerId}. ${errToStr(err)}`);
+      resp.status(400).send({error: errToStr(err)});
+      return;
+    }
+
+    try {
+      const expiryTime = new Date();
+      expiryTime.setDate(expiryTime.getDate() + JWT_EXPIRY_DAYS);
+      const jwtClaims = {
+        user: player.name,
+        uuid: player.uuid,
+        id: player.id,
+      };
+      const jwt = generateAccessToken(jwtClaims);
+      const response = {
+        'device-secret': player.deviceSecret,
+        name: player.name,
+        uuid: player.uuid,
+        id: player.id,
+        jwt: jwt,
+      };
+      resp.status(200).send(JSON.stringify(response));
+    } catch (err) {
+      logger.error(`Failed to login player ${playerId}. ${errToStr(err)}`);
+      resp.status(500).send({errors: ['JWT cannot be generated']});
+    }
+  } catch (e) {
+    resp.status(500).send({errors: errToStr(e)});
+  }
+}
