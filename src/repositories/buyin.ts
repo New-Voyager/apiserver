@@ -409,9 +409,19 @@ export class BuyIn {
             }
           }
         } else {
+          const gameSettings = await Cache.getGameSettings(
+            this.game.gameCode,
+            false,
+            transactionEntityManager
+          );
+
           // individual game
           if (this.player.id === this.game.hostId || this.player.bot) {
             // approved
+            approved = true;
+          } else if (
+            gameSettings.buyInLimit === BuyInApprovalLimit.BUYIN_NO_LIMIT
+          ) {
             approved = true;
           } else if (
             playerInGame.buyIn + cents <=

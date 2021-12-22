@@ -1,12 +1,12 @@
 {
-  "androidApiKey": "AIzaSyBFYPKC1815aembKAd_LXbhcOZ9704ybvw",
-  "androidAppId": "1:76242661450:android:425f378484d680cb7c36b3",
-  "iosApiKey": "AIzaSyAQ3dSL4VC2bsvmTcLRL0Ir-5Usuro9s1A",
-  "iosAppId": "1:76242661450:ios:5df7d802669774827c36b3",
-  "projectId": "poker-club-app---dev",
-  "authDomain": "poker-club-app---dev.firebaseapp.com",
-  "databaseURL": "https://poker-club-app---dev.firebaseio.com",
-  "storageBucket": "poker-club-app---dev.appspot.com",
-  "messagingSenderId": "76242661450",
+  "androidApiKey": "AIzaSyBbgyjwqwbyzL_ONQxLRv2ypZAn4RuV3sU",
+  "androidAppId": "1:552282757054:android:154edc9961cf412594cbef",
+  "iosApiKey": "AIzaSyDJuyVzy0Q-pN3LAyvfUnzAvEtDvoKlYU4",
+  "iosAppId": "1:552282757054:ios:3769ade4a06500f994cbef",
+  "projectId": "poker-club-app",
+  "authDomain": "poker-club-app.firebaseapp.com",
+  "databaseURL": "https://poker-club-app.firebaseio.com",
+  "storageBucket": "poker-club-app.appspot.com",
+  "messagingSenderId": "552282757054",
   "measurementId": null
 }

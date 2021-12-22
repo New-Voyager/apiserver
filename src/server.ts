@@ -90,17 +90,18 @@ export function getApolloServer(options?: {intTest?: boolean}): ApolloServer {
     logger.info('Processing resolvers from ' + resolverDir);
     mergeResolverDir(resolvers, resolverDir, extensions);
   }
-
+  let playGround = runProfile !== RunProfile.PROD;
+  // playGround = true;
   const server = new ApolloServer({
     typeDefs: typeDefs,
     resolvers,
     context: requestContext,
     plugins: [
-      runProfile === RunProfile.PROD
-        ? ApolloServerPluginLandingPageDisabled()
-        : ApolloServerPluginLandingPageGraphQLPlayground({
+      playGround
+        ? ApolloServerPluginLandingPageGraphQLPlayground({
             // options
-          }),
+          })
+        : ApolloServerPluginLandingPageDisabled(),
     ],
   });
   return server;
