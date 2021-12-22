@@ -56,7 +56,7 @@
       "outputCapture": "std",
       "console": "internalConsole",
       "env": {
-        "NATS_URL": "nats://192.168.0.100:4222",
+        "NATS_URL": "nats://192.168.0.111:4222",
         "EXTERNAL_ENDPOINTS": "1",
         "INTERNAL_ENDPOINTS": "1",
         "STORE_HAND_ANALYSIS": "1",
@@ -67,6 +67,29 @@
         "POSTGRES_DB": "game"
       }
     },
+    {
+      "name": "Prod-Watch Localhost debug",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "watch-localhost-prod-debug"],
+      "port": 9235,
+      "outputCapture": "std",
+      "console": "internalConsole",
+      "env": {
+        "NATS_URL": "nats://192.168.0.111:4222",
+        "EXTERNAL_ENDPOINTS": "1",
+        "INTERNAL_ENDPOINTS": "1",
+        "STORE_HAND_ANALYSIS": "1",
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_USER": "game",
+        "POSTGRES_PASSWORD": "game",
+        "POSTGRES_DB": "game",
+        "NODE_ENV": "prod"
+      }
+    },    
     {
       "name": "Integration Test Server Debug",
       "type": "node",
@@ -208,9 +231,9 @@
         "${workspaceRoot}/node_modules/.bin/jest",
         "--verbose",
         "--runInBand",
-        "./unit-tests/playersettings.test.ts",
+        "./unit-tests/player.test.ts",
         "--testNamePattern",
-        "playergamesettings: get player settings"
+        "change display name"
       ],
       "env": {
         "EXTERNAL_ENDPOINTS": "1",
