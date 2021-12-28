@@ -46,6 +46,7 @@ export async function getGameResultTable(gameCode: string) {
       }
       r.sessionTime = sessionTime;
       r.sessionTimeStr = getSessionTimeStr(r.sessionTime);
+      r.externalId = r.playerUuid.split('-').pop();
     }
 
     const converted = resultTableToClientUnits(resp);

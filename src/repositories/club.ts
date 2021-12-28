@@ -1296,7 +1296,8 @@ class ClubRepositoryImpl {
     clubCode: string,
     playerUuid: string,
     amount: number,
-    notes: string
+    notes: string,
+    followup: boolean
   ): Promise<boolean> {
     const reqPlayer = await Cache.getPlayer(reqPlayerId);
     if (!reqPlayer) {
@@ -1355,7 +1356,8 @@ class ClubRepositoryImpl {
       amount,
       reqPlayerId,
       notes,
-      CreditUpdateType.CHANGE
+      CreditUpdateType.CHANGE,
+      followup
     );
 
     return true;
@@ -1366,7 +1368,8 @@ class ClubRepositoryImpl {
     clubCode: string,
     playerUuid: string,
     amount: number,
-    notes: string
+    notes: string,
+    followup: boolean
   ): Promise<boolean> {
     const reqPlayer = await Cache.getPlayer(reqPlayerId);
     if (!reqPlayer) {
@@ -1425,7 +1428,8 @@ class ClubRepositoryImpl {
       amount,
       reqPlayerId,
       notes,
-      CreditUpdateType.DEDUCT
+      CreditUpdateType.DEDUCT,
+      followup
     );
 
     return true;
@@ -1436,7 +1440,8 @@ class ClubRepositoryImpl {
     clubCode: string,
     playerUuid: string,
     amount: number,
-    notes: string
+    notes: string,
+    followup: boolean
   ): Promise<boolean> {
     const reqPlayer = await Cache.getPlayer(reqPlayerId);
     if (!reqPlayer) {
@@ -1495,7 +1500,8 @@ class ClubRepositoryImpl {
       amount,
       reqPlayerId,
       notes,
-      CreditUpdateType.ADD
+      CreditUpdateType.ADD,
+      followup
     );
 
     return true;
@@ -1506,45 +1512,62 @@ class ClubRepositoryImpl {
     amount: number,
     adminUuid: string,
     notes: string,
-    creditType: CreditUpdateType
+    creditType: CreditUpdateType,
+    followup: boolean
   ) {
     let newCredit = 0;
-    if (creditType === CreditUpdateType.CHANGE) {
-      await this.setCredit(adminUuid, player.uuid, clubCode, amount);
-      newCredit = amount;
-      amount = 0;
-    }
-    if (creditType === CreditUpdateType.ADD) {
-      newCredit = await this.addCredit(
-        adminUuid,
-        player.uuid,
-        clubCode,
-        amount
-      );
-    }
-    if (creditType === CreditUpdateType.DEDUCT) {
-      newCredit = await this.deductCredit(
-        adminUuid,
-        player.uuid,
-        clubCode,
-        amount
-      );
-    }
 
-    const club = await Cache.getClub(clubCode);
-    await this.addCreditTracker(
-      player.id,
-      club.id,
-      amount,
-      newCredit,
-      creditType,
-      undefined,
-      adminUuid,
-      notes
-    );
+    await getUserManager().transaction(async transManager => {
+      if (creditType === CreditUpdateType.CHANGE) {
+        await this.setCredit(
+          transManager,
+          adminUuid,
+          player.uuid,
+          clubCode,
+          amount
+        );
+        newCredit = amount;
+        amount = 0;
+      }
+      if (creditType === CreditUpdateType.ADD) {
+        newCredit = await this.addCredit(
+          transManager,
+          adminUuid,
+          player.uuid,
+          clubCode,
+          amount
+        );
+      }
+      if (creditType === CreditUpdateType.DEDUCT) {
+        newCredit = await this.deductCredit(
+          transManager,
+          adminUuid,
+          player.uuid,
+          clubCode,
+          amount
+        );
+      }
+
+      const club = await Cache.getClub(clubCode);
+      await this.addCreditTracker(
+        transManager,
+        player.id,
+        club.id,
+        amount,
+        newCredit,
+        creditType,
+        followup,
+        undefined,
+        adminUuid,
+        notes
+      );
+    });
+
+    await Cache.getClubMember(player.uuid, clubCode, true);
   }
 
   public async setCredit(
+    transManager: EntityManager,
     adminUuid: string,
     playerUuid: string,
     clubCode: string,
@@ -1563,7 +1586,7 @@ class ClubRepositoryImpl {
         `Could not find club member. Player: ${playerUuid}, club: ${clubCode}`
       );
     }
-    const updateResult = await getUserConnection()
+    const updateResult = await transManager
       .createQueryBuilder()
       .update(ClubMember)
       .set({
@@ -1585,6 +1608,7 @@ class ClubRepositoryImpl {
   }
 
   public async addCredit(
+    transManager: EntityManager,
     adminUuid: string,
     playerUuid: string,
     clubCode: string,
@@ -1603,7 +1627,7 @@ class ClubRepositoryImpl {
         `Could not find club member. Player: ${playerUuid}, club: ${clubCode}`
       );
     }
-    const updateResult = await getUserConnection()
+    const updateResult = await transManager
       .createQueryBuilder()
       .update(ClubMember)
       .set({
@@ -1621,7 +1645,12 @@ class ClubRepositoryImpl {
       throw new Error('Invalid player');
     }
 
-    const member = await Cache.getClubMember(playerUuid, clubCode, true);
+    // get member using transaction
+    const memberRepo = transManager.getRepository(ClubMember);
+    const member = await memberRepo.findOne({
+      id: clubMember.id,
+    });
+
     if (!member) {
       logger.error(
         `Could not set club member credit. Club member does not exist. club: ${clubCode}, member ID: ${clubMember.id}`
@@ -1632,6 +1661,7 @@ class ClubRepositoryImpl {
   }
 
   public async deductCredit(
+    transManager: EntityManager,
     adminUuid: string,
     playerUuid: string,
     clubCode: string,
@@ -1650,7 +1680,7 @@ class ClubRepositoryImpl {
         `Could not find club member. Player: ${playerUuid}, club: ${clubCode}`
       );
     }
-    const updateResult = await getUserConnection()
+    const updateResult = await transManager
       .createQueryBuilder()
       .update(ClubMember)
       .set({
@@ -1668,7 +1698,11 @@ class ClubRepositoryImpl {
       throw new Error('Invalid player');
     }
 
-    const member = await Cache.getClubMember(playerUuid, clubCode, true);
+    // get member using transaction
+    const memberRepo = transManager.getRepository(ClubMember);
+    const member = await memberRepo.findOne({
+      id: clubMember.id,
+    });
     if (!member) {
       logger.error(
         `Could not set club member credit. Club member does not exist. club: ${clubCode}, member ID: ${clubMember.id}`
@@ -1685,23 +1719,29 @@ class ClubRepositoryImpl {
     updateType: CreditUpdateType,
     gameCode: string
   ): Promise<number> {
-    const newCredit = await ClubRepository.updateCredit(
-      player.uuid,
-      clubCode,
-      amount
-    );
-    const club = await Cache.getClub(clubCode);
-    await this.addCreditTracker(
-      player.id,
-      club.id,
-      amount,
-      newCredit,
-      updateType,
-      gameCode,
-      undefined,
-      undefined
-    );
-    return newCredit;
+    const credits = await getUserManager().transaction(async transManager => {
+      const newCredit = await ClubRepository.updateCredit(
+        player.uuid,
+        clubCode,
+        amount,
+        transManager
+      );
+      const club = await Cache.getClub(clubCode);
+      await this.addCreditTracker(
+        transManager,
+        player.id,
+        club.id,
+        amount,
+        newCredit,
+        updateType,
+        undefined,
+        gameCode,
+        undefined,
+        undefined
+      );
+      return newCredit;
+    });
+    return credits;
   }
 
   public async updateCredit(
@@ -1771,17 +1811,26 @@ class ClubRepositoryImpl {
       }
     }
 
-    await Cache.getClubMember(playerUuid, clubCode, true);
-
-    return newCredit || clubMember.availableCredit + amount;
+    // get member using transaction
+    const member = await clubMemberRepo.findOne({
+      id: clubMember.id,
+    });
+    if (!member) {
+      throw new Error(
+        `Could not find club member. Player: ${playerUuid}, club: ${clubCode}`
+      );
+    }
+    return newCredit || member.availableCredit + amount;
   }
 
   public async addCreditTracker(
+    transManager: EntityManager,
     playerId: number,
     clubId: number,
     amount: number,
     newCredit: number,
     updateType: CreditUpdateType,
+    followup?: boolean,
     gameCode?: string,
     adminUuid?: string,
     notes?: string
@@ -1813,7 +1862,27 @@ class ClubRepositoryImpl {
       }
       ct.gameCode = gameCode;
     }
-    await getUserConnection().getRepository(CreditTracking).save(ct);
+
+    if (followup === undefined) {
+      followup = false;
+    }
+    ct.followup = followup;
+    await transManager.getRepository(CreditTracking).save(ct);
+
+    if (followup) {
+      // update the club member table
+      await transManager
+        .createQueryBuilder()
+        .update(ClubMember)
+        .set({
+          followup: followup,
+        })
+        .where({
+          player: {id: playerId},
+          club: {id: clubId},
+        })
+        .execute();
+    }
   }
 
   public async getManagerRole(clubCode: string) {
@@ -1900,6 +1969,191 @@ class ClubRepositoryImpl {
         used: used,
       };
     }
+  }
+
+  public async clearFollowup(
+    reqPlayerId: string,
+    clubCode: string,
+    playerUuid: string,
+    transId: number
+  ): Promise<boolean> {
+    const reqPlayer = await Cache.getPlayer(reqPlayerId);
+    if (!reqPlayer) {
+      logger.error(
+        `Could not set credit. Request player does not exist. player: ${reqPlayerId}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const club = await Cache.getClub(clubCode);
+    if (!club) {
+      logger.error(
+        `Could not set credit. Club does not exist. club: ${clubCode}`
+      );
+      throw new Error('Invalid club');
+    }
+
+    const owner: Player | undefined = await Promise.resolve(club.owner);
+    if (!owner) {
+      throw new Error('Unexpected. There is no owner for the club');
+    }
+
+    if (reqPlayer.uuid !== owner.uuid) {
+      logger.error(
+        `Clear followup requested by unauthorized user. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const player = await Cache.getPlayer(playerUuid);
+    if (!player) {
+      logger.error(
+        `Could not clear followup flag. Player does not exist. player: ${playerUuid}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+    if (!clubMember) {
+      logger.error(
+        `Could not clear followup flag. Player is not a club member. player: ${playerUuid}, club: ${clubCode}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    if (!club.trackMemberCredit) {
+      logger.error(
+        `Could not clear followup flag. Member credit tracking is not enabled. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+      );
+      throw new Error('Credit tracking not enabled');
+    }
+
+    await getUserManager().transaction(async transactionEntityManager => {
+      const creditTrackingRepo =
+        transactionEntityManager.getRepository(CreditTracking);
+      const res = await creditTrackingRepo.findOne({
+        clubId: club.id,
+        playerId: player.id,
+        id: transId,
+      });
+
+      if (res) {
+        // if found the record clear the flag
+        await creditTrackingRepo.update(
+          {
+            clubId: club.id,
+            playerId: player.id,
+            id: transId,
+          },
+          {
+            followup: false,
+          }
+        );
+
+        // if all followup flags are cleared, then clear the flag in club_member table
+        let query =
+          'SELECT bool_or(followup) as followup FROM credit_tracking WHERE club_id=? AND player_id=?';
+        query = fixQuery(query);
+        const result = await transactionEntityManager.query(query, [
+          club.id,
+          player.id,
+        ]);
+
+        if (!result[0]['followup']) {
+          await transactionEntityManager.getRepository(ClubMember).update(
+            {
+              club: {id: club.id},
+              player: {id: player.id},
+            },
+            {
+              followup: false,
+            }
+          );
+        }
+      }
+    });
+    return true;
+  }
+
+  public async clearAllFollowups(
+    reqPlayerId: string,
+    clubCode: string,
+    playerUuid: string
+  ): Promise<boolean> {
+    const reqPlayer = await Cache.getPlayer(reqPlayerId);
+    if (!reqPlayer) {
+      logger.error(
+        `Could not set credit. Request player does not exist. player: ${reqPlayerId}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const club = await Cache.getClub(clubCode);
+    if (!club) {
+      logger.error(
+        `Could not set credit. Club does not exist. club: ${clubCode}`
+      );
+      throw new Error('Invalid club');
+    }
+
+    const owner: Player | undefined = await Promise.resolve(club.owner);
+    if (!owner) {
+      throw new Error('Unexpected. There is no owner for the club');
+    }
+
+    if (reqPlayer.uuid !== owner.uuid) {
+      logger.error(
+        `Clear followup requested by unauthorized user. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const player = await Cache.getPlayer(playerUuid);
+    if (!player) {
+      logger.error(
+        `Could not clear followup flag. Player does not exist. player: ${playerUuid}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+    if (!clubMember) {
+      logger.error(
+        `Could not clear followup flag. Player is not a club member. player: ${playerUuid}, club: ${clubCode}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    if (!club.trackMemberCredit) {
+      logger.error(
+        `Could not clear followup flag. Member credit tracking is not enabled. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+      );
+      throw new Error('Credit tracking not enabled');
+    }
+
+    await getUserManager().transaction(async transactionEntityManager => {
+      const creditTrackingRepo =
+        transactionEntityManager.getRepository(CreditTracking);
+      await creditTrackingRepo.update(
+        {
+          clubId: club.id,
+          playerId: player.id,
+        },
+        {
+          followup: false,
+        }
+      );
+      await transactionEntityManager.getRepository(ClubMember).update(
+        {
+          club: {id: club.id},
+          player: {id: player.id},
+        },
+        {
+          followup: false,
+        }
+      );
+    });
+    return true;
   }
 }
 

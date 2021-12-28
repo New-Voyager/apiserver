@@ -64,6 +64,7 @@ export async function getClubMembers(playerId: string, args: any) {
     memberAny.name = member.player.name;
     memberAny.playerId = member.player.uuid;
     memberAny.playerUuid = member.player.uuid;
+    memberAny.externalId = member.player.uuid.split('-').pop();
     memberAny.lastPlayedDate = member.lastPlayedDate.toISOString();
     memberAny.contactInfo = member.contactInfo;
     memberAny.status = ClubMemberStatus[member.status];
@@ -530,7 +531,7 @@ export async function creditHistory(
     throw new Error('Invalid argument');
   }
 
-  const ch = await ClubRepository.getCreditHistory(
+  let ch = await ClubRepository.getCreditHistory(
     playerId,
     clubCode,
     playerUuid
@@ -542,6 +543,7 @@ function creditHistoryToClientUnits(input: Array<any>): any {
   const resp = new Array<any>();
   for (const i of input) {
     const r = {...i};
+    r.transId = r.id;
     r.amount = centsToChips(r.amount);
     r.updatedCredits = centsToChips(r.updatedCredits);
     r.tips = centsToChips(r.tips);
@@ -610,7 +612,8 @@ export async function setCredit(
   clubCode: string,
   playerUuid: string,
   chips: number,
-  notes: string
+  notes: string,
+  followup: boolean
 ) {
   const errors = new Array<string>();
   if (!playerId) {
@@ -636,7 +639,8 @@ export async function setCredit(
     clubCode,
     playerUuid,
     cents,
-    notes
+    notes,
+    followup
   );
 }
 
@@ -645,7 +649,8 @@ export async function addCredit(
   clubCode: string,
   playerUuid: string,
   chips: number,
-  notes: string
+  notes: string,
+  followup: boolean
 ) {
   const errors = new Array<string>();
   if (!playerId) {
@@ -671,7 +676,8 @@ export async function addCredit(
     clubCode,
     playerUuid,
     cents,
-    notes
+    notes,
+    followup
   );
 }
 
@@ -680,7 +686,8 @@ export async function deductCredit(
   clubCode: string,
   playerUuid: string,
   chips: number,
-  notes: string
+  notes: string,
+  followup: boolean
 ) {
   const errors = new Array<string>();
   if (!playerId) {
@@ -706,8 +713,56 @@ export async function deductCredit(
     clubCode,
     playerUuid,
     cents,
-    notes
+    notes,
+    followup
   );
+}
+
+export async function clearFollowup(
+  playerId: string,
+  clubCode: string,
+  playerUuid: string,
+  transId: number
+) {
+  const errors = new Array<string>();
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  if (clubCode === '') {
+    errors.push('Invalid club');
+  }
+  if (playerUuid === '') {
+    errors.push('Invalid player');
+  }
+  if (errors.length > 0) {
+    logger.error('Invalid argument for addCredit: ' + errors.join(' '));
+    throw new Error('Invalid argument');
+  }
+
+  return ClubRepository.clearFollowup(playerId, clubCode, playerUuid, transId);
+}
+
+export async function clearAllFollowups(
+  playerId: string,
+  clubCode: string,
+  playerUuid: string
+) {
+  const errors = new Array<string>();
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  if (clubCode === '') {
+    errors.push('Invalid club');
+  }
+  if (playerUuid === '') {
+    errors.push('Invalid player');
+  }
+  if (errors.length > 0) {
+    logger.error('Invalid argument for addCredit: ' + errors.join(' '));
+    throw new Error('Invalid argument');
+  }
+
+  return ClubRepository.clearAllFollowups(playerId, clubCode, playerUuid);
 }
 
 export async function updateManagerRole(
@@ -826,7 +881,8 @@ const resolvers: any = {
         args.clubCode,
         args.playerUuid,
         args.amount,
-        args.notes
+        args.notes,
+        args.followup
       );
     },
 
@@ -836,7 +892,8 @@ const resolvers: any = {
         args.clubCode,
         args.playerUuid,
         args.amount,
-        args.notes
+        args.notes,
+        args.followup
       );
     },
 
@@ -846,7 +903,25 @@ const resolvers: any = {
         args.clubCode,
         args.playerUuid,
         args.amount,
-        args.notes
+        args.notes,
+        args.followup
+      );
+    },
+
+    clearFollowup: async (parent, args, ctx, info) => {
+      return clearFollowup(
+        ctx.req.playerId,
+        args.clubCode,
+        args.playerUuid,
+        args.transId
+      );
+    },
+
+    clearAllFollowups: async (parent, args, ctx, info) => {
+      return clearAllFollowups(
+        ctx.req.playerId,
+        args.clubCode,
+        args.playerUuid
       );
     },
 

@@ -64,6 +64,7 @@ type ClubMember {
   memberId: Int!
   playerId: String!
   playerUuid: String!
+  externalId: String!
   joinedDate: DateTime!
   status: ClubMemberStatus!
   lastPlayedDate: DateTime
@@ -81,6 +82,7 @@ type ClubMember {
   availableCredit: Float
   updatedAt: DateTime
   tipsBack: Float
+  followup: Boolean
 }
 
 type ClubGameInfo {
@@ -137,6 +139,7 @@ type ClubMemberStat {
 }
 
 type CreditHistory {
+  transId: Int!
   updateType: CreditUpdateType!
   amount: Float!
   updatedCredits: Float!
@@ -146,6 +149,7 @@ type CreditHistory {
   adminName: String
   notes: String
   updateDate: DateTime
+  followup: Boolean
 }
 
 type ClubMemberActivityGrouped {
@@ -160,6 +164,7 @@ type ClubMemberActivityGrouped {
   buyIn: Float!
   profit: Float!
   gamesPlayed: Int!
+  followup: Boolean
 }
 
 type ClubInvitation {
@@ -193,9 +198,13 @@ type Mutation {
   deleteClub(clubCode: String!): Boolean!
   updateClubMember(clubCode: String!, playerUuid: String!, update: ClubMemberUpdateInput!): ClubMemberStatus
   sendClubFcmMessage(clubCode: String!, message: Json!): Boolean
-  setCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String): Boolean!
-  addCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String): Boolean!
-  deductCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String): Boolean!
   updateManagerRole(clubCode: String!, role: ManagerRoleInput!): Boolean
   checkInvitation(code: String!): ClubInvitation!
+
+  # credit tracking APIs
+  setCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String, followup: Boolean): Boolean!
+  addCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String, followup: Boolean): Boolean!
+  deductCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String, followup: Boolean): Boolean!
+  clearFollowup(clubCode: String!, playerUuid: String!, transId: Int!): Boolean
+  clearAllFollowups(clubCode: String!, playerUuid: String!): Boolean
 }
