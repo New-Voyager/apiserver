@@ -107,7 +107,7 @@ export class BuyIn {
     const clubMember = await Cache.getClubMember(
       this.player.uuid,
       this.game.clubCode,
-      true,
+      true
     );
     if (!clubMember) {
       throw new Error(`The player ${this.player.uuid} is not in the club`);
