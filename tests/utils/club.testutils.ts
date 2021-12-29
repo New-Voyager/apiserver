@@ -159,6 +159,7 @@ export const setCreditLimitQuery = gql`
       clubCode: $clubCode
       playerUuid: $playerUuid
       amount: $amount
+      followup: false
     )
   }
 `;
