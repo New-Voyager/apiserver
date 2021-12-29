@@ -6,6 +6,7 @@ import {GamePlayerSettings} from '@src/repositories/types';
 import {GameSettingsRepository} from '@src/repositories/gamesettings';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
 import {GameNotFoundError} from '@src/errors';
+import {BuyInApprovalLimit} from '@src/entity/types';
 
 const logger = getLogger('resolvers::gamesettings');
 
@@ -63,6 +64,8 @@ export async function gameSettings(playerUuid: string, gameCode: string) {
     if (dealerChoiceGames) {
       gameSettingsRet.dealerChoiceGames = dealerChoiceGames.split(',');
     }
+
+    gameSettingsRet.buyInLimit = BuyInApprovalLimit[gameSettings.buyInLimit];
 
     return gameSettingsRet;
   } catch (err) {
