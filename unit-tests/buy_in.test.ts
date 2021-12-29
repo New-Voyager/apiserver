@@ -232,13 +232,13 @@ describe('BuyIn APIs', () => {
     const player2 = playerUuids[1];
     const player3 = playerUuids[2];
 
-    await setCredit(owner, club, player1, 50, 'Club credit for player 1');
-    await setCredit(owner, club, player2, 100, 'Club credit for player 2');
-    await setCredit(owner, club, player3, 150, 'Club credit for player 3');
+    await setCredit(owner, club, player1, 50, 'Club credit for player 1', false);
+    await setCredit(owner, club, player2, 100, 'Club credit for player 2', false);
+    await setCredit(owner, club, player3, 150, 'Club credit for player 3', false);
 
     // Only the owner can set member credit limit.
     const t = async () => {
-      await setCredit(player1, club, player3, 150, 'Club credit for player 3');
+      await setCredit(player1, club, player3, 150, 'Club credit for player 3', false);
     };
     await expect(t).rejects.toThrowError();
 

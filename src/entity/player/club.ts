@@ -179,6 +179,13 @@ export class ClubMember {
     default: 0,
   })
   public availableCredit!: number;
+
+  @Column({
+    name: 'followup',
+    nullable: true,
+    default: false,
+  })
+  public followup!: boolean;
 }
 
 @Entity({name: 'club_member_stat'})
@@ -280,6 +287,13 @@ export class CreditTracking {
     default: 0,
   })
   public tips!: number;
+
+  @Column({
+    name: 'followup',
+    nullable: true,
+    default: false,
+  })
+  public followup!: boolean;
 
   /**
    * DB insert time.
