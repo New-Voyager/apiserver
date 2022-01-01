@@ -10,6 +10,7 @@ import {Nats} from '@src/nats';
 import {ClubUpdateType} from './types';
 import {Cache} from '@src/cache/index';
 import {getUserConnection, getUserRepository} from '.';
+import {PokerGame} from '@src/entity/game/game';
 
 const logger = getLogger('repositories::clubmessage');
 
@@ -154,6 +155,24 @@ class ClubMessageRepositoryImpl {
       messageId
     );
 
+    return response.id;
+  }
+
+  public async newGameCreated(club: Club, game: PokerGame, player: Player) {
+    const sendMessage = new ClubMessageInput();
+    const msg: any = {
+      name: player.name,
+      gameCode: game.gameCode,
+      gameType: game.gameType,
+      sb: game.smallBlind,
+      bb: game.bigBlind,
+    };
+    sendMessage.text = JSON.stringify(msg);
+    sendMessage.messageType = ClubMessageType.NEW_GAME;
+    sendMessage.clubCode = club.clubCode;
+    sendMessage.player = player;
+    const repository = getUserRepository(ClubMessageInput);
+    const response = await repository.save(sendMessage);
     return response.id;
   }
 

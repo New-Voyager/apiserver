@@ -104,6 +104,9 @@ export class ClubMember {
   @Column({name: 'is_owner', default: false})
   public isOwner!: boolean;
 
+  @Column({name: 'main_owner', default: false})
+  public isMainOwner!: boolean;
+
   @Column({name: 'contact_info', default: ''})
   public contactInfo!: string;
 

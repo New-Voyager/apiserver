@@ -98,6 +98,23 @@ class NatsClass {
     this.sendMessage(gameChannel, messageStr);
   }
 
+  public sendCreditMessage(
+    clubName: string,
+    player: Player,
+    text: string,
+    messageId: string
+  ) {
+    const message: any = {
+      type: 'CREDIT_UPDATE',
+      clubName: clubName,
+      text: text,
+      requestId: messageId,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getPlayerChannel(player);
+    this.sendMessage(subject, messageStr);
+  }
+
   public sendGameEndingMessage(gameCode: string, messageId: string) {
     /*
     {

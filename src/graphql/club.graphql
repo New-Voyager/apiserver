@@ -46,6 +46,7 @@ input ClubMemberUpdateInput {
   referredBy: String
   contactInfo: String
   tipsBack: Float
+  isOwner: Boolean
 }
 
 input ManagerRoleInput {

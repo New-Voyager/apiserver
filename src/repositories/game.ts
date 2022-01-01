@@ -63,6 +63,7 @@ import {processPendingUpdates} from './pendingupdates';
 import {AppCoinRepository} from './appcoin';
 import {GameNotFoundError, SeatReservedError} from '@src/errors';
 import {Firebase} from '@src/firebase';
+import {ClubMessageRepository} from './clubmessage';
 const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
@@ -295,6 +296,14 @@ class GameRepositoryImpl {
       await GameSettingsRepository.get(game.gameCode, true);
       await GameUpdatesRepository.get(game.gameCode, true);
 
+      try {
+        if (club) {
+          // announce in club message
+          await ClubMessageRepository.newGameCreated(club, game, player);
+        }
+      } catch (err) {
+        //ignore this error
+      }
       //logger.info('****** ENDING TRANSACTION TO CREATE a private game');
       logger.debug(
         `createPrivateGame saveTime: ${saveTime}, saveUpdateTime: ${saveUpdateTime}, publishNewTime: ${publishNewTime}`
