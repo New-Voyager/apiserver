@@ -1603,15 +1603,15 @@ class ClubRepositoryImpl {
         message = `Credits -${newCreditsCents}. ${notes} \nAvailable Credits: ${availableCreditsCents}`;
       }
       // add a message in host->member message
-      // await HostMessageRepository.sendHostMessage(
-      //   club,
-      //   clubMember,
-      //   message,
-      //   HostMessageType.FROM_HOST
-      // );
-      // const messageId = uuidv4();
+      await HostMessageRepository.sendHostMessage(
+        club,
+        clubMember,
+        message,
+        HostMessageType.FROM_HOST
+      );
+      const messageId = uuidv4();
       // // send a NATS message to player
-      // Nats.sendCreditMessage(club.name, clubMember.player, message, messageId);
+      Nats.sendCreditMessage(club.name, clubMember.player, message, messageId);
     }
   }
 
