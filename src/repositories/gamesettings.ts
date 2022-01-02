@@ -5,7 +5,7 @@ import {getGameRepository} from '.';
 import {getLogger} from '@src/utils/log';
 import {JanusSession} from '@src/janus';
 import {Nats} from '@src/nats';
-import {BuyInApprovalLimit} from '@src/entity/types';
+import {BuyInApprovalLimit, GameType} from '@src/entity/types';
 
 const logger = getLogger('repositories::gamesettings');
 class GameSettingsRepositoryImpl {
@@ -185,7 +185,27 @@ class GameSettingsRepositoryImpl {
       );
     }
     if (input.bombPotNextHand !== undefined) {
-      await Cache.updateNextHandBombPot(game.gameCode, input.bombPotNextHand);
+      const type = input.bombPotGameType.toString();
+      let gameType = GameType.UNKNOWN;
+      let gameTypeStr = GameType[GameType.HOLDEM];
+      if (type === GameType[GameType.HOLDEM]) {
+        gameType = GameType.HOLDEM;
+      } else if (type === GameType[GameType.PLO]) {
+        gameType = GameType.PLO;
+      } else if (type === GameType[GameType.FIVE_CARD_PLO]) {
+        gameType = GameType.FIVE_CARD_PLO;
+      } else if (type === GameType[GameType.PLO_HILO]) {
+        gameType = GameType.PLO_HILO;
+      } else if (type === GameType[GameType.FIVE_CARD_PLO_HILO]) {
+        gameType = GameType.FIVE_CARD_PLO_HILO;
+      }
+      if (gameType !== GameType.UNKNOWN) {
+        await Cache.updateNextHandBombPot(
+          game.gameCode,
+          input.bombPotNextHand,
+          type
+        );
+      }
     }
     const gameSettingsUpdated = await Cache.getGameSettings(gameCode, true);
     Nats.gameSettingsChanged(game, gameSettingsUpdated.nextHandBombPot);

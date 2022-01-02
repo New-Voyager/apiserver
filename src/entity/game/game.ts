@@ -75,6 +75,9 @@ export class PokerGameUpdates {
   @Column({name: 'game_type', default: GameType.UNKNOWN})
   public gameType!: GameType;
 
+  @Column({name: 'bombpot_game_type', default: GameType.UNKNOWN})
+  public bombPotGameType!: GameType;
+
   @Column({name: 'coins_used', default: 0, type: 'int'})
   public coinsUsed!: number;
 
@@ -305,6 +308,7 @@ export class PokerGameSettings {
 
   // cache only
   public nextHandBombPot = false;
+  public bombPotGameType: GameType = GameType.UNKNOWN;
 }
 
 @Entity({name: 'poker_game'})
