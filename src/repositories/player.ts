@@ -290,7 +290,7 @@ class PlayerRepositoryImpl {
           player: {id: player.id},
         },
       });
-      for await (const data of playerClubs) {
+      for (const data of playerClubs) {
         await HostMessageRepository.sendHostMessage(
           data.club,
           data,

@@ -9,6 +9,7 @@ import {
   ClubMemberStatus,
   ClubStatus,
   CreditUpdateType,
+  HostMessageType,
 } from '@src/entity/types';
 import {Player} from '@src/entity/player/player';
 import {
@@ -30,7 +31,7 @@ import {
 } from '@src/types';
 import {errToStr, getLogger} from '@src/utils/log';
 import {getClubCode, getInviteCode} from '@src/utils/uniqueid';
-import {fixQuery} from '@src/utils';
+import {centsToChips, fixQuery} from '@src/utils';
 import {Cache} from '@src/cache';
 import {FirebaseToken, ClubUpdateType} from './types';
 import {Nats} from '@src/nats';
@@ -51,6 +52,7 @@ import {AppCoinRepository} from './appcoin';
 import {Errors, GenericError, UnauthorizedError} from '@src/errors';
 import _ from 'lodash';
 import {getRunProfile, RunProfile} from '@src/server';
+import {HostMessageRepository} from './hostmessage';
 
 const logger = getLogger('repositories::club');
 
@@ -81,6 +83,7 @@ export interface ClubMemberUpdateInput {
   referredBy?: string;
   contactInfo?: string;
   tipsBack?: number;
+  isOwner?: boolean;
 }
 
 class ClubRepositoryImpl {
@@ -132,6 +135,10 @@ class ClubRepositoryImpl {
       throw new Error(`The player ${player.name} is not in the club`);
     }
 
+    const wasManager = clubMember.isManager;
+    const wasOwner = clubMember.isOwner;
+    const wasMainOwner = clubMember.isMainOwner;
+
     // update data
     if (updateData.notes) {
       clubMember.notes = updateData.notes.toString();
@@ -168,7 +175,7 @@ class ClubRepositoryImpl {
     // Save the data
     const resp = await clubMemberRepository.save(clubMember);
     await Cache.getClubMember(player.uuid, clubCode, true /* update cache */);
-    if (updateData.isManager) {
+    if (updateData.isManager && !wasManager) {
       // a player is promoted as manager
       Nats.sendClubUpdate(
         clubCode,
@@ -178,9 +185,25 @@ class ClubRepositoryImpl {
         {
           playerUuid: player.uuid,
           name: player.name,
+          role: 'manager',
         }
       );
     }
+    if (updateData.isOwner && !wasOwner) {
+      // a player is promoted as manager
+      Nats.sendClubUpdate(
+        clubCode,
+        club.name,
+        ClubUpdateType[ClubUpdateType.PROMOTED],
+        uuidv4(),
+        {
+          playerUuid: player.uuid,
+          name: player.name,
+          role: 'owner',
+        }
+      );
+    }
+
     return clubMember.status;
   }
 
@@ -297,6 +320,7 @@ class ClubRepositoryImpl {
     clubMember.club = club;
     clubMember.player = owner;
     clubMember.isOwner = true;
+    clubMember.isMainOwner = true;
     clubMember.joinedDate = new Date();
     clubMember.status = ClubMemberStatus.ACTIVE;
     clubMember.lastPlayedDate = new Date();
@@ -1516,6 +1540,7 @@ class ClubRepositoryImpl {
     followup: boolean
   ) {
     let newCredit = 0;
+    const club = await Cache.getClub(clubCode);
 
     await getUserManager().transaction(async transManager => {
       if (creditType === CreditUpdateType.CHANGE) {
@@ -1564,6 +1589,30 @@ class ClubRepositoryImpl {
     });
 
     await Cache.getClubMember(player.uuid, clubCode, true);
+    let clubMember = await Cache.getClubMember(player.uuid, clubCode, true);
+    if (clubMember) {
+      const newCreditsCents = centsToChips(newCredit);
+      const availableCreditsCents = centsToChips(clubMember.availableCredit);
+
+      let message: string = '';
+      if (creditType === CreditUpdateType.CHANGE) {
+        message = `Update Credits ${newCreditsCents}. ${notes} \nAvailable Credits: ${availableCreditsCents}`;
+      } else if (creditType === CreditUpdateType.ADD) {
+        message = `Credits +${newCreditsCents}. ${notes} \nAvailable Credits: ${availableCreditsCents}`;
+      } else if (creditType === CreditUpdateType.DEDUCT) {
+        message = `Credits -${newCreditsCents}. ${notes} \nAvailable Credits: ${availableCreditsCents}`;
+      }
+      // add a message in host->member message
+      // await HostMessageRepository.sendHostMessage(
+      //   club,
+      //   clubMember,
+      //   message,
+      //   HostMessageType.FROM_HOST
+      // );
+      // const messageId = uuidv4();
+      // // send a NATS message to player
+      // Nats.sendCreditMessage(club.name, clubMember.player, message, messageId);
+    }
   }
 
   public async setCredit(
@@ -1579,8 +1628,9 @@ class ClubRepositoryImpl {
       );
       throw new Error('Invalid amount');
     }
+    const club = await Cache.getClub(clubCode);
 
-    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+    let clubMember = await Cache.getClubMember(playerUuid, clubCode);
     if (!clubMember) {
       throw new Error(
         `Could not find club member. Player: ${playerUuid}, club: ${clubCode}`
@@ -1603,8 +1653,6 @@ class ClubRepositoryImpl {
       );
       throw new Error('Invalid player');
     }
-
-    await Cache.getClubMember(playerUuid, clubCode, true);
   }
 
   public async addCredit(

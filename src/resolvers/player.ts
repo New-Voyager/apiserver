@@ -774,7 +774,8 @@ export async function changeDisplayName(
   if (!playerId) {
     throw new Error('Unauthorized');
   }
-  return await PlayerRepository.changeDisplayName(playerId, name);
+  const ret = await PlayerRepository.changeDisplayName(playerId, name);
+  return ret;
 }
 
 export async function redeemPromotionCode(

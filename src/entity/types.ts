@@ -76,6 +76,7 @@ export enum ClubMessageType {
   JOIN_CLUB,
   LEAVE_CLUB,
   KICKED_OUT,
+  NEW_GAME,
 }
 
 export enum ClubMemberStatus {
