@@ -1540,6 +1540,7 @@ class ClubRepositoryImpl {
     followup: boolean
   ) {
     let newCredit = 0;
+    const club = await Cache.getClub(clubCode);
 
     await getUserManager().transaction(async transManager => {
       if (creditType === CreditUpdateType.CHANGE) {
@@ -1588,8 +1589,6 @@ class ClubRepositoryImpl {
     });
 
     await Cache.getClubMember(player.uuid, clubCode, true);
-
-    const club = await Cache.getClub(clubCode);
     let clubMember = await Cache.getClubMember(player.uuid, clubCode, true);
     if (clubMember) {
       const newCreditsCents = centsToChips(newCredit);
@@ -1604,15 +1603,15 @@ class ClubRepositoryImpl {
         message = `Credits -${newCreditsCents}. ${notes} \nAvailable Credits: ${availableCreditsCents}`;
       }
       // add a message in host->member message
-      HostMessageRepository.sendHostMessage(
-        club,
-        clubMember,
-        message,
-        HostMessageType.FROM_HOST
-      );
-      const messageId = uuidv4();
-      // send a NATS message to player
-      Nats.sendCreditMessage(club.name, clubMember.player, message, messageId);
+      // await HostMessageRepository.sendHostMessage(
+      //   club,
+      //   clubMember,
+      //   message,
+      //   HostMessageType.FROM_HOST
+      // );
+      // const messageId = uuidv4();
+      // // send a NATS message to player
+      // Nats.sendCreditMessage(club.name, clubMember.player, message, messageId);
     }
   }
 

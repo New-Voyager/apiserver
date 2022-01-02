@@ -634,7 +634,7 @@ export async function setCredit(
   }
 
   const cents = chipsToCents(chips);
-  return ClubRepository.adminSetCredit(
+  const ret = await ClubRepository.adminSetCredit(
     playerId,
     clubCode,
     playerUuid,
@@ -642,6 +642,7 @@ export async function setCredit(
     notes,
     followup
   );
+  return ret;
 }
 
 export async function addCredit(
@@ -671,7 +672,7 @@ export async function addCredit(
   }
 
   const cents = chipsToCents(chips);
-  return ClubRepository.adminAddCredit(
+  const ret = await ClubRepository.adminAddCredit(
     playerId,
     clubCode,
     playerUuid,
@@ -679,6 +680,7 @@ export async function addCredit(
     notes,
     followup
   );
+  return ret;
 }
 
 export async function deductCredit(
@@ -708,7 +710,7 @@ export async function deductCredit(
   }
 
   const cents = chipsToCents(chips);
-  return ClubRepository.adminDeductCredit(
+  const ret = await ClubRepository.adminDeductCredit(
     playerId,
     clubCode,
     playerUuid,
@@ -716,6 +718,7 @@ export async function deductCredit(
     notes,
     followup
   );
+  return ret;
 }
 
 export async function clearFollowup(
