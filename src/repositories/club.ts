@@ -1591,16 +1591,16 @@ class ClubRepositoryImpl {
     await Cache.getClubMember(player.uuid, clubCode, true);
     let clubMember = await Cache.getClubMember(player.uuid, clubCode, true);
     if (clubMember) {
-      const newCreditsCents = centsToChips(newCredit);
+      const changeAmount = centsToChips(amount);
       const availableCreditsCents = centsToChips(clubMember.availableCredit);
 
       let message: string = '';
       if (creditType === CreditUpdateType.CHANGE) {
-        message = `Update Credits ${newCreditsCents}. ${notes} \nAvailable Credits: ${availableCreditsCents}`;
+        message = `Set Credits ${changeAmount}\n${notes}\nAvailable Credits: ${availableCreditsCents}`;
       } else if (creditType === CreditUpdateType.ADD) {
-        message = `Credits +${newCreditsCents}. ${notes} \nAvailable Credits: ${availableCreditsCents}`;
+        message = `Change +${changeAmount}\n${notes}\nAvailable Credits: ${availableCreditsCents}`;
       } else if (creditType === CreditUpdateType.DEDUCT) {
-        message = `Credits -${newCreditsCents}. ${notes} \nAvailable Credits: ${availableCreditsCents}`;
+        message = `Change -${changeAmount}\n${notes}\nAvailable Credits: ${availableCreditsCents}`;
       }
       // add a message in host->member message
       await HostMessageRepository.sendHostMessage(
