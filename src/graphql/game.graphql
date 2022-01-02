@@ -373,6 +373,7 @@ input GameSettingsUpdateInput {
   chat: Boolean
 
   # bomb pot (comes from PokerGameUpdates)
+  bombPotGameType: GameType
   bombPotEnabled: Boolean
   bombPotBet: Int
   doubleBoardBombPot: Boolean

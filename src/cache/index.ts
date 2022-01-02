@@ -20,7 +20,7 @@ import {
   getGameRepository,
   getUserRepository,
 } from '@src/repositories';
-import {BuyInApprovalLimit, PlayerLocation} from '@src/entity/types';
+import {BuyInApprovalLimit, GameType, PlayerLocation} from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
 import {getLogger, errToStr} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
@@ -235,7 +235,8 @@ class GameCache {
   // once read, reset to false
   public async updateNextHandBombPot(
     gameCode: string,
-    isBombPotNextHand: boolean
+    isBombPotNextHand: boolean,
+    bombPotGameType: GameType
   ) {
     const getResp = await this.getCache(`gameSettingsCache-${gameCode}`);
     if (getResp.success && getResp.data) {
@@ -243,6 +244,7 @@ class GameCache {
         getResp.data
       ) as PokerGameSettings;
       game.nextHandBombPot = isBombPotNextHand;
+      game.bombPotGameType = bombPotGameType;
       await this.setCache(
         `gameSettingsCache-${gameCode}`,
         JSON.stringify(game)
@@ -357,6 +359,14 @@ class GameCache {
         const buyInLimit: string = data.buyInLimit;
         ret.buyInLimit = BuyInApprovalLimit[buyInLimit];
       }
+
+      if (typeof data.bombPotGameType === 'number') {
+      } else {
+        const tmp: string = data.bombPotGameType;
+        if (tmp) {
+          ret.bombPotGameType = GameType[tmp];
+        }
+      }
       return ret;
     } else {
       let repo: Repository<PokerGameSettings>;
@@ -377,6 +387,7 @@ class GameCache {
       if (getResp.data) {
         const oldGameSettings = JSON.parse(getResp.data) as PokerGameSettings;
         gameSettings.nextHandBombPot = oldGameSettings.nextHandBombPot;
+        gameSettings.bombPotGameType = oldGameSettings.bombPotGameType;
       }
 
       await this.setCache(
