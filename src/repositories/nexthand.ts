@@ -235,9 +235,32 @@ class MoveToNextHand {
           .execute();
 
         // reset this one-time flag
-        if (this.gameSettings && this.gameSettings.nextHandBombPot === true) {
-          this.gameSettings.nextHandBombPot = false;
-          await Cache.updateNextHandBombPot(game.gameCode, false);
+        if (this.gameSettings) {
+          if (this.gameSettings.nextHandBombPot === true) {
+            this.gameSettings.nextHandBombPot = false;
+
+            const settings = await Cache.getGameSettings(game.gameCode);
+            let gameType = GameType.UNKNOWN;
+            if (settings.bombPotGameType !== GameType.UNKNOWN) {
+              gameType = settings.bombPotGameType;
+            }
+            if (settings.bombPotGameType === GameType.UNKNOWN) {
+              gameType = game.gameType;
+            }
+            await Cache.updateNextHandBombPot(game.gameCode, false, gameType);
+            const setProps: any = {
+              bombPotGameType: gameType,
+            };
+            // update game type
+            await gameUpdatesRepo
+              .createQueryBuilder()
+              .update()
+              .set(setProps)
+              .where({
+                gameCode: game.gameCode,
+              })
+              .execute();
+          }
         }
 
         if (game.gameType === GameType.DEALER_CHOICE) {
@@ -841,6 +864,7 @@ export class NextHandProcess {
           }
         }
 
+        let gameType = gameUpdate.gameType;
         let announceGameType = false;
         if (game.gameType === GameType.ROE) {
           if (gameUpdate.gameType !== gameUpdate.prevGameType) {
@@ -853,6 +877,10 @@ export class NextHandProcess {
         let doubleBoard = gameSettings.doubleBoardEveryHand;
         if (gameUpdate.bombPotThisHand) {
           doubleBoard = gameSettings.doubleBoardBombPot;
+          if (gameUpdate.bombPotGameType) {
+            gameType = gameUpdate.bombPotGameType;
+            announceGameType = true;
+          }
         }
         logger.info(
           `[${gameLogPrefix(game)}] Next Hand:HandNum: ${
@@ -864,7 +892,7 @@ export class NextHandProcess {
         const nextHandInfo: NewHandInfo = {
           gameId: game.id,
           gameCode: this.gameCode,
-          gameType: gameUpdate.gameType,
+          gameType: gameType,
           announceGameType: announceGameType,
           playersInSeats: seats,
           smallBlind: game.smallBlind,
