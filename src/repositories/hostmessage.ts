@@ -13,23 +13,38 @@ class HostMessageRepositoryImpl {
     messageType: HostMessageType
   ): Promise<any> {
     try {
-      getUserConnection().transaction(async tran => {
-        const hostMessageRepository = tran.getRepository(ClubHostMessages);
-        const newMessage = new ClubHostMessages();
-        newMessage.club = club;
-        newMessage.member = clubMember;
-        newMessage.messageType = messageType;
-        newMessage.text = text;
-        const resp = await hostMessageRepository.save(newMessage);
-        return {
-          id: resp.id,
-          clubCode: resp.club.clubCode,
-          memberId: resp.member.id,
-          messageTime: resp.messageTime,
-          messageType: HostMessageType[resp.messageType],
-          text: resp.text,
-        };
-      });
+      // getUserConnection().transaction(async tran => {
+      //   const hostMessageRepository = tran.getRepository(ClubHostMessages);
+      //   const newMessage = new ClubHostMessages();
+      //   newMessage.club = club;
+      //   newMessage.member = clubMember;
+      //   newMessage.messageType = messageType;
+      //   newMessage.text = text;
+      //   const resp = await hostMessageRepository.save(newMessage);
+      //   return {
+      //     id: resp.id,
+      //     clubCode: resp.club.clubCode,
+      //     memberId: resp.member.id,
+      //     messageTime: resp.messageTime,
+      //     messageType: HostMessageType[resp.messageType],
+      //     text: resp.text,
+      //   };
+      // });
+      const hostMessageRepository = getUserRepository(ClubHostMessages);
+      const newMessage = new ClubHostMessages();
+      newMessage.club = club;
+      newMessage.member = clubMember;
+      newMessage.messageType = messageType;
+      newMessage.text = text;
+      const resp = await hostMessageRepository.save(newMessage);
+      return {
+        id: resp.id,
+        clubCode: resp.club.clubCode,
+        memberId: resp.member.id,
+        messageTime: resp.messageTime,
+        messageType: HostMessageType[resp.messageType],
+        text: resp.text,
+      };
     } catch (e) {
       logger.error(JSON.stringify(e));
       throw e;

@@ -171,7 +171,7 @@ export async function sendMessageToMember(
     );
   }
   try {
-    const ret = HostMessageRepository.sendHostMessage(
+    const ret = await HostMessageRepository.sendHostMessage(
       club,
       to,
       text,
@@ -215,7 +215,7 @@ export async function sendMessageToHost(
     );
   }
   try {
-    const ret = HostMessageRepository.sendHostMessage(
+    const ret = await HostMessageRepository.sendHostMessage(
       club,
       clubMember,
       text,
