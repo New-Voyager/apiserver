@@ -40,6 +40,7 @@ import {HandHistory} from '@src/entity/history/hand';
 import {ClubMember, ClubMemberStat} from '@src/entity/player/club';
 import {StatsRepository} from './stats';
 import {GameRepository} from './game';
+import {TakeBreak} from './takebreak';
 
 const logger = getLogger('players_in_game');
 
@@ -192,6 +193,16 @@ class PlayersInGameRepositoryImpl {
         await nextHandUpdatesRepository.save(update);
       }
     });
+  }
+
+  public async sitOutPlayer(gameCode: string, player: Player) {
+    // find game
+    const game = await Cache.getGame(gameCode, false);
+
+    if (game) {
+      const takeBreak = new TakeBreak(game, player);
+      const status = await takeBreak.takeBreak();
+    }
   }
 
   public async setBuyInLimit(gameCode: string, player: Player, cents: number) {

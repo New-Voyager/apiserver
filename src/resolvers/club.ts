@@ -11,7 +11,6 @@ import * as _ from 'lodash';
 import {getLogger} from '@src/utils/log';
 import {Cache} from '@src/cache';
 import {AppCoinRepository} from '@src/repositories/appcoin';
-import moment from 'moment-timezone';
 import {centsToChips, chipsToCents} from '@src/utils';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const humanizeDuration = require('humanize-duration');
@@ -59,6 +58,12 @@ export async function getClubMembers(playerId: string, args: any) {
   const clubMemberStat = await ClubRepository.getClubMemberStat(args.clubCode);
   const members = new Array<any>();
   for (const member of clubMembers) {
+    if (member.status !== ClubMemberStatus.ACTIVE) {
+      if (!(clubMember.isOwner || clubMember.isManager)) {
+        continue;
+      }
+    }
+
     const memberAny = member as any;
     memberAny.memberId = member.id;
     memberAny.name = member.player.name;

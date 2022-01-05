@@ -91,6 +91,9 @@ const resolvers: any = {
     kickOut: async (parent, args, ctx, info) => {
       return kickOutPlayer(ctx.req.playerId, args.gameCode, args.playerUuid);
     },
+    sitOut: async (parent, args, ctx, info) => {
+      return sitOutPlayer(ctx.req.playerId, args.gameCode, args.playerUuid);
+    },
     setBuyInLimit: async (parent, args, ctx, info) => {
       return setBuyInLimit(
         ctx.req.playerId,
@@ -824,6 +827,74 @@ export async function kickOutPlayer(
   }
 }
 
+export async function sitOutPlayer(
+  requestUser: string,
+  gameCode: string,
+  sitOutPlayer: string
+): Promise<boolean> {
+  if (!requestUser) {
+    throw new UnauthorizedError();
+  }
+  try {
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new GameNotFoundError(gameCode);
+    }
+
+    if (game.clubCode) {
+      // club game
+      const clubMember = await Cache.getClubMember(requestUser, game.clubCode);
+      if (!clubMember) {
+        logger.error(
+          `Player: ${requestUser} is not a club member in club ${game.clubName}`
+        );
+        throw new Error(
+          `Player: ${requestUser} is not authorized to sit out a user`
+        );
+      }
+
+      if (!(clubMember.isOwner || clubMember.isManager)) {
+        // player is not a owner or a manager
+        // did this user start the game?
+        if (game.hostUuid !== requestUser) {
+          logger.error(
+            `Player: ${requestUser} cannot sit out a player in game ${gameCode}`
+          );
+          throw new Error(
+            `Player: ${requestUser} cannot sit out a player in game ${gameCode}`
+          );
+        }
+      }
+    } else {
+      // hosted by individual user
+      if (game.hostUuid !== requestUser) {
+        logger.error(
+          `Player: ${requestUser} cannot sit out a player in game ${gameCode}`
+        );
+        throw new Error(
+          `Player: ${requestUser} cannot sit out a player in game ${gameCode}`
+        );
+      }
+    }
+
+    const player = await Cache.getPlayer(sitOutPlayer);
+    logger.info(
+      `${gameLogPrefix(game)} Player: ${player.uuid}/${
+        player.name
+      } is being sit out by admin`
+    );
+    await PlayersInGameRepository.sitOutPlayer(gameCode, player);
+    return true;
+  } catch (err) {
+    logger.error(
+      `Error while sitting player out. requestUser: ${requestUser}, gameCode: ${gameCode}, forceSitOutPlayer: ${sitOutPlayer}: ${errToStr(
+        err
+      )}`
+    );
+    throw new Error('Failed to sit out player');
+  }
+}
 export async function setBuyInLimit(
   requestUser: string,
   gameCode: string,

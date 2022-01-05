@@ -146,7 +146,6 @@ type CreditHistory {
   updatedCredits: Float!
   tips: Float
   gameCode: String
-  adminUuid: String
   adminName: String
   notes: String
   updateDate: DateTime

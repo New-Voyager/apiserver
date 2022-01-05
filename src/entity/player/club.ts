@@ -257,8 +257,8 @@ export class CreditTracking {
   @Column({name: 'game_code', nullable: true})
   public gameCode!: string;
 
-  @Column({name: 'admin_uuid', nullable: true})
-  public adminUuid!: string;
+  @Column({name: 'admin_name', nullable: true})
+  public adminName!: string;
 
   @Column({
     name: 'amount',
