@@ -1,3 +1,4 @@
+import {performance} from 'perf_hooks';
 import {TakeBreak} from '@src/repositories/takebreak';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {Cache} from '@src/cache';
@@ -41,6 +42,8 @@ class HandServerAPIs {
           game
         )}] Starting saveHand endpoint game ${gameID} hand ${handNum}`
       );
+
+      const startTime = performance.now();
       const result = req.body;
       if (result.result?.timeoutStats) {
         await processConsecutiveActionTimeouts(
@@ -56,12 +59,15 @@ class HandServerAPIs {
       }
       processedConsecutiveTimeouts = true;
       const saveResult = await saveHand(gameID, handNum, result);
+      const endTime = performance.now();
       if (saveResult.success) {
         resp.status(200).send(saveResult);
         logger.info(
           `[${gameLogPrefix(
             game
-          )}] Finished saveHand endpoint game ${gameID} hand ${handNum}`
+          )}] Finished saveHand endpoint game ${gameID} hand ${handNum} processing took ${
+            endTime - startTime
+          } ms`
         );
         return;
       } else {
