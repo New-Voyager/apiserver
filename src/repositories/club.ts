@@ -155,6 +155,14 @@ class ClubRepositoryImpl {
       }
       clubMember.isManager = updateData.isManager;
     }
+
+    if (updateData.isOwner || updateData.isOwner === false) {
+      if (!callingUser.isMainOwner) {
+        throw new UnauthorizedError();
+      }
+      clubMember.isOwner = updateData.isOwner;
+    }
+
     if (
       updateData.autoBuyinApproval ||
       updateData.autoBuyinApproval === false
