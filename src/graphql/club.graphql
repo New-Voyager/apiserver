@@ -59,7 +59,7 @@ input ManagerRoleInput {
   viewMemberActivities: Boolean
   canUpdateCredits: Boolean
 }
-
+  
 type ClubMember {
   name: String!
   memberId: Int!
@@ -72,6 +72,7 @@ type ClubMember {
   imageId: String
   isOwner: Boolean
   isManager: Boolean
+  isMainOwner: Boolean
   totalBuyins: Float
   totalWinnings: Float
   rakePaid: Float
