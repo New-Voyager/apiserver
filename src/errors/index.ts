@@ -27,6 +27,7 @@ export enum Errors {
   MAXCLUB_REACHED,
   SEAT_RESERVED,
   INSUFFICIENT_CREDITS,
+  ALREADY_RESERVED_A_SEAT,
 }
 
 export class WaitlistSeatError extends ApolloError {
@@ -127,6 +128,15 @@ export class SeatReservedError extends ApolloError {
     extensions['gameCode'] = gameCode;
     extensions['seatNo'] = seatNo;
     super(message, Errors[Errors.SEAT_RESERVED], extensions);
+  }
+}
+
+export class AlreadyReservedSeatError extends ApolloError {
+  constructor(gameCode: string) {
+    const message = `Game ${gameCode}. Already reserved another seat`;
+    const extensions: any = {};
+    extensions['gameCode'] = gameCode;
+    super(message, Errors[Errors.ALREADY_RESERVED_A_SEAT], extensions);
   }
 }
 
