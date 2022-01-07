@@ -28,7 +28,7 @@ import {Nats} from '@src/nats';
 import {Cache} from '@src/cache/index';
 import {processPendingUpdates, switchSeatNextHand} from './pendingupdates';
 import {getGameConnection, getGameManager, getGameRepository} from '.';
-import {GameNotFoundError} from '@src/errors';
+import {AlreadyReservedSeatError, GameNotFoundError} from '@src/errors';
 
 const logger = getLogger('repositories::seatchange');
 
@@ -724,12 +724,22 @@ export class SeatChangeProcess {
 
         // check whether there is another player waiting in the next hand update
         const nextHandUpdatesRepo = getGameRepository(NextHandUpdates);
-        const prevUpdate = await nextHandUpdatesRepo.findOne({
+        let prevUpdate = await nextHandUpdatesRepo.findOne({
           game: {id: this.game.id},
           newSeat: seatNo,
         });
         if (prevUpdate) {
           throw new Error('A player has reserved the seat');
+        }
+
+        // if this player has reserved another seat, don't let him change again
+        prevUpdate = await nextHandUpdatesRepo.findOne({
+          game: {id: this.game.id},
+          playerId: player.id,
+          newUpdate: NextHandUpdate.SWITCH_SEAT,
+        });
+        if (prevUpdate) {
+          throw new AlreadyReservedSeatError(this.game.gameCode);
         }
 
         // is game running
