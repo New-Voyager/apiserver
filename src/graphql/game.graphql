@@ -132,6 +132,7 @@ input GameCreateInput {
   bombPotInterval: Int        
   bombPotIntervalInSecs: Int  # for tests
   bombPotEveryHand: Boolean
+  bombPotGameType: GameType
 
   ipCheck: Boolean
   gpsCheck: Boolean

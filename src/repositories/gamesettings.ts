@@ -36,8 +36,8 @@ class GameSettingsRepositoryImpl {
       gameSettings.bombPotEveryHand = input.bombPotEveryHand;
       gameSettings.bombPotBet = input.bombPotBet; // x BB value
       gameSettings.doubleBoardBombPot = input.doubleBoardBombPot;
-      if (input.bombBotInterval) {
-        gameSettings.bombPotInterval = input.bombBotInterval * 60;
+      if (input.bombPotInterval) {
+        gameSettings.bombPotInterval = input.bombPotInterval * 60;
       } else if (input.bombPotIntervalInSecs) {
         gameSettings.bombPotInterval = input.bombPotIntervalInSecs;
       }
