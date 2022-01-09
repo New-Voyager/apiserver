@@ -29,6 +29,16 @@ class GameUpdatesRepositoryImpl {
 
       // first hand is bomb pot hand
       gameUpdates.bombPotThisHand = true;
+      const gameTypeStr: string = input['bombPotGameType'];
+
+      if (input.bombPotGameType) {
+        const gameType: GameType = GameType[gameTypeStr];
+        gameUpdates.bombPotGameType = gameType;
+      } else {
+        const gameTypeStr: string = input['bombPotGameType'];
+        const gameType: GameType = GameType[gameTypeStr];
+        gameUpdates.bombPotGameType = input.gameType;
+      }
     }
 
     gameUpdates.dealerChoiceOrbit = input.dealerChoiceOrbit;
