@@ -397,9 +397,12 @@ export class Reload {
     const club = await Cache.getClub(this.game.clubCode);
     if (
       (clubMember.isOwner || isHost || clubMember.autoBuyinApproval) &&
-      (gameSettings.buyInLimit == BuyInApprovalLimit.BUYIN_NO_LIMIT ||
-        gameSettings.buyInLimit == BuyInApprovalLimit.BUYIN_HOST_APPROVAL)
+      gameSettings.buyInLimit == BuyInApprovalLimit.BUYIN_HOST_APPROVAL
     ) {
+      approved = true;
+    }
+
+    if (gameSettings.buyInLimit == BuyInApprovalLimit.BUYIN_NO_LIMIT) {
       approved = true;
     }
 

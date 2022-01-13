@@ -123,7 +123,7 @@ describe('Tests: Reload API', () => {
     done();
   });
 
-  test.skip('reload-test1', async () => {
+  test('reload-test1', async () => {
     //    test('reload auto approval, game did not start', async () => {
     // Create club and owner
     const [ownerId, clubCode, players] = await createClubWithMembers([
@@ -167,14 +167,14 @@ describe('Tests: Reload API', () => {
     await buyIn({ownerId: players[2], gameCode: game.gameCode, amount: 100});
 
     // reload game
-    await reload({playerId: players[0], gameCode: game.gameCode, amount: 50});
+    const resp = await reload({playerId: players[0], gameCode: game.gameCode, amount: 50});
     const gameInfo = await gameutils.gameInfo(players[0], game.gameCode);
     console.log(JSON.stringify(gameInfo));
 
     const seats = gameInfo.seatInfo.playersInSeats;
     for (const seat of seats) {
       if (seat.seatNo === 1) {
-        expect(seat.stack).toBe(600);
+        expect(seat.stack).toBe(150);
       }
     }
   });
@@ -223,7 +223,7 @@ describe('Tests: Reload API', () => {
     await buyIn({ownerId: players[2], gameCode: game.gameCode, amount: 100});
 
     // reload game
-    await reload({playerId: players[0], gameCode: game.gameCode, amount: 800});
+    await reload({playerId: players[0], gameCode: game.gameCode, amount: 500});
     const gameInfo = await gameutils.gameInfo(players[0], game.gameCode);
     console.log(JSON.stringify(gameInfo));
 
