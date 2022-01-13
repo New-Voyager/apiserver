@@ -562,6 +562,8 @@ type BuyInResponse {
   availableCredits: Float
   insufficientCredits: Boolean
   appliedNextHand: Boolean
+  waitingForApproval: Boolean
+  pendingRequest: Boolean
 }
 
 type Mutation {

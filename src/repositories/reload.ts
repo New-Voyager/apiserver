@@ -171,7 +171,7 @@ export class Reload {
           );
 
           databaseTime = new Date().getTime() - databaseTime;
-          if (!ret.approved) {
+          if (!ret.approved && ret.waitingForApproval) {
             const reloadTimeExp = new Date();
             const timeout = gameSettings.buyInTimeout;
             reloadTimeExp.setSeconds(reloadTimeExp.getSeconds() + timeout);
@@ -392,16 +392,20 @@ export class Reload {
     const ret: BuyInResponse = {
       approved: false,
       status: playerInGame.status,
+      waitingForApproval: false,
     };
     const club = await Cache.getClub(this.game.clubCode);
     if (
-      gameSettings.buyInLimit != BuyInApprovalLimit.BUYIN_CREDIT_LIMIT &&
+      (clubMember.isOwner || isHost || clubMember.autoBuyinApproval) &&
       (gameSettings.buyInLimit == BuyInApprovalLimit.BUYIN_NO_LIMIT ||
-        clubMember.isOwner ||
-        clubMember.isManager ||
-        clubMember.autoBuyinApproval ||
-        !gameSettings.buyInApproval ||
-        isHost)
+        gameSettings.buyInLimit == BuyInApprovalLimit.BUYIN_HOST_APPROVAL)
+    ) {
+      approved = true;
+    }
+
+    if (
+      gameSettings.buyInLimit != BuyInApprovalLimit.BUYIN_CREDIT_LIMIT &&
+      approved
     ) {
       ret.approved = true;
       approved = true;
@@ -442,13 +446,19 @@ export class Reload {
           );
           ret.appliedNextHand = resp.appliedNextHand;
         } else {
-          await this.addToNextHand(
-            amount,
-            NextHandUpdate.WAIT_RELOAD_APPROVAL,
-            transactionEntityManager
-          );
-
-          approved = false;
+          // if there is another reload pending,
+          if (await this.isTherePendingApproval(transactionEntityManager)) {
+            ret.pendingRequest = true;
+            ret.approved = false;
+          } else {
+            await this.addToNextHand(
+              amount,
+              NextHandUpdate.WAIT_RELOAD_APPROVAL,
+              transactionEntityManager
+            );
+            ret.waitingForApproval = true;
+            approved = false;
+          }
         }
       }
     }
@@ -478,7 +488,7 @@ export class Reload {
       this.game,
       this.player,
       playerInGame.status,
-      NewUpdate.BUYIN_DENIED,
+      NewUpdate.RELOAD_DENIED,
       playerInGame.stack,
       playerInGame.seatNo
     );
@@ -555,6 +565,12 @@ export class Reload {
           if (!request) {
             return false;
           }
+          // remove row from NextHandUpdates table
+          await pendingUpdatesRepo.delete({
+            game: {id: this.game.id},
+            playerId: this.player.id,
+            newUpdate: NextHandUpdate.WAIT_RELOAD_APPROVAL,
+          });
 
           // update player game tracker
           const playerInGameRepo =
@@ -574,6 +590,26 @@ export class Reload {
         }
       );
     }
+  }
+
+  private async isTherePendingApproval(
+    transactionEntityManager?: EntityManager
+  ) {
+    let nextHandUpdatesRepository;
+    if (transactionEntityManager) {
+      nextHandUpdatesRepository =
+        transactionEntityManager.getRepository(NextHandUpdates);
+    } else {
+      nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
+    }
+    const row = await nextHandUpdatesRepository.findOne({
+      game: {id: this.game.id},
+      playerId: this.player.id,
+    });
+    if (row) {
+      return true;
+    }
+    return false;
   }
 
   private async addToNextHand(

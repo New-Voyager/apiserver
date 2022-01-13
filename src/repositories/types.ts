@@ -31,6 +31,7 @@ export enum NewUpdate {
   NEWUPDATE_NOT_PLAYING,
   RESERVE_SEAT,
   WAIT_FOR_BUYIN,
+  RELOAD_DENIED,
 }
 
 export interface HighHandWinnerResult {
@@ -196,6 +197,8 @@ export interface BuyInResponse {
   insufficientCredits?: boolean;
   hostConfirmation?: boolean;
   appliedNextHand?: boolean;
+  waitingForApproval?: boolean;
+  pendingRequest?: boolean;
 }
 
 export interface ReloadApproval {
