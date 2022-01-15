@@ -183,7 +183,7 @@ class NatsClass {
     Used for sending an update to the app to refresh the club screen.
     changed: What changed in the club
       CLUB_CHAT, PENDING_APPROVAL, NEW_MEMBER, MEMBER_APPROVED, MEMBER_DENIED,
-      HOST_MESSAGE, ANNOUNCEMENT, NEW_GAME
+      HOST_MESSAGE, ANNOUNCEMENT, NEW_GAME, BUYIN_REQUEST
   */
   public sendClubUpdate(
     clubCode: string,
@@ -579,6 +579,13 @@ class NatsClass {
     const messageStr = JSON.stringify(message);
     const subject = this.getPlayerChannel(host);
     this.sendMessage(subject, messageStr);
+
+    if (game.clubCode) {
+      this.sendClubUpdate(game.clubCode, '', 'BUYIN_REQUEST', messageId, {
+        gameCode: game.gameCode,
+        hostUuid: host.uuid,
+      });
+    }
   }
 
   public playerBuyIn(
