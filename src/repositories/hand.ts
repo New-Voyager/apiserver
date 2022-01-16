@@ -578,6 +578,10 @@ class HandRepositoryImpl {
               case GameType.FIVE_CARD_PLO_HILO:
                 statGameType = GameType.FIVE_CARD_PLO;
                 break;
+              case GameType.SIX_CARD_PLO:
+              case GameType.SIX_CARD_PLO_HILO:
+                statGameType = GameType.SIX_CARD_PLO;
+                break;
             }
 
             if (gameType !== GameType.UNKNOWN) {

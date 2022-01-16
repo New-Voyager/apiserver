@@ -145,6 +145,12 @@ class Deck {
     if (gameType === 'FIVE_CARD_PLO') {
       noOfCards = 4;
     }
+    if (gameType === 'SIX_CARD_PLO_HILO') {
+      noOfCards = 4;
+    }
+    if (gameType === 'SIX_CARD_PLO') {
+      noOfCards = 4;
+    }
 
     const cards: Array<number> = [];
     for (let i = 0; i < noOfCards; i++) {
