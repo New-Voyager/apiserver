@@ -130,6 +130,11 @@ class StatsRepositoryImpl {
       game.gameType === GameType.FIVE_CARD_PLO_HILO
     ) {
       gameType = GameType.FIVE_CARD_PLO;
+    } else if (
+      game.gameType === GameType.SIX_CARD_PLO ||
+      game.gameType === GameType.SIX_CARD_PLO_HILO
+    ) {
+      gameType = GameType.SIX_CARD_PLO;
     }
 
     await clubStatsRepo
@@ -283,6 +288,11 @@ class StatsRepositoryImpl {
       game.gameType === GameType.FIVE_CARD_PLO_HILO
     ) {
       gameType = GameType.FIVE_CARD_PLO;
+    } else if (
+      game.gameType === GameType.SIX_CARD_PLO ||
+      game.gameType === GameType.SIX_CARD_PLO_HILO
+    ) {
+      gameType = GameType.SIX_CARD_PLO;
     }
     await systemStatsRepo
       .createQueryBuilder()
@@ -570,6 +580,11 @@ class StatsRepositoryImpl {
     clubStats.gameType = GameType.FIVE_CARD_PLO;
     clubStats.clubId = club.id;
     await clubStatsRepo.save(clubStats);
+
+    clubStats = new ClubStats();
+    clubStats.gameType = GameType.SIX_CARD_PLO;
+    clubStats.clubId = club.id;
+    await clubStatsRepo.save(clubStats);
   }
 
   public async newSystemStats() {
@@ -598,6 +613,15 @@ class StatsRepositoryImpl {
     if (count <= 0) {
       const systemStats = new SystemStats();
       systemStats.gameType = GameType.FIVE_CARD_PLO;
+      await systemStatsRepo.save(systemStats);
+    }
+
+    count = await systemStatsRepo.count({
+      gameType: GameType.SIX_CARD_PLO,
+    });
+    if (count <= 0) {
+      const systemStats = new SystemStats();
+      systemStats.gameType = GameType.SIX_CARD_PLO;
       await systemStatsRepo.save(systemStats);
     }
   }

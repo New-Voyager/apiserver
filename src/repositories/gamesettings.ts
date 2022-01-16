@@ -194,10 +194,14 @@ class GameSettingsRepositoryImpl {
         gameType = GameType.PLO;
       } else if (type === GameType[GameType.FIVE_CARD_PLO]) {
         gameType = GameType.FIVE_CARD_PLO;
+      } else if (type === GameType[GameType.SIX_CARD_PLO]) {
+        gameType = GameType.SIX_CARD_PLO;
       } else if (type === GameType[GameType.PLO_HILO]) {
         gameType = GameType.PLO_HILO;
       } else if (type === GameType[GameType.FIVE_CARD_PLO_HILO]) {
         gameType = GameType.FIVE_CARD_PLO_HILO;
+      } else if (type === GameType[GameType.SIX_CARD_PLO_HILO]) {
+        gameType = GameType.SIX_CARD_PLO_HILO;
       }
       if (gameType !== GameType.UNKNOWN) {
         await Cache.updateNextHandBombPot(
