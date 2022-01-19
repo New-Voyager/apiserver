@@ -69,6 +69,10 @@ export interface Asset {
   updatedDate: Date;
 }
 
+export interface AppConfig {
+  sfuUrls: Array<string>;
+}
+
 class FirebaseClass {
   private firebaseInitialized = false;
   private clientFirebaseSettings: ClientFirebaseSettings | undefined;
@@ -78,6 +82,9 @@ class FirebaseClass {
   private productsFetchTime: Date | undefined = undefined;
   private iapProducts = new Array<IapProduct>();
   private assets = new Array<Asset>();
+  private config: AppConfig = {
+    sfuUrls: new Array<string>(),
+  };
   private appInfo: AppInfo = {
     help: 'Help is not available',
     toc: 'Toc is not available',
@@ -100,6 +107,10 @@ class FirebaseClass {
 
   public getAppInfo(): AppInfo {
     return this.appInfo;
+  }
+
+  public getAppConfig(): AppConfig {
+    return this.config;
   }
 
   public async init() {
@@ -620,6 +631,7 @@ class FirebaseClass {
       }
 
       if (fetch) {
+        await this.fetchAppConfig();
         await this.fetchAssets();
         await this.fetchIapProducts();
         await this.fetchAppInfo();
@@ -747,6 +759,30 @@ class FirebaseClass {
             .toDate();
         } else if (id === 'help') {
           this.appInfo.help = d.get('content');
+        }
+      }
+    } catch (err) {
+      logger.error(
+        `Could not get products from the firestore. ${errToStr(err)}`
+      );
+    }
+  }
+
+  public async fetchAppConfig() {
+    try {
+      const query = await this.app?.firestore().collection('config');
+      const docs = await query?.listDocuments();
+      if (!docs) {
+        throw new Error('Could not get app info');
+      }
+      for (const doc of docs) {
+        const d = await doc.get();
+        const id = d.id;
+        if (id === 'config') {
+          let sfuUrls: string = d.get('sfuUrls');
+          if (sfuUrls) {
+            this.config.sfuUrls = JSON.parse(sfuUrls);
+          }
         }
       }
     } catch (err) {

@@ -547,6 +547,9 @@ export class PokerGame {
   @Column({name: 'game_server_url', default: ''})
   public gameServerUrl!: string;
 
+  @Column({name: 'sfu_url', default: ''})
+  public sfuUrl!: string;
+
   // This is not a database column and used for tracking highhand in the cache
   public highHandRank = 0;
 

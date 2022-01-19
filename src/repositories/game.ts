@@ -171,6 +171,21 @@ class GameRepositoryImpl {
           transactionEntityManager
         );
 
+        const appConfig = Firebase.getAppConfig();
+        if (appConfig.sfuUrls && appConfig.sfuUrls.length > 0) {
+          const serverIndex = game.id % appConfig.sfuUrls.length;
+          let sfuUrl = appConfig.sfuUrls[serverIndex];
+          //sfuUrl = 'http://192.168.0.111:7000';
+          await transactionEntityManager.getRepository(PokerGame).update(
+            {
+              id: game.id,
+            },
+            {
+              sfuUrl: sfuUrl,
+            }
+          );
+        }
+
         saveTime = new Date().getTime() - saveTime;
         if (!game.isTemplate) {
           // create an entry in the history table
