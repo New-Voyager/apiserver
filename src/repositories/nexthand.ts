@@ -872,7 +872,8 @@ export class NextHandProcess {
           }
         }
         if (game.gameType === GameType.DEALER_CHOICE) {
-          announceGameType = true;
+          // dealer choice is announced via game message
+          announceGameType = false;
         }
         let doubleBoard = gameSettings.doubleBoardEveryHand;
         if (gameUpdate.bombPotThisHand) {
@@ -882,6 +883,11 @@ export class NextHandProcess {
             announceGameType = true;
           }
         }
+
+        if (game.gameType === GameType.DEALER_CHOICE) {
+          doubleBoard = gameUpdate.doubleBoard;
+        }
+
         logger.info(
           `[${gameLogPrefix(game)}] Next Hand:HandNum: ${
             gameUpdate.handNum

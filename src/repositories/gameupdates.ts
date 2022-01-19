@@ -151,7 +151,11 @@ class GameUpdatesRepositoryImpl {
     await GameUpdatesRepository.get(game.gameCode, true);
   }
 
-  public async updateNextGameType(game: PokerGame, gameType: GameType) {
+  public async updateNextGameType(
+    game: PokerGame,
+    gameType: GameType,
+    doubleBoard: boolean
+  ) {
     // update game type in the GameUpdates table
     const gameUpdatesRepo = getGameRepository(PokerGameUpdates);
     await gameUpdatesRepo.update(
@@ -160,6 +164,7 @@ class GameUpdatesRepositoryImpl {
       },
       {
         gameType: gameType,
+        doubleBoard: doubleBoard,
       }
     );
     await GameUpdatesRepository.get(game.gameCode, true);

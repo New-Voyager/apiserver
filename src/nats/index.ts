@@ -239,6 +239,34 @@ class NatsClass {
     this.sendMessage(subject, messageStr);
   }
 
+  public async notifyDealerChoiceGame(
+    game: PokerGame,
+    playerId: number,
+    gameType: GameType,
+    doubleBoard: boolean,
+    messageId?: string
+  ) {
+    if (this.client === null) {
+      return;
+    }
+
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message: any = {
+      type: 'DEALER_CHOICE_GAME',
+      gameId: game.id,
+      gameCode: game.gameCode,
+      playerId: playerId,
+      gameType: GameType[gameType],
+      doubleBoard: doubleBoard,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getGameChannel(game.gameCode);
+    this.sendMessage(subject, messageStr);
+  }
+
   public sendDealersChoiceMessage(
     game: PokerGame,
     gameSettings: PokerGameSettings,

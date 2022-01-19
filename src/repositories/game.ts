@@ -1414,7 +1414,8 @@ class GameRepositoryImpl {
   public async updateDealerChoice(
     game: PokerGame,
     player: Player,
-    gameType: GameType
+    gameType: GameType,
+    doubleBoard: boolean
   ) {
     // is this player supposed to update?
     const gameUpdate = await GameUpdatesRepository.get(game.gameCode, true);
@@ -1428,7 +1429,10 @@ class GameRepositoryImpl {
         `Cancelling dealer choice timeout failed. Error: ${e.message}`
       );
     });
-    await GameUpdatesRepository.updateNextGameType(game, gameType);
+    await GameUpdatesRepository.updateNextGameType(game, gameType, doubleBoard);
+
+    // send a message to the game channel
+    Nats.notifyDealerChoiceGame(game, player.id, gameType, doubleBoard);
     // pending updates done
     await resumeGame(game.id);
   }

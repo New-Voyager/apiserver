@@ -104,7 +104,12 @@ const resolvers: any = {
       );
     },
     dealerChoice: async (parent, args, ctx, info) => {
-      return dealerChoice(ctx.req.playerId, args.gameCode, args.gameType);
+      return dealerChoice(
+        ctx.req.playerId,
+        args.gameCode,
+        args.gameType,
+        args.doubleBoard
+      );
     },
     postBlind: async (parent, args, ctx, info) => {
       return postBlind(ctx.req.playerId, args.gameCode);
@@ -989,7 +994,8 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
 export async function dealerChoice(
   playerId: string,
   gameCode: string,
-  gameTypeStr: string
+  gameTypeStr: string,
+  doubleBoard: boolean
 ) {
   if (!playerId) {
     throw new Error('Unauthorized');
@@ -1001,7 +1007,15 @@ export async function dealerChoice(
       throw new GameNotFoundError(gameCode);
     }
     const player = await Cache.getPlayer(playerId);
-    await GameRepository.updateDealerChoice(game, player, gameType);
+    if (!doubleBoard) {
+      doubleBoard = false;
+    }
+    await GameRepository.updateDealerChoice(
+      game,
+      player,
+      gameType,
+      doubleBoard
+    );
   } catch (err) {
     logger.error(
       `Error while updating dealer choice. playerId: ${playerId}, gameCode: ${gameCode}, gameTypeStr: ${gameTypeStr}: ${errToStr(

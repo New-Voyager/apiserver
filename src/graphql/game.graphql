@@ -618,7 +618,7 @@ type Mutation {
   seatChangeComplete(gameCode: String!, cancelChanges: Boolean): Boolean  
 
   # dealer choice game
-  dealerChoice(gameCode: String!, gameType: GameType!): Boolean
+  dealerChoice(gameCode: String!, gameType: GameType!, doubleBoard: Boolean): Boolean
 
   # post blind
   postBlind(gameCode: String!): Boolean

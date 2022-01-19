@@ -75,6 +75,9 @@ export class PokerGameUpdates {
   @Column({name: 'game_type', default: GameType.UNKNOWN})
   public gameType!: GameType;
 
+  @Column({name: 'double_board', default: false})
+  public doubleBoard!: boolean;
+
   @Column({name: 'bombpot_game_type', default: GameType.UNKNOWN})
   public bombPotGameType!: GameType;
 
