@@ -215,6 +215,30 @@ class NatsClass {
     this.sendMessage(subject, messageStr);
   }
 
+  public async notifyDealerChoicePrompt(
+    game: PokerGame,
+    playerId: number,
+    messageId?: string
+  ) {
+    if (this.client === null) {
+      return;
+    }
+
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message: any = {
+      type: 'DEALER_CHOICE_PROMPT',
+      gameId: game.id,
+      gameCode: game.gameCode,
+      playerId: playerId,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getGameChannel(game.gameCode);
+    this.sendMessage(subject, messageStr);
+  }
+
   public sendDealersChoiceMessage(
     game: PokerGame,
     gameSettings: PokerGameSettings,

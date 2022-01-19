@@ -602,14 +602,18 @@ async function handleDealersChoice(
   );
   const settings = await Cache.getGameSettings(game.gameCode);
   setTimeout(() => {
-    Nats.sendDealersChoiceMessage(
-      game,
-      settings,
-      playerId,
-      gameUpdate.handNum + 1,
-      timeout
-    );
-  }, 1000);
+    Nats.notifyDealerChoicePrompt(game, playerId)
+      .then(e => {
+        Nats.sendDealersChoiceMessage(
+          game,
+          settings,
+          playerId,
+          gameUpdate.handNum + 1,
+          timeout
+        );
+      })
+      .catch(e => {});
+  }, 300);
 }
 
 export async function switchSeatNextHand(
