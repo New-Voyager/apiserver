@@ -44,6 +44,7 @@ import {
 } from '@src/errors';
 import {Firebase} from '@src/firebase';
 import {centsToChips, chipsToCents} from '@src/utils';
+import {Livekit} from '@src/livekit';
 
 const logger = getLogger('resolvers::game');
 
@@ -674,6 +675,9 @@ export async function getGameInfo(playerUuid: string, gameCode: string) {
     ret.chipUnit = ChipUnit[game.chipUnit];
     ret.gameID = game.id;
     ret.agoraAppId = getAgoraAppId();
+
+    ret.livekitUrl = game.livekitUrl;
+    ret.livekitToken = Livekit.getToken(game.livekitUrl, gameCode, player.id);
 
     const updates = await GameUpdatesRepository.get(game.gameCode);
     const settings = await GameSettingsRepository.get(game.gameCode);

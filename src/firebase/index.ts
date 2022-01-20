@@ -17,6 +17,7 @@ import {Cache} from '@src/cache';
 import {Announcement} from '@src/entity/player/announcements';
 import {FirebaseToken} from '@src/repositories/types';
 import {centsToChips} from '@src/utils';
+import {Livekit} from '@src/livekit';
 
 //import {default as google} from 'googleapis';
 let MESSAGE_BATCH_SIZE = 100;
@@ -71,6 +72,7 @@ export interface Asset {
 
 export interface AppConfig {
   sfuUrls: Array<string>;
+  livekitUrls: Array<any>;
 }
 
 class FirebaseClass {
@@ -82,8 +84,11 @@ class FirebaseClass {
   private productsFetchTime: Date | undefined = undefined;
   private iapProducts = new Array<IapProduct>();
   private assets = new Array<Asset>();
+
+  private livekitOldUrls: string = '';
   private config: AppConfig = {
     sfuUrls: new Array<string>(),
+    livekitUrls: [],
   };
   private appInfo: AppInfo = {
     help: 'Help is not available',
@@ -782,6 +787,15 @@ class FirebaseClass {
           let sfuUrls: string = d.get('sfuUrls');
           if (sfuUrls) {
             this.config.sfuUrls = JSON.parse(sfuUrls);
+          }
+
+          let livekitUrls: string = d.get('livekitUrls');
+          if (livekitUrls) {
+            if (this.livekitOldUrls !== livekitUrls) {
+              this.config.livekitUrls = JSON.parse(livekitUrls);
+              Livekit.init(this.config.livekitUrls);
+              this.livekitOldUrls = livekitUrls;
+            }
           }
         }
       }

@@ -64,6 +64,7 @@ import {AppCoinRepository} from './appcoin';
 import {GameNotFoundError, SeatReservedError} from '@src/errors';
 import {Firebase} from '@src/firebase';
 import {ClubMessageRepository} from './clubmessage';
+import {Livekit} from '@src/livekit';
 const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
@@ -172,20 +173,23 @@ class GameRepositoryImpl {
         );
 
         const appConfig = Firebase.getAppConfig();
+        let livekitUrl: string = '';
+        let sfuUrl: string = '';
         if (appConfig.sfuUrls && appConfig.sfuUrls.length > 0) {
           const serverIndex = game.id % appConfig.sfuUrls.length;
-          let sfuUrl = appConfig.sfuUrls[serverIndex];
-          //sfuUrl = 'http://192.168.0.111:7000';
-          await transactionEntityManager.getRepository(PokerGame).update(
-            {
-              id: game.id,
-            },
-            {
-              sfuUrl: sfuUrl,
-            }
-          );
+          sfuUrl = appConfig.sfuUrls[serverIndex];
         }
 
+        livekitUrl = Livekit.getUrl(game.id);
+        await transactionEntityManager.getRepository(PokerGame).update(
+          {
+            id: game.id,
+          },
+          {
+            sfuUrl: sfuUrl,
+            livekitUrl: livekitUrl,
+          }
+        );
         saveTime = new Date().getTime() - saveTime;
         if (!game.isTemplate) {
           // create an entry in the history table
