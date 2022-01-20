@@ -73,6 +73,7 @@
     "humanize-duration": "^3.25.0",
     "js-yaml": "^3.14.0",
     "jsonwebtoken": "^8.5.1",
+    "livekit-server-sdk": "^0.5.9",
     "lodash": "^4.17.19",
     "lzutf8": "^0.6.0",
     "merge-graphql-schemas": "^1.7.8",

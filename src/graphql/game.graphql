@@ -305,6 +305,10 @@ type GameInfo {
   # sfuUrl
   sfuUrl: String
   
+  # livekit information
+  livekitUrl: String
+  livekitToken: String
+
   settings: GameSettings
 }
 
