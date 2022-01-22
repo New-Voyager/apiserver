@@ -894,6 +894,31 @@ class PlayersInGameRepositoryImpl {
       await Cache.getAutoReloadPlayers(game.id, true);
     }
   }
+
+  public async autoReloadOff(
+    game: PokerGame,
+    player: Player,
+  ): Promise<void> {
+    const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
+    const playerGameTracker = await playerGameTrackerRepo.findOne({
+      where: {
+        game: {id: game.id},
+        playerId: player.id,
+      },
+    });
+    if (playerGameTracker) {
+      await playerGameTrackerRepo.update(
+        {
+          game: {id: game.id},
+          playerId: player.id,
+        },
+        {
+          autoReload: false,
+        }
+      );
+      await Cache.getAutoReloadPlayers(game.id, true);
+    }
+  }  
 }
 
 export const PlayersInGameRepository = new PlayersInGameRepositoryImpl();

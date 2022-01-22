@@ -122,6 +122,12 @@ const resolvers: any = {
         args.reloadTo
       );
     },
+    autoReloadOff: async (parent, args, ctx, info) => {
+      return autoReloadOff(
+        ctx.req.playerId,
+        args.gameCode,
+      );
+    },    
   },
 };
 
@@ -1099,6 +1105,45 @@ export async function autoReload(
       player,
       reloadThreshold,
       reloadTo
+    );
+
+    return true;
+  } catch (err) {
+    logger.error(`Error when setting auto reload: ${errToStr(err)}`);
+    throw new GenericError(
+      Errors.AUTORELOAD_SET_FAILED,
+      `Error when setting auto reload`
+    );
+  }
+}
+
+
+export async function autoReloadOff(
+  requestUser: string,
+  gameCode: string,
+): Promise<boolean> {
+  if (!requestUser) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    const player = await Cache.getPlayer(requestUser);
+    if (!player) {
+      throw new Error(`Player ${requestUser} is not found`);
+    }
+
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    const gameSettings = await Cache.getGameSettings(game.gameCode);
+    if (gameSettings.buyInLimit === BuyInApprovalLimit.BUYIN_HOST_APPROVAL) {
+      throw new Error(`Only No limit and credit limit games allow auto reload`);
+    }
+    await PlayersInGameRepository.autoReloadOff(
+      game,
+      player,
     );
 
     return true;
