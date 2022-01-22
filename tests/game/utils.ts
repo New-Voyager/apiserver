@@ -1,7 +1,8 @@
 import {gql} from 'apollo-server-express';
 import axios from 'axios';
 import { errToStr } from '../../src/utils/log';
-import {getClient, INTERNAL_PORT} from '../utils/utils';
+import {getClient} from '../utils/utils';
+const INTERNAL_PORT = 9502;
 
 const sitBackMutation = gql`
   mutation($gameCode: String!, $location: LocationInput!) {

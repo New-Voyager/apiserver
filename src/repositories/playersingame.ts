@@ -895,10 +895,7 @@ class PlayersInGameRepositoryImpl {
     }
   }
 
-  public async autoReloadOff(
-    game: PokerGame,
-    player: Player,
-  ): Promise<void> {
+  public async autoReloadOff(game: PokerGame, player: Player): Promise<void> {
     const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     const playerGameTracker = await playerGameTrackerRepo.findOne({
       where: {
@@ -918,7 +915,7 @@ class PlayersInGameRepositoryImpl {
       );
       await Cache.getAutoReloadPlayers(game.id, true);
     }
-  }  
+  }
 }
 
 export const PlayersInGameRepository = new PlayersInGameRepositoryImpl();

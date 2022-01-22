@@ -123,11 +123,8 @@ const resolvers: any = {
       );
     },
     autoReloadOff: async (parent, args, ctx, info) => {
-      return autoReloadOff(
-        ctx.req.playerId,
-        args.gameCode,
-      );
-    },    
+      return autoReloadOff(ctx.req.playerId, args.gameCode);
+    },
   },
 };
 
@@ -1117,10 +1114,9 @@ export async function autoReload(
   }
 }
 
-
 export async function autoReloadOff(
   requestUser: string,
-  gameCode: string,
+  gameCode: string
 ): Promise<boolean> {
   if (!requestUser) {
     throw new Error('Unauthorized');
@@ -1141,10 +1137,7 @@ export async function autoReloadOff(
     if (gameSettings.buyInLimit === BuyInApprovalLimit.BUYIN_HOST_APPROVAL) {
       throw new Error(`Only No limit and credit limit games allow auto reload`);
     }
-    await PlayersInGameRepository.autoReloadOff(
-      game,
-      player,
-    );
+    await PlayersInGameRepository.autoReloadOff(game, player);
 
     return true;
   } catch (err) {
