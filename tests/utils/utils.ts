@@ -2,7 +2,11 @@ import {default as ApolloClient} from 'apollo-boost';
 import axios from 'axios';
 import {execute, gql, HttpLink, toPromise} from 'apollo-boost';
 import {start} from '../../src/server';
+import * as gameutils from './game.testutils';
+import * as clubutils from './club.testutils';
+import * as handutils from './hand.testutils';
 import fetch from 'node-fetch'
+import { startGame } from '../game/utils';
 export const EXTERNAL_PORT = 9501;
 export const INTERNAL_PORT = 9502;
 
@@ -160,3 +164,58 @@ export const startGqlServer = async () => {
     graphql: executeOperation,
   };
 };
+
+export async function setupGameEnvironment(
+  gameServerUrl: string,
+  owner: string,
+  club: string,
+  players: Array<string>,
+  holdemGameInput: any,
+): Promise<[string, number]> {
+  const gameServer = {
+    ipAddress: '10.1.1.1',
+    currentMemory: 100,
+    status: 'ACTIVE',
+    url: 'htto://localhost:8080',
+  };
+  try {
+    await axios.post(`${gameServerUrl}/register-game-server`, gameServer);
+  } catch (err) {
+    expect(true).toBeFalsy();
+  }
+  const game = await gameutils.configureGame(owner, club, holdemGameInput);
+  let i = 1;
+  for await (const player of players) {
+    await gameutils.joinGame(player, game.gameCode, i);
+    //  await chipstrackutils.buyIn(player, game.gameCode, buyin);
+    i++;
+  }
+
+  await startGame({ownerId: owner, gameCode: game.gameCode});
+
+  const gameId = await gameutils.getGameById(game.gameCode);
+  return [game.gameCode, gameId];
+}
+
+export async function createClubWithMembers(
+  ownerInput: any,
+  clubInput: any,
+  players: Array<any>
+): Promise<[string, string, number, Array<string>, Array<number>]> {
+  const [clubCode, ownerUuid] = await clubutils.createClub('brady', 'yatzee');
+  const clubId = await clubutils.getClubById(clubCode);
+  const playerUuids = new Array<string>();
+  const playerIds = new Array<number>();
+  for (const playerInput of players) {
+    const playerUuid = await clubutils.createPlayer(
+      playerInput.name,
+      playerInput.deviceId
+    );
+    const playerId = await handutils.getPlayerById(playerUuid);
+    await clubutils.playerJoinsClub(clubCode, playerUuid);
+    await clubutils.approvePlayer(clubCode, ownerUuid, playerUuid);
+    playerUuids.push(playerUuid);
+    playerIds.push(playerId);
+  }
+  return [ownerUuid, clubCode, clubId, playerUuids, playerIds];
+}

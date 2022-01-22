@@ -3,14 +3,14 @@ import {
   getClient,
   INTERNAL_PORT,
   startGqlServer,
-} from './utils/utils';
-import * as clubutils from './utils/club.testutils';
-import * as gameutils from './utils/game.testutils';
-import * as handutils from './utils/hand.testutils';
-import * as rewardutils from './utils/reward.testutils';
+} from '../utils/utils';
+import * as clubutils from '../utils/club.testutils';
+import * as gameutils from '../utils/game.testutils';
+import * as handutils from '../utils/hand.testutils';
+import * as rewardutils from '../utils/reward.testutils';
 import {default as axios} from 'axios';
-import {getLogger} from '../src/utils/log';
-import {buyIn, reload, startGame} from './game/utils';
+import {getLogger} from '../../src/utils/log';
+import {buyIn, reload, startGame} from '../game/utils';
 const logger = getLogger('game');
 
 const holdemGameInput = {

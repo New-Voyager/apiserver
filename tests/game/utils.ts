@@ -1,5 +1,6 @@
 import {gql} from 'apollo-server-express';
 import axios from 'axios';
+import { errToStr } from '../../src/utils/log';
 import {getClient, INTERNAL_PORT} from '../utils/utils';
 
 const sitBackMutation = gql`
@@ -181,6 +182,13 @@ const reloadQuery = gql`
       insufficientCredits
       appliedNextHand
     }
+  }
+`;
+
+
+const autoReloadQuery = gql`
+  mutation($gameCode: String!, $lowThreshold: Float!, $reloadTo: Float!) {
+    status: autoReload(gameCode: $gameCode, reloadThreshold: $lowThreshold, reloadTo: $reloadTo)
   }
 `;
 
@@ -387,6 +395,23 @@ export async function reload({playerId, gameCode, amount}): Promise<any> {
     mutation: reloadQuery,
   });
   return resp.data;
+}
+
+export async function autoReload({playerId, gameCode, lowThreshold, reloadTo}): Promise<any> {
+  try {
+    const resp = await getClient(playerId).mutate({
+      variables: {
+        gameCode: gameCode,
+        lowThreshold: lowThreshold,
+        reloadTo: reloadTo,
+      },
+      mutation: autoReloadQuery,
+    });
+    return resp.data;
+  } catch(err) {
+    console.error(errToStr(err));
+    throw err;
+  }
 }
 
 export const buyIn = async ({ownerId, gameCode, amount}): Promise<any> => {
