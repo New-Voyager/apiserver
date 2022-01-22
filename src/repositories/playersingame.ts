@@ -31,16 +31,16 @@ import {
 } from '@src/entity/types';
 import {Nats} from '@src/nats';
 import {startTimer} from '@src/timer';
-import {chipsToCents, utcTime} from '@src/utils';
+import {utcTime} from '@src/utils';
 import _ from 'lodash';
 import {BUYIN_TIMEOUT, GamePlayerSettings} from './types';
 import {getAgoraToken} from '@src/3rdparty/agora';
-import {playersInGame} from '@src/resolvers/history';
 import {HandHistory} from '@src/entity/history/hand';
 import {ClubMember, ClubMemberStat} from '@src/entity/player/club';
 import {StatsRepository} from './stats';
 import {GameRepository} from './game';
 import {TakeBreak} from './takebreak';
+import {PlayersInGame} from '@src/entity/history/player';
 
 const logger = getLogger('players_in_game');
 
@@ -816,6 +816,105 @@ class PlayersInGameRepositoryImpl {
       throw new Error('Could not find player');
     }
     return updatedPlayer;
+  }
+
+  public async getPlayersInGameById(
+    gameId: number
+  ): Promise<Array<PlayersInGame> | undefined> {
+    const playersInGameRepo = getHistoryRepository(PlayersInGame);
+    const playersInGame = await playersInGameRepo.find({
+      where: {gameId: gameId},
+    });
+    return playersInGame;
+  }
+
+  public async getPlayersGameTrackerById(
+    gameId: number
+  ): Promise<Array<PlayerGameTracker> | undefined> {
+    const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
+    const playerGameTracker = await playerGameTrackerRepo.find({
+      where: {game: {id: gameId}},
+    });
+    return playerGameTracker;
+  }
+
+  public async postBlind(game: PokerGame, player: Player): Promise<void> {
+    logger.info(`postBlind is called`);
+    const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
+    const playerGameTracker = await playerGameTrackerRepo.findOne({
+      where: {
+        game: {id: game.id},
+        playerId: player.id,
+      },
+    });
+    if (playerGameTracker) {
+      await playerGameTrackerRepo.update(
+        {
+          game: {id: game.id},
+          playerId: player.id,
+        },
+        {
+          postedBlind: true,
+        }
+      );
+    }
+    const gameDB = await Cache.getGame(game.gameCode, true);
+    if (gameDB && gameDB.tableStatus === TableStatus.NOT_ENOUGH_PLAYERS) {
+      // resume game
+      await GameRepository.restartGameIfNeeded(game, false, false);
+    }
+  }
+
+  public async autoReload(
+    game: PokerGame,
+    player: Player,
+    reloadThreshold: number,
+    reloadTo: number
+  ): Promise<void> {
+    logger.info(`auto reload is called`);
+    const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
+    const playerGameTracker = await playerGameTrackerRepo.findOne({
+      where: {
+        game: {id: game.id},
+        playerId: player.id,
+      },
+    });
+    if (playerGameTracker) {
+      await playerGameTrackerRepo.update(
+        {
+          game: {id: game.id},
+          playerId: player.id,
+        },
+        {
+          autoReload: true,
+          reloadLowThreshold: reloadThreshold,
+          reloadTo: reloadTo,
+        }
+      );
+      await Cache.getAutoReloadPlayers(game.id, true);
+    }
+  }
+
+  public async autoReloadOff(game: PokerGame, player: Player): Promise<void> {
+    const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
+    const playerGameTracker = await playerGameTrackerRepo.findOne({
+      where: {
+        game: {id: game.id},
+        playerId: player.id,
+      },
+    });
+    if (playerGameTracker) {
+      await playerGameTrackerRepo.update(
+        {
+          game: {id: game.id},
+          playerId: player.id,
+        },
+        {
+          autoReload: false,
+        }
+      );
+      await Cache.getAutoReloadPlayers(game.id, true);
+    }
   }
 }
 

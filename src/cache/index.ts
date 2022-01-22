@@ -24,6 +24,8 @@ import {BuyInApprovalLimit, GameType, PlayerLocation} from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
 import {getLogger, errToStr} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
+import {reload} from '@src/resolvers/playersingame';
+import {PlayersInGameRepository} from '@src/repositories/playersingame';
 
 const logger = getLogger('cache');
 
@@ -32,6 +34,13 @@ interface MemCache {
   success: boolean;
   data: string;
 }
+
+interface AutoReloadPlayer {
+  playerId: number;
+  lowThreshold: number;
+  reloadTo: number;
+}
+
 let unitTestCache: {[key: string]: MemCache | undefined} = {};
 
 export function initializeRedis() {
@@ -632,6 +641,50 @@ class GameCache {
     }
   }
 
+  public async getAutoReloadPlayers(
+    gameId: number,
+    update = false
+  ): Promise<Array<AutoReloadPlayer>> {
+    const key = `gameAutoReloadCache-${gameId}`;
+    const getResp = await this.getCache(key);
+    if (getResp.success && getResp.data && !update) {
+      const arr = JSON.parse(getResp.data);
+      const reloadPlayers = new Array<AutoReloadPlayer>();
+      for (const item of arr) {
+        const reload: AutoReloadPlayer = {
+          playerId: item.playerId,
+          lowThreshold: item.lowThreshold,
+          reloadTo: item.reloadTo,
+        };
+        reloadPlayers.push(reload);
+      }
+      return reloadPlayers;
+    } else {
+      const reloadPlayers = new Array<AutoReloadPlayer>();
+      try {
+        if (update) {
+          // query the table
+          const playersInGame = await PlayersInGameRepository.getPlayersInSeats(
+            gameId
+          );
+          for (const player of playersInGame) {
+            if (player.autoReload) {
+              reloadPlayers.push({
+                playerId: player.playerId,
+                lowThreshold: player.reloadLowThreshold,
+                reloadTo: player.reloadTo,
+              });
+            }
+          }
+          await this.setCache(key, JSON.stringify(reloadPlayers));
+        }
+      } catch (err) {
+        logger.error(`Failed to get reload players: err: ${errToStr(err)}`);
+      }
+      return reloadPlayers;
+    }
+  }
+
   public async isClubMember(
     playerUUid: string,
     clubCode: string
@@ -704,6 +757,7 @@ class GameCache {
       const game = JSON.parse(getResp.data) as PokerGame;
       await this.removeCache(`gameCache-${gameCode}`);
       await this.removeCache(`gameIdCache-${game.id}`);
+      await this.removeCache(`gameAutoReloadCache-${game.id}`);
     }
   }
 

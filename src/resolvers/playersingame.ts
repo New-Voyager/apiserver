@@ -1,5 +1,5 @@
 import {GameRepository} from '@src/repositories/game';
-import {GameType, PlayerStatus} from '@src/entity/types';
+import {BuyInApprovalLimit, GameType, PlayerStatus} from '@src/entity/types';
 import {getLogger, errToStr} from '@src/utils/log';
 import {Cache} from '@src/cache/index';
 import {default as _} from 'lodash';
@@ -114,6 +114,17 @@ const resolvers: any = {
     postBlind: async (parent, args, ctx, info) => {
       return postBlind(ctx.req.playerId, args.gameCode);
     },
+    autoReload: async (parent, args, ctx, info) => {
+      return autoReload(
+        ctx.req.playerId,
+        args.gameCode,
+        args.reloadThreshold,
+        args.reloadTo
+      );
+    },
+    autoReloadOff: async (parent, args, ctx, info) => {
+      return autoReloadOff(ctx.req.playerId, args.gameCode);
+    },
   },
 };
 
@@ -203,7 +214,9 @@ export async function playersInGameById(playerId: string, gameCode: string) {
       }
     }
 
-    const playersInGame = await GameRepository.getPlayersInGameById(game.id);
+    const playersInGame = await PlayersInGameRepository.getPlayersInGameById(
+      game.id
+    );
     if (!playersInGame) {
       logger.error(
         `playersInGame not found for the game ${gameCode} in club ${game.clubName}`
@@ -265,9 +278,8 @@ export async function playersGameTrackerById(
       }
     }
 
-    const playersGameTracker = await GameRepository.getPlayersGameTrackerById(
-      game.id
-    );
+    const playersGameTracker =
+      await PlayersInGameRepository.getPlayersGameTrackerById(game.id);
     if (!playersGameTracker) {
       logger.error(
         `Player Game Tracker not found for the game ${gameCode} in club ${game.clubName}`
@@ -1042,7 +1054,7 @@ export async function postBlind(
       throw new GameNotFoundError(gameCode);
     }
     const player = await Cache.getPlayer(playerId);
-    await GameRepository.postBlind(game, player);
+    await PlayersInGameRepository.postBlind(game, player);
     return true;
   } catch (err) {
     logger.error(
@@ -1056,4 +1068,83 @@ export async function postBlind(
 
 export function getResolvers() {
   return resolvers;
+}
+
+export async function autoReload(
+  requestUser: string,
+  gameCode: string,
+  reloadThreshold: number,
+  reloadTo: number
+): Promise<boolean> {
+  if (!requestUser) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    const player = await Cache.getPlayer(requestUser);
+    if (!player) {
+      throw new Error(`Player ${requestUser} is not found`);
+    }
+
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    const gameSettings = await Cache.getGameSettings(game.gameCode);
+    if (gameSettings.buyInLimit === BuyInApprovalLimit.BUYIN_HOST_APPROVAL) {
+      throw new Error(`Only No limit and credit limit games allow auto reload`);
+    }
+    reloadThreshold = chipsToCents(reloadThreshold);
+    reloadTo = chipsToCents(reloadTo);
+    await PlayersInGameRepository.autoReload(
+      game,
+      player,
+      reloadThreshold,
+      reloadTo
+    );
+
+    return true;
+  } catch (err) {
+    logger.error(`Error when setting auto reload: ${errToStr(err)}`);
+    throw new GenericError(
+      Errors.AUTORELOAD_SET_FAILED,
+      `Error when setting auto reload`
+    );
+  }
+}
+
+export async function autoReloadOff(
+  requestUser: string,
+  gameCode: string
+): Promise<boolean> {
+  if (!requestUser) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    const player = await Cache.getPlayer(requestUser);
+    if (!player) {
+      throw new Error(`Player ${requestUser} is not found`);
+    }
+
+    // get game using game code
+    const game = await Cache.getGame(gameCode);
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+
+    const gameSettings = await Cache.getGameSettings(game.gameCode);
+    if (gameSettings.buyInLimit === BuyInApprovalLimit.BUYIN_HOST_APPROVAL) {
+      throw new Error(`Only No limit and credit limit games allow auto reload`);
+    }
+    await PlayersInGameRepository.autoReloadOff(game, player);
+
+    return true;
+  } catch (err) {
+    logger.error(`Error when setting auto reload: ${errToStr(err)}`);
+    throw new GenericError(
+      Errors.AUTORELOAD_SET_FAILED,
+      `Error when setting auto reload`
+    );
+  }
 }

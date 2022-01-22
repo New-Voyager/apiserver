@@ -218,4 +218,13 @@ export class PlayerGameTracker {
 
   @Column({name: 'missed_blind', default: false}) // this is set to true, if a player misses blind (in break)
   public missedBlind!: boolean;
+
+  @Column({name: 'auto_reload', default: false})
+  public autoReload!: boolean;
+
+  @Column({name: 'reload_low_threshold', type: 'decimal', default: 0})
+  public reloadLowThreshold!: number;
+
+  @Column({name: 'reload_to', type: 'decimal', default: 0})
+  public reloadTo!: number;
 }

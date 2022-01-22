@@ -900,12 +900,37 @@ class HandRepositoryImpl {
       await GameUpdatesRepository.get(game.gameCode, true);
 
       let pendingUpdates = false;
-      for (const seatNo of Object.keys(playersInHand)) {
-        const player = playersInHand[seatNo];
-        if (player.balance.after <= game.ante) {
-          await Cache.updateGamePendingUpdates(game.gameCode, true);
-          pendingUpdates = true;
-          break;
+      // handle stack reload functionality
+      const reloadPlayers = await Cache.getAutoReloadPlayers(game.id);
+      if (reloadPlayers && reloadPlayers.length > 0) {
+        // check to see any reload players stack went down to threshold
+        const reloadPlayersMap = _.keyBy(reloadPlayers, 'playerId');
+        for (const seatNo of Object.keys(playersInHand)) {
+          const player = playersInHand[seatNo];
+          if (reloadPlayersMap[player.playerId]) {
+            if (
+              player.balance.after <
+              reloadPlayersMap[player.playerId].lowThreshold
+            ) {
+              pendingUpdates = true;
+              break;
+            }
+          }
+        }
+      }
+
+      if (pendingUpdates) {
+        await Cache.updateGamePendingUpdates(game.gameCode, true);
+      }
+
+      if (!pendingUpdates) {
+        for (const seatNo of Object.keys(playersInHand)) {
+          const player = playersInHand[seatNo];
+          if (player.balance.after <= game.ante) {
+            await Cache.updateGamePendingUpdates(game.gameCode, true);
+            pendingUpdates = true;
+            break;
+          }
         }
       }
 

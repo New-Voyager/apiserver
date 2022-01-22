@@ -1580,53 +1580,6 @@ class GameRepositoryImpl {
     return gameHistory;
   }
 
-  public async getPlayersInGameById(
-    gameId: number
-  ): Promise<Array<PlayersInGame> | undefined> {
-    const playersInGameRepo = getHistoryRepository(PlayersInGame);
-    const playersInGame = await playersInGameRepo.find({
-      where: {gameId: gameId},
-    });
-    return playersInGame;
-  }
-
-  public async getPlayersGameTrackerById(
-    gameId: number
-  ): Promise<Array<PlayerGameTracker> | undefined> {
-    const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
-    const playerGameTracker = await playerGameTrackerRepo.find({
-      where: {game: {id: gameId}},
-    });
-    return playerGameTracker;
-  }
-
-  public async postBlind(game: PokerGame, player: Player): Promise<void> {
-    logger.info(`postBlind is called`);
-    const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
-    const playerGameTracker = await playerGameTrackerRepo.findOne({
-      where: {
-        game: {id: game.id},
-        playerId: player.id,
-      },
-    });
-    if (playerGameTracker) {
-      await playerGameTrackerRepo.update(
-        {
-          game: {id: game.id},
-          playerId: player.id,
-        },
-        {
-          postedBlind: true,
-        }
-      );
-    }
-    const gameDB = await Cache.getGame(game.gameCode, true);
-    if (gameDB && gameDB.tableStatus === TableStatus.NOT_ENOUGH_PLAYERS) {
-      // resume game
-      await this.restartGameIfNeeded(game, false, false);
-    }
-  }
-
   public async getSeatStatus(gameID: number): Promise<Array<SeatStatus>> {
     const game = await Cache.getGameById(gameID);
     if (!game) {

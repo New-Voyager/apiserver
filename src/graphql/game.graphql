@@ -632,6 +632,10 @@ type Mutation {
 
   # update settings for a player
   updateGamePlayerSettings(gameCode: String!, settings: GamePlayerSettingsUpdateInput): Boolean
+
+  # sets auto reload setting for a player
+  autoReload(gameCode: String!, reloadThreshold: Float!, reloadTo: Float!): Boolean
+  autoReloadOff(gameCode: String!): Boolean
 }
 
 type gameId{

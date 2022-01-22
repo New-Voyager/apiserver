@@ -1,9 +1,7 @@
-import {INTERNAL_PORT, startGqlServer} from './utils/utils';
+import {createClubWithMembers, INTERNAL_PORT, setupGameEnvironment, startGqlServer} from './utils/utils';
 import {default as axios} from 'axios';
 import {resetDatabase, getClient} from './utils/utils';
 import * as handutils from './utils/hand.testutils';
-import * as clubutils from './utils/club.testutils';
-import * as gameutils from './utils/game.testutils';
 import * as rewardutils from './utils/reward.testutils';
 import {getLogger} from '../src/utils/log';
 const logger = getLogger('hand-test');
@@ -92,60 +90,6 @@ async function createReward1(playerId, clubCode) {
 
 const SERVER_API = `http://localhost:${INTERNAL_PORT}/internal`;
 
-async function createClubWithMembers(
-  ownerInput: any,
-  clubInput: any,
-  players: Array<any>
-): Promise<[string, string, number, Array<string>, Array<number>]> {
-  const [clubCode, ownerUuid] = await clubutils.createClub('brady', 'yatzee');
-  const clubId = await clubutils.getClubById(clubCode);
-  const playerUuids = new Array<string>();
-  const playerIds = new Array<number>();
-  for (const playerInput of players) {
-    const playerUuid = await clubutils.createPlayer(
-      playerInput.name,
-      playerInput.deviceId
-    );
-    const playerId = await handutils.getPlayerById(playerUuid);
-    await clubutils.playerJoinsClub(clubCode, playerUuid);
-    await clubutils.approvePlayer(clubCode, ownerUuid, playerUuid);
-    playerUuids.push(playerUuid);
-    playerIds.push(playerId);
-  }
-  return [ownerUuid, clubCode, clubId, playerUuids, playerIds];
-}
-
-async function setupGameEnvironment(
-  owner: string,
-  club: string,
-  players: Array<string>,
-  buyin: number
-): Promise<[string, number]> {
-  const gameServer = {
-    ipAddress: '10.1.1.1',
-    currentMemory: 100,
-    status: 'ACTIVE',
-    url: 'htto://localhost:8080',
-  };
-  try {
-    await axios.post(`${SERVER_API}/register-game-server`, gameServer);
-  } catch (err) {
-    expect(true).toBeFalsy();
-  }
-  const game = await gameutils.configureGame(owner, club, holdemGameInput);
-  let i = 1;
-  for await (const player of players) {
-    await gameutils.joinGame(player, game.gameCode, i);
-    //  await chipstrackutils.buyIn(player, game.gameCode, buyin);
-    i++;
-  }
-
-  await startGame({ownerId: owner, gameCode: game.gameCode});
-
-  const gameId = await gameutils.getGameById(game.gameCode);
-  return [game.gameCode, gameId];
-}
-
 describe('Hand Tests', () => {
   beforeAll(async done => {
     await resetDatabase();
@@ -176,10 +120,11 @@ describe('Hand Tests', () => {
       ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
       //const rewardId = await createReward(owner, clubCode);
       const [gameCode, gameId] = await setupGameEnvironment(
+        SERVER_API,
         owner,
         clubCode,
         playerUuids,
-        100
+        holdemGameInput,
       );
       // const rewardTrackId = await rewardutils.getRewardtrack(
       //   playerUuids[0],
@@ -224,10 +169,11 @@ describe('Hand Tests', () => {
     ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
     //const rewardId = await createReward(owner, clubCode);
     const [gameCode, gameId] = await setupGameEnvironment(
+      SERVER_API,
       owner,
       clubCode,
       playerUuids,
-      100
+      holdemGameInput,
     );
     // const rewardTrackId = await rewardutils.getRewardtrack(
     //   playerUuids[0],
@@ -278,10 +224,11 @@ describe('Hand Tests', () => {
     ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
     //const rewardId = await createReward(owner, clubCode);
     const [gameCode, gameId] = await setupGameEnvironment(
+      SERVER_API,
       owner,
       clubCode,
       playerUuids,
-      100
+      holdemGameInput,
     );
     // const rewardTrackId = await rewardutils.getRewardtrack(
     //   playerUuids[0],
@@ -334,10 +281,11 @@ describe('Hand Tests', () => {
       ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
       //const rewardId = await createReward(owner, clubCode);
       const [gameCode, gameId] = await setupGameEnvironment(
+        SERVER_API,
         owner,
         clubCode,
         playerUuids,
-        100
+        holdemGameInput,
       );
       // const rewardTrackId = await rewardutils.getRewardtrack(
       //   playerUuids[0],
@@ -390,10 +338,11 @@ describe('Hand Tests', () => {
       ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
       //const rewardId = await createReward(owner, clubCode);
       const [gameCode, gameId] = await setupGameEnvironment(
+        SERVER_API,
         owner,
         clubCode,
         playerUuids,
-        100
+        holdemGameInput,
       );
       // const rewardTrackId = await rewardutils.getRewardtrack(
       //   playerUuids[0],
@@ -458,10 +407,11 @@ describe('Hand Tests', () => {
       ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
       //const rewardId = await createReward(owner, clubCode);
       const [gameCode, gameId] = await setupGameEnvironment(
+        SERVER_API,
         owner,
         clubCode,
         playerUuids,
-        100
+        holdemGameInput,
       );
       // const rewardTrackId = await rewardutils.getRewardtrack(
       //   playerUuids[0],
@@ -528,10 +478,11 @@ describe('Hand Tests', () => {
       ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
       //const rewardId = await createReward(owner, clubCode);
       const [gameCode, gameId] = await setupGameEnvironment(
+        SERVER_API,
         owner,
         clubCode,
         playerUuids,
-        100
+        holdemGameInput,
       );
       // const rewardTrackId = await rewardutils.getRewardtrack(
       //   playerUuids[0],
@@ -601,10 +552,11 @@ describe('Hand Tests', () => {
       ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
       //const rewardId = await createReward(owner, clubCode);
       const [gameCode, gameId] = await setupGameEnvironment(
+        SERVER_API,
         owner,
         clubCode,
         playerUuids,
-        100
+        holdemGameInput,
       );
       // const rewardTrackId = await rewardutils.getRewardtrack(
       //   playerUuids[0],
@@ -671,10 +623,11 @@ describe('Hand Tests', () => {
     ] = await createClubWithMembers(ownerInput, clubInput, playersInput);
     //const rewardId = await createReward(owner, clubCode);
     const [gameCode, gameId] = await setupGameEnvironment(
+      SERVER_API,
       owner,
       clubCode,
       playerUuids,
-      100
+      holdemGameInput,
     );
     // const rewardTrackId = await rewardutils.getRewardtrack(
     //   playerUuids[0],

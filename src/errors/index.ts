@@ -28,6 +28,7 @@ export enum Errors {
   SEAT_RESERVED,
   INSUFFICIENT_CREDITS,
   ALREADY_RESERVED_A_SEAT,
+  AUTORELOAD_SET_FAILED,
 }
 
 export class WaitlistSeatError extends ApolloError {

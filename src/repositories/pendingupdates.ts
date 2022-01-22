@@ -23,7 +23,7 @@ import {startTimer} from '@src/timer';
 import {occupiedSeats, WaitListMgmt} from './waitlist';
 import {SeatChangeProcess} from './seatchange';
 import {DEALER_CHOICE_TIMEOUT, NewUpdate} from './types';
-import _ from 'lodash';
+import _, {map} from 'lodash';
 import {Nats} from '@src/nats';
 import {TakeBreak} from './takebreak';
 import {Cache} from '@src/cache';
@@ -190,24 +190,6 @@ export async function processPendingUpdates(gameId: number) {
         await takeBreak.processPendingUpdate(update);
       }
     }
-
-    let seatChangeAllowed = gameSettings.seatChangeAllowed;
-    seatChangeAllowed = true; // debugging
-    if (seatChangeAllowed && openedSeat) {
-      const seats = await occupiedSeats(game.id);
-      if (newOpenSeat && seats <= game.maxPlayers - 1) {
-        logger.info(`[${gameLogPrefix(game)}] Seat Change is in Progress`);
-        // open seat
-        const seatChangeProcess = new SeatChangeProcess(game);
-        const waitingPlayers =
-          await seatChangeProcess.getSeatChangeRequestedPlayers();
-        if (waitingPlayers.length > 0) {
-          endPendingProcess = false;
-          await seatChangeProcess.start(openedSeat);
-          seatChangeInProgress = true;
-        }
-      }
-    }
   }
 
   // did the host paused the game?
@@ -228,6 +210,52 @@ export async function processPendingUpdates(gameId: number) {
       [gameId, NextHandUpdate.PAUSE_GAME]
     );
     return;
+  }
+
+  // reload if needed
+  const autoReloadPlayers = await Cache.getAutoReloadPlayers(game.id);
+  if (autoReloadPlayers && autoReloadPlayers.length > 0) {
+    // get all the players in the game
+    const playersInGame = await PlayersInGameRepository.getPlayersInSeats(
+      game.id
+    );
+    const reloadPlayersMap = _.keyBy(autoReloadPlayers, 'playerId');
+    for (const playerInSeat of playersInGame) {
+      if (reloadPlayersMap[playerInSeat.playerId]) {
+        // player is set for auto reload
+        if (
+          playerInSeat.stack <
+          reloadPlayersMap[playerInSeat.playerId].lowThreshold
+        ) {
+          const player = await Cache.getPlayer(playerInSeat.playerUuid);
+          // player hit low threshold
+          const reload = new Reload(game, player);
+          const amount =
+            reloadPlayersMap[playerInSeat.playerId].reloadTo -
+            playerInSeat.stack;
+          // reload teh stack
+          await reload.request(amount);
+        }
+      }
+    }
+  }
+
+  let seatChangeAllowed = gameSettings.seatChangeAllowed;
+  seatChangeAllowed = true; // debugging
+  if (seatChangeAllowed && openedSeat) {
+    const seats = await occupiedSeats(game.id);
+    if (newOpenSeat && seats <= game.maxPlayers - 1) {
+      logger.info(`[${gameLogPrefix(game)}] Seat Change is in Progress`);
+      // open seat
+      const seatChangeProcess = new SeatChangeProcess(game);
+      const waitingPlayers =
+        await seatChangeProcess.getSeatChangeRequestedPlayers();
+      if (waitingPlayers.length > 0) {
+        endPendingProcess = false;
+        await seatChangeProcess.start(openedSeat);
+        seatChangeInProgress = true;
+      }
+    }
   }
 
   if (!seatChangeInProgress && gameSettings.waitlistAllowed) {
