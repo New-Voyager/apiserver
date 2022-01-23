@@ -97,7 +97,7 @@ export async function resumeGame(
   gameId: number,
   transactionManager?: EntityManager
 ) {
-  logger.info(`Starting resumeGame game: ${gameId}`);
+  logger.debug(`Starting resumeGame game: ${gameId}`);
   if (!notifyGameServer) {
     return;
   }
@@ -112,7 +112,7 @@ export async function resumeGame(
   } catch (err) {
     logger.error(`Failed to update pending updates for game: ${gameId}.`);
   }
-  logger.info(`Finished resumeGame game: ${gameId}`);
+  logger.debug(`Finished resumeGame game: ${gameId}`);
 }
 
 export async function endGame(gameId: number) {

@@ -176,6 +176,9 @@ export interface GamePlayerSettings {
   bombPotEnabled?: boolean;
   muckLosingHand?: boolean;
   runItTwiceEnabled?: boolean;
+  autoReload?: boolean;
+  reloadThreshold?: number;
+  reloadTo?: number;
 }
 
 export interface SitBackResponse {

@@ -31,7 +31,7 @@ import {
 } from '@src/entity/types';
 import {Nats} from '@src/nats';
 import {startTimer} from '@src/timer';
-import {utcTime} from '@src/utils';
+import {centsToChips, chipsToCents, utcTime} from '@src/utils';
 import _ from 'lodash';
 import {BUYIN_TIMEOUT, GamePlayerSettings} from './types';
 import {getAgoraToken} from '@src/3rdparty/agora';
@@ -436,6 +436,9 @@ class PlayersInGameRepositoryImpl {
         bombPotEnabled: true,
         runItTwiceEnabled: true,
         buttonStraddle: false,
+        autoReload: false,
+        reloadThreshold: game.buyInMin,
+        reloadTo: game.buyInMax,
       };
     }
 
@@ -445,6 +448,9 @@ class PlayersInGameRepositoryImpl {
       bombPotEnabled: playerInGame.bombPotEnabled,
       runItTwiceEnabled: playerInGame.runItTwiceEnabled,
       buttonStraddle: playerInGame.buttonStraddle,
+      autoReload: playerInGame.autoReload,
+      reloadThreshold: centsToChips(playerInGame.reloadLowThreshold),
+      reloadTo: centsToChips(playerInGame.reloadTo),
     };
     return settings;
   }

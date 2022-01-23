@@ -89,10 +89,15 @@ else if times out
 export class Reload {
   private game: PokerGame;
   private player: Player;
+  private inPendingProcess: boolean;
 
-  constructor(game: PokerGame, player: Player) {
+  constructor(game: PokerGame, player: Player, inPendingProcess?: boolean) {
     this.game = game;
     this.player = player;
+    this.inPendingProcess = false;
+    if (inPendingProcess) {
+      this.inPendingProcess = true;
+    }
   }
 
   public async request(amount: number): Promise<BuyInResponse> {
@@ -263,6 +268,7 @@ export class Reload {
       applied: false,
     };
     if (
+      !this.inPendingProcess &&
       this.game.status === GameStatus.ACTIVE &&
       (this.game.tableStatus === null || // test mode
         this.game.tableStatus === TableStatus.GAME_RUNNING)

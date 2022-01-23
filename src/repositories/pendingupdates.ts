@@ -229,7 +229,7 @@ export async function processPendingUpdates(gameId: number) {
         ) {
           const player = await Cache.getPlayer(playerInSeat.playerUuid);
           // player hit low threshold
-          const reload = new Reload(game, player);
+          const reload = new Reload(game, player, true);
           const amount =
             reloadPlayersMap[playerInSeat.playerId].reloadTo -
             playerInSeat.stack;
