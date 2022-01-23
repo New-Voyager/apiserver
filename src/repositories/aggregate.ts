@@ -205,9 +205,9 @@ class AggregationImpl {
             hand.showDown = handHistory.showDown;
             hand.timeStarted = handHistory.timeStarted.toISOString();
             hand.timeEnded = handHistory.timeEnded.toISOString();
-            logger.info(
-              `Aggregating hand history for game: ${game.gameId}:${game.gameCode} hand data: ${handHistory.data}`
-            );
+            // logger.info(
+            //   `Aggregating hand history for game: ${game.gameId}:${game.gameCode} hand data: ${handHistory.data}`
+            // );
             hand.data = JSON.parse(handHistory.data.toString());
             hand.totalPot = handHistory.totalPot;
             hand.tips = handHistory.rake;

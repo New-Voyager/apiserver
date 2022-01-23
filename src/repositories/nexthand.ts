@@ -133,7 +133,9 @@ class MoveToNextHand {
         `Game ${this.game.gameCode} is not found in PokerGameSettings`
       );
     }
-    logger.info(`[${gameLogPrefix(game)}] Moving to next hand ${this.handNum}`);
+    logger.debug(
+      `[${gameLogPrefix(game)}] Moving to next hand ${this.handNum}`
+    );
 
     this.nextGameType = this.gameUpdate.gameType;
 
@@ -302,7 +304,7 @@ class MoveToNextHand {
     }
 
     this.gameUpdate = await GameUpdatesRepository.get(this.game.gameCode, true);
-    logger.info(
+    logger.debug(
       `[${gameLogPrefix(game)}] Hand Num: ${this.gameUpdate.handNum} Button: ${
         this.gameUpdate.buttonPos
       } SB: ${this.gameUpdate.sbPos} BB: ${this.gameUpdate.bbPos}`
@@ -468,7 +470,7 @@ class MoveToNextHand {
           }
         }
         if (this.game.gameType === GameType.DEALER_CHOICE) {
-          logger.info(
+          logger.debug(
             `[${gameLogPrefix(
               this.game
             )}] DealerChoice: buttonPos: ${buttonPos} oldButtonPos: ${oldButtonPos} orbitPos: ${orbitPos} passedOrbit: ${
