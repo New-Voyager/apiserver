@@ -320,6 +320,9 @@ type GamePlayerSettings {
   bombPotEnabled: Boolean
   muckLosingHand: Boolean
   runItTwiceEnabled: Boolean
+  autoReload: Boolean
+  reloadThreshold: Float
+  reloadTo: Float
 }
 
 input GamePlayerSettingsUpdateInput {

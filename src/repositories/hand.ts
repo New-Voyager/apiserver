@@ -907,10 +907,10 @@ class HandRepositoryImpl {
         const reloadPlayersMap = _.keyBy(reloadPlayers, 'playerId');
         for (const seatNo of Object.keys(playersInHand)) {
           const player = playersInHand[seatNo];
-          if (reloadPlayersMap[player.playerId]) {
+          const playerId = parseInt(player.id);
+          if (reloadPlayersMap[playerId]) {
             if (
-              player.balance.after <
-              reloadPlayersMap[player.playerId].lowThreshold
+              player.balance.after < reloadPlayersMap[playerId].lowThreshold
             ) {
               pendingUpdates = true;
               break;
