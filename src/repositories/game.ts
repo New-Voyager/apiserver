@@ -541,17 +541,32 @@ class GameRepositoryImpl {
         !forceKillStuck
       ) {
         // the game will be stopped in the next hand
+        logger.info(
+          `Ending expired game next hand. Game: ${game.id}/${
+            game.gameCode
+          }, started at: ${game.startedAt.toISOString()}, game length: ${
+            game.gameLength
+          }, expired at: ${normalExpireAt.toISOString()}`
+        );
         await NextHandUpdatesRepository.expireGameNextHand(game.id);
         const messageId = uuidv4();
         Nats.sendGameEndingMessage(game.gameCode, messageId);
       } else {
         if (forceKillExpired) {
           logger.info(
-            `Attempting to kill expired game. Game: ${game.id}/${game.gameCode}, minutes since expired: ${minutesSinceExpired}, grace period: ${killLimit} minutes`
+            `Attempting to kill expired game. Game: ${game.id}/${
+              game.gameCode
+            }, started at: ${game.startedAt.toISOString()}, game length: ${
+              game.gameLength
+            }, minutes since expired: ${minutesSinceExpired}, grace period: ${killLimit} minutes`
           );
         } else if (forceKillStuck) {
           logger.info(
-            `Attempting to kill stuck game. Game: ${game.id}/${game.gameCode}, minutes since stuck: ${minutesSinceEndGameReq}, grace period: ${killLimit} minutes`
+            `Attempting to kill stuck game. Game: ${game.id}/${
+              game.gameCode
+            }, started at: ${game.startedAt.toISOString()}, game length: ${
+              game.gameLength
+            }, minutes since stuck: ${minutesSinceEndGameReq}, grace period: ${killLimit} minutes`
           );
         } else {
           // Not stuck or expired past grace period. Just expired normally while not being actively played.
