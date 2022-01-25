@@ -550,10 +550,10 @@ export class PokerGame {
   @Column({name: 'game_server_url', default: ''})
   public gameServerUrl!: string;
 
-  @Column({name: 'sfu_url', default: ''})
+  @Column({name: 'sfu_url', nullable: true})
   public sfuUrl!: string;
 
-  @Column({name: 'livekit_url', default: ''})
+  @Column({name: 'livekit_url', nullable: true})
   public livekitUrl!: string;
 
   // This is not a database column and used for tracking highhand in the cache
