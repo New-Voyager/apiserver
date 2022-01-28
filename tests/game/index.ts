@@ -16,4 +16,4 @@ import './waitlist.test'
 import './leaveGame.test'
 import './locationcheck.test'
 import './takebreak.test'
-import './seatChange.test';
+//import './seatChange.test';
