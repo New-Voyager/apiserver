@@ -1,0 +1,389 @@
+# SYSTEM_TEST_TIMEOUT_SEC:240
+
+app-game: Three Pots Game
+
+club:
+  name: Manchester Club
+  description: Club used for testing with the bot runner
+
+game:
+  create: true
+  title: "NLH Testing Game"
+  game-type: "HOLDEM"
+  small-blind: 1.0
+  big-blind: 2.0
+  utg-straddle-allowed: true
+  straddle-bet: 4.0
+  min-players: 2
+  max-players: 4
+  game-length: 60
+  buy-in-approval: true
+  rake-percentage: 5.0
+  rake-cap: 5.0
+  buy-in-min: 100
+  buy-in-max: 400
+  action-time: 10
+
+starting-seats:
+  - seat: 1
+    player: young
+    buy-in: 100
+  - seat: 2
+    player: carol
+    buy-in: 200
+  - seat: 3
+    player: matt
+    buy-in: 300
+  - seat: 4
+    player: rich
+    buy-in: 400
+
+tester:
+auto-play:
+  enabled: false
+
+hands:
+  - setup:
+      button-pos: 1
+      board: ["Ac", "Ad", "2c", "Td", "4s"]
+      seat-cards:
+        - seat: 1
+          cards: ["9h", "2s"]
+        - seat: 2
+          cards: ["Kh", "Qd"]
+        - seat: 3
+          cards: ["3s", "7s"]
+        - seat: 4
+          cards: ["Th", "Ks"]
+
+    # simulate pre-flop action
+    preflop:
+      seat-actions:
+        # seat number/action/amount
+        - action: 4, CALL, 2
+        - action: 1, CALL, 2
+        - action: 2, CALL, 2
+        - action: 3, CHECK
+          timeout: true
+
+    flop:
+      verify:
+        board: ["Ac", "Ad", "2c"]
+      seat-actions:
+        - action: 2, CHECK
+          timeout: true
+        - action: 3, CHECK
+          timeout: true
+        - action: 4, CHECK
+          timeout: true
+        - action: 1, ALLIN
+        - action: 2, CALL, 98
+        - action: 3, FOLD
+          timeout: true
+        - action: 4, CALL, 98
+
+    turn:
+      verify:
+        board: ["Ac", "Ad", "2c", "Td"]
+      seat-actions:
+        - action: 2, ALLIN
+        - action: 4, FOLD
+          timeout: true
+
+    result:
+      winners:
+        - seat: 1
+          receive: 297
+          rake-paid: 5.0
+          rank: Two Pair
+      action-ended: SHOW_DOWN
+      timeout-stats:
+        - seat: 1
+          consecutive-action-timeouts: 0
+          acted-at-least-once: true
+        - seat: 2
+          consecutive-action-timeouts: 0
+          acted-at-least-once: true
+        - seat: 3
+          consecutive-action-timeouts: 3
+          acted-at-least-once: false
+        - seat: 4
+          consecutive-action-timeouts: 1
+          acted-at-least-once: true
+      players:
+        - seat: 1
+          balance:
+            after: 297
+        - seat: 2
+          balance:
+            after: 100
+        - seat: 3
+          balance:
+            after: 298
+        - seat: 4
+          balance:
+            after: 300
+
+  - setup:
+      board: ["2s", "Tc", "2d", "Ad", "9s"]
+      seat-cards:
+        - seat: 1
+          cards: ["9d", "6c"]
+        - seat: 2
+          cards: ["Qs", "7s"]
+        - seat: 3
+          cards: ["3d", "2c"]
+        - seat: 4
+          cards: ["8d", "5h"]
+
+    # simulate pre-flop action
+    preflop:
+      seat-actions:
+        # seat number/action/amount
+        - action: 1, CALL, 2
+        - action: 2, CALL, 2
+        - action: 3, FOLD
+          timeout: true
+        - action: 4, CHECK
+
+    flop:
+      verify:
+        board: ["2s", "Tc", "2d"]
+      seat-actions:
+        - action: 4, CHECK
+        - action: 1, CHECK
+        - action: 2, CHECK
+
+    turn:
+      verify:
+        board: ["2s", "Tc", "2d", "Ad"]
+      seat-actions:
+        - action: 4, CHECK
+          timeout: true
+        - action: 1, CHECK
+        - action: 2, CHECK
+
+    river:
+      verify:
+        board: ["2s", "Tc", "2d", "Ad", "9s"]
+      seat-actions:
+        - action: 4, CHECK
+          timeout: true
+        - action: 1, CHECK
+        - action: 2, CHECK
+
+    result:
+      winners:
+        - seat: 1
+          receive: 6
+          rank: Two Pair
+          rake-paid: 1
+      action-ended: SHOW_DOWN
+      timeout-stats:
+        - seat: 1
+          consecutive-action-timeouts: 0
+          acted-at-least-once: true
+        - seat: 2
+          consecutive-action-timeouts: 0
+          acted-at-least-once: true
+        - seat: 3
+          consecutive-action-timeouts: 1
+          acted-at-least-once: false
+        - seat: 4
+          consecutive-action-timeouts: 2
+          acted-at-least-once: true
+      players:
+        - seat: 1
+          balance:
+            after: 301
+        - seat: 2
+          balance:
+            after: 98
+        - seat: 3
+          balance:
+            after: 297
+        - seat: 4
+          balance:
+            after: 298
+
+  - setup:
+      board: ["8s", "6h", "8d", "5d", "4c"]
+      seat-cards:
+        - seat: 1
+          cards: ["9h", "5c"]
+        - seat: 2
+          cards: ["8c", "Ts"]
+        - seat: 3
+          cards: ["Qc", "Qh"]
+        - seat: 4
+          cards: ["Qd", "7c"]
+
+    # simulate pre-flop action
+    preflop:
+      seat-actions:
+        # seat number/action/amount
+        - action: 2, CALL, 2
+        - action: 3, FOLD
+          timeout: true
+        - action: 4, CALL, 2
+        - action: 1, CHECK
+
+    flop:
+      verify:
+        board: ["8s", "6h", "8d"]
+      seat-actions:
+        - action: 4, CHECK
+        - action: 1, CHECK
+        - action: 2, CHECK
+
+    turn:
+      verify:
+        board: ["8s", "6h", "8d", "5d"]
+      seat-actions:
+        - action: 4, CHECK
+        - action: 1, CHECK
+        - action: 2, CHECK
+
+    river:
+      verify:
+        board: ["8s", "6h", "8d", "5d", "4c"]
+      seat-actions:
+        - action: 4, CHECK
+        - action: 1, CHECK
+        - action: 2, CHECK
+
+    result:
+      winners:
+        - seat: 4
+          receive: 5
+          rank: Straight
+          rake-paid: 1
+      action-ended: SHOW_DOWN
+      timeout-stats:
+        - seat: 1
+          consecutive-action-timeouts: 0
+          acted-at-least-once: true
+        - seat: 2
+          consecutive-action-timeouts: 0
+          acted-at-least-once: true
+        - seat: 3
+          consecutive-action-timeouts: 1
+          acted-at-least-once: false
+        - seat: 4
+          consecutive-action-timeouts: 0
+          acted-at-least-once: true
+      players:
+        - seat: 1
+          balance:
+            after: 299
+        - seat: 2
+          balance:
+            after: 96
+        - seat: 3
+          balance:
+            after: 297
+        - seat: 4
+          balance:
+            after: 301
+
+  # Seat 3 got put in break after the previous hand due to 5 consecutive timeouts.
+  # This hand should start with only seats 1, 2, and 4.
+  - setup:
+      board: ["Ts", "8s", "5h", "Kc", "3d"]
+      seat-cards:
+        - seat: 1
+          cards: ["4h", "6d"]
+        - seat: 2
+          cards: ["Qs", "As"]
+        - seat: 4
+          cards: ["4c", "3c"]
+
+    # simulate pre-flop action
+    preflop:
+      seat-actions:
+        # seat number/action/amount
+        - action: 4, CALL, 2
+        - action: 1, CALL, 2
+        - action: 2, CHECK
+
+    flop:
+      verify:
+        board: ["Ts", "8s", "5h"]
+      seat-actions:
+        - action: 1, CHECK
+        - action: 2, CHECK
+        - action: 4, CHECK
+
+    turn:
+      verify:
+        board: ["Ts", "8s", "5h", "Kc"]
+      seat-actions:
+        - action: 1, CHECK
+        - action: 2, CHECK
+        - action: 4, CHECK
+
+    river:
+      verify:
+        board: ["Ts", "8s", "5h", "Kc", "3d"]
+      seat-actions:
+        - action: 1, CHECK
+        - action: 2, CHECK
+        - action: 4, CHECK
+
+    result:
+      winners:
+        - seat: 4
+          receive: 5
+          rank: Pair
+          rake-paid: 1
+      action-ended: SHOW_DOWN
+      timeout-stats:
+        - seat: 1
+          consecutive-action-timeouts: 0
+          acted-at-least-once: true
+        - seat: 2
+          consecutive-action-timeouts: 0
+          acted-at-least-once: true
+        - seat: 4
+          consecutive-action-timeouts: 0
+          acted-at-least-once: true
+      players:
+        - seat: 1
+          balance:
+            after: 297
+        - seat: 2
+          balance:
+            after: 94
+        - seat: 4
+          balance:
+            after: 304
+
+after-game:
+  verify:
+    api:
+      game-result-table:
+        - player-name: young
+          hands-played: 4
+          buy-in: 100
+          profit: 197
+          stack: 297
+          rake-paid: 5
+        - player-name: carol
+          hands-played: 4
+          buy-in: 200
+          profit: -106
+          stack: 94
+          rake-paid: 2
+        - player-name: matt
+          # matt only played 3/4 hands due to consecutive timeouts and being put in break.
+          hands-played: 3
+          buy-in: 300
+          profit: -3
+          stack: 297
+          rake-paid: 0
+        - player-name: rich
+          hands-played: 4
+          buy-in: 400
+          profit: -96
+          stack: 304
+          rake-paid: 1

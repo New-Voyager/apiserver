@@ -487,7 +487,7 @@ describe('Club APIs', () => {
       status: ClubMemberStatus['KICKEDOUT'],
       isManager: false,
       autoBuyinApproval: true,
-      referredBy: player2Id,
+      // referredBy: player2Id,
     });
     expect(resp).toBe(ClubMemberStatus['KICKEDOUT']);
 
