@@ -390,7 +390,6 @@ describe('Club APIs', () => {
         notes: 'Kicked out',
         status: 'KICKEDOUT',
         autoBuyinApproval: true,
-        referredBy: ownerId,
       });
     } catch (error) {
       const expectedError = 'clubCode is a required field';
@@ -401,7 +400,6 @@ describe('Club APIs', () => {
         notes: 'Kicked out',
         status: 'KICKEDOUT',
         autoBuyinApproval: true,
-        referredBy: ownerId,
       });
     } catch (error) {
       const expectedError = 'Unauthorized';
@@ -412,7 +410,6 @@ describe('Club APIs', () => {
         notes: 'Kicked out',
         status: 'KICKEDOUT',
         autoBuyinApproval: true,
-        referredBy: ownerId,
       });
     } catch (error) {
       const expectedError = 'playerUuid is a required field';
@@ -427,7 +424,6 @@ describe('Club APIs', () => {
         notes: 'Kicked out',
         status: 'KICKEDOUT',
         autoBuyinApproval: true,
-        referredBy: ownerId,
       }
     );
     expect(resp.status).toBe('KICKEDOUT');
