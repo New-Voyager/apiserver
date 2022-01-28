@@ -70,9 +70,6 @@ export class Club {
   @Column({name: 'credit_tracking_enabled', default: false})
   public creditTrackingEnabled!: boolean;
 
-  @Column({name: 'referred_by', default: ''})
-  public referredBy!: string;
-
   @Column({name: 'show_game_result', default: true})
   public showGameResult!: boolean;
 
@@ -107,11 +104,18 @@ export class ClubMember {
   @Column({name: 'main_owner', default: false})
   public isMainOwner!: boolean;
 
+  @Column({name: 'is_leader', default: false})
+  public isLeader!: boolean;
+
   @Column({name: 'contact_info', default: ''})
   public contactInfo!: string;
 
   @Column({name: 'referred_by', default: ''})
   public referredBy!: string;
+
+  @ManyToOne(type => Player, {eager: true, nullable: true})
+  @JoinColumn({name: 'leader_player_id'})
+  public leader!: Player;
 
   @Column({name: 'owner_notes', default: ''})
   public ownerNotes!: string;

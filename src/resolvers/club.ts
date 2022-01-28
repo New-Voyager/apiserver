@@ -84,6 +84,11 @@ export async function getClubMembers(playerId: string, args: any) {
     if (!club.trackMemberCredit) {
       memberAny.availableCredit = 0;
     }
+
+    if (member.leader != null) {
+      memberAny.leaderName = member.leader.name;
+      memberAny.leaderUuid = member.leader.uuid;
+    }
     members.push(memberAny);
   }
   return clubMembersToClientUnits(members);

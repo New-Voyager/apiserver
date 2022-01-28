@@ -1,0 +1,234 @@
+club:
+  name: Manchester Club
+  description: Club used for testing with the bot runner
+
+game:
+  create: true
+  title: "NLH Testing Game"
+  game-type: "HOLDEM"
+  small-blind: 1.0
+  big-blind: 2.0
+  utg-straddle-allowed: true
+  straddle-bet: 4.0
+  min-players: 2
+  max-players: 9
+  game-length: 60
+  buy-in-approval: true
+  rake-percentage: 5.0
+  rake-cap: 5.0
+  buy-in-min: 100
+  buy-in-max: 300
+  action-time: 100
+
+starting-seats:
+  - seat: 1
+    player: young
+    buy-in: 100
+  - seat: 5
+    player: carol
+    buy-in: 100
+  - seat: 8
+    player: matt
+    buy-in: 100
+
+tester:
+auto-play:
+  enabled: false
+
+hands:
+  - setup:
+      button-pos: 1
+      flop: ["Ac", "Ad", "2c"]
+      turn: Td
+      river: 4s
+      seat-cards:
+        - seat: 1
+          cards: ["Kh", "Qd"]
+        - seat: 5
+          cards: ["3s", "7s"]
+        - seat: 8
+          cards: ["9h", "2s"]
+
+    # simulate pre-flop action
+    preflop:
+      seat-actions:
+        # seat number/action/amount
+        - action: 1, CALL, 2
+        - action: 5, CALL, 2
+        - action: 8, CHECK
+
+    flop:
+      verify:
+        board: ["Ac", "Ad", "2c"]
+      seat-actions:
+        - action: 5, CHECK
+        - action: 8, BET, 2
+        - action: 1, CALL, 2
+        - action: 5, RAISE, 4
+        - action: 8, FOLD
+        - action: 1, CALL, 4
+
+    turn:
+      verify:
+        board: ["Ac", "Ad", "2c", "Td"]
+      seat-actions:
+        - action: 5, CHECK
+        - action: 1, BET, 10
+        - action: 5, CALL, 10
+
+    river:
+      verify:
+        board: ["Ac", "Ad", "2c", "Td", "4s"]
+      seat-actions:
+        - action: 5, BET, 10
+        - action: 1, CALL, 10
+
+    result:
+      winners:
+        - seat: 1
+          receive: 54.0
+          rank: Pair
+          rake-paid: 2.0
+      action-ended: SHOW_DOWN
+
+      players:
+        - seat: 1
+          balance:
+            after: 128
+        - seat: 5
+          balance:
+            after: 74
+        - seat: 8
+          balance:
+            after: 96
+
+    api:
+      game-result-table:
+        - player-name: young
+          hands-played: 1
+          buy-in: 100
+          profit: 28
+          stack: 128
+          rake-paid: 1
+        - player-name: carol
+          hands-played: 1
+          buy-in: 100
+          profit: -26
+          stack: 74
+          rake-paid: 1
+        - player-name: matt
+          hands-played: 1
+          buy-in: 100
+          profit: -4
+          stack: 96
+          rake-paid: 0
+
+  # button is 5, sb 8, bb 1
+  - setup:
+      flop: ["Ac", "Ad", "2c"]
+      turn: Td
+      river: 4s
+      seat-cards:
+        - seat: 1
+          cards: ["3s", "7s"]
+        - seat: 5
+          cards: ["9h", "2s"]
+        - seat: 8
+          cards: ["Kh", "Qd"]
+
+    # simulate pre-flop action
+    preflop:
+      seat-actions:
+        # seat number/action/amount
+        - action: 5, CALL, 2
+        - action: 8, CALL, 2
+        - action: 1, CHECK
+
+    flop:
+      verify:
+        board: ["Ac", "Ad", "2c"]
+      seat-actions:
+        - action: 8, CHECK
+        - action: 1, BET, 2
+        - action: 5, CALL, 2
+        - action: 8, RAISE, 4
+        - action: 1, FOLD
+        - action: 5, CALL, 4
+
+    turn:
+      verify:
+        board: ["Ac", "Ad", "2c", "Td"]
+      seat-actions:
+        - action: 8, CHECK
+        - action: 5, BET, 10
+        - action: 8, CALL, 10
+
+    river:
+      verify:
+        board: ["Ac", "Ad", "2c", "Td", "4s"]
+      seat-actions:
+        - action: 8, BET, 10
+        - action: 5, CALL, 10
+
+    result:
+      winners:
+        - seat: 5
+          receive: 54.0
+          rank: Two Pair
+          rake-paid: 2.0
+      action-ended: SHOW_DOWN
+
+      players:
+        - seat: 1
+          balance:
+            after: 124
+        - seat: 5
+          balance:
+            after: 102
+        - seat: 8
+          balance:
+            after: 70
+
+    api:
+      game-result-table:
+        - player-name: young
+          hands-played: 2
+          buy-in: 100
+          profit: 24
+          stack: 124
+          rake-paid: 2
+        - player-name: carol
+          hands-played: 2
+          buy-in: 100
+          profit: 2
+          stack: 102
+          rake-paid: 2
+        - player-name: matt
+          hands-played: 2
+          buy-in: 100
+          profit: -30
+          stack: 70
+          rake-paid: 0
+
+after-game:
+  verify:
+    api:
+      game-result-table:
+        - player-name: young
+          hands-played: 2
+          buy-in: 100
+          profit: 24
+          stack: 124
+          rake-paid: 2
+        - player-name: carol
+          hands-played: 2
+          buy-in: 100
+          profit: 2
+          stack: 102
+          rake-paid: 2
+        - player-name: matt
+          hands-played: 2
+          buy-in: 100
+          profit: -30
+          stack: 70
+          rake-paid: 0
