@@ -8,28 +8,30 @@ beforeAll(async () => {
   await start(false, {intTest: true});
 });
 
-import './announcements';
-import './auth';
-import './chat';
-import './chipstrack';
-import './club';
-import './clubmessage';
-import './game';
-import './history';
-import './observers';
-import './stats';
-import './club.test';
-import './clubmessage.test';
-import './game.test';
-import './gameserver.test';
-import './hand.test';
-import './helloworld.test';
-import './player.test';
-import './reload';
-import './seatchange.test';
-import './waitlistseating.test';
-import './game-types';
-import './hand'
-import './player'
-import './appcoin/appcoin.test';
-import './buyin';
+// import './announcements';
+// import './auth';
+// import './chat';
+// import './chipstrack';
+// import './club';
+// import './clubmessage';
+// import './game';
+// import './history';
+// import './observers';
+// import './stats';
+// import './club.test';
+// import './clubmessage.test';
+// import './game.test';
+// import './gameserver.test';
+// import './hand.test';
+// import './helloworld.test';
+// import './player.test';
+// import './reload';
+// import './seatchange.test';
+// import './waitlistseating.test';
+// import './game-types';
+// import './hand'
+// import './player'
+// import './appcoin/appcoin.test';
+// import './buyin';
+
+import './agents';

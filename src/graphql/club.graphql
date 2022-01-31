@@ -44,11 +44,11 @@ input ClubMemberUpdateInput {
   notes: String
   status: ClubMemberStatus
   autoBuyinApproval: Boolean
-  leaderUuid: String            # playerUuid 
+  agentUuid: String            # playerUuid 
   contactInfo: String
   tipsBack: Float
   isOwner: Boolean
-  isLeader: Boolean
+  isAgent: Boolean
 }
 
 input ManagerRoleInput {
@@ -75,7 +75,7 @@ type ClubMember {
   isOwner: Boolean
   isManager: Boolean
   isMainOwner: Boolean
-  isLeader: Boolean
+  isAgent: Boolean
   totalBuyins: Float
   totalWinnings: Float
   rakePaid: Float
@@ -88,8 +88,8 @@ type ClubMember {
   updatedAt: DateTime
   tipsBack: Float
   followup: Boolean
-  leaderName: String
-  leaderUuid: String
+  agentName: String
+  agentUuid: String
 }
 
 type ClubGameInfo {

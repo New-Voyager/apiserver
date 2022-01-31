@@ -78,7 +78,6 @@ export class Club {
 
   @Column({name: 'agents_can_see_player_tips', default: true})
   public agentsCanSeePlayerTips!: boolean;
-  
 }
 
 @Entity({name: 'club_member'})
@@ -108,8 +107,8 @@ export class ClubMember {
   @Column({name: 'main_owner', default: false})
   public isMainOwner!: boolean;
 
-  @Column({name: 'is_leader', default: false})
-  public isLeader!: boolean;
+  @Column({name: 'is_agent', default: false})
+  public isAgent!: boolean;
 
   @Column({name: 'contact_info', default: ''})
   public contactInfo!: string;
@@ -117,9 +116,9 @@ export class ClubMember {
   @Column({name: 'referred_by', default: ''})
   public referredBy!: string;
 
-  @ManyToOne(type => Player, {eager: true, nullable: true})
-  @JoinColumn({name: 'leader_player_id'})
-  public leader!: Player;
+  @ManyToOne(type => Player, {eager: false, nullable: true})
+  @JoinColumn({name: 'agent_id'})
+  public agent!: Player;
 
   @Column({name: 'owner_notes', default: ''})
   public ownerNotes!: string;
@@ -368,4 +367,59 @@ export class ClubInvitations {
     default: () => 'CURRENT_TIMESTAMP',
   })
   public createdAt!: Date;
+}
+
+@Entity({name: 'member_tips_tracking'})
+export class MemberTipsTracking {
+  @Column({name: 'club_id', primary: true})
+  public clubId!: number;
+
+  @Column({name: 'player_id', primary: true})
+  public playerId!: number;
+
+  @DbAwareColumn({
+    name: 'game_ended_datetime',
+    type: 'timestamp',
+    nullable: true,
+  })
+  public gameEndedAt!: Date;
+
+  @Column({name: 'game_code'})
+  public gameCode!: string;
+
+  @Column({
+    name: 'tips_paid',
+    type: 'decimal',
+    precision: 7,
+    scale: 2,
+    nullable: false,
+  })
+  public tipsPaid!: number;
+
+  @Column({
+    name: 'number_of_hands_played',
+    type: 'decimal',
+    precision: 7,
+    scale: 2,
+    nullable: false,
+  })
+  public numberOfHands!: number;
+
+  @Column({
+    name: 'buyin',
+    type: 'decimal',
+    precision: 7,
+    scale: 2,
+    nullable: false,
+  })
+  public buyin!: number;
+
+  @Column({
+    name: 'profit',
+    type: 'decimal',
+    precision: 7,
+    scale: 2,
+    nullable: false,
+  })
+  public profit!: number;
 }

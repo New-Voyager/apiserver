@@ -81,11 +81,11 @@ export interface ClubMemberUpdateInput {
   notes?: string;
   status?: ClubMemberStatus;
   autoBuyinApproval?: boolean;
-  leaderUuid?: string;
+  agentUuid?: string;
   contactInfo?: string;
   tipsBack?: number;
   isOwner?: boolean;
-  isLeader?: boolean;
+  isAgent?: boolean;
 }
 
 class ClubRepositoryImpl {
@@ -179,15 +179,15 @@ class ClubRepositoryImpl {
       clubMember.tipsBack = updateData.tipsBack;
     }
 
-    if (updateData.isLeader !== undefined) {
+    if (updateData.isAgent !== undefined) {
       // lookup the player
-      clubMember.isLeader = updateData.isLeader;
+      clubMember.isAgent = updateData.isAgent;
     }
 
-    if (updateData.leaderUuid) {
+    if (updateData.agentUuid) {
       // lookup the player
-      const referredByPlayer = await Cache.getPlayer(updateData.leaderUuid);
-      clubMember.leader = referredByPlayer;
+      const referredByPlayer = await Cache.getPlayer(updateData.agentUuid);
+      clubMember.agent = referredByPlayer;
     }
 
     // Save the data

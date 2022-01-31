@@ -324,12 +324,12 @@ export const applyWaitlistOrder = async ({
   return resp.data;
 };
 
-export const getPlayerById = async ({ ownerId }) => {
-  const resp = await getClient(ownerId).query({
+export const getPlayerById = async (playerId: string) => {
+  const resp = await getClient(playerId).query({
     query: playerById,
   });
 
-  return resp.data
+  return resp.data.playerById.id;
 }
 
 export const setBuyInLimit = async ({ownerId, gameCode, playerId, limit}) => {
