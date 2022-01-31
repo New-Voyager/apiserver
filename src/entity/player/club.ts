@@ -75,6 +75,10 @@ export class Club {
 
   @Column({name: 'invitation_code', nullable: true})
   public invitationCode!: string;
+
+  @Column({name: 'agents_can_see_player_tips', default: true})
+  public agentsCanSeePlayerTips!: boolean;
+  
 }
 
 @Entity({name: 'club_member'})

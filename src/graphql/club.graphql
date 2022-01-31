@@ -36,6 +36,7 @@ input ClubUpdateInput {
   trackMemberCredit: Boolean
   picUrl: String
   showGameResult: Boolean
+  agentsCanSeePlayerTips: Boolean
 }
 
 input ClubMemberUpdateInput {
@@ -56,7 +57,7 @@ input ManagerRoleInput {
   makeAnnouncement: Boolean
   sendPrivateMessage: Boolean
   hostGames: Boolean
-  approveBuyin: Boolean
+  approveBuyin: Boolean 
   viewMemberActivities: Boolean
   canUpdateCredits: Boolean
 }
