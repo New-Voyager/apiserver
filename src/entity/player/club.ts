@@ -370,12 +370,19 @@ export class ClubInvitations {
 }
 
 @Entity({name: 'member_tips_tracking'})
+@Index(['clubId', 'playerId'])
 export class MemberTipsTracking {
-  @Column({name: 'club_id', primary: true})
+  @PrimaryGeneratedColumn({type: 'bigint'})
+  public id!: number;
+
+  @Column({name: 'club_id'})
   public clubId!: number;
 
-  @Column({name: 'player_id', primary: true})
+  @Column({name: 'player_id'})
   public playerId!: number;
+
+  @Column({name: 'game_code'})
+  public gameCode!: string;
 
   @DbAwareColumn({
     name: 'game_ended_datetime',
@@ -384,42 +391,40 @@ export class MemberTipsTracking {
   })
   public gameEndedAt!: Date;
 
-  @Column({name: 'game_code'})
-  public gameCode!: string;
-
   @Column({
     name: 'tips_paid',
     type: 'decimal',
-    precision: 7,
+    precision: 12,
     scale: 2,
-    nullable: false,
+    nullable: true,
+    default: 0,
   })
   public tipsPaid!: number;
 
   @Column({
     name: 'number_of_hands_played',
-    type: 'decimal',
-    precision: 7,
-    scale: 2,
-    nullable: false,
+    type: 'int',
+    nullable: true,
   })
   public numberOfHands!: number;
 
   @Column({
     name: 'buyin',
     type: 'decimal',
-    precision: 7,
+    precision: 12,
     scale: 2,
-    nullable: false,
+    nullable: true,
+    default: 0,
   })
   public buyin!: number;
 
   @Column({
     name: 'profit',
     type: 'decimal',
-    precision: 7,
+    precision: 12,
     scale: 2,
-    nullable: false,
+    nullable: true,
+    default: 0,
   })
   public profit!: number;
 }

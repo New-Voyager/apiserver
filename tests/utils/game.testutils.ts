@@ -294,6 +294,26 @@ export const gameInfoQuery = gql`
   }
 `;
 
+
+export const gameResultQuery = gql`
+  query($gameCode: String!) {
+    result: gameResultTable(gameCode: $gameCode) {
+      playerId
+      playerUuid
+      playerName
+      externalId
+      sessionTime
+      sessionTimeStr
+      handsPlayed
+      buyIn
+      profit
+      stack
+      rakePaid
+    }
+  }
+`;
+
+
 export const declineSeatChange = async (ownerId, gameCode) => {
   const resp = await getClient(ownerId).mutate({
     variables: {
@@ -681,6 +701,24 @@ export async function gameInfo(
   expect(resp.errors).toBeUndefined();
   expect(resp.data).not.toBeNull();
   return resp.data.gameInfo;
+}
+
+
+export async function gameResult(
+  playerId: string,
+  gameCode: string
+): Promise<any> {
+  const variables: any = {
+    gameCode: gameCode,
+  };
+
+  const resp = await getClient(playerId).query({
+    variables: variables,
+    query: gameResultQuery,
+  });
+  expect(resp.errors).toBeUndefined();
+  expect(resp.data).not.toBeNull();
+  return resp.data.result;
 }
 
 export async function pendingApprovalsForGame(
