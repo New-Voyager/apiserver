@@ -170,6 +170,7 @@ type ClubMemberActivityGrouped {
   buyIn: Float!
   profit: Float!
   gamesPlayed: Int!
+  handsPlayed: Int
   followup: Boolean
 }
 

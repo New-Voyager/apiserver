@@ -632,8 +632,8 @@ export async function agentPlayersActivity(
     throw new Error('Invalid argument');
   }
 
-  const a = await ClubRepository.clubMemberActivityGrouped(
-    playerId,
+  const a = await ClubRepository.agentPlayersActivity(
+    agentId,
     clubCode,
     startDate,
     endDate
