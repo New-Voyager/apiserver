@@ -372,7 +372,7 @@ export class ClubInvitations {
 @Entity({name: 'member_tips_tracking'})
 @Index(['clubId', 'playerId'])
 export class MemberTipsTracking {
-  @PrimaryGeneratedColumn({type: 'bigint'})
+  @PrimaryGeneratedColumn({type: 'int'})
   public id!: number;
 
   @Column({name: 'club_id'})
