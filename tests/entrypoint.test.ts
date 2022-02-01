@@ -33,3 +33,4 @@ import './hand'
 import './player'
 import './appcoin/appcoin.test';
 import './buyin';
+import './agents';

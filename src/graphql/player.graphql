@@ -141,6 +141,7 @@ type ClubInfo {
   showGameResult: Boolean
   availableCredit: Float
   managerRole: ManagerRole
+  agentsCanSeePlayerTips: Boolean
 }
 
 type SearchClubResult {

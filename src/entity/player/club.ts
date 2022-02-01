@@ -75,6 +75,9 @@ export class Club {
 
   @Column({name: 'invitation_code', nullable: true})
   public invitationCode!: string;
+
+  @Column({name: 'agents_can_see_player_tips', default: true})
+  public agentsCanSeePlayerTips!: boolean;
 }
 
 @Entity({name: 'club_member'})
@@ -104,8 +107,8 @@ export class ClubMember {
   @Column({name: 'main_owner', default: false})
   public isMainOwner!: boolean;
 
-  @Column({name: 'is_leader', default: false})
-  public isLeader!: boolean;
+  @Column({name: 'is_agent', default: false})
+  public isAgent!: boolean;
 
   @Column({name: 'contact_info', default: ''})
   public contactInfo!: string;
@@ -114,8 +117,8 @@ export class ClubMember {
   public referredBy!: string;
 
   @ManyToOne(type => Player, {eager: true, nullable: true})
-  @JoinColumn({name: 'leader_player_id'})
-  public leader!: Player;
+  @JoinColumn({name: 'agent_id'})
+  public agent!: Player;
 
   @Column({name: 'owner_notes', default: ''})
   public ownerNotes!: string;
@@ -364,4 +367,64 @@ export class ClubInvitations {
     default: () => 'CURRENT_TIMESTAMP',
   })
   public createdAt!: Date;
+}
+
+@Entity({name: 'member_tips_tracking'})
+@Index(['clubId', 'playerId'])
+export class MemberTipsTracking {
+  @PrimaryGeneratedColumn({type: 'int'})
+  public id!: number;
+
+  @Column({name: 'club_id'})
+  public clubId!: number;
+
+  @Column({name: 'player_id'})
+  public playerId!: number;
+
+  @Column({name: 'game_code'})
+  public gameCode!: string;
+
+  @DbAwareColumn({
+    name: 'game_ended_datetime',
+    type: 'timestamp',
+    nullable: true,
+  })
+  public gameEndedAt!: Date;
+
+  @Column({
+    name: 'tips_paid',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    default: 0,
+  })
+  public tipsPaid!: number;
+
+  @Column({
+    name: 'number_of_hands_played',
+    type: 'int',
+    nullable: true,
+  })
+  public numberOfHands!: number;
+
+  @Column({
+    name: 'buyin',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    default: 0,
+  })
+  public buyin!: number;
+
+  @Column({
+    name: 'profit',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    default: 0,
+  })
+  public profit!: number;
 }

@@ -5,7 +5,7 @@ import {
 } from 'typeorm';
 import {Player, PlayerNotes} from '../src/entity/player/player';
 import {ChatText} from '../src/entity/player/chat';
-import {Club, ClubManagerRoles, ClubMember, ClubMemberStat, CreditTracking} from '../src/entity/player/club';
+import {Club, ClubManagerRoles, ClubMember, ClubMemberStat, CreditTracking, MemberTipsTracking} from '../src/entity/player/club';
 import {SavedHands} from '../src/entity/player/player';
 import {
   PokerGame,
@@ -95,6 +95,7 @@ export async function sqlliteConnection() {
           PromotionConsumed,
           ChatText,
           ClubManagerRoles,
+          MemberTipsTracking,
         ],
         dropSchema: true,
         synchronize: true,

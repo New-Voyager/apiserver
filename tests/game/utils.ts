@@ -324,12 +324,12 @@ export const applyWaitlistOrder = async ({
   return resp.data;
 };
 
-export const getPlayerById = async ({ ownerId }) => {
-  const resp = await getClient(ownerId).query({
+export const getPlayerById = async (playerId: string) => {
+  const resp = await getClient(playerId).query({
     query: playerById,
   });
 
-  return resp.data
+  return resp.data.playerById.id;
 }
 
 export const setBuyInLimit = async ({ownerId, gameCode, playerId, limit}) => {
@@ -481,11 +481,15 @@ export const joinGame = async ({ownerId, gameCode, seatNo, location, ip}:any) =>
   return resp.data;
 };
 
-export const configureGame = async ({playerId, clubCode, highHandTracked, gpsCheck, ipCheck}: any) => {
+export const configureGame = async ({gameInput, playerId, clubCode, highHandTracked, gpsCheck, ipCheck}: any) => {
+
+  if (gameInput == null) {
+    gameInput = {...holdemGameInput};
+  }
   const resp = await getClient(playerId).mutate({
     variables: {
       clubCode: clubCode,
-      gameInput: { ...holdemGameInput, highHandTracked, gpsCheck, ipCheck },
+      gameInput: { ...gameInput, highHandTracked, gpsCheck, ipCheck },
     },
     mutation: configureGameQuery,
   });

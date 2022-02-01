@@ -36,6 +36,7 @@ input ClubUpdateInput {
   trackMemberCredit: Boolean
   picUrl: String
   showGameResult: Boolean
+  agentsCanSeePlayerTips: Boolean
 }
 
 input ClubMemberUpdateInput {
@@ -43,11 +44,11 @@ input ClubMemberUpdateInput {
   notes: String
   status: ClubMemberStatus
   autoBuyinApproval: Boolean
-  leaderUuid: String            # playerUuid 
+  agentUuid: String            # playerUuid 
   contactInfo: String
   tipsBack: Float
   isOwner: Boolean
-  isLeader: Boolean
+  isAgent: Boolean
 }
 
 input ManagerRoleInput {
@@ -56,7 +57,7 @@ input ManagerRoleInput {
   makeAnnouncement: Boolean
   sendPrivateMessage: Boolean
   hostGames: Boolean
-  approveBuyin: Boolean
+  approveBuyin: Boolean 
   viewMemberActivities: Boolean
   canUpdateCredits: Boolean
 }
@@ -74,7 +75,7 @@ type ClubMember {
   isOwner: Boolean
   isManager: Boolean
   isMainOwner: Boolean
-  isLeader: Boolean
+  isAgent: Boolean
   totalBuyins: Float
   totalWinnings: Float
   rakePaid: Float
@@ -87,8 +88,8 @@ type ClubMember {
   updatedAt: DateTime
   tipsBack: Float
   followup: Boolean
-  leaderName: String
-  leaderUuid: String
+  agentName: String
+  agentUuid: String
 }
 
 type ClubGameInfo {
@@ -169,6 +170,7 @@ type ClubMemberActivityGrouped {
   buyIn: Float!
   profit: Float!
   gamesPlayed: Int!
+  handsPlayed: Int
   followup: Boolean
 }
 
@@ -191,6 +193,7 @@ type Query {
   creditHistory(clubCode: String!, playerUuid: String!): [CreditHistory!]
   # Dates are in UTC.
   clubMemberActivityGrouped(clubCode: String!, startDate: DateTime!, endDate: DateTime!): [ClubMemberActivityGrouped]
+  agentPlayersActivity(clubCode: String!, agentId: String!, startDate: DateTime!, endDate: DateTime!): [ClubMemberActivityGrouped]
 }
 
 type Mutation {

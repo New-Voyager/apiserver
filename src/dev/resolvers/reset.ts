@@ -81,6 +81,7 @@ export async function resetDB() {
     });
     logger.info('Resetting user DB tables');
     await getUserManager().transaction(async transactionEntityManager => {
+      await deleteAll('member_tips_tracking', transactionEntityManager);
       await deleteAll('player_notes', transactionEntityManager);
       await deleteAll('club_messages', transactionEntityManager);
       await deleteAll('saved_hands', transactionEntityManager);

@@ -39,7 +39,11 @@ import {getRunProfile, getStoreHandAnalysis, RunProfile} from '@src/server';
 import {AdminRepository} from './admin';
 import {HandAnalysis} from '@src/entity/debug/handanalyze';
 import {GameRepository} from './game';
-import {ClubMember, CreditTracking} from '@src/entity/player/club';
+import {
+  ClubMember,
+  CreditTracking,
+  MemberTipsTracking,
+} from '@src/entity/player/club';
 import {ClubRepository} from './club';
 
 const BATCH_SIZE = 10;
@@ -111,7 +115,9 @@ class AggregationImpl {
       );
 
       // update credit history
-      this.updateCreditHistory(game);
+      if (game.clubCode) {
+        await this.updateCreditHistory(game);
+      }
 
       await getHistoryManager().transaction(
         async transactionalEntityManager => {
@@ -393,6 +399,7 @@ class AggregationImpl {
       return;
     }
     const creditChanges = new Array<CreditTracking>();
+    const tipUpdates = new Array();
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const players = await playerGameTrackerRepository.find({
       game: {id: game.id},
@@ -403,6 +410,7 @@ class AggregationImpl {
         const playerUuid = playerInGame.playerUuid;
         const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
         if (clubMember) {
+          // update result
           const amount = playerInGame.stack;
           let newCredit: number;
 
@@ -433,6 +441,20 @@ class AggregationImpl {
           ct.updatedCredits = newCredit;
           ct.tips = playerInGame.rakePaid;
           creditChanges.push(ct);
+
+          // update tips information
+          const tipTrack = new MemberTipsTracking();
+          tipTrack.clubId = game.clubId;
+          tipTrack.playerId = playerInGame.playerId;
+          tipTrack.gameEndedAt = game.endedAt;
+          tipTrack.gameCode = game.gameCode;
+          tipTrack.numberOfHands = playerInGame.noHandsPlayed;
+          tipTrack.tipsPaid = playerInGame.rakePaid;
+          tipTrack.buyin = playerInGame.buyIn;
+          tipTrack.profit = playerInGame.stack - playerInGame.buyIn;
+          tipUpdates.push(
+            tranManager.getRepository(MemberTipsTracking).save(tipTrack)
+          );
         } else {
           logger.error(
             `Could not find club member in cache while updating credit tracker. club: ${game.clubCode}, player: ${playerUuid}`
@@ -441,6 +463,14 @@ class AggregationImpl {
       }
       if (creditChanges.length > 0) {
         await tranManager.getRepository(CreditTracking).save(creditChanges);
+      }
+
+      if (tipUpdates.length > 0) {
+        try {
+          await Promise.all(tipUpdates);
+        } catch (err) {
+          logger.error(`Failed to update tips tracking.`);
+        }
       }
     });
 
