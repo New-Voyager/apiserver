@@ -21,7 +21,7 @@ describe('hand game APIs', () => {
   afterAll(async done => {
     done();
   });
-  test('hand game', async () => {
+  test.skip('hand game', async () => {
     const [clubCode, playerId] = await clubutils.createClub(`brady`, `yatzee`);
     await createGameServer('1.99.0.1');
     const resp = await configureGame({clubCode, playerId});
