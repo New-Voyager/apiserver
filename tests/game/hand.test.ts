@@ -73,7 +73,7 @@ describe('hand game APIs', () => {
     for (const file of files) {
       const handData = JSON.parse(fs.readFileSync(`${directory}/${file}`, { encoding: 'utf-8' }))
       await Promise.all([...playerIds, playerId].map(async (player, index) => {
-        const newplayerId = await getPlayerById({ownerId: player});
+        const newplayerId = await getPlayerById(player);
         handData.result.playerInfo[index + 1].id = newplayerId.playerById.id
       }))
       handData.gameId = String(gameId);
@@ -154,7 +154,7 @@ describe('hand game APIs', () => {
     await axios.post(`http://localhost:${INTERNAL_PORT}/admin/post-process-games`)
     console.log('Post processing done');
     await Promise.all(playerIds.map(async (playerId) => {
-      const newplayerId = await getPlayerById({ownerId: playerId});
+      const newplayerId = await getPlayerById(playerId);
       console.log('Fetch completed game');
       const complData = await getCompletedGame({ ownerId: playerId, gameCode: resp.data.configuredGame.gameCode})
       console.log('Got completed game');
@@ -225,7 +225,7 @@ describe('hand game APIs', () => {
     for (const file of files) {
       const handData = JSON.parse(fs.readFileSync(`${directory}/${file}`, { encoding: 'utf-8' }))
       await Promise.all([...playerIds, playerId].map(async (player, index) => {
-        const newplayerId = await getPlayerById({ownerId: player});
+        const newplayerId = await getPlayerById(player);
         handData.result.playerInfo[index + 1].id = newplayerId.playerById.id
       }))
       handData.gameId = String(gameId);
@@ -288,7 +288,7 @@ describe('hand game APIs', () => {
     await axios.post(`http://localhost:${INTERNAL_PORT}/admin/post-process-games`)
     
     await Promise.all(playerIds.map(async (playerId) => {
-      const newplayerId = await getPlayerById({ownerId: playerId});
+      const newplayerId = await getPlayerById(playerId);
       const complData = await getCompletedGame({ ownerId: playerId, gameCode: resp.data.configuredGame.gameCode})
 
       const complGameData = complData.completedGame.stackStat.map(item => ({
