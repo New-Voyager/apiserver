@@ -602,6 +602,46 @@ export async function clubMemberActivityGrouped(
   return activityToClientUnits(a);
 }
 
+export async function agentPlayersActivity(
+  playerId: string,
+  agentId: string,
+  clubCode: string,
+  startDate: Date,
+  endDate: Date
+) {
+  const errors = new Array<string>();
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  if (clubCode === '') {
+    errors.push('Invalid club');
+  }
+  if (!startDate) {
+    errors.push('Invalid startDate');
+  }
+  if (!endDate) {
+    errors.push('Invalid endDate');
+  }
+  if (startDate > endDate) {
+    errors.push('Invalid dates');
+  }
+  if (errors.length > 0) {
+    logger.error(
+      'Invalid argument for clubMemberActivityGrouped: ' + errors.join(' ')
+    );
+    throw new Error('Invalid argument');
+  }
+
+  const a = await ClubRepository.clubMemberActivityGrouped(
+    playerId,
+    clubCode,
+    startDate,
+    endDate
+  );
+
+  return activityToClientUnits(a);
+}
+
 function activityToClientUnits(input: Array<any>): any {
   const resp = new Array<any>();
   for (const a of input) {
@@ -836,6 +876,15 @@ const resolvers: any = {
     clubMemberActivityGrouped: async (parent, args, ctx, info) => {
       return clubMemberActivityGrouped(
         ctx.req.playerId,
+        args.clubCode,
+        args.startDate,
+        args.endDate
+      );
+    },
+    agentPlayersActivity: async (parent, args, ctx, info) => {
+      return agentPlayersActivity(
+        ctx.req.playerId,
+        args.agentId,
         args.clubCode,
         args.startDate,
         args.endDate

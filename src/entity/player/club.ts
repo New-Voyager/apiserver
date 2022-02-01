@@ -116,7 +116,7 @@ export class ClubMember {
   @Column({name: 'referred_by', default: ''})
   public referredBy!: string;
 
-  @ManyToOne(type => Player, {eager: false, nullable: true})
+  @ManyToOne(type => Player, {eager: true, nullable: true})
   @JoinColumn({name: 'agent_id'})
   public agent!: Player;
 

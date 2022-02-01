@@ -1329,6 +1329,100 @@ class ClubRepositoryImpl {
     return res;
   }
 
+  public async agentPlayersActivity(
+    agentId: string,
+    clubCode: string,
+    startDate: Date,
+    endDate: Date
+  ) {
+    const reqPlayer = await Cache.getPlayer(agentId);
+    if (!reqPlayer) {
+      logger.error(
+        `Could not get aggregated member activity. Request player does not exist. player: ${agentId}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const club = await Cache.getClub(clubCode);
+    if (!club) {
+      logger.error(
+        `Could not get aggregated member activity. Club does not exist. club: ${clubCode}`
+      );
+      throw new Error('Invalid club');
+    }
+
+    const clubMember = await Cache.getClubMember(agentId, clubCode, true);
+    if (!clubMember) {
+      throw new Error('Unexpected. There is no owner for the club');
+    }
+
+    const query = fixQuery(`
+    SELECT cm.player_id AS "playerId", cm.available_credit AS "availableCredit",
+    cm.tips_back AS "tipsBack", cm.last_played_date AS "lastPlayedDate",
+    p.uuid AS "playerUuid", p.name AS "playerName", aggtips.tips AS "tips"
+      FROM club_member cm
+      INNER JOIN player p ON cm.player_id = p.id
+      JOIN (
+        SELECT mtt.player_id, sum(number_of_hands_played) handsPlayed, sum(tips_paid) as tips, 
+              sum(buyin) as buyin, sum(profit) as profit from member_tips_tracking mtt 
+        WHERE mtt.club_id = ? AND game_ended_datetime >= ? AND game_ended_datetime <= (?::timestamp + INTERVAL '1 day')
+              AND mtt.player_id IN 
+              (SELECT cm.player_id FROM club_member cm WHERE cm.agent_id=?)
+        GROUP BY player_id) 
+      as aggtips on aggtips.player_id = p.id
+    `);
+    const dbResult = await getUserConnection().query(query, [
+      club.id,
+      startDate,
+      endDate,
+      club.id,
+    ]);
+
+    const res: Array<any> = [];
+    for (const row of dbResult) {
+      const activity = {...row};
+      if (activity.credits === null || activity.credits === undefined) {
+        activity.credits = 0;
+      }
+      if (activity.tips === null || activity.tips === undefined) {
+        activity.tips = 0;
+      }
+      if (activity.tipsBack === null || activity.tipsBack === undefined) {
+        activity.tipsBack = 0;
+      }
+      activity.tipsBackAmount = activity.tips * activity.tipsBack * 0.01;
+      activity.lastPlayedDate = activity.lastPlayedDate?.toISOString();
+      res.push(activity);
+    }
+
+    const playersActivity = _.keyBy(res, 'playerId');
+    for (const key of Object.keys(playersActivity)) {
+      playersActivity[key].buyIn = 0;
+      playersActivity[key].profit = 0;
+      playersActivity[key].gamesPlayed = 0;
+    }
+
+    // get buyin and profit data from players_in_game
+    const buyInQuery = fixQuery(`
+        select player_id "playerId", count(*) "gamesPlayed", sum(buy_in) "buyIn", sum(stack) - sum(buy_in) profit, 
+          sum(rake_paid) from players_in_game pig join game_history gh ON 
+            pig.game_id = gh.game_id  
+        where gh.club_code  = ? and 
+            gh.ended_at > ? and 
+            gh.ended_at < ?
+        group by pig.player_id`);
+    const buyInResult = await getHistoryConnection().query(buyInQuery, [
+      club.clubCode,
+      startDate,
+      endDate,
+    ]);
+    for (const row of buyInResult) {
+      playersActivity[row.playerId].buyIn = row.buyIn;
+      playersActivity[row.playerId].profit = row.profit;
+      playersActivity[row.playerId].gamesPlayed = row.gamesPlayed;
+    }
+    return res;
+  }
   public async adminSetCredit(
     reqPlayerId: string,
     clubCode: string,

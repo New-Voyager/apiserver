@@ -192,6 +192,7 @@ type Query {
   creditHistory(clubCode: String!, playerUuid: String!): [CreditHistory!]
   # Dates are in UTC.
   clubMemberActivityGrouped(clubCode: String!, startDate: DateTime!, endDate: DateTime!): [ClubMemberActivityGrouped]
+  agentPlayersActivity(clubCode: String!, agentId: String!, startDate: DateTime!, endDate: DateTime!): [ClubMemberActivityGrouped]
 }
 
 type Mutation {
