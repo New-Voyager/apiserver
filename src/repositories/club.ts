@@ -86,6 +86,7 @@ export interface ClubMemberUpdateInput {
   tipsBack?: number;
   isOwner?: boolean;
   isAgent?: boolean;
+  displayName?: string;
 }
 
 class ClubRepositoryImpl {
@@ -188,6 +189,10 @@ class ClubRepositoryImpl {
       // lookup the player
       const referredByPlayer = await Cache.getPlayer(updateData.agentUuid);
       clubMember.agent = referredByPlayer;
+    }
+
+    if (updateData.displayName !== undefined) {
+      clubMember.displayName = updateData.displayName;
     }
 
     // Save the data

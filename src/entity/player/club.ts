@@ -95,7 +95,10 @@ export class ClubMember {
   @JoinColumn({name: 'player_id'})
   public player!: Player;
 
-  @Column('int')
+  @Column({name: 'disply_name', default: '', nullable: true})
+  public displayName!: string;
+
+  @Column({name: 'status', type: 'int'})
   public status!: ClubMemberStatus;
 
   @Column({name: 'is_manager', default: false})

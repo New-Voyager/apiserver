@@ -45,6 +45,7 @@ input ClubMemberUpdateInput {
   status: ClubMemberStatus
   autoBuyinApproval: Boolean
   agentUuid: String            # playerUuid 
+  displayName: String
   contactInfo: String
   tipsBack: Float
   isOwner: Boolean
@@ -64,6 +65,7 @@ input ManagerRoleInput {
   
 type ClubMember {
   name: String!
+  displayName: String!
   memberId: Int!
   playerId: String!
   playerUuid: String!
