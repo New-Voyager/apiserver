@@ -129,6 +129,9 @@ export class ClubMember {
   @Column({name: 'tips_back', type: 'int', nullable: true, default: 0})
   public tipsBack!: number;
 
+  @Column({name: 'agent_fee_back', type: 'int', nullable: true, default: 0})
+  public agentFeeBack!: number;
+
   @DbAwareColumn({
     name: 'last_played_date',
     type: 'timestamptz',

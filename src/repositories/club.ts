@@ -87,6 +87,7 @@ export interface ClubMemberUpdateInput {
   isOwner?: boolean;
   isAgent?: boolean;
   displayName?: string;
+  agentFeeBack?: number;
 }
 
 class ClubRepositoryImpl {
@@ -197,6 +198,14 @@ class ClubRepositoryImpl {
 
     if (updateData.displayName !== undefined) {
       clubMember.displayName = updateData.displayName;
+    }
+
+    if (updateData.displayName !== undefined) {
+      clubMember.displayName = updateData.displayName;
+    }
+
+    if (updateData.agentFeeBack !== undefined) {
+      clubMember.agentFeeBack = updateData.agentFeeBack;
     }
 
     // Save the data

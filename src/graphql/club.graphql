@@ -50,6 +50,7 @@ input ClubMemberUpdateInput {
   tipsBack: Float
   isOwner: Boolean
   isAgent: Boolean
+  agentFeeBack: Float         # agents fee back percentage
 }
 
 input ManagerRoleInput {
@@ -92,6 +93,7 @@ type ClubMember {
   followup: Boolean
   agentName: String
   agentUuid: String
+  agentFeeBack: Float
 }
 
 type ClubGameInfo {
