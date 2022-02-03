@@ -121,13 +121,16 @@ export class ClubMember {
 
   @ManyToOne(type => Player, {eager: true, nullable: true})
   @JoinColumn({name: 'agent_id'})
-  public agent!: Player;
+  public agent!: Player | null;
 
   @Column({name: 'owner_notes', default: ''})
   public ownerNotes!: string;
 
   @Column({name: 'tips_back', type: 'int', nullable: true, default: 0})
   public tipsBack!: number;
+
+  @Column({name: 'agent_fee_back', type: 'int', nullable: true, default: 0})
+  public agentFeeBack!: number;
 
   @DbAwareColumn({
     name: 'last_played_date',
