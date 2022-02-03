@@ -121,7 +121,7 @@ export class ClubMember {
 
   @ManyToOne(type => Player, {eager: true, nullable: true})
   @JoinColumn({name: 'agent_id'})
-  public agent!: Player;
+  public agent!: Player | null;
 
   @Column({name: 'owner_notes', default: ''})
   public ownerNotes!: string;

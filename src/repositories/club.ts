@@ -185,10 +185,14 @@ class ClubRepositoryImpl {
       clubMember.isAgent = updateData.isAgent;
     }
 
-    if (updateData.agentUuid) {
-      // lookup the player
-      const referredByPlayer = await Cache.getPlayer(updateData.agentUuid);
-      clubMember.agent = referredByPlayer;
+    if (updateData.agentUuid !== undefined) {
+      if (updateData.agentUuid === '') {
+        clubMember.agent = null;
+      } else {
+        // lookup the player
+        const referredByPlayer = await Cache.getPlayer(updateData.agentUuid);
+        clubMember.agent = referredByPlayer;
+      }
     }
 
     if (updateData.displayName !== undefined) {
