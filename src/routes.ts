@@ -43,6 +43,7 @@ import {getRunProfile, RunProfile} from './server';
 import {authReq} from './middlewares/authorization';
 import {Club} from './entity/player/club';
 import {Player} from './entity/player/player';
+import {LocationCheck} from './repositories/locationcheck';
 
 const logger = getLogger('routes');
 
@@ -252,6 +253,7 @@ export function addInternalRoutes(app: any) {
 
   // Yong: I added this endpoint to test how unhandled rejections behave.
   app.get('/test/crashAsync', crashAsync);
+  app.post('/test/ipLocation/:ip', ipLocation);
 }
 
 // returns nats urls
@@ -306,4 +308,14 @@ async function crashAsync(req: any, resp: any) {
 
 async function doCrashAsync() {
   throw new Error('Oops!');
+}
+
+async function ipLocation(req: any, resp: any) {
+  try {
+    const ip = req.params.ip;
+    const city = LocationCheck.getCity(ip);
+    resp.status(200).json(city);
+  } catch (err) {
+    resp.status(500).json({error: errToStr(err)});
+  }
 }
