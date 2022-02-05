@@ -115,6 +115,8 @@ type ClubGameInfo {
   sessionTimeStr: String
   handsPlayed: Int
   balance: Float  
+  dealerChoiceGames: [GameType!]
+  roeGames: [GameType!]
 }
 
 input PageInput {

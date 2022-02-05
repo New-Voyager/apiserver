@@ -522,6 +522,10 @@ type CompletedGame {
   isOwner: Boolean
   isManager: Boolean
 
+  # dealer choice games
+  dealerChoiceGames: [GameType!]
+  roeGames: [GameType!]
+
   handDataLink: String
 
   # other stats

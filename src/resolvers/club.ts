@@ -131,7 +131,7 @@ export async function getClubGames(
   const now = new Date().getTime();
 
   for (const game of clubGames) {
-    const retGame = game as any;
+    const retGame = {...(game as any)};
     if (game.endedAt) {
       let runTime = game.endedAt - game.startedAt;
       const roundedRunTime = Math.ceil(runTime / (60 * 1000));
@@ -157,6 +157,15 @@ export async function getClubGames(
       game.endedBy = '';
     }
     retGame.gameType = GameType[game.gameType];
+
+    retGame.dealerChoiceGames = [];
+    if (game.dealerChoiceGames) {
+      retGame.dealerChoiceGames = game.dealerChoiceGames.split(',');
+    }
+    retGame.roeGames = [];
+    if (game.roeGames) {
+      retGame.roeGames = game.roeGames.split(',');
+    }
     ret.push(retGame);
   }
   // convert club games to PlayerClubGame

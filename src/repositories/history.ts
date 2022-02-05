@@ -1,5 +1,5 @@
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {PokerGame} from '@src/entity/game/game';
+import {PokerGame, PokerGameSettings} from '@src/entity/game/game';
 import {GameHistory} from '@src/entity/history/game';
 import {HighHandHistory} from '@src/entity/history/hand';
 import {PlayersInGame} from '@src/entity/history/player';
@@ -16,7 +16,7 @@ import {ClubRepository} from './club';
 import {In, IsNull, Not} from 'typeorm';
 import _ from 'lodash';
 import {Player} from '@src/entity/player/player';
-import {ChipUnit, GameEndReason, GameStatus} from '@src/entity/types';
+import {ChipUnit, GameEndReason, GameStatus, GameType} from '@src/entity/types';
 import {stat, Stats} from 'fs';
 import {StatsRepository} from './stats';
 import {GameNotFoundError} from '@src/errors';
@@ -35,7 +35,10 @@ class HistoryRepositoryImpl {
       }
     );
   }
-  public async newGameCreated(game: PokerGame) {
+  public async newGameCreated(
+    game: PokerGame,
+    gameSettings: PokerGameSettings
+  ) {
     const gameHistoryRepo = getHistoryRepository(GameHistory);
     const gameHistory = new GameHistory();
     gameHistory.gameId = game.id;
@@ -57,6 +60,9 @@ class HistoryRepositoryImpl {
     gameHistory.gameNum = game.gameNum;
     gameHistory.rakePercentage = game.rakePercentage;
     gameHistory.rakeCap = game.rakeCap;
+    gameHistory.audioConfEnabled = gameSettings.audioConfEnabled;
+    gameHistory.roeGames = gameSettings.roeGames;
+    gameHistory.dealerChoiceGames = gameSettings.dealerChoiceGames;
 
     await gameHistoryRepo.save(gameHistory);
   }
@@ -274,6 +280,13 @@ class HistoryRepositoryImpl {
           gameData.showdownHands = stats.wentToShowDown;
         }
       }
+      if (game.dealerChoiceGames) {
+        gameData.dealerChoiceGames = game.dealerChoiceGames.split(',');
+      }
+      if (game.roeGames) {
+        gameData.roeGames = game.roeGames.split(',');
+      }
+
       let runTime = 0;
       if (gameData.startedAt && gameData.endedAt) {
         const runTimeDiff =
@@ -450,6 +463,12 @@ class HistoryRepositoryImpl {
             pastGame.clubCode = club.clubCode;
             pastGame.clubName = club.name;
           }
+        }
+        if (game.dealerChoiceGames) {
+          pastGame.dealerChoiceGames = game.dealerChoiceGames.split(',');
+        }
+        if (game.roeGames) {
+          pastGame.roeGames = game.roeGames.split(',');
         }
         pastGames.push(pastGame);
       }

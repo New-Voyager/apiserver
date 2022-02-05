@@ -998,6 +998,7 @@ class ClubRepositoryImpl {
         gh.started_at as "startedAt", gh.started_by_name as "startedBy",
         gh.ended_at as "endedAt", gh.ended_by_name as "endedBy", 
         gh.started_at as "startedAt", pig.session_time as "sessionTime", 
+        gh.dealer_choice_games as "dealerChoiceGames", gh.roe_games as "roeGames", 
         (pig.stack - pig.buy_in) as balance 
         FROM
         game_history gh  
