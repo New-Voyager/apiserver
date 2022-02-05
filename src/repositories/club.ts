@@ -478,7 +478,7 @@ class ClubRepositoryImpl {
   public async joinClub(
     clubCode: string,
     playerId: string,
-    requestMessage: string
+    requestMessage?: string
   ): Promise<ClubMemberStatus> {
     clubCode = clubCode.toLowerCase();
     let clubMember = await Cache.getClubMember(playerId, clubCode, true);
