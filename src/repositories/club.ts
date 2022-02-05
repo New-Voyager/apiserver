@@ -520,7 +520,9 @@ class ClubRepositoryImpl {
     clubMember.joinedDate = new Date();
     clubMember.status = ClubMemberStatus.PENDING;
     clubMember.lastPlayedDate = new Date();
-    clubMember.requestMessage = requestMessage;
+    if (requestMessage) {
+      clubMember.requestMessage = requestMessage;
+    }
 
     const clubMemberStatRepository = getUserRepository(ClubMemberStat);
     let clubMemberStat = await clubMemberStatRepository.findOne({
