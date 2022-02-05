@@ -282,7 +282,7 @@ export async function updateClub(
 export async function joinClub(
   playerId: string,
   clubCode: string,
-  requestMessage: string
+  requestMessage?: string
 ) {
   const errors = new Array<string>();
   if (!playerId) {
