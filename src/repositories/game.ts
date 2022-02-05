@@ -192,9 +192,6 @@ class GameRepositoryImpl {
         );
         saveTime = new Date().getTime() - saveTime;
         if (!game.isTemplate) {
-          // create an entry in the history table
-          await HistoryRepository.newGameCreated(game);
-
           saveUpdateTime = new Date().getTime();
           await GameUpdatesRepository.create(
             game.id,
@@ -202,12 +199,14 @@ class GameRepositoryImpl {
             input,
             transactionEntityManager
           );
-          await GameSettingsRepository.create(
+          const gameSettings = await GameSettingsRepository.create(
             game.id,
             game.gameCode,
             input,
             transactionEntityManager
           );
+          // create an entry in the history table
+          await HistoryRepository.newGameCreated(game, gameSettings);
 
           const gameSeatInfoRepo =
             transactionEntityManager.getRepository(PokerGameSeatInfo);

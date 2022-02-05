@@ -202,6 +202,9 @@ export class ClubMember {
     default: false,
   })
   public followup!: boolean;
+
+  @Column({name: 'request_message', nullable: true})
+  public requestMessage!: string;
 }
 
 @Entity({name: 'club_member_stat'})

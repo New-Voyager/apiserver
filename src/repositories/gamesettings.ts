@@ -14,7 +14,7 @@ class GameSettingsRepositoryImpl {
     gameCode: string,
     input: any,
     transactionEntityManager?: EntityManager
-  ) {
+  ): Promise<PokerGameSettings> {
     const gameSettings = new PokerGameSettings();
     let gameSettingsRepo: Repository<PokerGameSettings>;
     if (transactionEntityManager) {
@@ -89,6 +89,7 @@ class GameSettingsRepositoryImpl {
     gameSettings.ionRoom = gameCode;
 
     await gameSettingsRepo.save(gameSettings);
+    return gameSettings;
   }
 
   public async update(game: PokerGame, gameCode: string, input: any) {

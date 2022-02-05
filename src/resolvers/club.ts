@@ -89,6 +89,10 @@ export async function getClubMembers(playerId: string, args: any) {
       memberAny.agentName = member.agent.name;
       memberAny.agentUuid = member.agent.uuid;
     }
+
+    if (member.status === ClubMemberStatus.PENDING) {
+      memberAny.requestMessage = member.requestMessage;
+    }
     members.push(memberAny);
   }
   return clubMembersToClientUnits(members);
@@ -131,7 +135,7 @@ export async function getClubGames(
   const now = new Date().getTime();
 
   for (const game of clubGames) {
-    const retGame = game as any;
+    const retGame = {...(game as any)};
     if (game.endedAt) {
       let runTime = game.endedAt - game.startedAt;
       const roundedRunTime = Math.ceil(runTime / (60 * 1000));
@@ -157,6 +161,15 @@ export async function getClubGames(
       game.endedBy = '';
     }
     retGame.gameType = GameType[game.gameType];
+
+    retGame.dealerChoiceGames = [];
+    if (game.dealerChoiceGames) {
+      retGame.dealerChoiceGames = game.dealerChoiceGames.split(',');
+    }
+    retGame.roeGames = [];
+    if (game.roeGames) {
+      retGame.roeGames = game.roeGames.split(',');
+    }
     ret.push(retGame);
   }
   // convert club games to PlayerClubGame
@@ -266,7 +279,11 @@ export async function updateClub(
   }
 }
 
-export async function joinClub(playerId: string, clubCode: string) {
+export async function joinClub(
+  playerId: string,
+  clubCode: string,
+  requestMessage?: string
+) {
   const errors = new Array<string>();
   if (!playerId) {
     throw new Error('Unauthorized');
@@ -279,7 +296,11 @@ export async function joinClub(playerId: string, clubCode: string) {
   }
 
   // TODO: We need to get owner id from the JWT
-  const status = await ClubRepository.joinClub(clubCode, playerId);
+  const status = await ClubRepository.joinClub(
+    clubCode,
+    playerId,
+    requestMessage
+  );
   return ClubMemberStatus[status];
 }
 
@@ -905,7 +926,7 @@ const resolvers: any = {
       return updateClub(ctx.req.playerId, args.clubCode, args.club);
     },
     joinClub: async (parent, args, ctx, info) => {
-      return joinClub(ctx.req.playerId, args.clubCode);
+      return joinClub(ctx.req.playerId, args.clubCode, args.requestMessage);
     },
 
     approveMember: async (parent, args, ctx, info) => {

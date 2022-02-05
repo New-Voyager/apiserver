@@ -95,6 +95,8 @@ export interface getClubGamesData {
   handsPlayed?: number;
   balance?: number;
   satAt: Date;
+  dealerChoiceGames?: string;
+  roeGames?: string;
 }
 
 export interface SeatMove {

@@ -85,6 +85,8 @@ type PastGame {
   highHands: [HighHand!]
   highHandWinners: [HighHand!]
   clubPicUrl: String
+  dealerChoiceGames: [GameType!]
+  roeGames: [GameType!]
 }
 
 type PlayerId {

@@ -23,7 +23,7 @@ import {
   MIN_FULLHOUSE_RANK,
 } from './types';
 import {Cache} from '@src/cache';
-import _ from 'lodash';
+import _, {result} from 'lodash';
 import {Player} from '@src/entity/player/player';
 import {PokerGame} from '@src/entity/game/game';
 import {fixQuery, stringCards} from '@src/utils';
@@ -217,11 +217,14 @@ class RewardRepositoryImpl {
       return;
     }
 
+    const gameTypeStr: string = input['gameType'];
+    const gameType: GameType = GameType[gameTypeStr];
+
     await this.logHighRank(
       game.id,
       game.gameCode,
       game.clubCode,
-      game.gameType,
+      gameType,
       input.handNum,
       handTime,
       highRank,
