@@ -94,6 +94,7 @@ type ClubMember {
   agentName: String
   agentUuid: String
   agentFeeBack: Float
+  requestMessage: String    # only valid if status is pending
 }
 
 type ClubGameInfo {
@@ -205,7 +206,7 @@ type Query {
 type Mutation {
   createClub(club: ClubCreateInput!): String!
   updateClub(clubCode: String!, club: ClubUpdateInput!): Boolean!
-  joinClub(clubCode: String!): ClubMemberStatus
+  joinClub(clubCode: String!, requestMessage: String): ClubMemberStatus
   approveMember(clubCode: String!, playerUuid: String!): ClubMemberStatus
   rejectMember(clubCode: String!, playerUuid: String!): ClubMemberStatus
   kickMember(clubCode: String!, playerUuid: String!): ClubMemberStatus

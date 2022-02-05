@@ -477,7 +477,8 @@ class ClubRepositoryImpl {
 
   public async joinClub(
     clubCode: string,
-    playerId: string
+    playerId: string,
+    requestMessage: string
   ): Promise<ClubMemberStatus> {
     clubCode = clubCode.toLowerCase();
     let clubMember = await Cache.getClubMember(playerId, clubCode, true);
@@ -519,6 +520,7 @@ class ClubRepositoryImpl {
     clubMember.joinedDate = new Date();
     clubMember.status = ClubMemberStatus.PENDING;
     clubMember.lastPlayedDate = new Date();
+    clubMember.requestMessage = requestMessage;
 
     const clubMemberStatRepository = getUserRepository(ClubMemberStat);
     let clubMemberStat = await clubMemberStatRepository.findOne({

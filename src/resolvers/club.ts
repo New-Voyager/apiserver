@@ -89,6 +89,10 @@ export async function getClubMembers(playerId: string, args: any) {
       memberAny.agentName = member.agent.name;
       memberAny.agentUuid = member.agent.uuid;
     }
+
+    if (member.status === ClubMemberStatus.PENDING) {
+      memberAny.requestMessage = member.requestMessage;
+    }
     members.push(memberAny);
   }
   return clubMembersToClientUnits(members);
@@ -275,7 +279,11 @@ export async function updateClub(
   }
 }
 
-export async function joinClub(playerId: string, clubCode: string) {
+export async function joinClub(
+  playerId: string,
+  clubCode: string,
+  requestMessage: string
+) {
   const errors = new Array<string>();
   if (!playerId) {
     throw new Error('Unauthorized');
@@ -288,7 +296,11 @@ export async function joinClub(playerId: string, clubCode: string) {
   }
 
   // TODO: We need to get owner id from the JWT
-  const status = await ClubRepository.joinClub(clubCode, playerId);
+  const status = await ClubRepository.joinClub(
+    clubCode,
+    playerId,
+    requestMessage
+  );
   return ClubMemberStatus[status];
 }
 
@@ -914,7 +926,7 @@ const resolvers: any = {
       return updateClub(ctx.req.playerId, args.clubCode, args.club);
     },
     joinClub: async (parent, args, ctx, info) => {
-      return joinClub(ctx.req.playerId, args.clubCode);
+      return joinClub(ctx.req.playerId, args.clubCode, args.requestMessage);
     },
 
     approveMember: async (parent, args, ctx, info) => {
