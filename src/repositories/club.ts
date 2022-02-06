@@ -1283,7 +1283,7 @@ class ClubRepositoryImpl {
       throw new Error('Unauthorized');
     }
 
-    const query = fixQuery(`
+    const query1 = fixQuery(`
         SELECT cm.player_id AS "playerId", cm.available_credit AS "availableCredit",
             cm.tips_back AS "tipsBack", cm.last_played_date AS "lastPlayedDate",
             p.uuid AS "playerUuid", p.name AS "playerName", aggtips.tips AS "tips"
@@ -1299,13 +1299,29 @@ class ClubRepositoryImpl {
         ) aggtips ON cm.player_id = aggtips.player_id
         WHERE cm.club_id = ?;
     `);
+
+    const query = fixQuery(`
+    SELECT cm.player_id AS "playerId", cm.available_credit AS "availableCredit",
+    cm.tips_back AS "tipsBack", cm.last_played_date AS "lastPlayedDate",
+    p.uuid AS "playerUuid", p.name AS "playerName", 
+    aggtips.games_played "gamesPlayed", aggtips.tips AS "tips", 
+    aggtips.buyin AS "buyIn", aggtips.profit AS "profit", 
+    aggtips.hands_played AS "handsPlayed"
+      FROM club_member cm
+      INNER JOIN player p ON cm.player_id = p.id AND cm.club_id = ?
+      JOIN (
+        SELECT count(*) games_played, mtt.player_id, sum(number_of_hands_played) hands_played, sum(tips_paid) as tips, 
+              sum(buyin) as buyin, sum(profit) as profit from member_tips_tracking mtt 
+        WHERE mtt.club_id = ? AND game_ended_datetime >= ? AND game_ended_datetime < ?
+        GROUP BY player_id) 
+      as aggtips on aggtips.player_id = p.id
+    `);
     const dbResult = await getUserConnection().query(query, [
+      club.id,
       club.id,
       startDate,
       endDate,
-      club.id,
     ]);
-
     const res: Array<any> = [];
     for (const row of dbResult) {
       const activity = {...row};
@@ -1385,7 +1401,7 @@ class ClubRepositoryImpl {
     p.uuid AS "playerUuid", p.name AS "playerName", 
     aggtips.tips AS "tips", aggtips.buyin AS "buyIn", aggtips.profit AS "profit", aggtips.hands_played AS "handsPlayed"
       FROM club_member cm
-      INNER JOIN player p ON cm.player_id = p.id
+      INNER JOIN player p ON cm.player_id = p.id  AND cm.club_id = ?
       JOIN (
         SELECT mtt.player_id, sum(number_of_hands_played) hands_played, sum(tips_paid) as tips, 
               sum(buyin) as buyin, sum(profit) as profit from member_tips_tracking mtt 
@@ -1396,6 +1412,7 @@ class ClubRepositoryImpl {
       as aggtips on aggtips.player_id = p.id
     `);
     const dbResult = await getUserConnection().query(query, [
+      club.id,
       club.id,
       startDate,
       endDate,

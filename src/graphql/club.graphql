@@ -176,7 +176,7 @@ type ClubMemberActivityGrouped {
   lastPlayedDate: DateTime
   buyIn: Float!
   profit: Float!
-  gamesPlayed: Int!
+  gamesPlayed: Int
   handsPlayed: Int
   followup: Boolean
 }
