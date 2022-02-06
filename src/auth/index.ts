@@ -4,6 +4,7 @@ import {getUserRepository} from '@src/repositories';
 import {PlayerRepository} from '@src/repositories/player';
 import {UserRegistrationPayload} from '@src/types';
 import {errToStr, getLogger} from '@src/utils/log';
+import {LocationCheck} from '@src/repositories/locationcheck';
 
 const logger = getLogger('auth');
 const JWT_EXPIRY_DAYS = 3;
@@ -176,6 +177,33 @@ export async function signup(req: any, resp: any) {
     resp.status(500).send({errors: [errToStr(err)]});
     return;
   }
+
+  try {
+    if (req.headers['x-realip']) {
+      req.userIp = req.headers['x-realip'];
+    } else if (req.headers['x-real-ip']) {
+      req.userIp = req.headers['x-real-ip'];
+    } else if (req.headers['x-forwarded-for']) {
+      req.userIp = req.headers['x-forwarded-for'];
+    } else {
+      const ip = req.ip.replace('::ffff:', '');
+      req.userIp = ip;
+      // logger.info(`IP: ${req.userIp}`);
+      // if (req.body) {
+      //   logger.info(`body: ${JSON.stringify(req.body)}`);
+      // }
+    }
+    const geodata = LocationCheck.getCity(req.userIp);
+    if (geodata) {
+      await PlayerRepository.updatePlayerGeoData(
+        player.uuid,
+        geodata.continent,
+        geodata.country,
+        geodata.state,
+        geodata.city
+      );
+    }
+  } catch (err) {}
 
   try {
     const expiryTime = new Date();
