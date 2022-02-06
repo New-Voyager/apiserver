@@ -88,6 +88,31 @@ class PlayerRepositoryImpl {
     return true;
   }
 
+  public async updatePlayerGeoData(
+    playerId: string,
+    continent: string,
+    country: string,
+    state: string,
+    city: string
+  ): Promise<boolean> {
+    const repository = getUserRepository(Player);
+    let player: Player | undefined;
+    player = await repository.findOne({where: {uuid: playerId}});
+    if (!player) {
+      throw new Error(`Player is not found`);
+    }
+    const props: any = {};
+    if (continent || country || state || city) {
+      props['continent'] = continent;
+      props['country'] = country;
+      props['state'] = state;
+      props['city'] = city;
+    }
+
+    await repository.update({id: player.id}, props);
+    return true;
+  }
+
   // Updates firebase token for the player
   public async updateFirebaseToken(playerId: string, token: string) {
     const player = await getUserRepository(Player).findOne({

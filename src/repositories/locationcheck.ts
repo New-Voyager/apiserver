@@ -2,7 +2,7 @@ import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {PokerGame, PokerGameSettings} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {getDistanceInMeters, utcTime} from '@src/utils';
-import {getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {EntityManager, IsNull, Not, Repository} from 'typeorm';
 import {Cache} from '@src/cache/index';
 import {getGameRepository} from '.';
@@ -14,7 +14,13 @@ import {
 import {getAppSettings} from '@src/firebase';
 import _ from 'lodash';
 import {TakeBreak} from './takebreak';
+import * as fs from 'fs';
 const logger = getLogger('repositories::locationcheck');
+
+// Maxmind
+const Reader = require('@maxmind/geoip2-node').Reader;
+const buildDir = __dirname + '/../..';
+const dbBuffer = fs.readFileSync(buildDir + '/geodb/GeoLite2-City.mmdb');
 
 export class LocationCheck {
   private game: PokerGame;
@@ -23,6 +29,101 @@ export class LocationCheck {
   constructor(game: PokerGame, gameUpdate: PokerGameSettings) {
     this.game = game;
     this.gameSettings = gameUpdate;
+  }
+
+  /*
+  {
+    continent: {
+      code: 'NA',
+      geonameId: 6255149,
+      names: {
+        de: 'Nordamerika',
+        en: 'North America',
+        es: 'Norteamérica',
+        fr: 'Amérique du Nord',
+        ja: '北アメリカ',
+        'pt-BR': 'América do Norte',
+        ru: 'Северная Америка',
+        'zh-CN': '北美洲'
+      }
+    },
+    country: {
+      geonameId: 6252001,
+      isoCode: 'US',
+      names: {
+        de: 'Vereinigte Staaten',
+        en: 'United States',
+        es: 'Estados Unidos',
+        fr: 'États Unis',
+        ja: 'アメリカ',
+        'pt-BR': 'EUA',
+        ru: 'США',
+        'zh-CN': '美国'
+      }
+    },
+    maxmind: undefined,
+    registeredCountry: {
+      geonameId: 6252001,
+      isoCode: 'US',
+      names: {
+        de: 'Vereinigte Staaten',
+        en: 'United States',
+        es: 'Estados Unidos',
+        fr: 'États Unis',
+        ja: 'アメリカ',
+        'pt-BR': 'EUA',
+        ru: 'США',
+        'zh-CN': '美国'
+      },
+      isInEuropeanUnion: false
+    },
+    representedCountry: undefined,
+    traits: {
+      isAnonymous: false,
+      isAnonymousProxy: false,
+      isAnonymousVpn: false,
+      isHostingProvider: false,
+      isLegitimateProxy: false,
+      isPublicProxy: false,
+      isResidentialProxy: false,
+      isSatelliteProvider: false,
+      isTorExitNode: false,
+      ipAddress: '73.60.143.27',
+      network: '73.60.136.0/21'
+    },
+    city: { geonameId: 4930577, names: { en: 'Billerica', ja: 'ビレリカ' } },
+    location: {
+      accuracyRadius: 5,
+      latitude: 42.5511,
+      longitude: -71.256,
+      metroCode: 506,
+      timeZone: 'America/New_York'
+    },
+    postal: { code: '01821' },
+    subdivisions: [ { geonameId: 6254926, isoCode: 'MA', names: [Object] } ]
+  }
+  */
+  static getGeoLite2City(ip: string): any {
+    const reader = Reader.openBuffer(dbBuffer);
+    return reader.city(ip);
+  }
+
+  static getCity(ip: string): any {
+    try {
+      const data = LocationCheck.getGeoLite2City(ip);
+      const continent = data.continent?.names?.en;
+      const country = data.country?.names?.en;
+      const city = data.city?.names?.en;
+      let state = undefined;
+      if (data.subdivisions && data.subdivisions.length > 0) {
+        state = data.subdivisions[0].names?.en;
+      }
+
+      return {continent, country, state, city};
+    } catch (err) {
+      logger.error(`Could not get city from IP: ${errToStr(err)}`);
+      return undefined;
+    }
   }
 
   public async check() {
