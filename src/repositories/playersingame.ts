@@ -437,9 +437,18 @@ class PlayersInGameRepositoryImpl {
         runItTwiceEnabled: true,
         buttonStraddle: false,
         autoReload: false,
-        reloadThreshold: game.buyInMin,
-        reloadTo: game.buyInMax,
+        reloadThreshold: centsToChips(game.buyInMin),
+        reloadTo: centsToChips(game.buyInMax),
       };
+    }
+
+    let reloadLowThreshold = playerInGame.reloadLowThreshold;
+    let reloadTo = playerInGame.reloadTo;
+    if (!reloadLowThreshold) {
+      reloadLowThreshold = game.buyInMin;
+    }
+    if (!reloadTo) {
+      reloadTo = game.buyInMax;
     }
 
     const settings: GamePlayerSettings = {
@@ -449,8 +458,8 @@ class PlayersInGameRepositoryImpl {
       runItTwiceEnabled: playerInGame.runItTwiceEnabled,
       buttonStraddle: playerInGame.buttonStraddle,
       autoReload: playerInGame.autoReload,
-      reloadThreshold: centsToChips(playerInGame.reloadLowThreshold),
-      reloadTo: centsToChips(playerInGame.reloadTo),
+      reloadThreshold: centsToChips(reloadLowThreshold),
+      reloadTo: centsToChips(reloadTo),
     };
     return settings;
   }
