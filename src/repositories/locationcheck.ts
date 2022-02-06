@@ -2,7 +2,7 @@ import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {PokerGame, PokerGameSettings} from '@src/entity/game/game';
 import {Player} from '@src/entity/player/player';
 import {getDistanceInMeters, utcTime} from '@src/utils';
-import {getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {EntityManager, IsNull, Not, Repository} from 'typeorm';
 import {Cache} from '@src/cache/index';
 import {getGameRepository} from '.';
@@ -19,7 +19,6 @@ const logger = getLogger('repositories::locationcheck');
 
 // Maxmind
 const Reader = require('@maxmind/geoip2-node').Reader;
-console.log('##### dirname', __dirname);
 const buildDir = __dirname + '/../..';
 const dbBuffer = fs.readFileSync(buildDir + '/geodb/GeoLite2-City.mmdb');
 
@@ -110,17 +109,21 @@ export class LocationCheck {
   }
 
   static getCity(ip: string): any {
-    const data = LocationCheck.getGeoLite2City(ip);
-    console.log('##### city:', data);
-    const continent = data.continent?.names?.en;
-    const country = data.country?.names?.en;
-    const city = data.city?.names?.en;
-    let state = undefined;
-    if (data.subdivisions && data.subdivisions.length > 0) {
-      state = data.subdivisions[0].names?.en;
-    }
+    try {
+      const data = LocationCheck.getGeoLite2City(ip);
+      const continent = data.continent?.names?.en;
+      const country = data.country?.names?.en;
+      const city = data.city?.names?.en;
+      let state = undefined;
+      if (data.subdivisions && data.subdivisions.length > 0) {
+        state = data.subdivisions[0].names?.en;
+      }
 
-    return {continent, country, state, city};
+      return {continent, country, state, city};
+    } catch (err) {
+      logger.error(`Could not get city from IP: ${errToStr(err)}`);
+      return undefined;
+    }
   }
 
   public async check() {

@@ -78,11 +78,17 @@ export class Player {
   @Column({name: 'recovery_code', nullable: true})
   public recoveryCode!: string;
 
-  // @Column({name: 'country', nullable: true})
-  // public country!: string;
+  @Column({name: 'continent', nullable: true})
+  public continent!: string;
 
-  // @Column({name: 'city', nullable: true})
-  // public city!: string;
+  @Column({name: 'country', nullable: true})
+  public country!: string;
+
+  @Column({name: 'state', nullable: true})
+  public state!: string;
+
+  @Column({name: 'city', nullable: true})
+  public city!: string;
 
   // player current ip address and gps location (caching)
   public ipAddress!: string;

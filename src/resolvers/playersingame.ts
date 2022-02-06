@@ -20,6 +20,8 @@ import {
 import {gameLogPrefix} from '@src/entity/game/game';
 import {HistoryRepository} from '@src/repositories/history';
 import {centsToChips, chipsToCents} from '@src/utils';
+import {LocationCheck} from '@src/repositories/locationcheck';
+import {PlayerRepository} from '@src/repositories/player';
 
 const logger = getLogger('resolvers::players_in_game');
 
@@ -460,6 +462,16 @@ export async function takeSeat(
       logger.info(
         `[${gameLogPrefix(game)}] Player IP: Player: [${player.name}] IP: ${ip}`
       );
+      const geodata = LocationCheck.getCity(ip);
+      if (geodata) {
+        await PlayerRepository.updatePlayerGeoData(
+          player.uuid,
+          geodata.continent,
+          geodata.country,
+          geodata.state,
+          geodata.city
+        );
+      }
       await Cache.updatePlayerLocation(player.uuid, location, ip);
     }
     logger.info(
