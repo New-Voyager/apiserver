@@ -240,6 +240,7 @@ export enum CreditUpdateType {
   GAME_RESULT,
   ADD,
   DEDUCT,
+  FEE_CREDIT,
 }
 
 export enum BuyInApprovalLimit {

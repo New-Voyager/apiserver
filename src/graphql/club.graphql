@@ -21,6 +21,7 @@ enum CreditUpdateType {
   GAME_RESULT
   ADD
   DEDUCT
+  FEE_CREDIT,
 }
 
 input ClubCreateInput {
@@ -219,6 +220,7 @@ type Mutation {
   # credit tracking APIs
   setCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String, followup: Boolean): Boolean!
   addCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String, followup: Boolean): Boolean!
+  feeCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String, followup: Boolean): Boolean!
   deductCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String, followup: Boolean): Boolean!
   clearFollowup(clubCode: String!, playerUuid: String!, transId: Int!): Boolean
   clearAllFollowups(clubCode: String!, playerUuid: String!): Boolean

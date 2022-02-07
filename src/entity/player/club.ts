@@ -319,6 +319,7 @@ export class CreditTracking {
    */
   @DbAwareCreateDateColumn({
     type: 'timestamptz',
+    name: 'created_at',
     default: () => 'CURRENT_TIMESTAMP',
   })
   public createdAt!: Date;
