@@ -792,6 +792,44 @@ export async function deductCredit(
   return ret;
 }
 
+export async function feeCredit(
+  playerId: string,
+  clubCode: string,
+  playerUuid: string,
+  chips: number,
+  notes: string,
+  followup: boolean
+) {
+  const errors = new Array<string>();
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  if (clubCode === '') {
+    errors.push('Invalid club');
+  }
+  if (playerUuid === '') {
+    errors.push('Invalid player');
+  }
+  if (chips === null || chips === undefined) {
+    errors.push('Invalid amount');
+  }
+  if (errors.length > 0) {
+    logger.error('Invalid argument for feeCredit: ' + errors.join(' '));
+    throw new Error('Invalid argument');
+  }
+
+  const cents = chipsToCents(chips);
+  const ret = await ClubRepository.adminFeeCredit(
+    playerId,
+    clubCode,
+    playerUuid,
+    cents,
+    notes,
+    followup
+  );
+  return ret;
+}
+
 export async function clearFollowup(
   playerId: string,
   clubCode: string,
@@ -982,6 +1020,17 @@ const resolvers: any = {
 
     deductCredit: async (parent, args, ctx, info) => {
       return deductCredit(
+        ctx.req.playerId,
+        args.clubCode,
+        args.playerUuid,
+        args.amount,
+        args.notes,
+        args.followup
+      );
+    },
+
+    feeCredit: async (parent, args, ctx, info) => {
+      return feeCredit(
         ctx.req.playerId,
         args.clubCode,
         args.playerUuid,

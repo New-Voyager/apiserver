@@ -1282,24 +1282,6 @@ class ClubRepositoryImpl {
       );
       throw new Error('Unauthorized');
     }
-
-    const query1 = fixQuery(`
-        SELECT cm.player_id AS "playerId", cm.available_credit AS "availableCredit",
-            cm.tips_back AS "tipsBack", cm.last_played_date AS "lastPlayedDate",
-            p.uuid AS "playerUuid", p.name AS "playerName", aggtips.tips AS "tips"
-        FROM club_member cm
-        INNER JOIN player p ON cm.player_id = p.id
-        JOIN (
-            SELECT player_id, sum(tips) AS tips FROM credit_tracking ct
-            WHERE club_id = ?
-            AND "createdAt" >= ?
-            AND "createdAt" < (?::timestamp + INTERVAL '1 day')
-            AND tips IS NOT NULL
-            GROUP BY player_id
-        ) aggtips ON cm.player_id = aggtips.player_id
-        WHERE cm.club_id = ?;
-    `);
-
     const query = fixQuery(`
     SELECT cm.player_id AS "playerId", cm.available_credit AS "availableCredit",
     cm.tips_back AS "tipsBack", cm.last_played_date AS "lastPlayedDate",
@@ -1352,7 +1334,7 @@ class ClubRepositoryImpl {
           sum(rake_paid) from players_in_game pig join game_history gh ON 
             pig.game_id = gh.game_id  
         where gh.club_code  = ? and 
-            gh.ended_at > ? and 
+            gh.ended_at >= ? and 
             gh.ended_at < ?
         group by pig.player_id`);
     const buyInResult = await getHistoryConnection().query(buyInQuery, [
@@ -1703,6 +1685,83 @@ class ClubRepositoryImpl {
 
     return true;
   }
+
+  public async adminFeeCredit(
+    reqPlayerId: string,
+    clubCode: string,
+    playerUuid: string,
+    amount: number,
+    notes: string,
+    followup: boolean
+  ): Promise<boolean> {
+    const reqPlayer = await Cache.getPlayer(reqPlayerId);
+    if (!reqPlayer) {
+      logger.error(
+        `Could not set credit. Request player does not exist. player: ${reqPlayerId}`
+      );
+      throw new Error('Unauthorized');
+    }
+
+    const club = await Cache.getClub(clubCode);
+    if (!club) {
+      logger.error(
+        `Could not set credit. Club does not exist. club: ${clubCode}`
+      );
+      throw new Error('Invalid club');
+    }
+    const clubMember = await Cache.getClubMember(reqPlayerId, clubCode);
+    if (!clubMember) {
+      logger.error(
+        `Could not set credit. Player is not a club member. player: ${playerUuid}, club: ${clubCode}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    if (!clubMember.isOwner) {
+      let authorized = false;
+      if (clubMember.isManager) {
+        const role = await ClubRepository.getManagerRole(clubCode);
+        if (role) {
+          if (role.canUpdateCredits) {
+            authorized = true;
+          }
+        }
+      }
+
+      if (!authorized) {
+        logger.error(
+          `Set credit requested by unauthorized user. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+        );
+        throw new Error('Unauthorized');
+      }
+    }
+    const player = await Cache.getPlayer(playerUuid);
+    if (!player) {
+      logger.error(
+        `Could not set credit. Player does not exist. player: ${playerUuid}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    if (!club.trackMemberCredit) {
+      logger.error(
+        `Could not set credit. Member credit tracking is not enabled. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+      );
+      throw new Error('Credit tracking not enabled');
+    }
+
+    await this.setCreditAndTracker(
+      player,
+      clubCode,
+      amount,
+      reqPlayer,
+      notes,
+      CreditUpdateType.FEE_CREDIT,
+      followup
+    );
+
+    return true;
+  }
   public async setCreditAndTracker(
     player: Player,
     clubCode: string,
@@ -1746,7 +1805,15 @@ class ClubRepositoryImpl {
           amount
         );
       }
-
+      if (creditType === CreditUpdateType.FEE_CREDIT) {
+        newCredit = await this.feeCredit(
+          transManager,
+          admin,
+          player.uuid,
+          clubCode,
+          amount
+        );
+      }
       const club = await Cache.getClub(clubCode);
       await this.addCreditTracker(
         transManager,
@@ -1829,6 +1896,59 @@ class ClubRepositoryImpl {
   }
 
   public async addCredit(
+    transManager: EntityManager,
+    admin: Player,
+    playerUuid: string,
+    clubCode: string,
+    addCredit: number
+  ): Promise<number> {
+    if (addCredit < MIN_CREDIT || addCredit > MAX_CREDIT) {
+      logger.error(
+        `Could not set credit. Amount exceeds limit. Admin uuid: ${admin.uuid}, club: ${clubCode}, newCredit: ${addCredit}`
+      );
+      throw new Error('Invalid amount');
+    }
+
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+    if (!clubMember) {
+      throw new Error(
+        `Could not find club member. Player: ${playerUuid}, club: ${clubCode}`
+      );
+    }
+    const updateResult = await transManager
+      .createQueryBuilder()
+      .update(ClubMember)
+      .set({
+        availableCredit: () => `available_credit + ${addCredit}`,
+      })
+      .where({
+        id: clubMember.id,
+      })
+      .execute();
+
+    if (updateResult.affected === 0) {
+      logger.error(
+        `Could not set club member credit. Club member does not exist. club: ${clubCode}, member ID: ${clubMember.id}`
+      );
+      throw new Error('Invalid player');
+    }
+
+    // get member using transaction
+    const memberRepo = transManager.getRepository(ClubMember);
+    const member = await memberRepo.findOne({
+      id: clubMember.id,
+    });
+
+    if (!member) {
+      logger.error(
+        `Could not set club member credit. Club member does not exist. club: ${clubCode}, member ID: ${clubMember.id}`
+      );
+      throw new Error('Invalid player');
+    }
+    return member.availableCredit;
+  }
+
+  public async feeCredit(
     transManager: EntityManager,
     admin: Player,
     playerUuid: string,
@@ -2066,7 +2186,8 @@ class ClubRepositoryImpl {
     if (
       updateType === CreditUpdateType.CHANGE ||
       updateType === CreditUpdateType.ADD ||
-      updateType === CreditUpdateType.DEDUCT
+      updateType === CreditUpdateType.DEDUCT ||
+      updateType === CreditUpdateType.FEE_CREDIT
     ) {
       if (!admin) {
         throw new Error(
