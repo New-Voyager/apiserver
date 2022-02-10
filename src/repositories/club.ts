@@ -113,18 +113,8 @@ class ClubRepositoryImpl {
       throw new Error(`Player ${playerUuid} is not found`);
     }
 
-    // Check owner data
-    const owner: Player | undefined = await Promise.resolve(club.owner);
-    if (!owner) {
-      throw new Error('Unexpected. There is no owner for the club');
-    }
-
-    // check whether the calling user is the owner of the club
-    if (owner.uuid !== hostUuid) {
-      throw new UnauthorizedError();
-    }
-    const callingUser = await Cache.getClubMember(hostUuid, clubCode);
-    if (!callingUser) {
+    const owner = await Cache.getClubMember(hostUuid, clubCode);
+    if (!owner || !owner.isOwner) {
       throw new UnauthorizedError();
     }
 
@@ -153,14 +143,14 @@ class ClubRepositoryImpl {
       ] as unknown as ClubMemberStatus;
     }
     if (updateData.isManager || updateData.isManager === false) {
-      if (!callingUser.isOwner) {
+      if (!owner.isOwner) {
         throw new UnauthorizedError();
       }
       clubMember.isManager = updateData.isManager;
     }
 
     if (updateData.isOwner || updateData.isOwner === false) {
-      if (!callingUser.isMainOwner) {
+      if (!owner.isMainOwner) {
         throw new UnauthorizedError();
       }
       clubMember.isOwner = updateData.isOwner;
@@ -1270,17 +1260,12 @@ class ClubRepositoryImpl {
       );
       throw new Error('Invalid club');
     }
-
-    const owner: Player | undefined = await Promise.resolve(club.owner);
-    if (!owner) {
-      throw new Error('Unexpected. There is no owner for the club');
-    }
-
-    if (reqPlayer.uuid !== owner.uuid) {
+    const clubMember = await Cache.getClubMember(reqPlayer.uuid, clubCode);
+    if (!clubMember || !clubMember.isOwner) {
       logger.error(
         `Aggregated member activity requested by unauthorized player. Request player: ${reqPlayer.uuid}, club: ${clubCode}`
       );
-      throw new Error('Unauthorized');
+      throw new UnauthorizedError();
     }
     const query = fixQuery(`
     SELECT cm.player_id AS "playerId", cm.available_credit AS "availableCredit",

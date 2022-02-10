@@ -260,14 +260,13 @@ export async function updateClub(
     if (!club) {
       throw new Error(`Club ${clubCode} is not found`);
     }
-    const owner: Player | undefined = await Promise.resolve(club.owner);
-    if (!owner) {
-      throw new Error(`Club ${clubCode} does not have a owner`);
+    const clubMember = await Cache.getClubMember(playerId, clubCode);
+    if (!clubMember) {
+      throw new Error(`Club ${clubCode}, not a member`);
     }
-    if (playerId !== owner.uuid) {
-      const a = JSON.stringify(club.owner);
+    if (!clubMember.isOwner) {
       logger.error(
-        `Unauthorized. ${playerId} is not the owner of the club ${clubCode}, ${a}`
+        `Unauthorized. ${playerId} is not the owner of the club ${clubCode}`
       );
       throw new Error('Unauthorized');
     }
