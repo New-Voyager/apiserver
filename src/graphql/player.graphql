@@ -133,6 +133,8 @@ type ClubInfo {
   gamesPlayed: Int
   isManager: Boolean
   isOwner: Boolean
+  isAgent: Boolean
+  canViewAgentReport: Boolean
   pendingMemberCount: Int
   unreadMessageCount: Int
   memberUnreadMessageCount: Int

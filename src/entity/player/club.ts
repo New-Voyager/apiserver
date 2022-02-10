@@ -113,6 +113,9 @@ export class ClubMember {
   @Column({name: 'is_agent', default: false})
   public isAgent!: boolean;
 
+  @Column({name: 'can_view_agent_report', default: false})
+  public canViewAgentReport!: boolean;
+
   @Column({name: 'contact_info', default: ''})
   public contactInfo!: string;
 

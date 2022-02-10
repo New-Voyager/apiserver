@@ -88,6 +88,7 @@ export interface ClubMemberUpdateInput {
   isAgent?: boolean;
   displayName?: string;
   agentFeeBack?: number;
+  canViewAgentReport?: boolean;
 }
 
 class ClubRepositoryImpl {
@@ -196,6 +197,10 @@ class ClubRepositoryImpl {
 
     if (updateData.agentFeeBack !== undefined) {
       clubMember.agentFeeBack = updateData.agentFeeBack;
+    }
+
+    if (updateData.canViewAgentReport !== undefined) {
+      clubMember.canViewAgentReport = updateData.canViewAgentReport;
     }
 
     // Save the data

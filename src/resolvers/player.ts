@@ -378,6 +378,8 @@ export async function getClubPlayerInfo(playerId: string, clubCode: string) {
     // gamesPlayed: clubMember.totalGames,
     isManager: clubMember.isManager,
     isOwner: clubMember.isOwner,
+    isAgent: clubMember.isAgent,
+    canViewAgentReport: clubMember.canViewAgentReport,
     status: ClubMemberStatus[clubMember.status],
     clubCode: clubCode,
     showHighRankStats: club.showHighRankStats,

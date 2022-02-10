@@ -51,6 +51,7 @@ input ClubMemberUpdateInput {
   tipsBack: Float
   isOwner: Boolean
   isAgent: Boolean
+  canViewAgentReport: Boolean
   agentFeeBack: Float         # agents fee back percentage
 }
 
@@ -80,6 +81,7 @@ type ClubMember {
   isManager: Boolean
   isMainOwner: Boolean
   isAgent: Boolean
+  canViewAgentReport: Boolean
   totalBuyins: Float
   totalWinnings: Float
   rakePaid: Float
