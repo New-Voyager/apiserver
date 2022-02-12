@@ -125,6 +125,11 @@ export interface UserRegistrationPayload {
   email?: string;
   displayName?: string;
   bot?: boolean;
+  deviceModel?: string;
+  deviceOS?: string;
+  physicalDimension?: string;
+  screenDimension?: string;
+  attribsUsed?: string;
 }
 
 export interface LoginPayload {

@@ -44,6 +44,7 @@ import {authReq} from './middlewares/authorization';
 import {Club} from './entity/player/club';
 import {Player} from './entity/player/player';
 import {LocationCheck} from './repositories/locationcheck';
+import {Cache} from '@src/cache';
 
 const logger = getLogger('routes');
 
@@ -126,10 +127,10 @@ async function uploadPic(req: any, res: any) {
           logger.error(errMsg);
           throw new Error(errMsg);
         }
-        const owner: Player | undefined = await Promise.resolve(club.owner);
-        if (owner?.uuid !== req.playerId) {
+        const clubMember = await Cache.getClubMember(req.playerId, clubCode);
+        if (!clubMember || !clubMember.isOwner) {
           logger.error(
-            `Attempt to update club picture by non owner. Request user: ${req.playerId}, Owner: ${owner?.uuid}`
+            `Attempt to update club picture by non owner. Request user: ${req.playerId}`
           );
           throw new Error('Unauthorized');
         }

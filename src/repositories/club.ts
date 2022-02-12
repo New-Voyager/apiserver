@@ -176,7 +176,7 @@ class ClubRepositoryImpl {
       // lookup the player
       clubMember.isAgent = updateData.isAgent;
     }
-
+    let newAgent: Player | null = null;
     if (updateData.agentUuid !== undefined) {
       if (updateData.agentUuid === '') {
         clubMember.agent = null;
@@ -184,6 +184,7 @@ class ClubRepositoryImpl {
         // lookup the player
         const referredByPlayer = await Cache.getPlayer(updateData.agentUuid);
         clubMember.agent = referredByPlayer;
+        newAgent = referredByPlayer;
       }
     }
 
@@ -219,8 +220,7 @@ class ClubRepositoryImpl {
           role: 'manager',
         }
       );
-    }
-    if (updateData.isOwner && !wasOwner) {
+    } else if (updateData.isOwner && !wasOwner) {
       // a player is promoted as manager
       Nats.sendClubUpdate(
         clubCode,
@@ -233,8 +233,31 @@ class ClubRepositoryImpl {
           role: 'owner',
         }
       );
-    }
+    } else {
+      Nats.sendClubUpdate(
+        clubCode,
+        club.name,
+        ClubUpdateType[ClubUpdateType.MEMBER_UPDATED],
+        uuidv4(),
+        {
+          playerUuid: player.uuid,
+          name: player.name,
+        }
+      );
 
+      if (newAgent) {
+        Nats.sendClubUpdate(
+          clubCode,
+          club.name,
+          ClubUpdateType[ClubUpdateType.MEMBER_UPDATED],
+          uuidv4(),
+          {
+            playerUuid: newAgent.uuid,
+            name: newAgent.name,
+          }
+        );
+      }
+    }
     return clubMember.status;
   }
 
@@ -458,16 +481,11 @@ class ClubRepositoryImpl {
     if (!club) {
       throw new Error(`Club: ${clubCode} does not exist`);
     }
-
-    const owner: Player | undefined = await Promise.resolve(club.owner);
-    if (!owner) {
-      throw new Error('Unexpected. There is no owner for the club');
+    const clubMember = await Cache.getClubMember(clubCode, playerId);
+    if (!clubMember) {
+      return false;
     }
-
-    if (owner.uuid === playerId) {
-      return true;
-    }
-    return false;
+    return clubMember.isOwner;
   }
 
   public async joinClub(
@@ -600,16 +618,9 @@ class ClubRepositoryImpl {
     }
 
     const club = await Cache.getClub(clubCode, true);
-    const owner: Player | undefined = await Promise.resolve(club.owner);
-    if (!owner) {
-      throw new Error('Unexpected. There is no owner for the club');
-    }
-
-    if (owner.uuid !== ownerId) {
-      // TODO: make sure the ownerId is matching with club owner
-      if (ownerId !== '') {
-        throw new Error('Unauthorized');
-      }
+    const owner = await Cache.getClubMember(ownerId, clubCode);
+    if (!owner || !owner.isOwner) {
+      throw new UnauthorizedError();
     }
 
     const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);

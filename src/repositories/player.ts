@@ -415,7 +415,27 @@ class PlayerRepositoryImpl {
       player.uuid = uuidv4();
       player.deviceSecret = uuidv4();
     }
-
+    player.lastActiveDate = new Date();
+    if (!register.deviceModel) {
+      register.deviceModel = '';
+    }
+    if (!register.deviceOS) {
+      register.deviceOS = '';
+    }
+    if (!register.physicalDimension) {
+      register.physicalDimension = '';
+    }
+    if (!register.screenDimension) {
+      register.screenDimension = '';
+    }
+    if (!register.attribsUsed) {
+      register.attribsUsed = '';
+    }
+    player.deviceModel = register.deviceModel;
+    player.deviceOS = register.deviceOS;
+    player.attribsUsed = register.attribsUsed;
+    player.physicalDimension = register.physicalDimension;
+    player.screenDimension = register.screenDimension;
     await repository.save(player);
     await StatsRepository.newPlayerHandStats(player);
     if (newUser) {
@@ -510,6 +530,12 @@ class PlayerRepositoryImpl {
     }
     return player;
   }
+
+  public async updateLastActiveDate(playerUuid: string) {
+    const repository = getUserRepository(Player);
+    await repository.update({uuid: playerUuid}, {lastActiveDate: new Date()});
+  }
+
   public async updatePic(playerId: string, url: string) {}
 }
 

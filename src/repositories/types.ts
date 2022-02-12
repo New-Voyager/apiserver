@@ -166,6 +166,7 @@ export enum ClubUpdateType {
   GAME_ENDED,
   MEMBER_LEFT,
   PROMOTED,
+  MEMBER_UPDATED,
 }
 
 export interface GamePlayerSettings {

@@ -90,8 +90,26 @@ export class Player {
   @Column({name: 'city', nullable: true})
   public city!: string;
 
+  @Column({name: 'last_active_date', nullable: true})
+  public lastActiveDate!: Date;
+
+  @Column({name: 'device_model', nullable: true})
+  public deviceModel!: string;
+
+  @Column({name: 'device_os', nullable: true})
+  public deviceOS!: string;
+
+  @Column({name: 'physical_dimension', nullable: true})
+  public physicalDimension!: string;
+
+  @Column({name: 'screen_dimension', nullable: true})
+  public screenDimension!: string;
+
+  @Column({name: 'attribs_used', nullable: true})
+  public attribsUsed!: string;
+
   // player current ip address and gps location (caching)
-  public ipAddress!: string;
+  public ipAddress!: string | undefined;
 
   public location!: PlayerLocation;
 

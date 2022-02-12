@@ -146,6 +146,16 @@ export async function signup(req: any, resp: any) {
   const email = payload['email'];
   const displayName = payload['display-name'];
   const bot = payload['bot'];
+  const deviceModel = payload['device-model'];
+  const deviceOs = payload['device-os'];
+  const attribsUsed = payload['attribs-used'];
+  const physicalDimension = payload['physical-dimension'];
+  const screenDimension = payload['screen-dimension'];
+  // "device-model": DeviceInfo.model,
+  // "device-os": DeviceInfo.version,
+  // "attribs-used": attribs.name,
+  // "physcial-dimension": Screen.physicalSize.toString(),
+  // "screen-dimension": Screen.size.toString(),
 
   const errors = new Array<string>();
   if (!name) {
@@ -167,6 +177,11 @@ export async function signup(req: any, resp: any) {
     email: email,
     displayName: displayName,
     bot: bot,
+    deviceModel: deviceModel,
+    deviceOS: deviceOs,
+    physicalDimension: physicalDimension,
+    screenDimension: screenDimension,
+    attribsUsed: attribsUsed,
   };
 
   let player: Player;
@@ -300,6 +315,9 @@ export async function newlogin(req: any, resp: any) {
       uuid: player.uuid,
       id: player.id,
     };
+
+    // update last active date
+    await PlayerRepository.updateLastActiveDate(player.uuid);
     resp.contentType('application/json');
     resp.status(200).send(JSON.stringify(response));
   } catch (err) {
