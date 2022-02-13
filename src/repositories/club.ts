@@ -1344,9 +1344,11 @@ class ClubRepositoryImpl {
       endDate,
     ]);
     for (const row of buyInResult) {
-      playersActivity[row.playerId].buyIn = row.buyIn;
-      playersActivity[row.playerId].profit = row.profit;
-      playersActivity[row.playerId].gamesPlayed = row.gamesPlayed;
+      if (playersActivity[row.playerId]) {
+        playersActivity[row.playerId].buyIn = row.buyIn;
+        playersActivity[row.playerId].profit = row.profit;
+        playersActivity[row.playerId].gamesPlayed = row.gamesPlayed;
+      }
     }
     return res;
   }

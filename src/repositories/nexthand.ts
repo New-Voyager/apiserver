@@ -6,7 +6,12 @@ import {
 } from '@src/entity/game/game';
 import {getGameManager} from '.';
 import {Cache} from '@src/cache/index';
-import {GameType, PlayerStatus, TableStatus} from '@src/entity/types';
+import {
+  BombPotInterval,
+  GameType,
+  PlayerStatus,
+  TableStatus,
+} from '@src/entity/types';
 import {GameRepository} from './game';
 import {getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
@@ -219,6 +224,7 @@ class MoveToNextHand {
           bbPos: this.bbPos,
           handNum: this.handNum,
           bombPotThisHand: this.bombPotThisHand,
+          lastBombPotHandNum: this.gameUpdate.lastBombPotHandNum,
           calculateButtonPos: true, // calculate button position for next hand
         };
         if (this.bombPotThisHand) {
@@ -611,26 +617,46 @@ class MoveToNextHand {
         return;
       }
       if (this.handNum === 1) {
-        this.bombPotThisHand = true;
+        //this.bombPotThisHand = true;
         this.gameUpdate.lastBombPotTime = new Date();
+        this.gameUpdate.lastBombPotHandNum = 0;
       } else {
-        const now = new Date();
-        const intervalInMs = this.gameSettings.bombPotInterval * 1000;
-        if (this.gameUpdate.lastBombPotTime === null) {
-          this.gameUpdate.lastBombPotTime = new Date();
-        }
-        const nextBombPotTime = new Date(
-          this.gameUpdate.lastBombPotTime.getTime() + intervalInMs
-        );
-        logger.debug(
-          `Next bomb time: ${nextBombPotTime.toISOString()} now: ${now.toISOString()}`
-        );
         if (
-          now.getTime() > nextBombPotTime.getTime() ||
-          this.gameSettings.bombPotEveryHand
+          this.gameSettings.bombPotIntervalType == BombPotInterval.TIME_INTERVAL
         ) {
-          logger.debug(`Game: ${this.game.gameCode} Time for next bomb pot`);
-          this.bombPotThisHand = true;
+          const now = new Date();
+          const intervalInMs = this.gameSettings.bombPotInterval * 1000;
+          if (this.gameUpdate.lastBombPotTime === null) {
+            this.gameUpdate.lastBombPotTime = new Date();
+          }
+          const nextBombPotTime = new Date(
+            this.gameUpdate.lastBombPotTime.getTime() + intervalInMs
+          );
+          logger.debug(
+            `Next bomb time: ${nextBombPotTime.toISOString()} now: ${now.toISOString()}`
+          );
+          if (
+            now.getTime() > nextBombPotTime.getTime() ||
+            this.gameSettings.bombPotEveryHand
+          ) {
+            logger.debug(`Game: ${this.game.gameCode} Time for next bomb pot`);
+            this.gameUpdate.lastBombPotHandNum = this.gameUpdate.handNum + 1;
+            this.bombPotThisHand = true;
+          }
+        } else if (
+          this.gameSettings.bombPotIntervalType == BombPotInterval.EVERY_X_HANDS
+        ) {
+          // every x hands
+          const handDiff =
+            this.gameUpdate.handNum + 1 - this.gameUpdate.lastBombPotHandNum;
+          if (handDiff >= this.gameSettings.bombPotHandInterval) {
+            // time to run a bomb pot
+            logger.debug(
+              `Game: ${this.game.gameCode} Time for next bomb pot. Hand num: ${this.gameUpdate.handNum}`
+            );
+            this.gameUpdate.lastBombPotHandNum = this.gameUpdate.handNum + 1;
+            this.bombPotThisHand = true;
+          }
         }
       }
     }

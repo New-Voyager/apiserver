@@ -93,7 +93,8 @@ class PlayerRepositoryImpl {
     continent: string,
     country: string,
     state: string,
-    city: string
+    city: string,
+    postalCode: string
   ): Promise<boolean> {
     const repository = getUserRepository(Player);
     let player: Player | undefined;
@@ -107,6 +108,7 @@ class PlayerRepositoryImpl {
       props['country'] = country;
       props['state'] = state;
       props['city'] = city;
+      props['postalCode'] = postalCode;
     }
 
     await repository.update({id: player.id}, props);

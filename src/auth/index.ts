@@ -215,7 +215,8 @@ export async function signup(req: any, resp: any) {
         geodata.continent,
         geodata.country,
         geodata.state,
-        geodata.city
+        geodata.city,
+        geodata.postalCode
       );
     }
   } catch (err) {}

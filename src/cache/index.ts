@@ -20,7 +20,12 @@ import {
   getGameRepository,
   getUserRepository,
 } from '@src/repositories';
-import {BuyInApprovalLimit, GameType, PlayerLocation} from '@src/entity/types';
+import {
+  BombPotInterval,
+  BuyInApprovalLimit,
+  GameType,
+  PlayerLocation,
+} from '@src/entity/types';
 import {GameServer} from '@src/entity/game/gameserver';
 import {getLogger, errToStr} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
@@ -374,6 +379,13 @@ class GameCache {
         const tmp: string = data.bombPotGameType;
         if (tmp) {
           ret.bombPotGameType = GameType[tmp];
+        }
+      }
+      if (typeof data.bombPotIntervalType === 'number') {
+      } else {
+        const tmp: string = data.bombPotIntervalType;
+        if (tmp) {
+          ret.bombPotIntervalType = BombPotInterval[tmp];
         }
       }
       return ret;

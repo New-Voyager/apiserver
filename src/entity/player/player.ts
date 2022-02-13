@@ -90,6 +90,9 @@ export class Player {
   @Column({name: 'city', nullable: true})
   public city!: string;
 
+  @Column({name: 'postal_code', nullable: true})
+  public postalCode!: string;
+
   @Column({name: 'last_active_date', nullable: true})
   public lastActiveDate!: Date;
 

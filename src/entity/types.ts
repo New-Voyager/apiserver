@@ -248,3 +248,8 @@ export enum BuyInApprovalLimit {
   BUYIN_CREDIT_LIMIT,
   BUYIN_HOST_APPROVAL,
 }
+
+export enum BombPotInterval {
+  EVERY_X_HANDS,
+  TIME_INTERVAL,
+}

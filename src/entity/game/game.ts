@@ -21,6 +21,7 @@ import {
   GameEndReason,
   ChipUnit,
   BuyInApprovalLimit,
+  BombPotInterval,
 } from '../types';
 
 @Entity({name: 'poker_game_updates'})
@@ -103,6 +104,13 @@ export class PokerGameUpdates {
     nullable: true,
   })
   public lastBombPotTime!: Date;
+
+  @DbAwareColumn({
+    name: 'last_bomb_pot_hand_num',
+    type: 'int',
+    default: 0,
+  })
+  public lastBombPotHandNum!: number;
 
   @DbAwareColumn({
     name: 'last_ip_gps_check_time',
@@ -211,6 +219,15 @@ export class PokerGameSettings {
 
   @Column({type: 'int', name: 'bomb_pot_interval_in_secs', default: 30 * 60})
   public bombPotInterval!: number;
+
+  @Column({type: 'int', name: 'bomb_pot_hand_interval', default: 5})
+  public bombPotHandInterval!: number;
+
+  @Column({
+    name: 'bomb_pot_interval_type',
+    default: BombPotInterval.TIME_INTERVAL,
+  })
+  public bombPotIntervalType!: BombPotInterval;
 
   @Column({name: 'bomb_pot_every_hand', default: false})
   public bombPotEveryHand!: boolean;

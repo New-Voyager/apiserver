@@ -91,7 +91,7 @@ export function getApolloServer(options?: {intTest?: boolean}): ApolloServer {
     mergeResolverDir(resolvers, resolverDir, extensions);
   }
   let playGround = runProfile !== RunProfile.PROD;
-  // playGround = true;
+  playGround = true;
   const server = new ApolloServer({
     typeDefs: typeDefs,
     resolvers,

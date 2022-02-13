@@ -88,6 +88,11 @@ enum BuyInApprovalLimit {
   BUYIN_HOST_APPROVAL
 }
 
+enum BombPotInterval {
+  EVERY_X_HANDS,
+  TIME_INTERVAL,
+}
+
 input GameCreateInput {
   gameType: GameType!
   title: String
@@ -135,6 +140,8 @@ input GameCreateInput {
   bombPotIntervalInSecs: Int  # for tests
   bombPotEveryHand: Boolean
   bombPotGameType: GameType
+  bombPotIntervalType: BombPotInterval
+  bombPotHandInterval: Int
 
   ipCheck: Boolean
   gpsCheck: Boolean
@@ -248,7 +255,9 @@ type GameInfo {
   bombPotInterval: Int        
   bombPotIntervalInSecs: Int 
   bombPotEveryHand: Boolean
-  
+  bombPotIntervalType: BombPotInterval
+  bombPotHandInterval: Int
+
   ipCheck: Boolean
   gpsCheck: Boolean
 
@@ -355,6 +364,8 @@ type GameSettings {
   bombPotInterval: Int        
   bombPotIntervalInSecs: Int 
   bombPotEveryHand: Boolean
+  bombPotHandInterval: Int
+  bombPotIntervalType: BombPotInterval
 
   seatChangeAllowed: Boolean
   seatChangeTimeout: Int    # default 10 seconds

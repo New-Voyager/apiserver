@@ -18,6 +18,13 @@ let debugDB: string | undefined = 'defaultdb';
 let debugUser: string | undefined = 'doadmin';
 let debugPassword: string | undefined = 'v7wvhf4wo704h4q4';
 
+// process.env[pgHostKey] = 'db-postgresql-nyc1-99292-do-user-7667119-0.b.db.ondigitalocean.com';
+// process.env[pgPortKey] = '25060';
+// process.env[pgUserKey] = 'doadmin';
+// process.env[pgPasswordKey] = 'x2FKuUrScY5fyYF3';
+// process.env[pgDbNameKey] = 'defaultdb';
+// process.env[pgSSLKey] = '1';
+
 if (process.env[pgDebugHostKey]) {
   debugHost = process.env[pgDebugHostKey];
 }

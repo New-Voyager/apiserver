@@ -119,7 +119,12 @@ export class LocationCheck {
         state = data.subdivisions[0].names?.en;
       }
 
-      return {continent, country, state, city};
+      let postalCode = '';
+      if (data.postal && data.postal.code) {
+        postalCode = data.postal.code;
+      }
+
+      return {continent, country, state, city, postalCode};
     } catch (err) {
       logger.error(`Could not get city from IP: ${errToStr(err)}`);
       return undefined;

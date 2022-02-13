@@ -5,7 +5,7 @@ import {getGameRepository} from '.';
 import {getLogger} from '@src/utils/log';
 import {JanusSession} from '@src/janus';
 import {Nats} from '@src/nats';
-import {BuyInApprovalLimit, GameType} from '@src/entity/types';
+import {BombPotInterval, BuyInApprovalLimit, GameType} from '@src/entity/types';
 
 const logger = getLogger('repositories::gamesettings');
 class GameSettingsRepositoryImpl {
@@ -40,6 +40,15 @@ class GameSettingsRepositoryImpl {
         gameSettings.bombPotInterval = input.bombPotInterval * 60;
       } else if (input.bombPotIntervalInSecs) {
         gameSettings.bombPotInterval = input.bombPotIntervalInSecs;
+      }
+      if (input.bombPotHandInterval) {
+        gameSettings.bombPotHandInterval = input.bombPotHandInterval;
+      }
+      if (input['bombPotIntervalType']) {
+        const bombPotIntervalTypeStr: string = input['bombPotIntervalType'];
+        const bombPotInterval: BombPotInterval =
+          BombPotInterval[bombPotIntervalTypeStr];
+        gameSettings.bombPotIntervalType = bombPotInterval;
       }
     }
 

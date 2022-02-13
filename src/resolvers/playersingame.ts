@@ -469,7 +469,8 @@ export async function takeSeat(
           geodata.continent,
           geodata.country,
           geodata.state,
-          geodata.city
+          geodata.city,
+          geodata.postalCode
         );
       }
       await Cache.updatePlayerLocation(player.uuid, location, ip);
