@@ -136,3 +136,9 @@ export interface LoginPayload {
   deviceId: string;
   deviceSecret: string;
 }
+
+export interface HighRankStats {
+  totalHands: number;
+  straightFlush: number;
+  fourKind: number;
+}

@@ -1054,6 +1054,8 @@ class GameRepositoryImpl {
     }
     await this.markGameStatus(game.id, GameStatus.ACTIVE);
 
+    // cache hh rank stats
+    await Cache.getHighRankStats(game);
     return GameStatus.ACTIVE;
   }
 
