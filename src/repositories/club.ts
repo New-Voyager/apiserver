@@ -718,21 +718,13 @@ class ClubRepositoryImpl {
     }
 
     const club = await Cache.getClub(clubCode);
-    const owner: Player | undefined = await Promise.resolve(club.owner);
-    if (!owner) {
-      throw new Error('Unexpected. There is no owner for the club');
+    const isCallerOwner = await Cache.getClubMember(ownerId, clubCode);
+    if (!isCallerOwner) {
+      throw new Error('The player is not in the club');
     }
-
-    if (owner.uuid !== ownerId) {
-      // TODO: make sure the ownerId is matching with club owner
-      if (ownerId !== '') {
-        throw new Error('Unauthorized');
-      }
+    if (!isCallerOwner.isOwner) {
+      throw new UnauthorizedError();
     }
-
-    // if (clubMember.status === ClubMemberStatus.KICKEDOUT) {
-    //   return clubMember.status;
-    // }
 
     const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
     await clubMemberRepository
