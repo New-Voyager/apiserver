@@ -122,6 +122,8 @@ export interface NewHandInfo {
   totalHands?: number;
   straightFlushCount?: number;
   fourKindCount?: number;
+  straightFlushAllowed: boolean;
+  fourKindAllowed: boolean;
 }
 
 export enum ReedeemPromotionError {

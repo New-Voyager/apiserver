@@ -617,6 +617,15 @@ class StatsRepositoryImpl {
     });
 
     if (gameUpdates) {
+      let lastSFHandExpr = 'last_sf_hand';
+      if (gameUpdates.lastSFHand > 0) {
+        lastSFHandExpr = 'total_hands + ' + gameUpdates.lastSFHand;
+      }
+      let last4kHandExpr = 'last_4k_hand';
+      if (gameUpdates.last4kHand > 0) {
+        last4kHandExpr = 'total_hands + ' + gameUpdates.last4kHand;
+      }
+
       if (game.clubId) {
         // club game
         // player game
@@ -628,6 +637,8 @@ class StatsRepositoryImpl {
           highRank.totalHands = gameUpdates.handNum - 1;
           highRank.straightFlush = gameUpdates.straightFlushCount;
           highRank.fourKind = gameUpdates.fourKindCount;
+          highRank.lastSFHand = gameUpdates.lastSFHand;
+          highRank.last4kHand = gameUpdates.last4kHand;
           row = await highRankRepo.save(highRank);
         } else {
           await highRankRepo.update(
@@ -639,6 +650,8 @@ class StatsRepositoryImpl {
               straightFlush: () =>
                 'straight_flush + ' + gameUpdates.straightFlushCount,
               fourKind: () => 'four_kind + ' + gameUpdates.fourKindCount,
+              lastSFHand: () => lastSFHandExpr,
+              last4kHand: () => last4kHandExpr,
             }
           );
         }
@@ -652,6 +665,8 @@ class StatsRepositoryImpl {
           highRank.totalHands = gameUpdates.handNum - 1;
           highRank.straightFlush = gameUpdates.straightFlushCount;
           highRank.fourKind = gameUpdates.fourKindCount;
+          highRank.lastSFHand = gameUpdates.lastSFHand;
+          highRank.last4kHand = gameUpdates.last4kHand;
           row = await highRankRepo.save(highRank);
         } else {
           await highRankRepo.update(
@@ -663,6 +678,8 @@ class StatsRepositoryImpl {
               straightFlush: () =>
                 'straight_flush + ' + gameUpdates.straightFlushCount,
               fourKind: () => 'four_kind + ' + gameUpdates.fourKindCount,
+              lastSFHand: () => lastSFHandExpr,
+              last4kHand: () => last4kHandExpr,
             }
           );
         }

@@ -818,6 +818,12 @@ class GameCache {
     highRankStats.totalHands++;
     highRankStats.straightFlush += straightFlush;
     highRankStats.fourKind += fourKind;
+    if (straightFlush > 0) {
+      highRankStats.lastSFHand = highRankStats.totalHands;
+    }
+    if (fourKind > 0) {
+      highRankStats.last4kHand = highRankStats.totalHands;
+    }
     await this.setCache(key, JSON.stringify(highRankStats));
     return highRankStats;
   }
@@ -839,6 +845,8 @@ class GameCache {
       totalHands: 0,
       straightFlush: 0,
       fourKind: 0,
+      lastSFHand: 0,
+      last4kHand: 0,
     };
 
     if (game.clubId) {
@@ -850,6 +858,8 @@ class GameCache {
           totalHands: clubHHStats.totalHands,
           straightFlush: clubHHStats.straightFlush,
           fourKind: clubHHStats.fourKind,
+          lastSFHand: clubHHStats.lastSFHand,
+          last4kHand: clubHHStats.last4kHand,
         };
       }
     } else {
@@ -860,6 +870,8 @@ class GameCache {
           totalHands: stats.totalHands,
           straightFlush: stats.straightFlush,
           fourKind: stats.fourKind,
+          lastSFHand: stats.lastSFHand,
+          last4kHand: stats.last4kHand,
         };
       }
     }
