@@ -23,6 +23,7 @@ import {GameUpdatesRepository} from './gameupdates';
 import {EntityManager} from 'typeorm';
 import _ from 'lodash';
 import {GameNotFoundError} from '@src/errors';
+import {HighRankStats} from '@src/types';
 
 const logger = getLogger('repositories::nexthand');
 
@@ -923,6 +924,18 @@ export class NextHandProcess {
             gameUpdate.buttonPos
           }`
         );
+        let highRankStats: HighRankStats = {
+          totalHands: 0,
+          straightFlush: 0,
+          fourKind: 0,
+        };
+
+        try {
+          highRankStats = await Cache.getHighRankStats(game);
+        } catch (err) {
+          // not a critical error
+        }
+
         const nextHandInfo: NewHandInfo = {
           gameId: game.id,
           gameCode: this.gameCode,
@@ -953,6 +966,9 @@ export class NextHandProcess {
           highHandRank: game.highHandRank,
           // Not implemented yet (do we need it?)
           bringIn: 0,
+          totalHands: highRankStats.totalHands,
+          straightFlushCount: highRankStats.straightFlush,
+          fourKindCount: highRankStats.fourKind,
         };
         return nextHandInfo;
       }

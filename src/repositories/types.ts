@@ -119,6 +119,9 @@ export interface NewHandInfo {
   runItTwiceTimeout: number;
   highHandTracked: boolean;
   highHandRank: number;
+  totalHands?: number;
+  straightFlushCount?: number;
+  fourKindCount?: number;
 }
 
 export enum ReedeemPromotionError {
@@ -149,6 +152,12 @@ export const CHECK_AVAILABLE_COINS = 'CHECK_AVAILABLE_COINS';
 
 // full house rank
 export const MIN_FULLHOUSE_RANK = 322;
+
+// straight flush rank
+export const MIN_STRAIGHT_FLUSH_RANK = 10;
+
+// four of a kind rank
+export const MIN_FOUR_OF_A_KIND_RANK = 166;
 
 // CLUB_CHAT, PENDING_APPROVAL, NEW_MEMBER, MEMBER_APPROVED, MEMBER_DENIED,
 //       HOST_MESSAGE, ANNOUNCEMENT

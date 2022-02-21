@@ -20,7 +20,9 @@ import {errToStr, getLogger} from '@src/utils/log';
 import {
   HighHandWinner,
   HighHandWinnerResult,
+  MIN_FOUR_OF_A_KIND_RANK,
   MIN_FULLHOUSE_RANK,
+  MIN_STRAIGHT_FLUSH_RANK,
 } from './types';
 import {Cache} from '@src/cache';
 import _, {result} from 'lodash';
@@ -43,6 +45,7 @@ import {Metrics} from '@src/internal/metrics';
 import {GameNotFoundError} from '@src/errors';
 import {GameHistory} from '@src/entity/history/game';
 import {HistoryRepository} from './history';
+import {GameUpdatesRepository} from './gameupdates';
 
 const logger = getLogger('repositories::reward');
 
@@ -182,11 +185,29 @@ class RewardRepositoryImpl {
     await highRankRepo.save(record);
   }
 
-  public async handleHighRanks(game: PokerGame, input: any, handTime: Date) {
+  public async handleHighRanks(
+    game: PokerGame,
+    input: any,
+    handTime: Date,
+    transactionEntityManager: EntityManager
+  ) {
     const boards = input.result.boards;
     if (boards.length === 0) {
       return;
     }
+    // if (player.hiRank >= 1 && player.hiRank <= 10) {
+    //   // straight flush
+    //   ret.straightFlushes.push(board);
+    // } else if (player.hiRank <= 166) {
+    //   // four of a kind
+    //   ret.fourOfKinds.push(board);
+    // } else if (player.hiRank <= 322) {
+    //   // full house
+    //   ret.fullHouseHands.push(board);
+    // }
+
+    let straightFlushes = 0;
+    let fourOfKinds = 0;
 
     // get rank for all the players from all the board
     const activeSeats: Array<number> = input.result.activeSeats;
@@ -203,8 +224,30 @@ class RewardRepositoryImpl {
         if (player.hhRank && player.hhRank <= MIN_FULLHOUSE_RANK) {
           ranks.push(player.hhRank);
         }
+
+        if (player.hhRank) {
+          if (player.hhRank <= MIN_STRAIGHT_FLUSH_RANK) {
+            straightFlushes++;
+          } else if (player.hhRank <= MIN_FOUR_OF_A_KIND_RANK) {
+            fourOfKinds++;
+          }
+        }
       }
     }
+
+    // update high rank stats in redis
+    await Cache.updateHighRankStats(game, straightFlushes, fourOfKinds);
+
+    // update high rank stats in db
+    if (straightFlushes > 0 || fourOfKinds > 0) {
+      await GameUpdatesRepository.updateHighRankStats(
+        transactionEntityManager,
+        game,
+        straightFlushes,
+        fourOfKinds
+      );
+    }
+
     if (ranks.length === 0) {
       return;
     }
@@ -261,8 +304,8 @@ class RewardRepositoryImpl {
         const playerRank = board.playerRank;
         for (const seatNo of Object.keys(playerRank)) {
           const player = playerRank[seatNo];
-          if (player.hiRank <= MIN_FULLHOUSE_RANK) {
-            ranks.push(player.hiRank);
+          if (player.hhRank <= MIN_FULLHOUSE_RANK) {
+            ranks.push(player.hhRank);
           }
         }
       }
@@ -334,7 +377,7 @@ class RewardRepositoryImpl {
         const playersRank = board.playerRank;
         for (const seatNo of Object.keys(playersRank)) {
           const playerRank = playersRank[seatNo];
-          if (playerRank.hiRank !== highHandRank) {
+          if (playerRank.hhRank !== highHandRank) {
             continue;
           }
 

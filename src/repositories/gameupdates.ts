@@ -212,6 +212,27 @@ class GameUpdatesRepositoryImpl {
       .execute();
   }
 
+  public async updateHighRankStats(
+    transactionEntityManager: EntityManager,
+    game: PokerGame,
+    straightFlushes: number,
+    fourOfKinds: number
+  ) {
+    const gameUpdatesRepo =
+      transactionEntityManager.getRepository(PokerGameUpdates);
+    await gameUpdatesRepo
+      .createQueryBuilder()
+      .update()
+      .set({
+        straightFlushCount: () => `straight_flush_count + ${straightFlushes}`,
+        fourKindCount: () => `four_kind_count + ${fourOfKinds}`,
+      })
+      .where({
+        gameCode: game.gameCode,
+      })
+      .execute();
+  }
+
   public async get(
     gameCode: string,
     update?: boolean,

@@ -990,7 +990,12 @@ class HandRepositoryImpl {
     saveResult: any,
     transactionEntityManager: EntityManager
   ) {
-    await RewardRepository.handleHighRanks(game, result, timeEnded);
+    await RewardRepository.handleHighRanks(
+      game,
+      result,
+      timeEnded,
+      transactionEntityManager
+    );
   }
 
   private async handleHighHand(

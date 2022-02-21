@@ -1,23 +1,28 @@
 import {EntityManager, Repository} from 'typeorm';
-import {v4 as uuidv4} from 'uuid';
 import {Player} from '@src/entity/player/player';
 import {
+  ClubHighRankStats,
   ClubStats,
   PlayerGameStats,
   PlayerHandStats,
+  PlayerHighRankStats,
   SystemStats,
 } from '@src/entity/history/stats';
-import {PokerGame} from '@src/entity/game/game';
+import {PokerGame, PokerGameUpdates} from '@src/entity/game/game';
 import {isArray} from 'lodash';
-import {loggers} from 'winston';
 import {errToStr, getLogger} from '@src/utils/log';
 import {Club} from '@src/entity/player/club';
 import {GameType} from '@src/entity/types';
 import {Cache} from '@src/cache';
-import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {getHistoryConnection, getHistoryManager, getHistoryRepository} from '.';
+import {
+  getGameRepository,
+  getHistoryConnection,
+  getHistoryManager,
+  getHistoryRepository,
+} from '.';
 import {PlayersInGame} from '@src/entity/history/player';
 import {GameHistory} from '@src/entity/history/game';
+import {GameUpdatesRepository} from './gameupdates';
 
 const logger = getLogger('repositories::stats');
 // Odds
@@ -109,6 +114,24 @@ class StatsRepositoryImpl {
     playerStats.playerId = player.id;
     playerStats.gameId = game.id;
     await repository.save(playerStats);
+  }
+
+  public async newPlayerGame(
+    player: Player,
+    transactionManager: EntityManager
+  ) {
+    let highRankRepo: Repository<PlayerHighRankStats>;
+    if (transactionManager) {
+      highRankRepo = transactionManager.getRepository(PlayerHighRankStats);
+    } else {
+      highRankRepo = getHistoryRepository(PlayerHighRankStats);
+    }
+    const row = await highRankRepo.findOne({playerId: player.id});
+    if (!row) {
+      const highRank = new PlayerHighRankStats();
+      highRank.playerId = player.id;
+      await highRankRepo.save(highRank);
+    }
   }
 
   public async updateClubStats(
@@ -544,8 +567,106 @@ class StatsRepositoryImpl {
           gameType: gameType,
         })
         .execute();
+
+      let highRankRepo: Repository<ClubHighRankStats>;
+      highRankRepo = getHistoryRepository(ClubHighRankStats);
+      const row = await highRankRepo.findOne({clubId: clubId});
+      if (!row) {
+        const highRank = new ClubHighRankStats();
+        highRank.clubId = clubId;
+        await highRankRepo.save(highRank);
+      }
     } catch (err) {
       logger.error(`Failed to update club stats: ${errToStr(err)}`);
+    }
+  }
+
+  public async getClubHhRankStats(clubId: number) {
+    let highRankRepo: Repository<ClubHighRankStats>;
+    highRankRepo = getHistoryRepository(ClubHighRankStats);
+    let row = await highRankRepo.findOne({clubId: clubId});
+    if (!row) {
+      const highRank = new ClubHighRankStats();
+      highRank.clubId = clubId;
+      row = await highRankRepo.save(highRank);
+    }
+    return row;
+  }
+
+  public async getPlayerHhRankStats(playerId: number) {
+    let highRankRepo: Repository<PlayerHighRankStats>;
+    highRankRepo = getHistoryRepository(PlayerHighRankStats);
+    let row = await highRankRepo.findOne({playerId: playerId});
+    if (!row) {
+      const highRank = new PlayerHighRankStats();
+      highRank.playerId = playerId;
+      row = await highRankRepo.save(highRank);
+    }
+    return row;
+  }
+
+  public async updateHighRankStats(
+    game: GameHistory,
+    entityManager: EntityManager
+  ) {
+    // get poker game updates
+    let repo: Repository<PokerGameUpdates>;
+    repo = getGameRepository(PokerGameUpdates);
+    const gameUpdates = await repo.findOne({
+      where: {gameCode: game.gameCode},
+    });
+
+    if (gameUpdates) {
+      if (game.clubId) {
+        // club game
+        // player game
+        let highRankRepo = entityManager.getRepository(ClubHighRankStats);
+        let row = await highRankRepo.findOne({clubId: game.clubId});
+        if (!row) {
+          const highRank = new ClubHighRankStats();
+          highRank.clubId = game.clubId;
+          highRank.totalHands = gameUpdates.handNum - 1;
+          highRank.straightFlush = gameUpdates.straightFlushCount;
+          highRank.fourKind = gameUpdates.fourKindCount;
+          row = await highRankRepo.save(highRank);
+        } else {
+          await highRankRepo.update(
+            {
+              clubId: game.clubId,
+            },
+            {
+              totalHands: () => 'total_hands + ' + (gameUpdates.handNum - 1),
+              straightFlush: () =>
+                'straight_flush + ' + gameUpdates.straightFlushCount,
+              fourKind: () => 'four_kind + ' + gameUpdates.fourKindCount,
+            }
+          );
+        }
+      } else {
+        // player game
+        let highRankRepo = entityManager.getRepository(PlayerHighRankStats);
+        let row = await highRankRepo.findOne({playerId: game.startedBy});
+        if (!row) {
+          const highRank = new PlayerHighRankStats();
+          highRank.playerId = game.startedBy;
+          highRank.totalHands = gameUpdates.handNum - 1;
+          highRank.straightFlush = gameUpdates.straightFlushCount;
+          highRank.fourKind = gameUpdates.fourKindCount;
+          row = await highRankRepo.save(highRank);
+        } else {
+          await highRankRepo.update(
+            {
+              playerId: game.startedBy,
+            },
+            {
+              totalHands: () => 'total_hands + ' + (gameUpdates.handNum - 1),
+              straightFlush: () =>
+                'straight_flush + ' + gameUpdates.straightFlushCount,
+              fourKind: () => 'four_kind + ' + gameUpdates.fourKindCount,
+            }
+          );
+        }
+      }
     }
   }
 
@@ -585,6 +706,10 @@ class StatsRepositoryImpl {
     clubStats.gameType = GameType.SIX_CARD_PLO;
     clubStats.clubId = club.id;
     await clubStatsRepo.save(clubStats);
+
+    let clubHighRankStats = new ClubHighRankStats();
+    clubHighRankStats.clubId = club.id;
+    await getHistoryRepository(ClubHighRankStats).save(clubHighRankStats);
   }
 
   public async newSystemStats() {
