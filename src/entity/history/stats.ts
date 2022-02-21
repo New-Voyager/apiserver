@@ -324,6 +324,12 @@ export class ClubHighRankStats {
 
   @Column({type: 'bigint', name: 'four_kind', default: 0})
   public fourKind!: number;
+
+  @Column({type: 'bigint', name: 'last_sf_hand', default: 0})
+  public lastSFHand!: number;
+
+  @Column({type: 'bigint', name: 'last_4k_hand', default: 0})
+  public last4kHand!: number;
 }
 
 @Entity({name: 'player_high_rank_stats'})
@@ -343,4 +349,10 @@ export class PlayerHighRankStats {
 
   @Column({type: 'bigint', name: 'four_kind', default: 0})
   public fourKind!: number;
+
+  @Column({type: 'bigint', name: 'last_sf_hand', default: 0})
+  public lastSFHand!: number;
+
+  @Column({type: 'bigint', name: 'last_4k_hand', default: 0})
+  public last4kHand!: number;
 }

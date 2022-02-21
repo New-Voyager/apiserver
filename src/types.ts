@@ -141,4 +141,6 @@ export interface HighRankStats {
   totalHands: number;
   straightFlush: number;
   fourKind: number;
+  lastSFHand: number;
+  last4kHand: number;
 }
