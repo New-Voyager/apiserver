@@ -112,11 +112,11 @@ create-network:
 
 .PHONY: docker-build
 docker-build:
-	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build -f docker/Dockerfile.apiserver . -t $(IMAGE_NAME)
+	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build -f docker/Dockerfile.apiserver . -t $(IMAGE_NAME) --network host
 
 .PHONY: docker-build-test
 docker-build-test:
-	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build -f docker/Dockerfile.test . -t $(TEST_IMAGE_NAME)
+	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build -f docker/Dockerfile.test . -t $(TEST_IMAGE_NAME) --network host
 
 .PHONY: up
 up: create-network
