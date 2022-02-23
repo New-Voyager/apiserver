@@ -675,6 +675,18 @@ class ClubRepositoryImpl {
       throw new UnauthorizedError();
     }
 
+    const owner = await Cache.getPlayer(ownerId);
+    if (!owner) {
+      logger.error(`Could not get owner`);
+      throw new UnauthorizedError();
+    }
+
+    const club = await Cache.getClub(clubCode);
+    if (!club) {
+      logger.error(`Could not get club: ${clubCode}`);
+      throw new UnauthorizedError();
+    }
+
     if (clubMember.status === ClubMemberStatus.DENIED) {
       return clubMember.status;
     }
