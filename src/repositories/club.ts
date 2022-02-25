@@ -667,17 +667,24 @@ class ClubRepositoryImpl {
       throw new Error('The player is not in the club');
     }
 
-    const club = await Cache.getClub(clubCode, true);
-    const owner: Player | undefined = await Promise.resolve(club.owner);
-    if (!owner) {
-      throw new Error('Unexpected. There is no owner for the club');
+    const reqClubMember = await Cache.getClubMember(ownerId, clubCode);
+    if (!reqClubMember || !reqClubMember.isOwner) {
+      logger.error(
+        `Not an owner. Request player: ${ownerId}, club: ${clubCode}, player: ${playerId}`
+      );
+      throw new UnauthorizedError();
     }
 
-    if (owner.uuid !== ownerId) {
-      // TODO: make sure the ownerId is matching with club owner
-      if (ownerId !== '') {
-        throw new Error('Unauthorized');
-      }
+    const owner = await Cache.getPlayer(ownerId);
+    if (!owner) {
+      logger.error(`Could not get owner`);
+      throw new UnauthorizedError();
+    }
+
+    const club = await Cache.getClub(clubCode);
+    if (!club) {
+      logger.error(`Could not get club: ${clubCode}`);
+      throw new UnauthorizedError();
     }
 
     if (clubMember.status === ClubMemberStatus.DENIED) {
@@ -798,10 +805,6 @@ class ClubRepositoryImpl {
     const club = await clubRepository.findOne({where: {clubCode: clubCode}});
     if (!club) {
       throw new Error(`Club ${clubCode} is not found`);
-    }
-    const owner: Player | undefined = await Promise.resolve(club.owner);
-    if (!owner) {
-      throw new Error('Unexpected. There is no owner for the club');
     }
 
     const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
@@ -1193,17 +1196,12 @@ class ClubRepositoryImpl {
       );
       throw new Error('Invalid club');
     }
-
-    const owner: Player | undefined = await Promise.resolve(club.owner);
-    if (!owner) {
-      throw new Error('Unexpected. There is no owner for the club');
-    }
-
-    if (reqPlayer.uuid !== playerUuid && reqPlayer.uuid !== owner.uuid) {
+    const reqClubMember = await Cache.getClubMember(reqPlayer.uuid, clubCode);
+    if (!reqClubMember || !reqClubMember.isOwner) {
       logger.error(
         `Credit history requested by unauthorized player. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
       );
-      throw new Error('Unauthorized');
+      throw new UnauthorizedError();
     }
 
     const player = await Cache.getPlayer(playerUuid);
@@ -1464,11 +1462,6 @@ class ClubRepositoryImpl {
         `Could not set credit. Club does not exist. club: ${clubCode}`
       );
       throw new Error('Invalid club');
-    }
-
-    const owner: Player | undefined = await Promise.resolve(club.owner);
-    if (!owner) {
-      throw new Error('Unexpected. There is no owner for the club');
     }
 
     // check whether requesting player id is owner or manager
@@ -2333,16 +2326,12 @@ class ClubRepositoryImpl {
       throw new Error('Invalid club');
     }
 
-    const owner: Player | undefined = await Promise.resolve(club.owner);
-    if (!owner) {
-      throw new Error('Unexpected. There is no owner for the club');
-    }
-
-    if (reqPlayer.uuid !== owner.uuid) {
+    const reqClubMember = await Cache.getClubMember(reqPlayer.uuid, clubCode);
+    if (!reqClubMember || !reqClubMember.isOwner) {
       logger.error(
         `Clear followup requested by unauthorized user. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
       );
-      throw new Error('Unauthorized');
+      throw new UnauthorizedError();
     }
 
     const player = await Cache.getPlayer(playerUuid);
@@ -2436,16 +2425,12 @@ class ClubRepositoryImpl {
       throw new Error('Invalid club');
     }
 
-    const owner: Player | undefined = await Promise.resolve(club.owner);
-    if (!owner) {
-      throw new Error('Unexpected. There is no owner for the club');
-    }
-
-    if (reqPlayer.uuid !== owner.uuid) {
+    const reqClubMember = await Cache.getClubMember(reqPlayer.uuid, clubCode);
+    if (!reqClubMember || !reqClubMember.isOwner) {
       logger.error(
         `Clear followup requested by unauthorized user. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
       );
-      throw new Error('Unauthorized');
+      throw new UnauthorizedError();
     }
 
     const player = await Cache.getPlayer(playerUuid);

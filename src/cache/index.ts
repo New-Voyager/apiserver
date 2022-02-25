@@ -31,6 +31,8 @@ import {getLogger, errToStr} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {reload} from '@src/resolvers/playersingame';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
+import {HighRankStats} from '@src/types';
+import {StatsRepository} from '@src/repositories/stats';
 
 const logger = getLogger('cache');
 
@@ -798,6 +800,83 @@ class GameCache {
         }
       });
     });
+  }
+
+  public async updateHighRankStats(
+    game: PokerGame,
+    straightFlush: number,
+    fourKind: number
+  ): Promise<HighRankStats> {
+    let highRankStats: HighRankStats = await this.getHighRankStats(game);
+    let key = '';
+    if (game.clubId) {
+      // club game
+      key = `hh-club-high-rank-stats-${game.clubId}`;
+    } else {
+      key = `hh-player-high-rank-stats-${game.hostId}`;
+    }
+    highRankStats.totalHands++;
+    highRankStats.straightFlush += straightFlush;
+    highRankStats.fourKind += fourKind;
+    if (straightFlush > 0) {
+      highRankStats.lastSFHand = highRankStats.totalHands;
+    }
+    if (fourKind > 0) {
+      highRankStats.last4kHand = highRankStats.totalHands;
+    }
+    await this.setCache(key, JSON.stringify(highRankStats));
+    return highRankStats;
+  }
+
+  public async getHighRankStats(game: PokerGame): Promise<HighRankStats> {
+    let highRankStats: HighRankStats;
+    let key = '';
+    if (game.clubId) {
+      // club game
+      key = `hh-club-high-rank-stats-${game.clubId}`;
+    } else {
+      key = `hh-player-high-rank-stats-${game.hostId}`;
+    }
+    const getResp = await this.getCache(key);
+    if (getResp.success && getResp.data) {
+      return JSON.parse(getResp.data);
+    }
+    highRankStats = {
+      totalHands: 0,
+      straightFlush: 0,
+      fourKind: 0,
+      lastSFHand: 0,
+      last4kHand: 0,
+    };
+
+    if (game.clubId) {
+      // club game
+      const clubHHStats = await StatsRepository.getClubHhRankStats(game.clubId);
+
+      if (clubHHStats) {
+        highRankStats = {
+          totalHands: clubHHStats.totalHands,
+          straightFlush: clubHHStats.straightFlush,
+          fourKind: clubHHStats.fourKind,
+          lastSFHand: clubHHStats.lastSFHand,
+          last4kHand: clubHHStats.last4kHand,
+        };
+      }
+    } else {
+      const stats = await StatsRepository.getPlayerHhRankStats(game.hostId);
+
+      if (stats) {
+        highRankStats = {
+          totalHands: stats.totalHands,
+          straightFlush: stats.straightFlush,
+          fourKind: stats.fourKind,
+          lastSFHand: stats.lastSFHand,
+          last4kHand: stats.last4kHand,
+        };
+      }
+    }
+    await this.setCache(key, JSON.stringify(highRankStats));
+    return highRankStats;
   }
 }
 

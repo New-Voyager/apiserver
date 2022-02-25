@@ -13,7 +13,7 @@ import {
   TableStatus,
 } from '@src/entity/types';
 import {GameRepository} from './game';
-import {getLogger} from '@src/utils/log';
+import {errToStr, getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
 import {markDealerChoiceNextHand} from './pendingupdates';
 import {NewHandInfo, PlayerInSeat} from './types';
@@ -23,6 +23,7 @@ import {GameUpdatesRepository} from './gameupdates';
 import {EntityManager} from 'typeorm';
 import _ from 'lodash';
 import {GameNotFoundError} from '@src/errors';
+import {HighRankStats} from '@src/types';
 
 const logger = getLogger('repositories::nexthand');
 
@@ -923,6 +924,40 @@ export class NextHandProcess {
             gameUpdate.buttonPos
           }`
         );
+        let highRankStats: HighRankStats = {
+          totalHands: 0,
+          straightFlush: 0,
+          fourKind: 0,
+          lastSFHand: 0,
+          last4kHand: 0,
+        };
+
+        try {
+          highRankStats = await Cache.getHighRankStats(game);
+        } catch (err) {
+          // not a critical error
+          logger.warn(
+            `Could not get high rank stats from cache: ${errToStr(err)}`
+          );
+        }
+
+        const isSFAllowed = shouldAllowStraightFlush(
+          gameType,
+          highRankStats.totalHands,
+          highRankStats.lastSFHand
+        );
+        const is4kAllowed = shouldAllow4K(
+          gameType,
+          highRankStats.totalHands,
+          highRankStats.last4kHand
+        );
+
+        if (!isSFAllowed || !is4kAllowed) {
+          logger.info(
+            `SF allowed?: ${isSFAllowed}, 4K allowed?: ${is4kAllowed} Total Hands: ${highRankStats.totalHands}, Last SF: ${highRankStats.lastSFHand}, Last 4K: ${highRankStats.last4kHand}`
+          );
+        }
+
         const nextHandInfo: NewHandInfo = {
           gameId: game.id,
           gameCode: this.gameCode,
@@ -953,10 +988,85 @@ export class NextHandProcess {
           highHandRank: game.highHandRank,
           // Not implemented yet (do we need it?)
           bringIn: 0,
+          totalHands: highRankStats.totalHands,
+          straightFlushCount: highRankStats.straightFlush,
+          fourKindCount: highRankStats.fourKind,
+          straightFlushAllowed: isSFAllowed,
+          fourKindAllowed: is4kAllowed,
         };
         return nextHandInfo;
       }
     );
     return ret;
   }
+}
+
+/*
+  Intervals are based on 3-player hand.
+*/
+function shouldAllowStraightFlush(
+  gameType: GameType,
+  totalHands: number,
+  lastSFHand: number
+): boolean {
+  let interval: number;
+  switch (gameType) {
+    case GameType.HOLDEM:
+      interval = 1248; // 1/0.000801
+      break;
+    case GameType.PLO:
+    case GameType.PLO_HILO:
+      interval = 419; // 1/(0.000795 * 3)
+      break;
+    case GameType.FIVE_CARD_PLO:
+    case GameType.FIVE_CARD_PLO_HILO:
+      interval = 300; // Just a random guess. Can't find the correct value.
+      break;
+    case GameType.SIX_CARD_PLO:
+    case GameType.SIX_CARD_PLO_HILO:
+      interval = 200; // Just a random guess. Can't find the correct value.
+      break;
+    default:
+      // Just some arbitrary number to fall back to.
+      interval = 200;
+      break;
+  }
+
+  const multiplier = 0.7;
+  return totalHands - lastSFHand > interval * multiplier;
+}
+
+/*
+  Intervals are based on 3-player hand.
+*/
+function shouldAllow4K(
+  gameType: GameType,
+  totalHands: number,
+  last4kHand: number
+): boolean {
+  let interval: number;
+  switch (gameType) {
+    case GameType.HOLDEM:
+      interval = 219; // 1/0.004560
+      break;
+    case GameType.PLO:
+    case GameType.PLO_HILO:
+      interval = 69; // 1/(0.0048 * 3)
+      break;
+    case GameType.FIVE_CARD_PLO:
+    case GameType.FIVE_CARD_PLO_HILO:
+      interval = 60; // Just a random guess. Can't find the correct value.
+      break;
+    case GameType.SIX_CARD_PLO:
+    case GameType.SIX_CARD_PLO_HILO:
+      interval = 50; // Just a random guess. Can't find the correct value.
+      break;
+    default:
+      // Just some arbitrary number to fall back to.
+      interval = 50;
+      break;
+  }
+
+  const multiplier = 0.7;
+  return totalHands - last4kHand > interval * multiplier;
 }

@@ -17,9 +17,11 @@ import {
 import {HandHistory} from '../src/entity/history/hand';
 import {PlayerGameTracker} from '../src/entity/game/player_game_tracker';
 import {
+  ClubHighRankStats,
   ClubStats,
   PlayerGameStats,
   PlayerHandStats,
+  PlayerHighRankStats,
   SystemStats,
 } from '../src/entity/history/stats';
 import {GameHistory} from '../src/entity/history/game';
@@ -135,6 +137,8 @@ export async function sqlliteConnection() {
           ClubStats,
           SystemStats,
           PlayerGameStats,
+          PlayerHighRankStats,
+          ClubHighRankStats,
         ],
         dropSchema: true,
         synchronize: true,

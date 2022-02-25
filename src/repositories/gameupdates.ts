@@ -212,6 +212,41 @@ class GameUpdatesRepositoryImpl {
       .execute();
   }
 
+  public async updateHighRankStats(
+    transactionEntityManager: EntityManager,
+    game: PokerGame,
+    straightFlushes: number,
+    fourOfKinds: number
+  ) {
+    const gameUpdatesRepo =
+      transactionEntityManager.getRepository(PokerGameUpdates);
+    let lastSFHandCol: string;
+    if (straightFlushes > 0) {
+      lastSFHandCol = 'hand_num';
+    } else {
+      lastSFHandCol = 'last_sf_hand';
+    }
+    let last4kHandCol: string;
+    if (fourOfKinds > 0) {
+      last4kHandCol = 'hand_num';
+    } else {
+      last4kHandCol = 'last_4k_hand';
+    }
+    await gameUpdatesRepo
+      .createQueryBuilder()
+      .update()
+      .set({
+        straightFlushCount: () => `straight_flush_count + ${straightFlushes}`,
+        fourKindCount: () => `four_kind_count + ${fourOfKinds}`,
+        lastSFHand: () => lastSFHandCol,
+        last4kHand: () => last4kHandCol,
+      })
+      .where({
+        gameCode: game.gameCode,
+      })
+      .execute();
+  }
+
   public async get(
     gameCode: string,
     update?: boolean,

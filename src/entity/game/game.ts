@@ -128,6 +128,18 @@ export class PokerGameUpdates {
     default: 0,
   })
   public lastConsecutiveTimeoutProcessedHand!: number;
+
+  @Column({name: 'straight_flush_count', default: 0})
+  public straightFlushCount!: number;
+
+  @Column({name: 'four_kind_count', default: 0})
+  public fourKindCount!: number;
+
+  @Column({name: 'last_sf_hand', nullable: false, default: 0})
+  public lastSFHand!: number;
+
+  @Column({name: 'last_4k_hand', nullable: false, default: 0})
+  public last4kHand!: number;
 }
 
 @Entity({name: 'poker_game_seat_info'})

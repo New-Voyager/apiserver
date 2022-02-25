@@ -306,3 +306,53 @@ export class SystemStats {
   @Column({type: 'bigint', name: 'four_2222', default: 0})
   public four2222!: number;
 }
+
+@Entity({name: 'club_high_rank_stats'})
+export class ClubHighRankStats {
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @Index('club-hh-rank-stats-idx')
+  @Column({name: 'club_id', type: 'int'})
+  public clubId!: number;
+
+  @Column({type: 'bigint', name: 'total_hands', default: 0})
+  public totalHands!: number;
+
+  @Column({type: 'bigint', name: 'straight_flush', default: 0})
+  public straightFlush!: number;
+
+  @Column({type: 'bigint', name: 'four_kind', default: 0})
+  public fourKind!: number;
+
+  @Column({type: 'bigint', name: 'last_sf_hand', default: 0})
+  public lastSFHand!: number;
+
+  @Column({type: 'bigint', name: 'last_4k_hand', default: 0})
+  public last4kHand!: number;
+}
+
+@Entity({name: 'player_high_rank_stats'})
+export class PlayerHighRankStats {
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @Index('player-hh-rank-stats-idx')
+  @Column({name: 'player_id', type: 'bigint'})
+  public playerId!: number;
+
+  @Column({type: 'bigint', name: 'total_hands', default: 0})
+  public totalHands!: number;
+
+  @Column({type: 'bigint', name: 'straight_flush', default: 0})
+  public straightFlush!: number;
+
+  @Column({type: 'bigint', name: 'four_kind', default: 0})
+  public fourKind!: number;
+
+  @Column({type: 'bigint', name: 'last_sf_hand', default: 0})
+  public lastSFHand!: number;
+
+  @Column({type: 'bigint', name: 'last_4k_hand', default: 0})
+  public last4kHand!: number;
+}

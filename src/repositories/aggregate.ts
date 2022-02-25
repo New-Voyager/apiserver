@@ -204,7 +204,10 @@ class AggregationImpl {
               playersInShowdown,
               transactionalEntityManager
             );
-
+            await StatsRepository.updateHighRankStats(
+              game,
+              transactionalEntityManager
+            );
             // hand history
             let hand: any = {};
             hand.wonAt = handHistory.wonAt;
@@ -530,7 +533,7 @@ class AggregationImpl {
       data.pairedBoardsCount = ret.pairedBoards.length;
       data.pairedSecondBoardsCount = ret.pairedSecondBoards.length;
       data.sameHoleCardsCount = ret.game.sameRankHolecards;
-      data.straightFlushesCount = ret.game.fullHouseHands;
+      data.straightFlushesCount = ret.game.straightFlushes;
       data.fourOfKindCount = ret.game.fourOfKinds;
       data.fullHouseCount = ret.game.fullHouseHands;
       await repo.save(data);

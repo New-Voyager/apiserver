@@ -17,8 +17,8 @@ IMAGE_NAME := api-server
 TEST_IMAGE_NAME := api-server-test
 
 API_SERVER_IMAGE := $(REGISTRY)/$(IMAGE_NAME):0.7.62
-GAME_SERVER_IMAGE := $(REGISTRY)/game-server:0.7.74
-BOTRUNNER_IMAGE := $(REGISTRY)/botrunner:0.7.53
+GAME_SERVER_IMAGE := $(REGISTRY)/game-server:0.7.75
+BOTRUNNER_IMAGE := $(REGISTRY)/botrunner:0.7.54
 TIMER_IMAGE := $(REGISTRY)/timer:0.5.11
 SCHEDULER_IMAGE := $(REGISTRY)/scheduler:0.1.10
 
@@ -112,11 +112,11 @@ create-network:
 
 .PHONY: docker-build
 docker-build:
-	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build -f docker/Dockerfile.apiserver . -t $(IMAGE_NAME)
+	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build -f docker/Dockerfile.apiserver . -t $(IMAGE_NAME) --network host
 
 .PHONY: docker-build-test
 docker-build-test:
-	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build -f docker/Dockerfile.test . -t $(TEST_IMAGE_NAME)
+	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build -f docker/Dockerfile.test . -t $(TEST_IMAGE_NAME) --network host
 
 .PHONY: up
 up: create-network
