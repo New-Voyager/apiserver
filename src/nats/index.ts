@@ -215,6 +215,36 @@ class NatsClass {
     this.sendMessage(subject, messageStr);
   }
 
+  public sendPlayerGameUpdate(
+    playerId: number,
+    playerUuid: string,
+    game: PokerGame,
+    gameStatus: GameStatus,
+    messageId: string,
+    data?: any
+  ) {
+    /*
+    {
+      "type": "CLUB_UPDATED",
+      "clubName": "Manchester Club",
+      "clubCode": "<>"
+    }
+    */
+    let message: any = {
+      type: 'GAME_STATUS_CHANGE',
+      gameCode: game.gameCode,
+      status: GameStatus[gameStatus],
+      requestId: messageId,
+    };
+
+    if (data) {
+      message = Object.assign(message, data);
+    }
+    const messageStr = JSON.stringify(message);
+    const subject = this.getPlayerChannelUsingId(playerId);
+    this.sendMessage(subject, messageStr);
+  }
+
   public async notifyDealerChoicePrompt(
     game: PokerGame,
     playerId: number,
@@ -974,6 +1004,11 @@ class NatsClass {
 
   public getPlayerChannel(player: Player): string {
     const subject = `player.${player.id}`;
+    return subject;
+  }
+
+  public getPlayerChannelUsingId(playerId: number): string {
+    const subject = `player.${playerId}`;
     return subject;
   }
 

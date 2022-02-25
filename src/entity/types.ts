@@ -35,6 +35,7 @@ export enum TableStatus {
   GAME_RUNNING,
   HOST_SEATCHANGE_IN_PROGRESS,
   HOST_SEATCHANGE_COMPLETE,
+  GAME_ENDED,
 }
 
 export enum NextHandUpdate {

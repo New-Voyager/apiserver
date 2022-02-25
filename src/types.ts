@@ -73,6 +73,7 @@ export interface getPlayerClubsData {
   status: number;
   availableCredit: number;
   picUrl: string;
+  isOwner: boolean;
 }
 
 export interface getClubGamesData {

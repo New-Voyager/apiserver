@@ -1238,12 +1238,7 @@ class GameRepositoryImpl {
       }
 
       // announce to the players the game has ended
-      await Nats.changeGameStatus(
-        game,
-        status,
-        TableStatus.WAITING_TO_BE_STARTED,
-        forced
-      );
+      await Nats.changeGameStatus(game, status, TableStatus.GAME_ENDED, forced);
       if (game.clubCode) {
         const messageId = uuidv4();
         Nats.sendClubUpdate(
@@ -1254,6 +1249,23 @@ class GameRepositoryImpl {
         );
         const club = await Cache.getClub(game.clubCode);
         Firebase.gameEnded(club, game.gameCode, messageId);
+      } else {
+        // notify all the players who were in the game
+        const messageId = uuidv4();
+        const players = await PlayersInGameRepository.getPlayersInGameById(
+          game.id
+        );
+        if (players) {
+          for (const player of players) {
+            Nats.sendPlayerGameUpdate(
+              player.playerId,
+              player.playerUuid,
+              game,
+              GameStatus.ENDED,
+              messageId
+            );
+          }
+        }
       }
       return status;
     } else {

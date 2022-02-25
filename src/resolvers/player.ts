@@ -40,9 +40,7 @@ async function getClubs(playerId: string): Promise<Array<any>> {
 
   const clubs = _.map(clubMembers, x => {
     let isOwner = false;
-    if (x.ownerId === player.id) {
-      isOwner = true;
-    }
+    isOwner = x.isOwner;
 
     return {
       name: x.name,
