@@ -217,9 +217,9 @@ export async function createClub(playerId: string, club: ClubCreateInput) {
   if (club.name === '') {
     errors.push('name is a required field');
   }
-  if (club.description === '') {
-    errors.push('description is a required field');
-  }
+  // if (club.description === '') {
+  //   errors.push('description is a required field');
+  // }
 
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));

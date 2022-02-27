@@ -905,7 +905,7 @@ export function resetAppSettingsTest() {
 export function resetAppSettings() {
   settings = {
     maxClubCount: 20,
-    newUserFreeCoins: 20,
+    newUserFreeCoins: 100,
     clubHostFreeCoins: 100,
     consumeTime: 30 * 60, // every 30 minutes
     coinsAlertNotifyTime: 15 * 60,

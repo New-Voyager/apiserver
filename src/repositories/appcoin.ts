@@ -19,7 +19,7 @@ import {Nats} from '@src/nats';
 const crypto = require('crypto');
 
 const logger = getLogger('repositories::appcoins');
-
+const useAppCoin = false;
 class AppCoinRepositoryImpl {
   public async purchaseCoins(
     playerUuid: string,
@@ -212,6 +212,11 @@ class AppCoinRepositoryImpl {
   }
 
   public async enoughCoinsForGame(gameCode: string): Promise<boolean> {
+    // for v1, we won't deduct any coins
+    if (!useAppCoin) {
+      return true;
+    }
+
     const game = await Cache.getGame(gameCode);
     if (!game) {
       throw new Error(`Game: ${gameCode} is not found`);
@@ -236,6 +241,11 @@ class AppCoinRepositoryImpl {
   }
 
   public async gameCheckAvailableCoins(game: PokerGame) {
+    // for v1, we won't deduct any coins
+    if (useAppCoin) {
+      return true;
+    }
+
     let playerUuid = game.hostUuid;
     const host = await Cache.getPlayer(game.hostUuid);
     let clubOwnedByBot = false;

@@ -27,7 +27,7 @@ export class Club {
   @Column({name: 'club_code', unique: true})
   public clubCode!: string;
 
-  @Column()
+  @Column({nullable: true})
   public description!: string;
 
   @Column()
