@@ -24,6 +24,7 @@ RUN npm run compile && \
   rm -rf node_modules/typescript/ && \
   rm -rf geodb/ && \
   rm -rf *.log && \
+  find node_modules -name "*.ts" -exec rm -rf {} \; && \
   npm prune --production
 
 FROM node:16.13-alpine3.14
