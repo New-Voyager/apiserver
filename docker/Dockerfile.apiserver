@@ -1,6 +1,4 @@
 FROM node:16.13-alpine3.14 AS builder
-RUN apk --no-cache add curl
-WORKDIR /app
 
 RUN mkdir /build
 COPY package.json package-lock.json /build/
@@ -12,9 +10,8 @@ COPY . .
 
 RUN npm run compile && \
   rm -rf /app/node_modules/typescript && \
-  rm -rf /app/node_modules/prettier
-
-RUN clean-modules --exclude **/googleapis/**/docs && \
+  rm -rf /app/node_modules/prettier && \
+  clean-modules --exclude **/googleapis/**/docs && \
   rm -rf ./node_modules/eslint && \
   rm -rf ./node_modules/@types && \
   rm -rf ./coverage && \
@@ -23,8 +20,11 @@ RUN clean-modules --exclude **/googleapis/**/docs && \
   rm -rf node_modules/rxjs/_esm5/ && \
   rm -rf node_modules/rxjs/_esm2015/ && \
   rm -rf node_modules/grpc/deps/grpc/third_party/ && \
-  rm -rf node_modules/aws-sdk/dist/
-
+  rm -rf node_modules/aws-sdk/dist/ && \
+  rm -rf node_modules/typescript/ && \
+  rm -rf geodb/ && \
+  rm -rf *.log && \
+  npm prune --production
 
 FROM node:16.13-alpine3.14
 RUN apk --no-cache add --update curl
