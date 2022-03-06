@@ -385,6 +385,7 @@ class ClubRepositoryImpl {
         transactionEntityManager.getRepository<ClubMember>(ClubMember);
       const clubCount = await clubMemberRepo.count({
         player: {id: owner.id},
+        isMainOwner: true,
       });
       const appSettings = getAppSettings();
       if (clubCount >= appSettings.maxClubCount) {
