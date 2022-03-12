@@ -131,6 +131,7 @@ export interface UserRegistrationPayload {
   physicalDimension?: string;
   screenDimension?: string;
   attribsUsed?: string;
+  appVersion?: string;
 }
 
 export interface LoginPayload {

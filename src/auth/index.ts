@@ -151,6 +151,7 @@ export async function signup(req: any, resp: any) {
   const attribsUsed = payload['attribs-used'];
   const physicalDimension = payload['physical-dimension'];
   const screenDimension = payload['screen-dimension'];
+  const appVersion = payload['app-version'];
   // "device-model": DeviceInfo.model,
   // "device-os": DeviceInfo.version,
   // "attribs-used": attribs.name,
@@ -182,6 +183,7 @@ export async function signup(req: any, resp: any) {
     physicalDimension: physicalDimension,
     screenDimension: screenDimension,
     attribsUsed: attribsUsed,
+    appVersion: appVersion,
   };
 
   let player: Player;

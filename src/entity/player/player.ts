@@ -111,6 +111,9 @@ export class Player {
   @Column({name: 'attribs_used', nullable: true})
   public attribsUsed!: string;
 
+  @Column({name: 'app_version', nullable: true})
+  public appVersion!: string;
+
   // player current ip address and gps location (caching)
   public ipAddress!: string | undefined;
 

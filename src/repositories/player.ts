@@ -433,11 +433,15 @@ class PlayerRepositoryImpl {
     if (!register.attribsUsed) {
       register.attribsUsed = '';
     }
+    if (!register.appVersion) {
+      register.appVersion = '';
+    }
     player.deviceModel = register.deviceModel;
     player.deviceOS = register.deviceOS;
     player.attribsUsed = register.attribsUsed;
     player.physicalDimension = register.physicalDimension;
     player.screenDimension = register.screenDimension;
+    player.appVersion = register.appVersion;
     await repository.save(player);
     await StatsRepository.newPlayerHandStats(player);
     if (newUser) {

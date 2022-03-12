@@ -31,7 +31,10 @@
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run-script", "watch-debug"],
+      "runtimeArgs": [
+        "run-script",
+        "watch-debug"
+      ],
       "port": 9235,
       "outputCapture": "std",
       "console": "internalConsole",
@@ -50,13 +53,16 @@
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}",
-      "runtimeExecutable": "/Users/devopsvoyager/.nvm/versions/node/v17.4.0/bin/npm",
-      "runtimeArgs": ["run-script", "watch-localhost-debug"],
+      "runtimeExecutable": "/Users/devopsvoyager/.nvm/versions/node/v17.4.0/bin//npm",
+      "runtimeArgs": [
+        "run-script",
+        "watch-localhost-debug"
+      ],
       "port": 9235,
       "outputCapture": "std",
       "console": "internalConsole",
       "env": {
-        "NATS_URL": "nats://192.168.1.28:4222",
+        "NATS_URL": "nats://192.168.0.113:4222",
         "EXTERNAL_ENDPOINTS": "1",
         "INTERNAL_ENDPOINTS": "1",
         "STORE_HAND_ANALYSIS": "1",
@@ -73,7 +79,10 @@
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run-script", "watch-localhost-prod-debug"],
+      "runtimeArgs": [
+        "run-script",
+        "watch-localhost-prod-debug"
+      ],
       "port": 9235,
       "outputCapture": "std",
       "console": "internalConsole",
@@ -89,14 +98,17 @@
         "POSTGRES_DB": "game",
         "NODE_ENV": "prod"
       }
-    },    
+    },
     {
       "name": "Integration Test Server Debug",
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run-script", "int-server"],
+      "runtimeArgs": [
+        "run-script",
+        "int-server"
+      ],
       "port": 9235,
       "outputCapture": "std",
       "console": "internalConsole",
@@ -110,14 +122,17 @@
         "POSTGRES_PASSWORD": "game",
         "POSTGRES_DB": "game"
       }
-    },    
+    },
     {
       "name": "Run prod",
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run-script", "watch-debug"],
+      "runtimeArgs": [
+        "run-script",
+        "watch-debug"
+      ],
       "port": 9235,
       "outputCapture": "std",
       "console": "internalConsole",
@@ -135,14 +150,17 @@
         "REDIS_USER": "default",
         "REDIS_PASSWORD": "fwk0hhx8306zmefl"
       }
-    },    
+    },
     {
       "name": "Test Server debug",
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run-script", "test-server-watch"],
+      "runtimeArgs": [
+        "run-script",
+        "test-server-watch"
+      ],
       "port": 9235,
       "outputCapture": "std",
       "console": "internalConsole",
@@ -152,14 +170,17 @@
         "NODE_ENV": "test",
         "DB_USED": "sqllite"
       }
-    },    
+    },
     {
       "name": "Watch debug windows",
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run-script", "debug-windows"],
+      "runtimeArgs": [
+        "run-script",
+        "debug-windows"
+      ],
       "port": 9235,
       "env": {
         "EXTERNAL_ENDPOINTS": "1",
@@ -170,7 +191,7 @@
         "POSTGRES_PASSWORD": "game",
         "POSTGRES_DB": "game"
       }
-    },           
+    },
     {
       "name": "Debug Jest Tests",
       "type": "node",
@@ -216,7 +237,7 @@
         "POSTGRES_USER": "game",
         "POSTGRES_PASSWORD": "game",
         "POSTGRES_DB": "game",
-        "NATS_URL": "nats://localhost:4222"        
+        "NATS_URL": "nats://localhost:4222"
       },
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
@@ -250,13 +271,18 @@
       "request": "launch",
       "name": "Launch Script tests",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["--nolazy", "-r", "ts-node/register/transpile-only"],
-
+      "runtimeArgs": [
+        "--nolazy",
+        "-r",
+        "ts-node/register/transpile-only"
+      ],
       "skipFiles": [
         "<node_internals>/**"
       ],
       "cwd": "${workspaceRoot}",
-      "args": ["script-tests/testdriver.ts"],
+      "args": [
+        "script-tests/testdriver.ts"
+      ],
       "outFiles": [
         "${workspaceFolder}/**/*.js"
       ],
