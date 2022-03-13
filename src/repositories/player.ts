@@ -537,9 +537,15 @@ class PlayerRepositoryImpl {
     return player;
   }
 
-  public async updateLastActiveDate(playerUuid: string) {
+  public async updateLastActiveDate(playerUuid: string, appVersion?: string) {
     const repository = getUserRepository(Player);
-    await repository.update({uuid: playerUuid}, {lastActiveDate: new Date()});
+    const props = {
+      lastActiveDate: new Date(),
+    };
+    if (appVersion) {
+      props['appVersion'] = appVersion;
+    }
+    await repository.update({uuid: playerUuid}, props);
   }
 
   public async updatePic(playerId: string, url: string) {}

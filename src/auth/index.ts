@@ -266,6 +266,7 @@ export async function newlogin(req: any, resp: any) {
 
   const deviceId = payload['device-id'];
   const deviceSecret = payload['device-secret'];
+  const appVersion = payload['app-version'];
 
   const errors = new Array<string>();
   if (!deviceId) {
@@ -320,7 +321,7 @@ export async function newlogin(req: any, resp: any) {
     };
 
     // update last active date
-    await PlayerRepository.updateLastActiveDate(player.uuid);
+    await PlayerRepository.updateLastActiveDate(player.uuid, appVersion);
     resp.contentType('application/json');
     resp.status(200).send(JSON.stringify(response));
   } catch (err) {
