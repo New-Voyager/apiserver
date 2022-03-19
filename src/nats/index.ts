@@ -99,6 +99,7 @@ class NatsClass {
   }
 
   public sendCreditMessage(
+    clubCode: string,
     clubName: string,
     player: Player,
     text: string,
@@ -107,6 +108,7 @@ class NatsClass {
     const message: any = {
       type: 'CREDIT_UPDATE',
       clubName: clubName,
+      clubCode: clubCode,
       text: text,
       requestId: messageId,
     };

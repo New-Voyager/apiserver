@@ -1198,11 +1198,21 @@ class ClubRepositoryImpl {
       throw new Error('Invalid club');
     }
     const reqClubMember = await Cache.getClubMember(reqPlayer.uuid, clubCode);
-    if (!reqClubMember || !reqClubMember.isOwner) {
+    if (!reqClubMember) {
       logger.error(
         `Credit history requested by unauthorized player. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
       );
       throw new UnauthorizedError();
+    }
+
+    if (reqPlayer.uuid !== playerUuid) {
+      // only owner can view other player's credit history
+      if (!reqClubMember.isOwner) {
+        logger.error(
+          `Credit history requested by unauthorized player. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+        );
+        throw new UnauthorizedError();
+      }
     }
 
     const player = await Cache.getPlayer(playerUuid);
@@ -1840,7 +1850,13 @@ class ClubRepositoryImpl {
       );
       const messageId = uuidv4();
       // // send a NATS message to player
-      Nats.sendCreditMessage(club.name, clubMember.player, message, messageId);
+      Nats.sendCreditMessage(
+        club.clubCode,
+        club.name,
+        clubMember.player,
+        message,
+        messageId
+      );
     }
   }
 
