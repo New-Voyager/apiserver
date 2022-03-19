@@ -80,6 +80,7 @@ export enum ClubMessageType {
   LEAVE_CLUB,
   KICKED_OUT,
   NEW_GAME,
+  STICKER,
 }
 
 export enum ClubMemberStatus {

@@ -6,6 +6,7 @@ enum ClubMessageType {
   LEAVE_CLUB,
   KICKED_OUT,
   NEW_GAME,
+  STICKER,
 }
 
 enum HostMessageType {
