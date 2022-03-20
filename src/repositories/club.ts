@@ -923,6 +923,11 @@ class ClubRepositoryImpl {
       player.id,
       player.id,
     ]);
+    for (const r of result) {
+      // SQLite returns 0 for boolean which goes all the way to the GQL response.
+      // Convert it to the proper boolean value.
+      r.isOwner = !!r.isOwner;
+    }
     return result;
   }
 

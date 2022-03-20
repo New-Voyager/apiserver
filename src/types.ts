@@ -65,7 +65,7 @@ export interface getMembersFilterData {
 
 export interface getPlayerClubsData {
   clubCode: string;
-  memberCount: string;
+  memberCount: number;
   name: string;
   host: string;
   ownerId: number;
