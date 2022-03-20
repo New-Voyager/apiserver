@@ -49,7 +49,7 @@ async function getClubs(playerId: string): Promise<Array<any>> {
       imageId: '',
       isOwner: isOwner,
       clubCode: x.clubCode,
-      memberCount: parseInt(x.memberCount),
+      memberCount: x.memberCount,
       clubStatus: ClubStatus[x.status],
       memberStatus: ClubMemberStatus[x.memberStatus],
       availableCredit: x.availableCredit,
