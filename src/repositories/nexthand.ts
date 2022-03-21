@@ -618,7 +618,8 @@ class MoveToNextHand {
         return;
       }
       if (this.handNum === 1) {
-        this.bombPotThisHand = true;
+        // Should not run bomb pot on the first hand.
+        // this.bombPotThisHand = true;
         this.gameUpdate.lastBombPotTime = new Date();
         this.gameUpdate.lastBombPotHandNum = 0;
       } else {
