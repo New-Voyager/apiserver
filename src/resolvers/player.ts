@@ -21,6 +21,7 @@ import {HistoryRepository} from '@src/repositories/history';
 import {PromotionRepository} from '@src/repositories/promotion';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
 import {centsToChips} from '@src/utils';
+import {PlayChipRepository} from '@src/repositories/playchip';
 const logger = getLogger('resolvers::player');
 
 async function getClubs(playerId: string): Promise<Array<any>> {
@@ -325,6 +326,9 @@ export async function getPlayerInfo(playerId: string, getPrivs: boolean) {
       logger.error(`Exception caught when getting privileges ${errToStr(err)}`);
     }
   }
+
+  const playChips = await PlayChipRepository.getChips(playerId);
+
   return {
     uuid: player.uuid,
     id: player.id,
@@ -334,6 +338,7 @@ export async function getPlayerInfo(playerId: string, getPrivs: boolean) {
     lastActiveTime: player.updatedAt,
     channel: Nats.getPlayerChannel(player),
     privileges: privileges,
+    playChips: playChips,
   };
 }
 

@@ -104,6 +104,7 @@ type PlayerInfo {
   lastActiveTime: DateTime
   channel: String
   privileges: Privileges
+  playChips: Int
 }
 
 type Privileges {

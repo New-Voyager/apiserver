@@ -13,6 +13,7 @@ import {UserRegistrationPayload} from '@src/types';
 import {sendRecoveryCode} from '@src/email';
 import {getRecoveryCode} from '@src/utils/uniqueid';
 import {AppCoinRepository} from './appcoin';
+import {PlayChipRepository} from './playchip';
 
 const logger = getLogger('repositories::player');
 
@@ -446,6 +447,7 @@ class PlayerRepositoryImpl {
     await StatsRepository.newPlayerHandStats(player);
     if (newUser) {
       await AppCoinRepository.newUser(player);
+      await PlayChipRepository.newUser(player);
     }
     return player;
   }
