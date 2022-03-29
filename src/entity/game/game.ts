@@ -593,6 +593,9 @@ export class PokerGame {
   // public nextCoinConsumeTime: Date | null = null;
 
   // public lastIpCheckTime: Date | null = null;
+
+  @Column({name: 'demo_game', default: false})
+  public demoGame!: boolean;
 }
 
 @Entity({name: 'next_hand_updates'})

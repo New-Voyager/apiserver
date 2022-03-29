@@ -212,6 +212,11 @@ export async function configureGameByPlayer(playerId: string, game: any) {
     Metrics.incNewGame();
     const ret: any = gameInfo as any;
     ret.gameType = GameType[gameInfo.gameType];
+
+    if (gameInServerUnits.demoGame) {
+      await fillSeats("", cachedGame.id, cachedGame.gameCode, true);
+    }
+
     return gameInfoToClientUnits(ret);
   } catch (err) {
     logger.error(
