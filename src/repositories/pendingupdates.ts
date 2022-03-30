@@ -1,7 +1,9 @@
 import {Not, EntityManager, Repository, getRepository, In} from 'typeorm';
+import {v4 as uuidv4} from 'uuid';
 import {fixQuery} from '@src/utils';
 import {
   ApprovalStatus,
+  GameEndReason,
   GameStatus,
   GameType,
   NextHandUpdate,
@@ -37,6 +39,7 @@ import {GameSettingsRepository} from './gamesettings';
 import {resumeGame} from '@src/gameserver';
 import {PlayersInGameRepository} from './playersingame';
 import {GameUpdatesRepository} from './gameupdates';
+import {NextHandUpdatesRepository} from './nexthand_update';
 
 const logger = getLogger('repositories::pendingupdates');
 
@@ -302,6 +305,19 @@ export async function processPendingUpdates(gameId: number) {
     } else {
       const cachedGame = await Cache.getGame(game.gameCode);
       await resumeGame(gameId);
+    }
+    const update = await GameUpdatesRepository.get(game.gameCode);
+
+    // if demo game, end it after 5th hand
+    if (game.demoGame && update.handNum === 4) {
+      const player = await Cache.getPlayer(game.hostUuid);
+      await NextHandUpdatesRepository.endGameNextHand(
+        player,
+        game.id,
+        GameEndReason.SYSTEM_TERMINATED
+      );
+      const messageId = uuidv4();
+      Nats.sendGameEndingMessage(game.gameCode, messageId);
     }
   }
 }

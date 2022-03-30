@@ -116,7 +116,7 @@ class GameRepositoryImpl {
     game.gameType = gameType;
 
     if (game.demoGame) {
-      game.maxPlayers = 6
+      game.maxPlayers = 6;
     }
 
     const chipUnitStr: string = input['chipUnit'];

@@ -214,7 +214,11 @@ export async function configureGameByPlayer(playerId: string, game: any) {
     ret.gameType = GameType[gameInfo.gameType];
 
     if (gameInServerUnits.demoGame) {
-      await fillSeats("", cachedGame.id, cachedGame.gameCode, true);
+      try {
+        await fillSeats('', cachedGame.id, cachedGame.gameCode, true);
+      } catch (err) {
+        throw new Error('Cannot start the bot game');
+      }
     }
 
     return gameInfoToClientUnits(ret);
