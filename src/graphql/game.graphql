@@ -161,6 +161,8 @@ input GameCreateInput {
 
   breakAllowed: Boolean
   breakLength: Int # in minutes (default 15 mins)
+
+  isLobbyGame: Boolean
 }
 
 type SeatInfo {
@@ -319,6 +321,8 @@ type GameInfo {
   livekitToken: String
 
   settings: GameSettings
+
+  isLobbyGame: Boolean
 }
 
 type GamePlayerSettings {
@@ -711,4 +715,6 @@ type Query {
   playerRole(gameCode: String!): PlayerRole
 
   playersWithNotes(gameCode: String!): [PlayerNotes!]
+
+  lobbyGames: [GameInfo!]
 }

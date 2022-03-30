@@ -590,6 +590,9 @@ export class PokerGame {
 
   public pendingUpdates = false;
 
+  @Column({name: 'is_lobby_game', default: false})
+  public isLobbyGame!: boolean;
+
   // public nextCoinConsumeTime: Date | null = null;
 
   // public lastIpCheckTime: Date | null = null;
