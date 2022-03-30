@@ -223,6 +223,43 @@ export async function configureGameByPlayer(playerId: string, game: any) {
   }
 }
 
+export async function configureLobbyGame(playerId: string, game: any) {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+  const errors = new Array<string>();
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+  try {
+    const player = await Cache.getPlayer(playerId);
+    const gameInServerUnits = gameInputToServerUnits(game);
+    const gameInfo = await GameRepository.createPrivateGame(
+      null,
+      player,
+      gameInServerUnits
+    );
+    const cachedGame = await Cache.getGame(gameInfo.gameCode, true);
+    if (!cachedGame) {
+      throw new GameNotFoundError(gameInfo.gameCode);
+    }
+    logger.info(
+      `[${gameLogPrefix(cachedGame)}] Game ${gameInfo.gameCode} is created.`
+    );
+    Metrics.incNewGame();
+    const ret: any = gameInfo as any;
+    ret.gameType = GameType[gameInfo.gameType];
+    return gameInfoToClientUnits(ret);
+  } catch (err) {
+    logger.error(
+      `Error while configuring game by player. playerId: ${playerId}, game: ${JSON.stringify(
+        game
+      )}: ${errToStr(err)}`
+    );
+    throw new GameCreationError('UNKNOWN');
+  }
+}
+
 export async function endGame(playerId: string, gameCode: string) {
   if (!playerId) {
     throw new Error('Unauthorized');
@@ -1279,6 +1316,9 @@ const resolvers: any = {
     },
     configureFriendsGame: async (parent, args, ctx, info) => {
       return configureGameByPlayer(ctx.req.playerId, args.game);
+    },
+    configureLobbyGame: async (parent, args, ctx, info) => {
+      return configureLobbyGame(ctx.req.playerId, args.game);
     },
     endGame: async (parent, args, ctx, info) => {
       return endGame(ctx.req.playerId, args.gameCode);
