@@ -190,24 +190,27 @@ class AggregationImpl {
             if (handHistory.highRank) {
               highRankJson = JSON.parse(handHistory.highRank);
             }
-            await StatsRepository.updateClubStats(
-              game,
-              highRankJson,
-              playersInHand,
-              playersInShowdown,
-              transactionalEntityManager
-            );
-            await StatsRepository.updateSystemStats(
-              game,
-              highRankJson,
-              playersInHand,
-              playersInShowdown,
-              transactionalEntityManager
-            );
-            await StatsRepository.updateHighRankStats(
-              game,
-              transactionalEntityManager
-            );
+
+            if (!game.demoGame) {
+              await StatsRepository.updateClubStats(
+                game,
+                highRankJson,
+                playersInHand,
+                playersInShowdown,
+                transactionalEntityManager
+              );
+              await StatsRepository.updateSystemStats(
+                game,
+                highRankJson,
+                playersInHand,
+                playersInShowdown,
+                transactionalEntityManager
+              );
+              await StatsRepository.updateHighRankStats(
+                game,
+                transactionalEntityManager
+              );
+            }
             // hand history
             let hand: any = {};
             hand.wonAt = handHistory.wonAt;
@@ -259,27 +262,32 @@ class AggregationImpl {
             playerStatsMap[player.playerId].headsupHandDetails =
               headsupHandDetails;
             delete playerStatsMap[player.playerId].headsupDetails;
-            await gameStatsRepo.update(
-              {
-                gameId: game.gameId,
-                playerId: player.playerId,
-              },
-              playerStatsMap[player.playerId]
-            );
+
+            if (!game.demoGame) {
+              await gameStatsRepo.update(
+                {
+                  gameId: game.gameId,
+                  playerId: player.playerId,
+                },
+                playerStatsMap[player.playerId]
+              );
+            }
           }
 
-          // roll up stats
-          await StatsRepository.rollupStats(
-            game.gameId,
-            transactionalEntityManager
-          );
+          if (!game.demoGame) {
+            // roll up stats
+            await StatsRepository.rollupStats(
+              game.gameId,
+              transactionalEntityManager
+            );
 
-          // update player performance
-          await StatsRepository.gameEnded(
-            game,
-            playersInGame,
-            transactionalEntityManager
-          );
+            // update player performance
+            await StatsRepository.gameEnded(
+              game,
+              playersInGame,
+              transactionalEntityManager
+            );
+          }
 
           // data is aggregated for this game
           await gameHistoryRepo.update(

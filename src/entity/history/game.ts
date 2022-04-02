@@ -87,6 +87,9 @@ export class GameHistory {
   @Column({name: 'audio_conf_enabled', nullable: false, default: false})
   public audioConfEnabled!: boolean;
 
+  @Column({name: 'demo_game', nullable: false, default: false})
+  public demoGame!: boolean;
+
   @DbAwareColumn({
     name: 'started_at',
     type: 'timestamp',

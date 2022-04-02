@@ -115,6 +115,10 @@ class GameRepositoryImpl {
     const game: PokerGame = {...input} as PokerGame;
     game.gameType = gameType;
 
+    if (game.demoGame) {
+      game.maxPlayers = 6;
+    }
+
     const chipUnitStr: string = input['chipUnit'];
     const chipUnit: ChipUnit = ChipUnit[chipUnitStr];
     game.chipUnit = chipUnit;
@@ -491,7 +495,7 @@ class GameRepositoryImpl {
           g.game_code = pgs.game_code
         WHERE
           g.game_status NOT IN (${GameStatus.ENDED}) AND
-          g.is_lobby_game = true`;
+          g.lobby_game = true`;
     const resp = await getGameConnection().query(query);
     return resp;
   }

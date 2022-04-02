@@ -5,6 +5,7 @@ import {HandHistory} from '@src/entity/history/hand';
 import {
   ChipUnit,
   ClubMessageType,
+  GameEndReason,
   GameType,
   HandDataType,
   PlayerStatus,
@@ -39,6 +40,7 @@ import {GameHistory} from '@src/entity/history/game';
 import {GameNotFoundError} from '@src/errors';
 import Axios from 'axios';
 import {floorToNearest} from '@src/utils';
+import {NextHandUpdatesRepository} from './nexthand_update';
 const logger = getLogger('repositories::hand');
 
 const MAX_STARRED_HAND = 25;
@@ -931,6 +933,14 @@ class HandRepositoryImpl {
             pendingUpdates = true;
             break;
           }
+        }
+      }
+
+      // end demo game after 5 hands
+      if (game.demoGame) {
+        if (gameUpdates.handNum === 4) {
+          await Cache.updateGamePendingUpdates(game.gameCode, true);
+          pendingUpdates = true;
         }
       }
 

@@ -63,6 +63,7 @@ class HistoryRepositoryImpl {
     gameHistory.audioConfEnabled = gameSettings.audioConfEnabled;
     gameHistory.roeGames = gameSettings.roeGames;
     gameHistory.dealerChoiceGames = gameSettings.dealerChoiceGames;
+    gameHistory.demoGame = game.demoGame;
 
     await gameHistoryRepo.save(gameHistory);
   }

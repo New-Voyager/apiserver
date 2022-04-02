@@ -595,6 +595,16 @@ export async function buyIn(
         resp.availableCredits = centsToChips(status.availableCredits);
       }
       resp.insufficientCredits = status.insufficientCredits;
+
+      // if game is a demo game and player is the host, then start the game
+      if (
+        game.demoGame &&
+        player.uuid === game.hostUuid &&
+        playerInGame.status === PlayerStatus.PLAYING
+      ) {
+        GameRepository.startGame(player, game);
+      }
+
       return resp;
     }
     return {
