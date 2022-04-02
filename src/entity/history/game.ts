@@ -90,6 +90,9 @@ export class GameHistory {
   @Column({name: 'demo_game', nullable: false, default: false})
   public demoGame!: boolean;
 
+  @Column({name: 'lobby_game', nullable: false, default: false})
+  public lobbyGame!: boolean;
+
   @DbAwareColumn({
     name: 'started_at',
     type: 'timestamp',

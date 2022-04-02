@@ -162,8 +162,8 @@ input GameCreateInput {
   breakAllowed: Boolean
   breakLength: Int # in minutes (default 15 mins)
 
-  lobbyGame: Boolean
   demoGame: Boolean
+  lobbyGame: Boolean
 }
 
 type SeatInfo {
