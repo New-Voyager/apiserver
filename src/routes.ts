@@ -224,6 +224,7 @@ export function addInternalRoutes(app: any) {
 
   app.post('/internal/restart-games', GameServerAPI.restartGames);
   app.post('/internal/restart-timers', restartTimers);
+  app.post('/internal/refresh-lobby-games', GameAPI.refreshLobbyGames);
 
   app.post('/internal/end-expired-games', GameAPI.endExpiredGames);
   app.post(

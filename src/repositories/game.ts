@@ -65,6 +65,7 @@ import {GameNotFoundError, SeatReservedError} from '@src/errors';
 import {Firebase} from '@src/firebase';
 import {ClubMessageRepository} from './clubmessage';
 import {Livekit} from '@src/livekit';
+import {createPlayer} from '@src/resolvers/player';
 const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
@@ -508,6 +509,58 @@ class GameRepositoryImpl {
       nextNumber = resp[0]['next_number'];
     }
     return nextNumber;
+  }
+
+  public async refreshLobbyGames(): Promise<any> {
+    const games: Array<PokerGame> = await getGameRepository(PokerGame).find({
+      where: {
+        lobbyGame: true,
+      },
+    });
+
+    const targetGames = 3;
+    let numGames = games.length;
+    while (numGames < targetGames) {
+      const gameInput = {
+        gameType: 'HOLDEM',
+        title: 'NLH 1/2',
+        smallBlind: 1.0,
+        bigBlind: 2.0,
+        straddleBet: 4.0,
+        utgStraddleAllowed: true,
+        buttonStraddleAllowed: false,
+        minPlayers: 2,
+        maxPlayers: 9,
+        gameLength: 120,
+        buyInApproval: false,
+        breakLength: 20,
+        autoKickAfterBreak: true,
+        waitForBigBlind: true,
+        waitlistAllowed: true,
+        maxWaitList: 30,
+        sitInApproval: false,
+        rakePercentage: 5.0,
+        rakeCap: 5.0,
+        buyInMin: 100,
+        buyInMax: 600,
+        actionTime: 20,
+        muckLosingHand: true,
+        rewardIds: [] as any,
+        lobbyGame: true,
+      };
+      let player;
+      try {
+        player = await Cache.getPlayer('system');
+      } catch (err) {
+        const playerID = await createPlayer({
+          player: {name: 'system', deviceId: 'system', page: {count: 20}},
+        });
+        player = await Cache.getPlayer('system');
+      }
+
+      await this.createPrivateGame(null, player, gameInput);
+      numGames++;
+    }
   }
 
   public async endExpireGames(): Promise<any> {
