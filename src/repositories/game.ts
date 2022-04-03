@@ -70,6 +70,7 @@ import {Firebase} from '@src/firebase';
 import {ClubMessageRepository} from './clubmessage';
 import {Livekit} from '@src/livekit';
 import {createPlayer} from '@src/resolvers/player';
+import {startGame} from '@src/resolvers/game';
 const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
@@ -554,7 +555,7 @@ class GameRepositoryImpl {
         rewardIds: [] as any,
         lobbyGame: true,
       };
-      let player;
+      let player: Player;
       try {
         player = await Cache.getPlayer('system');
       } catch (err) {
@@ -565,7 +566,9 @@ class GameRepositoryImpl {
       }
 
       logger.info('Creating lobby game');
-      await this.createPrivateGame(null, player, gameInput);
+      const game = await this.createPrivateGame(null, player, gameInput);
+      logger.info(`Starting lobby game ${game.gameCode}`);
+      await startGame(player.uuid, game.gameCode);
       numGames++;
     }
   }
