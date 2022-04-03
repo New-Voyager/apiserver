@@ -22,7 +22,11 @@ import {
 import {GameServer} from '@src/entity/game/gameserver';
 import {errToStr, getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
+import {
+  getGameCodeForClub,
+  getGameCodeForPlayer,
+  getGameCodeForLobby,
+} from '@src/utils/uniqueid';
 import {publishNewGame, resumeGame, endGame} from '@src/gameserver';
 import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery, getDistanceInMeters} from '@src/utils';
@@ -137,6 +141,8 @@ class GameRepositoryImpl {
       game.clubCode = club.clubCode;
       game.clubName = club.name;
       game.gameCode = await getGameCodeForClub();
+    } else if (input.lobbyGame) {
+      game.gameCode = await getGameCodeForLobby();
     } else {
       game.gameCode = await getGameCodeForPlayer();
     }
@@ -558,6 +564,7 @@ class GameRepositoryImpl {
         player = await Cache.getPlayer('system');
       }
 
+      logger.info('Creating lobby game');
       await this.createPrivateGame(null, player, gameInput);
       numGames++;
     }

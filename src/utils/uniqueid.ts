@@ -19,6 +19,11 @@ export async function getGameCodeForPlayer(): Promise<string> {
   return 'pg' + gameCode.toLowerCase();
 }
 
+export async function getGameCodeForLobby(): Promise<string> {
+  const gameCode = getCode(6, {includeAlpha: true, includeNumbers: false});
+  return 'lg' + gameCode.toLowerCase();
+}
+
 export function getRecoveryCode(email: string): string {
   const codeChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
   const generatedCode = new Array<string>();
