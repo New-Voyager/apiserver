@@ -36,10 +36,13 @@ services:
       - 4222:4222
       - 8222:8222
       - 9222:9222
+      - 8090:8080
     command:
       - "/bin/sh"
       - "-c"
       - "nats-server --config /etc/nats/nats-server.conf ${NATS_OPTS}"
+    volumes:
+      - ./nats-server.conf:/etc/nats/nats-server.conf
 
   redis:
     image: ${REDIS_IMAGE}
@@ -134,7 +137,7 @@ services:
 
 volumes:
   db-data:
-      
+
 networks:
   default:
     external:
