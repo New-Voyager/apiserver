@@ -1778,6 +1778,15 @@ class ClubRepositoryImpl {
     let newCredit = 0;
     const club = await Cache.getClub(clubCode);
     const changeAmount = centsToChips(amount);
+    // get current credit
+    const clubMember1 = await Cache.getClubMember(player.uuid, clubCode, true);
+    if (!clubMember1) {
+      throw new Error(
+        `Could not find club member. Player: ${player.uuid}, club: ${clubCode}`
+      );
+    }
+    let oldCredits = clubMember1.availableCredit;
+    oldCredits = centsToChips(oldCredits);
 
     await getUserManager().transaction(async transManager => {
       if (creditType === CreditUpdateType.CHANGE) {
@@ -1838,20 +1847,40 @@ class ClubRepositoryImpl {
     if (clubMember) {
       const availableCreditsCents = centsToChips(clubMember.availableCredit);
 
+      /*
+{
+    "type": "CT",
+    "sub-type": "ADD",
+    "amount": 100,
+    "credits": 98
+}      
+      */
+      let messageJson: any = {};
       let message: string = '';
+      messageJson['type'] = 'CT';
       if (creditType === CreditUpdateType.CHANGE) {
         message = `Set Credits ${changeAmount}\n${notes}\nAvailable Credits: ${availableCreditsCents}`;
+        messageJson['sub-type'] = 'CHANGE';
       } else if (creditType === CreditUpdateType.ADD) {
         message = `Change +${changeAmount}\n${notes}\nAvailable Credits: ${availableCreditsCents}`;
+        messageJson['sub-type'] = 'ADD';
       } else if (creditType === CreditUpdateType.DEDUCT) {
         message = `Change -${changeAmount}\n${notes}\nAvailable Credits: ${availableCreditsCents}`;
+        messageJson['sub-type'] = 'DEDUCT';
       }
+      messageJson['notes'] = notes;
+      messageJson['amount'] = changeAmount;
+      messageJson['credits'] = availableCreditsCents;
+      messageJson['oldCredits'] = oldCredits;
+      message = JSON.stringify(messageJson);
+
       // add a message in host->member message
       await HostMessageRepository.sendHostMessage(
         club,
         clubMember,
         message,
-        HostMessageType.FROM_HOST
+        HostMessageType.FROM_HOST,
+        admin
       );
       const messageId = uuidv4();
       // // send a NATS message to player

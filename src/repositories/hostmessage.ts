@@ -3,14 +3,17 @@ import {Club, ClubMember} from '@src/entity/player/club';
 import {HostMessageType} from '../entity/types';
 import {getLogger} from '@src/utils/log';
 import {getUserConnection, getUserRepository} from '.';
+import {Player} from '@src/entity/player/player';
 const logger = getLogger('repositories::hostmessage');
+import {Cache} from '@src/cache';
 
 class HostMessageRepositoryImpl {
   public async sendHostMessage(
     club: Club,
     clubMember: ClubMember,
     text: string,
-    messageType: HostMessageType
+    messageType: HostMessageType,
+    updatedBy?: Player
   ): Promise<any> {
     try {
       // getUserConnection().transaction(async tran => {
@@ -36,6 +39,9 @@ class HostMessageRepositoryImpl {
       newMessage.member = clubMember;
       newMessage.messageType = messageType;
       newMessage.text = text;
+      if (updatedBy) {
+        newMessage.updatedBy = updatedBy.id;
+      }
       const resp = await hostMessageRepository.save(newMessage);
       return {
         id: resp.id,
@@ -142,6 +148,17 @@ class HostMessageRepositoryImpl {
 
       const messages = new Array<any>();
       for await (const message of resp) {
+        let updatedBy: string | null = null;
+        let updatedByPlayer: Player | undefined;
+        if (message.updatedBy) {
+          if (!updatedByPlayer || updatedByPlayer.id !== message.updatedBy) {
+            updatedByPlayer = await Cache.getPlayerById(message.updatedBy);
+          }
+          if (updatedByPlayer) {
+            updatedBy = updatedByPlayer.name;
+          }
+        }
+
         messages.push({
           id: message.id,
           clubCode: club.clubCode,
@@ -151,6 +168,7 @@ class HostMessageRepositoryImpl {
           messageTime: message.messageTime,
           messageType: HostMessageType[message.messageType],
           text: message.text,
+          updatedBy: updatedBy,
         });
       }
 

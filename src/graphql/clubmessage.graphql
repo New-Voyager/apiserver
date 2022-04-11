@@ -58,6 +58,7 @@ type HostMessage {
   messageTime: DateTime
   messageType: HostMessageType!
   text: String!
+  updatedBy: String
 }
 
 type HostMessageSummary {
