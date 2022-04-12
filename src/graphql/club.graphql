@@ -190,6 +190,20 @@ type ClubInvitation {
   valid: Boolean!
 }
 
+input NotificationSettingsInput {
+  newGames: Boolean
+  clubChat: Boolean
+  creditUpdates: Boolean
+  hostMessages: Boolean
+}
+
+type NotificationSettings {
+  newGames: Boolean
+  clubChat: Boolean
+  creditUpdates: Boolean
+  hostMessages: Boolean
+}
+
 type Query {
   clubMembers(clubCode: String!, filter: MemberFilterInput): [ClubMember!]
   clubById(clubCode: String!): clubId!
@@ -204,6 +218,7 @@ type Query {
   # Dates are in UTC.
   clubMemberActivityGrouped(clubCode: String!, startDate: DateTime!, endDate: DateTime!): [ClubMemberActivityGrouped]
   agentPlayersActivity(clubCode: String!, agentId: String!, startDate: DateTime!, endDate: DateTime!): [ClubMemberActivityGrouped]
+  notificationSettings(clubCode: String!): NotificationSettings!
 }
 
 type Mutation {
@@ -218,6 +233,7 @@ type Mutation {
   sendClubFcmMessage(clubCode: String!, message: Json!): Boolean
   updateManagerRole(clubCode: String!, role: ManagerRoleInput!): Boolean
   checkInvitation(code: String!): ClubInvitation!
+  updateNotificationSettings(clubCode: String!, input: NotificationSettingsInput!): NotificationSettings!
 
   # credit tracking APIs
   setCredit(clubCode: String!, playerUuid: String!, amount: Float!, notes: String, followup: Boolean): Boolean!

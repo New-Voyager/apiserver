@@ -3,6 +3,7 @@ import {
   ClubInvitations,
   ClubManagerRoles,
   ClubMember,
+  ClubNotificationSettings,
   CreditTracking,
 } from '@src/entity/player/club';
 import {
@@ -89,6 +90,13 @@ export interface ClubMemberUpdateInput {
   displayName?: string;
   agentFeeBack?: number;
   canViewAgentReport?: boolean;
+}
+
+export interface NotificationSettings {
+  newGames: boolean;
+  clubChat: boolean;
+  creditUpdates: boolean;
+  hostMessages: boolean;
 }
 
 class ClubRepositoryImpl {
@@ -636,6 +644,8 @@ class ClubRepositoryImpl {
       })
       .execute();
     await Cache.getClubMember(playerId, clubCode, true /* update cache */);
+
+    await this.updateNotificationSettings(playerId, clubCode);
 
     const messageId = uuidv4();
     try {
@@ -2531,6 +2541,79 @@ class ClubRepositoryImpl {
     });
     return true;
   }
+
+  public async updateNotificationSettings(
+    playerUuid: string,
+    clubCode: string,
+    input?: NotificationSettings
+  ): Promise<NotificationSettings> {
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+
+    if (!clubMember) {
+      logger.error(
+        `Could not get the club member for clubCode: ${clubCode} & playerUuid: ${playerUuid}`
+      );
+      throw new Error('Invalid Club Member');
+    }
+
+    const repository = getUserRepository(ClubNotificationSettings);
+
+    let notificationSettings = await repository.findOne({where: {clubMemberId: clubMember!.id}});
+
+    if (!notificationSettings) {
+      notificationSettings = new ClubNotificationSettings(); 
+    }
+
+    if (input) {
+      if (input.newGames !== undefined) {
+        notificationSettings.newGames =  input.newGames;
+      }
+      
+      if (input.clubChat !== undefined) {
+        notificationSettings.clubChat = input.clubChat;
+      }
+  
+      if (input.creditUpdates !== undefined) {
+        notificationSettings.creditUpdates = input.creditUpdates;
+      }
+  
+      if (input.hostMessages !== undefined) {
+        notificationSettings.hostMessages = input.hostMessages;
+      }
+  
+    }
+    
+    notificationSettings.clubMemberId = clubMember.id;
+
+    return repository.save(notificationSettings);
+  }
+
+  public async getNotificationSettings(
+    playerUuid: string,
+    clubCode: string
+  ): Promise<NotificationSettings> {
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+
+    if (!clubMember) {
+      logger.error(
+        `Could not get the club member for clubCode: ${clubCode} & playerUuid: ${playerUuid}`
+      );
+      throw new Error('Invalid Club Member');
+    }
+
+    const repository = getUserRepository(ClubNotificationSettings);
+    const notificationSettings = await repository.findOne({where: {clubMemberId: clubMember!.id}});
+
+    if (notificationSettings) {
+      return notificationSettings;
+    } else {
+      const notificationSettings = new ClubNotificationSettings();
+      notificationSettings.clubMemberId = clubMember.id;
+
+      return repository.save(notificationSettings);
+    }
+  }
+
 }
 
 export const ClubRepository = new ClubRepositoryImpl();
