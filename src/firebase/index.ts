@@ -9,7 +9,12 @@ import {Club} from '@src/entity/player/club';
 import {default as axios} from 'axios';
 import {GoogleAuth} from 'google-auth-library';
 import {threadId} from 'worker_threads';
-import {AnnouncementLevel, AnnouncementType, ClubNotificationType, GameType} from '@src/entity/types';
+import {
+  AnnouncementLevel,
+  AnnouncementType,
+  ClubNotificationType,
+  GameType,
+} from '@src/entity/types';
 import {ClubRepository} from '@src/repositories/club';
 import _ from 'lodash';
 import {PlayerRepository} from '@src/repositories/player';
@@ -396,13 +401,15 @@ class FirebaseClass {
       bb: centsToChips(bb).toString(),
       requestId: messageId,
     };
-    this.sendClubMsg(club, message, ClubNotificationType.NEW_GAME).catch(err => {
-      logger.error(
-        `Failed to send club firebase message: ${
-          club.clubCode
-        }, err: ${errToStr(err)}`
-      );
-    });
+    this.sendClubMsg(club, message, ClubNotificationType.NEW_GAME).catch(
+      err => {
+        logger.error(
+          `Failed to send club firebase message: ${
+            club.clubCode
+          }, err: ${errToStr(err)}`
+        );
+      }
+    );
   }
 
   public gameEnded(club: Club, gameCode: string, messageId: string) {
@@ -423,7 +430,11 @@ class FirebaseClass {
     });
   }
 
-  public async sendClubMsg(club: Club, message: any, notificationType: ClubNotificationType) {
+  public async sendClubMsg(
+    club: Club,
+    message: any,
+    notificationType: ClubNotificationType
+  ) {
     if (!this.firebaseInitialized) {
       return;
     }
@@ -433,7 +444,10 @@ class FirebaseClass {
       return;
     }
     try {
-      const playerTokens = await ClubRepository.getClubMembersForFirebase(club, notificationType);
+      const playerTokens = await ClubRepository.getClubMembersForFirebase(
+        club,
+        notificationType
+      );
       await this.sendMsgInBatch(message, playerTokens);
     } catch (err) {
       logger.error(`Sending message to club members failed. ${errToStr(err)}`);

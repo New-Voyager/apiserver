@@ -262,4 +262,4 @@ export enum ClubNotificationType {
   CLUB_CHAT,
   CREDIT_UPDATES,
   HOST_MESSAGES,
-};
+}

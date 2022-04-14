@@ -951,9 +951,9 @@ const resolvers: any = {
     notificationSettings: async (parent, args, ctx, info) => {
       return ClubRepository.getNotificationSettings(
         ctx.req.playerId,
-        args.clubCode,
-      )
-    }
+        args.clubCode
+      );
+    },
   },
   Mutation: {
     createClub: async (parent, args, ctx, info) => {
@@ -1074,9 +1074,9 @@ const resolvers: any = {
       return ClubRepository.updateNotificationSettings(
         ctx.req.playerId,
         args.clubCode,
-        args.input,
-      )
-    }
+        args.input
+      );
+    },
   },
 };
 

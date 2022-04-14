@@ -2560,31 +2560,32 @@ class ClubRepositoryImpl {
 
     const repository = getUserRepository(ClubNotificationSettings);
 
-    let notificationSettings = await repository.findOne({where: {clubMemberId: clubMember!.id}});
+    let notificationSettings = await repository.findOne({
+      where: {clubMemberId: clubMember!.id},
+    });
 
     if (!notificationSettings) {
-      notificationSettings = new ClubNotificationSettings(); 
+      notificationSettings = new ClubNotificationSettings();
     }
 
     if (input) {
       if (input.newGames !== undefined) {
-        notificationSettings.newGames =  input.newGames;
+        notificationSettings.newGames = input.newGames;
       }
-      
+
       if (input.clubChat !== undefined) {
         notificationSettings.clubChat = input.clubChat;
       }
-  
+
       if (input.creditUpdates !== undefined) {
         notificationSettings.creditUpdates = input.creditUpdates;
       }
-  
+
       if (input.hostMessages !== undefined) {
         notificationSettings.hostMessages = input.hostMessages;
       }
-  
     }
-    
+
     notificationSettings.clubMemberId = clubMember.id;
 
     return repository.save(notificationSettings);
@@ -2604,7 +2605,9 @@ class ClubRepositoryImpl {
     }
 
     const repository = getUserRepository(ClubNotificationSettings);
-    const notificationSettings = await repository.findOne({where: {clubMemberId: clubMember!.id}});
+    const notificationSettings = await repository.findOne({
+      where: {clubMemberId: clubMember!.id},
+    });
 
     if (notificationSettings) {
       return notificationSettings;
@@ -2615,7 +2618,6 @@ class ClubRepositoryImpl {
       return repository.save(notificationSettings);
     }
   }
-
 }
 
 export const ClubRepository = new ClubRepositoryImpl();
