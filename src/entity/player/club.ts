@@ -459,4 +459,7 @@ export class ClubNotificationSettings {
 
   @Column({name: 'host_messages', default: true})
   public hostMessages!: boolean;
+
+  @Column({name: 'club_announcements', default: true})
+  public clubAnnouncements!: boolean;
 }

@@ -95,10 +95,11 @@ export interface ClubMemberUpdateInput {
 }
 
 export interface NotificationSettings {
-  newGames: boolean;
-  clubChat: boolean;
-  creditUpdates: boolean;
-  hostMessages: boolean;
+  newGames?: boolean;
+  clubChat?: boolean;
+  creditUpdates?: boolean;
+  hostMessages?: boolean;
+  clubAnnouncements?: boolean;
 }
 
 class ClubRepositoryImpl {
@@ -1169,20 +1170,23 @@ class ClubRepositoryImpl {
     if (notificationType === ClubNotificationType.CLUB_CHAT) {
       notificationQuery = 'AND cns.club_chat = true';
     } else if (notificationType === ClubNotificationType.NEW_GAME) {
-      notificationQuery = 'AND cns.new_game = true';
+      notificationQuery = 'AND cns.new_games = true';
     } else if (notificationType === ClubNotificationType.HOST_MESSAGES) {
       notificationQuery = 'AND cns.host_messages = true';
     } else if (notificationType === ClubNotificationType.CREDIT_UPDATES) {
       notificationQuery = 'AND cns.credit_updates = true';
+    } else if (notificationType === ClubNotificationType.CLUB_ANNOUNCEMENT) {
+      notificationQuery = 'AND cns.club_announcements = true';
     }
-    const sql = `select player.id, firebase_token "firebaseToken" from player join club_member cm 
-            on 
-            player.id = cm.player_id 
-            ON club_notification_settings cns
-            ON cns.club_id = cm.club_id
-            where 
-            firebase_token is not null 
-            and cm.club_id = ? ${notificationQuery} order by player.id`;
+    const sql = `SELECT player.id, firebase_token "firebaseToken" 
+            FROM player JOIN club_member cm 
+            ON             
+            player.id = cm.player_id             
+            JOIN club_notification_settings cns            
+            ON cns.club_member_id = cm.id            
+            WHERE             
+            player.firebase_token is not null
+            AND cm.club_id = ? ${notificationQuery} order by player.id;`;
     const ret = new Array<FirebaseToken>();
     const query = fixQuery(sql);
     const resp = await getUserConnection().query(query, [club.id]);
@@ -2600,6 +2604,10 @@ class ClubRepositoryImpl {
 
       if (input.hostMessages !== undefined) {
         notificationSettings.hostMessages = input.hostMessages;
+      }
+
+      if (input.clubAnnouncements !== undefined) {
+        notificationSettings.clubAnnouncements = input.clubAnnouncements;
       }
     }
 

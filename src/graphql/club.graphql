@@ -195,6 +195,7 @@ input NotificationSettingsInput {
   clubChat: Boolean
   creditUpdates: Boolean
   hostMessages: Boolean
+  clubAnnouncements: Boolean
 }
 
 type NotificationSettings {
@@ -202,6 +203,7 @@ type NotificationSettings {
   clubChat: Boolean
   creditUpdates: Boolean
   hostMessages: Boolean
+  clubAnnouncements: Boolean
 }
 
 type Query {

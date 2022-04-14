@@ -360,7 +360,7 @@ class FirebaseClass {
       shortText: announcement.text.substr(0, 128),
       requestId: messageId,
     };
-    this.sendClubMsg(club, message, ClubNotificationType.NONE).catch(err => {
+    this.sendClubMsg(club, message, ClubNotificationType.CLUB_ANNOUNCEMENT).catch(err => {
       logger.error(
         `Failed to send club firebase message: ${
           club.clubCode
