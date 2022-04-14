@@ -8,6 +8,7 @@ import {
 } from '@src/entity/player/club';
 import {
   ClubMemberStatus,
+  ClubNotificationType,
   ClubStatus,
   CreditUpdateType,
   HostMessageType,
@@ -1130,7 +1131,7 @@ class ClubRepositoryImpl {
   }
 
   public async broadcastMessage(club: Club, message: any) {
-    await Firebase.sendClubMsg(club, message);
+    await Firebase.sendClubMsg(club, message, ClubNotificationType.NONE);
   }
 
   public async getClubIds(playerId: number): Promise<Array<number>> {
@@ -1160,7 +1161,8 @@ class ClubRepositoryImpl {
   }
 
   public async getClubMembersForFirebase(
-    club: Club
+    club: Club,
+    notificationType: ClubNotificationType
   ): Promise<Array<FirebaseToken>> {
     const sql = `select player.id, firebase_token "firebaseToken" from player join club_member cm 
             on player.id = cm.player_id where firebase_token is not null and cm.club_id = ? order by player.id`;

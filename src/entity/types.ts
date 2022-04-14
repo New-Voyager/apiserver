@@ -255,3 +255,11 @@ export enum BombPotInterval {
   EVERY_X_HANDS,
   TIME_INTERVAL,
 }
+
+export enum ClubNotificationType {
+  NONE,
+  NEW_GAME,
+  CLUB_CHAT,
+  CREDIT_UPDATES,
+  HOST_MESSAGES,
+};
