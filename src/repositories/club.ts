@@ -13,7 +13,7 @@ import {
   CreditUpdateType,
   HostMessageType,
 } from '@src/entity/types';
-import {Player} from '@src/entity/player/player';
+import { Player } from '@src/entity/player/player';
 import {
   Not,
   LessThan,
@@ -24,22 +24,22 @@ import {
   EntityManager,
   Repository,
 } from 'typeorm';
-import {PokerGame} from '@src/entity/game/game';
+import { PokerGame } from '@src/entity/game/game';
 import {
   getClubGamesData,
   getMembersFilterData,
   getPlayerClubsData,
   PageOptions,
 } from '@src/types';
-import {errToStr, getLogger} from '@src/utils/log';
-import {getClubCode, getInviteCode} from '@src/utils/uniqueid';
-import {centsToChips, fixQuery} from '@src/utils';
-import {Cache} from '@src/cache';
-import {FirebaseToken, ClubUpdateType} from './types';
-import {Nats} from '@src/nats';
-import {v4 as uuidv4} from 'uuid';
-import {StatsRepository} from './stats';
-import {Firebase, getAppSettings} from '@src/firebase';
+import { errToStr, getLogger } from '@src/utils/log';
+import { getClubCode, getInviteCode } from '@src/utils/uniqueid';
+import { centsToChips, fixQuery } from '@src/utils';
+import { Cache } from '@src/cache';
+import { FirebaseToken, ClubUpdateType } from './types';
+import { Nats } from '@src/nats';
+import { v4 as uuidv4 } from 'uuid';
+import { StatsRepository } from './stats';
+import { Firebase, getAppSettings } from '@src/firebase';
 import {
   getGameConnection,
   getHistoryConnection,
@@ -48,14 +48,15 @@ import {
   getUserManager,
   getUserRepository,
 } from '.';
-import {ClubMemberStat} from '@src/entity/player/club';
-import {ClubMessageRepository} from './clubmessage';
-import {AppCoinRepository} from './appcoin';
-import {Errors, GenericError, UnauthorizedError} from '@src/errors';
+import { ClubMemberStat } from '@src/entity/player/club';
+import { ClubMessageRepository } from './clubmessage';
+import { AppCoinRepository } from './appcoin';
+import { Errors, GenericError, UnauthorizedError } from '@src/errors';
 import _ from 'lodash';
-import {getRunProfile, RunProfile} from '@src/server';
-import {HostMessageRepository} from './hostmessage';
-import {resolveObjectURL} from 'buffer';
+import { getRunProfile, RunProfile } from '@src/server';
+import { HostMessageRepository } from './hostmessage';
+import { resolveObjectURL } from 'buffer';
+import e from 'express';
 
 const logger = getLogger('repositories::club');
 
@@ -112,13 +113,13 @@ class ClubRepositoryImpl {
     const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
 
     // Check club data
-    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
+    const club = await clubRepository.findOne({ where: { clubCode: clubCode } });
     if (!club) {
       throw new Error(`Club: ${clubCode} does not exist`);
     }
 
     // Check player data
-    const player = await playerRepository.findOne({where: {uuid: playerUuid}});
+    const player = await playerRepository.findOne({ where: { uuid: playerUuid } });
     if (!player) {
       throw new Error(`Player ${playerUuid} is not found`);
     }
@@ -131,8 +132,8 @@ class ClubRepositoryImpl {
     // Check ClubMember data
     const clubMember = await clubMemberRepository.findOne({
       where: {
-        club: {id: club.id},
-        player: {id: player.id},
+        club: { id: club.id },
+        player: { id: player.id },
       },
     });
     if (!clubMember) {
@@ -272,7 +273,7 @@ class ClubRepositoryImpl {
 
   public async getClub(clubCode: string): Promise<Club | undefined> {
     const clubRepository = getUserRepository(Club);
-    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
+    const club = await clubRepository.findOne({ where: { clubCode: clubCode } });
     return club;
   }
 
@@ -284,7 +285,7 @@ class ClubRepositoryImpl {
     const clubRepository = getUserRepository(Club);
 
     if (!club) {
-      club = await clubRepository.findOne({where: {clubCode: clubCode}});
+      club = await clubRepository.findOne({ where: { clubCode: clubCode } });
       if (!club) {
         throw new Error(`Club ${clubCode} is not found`);
       }
@@ -331,7 +332,7 @@ class ClubRepositoryImpl {
       // generate a club code
       clubCode = await getClubCode(input.name);
       //clubCode = 'TEST';
-      const club = await clubRepository.findOne({where: {clubCode: clubCode}});
+      const club = await clubRepository.findOne({ where: { clubCode: clubCode } });
 
       if (!club) {
         // if the club doesn't exist, we can use it
@@ -342,7 +343,7 @@ class ClubRepositoryImpl {
     // locate the owner
     const playerRepository = getUserRepository<Player>(Player);
     const owner = await playerRepository.findOne({
-      where: {uuid: input.ownerUuid},
+      where: { uuid: input.ownerUuid },
     });
     if (!owner) {
       throw new Error(`Owner ${input.ownerUuid} is not found`);
@@ -371,7 +372,7 @@ class ClubRepositoryImpl {
     club.clubCode = clubCode;
     club.status = ClubStatus.ACTIVE;
     const ownerObj = await playerRepository.findOne({
-      where: {uuid: input.ownerUuid},
+      where: { uuid: input.ownerUuid },
     });
     if (!ownerObj) {
       throw new Error('Owner is not found');
@@ -393,7 +394,7 @@ class ClubRepositoryImpl {
       const clubMemberRepo =
         transactionEntityManager.getRepository<ClubMember>(ClubMember);
       const clubCount = await clubMemberRepo.count({
-        player: {id: owner.id},
+        player: { id: owner.id },
         isMainOwner: true,
       });
       const appSettings = getAppSettings();
@@ -456,7 +457,7 @@ class ClubRepositoryImpl {
 
   public async deleteClub(clubCode: string) {
     const clubRepository = getUserRepository(Club);
-    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
+    const club = await clubRepository.findOne({ where: { clubCode: clubCode } });
     if (!club) {
       throw new Error(`Club: ${clubCode} does not exist`);
     }
@@ -469,7 +470,7 @@ class ClubRepositoryImpl {
   // This is an internal API
   public async deleteClubByName(clubName: string) {
     const clubRepository = getUserRepository(Club);
-    const club = await clubRepository.findOne({where: {name: clubName}});
+    const club = await clubRepository.findOne({ where: { name: clubName } });
     if (club) {
       logger.debug('****** STARTING TRANSACTION TO delete club');
       await getUserManager().transaction(async transactionEntityManager => {
@@ -477,7 +478,7 @@ class ClubRepositoryImpl {
           .createQueryBuilder()
           .delete()
           .from(ClubMember)
-          .where('club_id = :id', {id: club.id})
+          .where('club_id = :id', { id: club.id })
           .execute();
         await transactionEntityManager.getRepository(Club).delete(club);
       });
@@ -487,7 +488,7 @@ class ClubRepositoryImpl {
 
   public async isClubOwner(clubCode: string, playerId: string) {
     const clubRepository = getUserRepository(Club);
-    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
+    const club = await clubRepository.findOne({ where: { clubCode: clubCode } });
     if (!club) {
       throw new Error(`Club: ${clubCode} does not exist`);
     }
@@ -788,8 +789,8 @@ class ClubRepositoryImpl {
     const clubRepository = getUserRepository<Club>(Club);
     const playerRepository = getUserRepository<Player>(Player);
 
-    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
-    const player = await playerRepository.findOne({where: {uuid: playerId}});
+    const club = await clubRepository.findOne({ where: { clubCode: clubCode } });
+    const player = await playerRepository.findOne({ where: { uuid: playerId } });
     if (!club) {
       throw new Error(`Club ${clubCode} is not found`);
     }
@@ -802,8 +803,8 @@ class ClubRepositoryImpl {
     // see whehter the player is already a member
     const clubMember = await clubMemberRepository.findOne({
       where: {
-        club: {id: club.id},
-        player: {id: player.id},
+        club: { id: club.id },
+        player: { id: player.id },
       },
     });
     return [club, player, clubMember];
@@ -814,7 +815,7 @@ class ClubRepositoryImpl {
     filter?: getMembersFilterData
   ): Promise<ClubMember[]> {
     const clubRepository = getUserRepository<Club>(Club);
-    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
+    const club = await clubRepository.findOne({ where: { clubCode: clubCode } });
     if (!club) {
       throw new Error(`Club ${clubCode} is not found`);
     }
@@ -822,7 +823,7 @@ class ClubRepositoryImpl {
     const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
-      club: {id: club.id},
+      club: { id: club.id },
       status: Not(
         In([
           ClubMemberStatus.LEFT,
@@ -857,7 +858,7 @@ class ClubRepositoryImpl {
 
         if (filter.playerId) {
           const player = await Cache.getPlayer(filter.playerId);
-          where.player = {id: player.id};
+          where.player = { id: player.id };
         }
 
         if (filter.inactive) {
@@ -881,7 +882,7 @@ class ClubRepositoryImpl {
     const club = await Cache.getClub(clubCode);
     // see whehter the player is already a member
     const clubMemberStat = await clubMemberStatRepo.find({
-      where: {clubId: club.id},
+      where: { clubId: club.id },
     });
     return _.keyBy(clubMemberStat, 'playerId');
   }
@@ -892,8 +893,8 @@ class ClubRepositoryImpl {
   ): Promise<ClubMember | null> {
     const playerRepository = getUserRepository<Player>(Player);
     const clubRepository = getUserRepository<Club>(Club);
-    const club = await clubRepository.findOne({where: {clubCode: clubCode}});
-    const player = await playerRepository.findOne({where: {uuid: playerId}});
+    const club = await clubRepository.findOne({ where: { clubCode: clubCode } });
+    const player = await playerRepository.findOne({ where: { uuid: playerId } });
     if (!club || !player) {
       return null;
     }
@@ -901,8 +902,8 @@ class ClubRepositoryImpl {
     const clubMemberRepository = getUserRepository<ClubMember>(ClubMember);
     const clubMember = await clubMemberRepository.findOne({
       where: {
-        club: {id: club.id},
-        player: {id: player.id},
+        club: { id: club.id },
+        player: { id: player.id },
       },
     });
     if (clubMember) {
@@ -915,7 +916,7 @@ class ClubRepositoryImpl {
     playerId: string
   ): Promise<Array<getPlayerClubsData>> {
     const playerRepository = getUserRepository<Player>(Player);
-    const player = await playerRepository.findOne({where: {uuid: playerId}});
+    const player = await playerRepository.findOne({ where: { uuid: playerId } });
     if (!player) {
       throw new Error('Not found');
     }
@@ -1039,7 +1040,7 @@ class ClubRepositoryImpl {
   public async getClubById(clubCode: string): Promise<Club | undefined> {
     const repository = getUserRepository(Club);
     // get club by id (testing only)
-    const club = await repository.findOne({where: {clubCode: clubCode}});
+    const club = await repository.findOne({ where: { clubCode: clubCode } });
     if (!club) {
       throw new Error('Club not found');
     }
@@ -1062,7 +1063,7 @@ class ClubRepositoryImpl {
           })
           .execute();
 
-        const club = await clubRepo.findOne({id: clubId});
+        const club = await clubRepo.findOne({ id: clubId });
         if (!club) {
           return 1;
         }
@@ -1077,7 +1078,7 @@ class ClubRepositoryImpl {
     clubCode = clubCode.toLowerCase();
     try {
       const clubs = await getUserRepository(Club).find({
-        where: {clubCode: clubCode},
+        where: { clubCode: clubCode },
       });
       if (clubs.length === 1) {
         const club = clubs[0];
@@ -1103,7 +1104,7 @@ class ClubRepositoryImpl {
     const clubMemberRepo = getUserRepository(ClubMember);
     const player = await Cache.getPlayer(playerUuid);
     const resp = await clubMemberRepo.find({
-      player: {id: player.id},
+      player: { id: player.id },
       status: ClubMemberStatus.ACTIVE,
     });
     let ownerCount = 0,
@@ -1124,7 +1125,7 @@ class ClubRepositoryImpl {
   public async getPendingMemberCount(club: Club): Promise<number> {
     const clubMemberRepo = getUserRepository(ClubMember);
     const count = await clubMemberRepo.count({
-      club: {id: club.id},
+      club: { id: club.id },
       status: ClubMemberStatus.PENDING,
     });
     return count;
@@ -1140,7 +1141,7 @@ class ClubRepositoryImpl {
       .createQueryBuilder()
       .select('club_id', 'clubId')
       .where({
-        player: {id: playerId},
+        player: { id: playerId },
       })
       .execute();
     return resp.map(x => x.clubId);
@@ -1164,8 +1165,24 @@ class ClubRepositoryImpl {
     club: Club,
     notificationType: ClubNotificationType
   ): Promise<Array<FirebaseToken>> {
+    let notificationQuery = '';
+    if (notificationType === ClubNotificationType.CLUB_CHAT) {
+      notificationQuery = 'AND cns.club_chat = true';
+    } else if (notificationType === ClubNotificationType.NEW_GAME) {
+      notificationQuery = 'AND cns.new_game = true';
+    } else if (notificationType === ClubNotificationType.HOST_MESSAGES) {
+      notificationQuery = 'AND cns.host_messages = true';
+    } else if (notificationType === ClubNotificationType.CREDIT_UPDATES) {
+      notificationQuery = 'AND cns.credit_updates = true';
+    }
     const sql = `select player.id, firebase_token "firebaseToken" from player join club_member cm 
-            on player.id = cm.player_id where firebase_token is not null and cm.club_id = ? order by player.id`;
+            on 
+            player.id = cm.player_id 
+            ON club_notification_settings cns
+            ON cns.club_id = cm.club_id
+            where 
+            firebase_token is not null 
+            and cm.club_id = ? ${notificationQuery} order by player.id`;
     const ret = new Array<FirebaseToken>();
     const query = fixQuery(sql);
     const resp = await getUserConnection().query(query, [club.id]);
@@ -1202,7 +1219,7 @@ class ClubRepositoryImpl {
     const reqPlayer = await Cache.getPlayer(reqPlayerId);
     if (!reqPlayer) {
       logger.error(
-        `Could not get credit history. Request player does not exist. player: ${reqPlayerId}`
+        `Could not get credit history.Request player does not exist.player: ${reqPlayerId} `
       );
       throw new Error('Unauthorized');
     }
@@ -1210,14 +1227,14 @@ class ClubRepositoryImpl {
     const club = await Cache.getClub(clubCode);
     if (!club) {
       logger.error(
-        `Could not get credit history. Club does not exist. club: ${clubCode}`
+        `Could not get credit history.Club does not exist.club: ${clubCode} `
       );
       throw new Error('Invalid club');
     }
     const reqClubMember = await Cache.getClubMember(reqPlayer.uuid, clubCode);
     if (!reqClubMember) {
       logger.error(
-        `Credit history requested by unauthorized player. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+        `Credit history requested by unauthorized player.Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid} `
       );
       throw new UnauthorizedError();
     }
@@ -1226,7 +1243,7 @@ class ClubRepositoryImpl {
       // only owner can view other player's credit history
       if (!reqClubMember.isOwner) {
         logger.error(
-          `Credit history requested by unauthorized player. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+          `Credit history requested by unauthorized player.Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid} `
         );
         throw new UnauthorizedError();
       }
@@ -1235,7 +1252,7 @@ class ClubRepositoryImpl {
     const player = await Cache.getPlayer(playerUuid);
     if (!player) {
       logger.error(
-        `Could not get credit history. Player does not exist. player: ${playerUuid}`
+        `Could not get credit history.Player does not exist.player: ${playerUuid} `
       );
       throw new Error('Invalid player');
     }
@@ -1243,7 +1260,7 @@ class ClubRepositoryImpl {
     const clubMember = await Cache.getClubMember(playerUuid, clubCode);
     if (!clubMember) {
       logger.error(
-        `Could not get credit history. Player is not a club member. player: ${playerUuid}, club: ${clubCode}`
+        `Could not get credit history.Player is not a club member.player: ${playerUuid}, club: ${clubCode} `
       );
       throw new Error('Invalid player');
     }
@@ -1282,7 +1299,7 @@ class ClubRepositoryImpl {
     const reqPlayer = await Cache.getPlayer(playerId);
     if (!reqPlayer) {
       logger.error(
-        `Could not get aggregated member activity. Request player does not exist. player: ${playerId}`
+        `Could not get aggregated member activity.Request player does not exist.player: ${playerId} `
       );
       throw new Error('Unauthorized');
     }
@@ -1290,33 +1307,33 @@ class ClubRepositoryImpl {
     const club = await Cache.getClub(clubCode);
     if (!club) {
       logger.error(
-        `Could not get aggregated member activity. Club does not exist. club: ${clubCode}`
+        `Could not get aggregated member activity.Club does not exist.club: ${clubCode} `
       );
       throw new Error('Invalid club');
     }
     const clubMember = await Cache.getClubMember(reqPlayer.uuid, clubCode);
     if (!clubMember || !clubMember.isOwner) {
       logger.error(
-        `Aggregated member activity requested by unauthorized player. Request player: ${reqPlayer.uuid}, club: ${clubCode}`
+        `Aggregated member activity requested by unauthorized player.Request player: ${reqPlayer.uuid}, club: ${clubCode} `
       );
       throw new UnauthorizedError();
     }
     const query = fixQuery(`
     SELECT cm.player_id AS "playerId", cm.available_credit AS "availableCredit",
-    cm.tips_back AS "tipsBack", cm.last_played_date AS "lastPlayedDate",
-    p.uuid AS "playerUuid", p.name AS "playerName", 
-    aggtips.games_played "gamesPlayed", aggtips.tips AS "tips", 
-    aggtips.buyin AS "buyIn", aggtips.profit AS "profit", 
-    aggtips.hands_played AS "handsPlayed"
+      cm.tips_back AS "tipsBack", cm.last_played_date AS "lastPlayedDate",
+        p.uuid AS "playerUuid", p.name AS "playerName",
+          aggtips.games_played "gamesPlayed", aggtips.tips AS "tips",
+            aggtips.buyin AS "buyIn", aggtips.profit AS "profit",
+              aggtips.hands_played AS "handsPlayed"
       FROM club_member cm
       INNER JOIN player p ON cm.player_id = p.id AND cm.club_id = ?
-      JOIN (
-        SELECT count(*) games_played, mtt.player_id, sum(number_of_hands_played) hands_played, sum(tips_paid) as tips, 
-              sum(buyin) as buyin, sum(profit) as profit from member_tips_tracking mtt 
+      JOIN(
+        SELECT count(*) games_played, mtt.player_id, sum(number_of_hands_played) hands_played, sum(tips_paid) as tips,
+        sum(buyin) as buyin, sum(profit) as profit from member_tips_tracking mtt 
         WHERE mtt.club_id = ? AND game_ended_datetime >= ? AND game_ended_datetime < ?
         GROUP BY player_id) 
       as aggtips on aggtips.player_id = p.id
-    `);
+      `);
     const dbResult = await getUserConnection().query(query, [
       club.id,
       club.id,
@@ -1325,7 +1342,7 @@ class ClubRepositoryImpl {
     ]);
     const res: Array<any> = [];
     for (const row of dbResult) {
-      const activity = {...row};
+      const activity = { ...row };
       if (activity.credits === null || activity.credits === undefined) {
         activity.credits = 0;
       }
@@ -1349,13 +1366,13 @@ class ClubRepositoryImpl {
 
     // get buyin and profit data from players_in_game
     const buyInQuery = fixQuery(`
-        select player_id "playerId", count(*) "gamesPlayed", sum(buy_in) "buyIn", sum(stack) - sum(buy_in) profit, 
-          sum(rake_paid) from players_in_game pig join game_history gh ON 
-            pig.game_id = gh.game_id  
-        where gh.club_code  = ? and 
+        select player_id "playerId", count(*) "gamesPlayed", sum(buy_in) "buyIn", sum(stack) - sum(buy_in) profit,
+      sum(rake_paid) from players_in_game pig join game_history gh ON
+    pig.game_id = gh.game_id  
+        where gh.club_code = ? and 
             gh.ended_at >= ? and 
             gh.ended_at < ?
-        group by pig.player_id`);
+      group by pig.player_id`);
     const buyInResult = await getHistoryConnection().query(buyInQuery, [
       club.clubCode,
       startDate,
@@ -1380,7 +1397,7 @@ class ClubRepositoryImpl {
     const reqPlayer = await Cache.getPlayer(agentId);
     if (!reqPlayer) {
       logger.error(
-        `Could not get aggregated member activity. Request player does not exist. player: ${agentId}`
+        `Could not get aggregated member activity.Request player does not exist.player: ${agentId} `
       );
       throw new Error('Unauthorized');
     }
@@ -1388,7 +1405,7 @@ class ClubRepositoryImpl {
     const club = await Cache.getClub(clubCode);
     if (!club) {
       logger.error(
-        `Could not get aggregated member activity. Club does not exist. club: ${clubCode}`
+        `Could not get aggregated member activity.Club does not exist.club: ${clubCode} `
       );
       throw new Error('Invalid club');
     }
@@ -1400,20 +1417,20 @@ class ClubRepositoryImpl {
 
     const query = fixQuery(`
     SELECT cm.player_id AS "playerId", cm.available_credit AS "availableCredit",
-    cm.tips_back AS "tipsBack", cm.last_played_date AS "lastPlayedDate",
-    p.uuid AS "playerUuid", p.name AS "playerName", 
-    aggtips.tips AS "tips", aggtips.buyin AS "buyIn", aggtips.profit AS "profit", aggtips.hands_played AS "handsPlayed"
+      cm.tips_back AS "tipsBack", cm.last_played_date AS "lastPlayedDate",
+        p.uuid AS "playerUuid", p.name AS "playerName",
+          aggtips.tips AS "tips", aggtips.buyin AS "buyIn", aggtips.profit AS "profit", aggtips.hands_played AS "handsPlayed"
       FROM club_member cm
       INNER JOIN player p ON cm.player_id = p.id  AND cm.club_id = ?
-      JOIN (
-        SELECT mtt.player_id, sum(number_of_hands_played) hands_played, sum(tips_paid) as tips, 
-              sum(buyin) as buyin, sum(profit) as profit from member_tips_tracking mtt 
-        WHERE mtt.club_id = ? AND game_ended_datetime >= ? AND game_ended_datetime <= (?::timestamp + INTERVAL '1 day')
-              AND mtt.player_id IN 
-              (SELECT cm.player_id FROM club_member cm WHERE cm.agent_id=?)
+      JOIN(
+        SELECT mtt.player_id, sum(number_of_hands_played) hands_played, sum(tips_paid) as tips,
+        sum(buyin) as buyin, sum(profit) as profit from member_tips_tracking mtt 
+        WHERE mtt.club_id = ? AND game_ended_datetime >= ? AND game_ended_datetime <= (?:: timestamp + INTERVAL '1 day')
+              AND mtt.player_id IN
+      (SELECT cm.player_id FROM club_member cm WHERE cm.agent_id =?)
         GROUP BY player_id) 
       as aggtips on aggtips.player_id = p.id
-    `);
+      `);
     const dbResult = await getUserConnection().query(query, [
       club.id,
       club.id,
@@ -1424,7 +1441,7 @@ class ClubRepositoryImpl {
 
     const res: Array<any> = [];
     for (const row of dbResult) {
-      const activity = {...row};
+      const activity = { ...row };
       activity.gamesPlayed = 0;
       if (activity.credits === null || activity.credits === undefined) {
         activity.credits = 0;
@@ -2274,8 +2291,8 @@ class ClubRepositoryImpl {
           followup: followup,
         })
         .where({
-          player: {id: playerId},
-          club: {id: clubId},
+          player: { id: playerId },
+          club: { id: clubId },
         })
         .execute();
     }
@@ -2454,8 +2471,8 @@ class ClubRepositoryImpl {
         if (!result[0]['followup']) {
           await transactionEntityManager.getRepository(ClubMember).update(
             {
-              club: {id: club.id},
-              player: {id: player.id},
+              club: { id: club.id },
+              player: { id: player.id },
             },
             {
               followup: false,
@@ -2533,8 +2550,8 @@ class ClubRepositoryImpl {
       );
       await transactionEntityManager.getRepository(ClubMember).update(
         {
-          club: {id: club.id},
-          player: {id: player.id},
+          club: { id: club.id },
+          player: { id: player.id },
         },
         {
           followup: false,
@@ -2561,7 +2578,7 @@ class ClubRepositoryImpl {
     const repository = getUserRepository(ClubNotificationSettings);
 
     let notificationSettings = await repository.findOne({
-      where: {clubMemberId: clubMember!.id},
+      where: { clubMemberId: clubMember!.id },
     });
 
     if (!notificationSettings) {
@@ -2606,7 +2623,7 @@ class ClubRepositoryImpl {
 
     const repository = getUserRepository(ClubNotificationSettings);
     const notificationSettings = await repository.findOne({
-      where: {clubMemberId: clubMember!.id},
+      where: { clubMemberId: clubMember!.id },
     });
 
     if (notificationSettings) {
