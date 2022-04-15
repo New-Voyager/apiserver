@@ -360,7 +360,11 @@ class FirebaseClass {
       shortText: announcement.text.substr(0, 128),
       requestId: messageId,
     };
-    this.sendClubMsg(club, message, ClubNotificationType.CLUB_ANNOUNCEMENT).catch(err => {
+    this.sendClubMsg(
+      club,
+      message,
+      ClubNotificationType.CLUB_ANNOUNCEMENT
+    ).catch(err => {
       logger.error(
         `Failed to send club firebase message: ${
           club.clubCode
@@ -452,6 +456,35 @@ class FirebaseClass {
     } catch (err) {
       logger.error(`Sending message to club members failed. ${errToStr(err)}`);
     }
+  }
+
+  public notifyClubChat(
+    player: Player,
+    club: Club,
+    chatItem: any,
+    messageId: string
+  ) {
+    let message: any = {
+      type: 'CLUB_CHAT',
+      clubCode: club.clubCode,
+      clubName: club.name,
+      playerName: player.name,
+      playerId: player.id.toString(),
+      requestId: messageId,
+    };
+    const type = chatItem.messageType.toString();
+    if (type === 'TEXT') {
+      message['text'] = chatItem.text;
+    }
+    this.sendClubMsg(club, message, ClubNotificationType.CLUB_CHAT).catch(
+      err => {
+        logger.error(
+          `Failed to send club firebase message: ${
+            club.clubCode
+          }, err: ${errToStr(err)}`
+        );
+      }
+    );
   }
 
   public async sendSystemMsg(message: any) {

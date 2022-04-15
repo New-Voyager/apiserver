@@ -11,6 +11,7 @@ import {ClubUpdateType} from './types';
 import {Cache} from '@src/cache/index';
 import {getUserConnection, getUserRepository} from '.';
 import {PokerGame} from '@src/entity/game/game';
+import {Firebase} from '@src/firebase';
 
 const logger = getLogger('repositories::clubmessage');
 
@@ -54,7 +55,10 @@ class ClubMessageRepositoryImpl {
           message.text !== '' &&
           message.text !== undefined
         ) {
-          return this.saveMessage(0, club, message, player);
+          const ret = await this.saveMessage(0, club, message, player);
+          let messageId = uuidv4();
+          Firebase.notifyClubChat(player, club, message, messageId);
+          return ret;
         } else if (
           message.messageType.toString() === 'GIPHY' &&
           message.giphyLink !== '' &&
