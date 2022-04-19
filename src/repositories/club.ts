@@ -3,10 +3,12 @@ import {
   ClubInvitations,
   ClubManagerRoles,
   ClubMember,
+  ClubNotificationSettings,
   CreditTracking,
 } from '@src/entity/player/club';
 import {
   ClubMemberStatus,
+  ClubNotificationType,
   ClubStatus,
   CreditUpdateType,
   HostMessageType,
@@ -54,6 +56,7 @@ import _ from 'lodash';
 import {getRunProfile, RunProfile} from '@src/server';
 import {HostMessageRepository} from './hostmessage';
 import {resolveObjectURL} from 'buffer';
+import e from 'express';
 
 const logger = getLogger('repositories::club');
 
@@ -89,6 +92,14 @@ export interface ClubMemberUpdateInput {
   displayName?: string;
   agentFeeBack?: number;
   canViewAgentReport?: boolean;
+}
+
+export interface NotificationSettings {
+  newGames?: boolean;
+  clubChat?: boolean;
+  creditUpdates?: boolean;
+  hostMessages?: boolean;
+  clubAnnouncements?: boolean;
 }
 
 class ClubRepositoryImpl {
@@ -431,6 +442,15 @@ class ClubRepositoryImpl {
         }
       }
 
+      // create an entry in the notitication table
+      const repository = transactionEntityManager.getRepository(
+        ClubNotificationSettings
+      );
+      const notificationSettings = new ClubNotificationSettings();
+      notificationSettings.clubMemberId = clubMember.id;
+
+      repository.save(notificationSettings);
+
       const clubMemberStatRepository =
         transactionEntityManager.getRepository(ClubMemberStat);
       const clubMemberStat = new ClubMemberStat();
@@ -636,6 +656,8 @@ class ClubRepositoryImpl {
       })
       .execute();
     await Cache.getClubMember(playerId, clubCode, true /* update cache */);
+
+    await this.updateNotificationSettings(playerId, clubCode);
 
     const messageId = uuidv4();
     try {
@@ -1120,7 +1142,7 @@ class ClubRepositoryImpl {
   }
 
   public async broadcastMessage(club: Club, message: any) {
-    await Firebase.sendClubMsg(club, message);
+    await Firebase.sendClubMsg(club, message, ClubNotificationType.NONE);
   }
 
   public async getClubIds(playerId: number): Promise<Array<number>> {
@@ -1150,10 +1172,30 @@ class ClubRepositoryImpl {
   }
 
   public async getClubMembersForFirebase(
-    club: Club
+    club: Club,
+    notificationType: ClubNotificationType
   ): Promise<Array<FirebaseToken>> {
-    const sql = `select player.id, firebase_token "firebaseToken" from player join club_member cm 
-            on player.id = cm.player_id where firebase_token is not null and cm.club_id = ? order by player.id`;
+    let notificationQuery = '';
+    if (notificationType === ClubNotificationType.CLUB_CHAT) {
+      notificationQuery = 'AND cns.club_chat = true';
+    } else if (notificationType === ClubNotificationType.NEW_GAME) {
+      notificationQuery = 'AND cns.new_games = true';
+    } else if (notificationType === ClubNotificationType.HOST_MESSAGES) {
+      notificationQuery = 'AND cns.host_messages = true';
+    } else if (notificationType === ClubNotificationType.CREDIT_UPDATES) {
+      notificationQuery = 'AND cns.credit_updates = true';
+    } else if (notificationType === ClubNotificationType.CLUB_ANNOUNCEMENT) {
+      notificationQuery = 'AND cns.club_announcements = true';
+    }
+    const sql = `SELECT player.id, firebase_token "firebaseToken" 
+            FROM player JOIN club_member cm 
+            ON             
+            player.id = cm.player_id             
+            JOIN club_notification_settings cns            
+            ON cns.club_member_id = cm.id            
+            WHERE             
+            player.firebase_token is not null
+            AND cm.club_id = ? ${notificationQuery} order by player.id;`;
     const ret = new Array<FirebaseToken>();
     const query = fixQuery(sql);
     const resp = await getUserConnection().query(query, [club.id]);
@@ -1190,7 +1232,7 @@ class ClubRepositoryImpl {
     const reqPlayer = await Cache.getPlayer(reqPlayerId);
     if (!reqPlayer) {
       logger.error(
-        `Could not get credit history. Request player does not exist. player: ${reqPlayerId}`
+        `Could not get credit history.Request player does not exist.player: ${reqPlayerId} `
       );
       throw new Error('Unauthorized');
     }
@@ -1198,14 +1240,14 @@ class ClubRepositoryImpl {
     const club = await Cache.getClub(clubCode);
     if (!club) {
       logger.error(
-        `Could not get credit history. Club does not exist. club: ${clubCode}`
+        `Could not get credit history.Club does not exist.club: ${clubCode} `
       );
       throw new Error('Invalid club');
     }
     const reqClubMember = await Cache.getClubMember(reqPlayer.uuid, clubCode);
     if (!reqClubMember) {
       logger.error(
-        `Credit history requested by unauthorized player. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+        `Credit history requested by unauthorized player.Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid} `
       );
       throw new UnauthorizedError();
     }
@@ -1214,7 +1256,7 @@ class ClubRepositoryImpl {
       // only owner can view other player's credit history
       if (!reqClubMember.isOwner) {
         logger.error(
-          `Credit history requested by unauthorized player. Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid}`
+          `Credit history requested by unauthorized player.Request player: ${reqPlayer.uuid}, club: ${clubCode}, player: ${playerUuid} `
         );
         throw new UnauthorizedError();
       }
@@ -1223,7 +1265,7 @@ class ClubRepositoryImpl {
     const player = await Cache.getPlayer(playerUuid);
     if (!player) {
       logger.error(
-        `Could not get credit history. Player does not exist. player: ${playerUuid}`
+        `Could not get credit history.Player does not exist.player: ${playerUuid} `
       );
       throw new Error('Invalid player');
     }
@@ -1231,7 +1273,7 @@ class ClubRepositoryImpl {
     const clubMember = await Cache.getClubMember(playerUuid, clubCode);
     if (!clubMember) {
       logger.error(
-        `Could not get credit history. Player is not a club member. player: ${playerUuid}, club: ${clubCode}`
+        `Could not get credit history.Player is not a club member.player: ${playerUuid}, club: ${clubCode} `
       );
       throw new Error('Invalid player');
     }
@@ -1270,7 +1312,7 @@ class ClubRepositoryImpl {
     const reqPlayer = await Cache.getPlayer(playerId);
     if (!reqPlayer) {
       logger.error(
-        `Could not get aggregated member activity. Request player does not exist. player: ${playerId}`
+        `Could not get aggregated member activity.Request player does not exist.player: ${playerId} `
       );
       throw new Error('Unauthorized');
     }
@@ -1278,33 +1320,33 @@ class ClubRepositoryImpl {
     const club = await Cache.getClub(clubCode);
     if (!club) {
       logger.error(
-        `Could not get aggregated member activity. Club does not exist. club: ${clubCode}`
+        `Could not get aggregated member activity.Club does not exist.club: ${clubCode} `
       );
       throw new Error('Invalid club');
     }
     const clubMember = await Cache.getClubMember(reqPlayer.uuid, clubCode);
     if (!clubMember || !clubMember.isOwner) {
       logger.error(
-        `Aggregated member activity requested by unauthorized player. Request player: ${reqPlayer.uuid}, club: ${clubCode}`
+        `Aggregated member activity requested by unauthorized player.Request player: ${reqPlayer.uuid}, club: ${clubCode} `
       );
       throw new UnauthorizedError();
     }
     const query = fixQuery(`
     SELECT cm.player_id AS "playerId", cm.available_credit AS "availableCredit",
-    cm.tips_back AS "tipsBack", cm.last_played_date AS "lastPlayedDate",
-    p.uuid AS "playerUuid", p.name AS "playerName", 
-    aggtips.games_played "gamesPlayed", aggtips.tips AS "tips", 
-    aggtips.buyin AS "buyIn", aggtips.profit AS "profit", 
-    aggtips.hands_played AS "handsPlayed"
+      cm.tips_back AS "tipsBack", cm.last_played_date AS "lastPlayedDate",
+        p.uuid AS "playerUuid", p.name AS "playerName",
+          aggtips.games_played "gamesPlayed", aggtips.tips AS "tips",
+            aggtips.buyin AS "buyIn", aggtips.profit AS "profit",
+              aggtips.hands_played AS "handsPlayed"
       FROM club_member cm
       INNER JOIN player p ON cm.player_id = p.id AND cm.club_id = ?
-      JOIN (
-        SELECT count(*) games_played, mtt.player_id, sum(number_of_hands_played) hands_played, sum(tips_paid) as tips, 
-              sum(buyin) as buyin, sum(profit) as profit from member_tips_tracking mtt 
+      JOIN(
+        SELECT count(*) games_played, mtt.player_id, sum(number_of_hands_played) hands_played, sum(tips_paid) as tips,
+        sum(buyin) as buyin, sum(profit) as profit from member_tips_tracking mtt 
         WHERE mtt.club_id = ? AND game_ended_datetime >= ? AND game_ended_datetime < ?
         GROUP BY player_id) 
       as aggtips on aggtips.player_id = p.id
-    `);
+      `);
     const dbResult = await getUserConnection().query(query, [
       club.id,
       club.id,
@@ -1337,13 +1379,13 @@ class ClubRepositoryImpl {
 
     // get buyin and profit data from players_in_game
     const buyInQuery = fixQuery(`
-        select player_id "playerId", count(*) "gamesPlayed", sum(buy_in) "buyIn", sum(stack) - sum(buy_in) profit, 
-          sum(rake_paid) from players_in_game pig join game_history gh ON 
-            pig.game_id = gh.game_id  
-        where gh.club_code  = ? and 
+        select player_id "playerId", count(*) "gamesPlayed", sum(buy_in) "buyIn", sum(stack) - sum(buy_in) profit,
+      sum(rake_paid) from players_in_game pig join game_history gh ON
+    pig.game_id = gh.game_id  
+        where gh.club_code = ? and 
             gh.ended_at >= ? and 
             gh.ended_at < ?
-        group by pig.player_id`);
+      group by pig.player_id`);
     const buyInResult = await getHistoryConnection().query(buyInQuery, [
       club.clubCode,
       startDate,
@@ -1368,7 +1410,7 @@ class ClubRepositoryImpl {
     const reqPlayer = await Cache.getPlayer(agentId);
     if (!reqPlayer) {
       logger.error(
-        `Could not get aggregated member activity. Request player does not exist. player: ${agentId}`
+        `Could not get aggregated member activity.Request player does not exist.player: ${agentId} `
       );
       throw new Error('Unauthorized');
     }
@@ -1376,7 +1418,7 @@ class ClubRepositoryImpl {
     const club = await Cache.getClub(clubCode);
     if (!club) {
       logger.error(
-        `Could not get aggregated member activity. Club does not exist. club: ${clubCode}`
+        `Could not get aggregated member activity.Club does not exist.club: ${clubCode} `
       );
       throw new Error('Invalid club');
     }
@@ -1388,20 +1430,20 @@ class ClubRepositoryImpl {
 
     const query = fixQuery(`
     SELECT cm.player_id AS "playerId", cm.available_credit AS "availableCredit",
-    cm.tips_back AS "tipsBack", cm.last_played_date AS "lastPlayedDate",
-    p.uuid AS "playerUuid", p.name AS "playerName", 
-    aggtips.tips AS "tips", aggtips.buyin AS "buyIn", aggtips.profit AS "profit", aggtips.hands_played AS "handsPlayed"
+      cm.tips_back AS "tipsBack", cm.last_played_date AS "lastPlayedDate",
+        p.uuid AS "playerUuid", p.name AS "playerName",
+          aggtips.tips AS "tips", aggtips.buyin AS "buyIn", aggtips.profit AS "profit", aggtips.hands_played AS "handsPlayed"
       FROM club_member cm
       INNER JOIN player p ON cm.player_id = p.id  AND cm.club_id = ?
-      JOIN (
-        SELECT mtt.player_id, sum(number_of_hands_played) hands_played, sum(tips_paid) as tips, 
-              sum(buyin) as buyin, sum(profit) as profit from member_tips_tracking mtt 
-        WHERE mtt.club_id = ? AND game_ended_datetime >= ? AND game_ended_datetime <= (?::timestamp + INTERVAL '1 day')
-              AND mtt.player_id IN 
-              (SELECT cm.player_id FROM club_member cm WHERE cm.agent_id=?)
+      JOIN(
+        SELECT mtt.player_id, sum(number_of_hands_played) hands_played, sum(tips_paid) as tips,
+        sum(buyin) as buyin, sum(profit) as profit from member_tips_tracking mtt 
+        WHERE mtt.club_id = ? AND game_ended_datetime >= ? AND game_ended_datetime <= (?:: timestamp + INTERVAL '1 day')
+              AND mtt.player_id IN
+      (SELECT cm.player_id FROM club_member cm WHERE cm.agent_id =?)
         GROUP BY player_id) 
       as aggtips on aggtips.player_id = p.id
-    `);
+      `);
     const dbResult = await getUserConnection().query(query, [
       club.id,
       club.id,
@@ -1846,15 +1888,6 @@ class ClubRepositoryImpl {
     let clubMember = await Cache.getClubMember(player.uuid, clubCode, true);
     if (clubMember) {
       const availableCreditsCents = centsToChips(clubMember.availableCredit);
-
-      /*
-{
-    "type": "CT",
-    "sub-type": "ADD",
-    "amount": 100,
-    "credits": 98
-}      
-      */
       let messageJson: any = {};
       let message: string = '';
       messageJson['type'] = 'CT';
@@ -1891,6 +1924,22 @@ class ClubRepositoryImpl {
         message,
         messageId
       );
+      const settings = await Cache.getNotificationSettings(
+        player.uuid,
+        clubCode
+      );
+      if (settings == null || settings.creditUpdates) {
+        Firebase.sendCreditMessage(
+          club.clubCode,
+          club.name,
+          clubMember.player,
+          creditType,
+          changeAmount,
+          availableCreditsCents,
+          message,
+          messageId
+        );
+      }
     }
   }
 
@@ -2530,6 +2579,85 @@ class ClubRepositoryImpl {
       );
     });
     return true;
+  }
+
+  public async updateNotificationSettings(
+    playerUuid: string,
+    clubCode: string,
+    input?: NotificationSettings
+  ): Promise<NotificationSettings> {
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+
+    if (!clubMember) {
+      logger.error(
+        `Could not get the club member for clubCode: ${clubCode} & playerUuid: ${playerUuid}`
+      );
+      throw new Error('Invalid Club Member');
+    }
+
+    const repository = getUserRepository(ClubNotificationSettings);
+
+    let notificationSettings = await repository.findOne({
+      where: {clubMemberId: clubMember!.id},
+    });
+
+    if (!notificationSettings) {
+      notificationSettings = new ClubNotificationSettings();
+    }
+
+    if (input) {
+      if (input.newGames !== undefined) {
+        notificationSettings.newGames = input.newGames;
+      }
+
+      if (input.clubChat !== undefined) {
+        notificationSettings.clubChat = input.clubChat;
+      }
+
+      if (input.creditUpdates !== undefined) {
+        notificationSettings.creditUpdates = input.creditUpdates;
+      }
+
+      if (input.hostMessages !== undefined) {
+        notificationSettings.hostMessages = input.hostMessages;
+      }
+
+      if (input.clubAnnouncements !== undefined) {
+        notificationSettings.clubAnnouncements = input.clubAnnouncements;
+      }
+    }
+
+    notificationSettings.clubMemberId = clubMember.id;
+
+    return repository.save(notificationSettings);
+  }
+
+  public async getNotificationSettings(
+    playerUuid: string,
+    clubCode: string
+  ): Promise<NotificationSettings> {
+    const clubMember = await Cache.getClubMember(playerUuid, clubCode);
+
+    if (!clubMember) {
+      logger.error(
+        `Could not get the club member for clubCode: ${clubCode} & playerUuid: ${playerUuid}`
+      );
+      throw new Error('Invalid Club Member');
+    }
+
+    const repository = getUserRepository(ClubNotificationSettings);
+    const notificationSettings = await repository.findOne({
+      where: {clubMemberId: clubMember!.id},
+    });
+
+    if (notificationSettings) {
+      return notificationSettings;
+    } else {
+      const notificationSettings = new ClubNotificationSettings();
+      notificationSettings.clubMemberId = clubMember.id;
+
+      return repository.save(notificationSettings);
+    }
   }
 }
 
