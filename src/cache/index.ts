@@ -33,6 +33,7 @@ import {reload} from '@src/resolvers/playersingame';
 import {PlayersInGameRepository} from '@src/repositories/playersingame';
 import {HighRankStats} from '@src/types';
 import {StatsRepository} from '@src/repositories/stats';
+import {ClubRepository, NotificationSettings} from '@src/repositories/club';
 
 const logger = getLogger('cache');
 
@@ -652,6 +653,28 @@ class GameCache {
       }
       await this.setCache(`clubMemberCache-${key}`, JSON.stringify(clubMember));
       return clubMember;
+    }
+  }
+
+  public async getNotificationSettings(
+    playerUuid: string,
+    clubCode: string,
+    update = false
+  ): Promise<NotificationSettings | null> {
+    const key = `${clubCode}:${playerUuid}:notification`;
+    const getResp = await this.getCache(`clubMemberCache-${key}`);
+    if (getResp.success && getResp.data && !update) {
+      return JSON.parse(getResp.data) as NotificationSettings;
+    } else {
+      const ret = await ClubRepository.getNotificationSettings(
+        playerUuid,
+        clubCode
+      );
+      if (!ret) {
+        return null;
+      }
+      await this.setCache(`clubMemberCache-${key}`, JSON.stringify(ret));
+      return ret;
     }
   }
 

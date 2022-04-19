@@ -1924,17 +1924,22 @@ class ClubRepositoryImpl {
         message,
         messageId
       );
-
-      Firebase.sendCreditMessage(
-        club.clubCode,
-        club.name,
-        clubMember.player,
-        creditType,
-        changeAmount,
-        availableCreditsCents,
-        message,
-        messageId
+      const settings = await Cache.getNotificationSettings(
+        player.uuid,
+        clubCode
       );
+      if (settings == null || settings.creditUpdates) {
+        Firebase.sendCreditMessage(
+          club.clubCode,
+          club.name,
+          clubMember.player,
+          creditType,
+          changeAmount,
+          availableCreditsCents,
+          message,
+          messageId
+        );
+      }
     }
   }
 
