@@ -64,7 +64,10 @@ class ClubMessageRepositoryImpl {
           message.giphyLink !== '' &&
           message.giphyLink !== undefined
         ) {
-          return this.saveMessage(2, club, message, player);
+          const ret = await this.saveMessage(2, club, message, player);
+          let messageId = uuidv4();
+          Firebase.notifyClubChat(player, club, message, messageId);
+          return ret;
         } else if (
           message.messageType.toString() === 'HAND' &&
           message.handNum !== undefined

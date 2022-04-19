@@ -1888,15 +1888,6 @@ class ClubRepositoryImpl {
     let clubMember = await Cache.getClubMember(player.uuid, clubCode, true);
     if (clubMember) {
       const availableCreditsCents = centsToChips(clubMember.availableCredit);
-
-      /*
-{
-    "type": "CT",
-    "sub-type": "ADD",
-    "amount": 100,
-    "credits": 98
-}      
-      */
       let messageJson: any = {};
       let message: string = '';
       messageJson['type'] = 'CT';
@@ -1930,6 +1921,17 @@ class ClubRepositoryImpl {
         club.clubCode,
         club.name,
         clubMember.player,
+        message,
+        messageId
+      );
+
+      Firebase.sendCreditMessage(
+        club.clubCode,
+        club.name,
+        clubMember.player,
+        creditType,
+        changeAmount,
+        availableCreditsCents,
         message,
         messageId
       );

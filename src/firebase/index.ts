@@ -13,6 +13,7 @@ import {
   AnnouncementLevel,
   AnnouncementType,
   ClubNotificationType,
+  CreditUpdateType,
   GameType,
 } from '@src/entity/types';
 import {ClubRepository} from '@src/repositories/club';
@@ -23,6 +24,7 @@ import {Announcement} from '@src/entity/player/announcements';
 import {FirebaseToken} from '@src/repositories/types';
 import {centsToChips} from '@src/utils';
 import {Livekit} from '@src/livekit';
+import {playersGameTrackerById} from '@src/resolvers/playersingame';
 
 //import {default as google} from 'googleapis';
 let MESSAGE_BATCH_SIZE = 100;
@@ -416,6 +418,43 @@ class FirebaseClass {
     );
   }
 
+  public sendCreditMessage(
+    clubCode: string,
+    clubName: string,
+    player: Player,
+    updateType: CreditUpdateType,
+    changeCredit: number,
+    updatedCredits: number,
+    text: string,
+    messageId: string
+  ) {
+    const message: any = {
+      type: 'CREDIT_UPDATE',
+      clubName: clubName,
+      clubCode: clubCode,
+      text: text,
+      requestId: messageId,
+      changeCredit: changeCredit.toString(),
+      availableCredits: updatedCredits.toString(),
+      updateType: CreditUpdateType[updateType],
+    };
+
+    if (!this.app) {
+      logger.error('Firebase is not initialized');
+      return;
+    }
+    try {
+      this.sendMsgInBatch(message, [
+        {
+          playerId: player.id,
+          firebaseToken: player.firebaseToken,
+        },
+      ]);
+    } catch (err) {
+      logger.error(`Sending to device group failed. ${errToStr(err)}`);
+    }
+  }
+
   public gameEnded(club: Club, gameCode: string, messageId: string) {
     const msgType = 'GAME_ENDED';
     const message: any = {
@@ -475,6 +514,11 @@ class FirebaseClass {
     const type = chatItem.messageType.toString();
     if (type === 'TEXT') {
       message['text'] = chatItem.text;
+      message['chat-type'] = 'TEXT';
+    } else if (type === 'GIPHY') {
+      message['chat-type'] = 'GIPHY';
+    } else {
+      return;
     }
     this.sendClubMsg(club, message, ClubNotificationType.CLUB_CHAT).catch(
       err => {
