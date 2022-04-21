@@ -610,7 +610,6 @@ type Mutation {
   # implemented
   configureGame(clubCode: String!, game: GameCreateInput!): GameInfo!
   configureFriendsGame(game: GameCreateInput!): GameInfo!
-  configureLobbyGame(game: GameCreateInput!): GameInfo!
   joinGame(gameCode: String!, seatNo: Int!, location: LocationInput): JoinResponse!
   takeSeat(gameCode: String!, seatNo: Int!, location: LocationInput): SeatInfo!
   buyIn(gameCode: String!, amount: Float!): BuyInResponse!
