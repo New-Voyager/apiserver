@@ -9,7 +9,13 @@ import {Club} from '@src/entity/player/club';
 import {default as axios} from 'axios';
 import {GoogleAuth} from 'google-auth-library';
 import {threadId} from 'worker_threads';
-import {AnnouncementLevel, AnnouncementType, GameType} from '@src/entity/types';
+import {
+  AnnouncementLevel,
+  AnnouncementType,
+  ClubNotificationType,
+  CreditUpdateType,
+  GameType,
+} from '@src/entity/types';
 import {ClubRepository} from '@src/repositories/club';
 import _ from 'lodash';
 import {PlayerRepository} from '@src/repositories/player';
@@ -18,6 +24,7 @@ import {Announcement} from '@src/entity/player/announcements';
 import {FirebaseToken} from '@src/repositories/types';
 import {centsToChips} from '@src/utils';
 import {Livekit} from '@src/livekit';
+import {playersGameTrackerById} from '@src/resolvers/playersingame';
 
 //import {default as google} from 'googleapis';
 let MESSAGE_BATCH_SIZE = 100;
@@ -355,7 +362,11 @@ class FirebaseClass {
       shortText: announcement.text.substr(0, 128),
       requestId: messageId,
     };
-    this.sendClubMsg(club, message).catch(err => {
+    this.sendClubMsg(
+      club,
+      message,
+      ClubNotificationType.CLUB_ANNOUNCEMENT
+    ).catch(err => {
       logger.error(
         `Failed to send club firebase message: ${
           club.clubCode
@@ -396,13 +407,52 @@ class FirebaseClass {
       bb: centsToChips(bb).toString(),
       requestId: messageId,
     };
-    this.sendClubMsg(club, message).catch(err => {
-      logger.error(
-        `Failed to send club firebase message: ${
-          club.clubCode
-        }, err: ${errToStr(err)}`
-      );
-    });
+    this.sendClubMsg(club, message, ClubNotificationType.NEW_GAME).catch(
+      err => {
+        logger.error(
+          `Failed to send club firebase message: ${
+            club.clubCode
+          }, err: ${errToStr(err)}`
+        );
+      }
+    );
+  }
+
+  public sendCreditMessage(
+    clubCode: string,
+    clubName: string,
+    player: Player,
+    updateType: CreditUpdateType,
+    changeCredit: number,
+    updatedCredits: number,
+    text: string,
+    messageId: string
+  ) {
+    const message: any = {
+      type: 'CREDIT_UPDATE',
+      clubName: clubName,
+      clubCode: clubCode,
+      text: text,
+      requestId: messageId,
+      changeCredit: changeCredit.toString(),
+      availableCredits: updatedCredits.toString(),
+      updateType: CreditUpdateType[updateType],
+    };
+
+    if (!this.app) {
+      logger.error('Firebase is not initialized');
+      return;
+    }
+    try {
+      this.sendMsgInBatch(message, [
+        {
+          playerId: player.id,
+          firebaseToken: player.firebaseToken,
+        },
+      ]);
+    } catch (err) {
+      logger.error(`Sending to device group failed. ${errToStr(err)}`);
+    }
   }
 
   public gameEnded(club: Club, gameCode: string, messageId: string) {
@@ -414,7 +464,7 @@ class FirebaseClass {
       gameCode: gameCode,
       requestId: messageId,
     };
-    this.sendClubMsg(club, message).catch(err => {
+    this.sendClubMsg(club, message, ClubNotificationType.NONE).catch(err => {
       logger.error(
         `Failed to send club firebase message. Club: ${
           club.clubCode
@@ -423,7 +473,11 @@ class FirebaseClass {
     });
   }
 
-  public async sendClubMsg(club: Club, message: any) {
+  public async sendClubMsg(
+    club: Club,
+    message: any,
+    notificationType: ClubNotificationType
+  ) {
     if (!this.firebaseInitialized) {
       return;
     }
@@ -433,11 +487,48 @@ class FirebaseClass {
       return;
     }
     try {
-      const playerTokens = await ClubRepository.getClubMembersForFirebase(club);
+      const playerTokens = await ClubRepository.getClubMembersForFirebase(
+        club,
+        notificationType
+      );
       await this.sendMsgInBatch(message, playerTokens);
     } catch (err) {
       logger.error(`Sending message to club members failed. ${errToStr(err)}`);
     }
+  }
+
+  public notifyClubChat(
+    player: Player,
+    club: Club,
+    chatItem: any,
+    messageId: string
+  ) {
+    let message: any = {
+      type: 'CLUB_CHAT',
+      clubCode: club.clubCode,
+      clubName: club.name,
+      playerName: player.name,
+      playerId: player.id.toString(),
+      requestId: messageId,
+    };
+    const type = chatItem.messageType.toString();
+    if (type === 'TEXT') {
+      message['text'] = chatItem.text;
+      message['chat-type'] = 'TEXT';
+    } else if (type === 'GIPHY') {
+      message['chat-type'] = 'GIPHY';
+    } else {
+      return;
+    }
+    this.sendClubMsg(club, message, ClubNotificationType.CLUB_CHAT).catch(
+      err => {
+        logger.error(
+          `Failed to send club firebase message: ${
+            club.clubCode
+          }, err: ${errToStr(err)}`
+        );
+      }
+    );
   }
 
   public async sendSystemMsg(message: any) {

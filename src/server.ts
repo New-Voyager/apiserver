@@ -228,6 +228,7 @@ export async function start(
 
     externalApp.use(bodyParser.json());
     externalApp.use(authorize);
+    externalApp.use('/webapp', express.static('webapp'));
     //app.use(bodyParser.raw({ inflate: false, limit: '100kb', type: 'application/octet-stream' }));
 
     logger.info('Initializing GraphQL server');

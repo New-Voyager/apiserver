@@ -86,4 +86,7 @@ export class ClubHostMessages {
     name: 'message_time',
   })
   public messageTime!: Date;
+
+  @Column({name: 'updated_by', type: 'bigint', nullable: true})
+  public updatedBy!: number;
 }

@@ -948,6 +948,12 @@ const resolvers: any = {
         args.endDate
       );
     },
+    notificationSettings: async (parent, args, ctx, info) => {
+      return ClubRepository.getNotificationSettings(
+        ctx.req.playerId,
+        args.clubCode
+      );
+    },
   },
   Mutation: {
     createClub: async (parent, args, ctx, info) => {
@@ -1062,6 +1068,14 @@ const resolvers: any = {
 
     checkInvitation: async (parent, args, ctx, info) => {
       return checkInvitation(args.code);
+    },
+
+    updateNotificationSettings: async (parent, args, ctx, info) => {
+      return ClubRepository.updateNotificationSettings(
+        ctx.req.playerId,
+        args.clubCode,
+        args.input
+      );
     },
   },
 };

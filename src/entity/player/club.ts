@@ -6,6 +6,7 @@ import {
   JoinColumn,
   ManyToOne,
   Index,
+  PrimaryColumn,
 } from 'typeorm';
 import {
   DbAwareColumn,
@@ -440,4 +441,25 @@ export class MemberTipsTracking {
     default: 0,
   })
   public profit!: number;
+}
+
+@Entity({name: 'club_notification_settings'})
+export class ClubNotificationSettings {
+  @PrimaryColumn({name: 'club_member_id', unique: true})
+  public clubMemberId!: number;
+
+  @Column({name: 'new_games', default: true})
+  public newGames!: boolean;
+
+  @Column({name: 'club_chat', default: true})
+  public clubChat!: boolean;
+
+  @Column({name: 'credit_updates', default: true})
+  public creditUpdates!: boolean;
+
+  @Column({name: 'host_messages', default: true})
+  public hostMessages!: boolean;
+
+  @Column({name: 'club_announcements', default: true})
+  public clubAnnouncements!: boolean;
 }
