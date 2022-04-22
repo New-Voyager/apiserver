@@ -23,7 +23,7 @@ import {ClubRepository} from '@src/repositories/club';
 import {getCurrentHandLog} from '@src/gameserver';
 import {isHostOrManagerOrOwner} from './util';
 import {processPendingUpdates} from '@src/repositories/pendingupdates';
-import {pendingApprovalsForClubData} from '@src/types';
+import {PageOptions, pendingApprovalsForClubData} from '@src/types';
 import {JanusSession, JANUS_SECRET, JANUS_TOKEN} from '@src/janus';
 import {ClubUpdateType} from '@src/repositories/types';
 import {Nats} from '@src/nats';
@@ -1040,6 +1040,52 @@ async function playersWithNotes(
   return GameRepository.getPlayersWithNotes(playerId, gameCode);
 }
 
+export async function getLobbyGames(
+  playerId: string,
+  pageOptions?: PageOptions
+): Promise<Array<any>> {
+  if (!playerId) {
+    throw new Error('Unauthorized');
+  }
+
+  const lobbyGames = await GameRepository.getLobbyGames();
+  const ret = new Array<any>();
+
+  for (const game of lobbyGames) {
+    const retGame = {...(game as any)};
+
+    if (!game.endedBy) {
+      game.endedBy = '';
+    }
+    retGame.gameType = GameType[game.gameType];
+
+    retGame.dealerChoiceGames = [];
+    if (game.dealerChoiceGames) {
+      retGame.dealerChoiceGames = game.dealerChoiceGames.split(',');
+    }
+    retGame.roeGames = [];
+    if (game.roeGames) {
+      retGame.roeGames = game.roeGames.split(',');
+    }
+    ret.push(retGame);
+  }
+  // convert club games to PlayerClubGame
+  return lobbyGamesToClientUnits(ret);
+}
+
+function lobbyGamesToClientUnits(input: Array<any>): any {
+  const resp = new Array<any>();
+  for (const i of input) {
+    const r = {...i};
+    r.smallBlind = centsToChips(r.smallBlind);
+    r.bigBlind = centsToChips(r.bigBlind);
+    r.balance = centsToChips(r.balance);
+    resp.push(r);
+  }
+
+  return resp;
+}
+
 const resolvers: any = {
   Query: {
     gameById: async (parent, args, ctx, info) => {
@@ -1089,6 +1135,10 @@ const resolvers: any = {
     },
     openSeats: async (parent, args, ctx, info) => {
       return await openSeats(ctx.req.playerId, args.gameCode);
+    },
+
+    lobbyGames: async (parent, args, ctx, info) => {
+      return getLobbyGames(ctx.req.playerId, args.page);
     },
   },
   GameInfo: {

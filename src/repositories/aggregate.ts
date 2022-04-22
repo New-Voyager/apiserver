@@ -191,7 +191,7 @@ class AggregationImpl {
               highRankJson = JSON.parse(handHistory.highRank);
             }
 
-            if (!game.demoGame) {
+            if (!(game.demoGame || game.lobbyGame)) {
               await StatsRepository.updateClubStats(
                 game,
                 highRankJson,
@@ -263,7 +263,7 @@ class AggregationImpl {
               headsupHandDetails;
             delete playerStatsMap[player.playerId].headsupDetails;
 
-            if (!game.demoGame) {
+            if (!(game.demoGame || game.lobbyGame)) {
               await gameStatsRepo.update(
                 {
                   gameId: game.gameId,
@@ -274,7 +274,7 @@ class AggregationImpl {
             }
           }
 
-          if (!game.demoGame) {
+          if (!(game.demoGame || game.lobbyGame)) {
             // roll up stats
             await StatsRepository.rollupStats(
               game.gameId,

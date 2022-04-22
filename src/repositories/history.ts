@@ -64,6 +64,7 @@ class HistoryRepositoryImpl {
     gameHistory.roeGames = gameSettings.roeGames;
     gameHistory.dealerChoiceGames = gameSettings.dealerChoiceGames;
     gameHistory.demoGame = game.demoGame;
+    gameHistory.lobbyGame = game.lobbyGame;
 
     await gameHistoryRepo.save(gameHistory);
   }

@@ -395,6 +395,19 @@ class GameAPIs {
     }
   }
 
+  public async refreshLobbyGames(req: any, resp: any) {
+    try {
+      const res = await GameRepository.refreshLobbyGames();
+      resp.status(200).json({});
+    } catch (err) {
+      logger.error(`Unable to refresh lobby games: ${errToStr(err)}`);
+      const response = {
+        error: errToStr(err),
+      };
+      resp.status(500).json(response);
+    }
+  }
+
   public async endExpiredGames(req: any, resp: any) {
     try {
       const res = await GameRepository.endExpireGames();

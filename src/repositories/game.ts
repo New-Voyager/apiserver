@@ -22,7 +22,11 @@ import {
 import {GameServer} from '@src/entity/game/gameserver';
 import {errToStr, getLogger} from '@src/utils/log';
 import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {getGameCodeForClub, getGameCodeForPlayer} from '@src/utils/uniqueid';
+import {
+  getGameCodeForClub,
+  getGameCodeForPlayer,
+  getGameCodeForLobby,
+} from '@src/utils/uniqueid';
 import {publishNewGame, resumeGame, endGame} from '@src/gameserver';
 import {startTimer, cancelTimer} from '@src/timer';
 import {fixQuery, getDistanceInMeters} from '@src/utils';
@@ -65,6 +69,8 @@ import {GameNotFoundError, SeatReservedError} from '@src/errors';
 import {Firebase} from '@src/firebase';
 import {ClubMessageRepository} from './clubmessage';
 import {Livekit} from '@src/livekit';
+import {createPlayer} from '@src/resolvers/player';
+import {startGame} from '@src/resolvers/game';
 const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
@@ -136,6 +142,8 @@ class GameRepositoryImpl {
       game.clubCode = club.clubCode;
       game.clubName = club.name;
       game.gameCode = await getGameCodeForClub();
+    } else if (input.lobbyGame) {
+      game.gameCode = await getGameCodeForLobby();
     } else {
       game.gameCode = await getGameCodeForPlayer();
     }
@@ -471,6 +479,35 @@ class GameRepositoryImpl {
     return resp;
   }
 
+  public async getLobbyGames() {
+    const query = `
+        SELECT 
+          g.game_code as "gameCode", 
+          g.id as gameId, 
+          g.title as title, 
+          g.game_type as "gameType", 
+          g.buy_in_min as "buyInMin", 
+          g.buy_in_max as "buyInMax",
+          g.small_blind as "smallBlind",
+          g.big_blind as "bigBlind",
+          g.started_at as "startedAt", 
+          g.max_players as "maxPlayers", 
+          100 as "maxWaitList", 
+          pgs.players_in_waitlist as "waitlistCount", 
+          pgs.players_in_seats as "tableCount", 
+          g.game_status as "gameStatus",
+          pgu.hand_num as "handsDealt"
+        FROM poker_game as g JOIN poker_game_updates as pgu ON 
+          g.game_code = pgu.game_code
+        JOIN poker_game_seat_info pgs ON
+          g.game_code = pgs.game_code
+        WHERE
+          g.game_status NOT IN (${GameStatus.ENDED}) AND
+          g.lobby_game = true`;
+    const resp = await getGameConnection().query(query);
+    return resp;
+  }
+
   public async getNextGameServer(): Promise<number> {
     const query = 'SELECT max(server_num)+1 next_number FROM game_server';
     const resp = await getGameConnection().query(query);
@@ -479,6 +516,61 @@ class GameRepositoryImpl {
       nextNumber = resp[0]['next_number'];
     }
     return nextNumber;
+  }
+
+  public async refreshLobbyGames(): Promise<any> {
+    const games: Array<PokerGame> = await getGameRepository(PokerGame).find({
+      where: {
+        lobbyGame: true,
+      },
+    });
+
+    const targetGames = 3;
+    let numGames = games.length;
+    while (numGames < targetGames) {
+      const gameInput = {
+        gameType: 'HOLDEM',
+        title: 'NLH 1/2',
+        smallBlind: 1.0,
+        bigBlind: 2.0,
+        straddleBet: 4.0,
+        utgStraddleAllowed: true,
+        buttonStraddleAllowed: false,
+        minPlayers: 2,
+        maxPlayers: 9,
+        gameLength: 5,
+        buyInApproval: false,
+        breakLength: 20,
+        autoKickAfterBreak: true,
+        waitForBigBlind: true,
+        waitlistAllowed: true,
+        maxWaitList: 30,
+        sitInApproval: false,
+        rakePercentage: 5.0,
+        rakeCap: 5.0,
+        buyInMin: 100,
+        buyInMax: 600,
+        actionTime: 20,
+        muckLosingHand: true,
+        rewardIds: [] as any,
+        lobbyGame: true,
+      };
+      let player: Player;
+      try {
+        player = await Cache.getPlayer('system');
+      } catch (err) {
+        const playerID = await createPlayer({
+          player: {name: 'system', deviceId: 'system', page: {count: 20}},
+        });
+        player = await Cache.getPlayer('system');
+      }
+
+      logger.info('Creating lobby game');
+      const game = await this.createPrivateGame(null, player, gameInput);
+      logger.info(`Starting lobby game ${game.gameCode}`);
+      await startGame(player.uuid, game.gameCode);
+      numGames++;
+    }
   }
 
   public async endExpireGames(): Promise<any> {

@@ -596,6 +596,9 @@ export class PokerGame {
 
   @Column({name: 'demo_game', default: false})
   public demoGame!: boolean;
+
+  @Column({name: 'lobby_game', default: false})
+  public lobbyGame!: boolean;
 }
 
 @Entity({name: 'next_hand_updates'})

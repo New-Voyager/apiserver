@@ -163,6 +163,7 @@ input GameCreateInput {
   breakLength: Int # in minutes (default 15 mins)
 
   demoGame: Boolean
+  lobbyGame: Boolean
 }
 
 type SeatInfo {
@@ -323,6 +324,7 @@ type GameInfo {
   settings: GameSettings
 
   demoGame: Boolean
+  lobbyGame: Boolean
 }
 
 type GamePlayerSettings {
@@ -715,4 +717,6 @@ type Query {
   playerRole(gameCode: String!): PlayerRole
 
   playersWithNotes(gameCode: String!): [PlayerNotes!]
+
+  lobbyGames: [GameInfo!]
 }
