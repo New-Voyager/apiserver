@@ -538,7 +538,7 @@ class GameRepositoryImpl {
         buttonStraddleAllowed: false,
         minPlayers: 2,
         maxPlayers: 9,
-        gameLength: 5,
+        gameLength: 999999,
         buyInApproval: false,
         breakLength: 20,
         autoKickAfterBreak: true,
