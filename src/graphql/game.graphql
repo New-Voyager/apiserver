@@ -197,6 +197,18 @@ type GamePlayer {
   name: String!
 }
 
+type LobbyGame {
+  gameID: Int
+  gameCode: String!
+  gameType: GameType
+  title: String
+  smallBlind: Float
+  bigBlind: Float
+  buyInMin: Float
+  buyInMax: Float
+  status: GameStatus
+}
+
 type GameInfo {
   gameID: Int
   gameCode: String!
@@ -718,5 +730,5 @@ type Query {
 
   playersWithNotes(gameCode: String!): [PlayerNotes!]
 
-  lobbyGames: [GameInfo!]
+  lobbyGames: [LobbyGame!]
 }

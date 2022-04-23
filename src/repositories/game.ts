@@ -483,7 +483,7 @@ class GameRepositoryImpl {
     const query = `
         SELECT 
           g.game_code as "gameCode", 
-          g.id as gameId, 
+          g.id as "gameID", 
           g.title as title, 
           g.game_type as "gameType", 
           g.buy_in_min as "buyInMin", 
@@ -495,7 +495,7 @@ class GameRepositoryImpl {
           100 as "maxWaitList", 
           pgs.players_in_waitlist as "waitlistCount", 
           pgs.players_in_seats as "tableCount", 
-          g.game_status as "gameStatus",
+          g.game_status as "status",
           pgu.hand_num as "handsDealt"
         FROM poker_game as g JOIN poker_game_updates as pgu ON 
           g.game_code = pgu.game_code
@@ -505,6 +505,9 @@ class GameRepositoryImpl {
           g.game_status NOT IN (${GameStatus.ENDED}) AND
           g.lobby_game = true`;
     const resp = await getGameConnection().query(query);
+    for (const r of resp) {
+      r.status = GameStatus[r['status']];
+    }
     return resp;
   }
 
