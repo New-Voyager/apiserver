@@ -1048,8 +1048,13 @@ export async function getLobbyGames(
     throw new Error('Unauthorized');
   }
 
-  const lobbyGames = await GameRepository.getLobbyGames();
+  let lobbyGames = await GameRepository.getLobbyGames();
   const ret = new Array<any>();
+
+  if(lobbyGames.length == 0) {
+   await GameRepository.refreshLobbyGames();
+   lobbyGames = await GameRepository.getLobbyGames();
+  }
 
   for (const game of lobbyGames) {
     const retGame = {...(game as any)};
