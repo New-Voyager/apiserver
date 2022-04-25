@@ -53,7 +53,7 @@
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}",
-      "runtimeExecutable": "/usr/local/bin/npm",
+      "runtimeExecutable": "npm",
       "runtimeArgs": [
         "run-script",
         "watch-localhost-debug"
