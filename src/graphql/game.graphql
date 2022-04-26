@@ -207,6 +207,8 @@ type LobbyGame {
   buyInMin: Float
   buyInMax: Float
   status: GameStatus
+  maxPlayers: Int
+  activePlayers: Int
 }
 
 type GameInfo {

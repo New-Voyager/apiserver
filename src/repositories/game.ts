@@ -494,7 +494,7 @@ class GameRepositoryImpl {
           g.max_players as "maxPlayers", 
           100 as "maxWaitList", 
           pgs.players_in_waitlist as "waitlistCount", 
-          pgs.players_in_seats as "tableCount", 
+          pgs.players_in_seats as "activePlayers", 
           g.game_status as "status",
           pgu.hand_num as "handsDealt"
         FROM poker_game as g JOIN poker_game_updates as pgu ON 
