@@ -1079,7 +1079,8 @@ function lobbyGamesToClientUnits(input: Array<any>): any {
     const r = {...i};
     r.smallBlind = centsToChips(r.smallBlind);
     r.bigBlind = centsToChips(r.bigBlind);
-    r.balance = centsToChips(r.balance);
+    r.buyInMin = centsToChips(r.buyInMin);
+    r.buyInMax = centsToChips(r.buyInMax);
     resp.push(r);
   }
 
