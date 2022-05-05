@@ -246,6 +246,10 @@ class AppCoinRepositoryImpl {
       return true;
     }
 
+    if (game.lobbyGame) {
+      return true;
+    }
+
     let playerUuid = game.hostUuid;
     const host = await Cache.getPlayer(game.hostUuid);
     let clubOwnedByBot = false;
@@ -290,6 +294,10 @@ class AppCoinRepositoryImpl {
   }
 
   public async consumeGameCoins(game: PokerGame): Promise<boolean> {
+    if (game.lobbyGame) {
+      return true;
+    }
+
     // consume coins
     let playerUuid = game.hostUuid;
     const host = await Cache.getPlayer(game.hostUuid);
