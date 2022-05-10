@@ -59,6 +59,7 @@ import {GameSettingsRepository} from './gamesettings';
 import {PlayersInGameRepository} from './playersingame';
 import {GameUpdatesRepository} from './gameupdates';
 import {GameServerRepository} from './gameserver';
+import {GameCodeRepository} from './gamecode';
 import {PlayersInGame} from '@src/entity/history/player';
 import {schedulePostProcessing} from '@src/scheduler';
 import {getRunProfile, notifyScheduler, RunProfile} from '@src/server';
@@ -146,6 +147,7 @@ class GameRepositoryImpl {
       game.gameCode = await getGameCodeForLobby();
     } else {
       game.gameCode = await getGameCodeForPlayer();
+      game.gameCodeExternal = await GameCodeRepository.getNextGameCode();
     }
     let savedGame;
     // use current time as the game id for now

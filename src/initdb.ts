@@ -6,12 +6,15 @@ import {
 } from 'typeorm';
 import {
   getGameConnection,
+  getGameRepository,
   getHistoryConnection,
   getUserConnection,
 } from './repositories';
 import {ChatTextRepository} from './repositories/chat';
 import {StatsRepository} from './repositories/stats';
 import {errToStr, getLogger} from './utils/log';
+import {GameCodeExternal} from './entity/game/game';
+import {GameCodeRepository} from './repositories/gamecode';
 
 const systemChatText = [
   'Donkey call',
@@ -204,4 +207,6 @@ export async function initdb() {
       )}`
     );
   }
+
+  await GameCodeRepository.initGameCodes();
 }

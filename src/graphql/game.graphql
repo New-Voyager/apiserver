@@ -214,6 +214,7 @@ type LobbyGame {
 type GameInfo {
   gameID: Int
   gameCode: String!
+  gameCodeExternal: Int
   clubCode: String
   gameType: GameType
   title: String
