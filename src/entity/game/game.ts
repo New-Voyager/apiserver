@@ -352,6 +352,15 @@ export class PokerGame {
   @Column({unique: true, name: 'game_code'})
   public gameCode!: string;
 
+  @Index()
+  @Column({
+    unique: true,
+    name: 'game_code_external',
+    type: 'int',
+    nullable: true,
+  })
+  public gameCodeExternal!: number;
+
   @Index('game-club-idx')
   @Column({name: 'club_id', nullable: true})
   public clubId!: number;
@@ -647,6 +656,15 @@ export class NextHandUpdates {
     onUpdate: 'CURRENT_TIMESTAMP',
   })
   public updatedAt!: Date;
+}
+
+@Entity({name: 'game_code_external'})
+export class GameCodeExternal {
+  @PrimaryGeneratedColumn()
+  public rowNum!: number;
+
+  @Column({name: 'codes', nullable: true, array: true, type: 'int'})
+  public codes!: Array<number>;
 }
 
 export function gameLogPrefix(game: PokerGame): string {
