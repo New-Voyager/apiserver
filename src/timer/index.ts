@@ -160,7 +160,7 @@ export async function restartTimers(req: any, resp: any) {
   resp.status(200).send(JSON.stringify({status: 'OK'}));
 }
 
-function sleep(ms: number) {
+export function sleep(ms: number) {
   return new Promise(resolve => {
     setTimeout(resolve, ms);
   });

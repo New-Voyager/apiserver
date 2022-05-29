@@ -1,8 +1,10 @@
-import {Tournament} from '@src/entity/game/tournament';
-import {errToStr, getLogger} from '@src/utils/log';
-import {EntityManager, Repository} from 'typeorm';
-import {Cache} from '@src/cache';
-import {getGameRepository} from '.';
+import { Tournament } from '@src/entity/game/tournament';
+import { errToStr, getLogger } from '@src/utils/log';
+import { EntityManager, Repository } from 'typeorm';
+import { Cache } from '@src/cache';
+import { getGameRepository } from '.';
+import { sleep } from '@src/timer';
+import { Nats } from '@src/nats';
 
 const logger = getLogger('tournaments');
 
@@ -81,7 +83,7 @@ class TournamentRepositoryImpl {
       const player = await Cache.getPlayer(playerUuid);
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({id: tournamentId});
+      const tournament = await tournamentRepo.findOne({ id: tournamentId });
       if (tournament) {
         const data = JSON.parse(tournament.data);
         const playerData = data.registeredPlayers.find(
@@ -116,7 +118,7 @@ class TournamentRepositoryImpl {
     try {
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({id: tournamentId});
+      const tournament = await tournamentRepo.findOne({ id: tournamentId });
       if (tournament) {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
@@ -134,7 +136,7 @@ class TournamentRepositoryImpl {
     try {
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({id: tournamentId});
+      const tournament = await tournamentRepo.findOne({ id: tournamentId });
       if (tournament) {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
@@ -178,6 +180,7 @@ class TournamentRepositoryImpl {
       await tournamentRepo.save(tournament);
 
       // publish that the player has joined to tournament channel, send the table info
+      Nats.playerJoinedTournament(tournamentId, table.tableNo, player);
     } catch (err) {
       logger.error(
         `Failed to get tournement info: ${tournamentId}: ${errToStr(err)}`
@@ -190,16 +193,31 @@ class TournamentRepositoryImpl {
     try {
       // call bot-runner to register bots to the system and let them register for the tournament
       // now bots are listening on tournament channel
-    } catch (err) {}
+    } catch (err) { }
   }
 
   public async startTournament(tournamentId: number) {
     try {
       // bots will join the tournament here
+      let tournamentRepo: Repository<Tournament>;
+      tournamentRepo = getGameRepository(Tournament);
+      const tournament = await tournamentRepo.findOne({ id: tournamentId });
+      if (tournament) {
+      } else {
+        throw new Error(`Tournament ${tournamentId} is not found`);
+      }
+      const data = JSON.parse(tournament.data) as TournamentData;
+      for (const registeredPlayer of data.registeredPlayers) {
+        if (registeredPlayer.isBot) {
+          // call bot-runner to start the bot
+          await this.joinTournament(registeredPlayer.playerUuid, tournamentId);
+        }
+      }
+      await sleep(1000);
       // wait for the bots to start listen on the table channels
       // start the first hand
       // bots should play the first hand
-    } catch (err) {}
+    } catch (err) { }
   }
 }
 

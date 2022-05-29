@@ -980,6 +980,29 @@ class NatsClass {
     this.sendMessage(subject, messageStr);
   }
 
+  public playerJoinedTournament(
+    tournamentId: number,
+    tableNo: number,
+    player: Player,
+    messageId?: string
+  ) {
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message = {
+      type: 'PLAYER_JOINED',
+      tournamentId: tournamentId,
+      playerId: player.id,
+      playerUuid: player.uuid,
+      playerName: player.name,
+      tableNo: tableNo,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getTournamentChannel(tournamentId);
+    this.sendMessage(subject, messageStr);
+  }
+
   public async initiateSeatChangeProcess(
     game: PokerGame,
     seatNo: number,
@@ -1050,6 +1073,10 @@ class NatsClass {
 
   public getClientAliveChannel(gameCode: string): string {
     return `clientalive.${gameCode}`;
+  }
+
+  public getTournamentChannel(tournamentId: number): string {
+    return `tournament.${tournamentId}`;
   }
 }
 
