@@ -18,6 +18,7 @@ import {SageMakerFeatureStoreRuntime} from 'aws-sdk';
 import {getAppSettings} from '@src/firebase';
 import {centsToChips} from '@src/utils';
 import {TableUpdateReserveSeat} from '../const';
+import {TournamentRepository} from '@src/repositories/tournament';
 
 const logger = getLogger('nats');
 
@@ -982,6 +983,7 @@ class NatsClass {
 
   public playerJoinedTournament(
     tournamentId: number,
+    gameCode: string,
     tableNo: number,
     player: Player,
     messageId?: string
@@ -997,9 +999,10 @@ class NatsClass {
       playerUuid: player.uuid,
       playerName: player.name,
       tableNo: tableNo,
+      gameCode: gameCode,
     };
     const messageStr = JSON.stringify(message);
-    const subject = this.getTournamentChannel(tournamentId);
+    const subject = TournamentRepository.getTournamentChannel(tournamentId);
     this.sendMessage(subject, messageStr);
   }
 

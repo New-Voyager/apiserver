@@ -21,6 +21,7 @@ type TournamentPlayer {
   stack: Float!
   status: TournamentPlayingStatus
   tableNo: Int
+  seatNo: Int
 }
 
 type TournamentTable {
@@ -29,7 +30,7 @@ type TournamentTable {
 }
 
 type TournamentInfo {
-  id: ID!
+  id: Int!
   name: String!
   startTime: DateTime!
   startingChips: Float!
@@ -38,10 +39,39 @@ type TournamentInfo {
   maxPlayersInTable: Int!
   players: [TournamentPlayer!]
   tables: [TournamentTable!]
+  tournamentChannel: String!
+}
+
+type TournamentGameInfo {
+  gameCode: String!
+  gameType: GameType
+  smallBlind: Float
+  bigBlind: Float
+  ante: Float
+
+  players: [TournamentPlayer!]
+
+  level: Int!
+  nextLevel: Int
+  nextLevelTimeInSecs: Int    # next level time in seconds
+
+  # NATS channels
+  gameToPlayerChannel: String
+  handToAllChannel: String
+  playerToHandChannel: String
+  handToPlayerChannel: String
+  handToPlayerTextChannel: String
+  gameChatChannel: String
+  clientAliveChannel: String
+
+  # livekit information
+  livekitUrl: String
+  livekitToken: String
 }
 
 type Query {
   getTournamentInfo(tournamentId: Int!): TournamentInfo!
+  getTournamentTableInfo(tournamentId: Int!, tableNo: Int!): TournamentGameInfo!
 }
 
 type Mutation {

@@ -1,0 +1,85 @@
+syntax = "proto3";
+package rpc;
+option go_package = "./rpc";
+
+message HostTableInfo {
+    uint32 tournament_id = 1;     // 0: cash game, non-zero for tournament
+    uint32 table_no = 2;          // 0: cash game
+    string game_code = 3;
+    uint64 game_id = 4;
+    string game_channel = 5;
+    string hand_channel = 6;
+    string result_host = 7;         // if tournament, this will be grpc. if cash game, this will be api server
+}
+
+message Result {
+    bool success = 1;
+    string error = 2;
+}
+
+message TerminateTableInfo {
+    string game_code = 1;
+    uint64 game_id = 2;
+    bool is_tournament = 3;
+    uint32 table_no = 6;
+}
+
+message Seat {
+    uint32 seat_no = 1;
+    string player_uuid = 2;
+    uint64 player_id = 3;
+    double stack = 4;
+    bool inhand = 5;
+    string encryption_key = 6;
+    bool open_seat = 7;
+    string name = 8;
+}
+
+message HandDetails {
+    uint32 button_pos = 1;
+    uint32 sb_pos = 2;
+    uint32 bb_pos = 3;
+    double sb = 4;
+    double bb = 5;
+    double ante = 6;
+    bool bomb_pot = 7;
+    double bomb_pot_bet = 8;
+    uint32 game_type = 9;
+    uint32 hand_num = 10;
+    uint32 result_pause_time = 11;
+    uint32 max_players = 12;
+    uint32 action_time = 13;
+}
+
+message HandInfo {
+    uint32 tournament_id = 1;     // 0: cash game, non-zero for tournament
+    uint32 table_no = 2;          // 0: cash game
+    string game_code = 3;
+    uint64 game_id = 4;
+    repeated Seat seats = 5;
+    HandDetails hand_details = 6;
+}
+
+message RunHandResult {
+    bool success = 1;
+    string error = 2;    
+}
+
+// Tournament service messages
+message TableHandResult {
+    uint64 tournament_id = 1;
+    uint32 table_no = 2;
+	uint32 hand_no = 3;
+}
+
+service TableService {
+    rpc HostTable(HostTableInfo) returns (Result) {}
+    rpc TerimateTable(TerminateTableInfo) returns (Result) {}
+    rpc RunHand(HandInfo) returns (RunHandResult) {}
+}
+
+
+service TournamentService {
+    rpc SubmitResult(TableHandResult) returns (Result) {}
+}
+

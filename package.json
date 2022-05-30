@@ -7,7 +7,7 @@
   "private": true,
   "scripts": {
     "watch-debug": "npm run copy-files && LOG_LEVEL=INFO DEBUG_WITH_STACK=1 NOTIFY_GAME_SERVER=1 EXTERNAL_ENDPOINTS=${EXTERNAL_ENDPOINTS:-1} INTERNAL_ENDPOINTS=${INTERNAL_ENDPOINTS:-1} BOTRUNNER_URL=http://botrunner:8081 TIMER_URL=http://timer:8082 NATS_URL=${NATS_URL:-'nats://nats:4222'} EXTERNAL_NATS_URL=${EXTERNAL_NATS_URL:-'nats://localhost:4222'} NATS_ENABLED=1 POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} NODE_ENV=dev tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
-    "watch-localhost-debug": "NODE_ENV=dev npm run copy-files && LOG_LEVEL=INFO DEBUG_WITH_STACK=1 NOTIFY_GAME_SERVER=1 EXTERNAL_ENDPOINTS=${EXTERNAL_ENDPOINTS:-1} INTERNAL_ENDPOINTS=${INTERNAL_ENDPOINTS:-1} COMPRESS_HAND_DATA=false BOTRUNNER_URL=http://localhost:8081 TIMER_URL=http://localhost:8082 NATS_URL=${NATS_URL:-'nats://localhost:4222'} NATS_ENABLED=1 POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} EXTERNAL_NATS_URL=${EXTERNAL_NATS_URL:-'nats://192.168.0.187:4222'} NODE_ENV=dev tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
+    "watch-localhost-debug": "NODE_ENV=dev npm run copy-files && LOG_LEVEL=INFO DEBUG_WITH_STACK=1 NOTIFY_GAME_SERVER=1 EXTERNAL_ENDPOINTS=${EXTERNAL_ENDPOINTS:-1} INTERNAL_ENDPOINTS=${INTERNAL_ENDPOINTS:-1} COMPRESS_HAND_DATA=false BOTRUNNER_URL=http://localhost:8081 TIMER_URL=http://localhost:8082 NATS_URL=${NATS_URL:-'nats://localhost:4222'} NATS_ENABLED=1 POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} EXTERNAL_NATS_URL=${EXTERNAL_NATS_URL:-'nats://192.168.0.103:4222'} NODE_ENV=dev tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
     "watch-localhost-prod-debug": "NODE_ENV=prod npm run copy-files && LOG_LEVEL=INFO DEBUG_WITH_STACK=1 NOTIFY_GAME_SERVER=1 EXTERNAL_ENDPOINTS=${EXTERNAL_ENDPOINTS:-1} INTERNAL_ENDPOINTS=${INTERNAL_ENDPOINTS:-1} COMPRESS_HAND_DATA=false BOTRUNNER_URL=http://localhost:8081 TIMER_URL=http://localhost:8082 NATS_URL=${NATS_URL:-'nats://localhost:4222'} NATS_ENABLED=1 POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} NODE_ENV=prod tsc-watch --noClear --onSuccess 'node --inspect=0.0.0.0:9235 --nolazy ./build/index.js' --onFailure 'echo Beep! Compilation Failed'",
     "run-local": "NODE_ENV=dev NOTIFY_GAME_SERVER=0 EXTERNAL_ENDPOINTS=${EXTERNAL_ENDPOINTS:-1} INTERNAL_ENDPOINTS=${INTERNAL_ENDPOINTS:-1} NATS_URL=${NATS_URL:-'nats://localhost:4222'} POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} node -r ts-node/register -r source-map-support/register ./build/index.js",
     "run-docker": "NOTIFY_GAME_SERVER=1 EXTERNAL_ENDPOINTS=${EXTERNAL_ENDPOINTS:-1} INTERNAL_ENDPOINTS=${INTERNAL_ENDPOINTS:-1} NATS_URL=${NATS_URL:-'nats://nats:4222'} NATS_ENABLED=1 POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} NODE_ENV=${NODE_ENV:-dev} node --inspect=0.0.0.0:9235 --nolazy ./build/index.js",
@@ -39,14 +39,17 @@
     "run-redis": "docker-compose -f docker-compose-redis.yaml up -d",
     "stop-redis": "docker-compose -f docker-compose-redis.yaml down",
     "script-tests": "node build/script-tests/testdriver.js ./script-tests/script",
-    "copy-files": "npm run copy-google-svc && npm run copy-geodb",
+    "copy-files": "npm run copy-google-svc && npm run copy-geodb && npm run copy-proto",
     "copy-google-svc": "mkdir -p build/src/google-services/ && cp src/google-services/* build/src/google-services/",
     "copy-geodb": "mkdir -p build/geodb && cp geodb/GeoLite2-City.mmdb build/geodb/",
-    "codecov": "NODE_ENV=dev NOTIFY_GAME_SERVER=0 EXTERNAL_ENDPOINTS=${EXTERNAL_ENDPOINTS:-1} INTERNAL_ENDPOINTS=${INTERNAL_ENDPOINTS:-1} NATS_URL=${NATS_URL:-'nats://192.168.0.106:4222'} POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} nyc --reporter=html --reporter=text node -r ts-node/register -r source-map-support/register ./build/index.js",
-    "codecov-spec": "NODE_ENV=dev NOTIFY_GAME_SERVER=0 EXTERNAL_ENDPOINTS=${EXTERNAL_ENDPOINTS:-1} INTERNAL_ENDPOINTS=${INTERNAL_ENDPOINTS:-1} NATS_URL=${NATS_URL:-'nats://192.168.0.102:4222'} POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} jest --coverage --runInBand"
+    "copy-proto": "mkdir -p build/src/proto/ && cp src/proto/* build/src/proto/ && cp src/repositories/*.proto build/src/repositories",
+    "codecov": "NODE_ENV=dev NOTIFY_GAME_SERVER=0 EXTERNAL_ENDPOINTS=${EXTERNAL_ENDPOINTS:-1} INTERNAL_ENDPOINTS=${INTERNAL_ENDPOINTS:-1} NATS_URL=${NATS_URL:-'nats://192.168.0.107:4222'} POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} nyc --reporter=html --reporter=text node -r ts-node/register -r source-map-support/register ./build/index.js",
+    "codecov-spec": "NODE_ENV=dev NOTIFY_GAME_SERVER=0 EXTERNAL_ENDPOINTS=${EXTERNAL_ENDPOINTS:-1} INTERNAL_ENDPOINTS=${INTERNAL_ENDPOINTS:-1} NATS_URL=${NATS_URL:-'nats://192.168.0.107:4222'} POSTGRES_HOST=${POSTGRES_HOST:-localhost} POSTGRES_PORT=${POSTGRES_PORT:-5432} POSTGRES_USER=${POSTGRES_USER:-game} POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-game} jest --coverage --runInBand"
   },
   "dependencies": {
     "@googleapis/docs": "^0.2.0",
+    "@grpc/grpc-js": "^1.6.7",
+    "@grpc/proto-loader": "^0.6.12",
     "@maxmind/geoip2-node": "^3.4.0",
     "@types/jest": "^26.0.0",
     "@types/js-yaml": "^3.12.5",
@@ -69,6 +72,7 @@
     "fs-extra": "^10.0.0",
     "glob": "^7.1.6",
     "google-play-billing-validator": "^2.1.3",
+    "google-protobuf": "^3.20.1",
     "googleapis": "^80.1.0",
     "graphql": "^15.5.3",
     "gts": "^3.1.0",

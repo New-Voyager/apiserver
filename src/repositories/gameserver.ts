@@ -90,6 +90,20 @@ class GameServerRepositoryImpl {
     return gameServer;
   }
 
+  public async getUsingId(
+    id: number,
+    transactionManager?: EntityManager
+  ): Promise<GameServer | undefined> {
+    let gameServerRepo: Repository<GameServer>;
+    if (transactionManager) {
+      gameServerRepo = transactionManager.getRepository(GameServer);
+    } else {
+      gameServerRepo = getGameRepository(GameServer);
+    }
+    const gameServer = await gameServerRepo.findOne(id);
+    return gameServer;
+  }
+
   public async getGamesForGameServer(
     gameServerUrl: string
   ): Promise<Array<PokerGame>> {

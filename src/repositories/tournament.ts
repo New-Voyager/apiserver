@@ -1,12 +1,36 @@
-import { Tournament } from '@src/entity/game/tournament';
-import { errToStr, getLogger } from '@src/utils/log';
-import { EntityManager, Repository } from 'typeorm';
-import { Cache } from '@src/cache';
-import { getGameRepository } from '.';
-import { sleep } from '@src/timer';
-import { Nats } from '@src/nats';
+import {Tournament} from '@src/entity/game/tournament';
+import {errToStr, getLogger} from '@src/utils/log';
+import {EntityManager, Repository} from 'typeorm';
+import {Cache} from '@src/cache';
+import {getGameRepository} from '.';
+import {sleep} from '@src/timer';
+import {Nats} from '@src/nats';
+import {GameServer} from '@src/entity/game/gameserver';
+import {GameServerRepository} from './gameserver';
+import {seatPositions} from '@src/resolvers/seatchange';
+import {GameType} from '@src/entity/types';
+// import { TableServiceClient } from '@src/rpc/rpc_pb_service';
+// import * as proto_rpc_pb from "@src/rpc/rpc_pb";
 
 const logger = getLogger('tournaments');
+const apiCallbackHost = 'localhost:9001';
+
+const grpc = require('@grpc/grpc-js');
+var protoLoader = require('@grpc/proto-loader');
+const PROTO_PATH = __dirname + '/./rpc.proto';
+
+logger.info('Loading proto file: ' + PROTO_PATH);
+
+const options = {
+  keepCase: true,
+  enums: String,
+  defaults: true,
+  oneofs: true,
+};
+
+var packageDefinition = protoLoader.loadSync(PROTO_PATH, options);
+var packageDef = grpc.loadPackageDefinition(packageDefinition);
+const tableService = packageDef.rpc.TableService;
 
 interface Table {
   tableNo: number;
@@ -22,21 +46,150 @@ interface TournamentPlayer {
   isSittingOut: boolean;
   isBot: boolean;
   tableNo: number;
+  seatNo: number;
 }
 
+/*
+
+type TournamentInfo {
+  id: ID!
+  name: String!
+  startTime: DateTime!
+  startingChips: Float!
+  minPlayers: Int
+  maxPlayers: Int
+  maxPlayersInTable: Int!
+  players: [TournamentPlayer!]
+  tables: [TournamentTable!]
+  tournamentChannel: String!
+}
+*/
 interface TournamentData {
   id: number;
-  startingStack: number;
+  startingChips: number;
+  name: string;
+  currentLevel: number; // -1 = not started
+  levelTime: number;
+  levels: Array<TournamentLevel>;
+  startTime: Date;
+  minPlayers: number;
+  maxPlayers: number;
+  maxPlayersInTable: number;
   tables: Array<Table>;
   registeredPlayers: Array<TournamentPlayer>;
   playersInTournament: Array<TournamentPlayer>;
-  tournamentName: string;
-  startTime: Date;
+  tableServerId: number; // all the tournament tables are on this server
 }
 
+interface TournamentLevel {
+  level: number;
+  smallBlind: number;
+  bigBlind: number;
+  ante: number;
+}
+
+interface TournamentTableInfo {
+  gameCode: string;
+  gameType: GameType;
+  smallBlind: number;
+  bigBlind: number;
+  ante: number;
+  players: Array<TournamentPlayer>;
+  level: number;
+  nextLevel: number;
+  nextLevelTimeInSecs: number;
+}
+
+let gameServerRpc: any;
+
 class TournamentRepositoryImpl {
+  private initialized: boolean = false;
+  public async initialize(serverHost?: string) {
+    if (this.initialized) {
+      return;
+    }
+
+    if (!serverHost) {
+      const gameServer = await GameServerRepository.getNextGameServer();
+      if (!gameServer) {
+        throw new Error(`No game server is available`);
+      }
+      const url = new URL(gameServer.url);
+      serverHost = url.host;
+      serverHost = 'localhost';
+    }
+    const rpcPort = 9000;
+    const server = `${serverHost}:${rpcPort}`;
+    const client = new tableService(server, grpc.credentials.createInsecure());
+    gameServerRpc = client;
+    //gameServerRpc = new TableServiceClient(server, {});
+  }
+
   public getTournamentChannel(tournamentId: number): string {
     return `tournament-${tournamentId}`;
+  }
+
+  public getTableGameCode(tournamentId: number, tableNo: number): string {
+    return `tournament-${tournamentId}-${tableNo}`;
+  }
+
+  public getTurboLevels(): Array<TournamentLevel> {
+    let levels = new Array<TournamentLevel>();
+    let smallBlind = 10;
+    for (let i = 1; i <= 20; i++) {
+      let ante = 0;
+      let bigBlind = smallBlind * 2;
+      if (i < 5) {
+        ante = 0;
+      } else {
+        ante = bigBlind;
+      }
+      levels.push({
+        level: i,
+        smallBlind: smallBlind,
+        bigBlind: bigBlind,
+        ante: ante,
+      });
+    }
+    return levels;
+  }
+
+  public async getTournamentTableInfo(
+    tournamentId: number,
+    tableNo: number
+  ): Promise<TournamentTableInfo> {
+    let ret: TournamentTableInfo = {
+      gameCode: '',
+      gameType: GameType.HOLDEM,
+      smallBlind: 0,
+      bigBlind: 0,
+      ante: 0,
+      players: [],
+      level: 1,
+      nextLevel: 2,
+      nextLevelTimeInSecs: 30,
+    };
+    const data = await this.getTournamentData(tournamentId);
+    if (!data) {
+      throw new Error(`Tournament ${tournamentId} is not found`);
+    }
+    const table = data.tables.find(t => t.tableNo === tableNo);
+    if (!table) {
+      throw new Error(
+        `Table ${tableNo} is not found in tournament ${tournamentId}`
+      );
+    }
+    ret.gameCode = this.getTableGameCode(tournamentId, tableNo);
+    ret.gameType = GameType.HOLDEM;
+    if (data.currentLevel > 0) {
+      const level = data.levels[data.currentLevel];
+      ret.smallBlind = level.smallBlind;
+      ret.bigBlind = level.bigBlind;
+      ret.ante = level.ante;
+      ret.nextLevel = level.level + 1;
+    } else {
+    }
+    return ret;
   }
 
   public async scheduleTournament(
@@ -46,14 +199,22 @@ class TournamentRepositoryImpl {
     transactionManager?: EntityManager
   ): Promise<number> {
     try {
+      const tableServer = await GameServerRepository.getNextGameServer();
       const data: TournamentData = {
         id: 0,
-        tournamentName: tournamentName,
+        name: tournamentName,
+        minPlayers: 2,
+        maxPlayers: 100,
+        maxPlayersInTable: 6,
+        levelTime: 2, // minutes
+        currentLevel: -1,
+        levels: this.getTurboLevels(),
         tables: [],
         registeredPlayers: [],
         playersInTournament: [],
         startTime: startTime,
-        startingStack: 5000,
+        startingChips: 5000,
+        tableServerId: tableServer.id,
       };
       let tournamentRepo: Repository<Tournament>;
       if (transactionManager) {
@@ -83,7 +244,7 @@ class TournamentRepositoryImpl {
       const player = await Cache.getPlayer(playerUuid);
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({ id: tournamentId });
+      const tournament = await tournamentRepo.findOne({id: tournamentId});
       if (tournament) {
         const data = JSON.parse(tournament.data);
         const playerData = data.registeredPlayers.find(
@@ -118,7 +279,7 @@ class TournamentRepositoryImpl {
     try {
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({ id: tournamentId });
+      const tournament = await tournamentRepo.findOne({id: tournamentId});
       if (tournament) {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
@@ -132,11 +293,47 @@ class TournamentRepositoryImpl {
     }
   }
 
+  private async hostTable(
+    tournamentData: TournamentData,
+    tableNo: number,
+    tableServer: string
+  ) {
+    const gameServer = await GameServerRepository.getUsingId(
+      tournamentData.tableServerId
+    );
+    // host table in this server
+    await this.initialize();
+    const gameCode = this.getTableGameCode(tournamentData.id, tableNo);
+    const gameChannel = Nats.getGameChannel(gameCode);
+    const handChannel = Nats.getHandToAllChannel(gameCode);
+    const hostTablePayload = {
+      tournament_id: tournamentData.id,
+      game_code: gameCode,
+      table_no: tableNo,
+      game_channel: gameChannel,
+      hand_channel: handChannel,
+      result_host: apiCallbackHost,
+    };
+    logger.info(`Hosting table: ${JSON.stringify(hostTablePayload)}`);
+    gameServerRpc.hostTable(hostTablePayload, (err, value) => {
+      if (err) {
+        logger.error(
+          `hosting table tournament: ${tournamentData.id} table: ${tableNo} failed`
+        );
+      } else {
+        // successfully hosted the table
+        logger.info(
+          `hosting table tournament: ${tournamentData.id} table: ${tableNo} succeeded`
+        );
+      }
+    });
+  }
+
   public async joinTournament(playerUuid: string, tournamentId: number) {
     try {
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({ id: tournamentId });
+      const tournament = await tournamentRepo.findOne({id: tournamentId});
       if (tournament) {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
@@ -149,6 +346,7 @@ class TournamentRepositoryImpl {
       let table = data.tables.find(
         t => t.players.length < tournament.maxPlayersInTable
       );
+      let seatNo = 0;
       if (!table) {
         // add a new table and sit the player there
         table = {
@@ -156,16 +354,20 @@ class TournamentRepositoryImpl {
           players: [],
           tableServer: '', // set the table server here
         };
+        // host the table in the game server
+        this.hostTable(data, table.tableNo, table.tableServer);
         data.tables.push(table);
       }
+
       table.players.push({
         playerId: player.id,
         playerName: player.name,
         playerUuid: player.uuid,
-        stack: data.startingStack,
+        stack: data.startingChips,
         isSittingOut: false,
         isBot: player.bot,
         tableNo: table.tableNo,
+        seatNo: table.players.length + 1,
       });
 
       // set the table number for the player
@@ -178,9 +380,14 @@ class TournamentRepositoryImpl {
 
       tournament.data = JSON.stringify(data);
       await tournamentRepo.save(tournament);
-
+      const gameCode = `t${tournamentId}-${table.tableNo}`;
       // publish that the player has joined to tournament channel, send the table info
-      Nats.playerJoinedTournament(tournamentId, table.tableNo, player);
+      Nats.playerJoinedTournament(
+        tournamentId,
+        gameCode,
+        table.tableNo,
+        player
+      );
     } catch (err) {
       logger.error(
         `Failed to get tournement info: ${tournamentId}: ${errToStr(err)}`
@@ -193,7 +400,7 @@ class TournamentRepositoryImpl {
     try {
       // call bot-runner to register bots to the system and let them register for the tournament
       // now bots are listening on tournament channel
-    } catch (err) { }
+    } catch (err) {}
   }
 
   public async startTournament(tournamentId: number) {
@@ -201,23 +408,34 @@ class TournamentRepositoryImpl {
       // bots will join the tournament here
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({ id: tournamentId });
+      let tournament = await tournamentRepo.findOne({id: tournamentId});
       if (tournament) {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
       }
-      const data = JSON.parse(tournament.data) as TournamentData;
+      let data = JSON.parse(tournament.data) as TournamentData;
       for (const registeredPlayer of data.registeredPlayers) {
         if (registeredPlayer.isBot) {
           // call bot-runner to start the bot
           await this.joinTournament(registeredPlayer.playerUuid, tournamentId);
         }
       }
+
+      // get data again from the db
+      tournament = await tournamentRepo.findOne({id: tournamentId});
+      if (!tournament) {
+        throw new Error(`Tournament ${tournamentId} is not found`);
+      }
+      data = JSON.parse(tournament.data) as TournamentData;
+      data.currentLevel = 1;
+      tournament.data = JSON.stringify(data);
+      await tournamentRepo.save(tournament);
+
       await sleep(1000);
       // wait for the bots to start listen on the table channels
       // start the first hand
       // bots should play the first hand
-    } catch (err) { }
+    } catch (err) {}
   }
 }
 

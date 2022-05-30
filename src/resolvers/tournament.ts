@@ -1,9 +1,18 @@
+import {Nats} from '@src/nats';
 import {TournamentRepository} from '@src/repositories/tournament';
+import {Cache} from '@src/cache/index';
 
 const resolvers: any = {
   Query: {
     getTournamentInfo: async (parent, args, ctx, info) => {
       return getTournamentInfo(ctx.req.playerId, args.tournamentId);
+    },
+    getTournamentTableInfo: async (parent, args, ctx, info) => {
+      return getTournamentTableInfo(
+        ctx.req.playerId,
+        args.tournamentId,
+        args.tableNo
+      );
     },
   },
 
@@ -42,6 +51,8 @@ async function getTournamentInfo(
   tournamentId: number
 ): Promise<any> {
   const ret = await TournamentRepository.getTournamentData(tournamentId);
+  ret.tournamentChannel =
+    TournamentRepository.getTournamentChannel(tournamentId);
   return ret;
 }
 
@@ -108,4 +119,36 @@ async function seatBotsInTournament(
 
 export function getResolvers() {
   return resolvers;
+}
+
+async function getTournamentTableInfo(
+  playerUuid: string,
+  tournamentId: number,
+  tableNo: number
+): Promise<any> {
+  const player = await Cache.getPlayer(playerUuid);
+  const tournamentTableInfo = await TournamentRepository.getTournamentTableInfo(
+    tournamentId,
+    tableNo
+  );
+  const ret = tournamentTableInfo as any;
+  ret.gameToPlayerChannel = Nats.getGameChannel(tournamentTableInfo.gameCode);
+  ret.playerToHandChannel = Nats.getPlayerToHandChannel(
+    tournamentTableInfo.gameCode
+  );
+  ret.handToAllChannel = Nats.getHandToAllChannel(tournamentTableInfo.gameCode);
+  ret.handToPlayerChannel = Nats.getPlayerHandChannel(
+    tournamentTableInfo.gameCode,
+    player.id
+  );
+  ret.handToPlayerTextChannel = Nats.getPlayerHandTextChannel(
+    tournamentTableInfo.gameCode,
+    player.id
+  );
+  ret.gameChatChannel = Nats.getChatChannel(tournamentTableInfo.gameCode);
+  ret.clientAliveChannel = Nats.getClientAliveChannel(
+    tournamentTableInfo.gameCode
+  );
+
+  return ret;
 }
