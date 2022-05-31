@@ -5,9 +5,7 @@ import {Cache} from '@src/cache';
 import {getGameRepository} from '.';
 import {sleep} from '@src/timer';
 import {Nats} from '@src/nats';
-import {GameServer} from '@src/entity/game/gameserver';
 import {GameServerRepository} from './gameserver';
-import {seatPositions} from '@src/resolvers/seatchange';
 import {GameType} from '@src/entity/types';
 // import { TableServiceClient } from '@src/rpc/rpc_pb_service';
 // import * as proto_rpc_pb from "@src/rpc/rpc_pb";
@@ -20,6 +18,26 @@ var protoLoader = require('@grpc/proto-loader');
 const PROTO_PATH = __dirname + '/./rpc.proto';
 
 logger.info('Loading proto file: ' + PROTO_PATH);
+
+/****
+ * Tournament messages
+ * TOURNAMENT_SCHEDULED
+ *  When a tournament is scheduled, this message is sent in the tournament channel.
+ * TOURNAMENT_WILL_START
+ *  When the tournament starts in 5 minutes, this message is sent in the tournament channel.
+ * TOURNAMENT_STARTED
+ *  When the tournament is kicked off, this message is sent in the tournament channel.
+ * TOURNAMENT_TABLE_READY
+ *  When a table is ready and setup, this message is sent in the tournament channel.
+ *  The client will getTournamentTableInfo() and QUERY_CURRENT_HAND to get the current hand info
+ * TOURNAMENT_PLAYER_MOVED
+ *  When a player is moved from one table to another, this message is sent in the tournament channel.
+ *  The affected player will call getTournamentTableInfo() and QUERY_CURRENT_HAND to display the current hand in the table.
+ * TOURNAMENT_PLAYER_LEFT
+ *  When a player leaves the tournament (busted), this message is sent in the tournament channel.
+ * TOURNAMENT_LEVEL_CHANGED
+ *  Whne a tournament level is changed, this message is sent in the tournament channel.
+ */
 
 const options = {
   keepCase: true,
@@ -37,6 +55,13 @@ interface Table {
   players: Array<TournamentPlayer>;
   tableServer: string;
 }
+export enum TournamentPlayingStatus {
+  REGISTERED,
+  JOINED,
+  PLAYING,
+  BUSTED_OUT,
+  SITTING_OUT,
+}
 
 interface TournamentPlayer {
   playerId: number;
@@ -47,6 +72,7 @@ interface TournamentPlayer {
   isBot: boolean;
   tableNo: number;
   seatNo: number;
+  status: TournamentPlayingStatus;
 }
 
 /*
@@ -188,6 +214,21 @@ class TournamentRepositoryImpl {
       ret.ante = level.ante;
       ret.nextLevel = level.level + 1;
     } else {
+    }
+
+    // get the players in the table
+    for (const player of table.players) {
+      ret.players.push({
+        playerId: player.playerId,
+        playerName: player.playerName,
+        playerUuid: player.playerUuid,
+        stack: player.stack,
+        isSittingOut: false,
+        seatNo: player.seatNo,
+        tableNo: player.tableNo,
+        isBot: player.isBot,
+        status: player.status,
+      });
     }
     return ret;
   }
@@ -346,7 +387,6 @@ class TournamentRepositoryImpl {
       let table = data.tables.find(
         t => t.players.length < tournament.maxPlayersInTable
       );
-      let seatNo = 0;
       if (!table) {
         // add a new table and sit the player there
         table = {
@@ -358,8 +398,7 @@ class TournamentRepositoryImpl {
         this.hostTable(data, table.tableNo, table.tableServer);
         data.tables.push(table);
       }
-
-      table.players.push({
+      let seatPlayer: TournamentPlayer = {
         playerId: player.id,
         playerName: player.name,
         playerUuid: player.uuid,
@@ -368,7 +407,9 @@ class TournamentRepositoryImpl {
         isBot: player.bot,
         tableNo: table.tableNo,
         seatNo: table.players.length + 1,
-      });
+        status: TournamentPlayingStatus.PLAYING,
+      };
+      table.players.push(seatPlayer);
 
       // set the table number for the player
       const playerData = data.registeredPlayers.find(
@@ -385,8 +426,16 @@ class TournamentRepositoryImpl {
       Nats.playerJoinedTournament(
         tournamentId,
         gameCode,
-        table.tableNo,
+        seatPlayer.tableNo,
         player
+      );
+
+      Nats.tournamentSetPlayerTable(
+        tournamentId,
+        player.id,
+        player.uuid,
+        seatPlayer.tableNo,
+        seatPlayer.seatNo
       );
     } catch (err) {
       logger.error(
@@ -414,6 +463,8 @@ class TournamentRepositoryImpl {
         throw new Error(`Tournament ${tournamentId} is not found`);
       }
       let data = JSON.parse(tournament.data) as TournamentData;
+      data.tables = [];
+      data.playersInTournament = [];
       for (const registeredPlayer of data.registeredPlayers) {
         if (registeredPlayer.isBot) {
           // call bot-runner to start the bot
@@ -430,7 +481,7 @@ class TournamentRepositoryImpl {
       data.currentLevel = 1;
       tournament.data = JSON.stringify(data);
       await tournamentRepo.save(tournament);
-
+      Nats.tournamentStarted(tournamentId);
       await sleep(1000);
       // wait for the bots to start listen on the table channels
       // start the first hand

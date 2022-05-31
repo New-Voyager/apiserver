@@ -1,6 +1,7 @@
 import {Nats} from '@src/nats';
 import {TournamentRepository} from '@src/repositories/tournament';
 import {Cache} from '@src/cache/index';
+import {TournamentPlayingStatus} from '@src/repositories/tournament';
 
 const resolvers: any = {
   Query: {
@@ -132,6 +133,9 @@ async function getTournamentTableInfo(
     tableNo
   );
   const ret = tournamentTableInfo as any;
+  for (const player of ret.players) {
+    player.status = TournamentPlayingStatus[player.status];
+  }
   ret.gameToPlayerChannel = Nats.getGameChannel(tournamentTableInfo.gameCode);
   ret.playerToHandChannel = Nats.getPlayerToHandChannel(
     tournamentTableInfo.gameCode

@@ -7,11 +7,12 @@ input TournamentCreateInput {
   maxPlayersInTable: Int!
 }
 
-enum TournamentPlayingStatus{
+enum TournamentPlayingStatus {
   REGISTERED, 
   JOINED, 
   PLAYING,
   BUSTED_OUT,
+  SITTING_OUT,
 }
 
 type TournamentPlayer {

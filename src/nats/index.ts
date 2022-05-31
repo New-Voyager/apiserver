@@ -1006,6 +1006,45 @@ class NatsClass {
     this.sendMessage(subject, messageStr);
   }
 
+  public tournamentStarted(tournamentId: number, messageId?: string) {
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message = {
+      type: 'TOURNAMENT_STARTED',
+      tournamentId: tournamentId,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = TournamentRepository.getTournamentChannel(tournamentId);
+    this.sendMessage(subject, messageStr);
+  }
+
+  public tournamentSetPlayerTable(
+    tournamentId: number,
+    playerId: number,
+    playerUuid: string,
+    tableNo: number,
+    seatNo: number,
+    messageId?: string
+  ) {
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message = {
+      type: 'TOURNAMENT_INITIAL_PLAYER_TABLE',
+      tournamentId: tournamentId,
+      playerId: playerId,
+      playerUuid: playerUuid,
+      tableNo: tableNo,
+      seatNo: seatNo,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = TournamentRepository.getTournamentChannel(tournamentId);
+    this.sendMessage(subject, messageStr);
+  }
+
   public async initiateSeatChangeProcess(
     game: PokerGame,
     seatNo: number,
