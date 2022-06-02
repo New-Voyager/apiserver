@@ -107,7 +107,7 @@ class HandServerAPIs {
       logger.error(`Finished saveHand endpoint game ${tableNo} 500`);
       return;
     }
-    logger.info(JSON.stringify(req.body));
+    //logger.info(JSON.stringify(req.body));
     resp.status(200).send({
       status: 'OK',
     });

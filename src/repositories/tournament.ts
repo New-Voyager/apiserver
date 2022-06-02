@@ -168,13 +168,14 @@ class TournamentRepositoryImpl {
   public getTurboLevels(): Array<TournamentLevel> {
     let levels = new Array<TournamentLevel>();
     let smallBlind = 10;
+    let anteStart = 25;
     for (let i = 1; i <= 10; i++) {
       let ante = 0;
       let bigBlind = smallBlind * 2;
-      if (i < 5) {
+      if (i <= 5) {
         ante = 0;
       } else {
-        ante = bigBlind;
+        ante = (i - 5) * anteStart;
       }
       levels.push({
         level: i,
@@ -557,7 +558,7 @@ class TournamentRepositoryImpl {
       bb_pos: 3,
       sb: sb * 100,
       bb: bb * 100,
-      ante: 0, //ante * 100,
+      ante: ante * 100,
       game_type: GameType.HOLDEM,
       hand_num: 1,
       result_pause_time: 3,
@@ -739,15 +740,18 @@ class TournamentRepositoryImpl {
 
       // log interested result
       const players = result.result.playerInfo;
+      let playerStack = '';
       for (const seatNo of Object.keys(players)) {
         const player = players[seatNo];
         const playerId = parseInt(player.id);
+        playerStack = `${playerStack} ${playerId} [${player.balance.before} -> ${player.balance.after}]`;
         if (player.balance.after <= 0) {
           logger.info(
             `Player ${playerId} is out of tournament. Balance: ${player.balance.after} before: ${player.balance.before}`
           );
         }
       }
+      logger.info(`${playerStack}`);
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
       let tournament = await tournamentRepo.findOne({id: tournamentId});
