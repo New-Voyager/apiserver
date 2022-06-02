@@ -168,7 +168,7 @@ class TournamentRepositoryImpl {
   public getTurboLevels(): Array<TournamentLevel> {
     let levels = new Array<TournamentLevel>();
     let smallBlind = 10;
-    for (let i = 1; i <= 20; i++) {
+    for (let i = 1; i <= 10; i++) {
       let ante = 0;
       let bigBlind = smallBlind * 2;
       if (i < 5) {
@@ -557,13 +557,26 @@ class TournamentRepositoryImpl {
       bb_pos: 3,
       sb: sb * 100,
       bb: bb * 100,
-      ante: ante * 100,
+      ante: 0, //ante * 100,
       game_type: GameType.HOLDEM,
       hand_num: 1,
       result_pause_time: 3,
       max_players: 6,
       action_time: 15,
     };
+
+    // based on the number of players set up sb and bb
+    const numPlayers = table.players.length;
+    if (numPlayers <= 2) {
+      // only two players left, button is big blind
+      handDetails.button_pos = table.players[0].seatNo;
+      handDetails.sb_pos = handDetails.button_pos;
+      handDetails.bb_pos = table.players[1].seatNo;
+    } else {
+      handDetails.button_pos = table.players[0].seatNo;
+      handDetails.sb_pos = table.players[1].seatNo;
+      handDetails.bb_pos = table.players[2].seatNo;
+    }
 
     /*
       message HandInfo {
@@ -683,25 +696,27 @@ class TournamentRepositoryImpl {
       // continue only if there are players in the tournament
       if (data.tables[0].players.length > 1) {
         let currentLevelNo = this.currentTournamentLevel[tournamentId];
-        let currentLevel: TournamentLevel =
-          this.tournamentLevelData[tournamentId][currentLevelNo];
-        let levels: Array<TournamentLevel> =
-          this.tournamentLevelData[tournamentId];
-        currentLevelNo++;
-        for (let i = 0; i < levels.length; i++) {
-          let level = levels[i];
-          if (level.level === currentLevelNo) {
-            currentLevel = level;
-            logger.info(
-              `******* Starting next level sb: ${level.smallBlind} bb: ${level.bigBlind} ante: ${level.ante} *******`
-            );
-            break;
+        if (currentLevelNo < this.tournamentLevelData[tournamentId].length) {
+          let currentLevel: TournamentLevel =
+            this.tournamentLevelData[tournamentId][currentLevelNo];
+          let levels: Array<TournamentLevel> =
+            this.tournamentLevelData[tournamentId];
+          currentLevelNo++;
+          for (let i = 0; i < levels.length; i++) {
+            let level = levels[i];
+            if (level.level === currentLevelNo) {
+              currentLevel = level;
+              logger.info(
+                `******* Starting next level sb: ${level.smallBlind} bb: ${level.bigBlind} ante: ${level.ante} *******`
+              );
+              break;
+            }
           }
-        }
-        this.currentTournamentLevel[tournamentId] = currentLevel.level;
+          this.currentTournamentLevel[tournamentId] = currentLevel.level;
 
-        // kick off the next level
-        await this.startLevelTimer(tournamentId, data.levelTime);
+          // kick off the next level
+          await this.startLevelTimer(tournamentId, data.levelTime);
+        }
       }
 
       // send a NATS notification here
@@ -718,9 +733,21 @@ class TournamentRepositoryImpl {
     result: any
   ) {
     try {
-      logger.info(
-        `Result from Tournament: ${tournamentId} tableNo: ${tableNo}`
-      );
+      // logger.info(
+      //   `Result from Tournament: ${tournamentId} tableNo: ${tableNo}`
+      // );
+
+      // log interested result
+      const players = result.result.playerInfo;
+      for (const seatNo of Object.keys(players)) {
+        const player = players[seatNo];
+        const playerId = parseInt(player.id);
+        if (player.balance.after <= 0) {
+          logger.info(
+            `Player ${playerId} is out of tournament. Balance: ${player.balance.after} before: ${player.balance.before}`
+          );
+        }
+      }
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
       let tournament = await tournamentRepo.findOne({id: tournamentId});
@@ -735,7 +762,6 @@ class TournamentRepositoryImpl {
           `Table ${tableNo} is not found in tournament ${tournamentId}`
         );
       }
-      const players = result.result.playerInfo;
       const updatedTable = new Array<TournamentPlayer>();
       // remove the players who had lost all the stacks
       for (const seatNo of Object.keys(players)) {
