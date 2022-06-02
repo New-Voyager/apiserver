@@ -5,7 +5,7 @@ import {GameAPI} from './internal/game';
 import {AdminAPI} from './internal/admin';
 import {UserAPI} from './internal/user';
 import {MetricsAPI} from './internal/metrics';
-import {timerCallback} from './repositories/timer';
+import {timerCallback, timerGenericCallback} from './repositories/timer';
 import {
   buyBotCoins,
   generateBotScript,
@@ -173,6 +173,11 @@ export function addInternalRoutes(app: any) {
     HandServerAPI.saveHand
   );
 
+  app.post(
+    '/internal/save-hand/tournamentId/:tournamentId/tableNo/:tableNo',
+    HandServerAPI.saveTournamentHand
+  );
+
   // app.post(
   //   '/internal/save-hand-binary/gameId/:gameId/handNum/:handNum',
   //   HandServerAPI.saveHandBinary
@@ -221,6 +226,8 @@ export function addInternalRoutes(app: any) {
     '/internal/timer-callback/gameId/:gameID/playerId/:playerID/purpose/:purpose',
     timerCallback
   );
+
+  app.post('/internal/timer-callback-generic', timerGenericCallback);
 
   app.post('/internal/restart-games', GameServerAPI.restartGames);
   app.post('/internal/restart-timers', restartTimers);

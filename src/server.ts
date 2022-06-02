@@ -214,6 +214,7 @@ export async function start(
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   logger.info('Initializing apis');
   const express = require('express');
+  var cors = require('cors');
   let externalServer: any;
   let internalServer: any;
   if (shouldExposeExternalEndpoints()) {
@@ -228,6 +229,7 @@ export async function start(
 
     externalApp.use(bodyParser.json());
     externalApp.use(authorize);
+    externalApp.use(cors());
     externalApp.use('/webapp', express.static('webapp'));
     //app.use(bodyParser.raw({ inflate: false, limit: '100kb', type: 'application/octet-stream' }));
 

@@ -29,6 +29,7 @@ import {WaitListMgmt} from './waitlist';
 import {getGameRepository, getUserRepository} from '.';
 import {resumeGame} from '@src/gameserver';
 import {AppCoinRepository} from './appcoin';
+import {TournamentRepository} from './tournament';
 
 const logger = getLogger('repositories::timer');
 
@@ -89,6 +90,17 @@ export async function timerCallbackHandler(
     }
   } catch (err) {
     logger.error(`Error in timer callback: ${errToStr(err)}`);
+  }
+}
+
+export async function timerGenericCallback(req: any, resp: any) {
+  resp.status(200).send({status: 'OK'});
+
+  const payload = JSON.parse(req.body.payload);
+  if (payload.purpose === 'LEVEL_TIMEOUT') {
+    TournamentRepository.handleLevelTimeout(payload).catch(err => {
+      logger.error(`handling level timeout failed: ${errToStr(err)}`);
+    });
   }
 }
 

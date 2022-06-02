@@ -1,12 +1,12 @@
-import { Tournament } from '@src/entity/game/tournament';
-import { errToStr, getLogger } from '@src/utils/log';
-import { EntityManager, Repository } from 'typeorm';
-import { Cache } from '@src/cache';
-import { getGameRepository } from '.';
-import { sleep } from '@src/timer';
-import { Nats } from '@src/nats';
-import { GameServerRepository } from './gameserver';
-import { GameType } from '@src/entity/types';
+import {Tournament} from '@src/entity/game/tournament';
+import {errToStr, getLogger} from '@src/utils/log';
+import {EntityManager, Repository} from 'typeorm';
+import {Cache} from '@src/cache';
+import {getGameRepository} from '.';
+import {sleep, startTimerWithPayload} from '@src/timer';
+import {Nats} from '@src/nats';
+import {GameServerRepository} from './gameserver';
+import {GameType} from '@src/entity/types';
 
 const logger = getLogger('tournaments');
 const apiCallbackHost = 'localhost:9001';
@@ -128,7 +128,10 @@ let gameServerRpc: any;
 
 class TournamentRepositoryImpl {
   private initialized: boolean = false;
-  private cachedEncryptionKeys: { [key: string]: string } = {};
+  private cachedEncryptionKeys: {[key: string]: string} = {};
+  private currentTournamentLevel: {[key: number]: number} = {};
+  private tournamentLevelData: {[key: number]: Array<TournamentLevel>} = {};
+
   public async initialize(serverHost?: string) {
     if (this.initialized) {
       return;
@@ -179,6 +182,7 @@ class TournamentRepositoryImpl {
         bigBlind: bigBlind,
         ante: ante,
       });
+      smallBlind = bigBlind;
     }
     return levels;
   }
@@ -244,20 +248,21 @@ class TournamentRepositoryImpl {
   ): Promise<number> {
     try {
       const tableServer = await GameServerRepository.getNextGameServer();
+      const startingChips = 5000;
       const data: TournamentData = {
         id: 0,
         name: tournamentName,
         minPlayers: 2,
         maxPlayers: 100,
         maxPlayersInTable: 6,
-        levelTime: 2, // minutes
+        levelTime: 10, // seconds
         currentLevel: -1,
         levels: this.getTurboLevels(),
         tables: [],
         registeredPlayers: [],
         playersInTournament: [],
         startTime: startTime,
-        startingChips: 5000,
+        startingChips: startingChips * 100,
         tableServerId: tableServer.id,
       };
       let tournamentRepo: Repository<Tournament>;
@@ -288,7 +293,7 @@ class TournamentRepositoryImpl {
       const player = await Cache.getPlayer(playerUuid);
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({ id: tournamentId });
+      const tournament = await tournamentRepo.findOne({id: tournamentId});
       if (tournament) {
         const data = JSON.parse(tournament.data);
         const playerData = data.registeredPlayers.find(
@@ -299,7 +304,7 @@ class TournamentRepositoryImpl {
             playerId: player.id,
             playerName: player.name,
             playerUuid: player.uuid,
-            stack: data.startingStack,
+            stack: data.startingStack * 100,
             isSittingOut: false,
             isBot: player.bot,
             tableNo: 0,
@@ -323,7 +328,7 @@ class TournamentRepositoryImpl {
     try {
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({ id: tournamentId });
+      const tournament = await tournamentRepo.findOne({id: tournamentId});
       if (tournament) {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
@@ -377,7 +382,7 @@ class TournamentRepositoryImpl {
     try {
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({ id: tournamentId });
+      const tournament = await tournamentRepo.findOne({id: tournamentId});
       if (tournament) {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
@@ -449,12 +454,12 @@ class TournamentRepositoryImpl {
   }
 
   private async runHand(tournamentId: number, tableNo: number) {
-    const data = await this.getTournamentData(tournamentId);
+    const data: TournamentData = await this.getTournamentData(tournamentId);
     if (!data) {
       throw new Error(`Tournament ${tournamentId} is not found`);
     }
 
-    let table: Table | null;
+    let table: Table | undefined;
     table = data.tables.find(t => t.tableNo === tableNo);
     if (!table) {
       throw new Error(
@@ -473,6 +478,20 @@ class TournamentRepositoryImpl {
         string name = 8;
     */
     const seats = new Array<any>();
+    let openSeat: any = {
+      seat_no: 0,
+      player_uuid: '',
+      player_id: 0,
+      stack: 0,
+      inhand: false,
+      name: '',
+      open_seat: true,
+      encryption_key: '',
+    };
+    for (let seatNo = 0; seatNo <= data.maxPlayersInTable; seatNo++) {
+      openSeat.seat_no = seatNo;
+      seats.push(openSeat);
+    }
     for (const player of table.players) {
       let encryptionKey = this.cachedEncryptionKeys[player.playerUuid];
       if (!encryptionKey) {
@@ -491,7 +510,7 @@ class TournamentRepositoryImpl {
         open_seat: false,
         encryption_key: encryptionKey,
       };
-      seats.push(seat);
+      seats[player.seatNo] = seat;
     }
 
     /*
@@ -511,13 +530,34 @@ class TournamentRepositoryImpl {
           uint32 action_time = 13;
       }
     */
+    let sb = 10;
+    let bb = 20;
+    let ante = 0;
+    // get current level from memory
+    let currentLevel = this.currentTournamentLevel[tournamentId];
+    if (!currentLevel) {
+      currentLevel = data.currentLevel;
+      this.currentTournamentLevel[tournamentId] = currentLevel;
+    }
+
+    let level: any;
+    for (let i = 0; i < data.levels.length; i++) {
+      level = data.levels[i];
+      if (level.level === currentLevel) {
+        sb = level.smallBlind;
+        bb = level.bigBlind;
+        ante = level.ante;
+        break;
+      }
+    }
+
     let handDetails: any = {
       button_pos: 1,
       sb_pos: 2,
       bb_pos: 3,
-      sb: 10,
-      bb: 20,
-      ante: 0,
+      sb: sb * 100,
+      bb: bb * 100,
+      ante: ante * 100,
       game_type: GameType.HOLDEM,
       hand_num: 1,
       result_pause_time: 3,
@@ -536,7 +576,7 @@ class TournamentRepositoryImpl {
       } 
     */
     let handInfo: any = {
-      tournament_id: data.tournamentId,
+      tournament_id: tournamentId,
       table_no: table.tableNo,
       game_code: TournamentRepository.getTableGameCode(tournamentId, tableNo),
       game_id: TournamentRepository.getTableGameId(tournamentId, tableNo),
@@ -562,7 +602,7 @@ class TournamentRepositoryImpl {
     try {
       // call bot-runner to register bots to the system and let them register for the tournament
       // now bots are listening on tournament channel
-    } catch (err) { }
+    } catch (err) {}
   }
 
   public async startTournament(tournamentId: number) {
@@ -570,7 +610,7 @@ class TournamentRepositoryImpl {
       // bots will join the tournament here
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      let tournament = await tournamentRepo.findOne({ id: tournamentId });
+      let tournament = await tournamentRepo.findOne({id: tournamentId});
       if (tournament) {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
@@ -589,22 +629,147 @@ class TournamentRepositoryImpl {
       }
 
       // get data again from the db
-      tournament = await tournamentRepo.findOne({ id: tournamentId });
+      tournament = await tournamentRepo.findOne({id: tournamentId});
       if (!tournament) {
         throw new Error(`Tournament ${tournamentId} is not found`);
       }
       data = JSON.parse(tournament.data) as TournamentData;
       data.currentLevel = 1;
       tournament.data = JSON.stringify(data);
+      this.currentTournamentLevel[tournamentId] = 1;
+      this.tournamentLevelData[tournamentId] = data.levels;
       await tournamentRepo.save(tournament);
       Nats.tournamentStarted(tournamentId);
       await sleep(1000);
+      // start the level timer
+      await this.startLevelTimer(tournamentId, data.levelTime);
+
       // start the first hand
       for (const table of data.tables) {
         this.runHand(tournamentId, table.tableNo);
       }
       // bots should play the first hand
-    } catch (err) { }
+    } catch (err) {}
+  }
+
+  private async startLevelTimer(tournamentId: number, timeOutSecs: number) {
+    const nextTimeOut = new Date();
+    nextTimeOut.setSeconds(nextTimeOut.getSeconds() + timeOutSecs);
+    startTimerWithPayload(
+      {
+        tournamentId: tournamentId,
+        purpose: 'LEVEL_TIMEOUT',
+      },
+      nextTimeOut
+    ).catch(err => {
+      logger.error(
+        `Failed to start timer for level timeout ${tournamentId} ${err}`
+      );
+    });
+  }
+
+  public async handleLevelTimeout(payload: any) {
+    try {
+      const tournamentId = payload.tournamentId;
+      let tournamentRepo: Repository<Tournament>;
+      tournamentRepo = getGameRepository(Tournament);
+      let tournament = await tournamentRepo.findOne({id: tournamentId});
+      if (tournament) {
+      } else {
+        throw new Error(`Tournament ${tournamentId} is not found`);
+      }
+      let data = JSON.parse(tournament.data) as TournamentData;
+
+      // continue only if there are players in the tournament
+      if (data.tables[0].players.length > 1) {
+        let currentLevelNo = this.currentTournamentLevel[tournamentId];
+        let currentLevel: TournamentLevel =
+          this.tournamentLevelData[tournamentId][currentLevelNo];
+        let levels: Array<TournamentLevel> =
+          this.tournamentLevelData[tournamentId];
+        currentLevelNo++;
+        for (let i = 0; i < levels.length; i++) {
+          let level = levels[i];
+          if (level.level === currentLevelNo) {
+            currentLevel = level;
+            logger.info(
+              `******* Starting next level sb: ${level.smallBlind} bb: ${level.bigBlind} ante: ${level.ante} *******`
+            );
+            break;
+          }
+        }
+        this.currentTournamentLevel[tournamentId] = currentLevel.level;
+
+        // kick off the next level
+        await this.startLevelTimer(tournamentId, data.levelTime);
+      }
+
+      // send a NATS notification here
+    } catch (err) {
+      logger.error(
+        `Failed to handle for level timeout ${payload.tournamentId} ${err}`
+      );
+    }
+  }
+
+  public async saveTournamentHand(
+    tournamentId: number,
+    tableNo: number,
+    result: any
+  ) {
+    try {
+      logger.info(
+        `Result from Tournament: ${tournamentId} tableNo: ${tableNo}`
+      );
+      let tournamentRepo: Repository<Tournament>;
+      tournamentRepo = getGameRepository(Tournament);
+      let tournament = await tournamentRepo.findOne({id: tournamentId});
+      if (tournament) {
+      } else {
+        throw new Error(`Tournament ${tournamentId} is not found`);
+      }
+      let data = JSON.parse(tournament.data) as TournamentData;
+      let table = data.tables.find(t => t.tableNo === tableNo);
+      if (!table) {
+        throw new Error(
+          `Table ${tableNo} is not found in tournament ${tournamentId}`
+        );
+      }
+      const players = result.result.playerInfo;
+      const updatedTable = new Array<TournamentPlayer>();
+      // remove the players who had lost all the stacks
+      for (const seatNo of Object.keys(players)) {
+        const player = players[seatNo];
+        const playerId = parseInt(player.id);
+        for (const playerInTable of table.players) {
+          if (playerInTable.playerId === playerId) {
+            if (player.balance.after === 0) {
+              // remove the player from the table
+              logger.info(
+                `Tournament: ${tournamentId} tableNo: ${tableNo} Player: ${playerInTable.playerName} is busted`
+              );
+            } else {
+              playerInTable.stack = player.balance.after;
+              updatedTable.push(playerInTable);
+            }
+          }
+        }
+      }
+      table.players = updatedTable;
+      tournament.data = JSON.stringify(data);
+      tournament = await tournamentRepo.save(tournament);
+
+      // start tournament level timer
+
+      if (updatedTable.length > 1) {
+        // run the next hand
+        await this.runHand(tournamentId, table.tableNo);
+      } else {
+        logger.info(
+          `Tournament: ${tournamentId} tableNo: ${tableNo} Player: ${updatedTable[0].playerName} is the winner.`
+        );
+      }
+    } catch (err) {}
   }
 }
 

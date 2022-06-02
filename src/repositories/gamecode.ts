@@ -85,26 +85,26 @@ class GameCodeRepositoryImpl {
       }
     }
 
-    if (getRunProfile() != RunProfile.PROD) {
-      // Try cycling through all codes.
-      const numCodes = (this.numBuckets + 1) * this.bucketSize;
-      const buckets = new Array<Array<number>>();
-      for (let i = 0; i < this.numBuckets; i++) {
-        buckets[i] = new Array<number>();
-      }
-      for (let i = 0; i < numCodes; i++) {
-        const code = await this.getNextGameCode();
-        buckets[code % this.numBuckets].push(code);
-      }
-      for (let i = 0; i < this.numBuckets; i++) {
-        const numCodesInBucket = buckets[i].length;
-        if (numCodesInBucket < this.bucketSize) {
-          throw new Error(
-            `GameCodeRepositoryImpl.verifyInit bucket ${i} length = ${numCodesInBucket}. Expected at least ${this.bucketSize}`
-          );
-        }
-      }
-    }
+    // if (getRunProfile() != RunProfile.PROD) {
+    //   // Try cycling through all codes.
+    //   const numCodes = (this.numBuckets + 1) * this.bucketSize;
+    //   const buckets = new Array<Array<number>>();
+    //   for (let i = 0; i < this.numBuckets; i++) {
+    //     buckets[i] = new Array<number>();
+    //   }
+    //   for (let i = 0; i < numCodes; i++) {
+    //     const code = await this.getNextGameCode();
+    //     buckets[code % this.numBuckets].push(code);
+    //   }
+    //   for (let i = 0; i < this.numBuckets; i++) {
+    //     const numCodesInBucket = buckets[i].length;
+    //     if (numCodesInBucket < this.bucketSize) {
+    //       throw new Error(
+    //         `GameCodeRepositoryImpl.verifyInit bucket ${i} length = ${numCodesInBucket}. Expected at least ${this.bucketSize}`
+    //       );
+    //     }
+    //   }
+    // }
     const endTime = performance.now();
     logger.info(`Verified game codes in ${endTime - startTime} ms`);
   }
