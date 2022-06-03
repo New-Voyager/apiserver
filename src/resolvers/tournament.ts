@@ -2,7 +2,8 @@ import {Nats} from '@src/nats';
 import {TournamentRepository} from '@src/repositories/tournament';
 import {Cache} from '@src/cache/index';
 import {TournamentPlayingStatus} from '@src/repositories/tournament';
-import {GameType} from '@src/entity/types';
+import {ChipUnit, GameStatus, GameType, TableStatus} from '@src/entity/types';
+import {centsToChips} from '@src/utils';
 
 const resolvers: any = {
   Query: {
@@ -139,6 +140,7 @@ async function getTournamentTableInfo(
   const ret = tournamentTableInfo as any;
   for (const player of ret.players) {
     player.status = TournamentPlayingStatus[player.status];
+    player.stack = centsToChips(player.stack);
   }
   ret.gameType = GameType[ret.gameType];
   ret.gameToPlayerChannel = Nats.getGameChannel(tournamentTableInfo.gameCode);
@@ -158,6 +160,17 @@ async function getTournamentTableInfo(
   ret.clientAliveChannel = Nats.getClientAliveChannel(
     tournamentTableInfo.gameCode
   );
+
+  /*
+  hard code some values here for now
+  **/
+  ret.actionTime = 15;
+  ret.maxPlayersInTable = 6;
+  ret.title = 'Tournament';
+  ret.chipUnit = ChipUnit[ChipUnit.DOLLAR];
+  ret.status = GameStatus[GameStatus.ACTIVE];
+  ret.tableStatus = TableStatus[TableStatus.GAME_RUNNING];
+  ret.gameID = TournamentRepository.getTableGameId(tournamentId, tableNo);
 
   return ret;
 }

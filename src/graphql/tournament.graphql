@@ -44,12 +44,20 @@ type TournamentInfo {
 }
 
 type TournamentGameInfo {
+  gameID: Int!
   gameCode: String!
   gameType: GameType
   smallBlind: Float
   bigBlind: Float
   ante: Float
 
+  actionTime: Int
+  maxPlayersInTable: Int
+  title: String
+  chipUnit: ChipUnit
+  status: GameStatus
+  tableStatus: TableStatus
+  
   players: [TournamentPlayer!]
 
   level: Int!
