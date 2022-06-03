@@ -73,6 +73,7 @@ type TournamentGameInfo {
 type Query {
   getTournamentInfo(tournamentId: Int!): TournamentInfo!
   getTournamentTableInfo(tournamentId: Int!, tableNo: Int!): TournamentGameInfo!
+  getTournamentGameInfo(gameCode: String!): TournamentGameInfo!
 }
 
 type Mutation {

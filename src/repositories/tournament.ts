@@ -16,6 +16,10 @@ var protoLoader = require('@grpc/proto-loader');
 const PROTO_PATH = __dirname + '/./rpc.proto';
 
 logger.info('Loading proto file: ' + PROTO_PATH);
+interface QueueItem {
+  type: string;
+  payload: any;
+}
 
 /****
  * Tournament messages
@@ -94,6 +98,7 @@ interface TournamentData {
   name: string;
   currentLevel: number; // -1 = not started
   levelTime: number;
+  activePlayers: number;
   levels: Array<TournamentLevel>;
   startTime: Date;
   minPlayers: number;
@@ -125,12 +130,16 @@ interface TournamentTableInfo {
 }
 
 let gameServerRpc: any;
-
+interface Queue {
+  processing: boolean;
+  items: Array<QueueItem>;
+}
 class TournamentRepositoryImpl {
   private initialized: boolean = false;
   private cachedEncryptionKeys: {[key: string]: string} = {};
   private currentTournamentLevel: {[key: number]: number} = {};
   private tournamentLevelData: {[key: number]: Array<TournamentLevel>} = {};
+  private processQueue: {[key: number]: Queue} = {};
 
   public async initialize(serverHost?: string) {
     if (this.initialized) {
@@ -255,6 +264,7 @@ class TournamentRepositoryImpl {
         name: tournamentName,
         minPlayers: 2,
         maxPlayers: 100,
+        activePlayers: 0,
         maxPlayersInTable: 6,
         levelTime: 10, // seconds
         currentLevel: -1,
@@ -280,6 +290,11 @@ class TournamentRepositoryImpl {
       tournament.data = JSON.stringify(data);
       tournament.tableServer = ''; // assign table server here
       tournament = await tournamentRepo.save(tournament);
+
+      this.processQueue[tournament.id] = {
+        processing: false,
+        items: [],
+      };
 
       // host the table in the game server
       return tournament.id;
@@ -380,7 +395,75 @@ class TournamentRepositoryImpl {
   }
 
   public async joinTournament(playerUuid: string, tournamentId: number) {
+    const queue = this.processQueue[tournamentId];
+    const item: QueueItem = {
+      type: 'PLAYER_REG',
+      payload: {
+        playerUuid: playerUuid,
+      },
+    };
+
+    queue.items.push(item);
+    await this.processQueueItem(tournamentId).catch(err => {
+      logger.error(`Failed to process queue item. ${JSON.stringify(item)}`);
+    });
+  }
+
+  private async kickOffTournament(data: TournamentData) {
+    if (data.activePlayers === data.registeredPlayers.length) {
+      logger.info('Waiting for bot players to take the seats');
+      await sleep(5000);
+      // start the level timer
+      logger.info('Starting the level timer');
+      await this.startLevelTimer(data.id, data.levelTime);
+
+      // start the first hand
+      for (const table of data.tables) {
+        logger.info('Run a first hand');
+        this.runHand(data.id, table.tableNo);
+      }
+    }
+  }
+  private async processQueueItem(tournamentId: number) {
+    const queue = this.processQueue[tournamentId];
+    if (queue.processing) {
+      return;
+    }
+    queue.processing = true;
     try {
+      const item = queue.items.shift();
+      if (item) {
+        if (item.type === 'PLAYER_REG') {
+          await this.joinTournamentQueueItem(
+            item.payload.playerUuid,
+            tournamentId
+          );
+        } else if (item.type === 'HAND_RESULT') {
+          await this.saveTournamentHandInternal(
+            tournamentId,
+            item.payload.tableNo,
+            item.payload.result
+          );
+        }
+      }
+    } catch (err) {
+      logger.error(`Processing item from queue failed ${errToStr(err)}`);
+    }
+    queue.processing = false;
+    if (this.processQueue[tournamentId].items.length > 0) {
+      // proces the next item in the queue
+      await this.processQueueItem(tournamentId);
+    }
+  }
+
+  public async joinTournamentQueueItem(
+    playerUuid: string,
+    tournamentId: number
+  ) {
+    try {
+      logger.info(
+        `Joining tournament: ${tournamentId} playerUuid: ${playerUuid}`
+      );
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
       const tournament = await tournamentRepo.findOne({id: tournamentId});
@@ -419,6 +502,7 @@ class TournamentRepositoryImpl {
         status: TournamentPlayingStatus.PLAYING,
       };
       table.players.push(seatPlayer);
+      data.activePlayers += 1;
 
       // set the table number for the player
       const playerData = data.registeredPlayers.find(
@@ -446,6 +530,8 @@ class TournamentRepositoryImpl {
         seatPlayer.tableNo,
         seatPlayer.seatNo
       );
+
+      await this.kickOffTournament(data);
     } catch (err) {
       logger.error(
         `Failed to get tournement info: ${tournamentId}: ${errToStr(err)}`
@@ -654,14 +740,7 @@ class TournamentRepositoryImpl {
       this.tournamentLevelData[tournamentId] = data.levels;
       await tournamentRepo.save(tournament);
       Nats.tournamentStarted(tournamentId);
-      await sleep(1000);
-      // start the level timer
-      await this.startLevelTimer(tournamentId, data.levelTime);
 
-      // start the first hand
-      for (const table of data.tables) {
-        this.runHand(tournamentId, table.tableNo);
-      }
       // bots should play the first hand
     } catch (err) {}
   }
@@ -727,8 +806,27 @@ class TournamentRepositoryImpl {
       );
     }
   }
-
   public async saveTournamentHand(
+    tournamentId: number,
+    tableNo: number,
+    result: any
+  ) {
+    const queue = this.processQueue[tournamentId];
+    const item: QueueItem = {
+      type: 'HAND_RESULT',
+      payload: {
+        tableNo: tableNo,
+        result: result,
+      },
+    };
+
+    queue.items.push(item);
+    this.processQueueItem(tournamentId).catch(err => {
+      logger.error(`Failed to process queue item. ${JSON.stringify(item)}`);
+    });
+  }
+
+  public async saveTournamentHandInternal(
     tournamentId: number,
     tableNo: number,
     result: any

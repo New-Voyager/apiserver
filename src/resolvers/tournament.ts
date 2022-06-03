@@ -2,6 +2,7 @@ import {Nats} from '@src/nats';
 import {TournamentRepository} from '@src/repositories/tournament';
 import {Cache} from '@src/cache/index';
 import {TournamentPlayingStatus} from '@src/repositories/tournament';
+import {GameType} from '@src/entity/types';
 
 const resolvers: any = {
   Query: {
@@ -14,6 +15,9 @@ const resolvers: any = {
         args.tournamentId,
         args.tableNo
       );
+    },
+    getTournamentGameInfo: async (parent, args, ctx, info) => {
+      return getTournamentGameInfo(ctx.req.playerId, args.gameCode);
     },
   },
 
@@ -136,6 +140,7 @@ async function getTournamentTableInfo(
   for (const player of ret.players) {
     player.status = TournamentPlayingStatus[player.status];
   }
+  ret.gameType = GameType[ret.gameType];
   ret.gameToPlayerChannel = Nats.getGameChannel(tournamentTableInfo.gameCode);
   ret.playerToHandChannel = Nats.getPlayerToHandChannel(
     tournamentTableInfo.gameCode
@@ -155,4 +160,17 @@ async function getTournamentTableInfo(
   );
 
   return ret;
+}
+
+async function getTournamentGameInfo(
+  playerUuid: string,
+  gameCode: string
+): Promise<any> {
+  const toks = gameCode.split('-');
+  if (toks.length < 3) {
+    throw new Error(`Invalid gameCode: ${gameCode}`);
+  }
+  const tournamentId = parseInt(toks[1]);
+  const tableNo = parseInt(toks[2]);
+  return getTournamentTableInfo(playerUuid, tournamentId, tableNo);
 }
