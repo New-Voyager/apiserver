@@ -1,0 +1,49 @@
+{
+    "thisGame": {
+      "inPreflop": 0,
+      "inFlop": 0,
+      "inTurn": 0,
+      "inRiver": 0,
+      "wentToShowDown": 1,
+      "wonAtShowDown": 0,
+      "headsupHands": 1,
+      "wonHeadsupHands": 0,
+      "headsupHandDetails": [
+        {
+          "handNum": 1,
+          "otherPlayer": 2575,
+          "won": false
+        }
+      ],
+      "preflopRaise": 0,
+      "postflopRaise": 0,
+      "threeBet": 0,
+      "contBet": 0,
+      "vpipCount": 1,
+      "allInCount": 0,
+      "totalHands": 1
+    },
+    "alltime": {
+      "inPreflop": 0,
+      "inFlop": 0,
+      "inTurn": 0,
+      "inRiver": 0,
+      "wentToShowDown": 1,
+      "wonAtShowDown": 0,
+      "headsupHands": 1,
+      "wonHeadsupHands": 0,
+      "headsupHandSummary": {
+        "2575": {
+          "won": 0,
+          "total": 1
+        }
+      },
+      "preflopRaise": 0,
+      "postflopRaise": 0,
+      "threeBet": 0,
+      "contBet": 0,
+      "vpipCount": 1,
+      "allInCount": 0,
+      "totalHands": 1
+    }
+}

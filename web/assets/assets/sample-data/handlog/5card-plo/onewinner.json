@@ -1,0 +1,197 @@
+{
+	"game_id": 511,
+	"hand_num": 1,
+	"game_type": 4,
+	"no_cards": 5,
+	"hand_log": {
+		"preflop_actions": {
+			"pot": 6,
+			"actions": [{
+				"seat_no": 2,
+				"amount": 1,
+				"stack": 99
+			}, {
+				"seat_no": 3,
+				"action": 1,
+				"amount": 2,
+				"stack": 98
+			}, {
+				"seat_no": 1,
+				"action": 4,
+				"amount": 2,
+				"stack": 98
+			}, {
+				"seat_no": 2,
+				"action": 4,
+				"amount": 2,
+				"stack": 98
+			}, {
+				"seat_no": 3,
+				"action": 3,
+				"amount": 2,
+				"stack": 98
+			}]
+		},
+		"flop_actions": {
+			"pot_start": 6,
+			"pot": 10,
+			"actions": [{
+				"seat_no": 2,
+				"action": 3,
+				"stack": 98
+			}, {
+				"seat_no": 3,
+				"action": 6,
+				"amount": 2,
+				"stack": 96
+			}, {
+				"seat_no": 1,
+				"action": 4,
+				"amount": 2,
+				"stack": 96
+			}, {
+				"seat_no": 2,
+				"action": 7,
+				"amount": 4,
+				"stack": 94
+			}, {
+				"seat_no": 3,
+				"action": 5,
+				"stack": 96
+			}, {
+				"seat_no": 1,
+				"action": 4,
+				"amount": 4,
+				"stack": 94
+			}]
+		},
+		"turn_actions": {
+			"pot_start": 16,
+			"pot": 20,
+			"actions": [{
+				"seat_no": 2,
+				"action": 3,
+				"stack": 94
+			}, {
+				"seat_no": 1,
+				"action": 6,
+				"amount": 10,
+				"stack": 84
+			}, {
+				"seat_no": 2,
+				"action": 4,
+				"amount": 10,
+				"stack": 84
+			}]
+		},
+		"river_actions": {
+			"pot_start": 36,
+			"pot": 20,
+			"actions": [{
+				"seat_no": 2,
+				"action": 6,
+				"amount": 10,
+				"stack": 74
+			}, {
+				"seat_no": 1,
+				"action": 4,
+				"amount": 10,
+				"stack": 74
+			}]
+		},
+		"pot_winners": {
+			"0": {
+				"amount": 56,
+				"hi_winners": [{
+					"seat_no": 2,
+					"amount": 54,
+					"winning_cards": [18, 49, 200, 8, 33],
+					"winning_cards_str": "[ 3❤  5♠  A♣  2♣  4♠ ]",
+					"rank_str": "Straight",
+					"rank": 1609,
+					"player_cards": [18, 49],
+					"board_cards": [200, 8, 33]
+				}]
+			}
+		},
+		"won_at": 5,
+		"hand_started_at": 1620569677,
+		"hand_ended_at": 1620569696
+	},
+	"board_cards": [200, 196, 8, 132, 33],
+	"flop": [200, 196, 8],
+	"turn": 132,
+	"river": 33,
+	"players": {
+		"1": {
+			"id": 4850,
+			"cards": [114, 24, 88, 145, 180],
+			"best_cards": [145, 180, 200, 196, 132],
+			"rank": 3336,
+			"played_until": 5,
+			"balance": {
+				"before": 100,
+				"after": 74
+			},
+			"hh_cards": [145, 180, 200, 196, 132],
+			"hh_rank": 3336
+		},
+		"2": {
+			"id": 4851,
+			"cards": [178, 194, 18, 49, 65],
+			"best_cards": [18, 49, 200, 8, 33],
+			"rank": 1609,
+			"played_until": 5,
+			"balance": {
+				"before": 100,
+				"after": 128
+			},
+			"hh_cards": [18, 49, 200, 8, 33],
+			"hh_rank": 1609,
+			"received": 54,
+			"rake_paid": 2
+		},
+		"3": {
+			"id": 4852,
+			"played_until": 4,
+			"balance": {
+				"before": 100,
+				"after": 96
+			}
+		}
+	},
+	"rake_collected": 2,
+	"player_stats": {
+		"4850": {
+			"vpip": true,
+			"went_to_showdown": true,
+			"headsup": true,
+			"headsup_player": 4851,
+			"in_preflop": true,
+			"in_flop": true,
+			"in_turn": true,
+			"in_river": true
+		},
+		"4851": {
+			"postflop_raise": true,
+			"vpip": true,
+			"went_to_showdown": true,
+			"won_chips_at_showdown": true,
+			"headsup": true,
+			"headsup_player": 4850,
+			"won_headsup": true,
+			"in_preflop": true,
+			"in_flop": true,
+			"in_turn": true,
+			"in_river": true
+		},
+		"4852": {
+			"postflop_raise": true,
+			"in_preflop": true,
+			"in_flop": true
+		}
+	},
+	"hand_stats": {
+		"ended_at_showdown": true
+	}
+}

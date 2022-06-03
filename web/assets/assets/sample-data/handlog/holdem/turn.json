@@ -1,0 +1,346 @@
+{
+	"messageType": "RESULT",
+	"handResult": {
+		"gameId": "477",
+		"handNum": 1,
+		"gameType": "HOLDEM",
+		"noCards": 2,
+		"maxPlayers": 4,
+		"smallBlind": 1,
+		"bigBlind": 2,
+		"handLog": {
+			"preflopActions": {
+				"potStart": 0,
+				"pot": 6,
+				"actions": [
+					{
+						"seatNo": 2,
+						"action": "SB",
+						"amount": 1,
+						"timedOut": false,
+						"actionTime": 0,
+						"stack": 99
+					},
+					{
+						"seatNo": 3,
+						"action": "BB",
+						"amount": 2,
+						"timedOut": false,
+						"actionTime": 0,
+						"stack": 98
+					},
+					{
+						"seatNo": 1,
+						"action": "CALL",
+						"amount": 2,
+						"timedOut": false,
+						"actionTime": 0,
+						"stack": 98
+					},
+					{
+						"seatNo": 2,
+						"action": "CALL",
+						"amount": 2,
+						"timedOut": false,
+						"actionTime": 0,
+						"stack": 98
+					},
+					{
+						"seatNo": 3,
+						"action": "CHECK",
+						"amount": 2,
+						"timedOut": false,
+						"actionTime": 0,
+						"stack": 98
+					}
+				]
+			},
+			"flopActions": {
+				"potStart": 6,
+				"pot": 22,
+				"actions": [
+					{
+						"seatNo": 2,
+						"action": "CHECK",
+						"amount": 0,
+						"timedOut": false,
+						"actionTime": 0,
+						"stack": 98
+					},
+					{
+						"seatNo": 3,
+						"action": "BET",
+						"amount": 2,
+						"timedOut": false,
+						"actionTime": 0,
+						"stack": 96
+					},
+					{
+						"seatNo": 1,
+						"action": "CALL",
+						"amount": 2,
+						"timedOut": false,
+						"actionTime": 0,
+						"stack": 96
+					},
+					{
+						"seatNo": 2,
+						"action": "RAISE",
+						"amount": 10,
+						"timedOut": false,
+						"actionTime": 0,
+						"stack": 88
+					},
+					{
+						"seatNo": 3,
+						"action": "FOLD",
+						"amount": 0,
+						"timedOut": false,
+						"actionTime": 0,
+						"stack": 96
+					},
+					{
+						"seatNo": 1,
+						"action": "CALL",
+						"amount": 10,
+						"timedOut": false,
+						"actionTime": 0,
+						"stack": 88
+					}
+				]
+			},
+			"turnActions": {
+				"potStart": 28,
+				"pot": 10,
+				"actions": [
+					{
+						"seatNo": 2,
+						"action": "BET",
+						"amount": 10,
+						"timedOut": false,
+						"actionTime": 0,
+						"stack": 78
+					},
+					{
+						"seatNo": 1,
+						"action": "FOLD",
+						"amount": 0,
+						"timedOut": false,
+						"actionTime": 0,
+						"stack": 88
+					}
+				]
+			},
+			"riverActions": {
+				"potStart": 0,
+				"pot": 0,
+				"actions": []
+			},
+			"potWinners": {
+				"0": {
+					"potNo": 0,
+					"amount": 0,
+					"hiWinners": [
+						{
+							"seatNo": 2,
+							"loCard": false,
+							"amount": 37,
+							"winningCards": [],
+							"winningCardsStr": "",
+							"rankStr": "",
+							"rank": 0,
+							"playerCards": [],
+							"boardCards": []
+						}
+					],
+					"lowWinners": []
+				}
+			},
+			"wonAt": "TURN",
+			"showDown": null,
+			"handStartedAt": "1620551334",
+			"handEndedAt": "1620551347",
+			"runItTwice": false,
+			"runItTwiceResult": null
+		},
+		"rewardTrackingIds": [],
+		"boardCards": [
+			200,
+			196,
+			8,
+			132,
+			33
+		],
+		"boardCards2": [],
+		"flop": [
+			200,
+			196,
+			8
+		],
+		"turn": 132,
+		"river": 33,
+		"players": {
+			"1": {
+				"id": "1",
+				"cards": [],
+				"bestCards": [],
+				"rank": 0,
+				"playedUntil": "TURN",
+				"balance": {
+					"before": 100,
+					"after": 88
+				},
+				"hhCards": [],
+				"hhRank": 0,
+				"received": 0,
+				"rakePaid": 0
+			},
+			"2": {
+				"id": "2",
+				"cards": [
+					178,
+					164
+				],
+				"bestCards": [],
+				"rank": 4294967295,
+				"playedUntil": "TURN",
+				"balance": {
+					"before": 100,
+					"after": 115
+				},
+				"hhCards": [],
+				"hhRank": 4294967295,
+				"received": 37,
+				"rakePaid": 1
+			},
+			"3": {
+				"id": "3",
+				"cards": [],
+				"bestCards": [],
+				"rank": 0,
+				"playedUntil": "TURN",
+				"balance": {
+					"before": 100,
+					"after": 96
+				},
+				"hhCards": [],
+				"hhRank": 0,
+				"received": 0,
+				"rakePaid": 0
+			}
+		},
+		"rakeCollected": 1,
+		"highHand": null,
+		"playerStats": {
+			"4306": {
+				"preflopRaise": false,
+				"postflopRaise": false,
+				"threeBet": false,
+				"cbet": false,
+				"vpip": true,
+				"allin": false,
+				"wentToShowdown": false,
+				"wonChipsAtShowdown": false,
+				"headsup": true,
+				"headsupPlayer": "4307",
+				"wonHeadsup": false,
+				"badbeat": false,
+				"inPreflop": true,
+				"inFlop": true,
+				"inTurn": true,
+				"inRiver": false
+			},
+			"4307": {
+				"preflopRaise": false,
+				"postflopRaise": true,
+				"threeBet": false,
+				"cbet": false,
+				"vpip": true,
+				"allin": false,
+				"wentToShowdown": false,
+				"wonChipsAtShowdown": false,
+				"headsup": true,
+				"headsupPlayer": "4306",
+				"wonHeadsup": true,
+				"badbeat": false,
+				"inPreflop": true,
+				"inFlop": true,
+				"inTurn": true,
+				"inRiver": false
+			},
+			"4308": {
+				"preflopRaise": false,
+				"postflopRaise": true,
+				"threeBet": false,
+				"cbet": false,
+				"vpip": false,
+				"allin": false,
+				"wentToShowdown": false,
+				"wonChipsAtShowdown": false,
+				"headsup": false,
+				"headsupPlayer": "0",
+				"wonHeadsup": false,
+				"badbeat": false,
+				"inPreflop": true,
+				"inFlop": true,
+				"inTurn": false,
+				"inRiver": false
+			}
+		},
+		"handStats": {
+			"endedAtPreflop": false,
+			"endedAtFlop": false,
+			"endedAtTurn": false,
+			"endedAtRiver": false,
+			"endedAtShowdown": false
+		},
+		"runItTwice": false
+	},
+	"players": [
+		{
+			"id": 2,
+			"name": "young"
+		},
+		{
+			"id": 5,
+			"name": "jim"
+		},
+		{
+			"id": 8,
+			"name": "michael"
+		},
+		{
+			"id": 10,
+			"name": "david"
+		},
+		{
+			"id": 3,
+			"name": "carol"
+		},
+		{
+			"id": 9,
+			"name": "bill"
+		},
+		{
+			"id": 4,
+			"name": "matt"
+		},
+		{
+			"id": 6,
+			"name": "rob"
+		},
+		{
+			"id": 7,
+			"name": "john"
+		},
+		{
+			"id": 1,
+			"name": "siva"
+		}
+	],
+	"myInfo": {
+		"id": 1,
+		"uuid": "cfe63ff3712c594f",
+		"name": "asdf"
+	}
+}

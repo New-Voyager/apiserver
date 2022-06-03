@@ -1,0 +1,125 @@
+{
+	"currentPlayer": {
+		"myInfo": {
+			"id": 1,
+			"uuid": "371e8c15-39cb-4bd9-a932-ced7a9dd6aac",
+			"name": "me"
+		},
+		"role": {
+			"isHost": true,
+			"isOwner": true,
+			"isManager": false
+		}
+	},
+
+	"gameInfo": {
+		"gameCode": "CG-8QI4TZBWJRQAXN",
+		"clubCode": "C-ZZSA3WNME56Y",
+		"buyInMax": 100,
+		"maxPlayers": 9,
+		"title": "Test",
+		"gameType": "HOLDEM",
+		"buyInMin": 30,
+		"smallBlind": 1,
+		"bigBlind": 2,
+		"allowRabbitHunt": true,
+		"status": "ACTIVE",
+		"tableStatus": "GAME_RUNNING",
+		"seatInfo": {
+			"availableSeats": [],
+			"playersInSeats": [{
+					"name": "poker club",
+					"playerId": "1",
+					"seatNo": 1,
+					"playerUuid": "371e8c15-39cb-4bd9-a932-ced7a9dd6aac",
+					"stack": 98,
+					"buyIn": 100,
+					"status": "PLAYING",
+					"me": true
+				},
+				{
+					"name": "young",
+					"playerId": "2",
+					"seatNo": 2,
+					"playerUuid": "c2dc2c3d-13da-46cc-8c66-caa0c77459de",
+					"stack": 380,
+					"buyIn": 200,
+					"status": "PLAYING"
+				},
+				{
+					"name": "cnu federer",
+					"playerId": "3",
+					"seatNo": 3,
+					"playerUuid": "4b93e2be-7992-45c3-a2dd-593c2f708cb7",
+					"stack": 1036,
+					"buyIn": 100,
+					"status": "PLAYING"
+				},
+				{
+					"name": "paul",
+					"playerId": "4",
+					"seatNo": 4,
+					"playerUuid": "371e8c15-39cb-4bd9-a932-ced7a9dd6bcd",
+					"stack": 129,
+					"buyIn": 400,
+					"status": "PLAYING"
+				},
+				{
+					"name": "jim",
+					"playerId": "5",
+					"seatNo": 5,
+					"playerUuid": "52f59bab-02eb-43d8-9dce-69e57aed7f7d",
+					"stack": 38,
+					"buyIn": 200,
+					"status": "PLAYING"
+				},
+				{
+					"name": "paul",
+					"playerId": "6",
+					"seatNo": 6,
+					"playerUuid": "5cd96779-c6b2-4dba-a814-f365b6b48aeb",
+					"stack": 129,
+					"buyIn": 300,
+					"status": "PLAYING"
+				},
+				{
+					"name": "cnu federer",
+					"playerId": "7",
+					"seatNo": 7,
+					"playerUuid": "d04d24d1-be90-4c02-b8fb-c2499d9b76ed",
+					"stack": 135,
+					"buyIn": 400,
+					"status": "PLAYING"
+				},
+				{
+					"name": "michael",
+					"playerId": "8",
+					"seatNo": 8,
+					"playerUuid": "e9e2ee8b-2e2d-4659-a61d-4439fc274e1b",
+					"stack": 291,
+					"buyIn": 200,
+					"status": "PLAYING"
+				},
+				{
+					"name": "bill",
+					"playerId": "9",
+					"seatNo": 9,
+					"playerUuid": "8a159f59-bd78-4bce-a39b-fc32d63200ec",
+					"stack": 100,
+					"buyIn": 100,
+					"status": "PLAYING"
+				}
+			]
+		},
+		"actionTime": 30,
+		"gameToken": "d0b54f4e0f",
+		"playerGameStatus": "PLAYING",
+		"gameToPlayerChannel": "game.CG-8QI4TZBWJRQAXN.player",
+		"playerToHandChannel": "player.CG-8QI4TZBWJRQAXN.hand",
+		"handToAllChannel": "hand.CG-8QI4TZBWJRQAXN.player.all",
+		"handToPlayerChannel": "hand.CG-8QI4TZBWJRQAXN.player.1",
+		"gameChatChannel": "game.CG-8QI4TZBWJRQAXN.chat",
+		"pingChannel": "ping.CG-8QI4TZBWJRQAXN",
+		"pongChannel": "pong.CG-8QI4TZBWJRQAXN"
+	}
+}

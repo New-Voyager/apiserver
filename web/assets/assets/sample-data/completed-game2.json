@@ -1,0 +1,509 @@
+{
+	"gameCode": "CG-BKCOTKMXNZGXYM",
+	"gameType": "PLO",
+	"handsPlayed": 287,
+	"sessionTime": 37019,
+	"sessionTimeStr": "10 hours, 16 minutes, 59 seconds",
+	"stackStat": [
+		{
+			"handNum": 1,
+			"before": 1000,
+			"after": 980
+		},
+		{
+			"handNum": 2,
+			"before": 980,
+			"after": 918
+		},
+		{
+			"handNum": 3,
+			"before": 918,
+			"after": 858
+		},
+		{
+			"handNum": 4,
+			"before": 858,
+			"after": 808
+		},
+		{
+			"handNum": 5,
+			"before": 808,
+			"after": 794
+		},
+		{
+			"handNum": 6,
+			"before": 794,
+			"after": 604
+		},
+		{
+			"handNum": 7,
+			"before": 604,
+			"after": 590
+		},
+		{
+			"handNum": 8,
+			"before": 590,
+			"after": 534
+		},
+		{
+			"handNum": 9,
+			"before": 534,
+			"after": 502
+		},
+		{
+			"handNum": 10,
+			"before": 502,
+			"after": 0
+		},
+		{
+			"handNum": 11,
+			"before": 1000,
+			"after": 980
+		},
+		{
+			"handNum": 12,
+			"before": 980,
+			"after": 920
+		},
+		{
+			"handNum": 13,
+			"before": 920,
+			"after": 900
+		},
+		{
+			"handNum": 14,
+			"before": 900,
+			"after": 898
+		},
+		{
+			"handNum": 15,
+			"before": 898,
+			"after": 1201
+		},
+		{
+			"handNum": 16,
+			"before": 1201,
+			"after": 1252
+		},
+		{
+			"handNum": 17,
+			"before": 1252,
+			"after": 1174
+		},
+		{
+			"handNum": 18,
+			"before": 1174,
+			"after": 1154
+		},
+		{
+			"handNum": 19,
+			"before": 1154,
+			"after": 1111
+		},
+		{
+			"handNum": 20,
+			"before": 1111,
+			"after": 1097
+		},
+		{
+			"handNum": 21,
+			"before": 1097,
+			"after": 1067
+		},
+		{
+			"handNum": 22,
+			"before": 1067,
+			"after": 1065
+		},
+		{
+			"handNum": 23,
+			"before": 1065,
+			"after": 1055
+		},
+		{
+			"handNum": 24,
+			"before": 1055,
+			"after": 1053
+		},
+		{
+			"handNum": 25,
+			"before": 1053,
+			"after": 1051
+		},
+		{
+			"handNum": 26,
+			"before": 1051,
+			"after": 1049
+		},
+		{
+			"handNum": 27,
+			"before": 1049,
+			"after": 1041
+		},
+		{
+			"handNum": 28,
+			"before": 1041,
+			"after": 1040
+		},
+		{
+			"handNum": 29,
+			"before": 1040,
+			"after": 1020
+		},
+		{
+			"handNum": 30,
+			"before": 1020,
+			"after": 1197
+		},
+		{
+			"handNum": 31,
+			"before": 1197,
+			"after": 1195
+		},
+		{
+			"handNum": 32,
+			"before": 1195,
+			"after": 1145
+		},
+		{
+			"handNum": 33,
+			"before": 1145,
+			"after": 1322
+		},
+		{
+			"handNum": 34,
+			"before": 1322,
+			"after": 1276
+		},
+		{
+			"handNum": 35,
+			"before": 1276,
+			"after": 1369
+		},
+		{
+			"handNum": 36,
+			"before": 1369,
+			"after": 1325
+		},
+		{
+			"handNum": 37,
+			"before": 1325,
+			"after": 1288
+		},
+		{
+			"handNum": 38,
+			"before": 1288,
+			"after": 1286
+		},
+		{
+			"handNum": 39,
+			"before": 1286,
+			"after": 1421
+		},
+		{
+			"handNum": 40,
+			"before": 1421,
+			"after": 1419
+		},
+		{
+			"handNum": 41,
+			"before": 1419,
+			"after": 1636
+		},
+		{
+			"handNum": 42,
+			"before": 1636,
+			"after": 1748
+		},
+		{
+			"handNum": 43,
+			"before": 1748,
+			"after": 1704
+		},
+		{
+			"handNum": 44,
+			"before": 1704,
+			"after": 1702
+		},
+		{
+			"handNum": 45,
+			"before": 1702,
+			"after": 1682
+		},
+		{
+			"handNum": 46,
+			"before": 1682,
+			"after": 1645
+		},
+		{
+			"handNum": 47,
+			"before": 1645,
+			"after": 1635
+		},
+		{
+			"handNum": 48,
+			"before": 1635,
+			"after": 1633
+		},
+		{
+			"handNum": 49,
+			"before": 1633,
+			"after": 1631
+		},
+		{
+			"handNum": 50,
+			"before": 1631,
+			"after": 1599
+		},
+		{
+			"handNum": 51,
+			"before": 1599,
+			"after": 1597
+		},
+		{
+			"handNum": 52,
+			"before": 1597,
+			"after": 1710
+		},
+		{
+			"handNum": 53,
+			"before": 1710,
+			"after": 1708
+		},
+		{
+			"handNum": 54,
+			"before": 1708,
+			"after": 2013
+		},
+		{
+			"handNum": 55,
+			"before": 2013,
+			"after": 2011
+		},
+		{
+			"handNum": 56,
+			"before": 2011,
+			"after": 1967
+		},
+		{
+			"handNum": 57,
+			"before": 1967,
+			"after": 1941
+		},
+		{
+			"handNum": 58,
+			"before": 1941,
+			"after": 1939
+		},
+		{
+			"handNum": 59,
+			"before": 1939,
+			"after": 1901
+		},
+		{
+			"handNum": 60,
+			"before": 1901,
+			"after": 1899
+		},
+		{
+			"handNum": 61,
+			"before": 1899,
+			"after": 1897
+		},
+		{
+			"handNum": 62,
+			"before": 1897,
+			"after": 1868
+		},
+		{
+			"handNum": 63,
+			"before": 1868,
+			"after": 1812
+		},
+		{
+			"handNum": 64,
+			"before": 1812,
+			"after": 1881
+		},
+		{
+			"handNum": 65,
+			"before": 1881,
+			"after": 1879
+		},
+		{
+			"handNum": 66,
+			"before": 1879,
+			"after": 1877
+		},
+		{
+			"handNum": 67,
+			"before": 1877,
+			"after": 1875
+		},
+		{
+			"handNum": 68,
+			"before": 1875,
+			"after": 1873
+		},
+		{
+			"handNum": 69,
+			"before": 1873,
+			"after": 1863
+		},
+		{
+			"handNum": 70,
+			"before": 1863,
+			"after": 1861
+		},
+		{
+			"handNum": 71,
+			"before": 1861,
+			"after": 1859
+		},
+		{
+			"handNum": 72,
+			"before": 1859,
+			"after": 1821
+		},
+		{
+			"handNum": 73,
+			"before": 1821,
+			"after": 1820
+		},
+		{
+			"handNum": 74,
+			"before": 1820,
+			"after": 1819
+		},
+		{
+			"handNum": 75,
+			"before": 1819,
+			"after": 1817
+		},
+		{
+			"handNum": 76,
+			"before": 1817,
+			"after": 1809
+		},
+		{
+			"handNum": 77,
+			"before": 1809,
+			"after": 1783
+		},
+		{
+			"handNum": 78,
+			"before": 1783,
+			"after": 1739
+		},
+		{
+			"handNum": 79,
+			"before": 1739,
+			"after": 1701
+		},
+		{
+			"handNum": 80,
+			"before": 1701,
+			"after": 1699
+		},
+		{
+			"handNum": 81,
+			"before": 1699,
+			"after": 2004
+		},
+		{
+			"handNum": 82,
+			"before": 2004,
+			"after": 2183
+		},
+		{
+			"handNum": 83,
+			"before": 2183,
+			"after": 2163
+		},
+		{
+			"handNum": 84,
+			"before": 2163,
+			"after": 2161
+		},
+		{
+			"handNum": 85,
+			"before": 2161,
+			"after": 2464
+		},
+		{
+			"handNum": 86,
+			"before": 2464,
+			"after": 2462
+		},
+		{
+			"handNum": 87,
+			"before": 2462,
+			"after": 2460
+		},
+		{
+			"handNum": 88,
+			"before": 2460,
+			"after": 2458
+		},
+		{
+			"handNum": 89,
+			"before": 2458,
+			"after": 2392
+		},
+		{
+			"handNum": 90,
+			"before": 2392,
+			"after": 2366
+		},
+		{
+			"handNum": 91,
+			"before": 2366,
+			"after": 2365
+		},
+		{
+			"handNum": 92,
+			"before": 2365,
+			"after": 2339
+		},
+		{
+			"handNum": 93,
+			"before": 2339,
+			"after": 2301
+		},
+		{
+			"handNum": 94,
+			"before": 2301,
+			"after": 2223
+		},
+		{
+			"handNum": 95,
+			"before": 2223,
+			"after": 2358
+		},
+		{
+			"handNum": 96,
+			"before": 2358,
+			"after": 2350
+		},
+		{
+			"handNum": 97,
+			"before": 2350,
+			"after": 2615
+		},
+		{
+			"handNum": 98,
+			"before": 2615,
+			"after": 2613
+		},
+		{
+			"handNum": 99,
+			"before": 2613,
+			"after": 2625
+		},
+		{
+			"handNum": 100,
+			"before": 2625,
+			"after": 2618
+		}
+	]
+}

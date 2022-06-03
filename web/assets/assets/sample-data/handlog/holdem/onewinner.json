@@ -1,0 +1,337 @@
+{
+	"messageType": "RESULT",
+	"handResult": {
+		"gameId": "412",
+		"handNum": 1,
+		"actionTime": 30,
+		"gameType": "HOLDEM",
+		"noCards": 2,
+		"maxPlayers": 4,
+		"smallBlind": 1,
+		"bigBlind": 2,
+		"handLog": {
+			"preflopActions": {
+				"potStart": 0,
+				"pot": 6,
+				"actions": [{
+					"seatNo": 2,
+					"action": "SB",
+					"amount": 1,
+					"timedOut": false,
+					"actionTime": 0,
+					"stack": 99
+				}, {
+					"seatNo": 3,
+					"action": "BB",
+					"amount": 2,
+					"timedOut": false,
+					"actionTime": 0,
+					"stack": 98
+				}, {
+					"seatNo": 1,
+					"action": "CALL",
+					"amount": 2,
+					"timedOut": false,
+					"actionTime": 0,
+					"stack": 98
+				}, {
+					"seatNo": 2,
+					"action": "CALL",
+					"amount": 2,
+					"timedOut": false,
+					"actionTime": 0,
+					"stack": 98
+				}, {
+					"seatNo": 3,
+					"action": "CHECK",
+					"amount": 2,
+					"timedOut": false,
+					"actionTime": 0,
+					"stack": 98
+				}]
+			},
+			"flopActions": {
+				"potStart": 6,
+				"pot": 10,
+				"actions": [{
+					"seatNo": 2,
+					"action": "CHECK",
+					"amount": 0,
+					"timedOut": false,
+					"actionTime": 0,
+					"stack": 98
+				}, {
+					"seatNo": 3,
+					"action": "BET",
+					"amount": 2,
+					"timedOut": false,
+					"actionTime": 0,
+					"stack": 96
+				}, {
+					"seatNo": 1,
+					"action": "CALL",
+					"amount": 2,
+					"timedOut": false,
+					"actionTime": 0,
+					"stack": 96
+				}, {
+					"seatNo": 2,
+					"action": "RAISE",
+					"amount": 4,
+					"timedOut": false,
+					"actionTime": 0,
+					"stack": 94
+				}, {
+					"seatNo": 3,
+					"action": "FOLD",
+					"amount": 0,
+					"timedOut": false,
+					"actionTime": 0,
+					"stack": 96
+				}, {
+					"seatNo": 1,
+					"action": "CALL",
+					"amount": 4,
+					"timedOut": false,
+					"actionTime": 0,
+					"stack": 94
+				}]
+			},
+			"turnActions": {
+				"potStart": 16,
+				"pot": 20,
+				"actions": [{
+					"seatNo": 2,
+					"action": "CHECK",
+					"amount": 0,
+					"timedOut": false,
+					"actionTime": 0,
+					"stack": 94
+				}, {
+					"seatNo": 1,
+					"action": "BET",
+					"amount": 10,
+					"timedOut": false,
+					"actionTime": 0,
+					"stack": 84
+				}, {
+					"seatNo": 2,
+					"action": "CALL",
+					"amount": 10,
+					"timedOut": false,
+					"actionTime": 0,
+					"stack": 84
+				}]
+			},
+			"riverActions": {
+				"potStart": 36,
+				"pot": 20,
+				"actions": [{
+					"seatNo": 2,
+					"action": "BET",
+					"amount": 10,
+					"timedOut": false,
+					"actionTime": 0,
+					"stack": 74
+				}, {
+					"seatNo": 1,
+					"action": "CALL",
+					"amount": 10,
+					"timedOut": false,
+					"actionTime": 0,
+					"stack": 74
+				}]
+			},
+			"potWinners": {
+				"0": {
+					"potNo": 0,
+					"amount": 56,
+					"hiWinners": [{
+						"seatNo": 1,
+						"loCard": false,
+						"amount": 54,
+						"winningCards": [200, 196, 8, 132, 1],
+						"winningCardsStr": "[ A♣  A♦  2♣  T♦  2♠ ]",
+						"rankStr": "Two Pair",
+						"rank": 2592,
+						"playerCards": [1],
+						"boardCards": [200, 196, 8, 132]
+					}],
+					"lowWinners": []
+				}
+			},
+			"wonAt": "SHOW_DOWN",
+			"showDown": null,
+			"handStartedAt": "1620457557",
+			"handEndedAt": "1620457574",
+			"runItTwice": false,
+			"runItTwiceResult": null
+		},
+		"rewardTrackingIds": [],
+		"boardCards": [200, 196, 8, 132, 33],
+		"boardCards2": [],
+		"flop": [200, 196, 8],
+		"turn": 132,
+		"river": 33,
+		"players": {
+			"1": {
+				"id": "1",
+				"cards": [114, 1],
+				"bestCards": [200, 196, 8, 132, 1],
+				"rank": 2592,
+				"playedUntil": "SHOW_DOWN",
+				"balance": {
+					"before": 100,
+					"after": 128
+				},
+				"hhCards": [114, 1, 200, 196, 8],
+				"hhRank": 2593,
+				"received": 54,
+				"rakePaid": 2
+			},
+			"2": {
+				"id": "2",
+				"cards": [178, 164],
+				"bestCards": [200, 196, 132, 178, 164],
+				"rank": 3327,
+				"playedUntil": "SHOW_DOWN",
+				"balance": {
+					"before": 100,
+					"after": 74
+				},
+				"hhCards": [178, 164, 200, 196, 132],
+				"hhRank": 3327,
+				"received": 0,
+				"rakePaid": 0
+			},
+			"3": {
+				"id": "3",
+				"cards": [],
+				"bestCards": [],
+				"rank": 0,
+				"playedUntil": "RIVER",
+				"balance": {
+					"before": 100,
+					"after": 96
+				},
+				"hhCards": [],
+				"hhRank": 0,
+				"received": 0,
+				"rakePaid": 0
+			}
+		},
+		"rakeCollected": 2,
+		"highHand": null,
+		"playerStats": {
+			"3998": {
+				"preflopRaise": false,
+				"postflopRaise": false,
+				"threeBet": false,
+				"cbet": false,
+				"vpip": true,
+				"allin": false,
+				"wentToShowdown": true,
+				"wonChipsAtShowdown": true,
+				"headsup": true,
+				"headsupPlayer": "3999",
+				"wonHeadsup": true,
+				"badbeat": false,
+				"inPreflop": true,
+				"inFlop": true,
+				"inTurn": true,
+				"inRiver": true
+			},
+			"3999": {
+				"preflopRaise": false,
+				"postflopRaise": true,
+				"threeBet": false,
+				"cbet": false,
+				"vpip": true,
+				"allin": false,
+				"wentToShowdown": true,
+				"wonChipsAtShowdown": false,
+				"headsup": true,
+				"headsupPlayer": "3998",
+				"wonHeadsup": false,
+				"badbeat": false,
+				"inPreflop": true,
+				"inFlop": true,
+				"inTurn": true,
+				"inRiver": true
+			},
+			"4000": {
+				"preflopRaise": false,
+				"postflopRaise": true,
+				"threeBet": false,
+				"cbet": false,
+				"vpip": false,
+				"allin": false,
+				"wentToShowdown": false,
+				"wonChipsAtShowdown": false,
+				"headsup": false,
+				"headsupPlayer": "0",
+				"wonHeadsup": false,
+				"badbeat": false,
+				"inPreflop": true,
+				"inFlop": true,
+				"inTurn": false,
+				"inRiver": false
+			}
+		},
+		"handStats": {
+			"endedAtPreflop": false,
+			"endedAtFlop": false,
+			"endedAtTurn": false,
+			"endedAtRiver": false,
+			"endedAtShowdown": true
+		},
+		"runItTwice": false
+	},
+	"players": [
+		{
+			"id": 2,
+			"name": "young"
+		},
+		{
+			"id": 5,
+			"name": "jim"
+		},
+		{
+			"id": 8,
+			"name": "michael"
+		},
+		{
+			"id": 10,
+			"name": "david"
+		},
+		{
+			"id": 3,
+			"name": "carol"
+		},
+		{
+			"id": 9,
+			"name": "bill"
+		},
+		{
+			"id": 4,
+			"name": "matt"
+		},
+		{
+			"id": 6,
+			"name": "rob"
+		},
+		{
+			"id": 7,
+			"name": "john"
+		},
+		{
+			"id": 1,
+			"name": "siva"
+		}
+	],
+	"myInfo": {
+		"id": 1,
+		"uuid": "cfe63ff3712c594f",
+		"name": "asdf"
+	}
+}

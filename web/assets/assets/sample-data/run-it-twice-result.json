@@ -1,0 +1,184 @@
+{
+	"clubId": 1,
+	"gameId": "1620286504",
+	"gameCode": "1620286504",
+	"handNum": 1,
+	"messageId": "RIT_CONFIRM:1:RESULT:0:",
+	"handStatus": "RESULT",
+	"messages": [{
+		"messageType": "RUN_IT_TWICE",
+		"runItTwice": {
+			"board1": [200, 196, 8, 132, 33],
+			"board2": [72, 84, 40, 100, 97],
+			"stage": "PREFLOP",
+			"seatsPots": [{
+				"seats": [5, 8],
+				"pot": 100
+			}],
+			"seat1": 5,
+			"seat2": 8
+		}
+	}, {
+		"messageType": "RESULT",
+		"handResult": {
+			"gameId": "1620286504",
+			"handNum": 1,
+			"gameType": "HOLDEM",
+			"handLog": {
+				"preflopActions": {
+					"pot": 100,
+					"actions": [{
+						"seatNo": 5,
+						"amount": 1,
+						"stack": 49
+					}, {
+						"seatNo": 8,
+						"action": "BB",
+						"amount": 2,
+						"stack": 48
+					}, {
+						"seatNo": 1,
+						"action": "FOLD",
+						"stack": 50
+					}, {
+						"seatNo": 5,
+						"action": "ALLIN",
+						"amount": 50
+					}, {
+						"seatNo": 8,
+						"action": "ALLIN",
+						"amount": 50
+					}, {
+						"seatNo": 5,
+						"action": "RUN_IT_TWICE_YES"
+					}, {
+						"seatNo": 8,
+						"action": "RUN_IT_TWICE_YES"
+					}]
+				},
+				"flopActions": {},
+				"turnActions": {},
+				"riverActions": {},
+				"potWinners": {
+					"0": {
+						"hiWinners": [{
+							"seatNo": 5,
+							"amount": 50,
+							"winningCards": [200, 196, 132, 178, 164],
+							"winningCardsStr": "[ A♣  A♦  T♦  K❤  Q♦ ]",
+							"rankStr": "Pair",
+							"rank": 3327,
+							"playerCards": [178, 164],
+							"boardCards": [200, 196, 132]
+						}]
+					}
+				},
+				"wonAt": "SHOW_DOWN",
+				"handStartedAt": "1620286504",
+				"handEndedAt": "1620286506",
+				"runItTwice": true,
+				"runItTwiceResult": {
+					"runItTwiceStartedAt": "PREFLOP",
+					"board1Winners": {
+						"0": {
+							"hiWinners": [{
+								"seatNo": 5,
+								"amount": 50,
+								"winningCards": [200, 196, 132, 178, 164],
+								"winningCardsStr": "[ A♣  A♦  T♦  K❤  Q♦ ]",
+								"rankStr": "Pair",
+								"rank": 3327,
+								"playerCards": [178, 164],
+								"boardCards": [200, 196, 132]
+							}]
+						}
+					},
+					"board2Winners": {
+						"0": {
+							"hiWinners": [{
+								"seatNo": 8,
+								"amount": 50,
+								"winningCards": [72, 84, 100, 97, 81],
+								"winningCardsStr": "[ 6♣  7♦  8♦  8♠  7♠ ]",
+								"rankStr": "Two Pair",
+								"rank": 3101,
+								"playerCards": [81],
+								"boardCards": [72, 84, 100, 97]
+							}]
+						}
+					}
+				}
+			},
+			"boardCards": [200, 196, 8, 132, 33],
+			"boardCards2": [72, 84, 40, 100, 97],
+			"flop": [200, 196, 8],
+			"turn": 132,
+			"river": 33,
+			"players": {
+				"1": {
+					"id": "1",
+					"playedUntil": "PREFLOP",
+					"balance": {
+						"before": 50,
+						"after": 50
+					}
+				},
+				"5": {
+					"id": "2",
+					"cards": [178, 164],
+					"bestCards": [84, 100, 97, 178, 164],
+					"rank": 4704,
+					"playedUntil": "SHOW_DOWN",
+					"balance": {
+						"before": 50,
+						"after": 50
+					},
+					"hhRank": 4294967295,
+					"received": 50
+				},
+				"8": {
+					"id": "3",
+					"cards": [17, 81],
+					"bestCards": [72, 84, 100, 97, 81],
+					"rank": 3101,
+					"playedUntil": "SHOW_DOWN",
+					"balance": {
+						"before": 50,
+						"after": 50
+					},
+					"hhRank": 4294967295,
+					"received": 50
+				}
+			},
+			"playerStats": {
+				"1": {
+					"inPreflop": true
+				},
+				"2": {
+					"preflopRaise": true,
+					"threeBet": true,
+					"allin": true,
+					"wentToShowdown": true,
+					"wonChipsAtShowdown": true,
+					"headsup": true,
+					"headsupPlayer": "3",
+					"wonHeadsup": true,
+					"inPreflop": true
+				},
+				"3": {
+					"allin": true,
+					"wentToShowdown": true,
+					"headsup": true,
+					"headsupPlayer": "2",
+					"inPreflop": true
+				}
+			},
+			"handStats": {
+				"endedAtShowdown": true
+			},
+			"runItTwice": true
+		}
+	}, {
+		"messageType": "END"
+	}]
+}

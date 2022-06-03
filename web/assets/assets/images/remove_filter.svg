@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?> <!-- Created with Vectornator for iOS (http://vectornator.io/) --><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg height="100%" style="fill-rule:nonzero;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="100%" xmlns:vectornator="http://vectornator.io" version="1.1" viewBox="0 0 80 73">
+<metadata>
+<vectornator:setting key="DimensionsVisible" value="1"/>
+<vectornator:setting key="PencilOnly" value="1"/>
+<vectornator:setting key="SnapToPoints" value="0"/>
+<vectornator:setting key="OutlineMode" value="0"/>
+<vectornator:setting key="RulersVisible" value="1"/>
+<vectornator:setting key="CMYKEnabledKey" value="0"/>
+<vectornator:setting key="SnapToEdges" value="0"/>
+<vectornator:setting key="GuidesVisible" value="1"/>
+<vectornator:setting key="DisplayWhiteBackground" value="1"/>
+<vectornator:setting key="doHistoryDisabled" value="0"/>
+<vectornator:setting key="TimeLapseWatermarkDisabled" value="0"/>
+<vectornator:setting key="SnapToGuides" value="1"/>
+<vectornator:setting key="Units" value="Points"/>
+<vectornator:setting key="IsolateActiveLayer" value="0"/>
+<vectornator:setting key="SnapToGrid" value="0"/>
+<vectornator:setting key="DynamicGuides" value="0"/>
+</metadata>
+<defs/>
+<g id="Untitled" vectornator:layerName="Untitled">
+<g opacity="1">
+<path d="M32.7016+72.6582C32.527+72.6582+32.3475+72.6233+32.1829+72.5435C31.739+72.339+31.4548+71.9001+31.4548+71.4114L31.4548+37.8427L0.30501+2.0597C-0.0141704+1.6906-0.0892904+1.172+0.1102+0.72811C0.31467+0.28425+0.7538+0+1.24254+0L72.5393+0C73.0281+0+73.4716+0.28425+73.6711+0.72811C73.8706+1.172+73.7961+1.6956+73.4769+2.0597L42.3271+37.8427L42.3271+64.155C42.3271+64.5141+42.1722+64.8583+41.8979+65.0976L33.5094+72.3589C33.285+72.5534+32.9908+72.6582+32.7016+72.6582ZM3.98025+2.4886L33.6391+36.561C33.8386+36.7904+33.9435+37.0796+33.9435+37.3789L33.9435+68.6884L39.8433+63.5865L39.8433+37.3789C39.8433+37.0796+39.9531+36.7904+40.1476+36.561L69.8059+2.4886L3.98025+2.4886L3.98025+2.4886Z" opacity="1" fill="#000000"/>
+<path d="M63.9359+64.1207C55.0787+64.1207+47.8676+56.9142+47.8676+48.057C47.8676+39.1997+55.0737+31.9883+63.9359+31.9883C72.7932+31.9883+80+39.1948+80+48.057C80+56.9142+72.7932+64.1207+63.9359+64.1207ZM63.9359+34.4769C56.4502+34.4769+50.3612+40.5663+50.3612+48.052C50.3612+55.5378+56.4502+61.6271+63.9359+61.6271C71.4217+61.6271+77.5113+55.5378+77.5113+48.052C77.5113+40.5713+71.4217+34.4769+63.9359+34.4769Z" opacity="1" fill="#000000"/>
+<path d="M70.9035+49.2993L56.9641+49.2993C56.2758+49.2993+55.7173+48.7407+55.7173+48.0525C55.7173+47.3642+56.2758+46.8057+56.9641+46.8057L70.9035+46.8057C71.5917+46.8057+72.1503+47.3642+72.1503+48.0525C72.1503+48.7457+71.5917+49.2993+70.9035+49.2993Z" opacity="1" fill="#000000"/>
+</g>
+<text x="0" font-family=" Helvetica" y="0" text-anchor="start" vectornator:text="Created&#x20;by&#x20;Umer&#x20;Younas" fill="#000000" font-size="4" vectornator:width="47.6953" opacity="1" transform="matrix(1 0 0 1 0 1.45352e+155)">
+<tspan x="0" y="4" textLength="44.6953">
+Created by Umer Younas</tspan>
+</text>
+<text x="0" font-family=" Helvetica" y="0" text-anchor="start" vectornator:text="from&#x20;the&#x20;Noun&#x20;Project" fill="#000000" font-size="4" vectornator:width="41.9062" opacity="1" transform="matrix(1 0 0 1 0 1.45352e+155)">
+<tspan x="0" y="4" textLength="38.9062">
+from the Noun Project</tspan>
+</text>
+</g>
+</svg>
