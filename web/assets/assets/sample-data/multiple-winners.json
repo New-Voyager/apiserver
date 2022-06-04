@@ -1,0 +1,211 @@
+{
+	"gameId": "1",
+	"handNum": 1,
+	"gameType": "FIVE_CARD_PLO_HILO",
+	"handLog": {
+		"preflopActions": {
+			"pot": 15,
+			"actions": [{
+				"seatNo": 2,
+				"action": "SB",
+				"amount": 1,
+				"timedOut": false,
+				"stack": 0
+			}, {
+				"seatNo": 3,
+				"action": "BB",
+				"amount": 2,
+				"timedOut": false,
+				"stack": 0
+			}, {
+				"seatNo": 1,
+				"action": "BET",
+				"amount": 5,
+				"timedOut": false,
+				"stack": 0
+			}, {
+				"seatNo": 2,
+				"action": "CALL",
+				"amount": 5,
+				"timedOut": false,
+				"stack": 0
+			}, {
+				"seatNo": 3,
+				"action": "CALL",
+				"amount": 5,
+				"timedOut": false,
+				"stack": 0
+			}]
+		},
+		"flopActions": {
+			"pot": 30,
+			"actions": [{
+				"seatNo": 2,
+				"action": "BET",
+				"amount": 10,
+				"timedOut": false,
+				"stack": 0
+			}, {
+				"seatNo": 3,
+				"action": "CALL",
+				"amount": 10,
+				"timedOut": false,
+				"stack": 0
+			}, {
+				"seatNo": 1,
+				"action": "CALL",
+				"amount": 10,
+				"timedOut": false,
+				"stack": 0
+			}]
+		},
+		"turnActions": {
+			"pot": 0,
+			"actions": [{
+				"seatNo": 2,
+				"action": "CHECK",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 0
+			}, {
+				"seatNo": 3,
+				"action": "CHECK",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 0
+			}, {
+				"seatNo": 1,
+				"action": "CHECK",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 0
+			}]
+		},
+		"riverActions": {
+			"pot": 0,
+			"actions": [{
+				"seatNo": 2,
+				"action": "CHECK",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 0
+			}, {
+				"seatNo": 3,
+				"action": "CHECK",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 0
+			}, {
+				"seatNo": 1,
+				"action": "CHECK",
+				"amount": 0,
+				"timedOut": false,
+				"stack": 0
+			}]
+		},
+		"potWinners": {
+			"0": {
+				"hiWinners": [{
+					"seatNo": 1,
+					"loCard": false,
+					"amount": 10,
+					"winningCards": [50, 17, 200, 8, 33],
+					"winningCardsStr": "[ 5❤  3♠  A♣  2♣  4♠ ]",
+					"rankStr": "Straight",
+					"rank": 1609,
+					"playerCards": [50, 17],
+					"boardCards": [200, 8, 33]
+				}, {
+					"seatNo": 3,
+					"loCard": false,
+					"amount": 11,
+					"winningCards": [20, 56, 200, 8, 33],
+					"winningCardsStr": "[ 3♦  5♣  A♣  2♣  4♠ ]",
+					"rankStr": "Straight",
+					"rank": 1609,
+					"playerCards": [20, 56],
+					"boardCards": [200, 8, 33]
+				}],
+				"lowWinners": [{
+					"seatNo": 1,
+					"loCard": true,
+					"amount": 10,
+					"winningCards": [50, 17, 200, 8, 33],
+					"winningCardsStr": "[ 5❤  3♠  A♣  2♣  4♠ ]",
+					"rankStr": "",
+					"rank": 31,
+					"playerCards": [50, 17],
+					"boardCards": [200, 8, 33]
+				}, {
+					"seatNo": 3,
+					"loCard": true,
+					"amount": 10,
+					"winningCards": [20, 56, 200, 8, 33],
+					"winningCardsStr": "[ 3♦  5♣  A♣  2♣  4♠ ]",
+					"rankStr": "",
+					"rank": 31,
+					"playerCards": [20, 56],
+					"boardCards": [200, 8, 33]
+				}]
+			}
+		},
+		"wonAt": "SHOW_DOWN",
+		"showDown": null,
+		"handStartedAt": "1610130823",
+		"handEndedAt": "1610130828"
+	},
+	"rewardTrackingIds": [],
+	"boardCards": [200, 196, 8, 132, 33],
+	"boardCards2": [],
+	"flop": [200, 196, 8],
+	"turn": 132,
+	"river": 33,
+	"players": {
+		"1": {
+			"id": "1",
+			"cards": [50, 17, 194, 100, 180],
+			"bestCards": [50, 17, 200, 8, 33],
+			"rank": 1609,
+			"playedUntil": "SHOW_DOWN",
+			"balance": {
+				"before": 1000,
+				"after": 1005
+			},
+			"hhCards": [],
+			"hhRank": 4294967295,
+			"received": 20,
+			"rakePaid": 2
+		},
+		"2": {
+			"id": "2",
+			"cards": [178, 164, 152, 130, 113],
+			"bestCards": [178, 130, 200, 196, 132],
+			"rank": 2501,
+			"playedUntil": "SHOW_DOWN",
+			"balance": {
+				"before": 1000,
+				"after": 985
+			},
+			"hhCards": [],
+			"hhRank": 4294967295,
+			"received": 0,
+			"rakePaid": 0
+		},
+		"3": {
+			"id": "3",
+			"cards": [20, 81, 40, 56, 98],
+			"bestCards": [20, 56, 200, 8, 33],
+			"rank": 1609,
+			"playedUntil": "SHOW_DOWN",
+			"balance": {
+				"before": 1000,
+				"after": 1006
+			},
+			"hhCards": [],
+			"hhRank": 4294967295,
+			"received": 21,
+			"rakePaid": 2
+		}
+	},
+	"rakeCollected": 4
+}

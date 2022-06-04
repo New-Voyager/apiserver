@@ -1,0 +1,95 @@
+input TournamentCreateInput {
+  name: String!
+  startTime: DateTime!
+  startingChips: Float!
+  minPlayers: Int
+  maxPlayers: Int
+  maxPlayersInTable: Int!
+}
+
+enum TournamentPlayingStatus {
+  REGISTERED, 
+  JOINED, 
+  PLAYING,
+  BUSTED_OUT,
+  SITTING_OUT,
+}
+
+type TournamentPlayer {
+  playerId: Int!
+  playerUuid: String!
+  playerName: String!
+  stack: Float!
+  status: TournamentPlayingStatus
+  tableNo: Int
+  seatNo: Int
+}
+
+type TournamentTable {
+  no: Int!
+  players: [TournamentPlayer!]
+}
+
+type TournamentInfo {
+  id: Int!
+  name: String!
+  startTime: DateTime!
+  startingChips: Float!
+  minPlayers: Int
+  maxPlayers: Int
+  maxPlayersInTable: Int!
+  players: [TournamentPlayer!]
+  tables: [TournamentTable!]
+  tournamentChannel: String!
+}
+
+type TournamentGameInfo {
+  gameID: Int!
+  gameCode: String!
+  gameType: GameType
+  smallBlind: Float
+  bigBlind: Float
+  ante: Float
+
+  actionTime: Int
+  maxPlayersInTable: Int
+  title: String
+  chipUnit: ChipUnit
+  status: GameStatus
+  tableStatus: TableStatus
+  
+  players: [TournamentPlayer!]
+
+  level: Int!
+  nextLevel: Int
+  nextLevelTimeInSecs: Int    # next level time in seconds
+
+  # NATS channels
+  gameToPlayerChannel: String
+  handToAllChannel: String
+  playerToHandChannel: String
+  handToPlayerChannel: String
+  handToPlayerTextChannel: String
+  gameChatChannel: String
+  clientAliveChannel: String
+
+  # livekit information
+  livekitUrl: String
+  livekitToken: String
+}
+
+type Query {
+  getTournamentInfo(tournamentId: Int!): TournamentInfo!
+  getTournamentTableInfo(tournamentId: Int!, tableNo: Int!): TournamentGameInfo!
+  getTournamentGameInfo(gameCode: String!): TournamentGameInfo!
+}
+
+type Mutation {
+  scheduleTournament(input: TournamentCreateInput!): Int!
+  registerTournament(playerUuid: String, tournamentId: Int!): Boolean!
+  unregisterTournament(tournamentId: Int!): Boolean!
+  startTournament(tournamentId: Int!): Boolean!
+  joinTournament(tournamentId: Int!): Boolean!
+  cancelTournament(tournamentId: Int!): Boolean!
+  seatBotsInTournament(tournamentId: Int!): Boolean!
+}

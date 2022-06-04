@@ -1,0 +1,31 @@
+{
+    "weeklyActivity": [{
+        "dayOfWeek" : "Sun",
+        "buyIn" : 200, 
+        "balance" : 280
+    },{
+        "dayOfWeek" : "Mon",
+        "buyIn" : 300, 
+        "balance" : 150
+    },{
+        "dayOfWeek" : "Tue",
+        "buyIn" : 100, 
+        "balance" : 120
+    },{
+        "dayOfWeek" : "Wed",
+        "buyIn" : 400, 
+        "balance" : 350
+    },{
+        "dayOfWeek" : "Thu",
+        "buyIn" : 50, 
+        "balance" : 0
+    },{
+        "dayOfWeek" : "Fri",
+        "buyIn" : 0, 
+        "balance" : 0
+    },{
+        "dayOfWeek" : "Sat",
+        "buyIn" : 250, 
+        "balance" : 400
+    }]
+}

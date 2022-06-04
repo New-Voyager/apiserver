@@ -1,0 +1,13 @@
+{
+    "name" : "Niveda",
+    "lastPlayedDate" : "2021-01-02T07:18:37.382Z",
+    "contactInfo" : "+13456456765",
+    "balance" : 100,
+    "autoApprovalLimit" : 2000,
+    "gamesPlayed" : 67,
+    "totalBuyIn" : 4500,
+    "totalWinnings" : 3700,
+    "rakePaid" : 670,
+    "isClubManager" : false,
+    "notes" : "The last game was pretty wild"
+}

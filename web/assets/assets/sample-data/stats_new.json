@@ -1,0 +1,103 @@
+{
+    "data": {
+        "playerHandStats": {
+            "totalHands": 10,
+            "inPreflop": 5,
+            "inFlop": 1,
+            "inTurn": 0,
+            "inRiver": 0,
+            "wonAtShowDown": 1,
+            "wentToShowDown": 4,
+            "vpipCount": 1,
+            "preflopRaise": 0,
+            "postflopRaise": 0,
+            "threeBet": 0,
+            "contBet": 0,
+            "allInCount": 1,
+            "headsupHands": 10,
+            "wonHeadsupHands": 1,
+            "headsupHandSummary": {
+                "2": {
+                    "won": 1,
+                    "total": 10
+                }
+            }
+        },
+        "playerGameStats": {
+            "totalHands": 9,
+            "inPreflop": 5,
+            "inFlop": 1,
+            "inTurn": 0,
+            "inRiver": 0,
+            "wonAtShowDown": 1,
+            "wentToShowDown": 3,
+            "vpipCount": 1,
+            "preflopRaise": 0,
+            "postflopRaise": 0,
+            "threeBet": 0,
+            "contBet": 0,
+            "allInCount": 1,
+            "headsupHands": 9,
+            "wonHeadsupHands": 1,
+            "headsupHandDetails": [
+                {
+                    "handNum": 1,
+                    "otherPlayer": 2,
+                    "won": false
+                },
+                {
+                    "handNum": 2,
+                    "otherPlayer": 2,
+                    "won": false
+                },
+                {
+                    "handNum": 3,
+                    "otherPlayer": 2,
+                    "won": false
+                },
+                {
+                    "handNum": 4,
+                    "otherPlayer": 2,
+                    "won": false
+                },
+                {
+                    "handNum": 5,
+                    "otherPlayer": 2,
+                    "won": false
+                },
+                {
+                    "handNum": 6,
+                    "otherPlayer": 2,
+                    "won": false
+                },
+                {
+                    "handNum": 7,
+                    "otherPlayer": 2,
+                    "won": true
+                },
+                {
+                    "handNum": 8,
+                    "otherPlayer": 2,
+                    "won": false
+                },
+                {
+                    "handNum": 9,
+                    "otherPlayer": 2,
+                    "won": false
+                }
+            ]
+        },
+        "gamePlayers": [
+            {
+                "id": 2,
+                "uuid": "c2dc2c3d-13da-46cc-8c66-caa0c77459de",
+                "name": "young"
+            },
+            {
+                "id": 1,
+                "uuid": "cfe63ff3712c594f",
+                "name": "asdfasdf"
+            }
+        ]
+    }
+}

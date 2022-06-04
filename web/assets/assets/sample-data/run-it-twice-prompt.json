@@ -1,0 +1,28 @@
+{
+	"clubId": 1,
+	"gameId": "1620287740",
+	"gameCode": "1620287740",
+	"handNum": 1,
+	"messageId": "ACTION:1:FLOP:0:",
+	"handStatus": "FLOP",
+	"messages": [{
+		"messageType": "PLAYER_ACTED",
+		"playerActed": {
+			"seatNo": 8,
+			"action": "ALLIN",
+			"amount": 50
+		}
+	}, {
+		"messageType": "YOUR_ACTION",
+		"seatAction": {
+			"seatNo": 5,
+			"availableActions": ["RUN_IT_TWICE_PROMPT"]
+		}
+	}, {
+		"messageType": "YOUR_ACTION",
+		"seatAction": {
+			"seatNo": 8,
+			"availableActions": ["RUN_IT_TWICE_PROMPT"]
+		}
+	}]
+}

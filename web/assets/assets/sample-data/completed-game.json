@@ -1,0 +1,757 @@
+{
+    "data": {
+      "completedGame": {
+        "gameType": "HOLDEM",
+        "gameCode": "CG-7A8SB7",
+        "gameNum": 1,
+        "startedBy": "young",
+        "startedAt": "2021-01-02T07:18:37.382Z",
+        "endedBy": "",
+        "endedAt": "2021-01-02T13:33:23.179Z",
+        "sessionTime": 21333,
+        "handsPlayed": 140,
+        "runTime": 22485797,
+        "runTimeStr": "6 hours, 14 minutes, 46 seconds",
+        "sessionTimeStr": "5 hours, 55 minutes, 33 seconds",
+        "smallBlind": 1,
+        "bigBlind": 2,
+        "balance": -40,
+        "handsWon": 15,
+        "bigWin": 16,
+        "bigWinHand": 2,
+        "bigLoss": -2,
+        "bigLossHand": 1,
+        "preflopHands": 35,
+        "flopHands": 35,
+        "turnHands": 25,
+        "riverHands": 25,
+        "showdownHands": 20,
+        "hhWinners": [
+          {
+            "gameCode": "CG-7A8SB7",
+            "playerUuid": "c2dc2c3d-13da-46cc-8c66-caa0c77459de",
+            "playerName": "young",
+            "playerCards": "[4,1]",
+            "boardCards": "[200,196,8,84,88]",
+            "highHand": "[4,1,200,196,8]",
+            "handTime": "2021-01-03T14:18:29.000Z",
+            "handNum": 1,
+            "highHandCards": "[\"2♦\",\"2♠\",\"A♣\",\"A♦\",\"2♣\"]"
+          },
+          {
+            "gameCode": "CG-7A8SB7",
+            "playerUuid": "c2dc2c3d-13da-46cc-8c66-caa0c77459de",
+            "playerName": "paul",
+            "playerCards": "[4,1]",
+            "boardCards": "[200,196,8,84,88]",
+            "highHand": "[4,1,200,196,8]",
+            "handTime": "2021-01-03T13:00:29.000Z",
+            "handNum": 25,
+            "highHandCards": "[\"2♦\",\"2♠\",\"A♣\",\"A♦\",\"2♣\"]"
+          }
+        ],
+        "stackStat": [
+          {
+            "handNum": 1,
+            "before": 1000,
+            "after": 998
+          },
+          {
+            "handNum": 2,
+            "before": 998,
+            "after": 1014
+          },
+          {
+            "handNum": 3,
+            "before": 1014,
+            "after": 1012
+          },
+          {
+            "handNum": 4,
+            "before": 1012,
+            "after": 1010
+          },
+          {
+            "handNum": 5,
+            "before": 1010,
+            "after": 1008
+          },
+          {
+            "handNum": 6,
+            "before": 1008,
+            "after": 1006
+          },
+          {
+            "handNum": 7,
+            "before": 1006,
+            "after": 1004
+          },
+          {
+            "handNum": 8,
+            "before": 1004,
+            "after": 1002
+          },
+          {
+            "handNum": 9,
+            "before": 1002,
+            "after": 1000
+          },
+          {
+            "handNum": 10,
+            "before": 1000,
+            "after": 998
+          },
+          {
+            "handNum": 11,
+            "before": 998,
+            "after": 996
+          },
+          {
+            "handNum": 12,
+            "before": 996,
+            "after": 994
+          },
+          {
+            "handNum": 13,
+            "before": 994,
+            "after": 992
+          },
+          {
+            "handNum": 14,
+            "before": 992,
+            "after": 990
+          },
+          {
+            "handNum": 15,
+            "before": 990,
+            "after": 988
+          },
+          {
+            "handNum": 16,
+            "before": 988,
+            "after": 986
+          },
+          {
+            "handNum": 17,
+            "before": 986,
+            "after": 984
+          },
+          {
+            "handNum": 18,
+            "before": 984,
+            "after": 982
+          },
+          {
+            "handNum": 19,
+            "before": 982,
+            "after": 980
+          },
+          {
+            "handNum": 20,
+            "before": 980,
+            "after": 978
+          },
+          {
+            "handNum": 21,
+            "before": 978,
+            "after": 500
+          },
+          {
+            "handNum": 22,
+            "before": 976,
+            "after": 600
+          },
+          {
+            "handNum": 23,
+            "before": 992,
+            "after": 950
+          },
+          {
+            "handNum": 24,
+            "before": 990,
+            "after": 450
+          },
+          {
+            "handNum": 25,
+            "before": 988,
+            "after": 525
+          },
+          {
+            "handNum": 26,
+            "before": 986,
+            "after": 655
+          },
+          {
+            "handNum": 27,
+            "before": 984,
+            "after": 735
+          },
+          {
+            "handNum": 28,
+            "before": 1000,
+            "after": 785
+          },
+          {
+            "handNum": 29,
+            "before": 998,
+            "after": 825
+          },
+          {
+            "handNum": 30,
+            "before": 996,
+            "after": 900
+          },
+          {
+            "handNum": 31,
+            "before": 994,
+            "after": 992
+          },
+          {
+            "handNum": 32,
+            "before": 992,
+            "after": 990
+          },
+          {
+            "handNum": 33,
+            "before": 990,
+            "after": 1006
+          },
+          {
+            "handNum": 34,
+            "before": 1006,
+            "after": 1004
+          },
+          {
+            "handNum": 35,
+            "before": 1004,
+            "after": 1002
+          },
+          {
+            "handNum": 36,
+            "before": 1002,
+            "after": 1000
+          },
+          {
+            "handNum": 37,
+            "before": 1000,
+            "after": 998
+          },
+          {
+            "handNum": 38,
+            "before": 998,
+            "after": 996
+          },
+          {
+            "handNum": 39,
+            "before": 996,
+            "after": 994
+          },
+          {
+            "handNum": 40,
+            "before": 994,
+            "after": 992
+          },
+          {
+            "handNum": 41,
+            "before": 992,
+            "after": 990
+          },
+          {
+            "handNum": 42,
+            "before": 990,
+            "after": 988
+          },
+          {
+            "handNum": 43,
+            "before": 988,
+            "after": 986
+          },
+          {
+            "handNum": 44,
+            "before": 986,
+            "after": 984
+          },
+          {
+            "handNum": 45,
+            "before": 984,
+            "after": 982
+          },
+          {
+            "handNum": 46,
+            "before": 982,
+            "after": 980
+          },
+          {
+            "handNum": 47,
+            "before": 980,
+            "after": 978
+          },
+          {
+            "handNum": 48,
+            "before": 978,
+            "after": 976
+          },
+          {
+            "handNum": 49,
+            "before": 976,
+            "after": 974
+          },
+          {
+            "handNum": 50,
+            "before": 974,
+            "after": 972
+          },
+          {
+            "handNum": 51,
+            "before": 972,
+            "after": 970
+          },
+          {
+            "handNum": 52,
+            "before": 970,
+            "after": 968
+          },
+          {
+            "handNum": 53,
+            "before": 968,
+            "after": 966
+          },
+          {
+            "handNum": 54,
+            "before": 966,
+            "after": 964
+          },
+          {
+            "handNum": 55,
+            "before": 964,
+            "after": 962
+          },
+          {
+            "handNum": 56,
+            "before": 962,
+            "after": 960
+          },
+          {
+            "handNum": 57,
+            "before": 960,
+            "after": 958
+          },
+          {
+            "handNum": 58,
+            "before": 958,
+            "after": 956
+          },
+          {
+            "handNum": 59,
+            "before": 956,
+            "after": 954
+          },
+          {
+            "handNum": 60,
+            "before": 954,
+            "after": 952
+          },
+          {
+            "handNum": 61,
+            "before": 952,
+            "after": 950
+          },
+          {
+            "handNum": 62,
+            "before": 950,
+            "after": 966
+          },
+          {
+            "handNum": 63,
+            "before": 966,
+            "after": 964
+          },
+          {
+            "handNum": 64,
+            "before": 964,
+            "after": 962
+          },
+          {
+            "handNum": 65,
+            "before": 962,
+            "after": 969
+          },
+          {
+            "handNum": 66,
+            "before": 969,
+            "after": 967
+          },
+          {
+            "handNum": 67,
+            "before": 967,
+            "after": 965
+          },
+          {
+            "handNum": 68,
+            "before": 965,
+            "after": 963
+          },
+          {
+            "handNum": 69,
+            "before": 963,
+            "after": 961
+          },
+          {
+            "handNum": 70,
+            "before": 961,
+            "after": 959
+          },
+          {
+            "handNum": 71,
+            "before": 959,
+            "after": 957
+          },
+          {
+            "handNum": 72,
+            "before": 957,
+            "after": 955
+          },
+          {
+            "handNum": 73,
+            "before": 955,
+            "after": 953
+          },
+          {
+            "handNum": 74,
+            "before": 953,
+            "after": 951
+          },
+          {
+            "handNum": 75,
+            "before": 951,
+            "after": 949
+          },
+          {
+            "handNum": 76,
+            "before": 949,
+            "after": 965
+          },
+          {
+            "handNum": 77,
+            "before": 965,
+            "after": 963
+          },
+          {
+            "handNum": 78,
+            "before": 963,
+            "after": 961
+          },
+          {
+            "handNum": 79,
+            "before": 961,
+            "after": 977
+          },
+          {
+            "handNum": 80,
+            "before": 977,
+            "after": 993
+          },
+          {
+            "handNum": 81,
+            "before": 993,
+            "after": 991
+          },
+          {
+            "handNum": 82,
+            "before": 991,
+            "after": 989
+          },
+          {
+            "handNum": 83,
+            "before": 989,
+            "after": 987
+          },
+          {
+            "handNum": 84,
+            "before": 987,
+            "after": 985
+          },
+          {
+            "handNum": 85,
+            "before": 985,
+            "after": 983
+          },
+          {
+            "handNum": 86,
+            "before": 983,
+            "after": 981
+          },
+          {
+            "handNum": 87,
+            "before": 981,
+            "after": 979
+          },
+          {
+            "handNum": 88,
+            "before": 979,
+            "after": 977
+          },
+          {
+            "handNum": 89,
+            "before": 977,
+            "after": 975
+          },
+          {
+            "handNum": 90,
+            "before": 975,
+            "after": 973
+          },
+          {
+            "handNum": 91,
+            "before": 973,
+            "after": 971
+          },
+          {
+            "handNum": 92,
+            "before": 971,
+            "after": 969
+          },
+          {
+            "handNum": 93,
+            "before": 969,
+            "after": 967
+          },
+          {
+            "handNum": 94,
+            "before": 967,
+            "after": 965
+          },
+          {
+            "handNum": 95,
+            "before": 965,
+            "after": 963
+          },
+          {
+            "handNum": 96,
+            "before": 963,
+            "after": 961
+          },
+          {
+            "handNum": 97,
+            "before": 961,
+            "after": 959
+          },
+          {
+            "handNum": 98,
+            "before": 959,
+            "after": 957
+          },
+          {
+            "handNum": 99,
+            "before": 957,
+            "after": 955
+          },
+          {
+            "handNum": 100,
+            "before": 955,
+            "after": 953
+          },
+          {
+            "handNum": 101,
+            "before": 953,
+            "after": 969
+          },
+          {
+            "handNum": 102,
+            "before": 969,
+            "after": 967
+          },
+          {
+            "handNum": 103,
+            "before": 967,
+            "after": 965
+          },
+          {
+            "handNum": 104,
+            "before": 965,
+            "after": 963
+          },
+          {
+            "handNum": 105,
+            "before": 963,
+            "after": 961
+          },
+          {
+            "handNum": 106,
+            "before": 961,
+            "after": 959
+          },
+          {
+            "handNum": 107,
+            "before": 959,
+            "after": 975
+          },
+          {
+            "handNum": 108,
+            "before": 975,
+            "after": 973
+          },
+          {
+            "handNum": 109,
+            "before": 973,
+            "after": 971
+          },
+          {
+            "handNum": 110,
+            "before": 971,
+            "after": 969
+          },
+          {
+            "handNum": 111,
+            "before": 969,
+            "after": 973
+          },
+          {
+            "handNum": 112,
+            "before": 973,
+            "after": 971
+          },
+          {
+            "handNum": 113,
+            "before": 971,
+            "after": 969
+          },
+          {
+            "handNum": 114,
+            "before": 969,
+            "after": 967
+          },
+          {
+            "handNum": 115,
+            "before": 967,
+            "after": 965
+          },
+          {
+            "handNum": 116,
+            "before": 965,
+            "after": 963
+          },
+          {
+            "handNum": 117,
+            "before": 963,
+            "after": 961
+          },
+          {
+            "handNum": 118,
+            "before": 961,
+            "after": 959
+          },
+          {
+            "handNum": 119,
+            "before": 959,
+            "after": 957
+          },
+          {
+            "handNum": 120,
+            "before": 957,
+            "after": 955
+          },
+          {
+            "handNum": 121,
+            "before": 955,
+            "after": 953
+          },
+          {
+            "handNum": 122,
+            "before": 953,
+            "after": 951
+          },
+          {
+            "handNum": 123,
+            "before": 951,
+            "after": 949
+          },
+          {
+            "handNum": 124,
+            "before": 949,
+            "after": 947
+          },
+          {
+            "handNum": 125,
+            "before": 947,
+            "after": 945
+          },
+          {
+            "handNum": 126,
+            "before": 945,
+            "after": 961
+          },
+          {
+            "handNum": 127,
+            "before": 961,
+            "after": 968
+          },
+          {
+            "handNum": 128,
+            "before": 968,
+            "after": 966
+          },
+          {
+            "handNum": 129,
+            "before": 966,
+            "after": 964
+          },
+          {
+            "handNum": 130,
+            "before": 964,
+            "after": 962
+          },
+          {
+            "handNum": 131,
+            "before": 962,
+            "after": 960
+          },
+          {
+            "handNum": 132,
+            "before": 960,
+            "after": 958
+          },
+          {
+            "handNum": 133,
+            "before": 958,
+            "after": 956
+          },
+          {
+            "handNum": 134,
+            "before": 956,
+            "after": 954
+          },
+          {
+            "handNum": 135,
+            "before": 954,
+            "after": 952
+          },
+          {
+            "handNum": 136,
+            "before": 952,
+            "after": 950
+          },
+          {
+            "handNum": 137,
+            "before": 950,
+            "after": 948
+          },
+          {
+            "handNum": 138,
+            "before": 948,
+            "after": 964
+          },
+          {
+            "handNum": 139,
+            "before": 964,
+            "after": 962
+          },
+          {
+            "handNum": 140,
+            "before": 962,
+            "after": 960
+          }
+        ]
+      }
+    }
+  }

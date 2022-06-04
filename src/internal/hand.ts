@@ -10,6 +10,7 @@ import {PlayersInGameRepository} from '@src/repositories/playersingame';
 import _ from 'lodash';
 import {GameUpdatesRepository} from '@src/repositories/gameupdates';
 import {gameLogPrefix, PokerGameUpdates} from '@src/entity/game/game';
+import {TournamentRepository} from '@src/repositories/tournament';
 const logger = getLogger('internal::hand');
 
 /**
@@ -89,6 +90,28 @@ class HandServerAPIs {
       resp.status(500).send({error: errToStr(err)});
     }
     logger.info(`Finished saveHand endpoint game ${gameID} hand ${handNum}`);
+  }
+
+  public async saveTournamentHand(req: any, resp: any) {
+    const tournamentId = parseInt(req.params.tournamentId, 10);
+    if (!tournamentId) {
+      const res = {error: 'Invalid tournament id'};
+      resp.status(500).send(JSON.stringify(res));
+      logger.error(`Finished saveHand endpoint game ${tournamentId} 500`);
+      return;
+    }
+    const tableNo = parseInt(req.params.tableNo, 10);
+    if (!tableNo) {
+      const res = {error: 'Invalid table number'};
+      resp.status(500).send(JSON.stringify(res));
+      logger.error(`Finished saveHand endpoint game ${tableNo} 500`);
+      return;
+    }
+    //logger.info(JSON.stringify(req.body));
+    resp.status(200).send({
+      status: 'OK',
+    });
+    TournamentRepository.saveTournamentHand(tournamentId, tableNo, req.body);
   }
 
   public async saveHandBinary(req: any, resp: any) {

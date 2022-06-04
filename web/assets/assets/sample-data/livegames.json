@@ -1,0 +1,109 @@
+{
+  "liveGames": [
+    {
+      "gameCode": "CG-93CAIEXARNNOA4",
+      "gameType": "HOLDEM",
+      "clubName": "www",
+      "buyInMin": 30,
+      "buyInMax": 100,
+      "smallBlind": 1,
+      "bigBlind": 2,
+      "maxPlayers": 4,
+      "elapsedTime": 24147,
+      "tableCount": 2,
+      "waitlistCount": 0
+    },
+    {
+      "gameCode": "CG-KACRC9B8YYP7E5",
+      "gameType": "HOLDEM",
+      "clubName": "www",
+      "buyInMin": 30,
+      "buyInMax": 100,
+      "smallBlind": 1,
+      "bigBlind": 2,
+      "maxPlayers": 9,
+      "elapsedTime": 124,
+      "tableCount": 9,
+      "waitlistCount": 5
+    },
+    {
+      "gameCode": "CG-PACXFD9344OYXP",
+      "gameType": "PLO",
+      "clubName": "www",
+      "buyInMin": 30,
+      "buyInMax": 100,
+      "smallBlind": 1,
+      "bigBlind": 2,
+      "maxPlayers": 9,
+      "elapsedTime": 109,
+      "tableCount": 2,
+      "waitlistCount": 0
+    },
+    {
+      "gameCode": "CG-LBCRTN3B779RK5",
+      "gameType": "PLO_HILO",
+      "clubName": "www",
+      "buyInMin": 30,
+      "buyInMax": 100,
+      "smallBlind": 1,
+      "bigBlind": 2,
+      "maxPlayers": 9,
+      "elapsedTime": 103,
+      "tableCount": 2,
+      "waitlistCount": 0
+    },
+    {
+      "gameCode": "CG-M8C9HLEPXXZLN7",
+      "gameType": "FIVE_CARD_PLO",
+      "clubName": "www",
+      "buyInMin": 30,
+      "buyInMax": 100,
+      "smallBlind": 1,
+      "bigBlind": 2,
+      "maxPlayers": 9,
+      "elapsedTime": 95,
+      "tableCount": 2,
+      "waitlistCount": 0
+    },
+    {
+      "gameCode": "CG-89CZSWAO88W84P",
+      "gameType": "FIVE_CARD_PLO_HILO",
+      "clubName": "www",
+      "buyInMin": 30,
+      "buyInMax": 100,
+      "smallBlind": 1,
+      "bigBlind": 2,
+      "maxPlayers": 9,
+      "elapsedTime": 86,
+      "tableCount": 2,
+      "waitlistCount": 0
+    },
+    {
+      "gameCode": "CG-4BCA0E3D22BM9A",
+      "gameType": "ROE",
+      "clubName": "www",
+      "buyInMin": 30,
+      "buyInMax": 100,
+      "smallBlind": 1,
+      "bigBlind": 2,
+      "maxPlayers": 9,
+      "elapsedTime": 78,
+      "tableCount": 2,
+      "waitlistCount": 0
+    },
+    {
+      "gameCode": "CG-93C51EXAWWMKR7",
+      "gameType": "DEALER_CHOICE",
+      "clubName": "www",
+      "buyInMin": 30,
+      "buyInMax": 100,
+      "smallBlind": 1,
+      "bigBlind": 2,
+      "maxPlayers": 9,
+      "elapsedTime": 69,
+      "tableCount": 2,
+      "waitlistCount": 0
+    }
+  ],
+  "pastGames": []
+}

@@ -18,6 +18,7 @@ import {SageMakerFeatureStoreRuntime} from 'aws-sdk';
 import {getAppSettings} from '@src/firebase';
 import {centsToChips} from '@src/utils';
 import {TableUpdateReserveSeat} from '../const';
+import {TournamentRepository} from '@src/repositories/tournament';
 
 const logger = getLogger('nats');
 
@@ -980,6 +981,70 @@ class NatsClass {
     this.sendMessage(subject, messageStr);
   }
 
+  public playerJoinedTournament(
+    tournamentId: number,
+    gameCode: string,
+    tableNo: number,
+    player: Player,
+    messageId?: string
+  ) {
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message = {
+      type: 'PLAYER_JOINED',
+      tournamentId: tournamentId,
+      playerId: player.id,
+      playerUuid: player.uuid,
+      playerName: player.name,
+      tableNo: tableNo,
+      gameCode: gameCode,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = TournamentRepository.getTournamentChannel(tournamentId);
+    this.sendMessage(subject, messageStr);
+  }
+
+  public tournamentStarted(tournamentId: number, messageId?: string) {
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message = {
+      type: 'TOURNAMENT_STARTED',
+      tournamentId: tournamentId,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = TournamentRepository.getTournamentChannel(tournamentId);
+    this.sendMessage(subject, messageStr);
+  }
+
+  public tournamentSetPlayerTable(
+    tournamentId: number,
+    playerId: number,
+    playerUuid: string,
+    tableNo: number,
+    seatNo: number,
+    messageId?: string
+  ) {
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message = {
+      type: 'TOURNAMENT_INITIAL_PLAYER_TABLE',
+      tournamentId: tournamentId,
+      playerId: playerId,
+      playerUuid: playerUuid,
+      tableNo: tableNo,
+      seatNo: seatNo,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = TournamentRepository.getTournamentChannel(tournamentId);
+    this.sendMessage(subject, messageStr);
+  }
+
   public async initiateSeatChangeProcess(
     game: PokerGame,
     seatNo: number,
@@ -1050,6 +1115,10 @@ class NatsClass {
 
   public getClientAliveChannel(gameCode: string): string {
     return `clientalive.${gameCode}`;
+  }
+
+  public getTournamentChannel(tournamentId: number): string {
+    return `tournament.${tournamentId}`;
   }
 }
 

@@ -594,6 +594,12 @@ export class PokerGame {
   @Column({name: 'livekit_url', nullable: true})
   public livekitUrl!: string;
 
+  // @Column({ name: 'tournament_id', type: 'int', default: 0 })
+  // public tournamentId!: number;
+
+  // @Column({ name: 'tournament_game', default: false })
+  // public isTournamentGame!: boolean;
+
   // This is not a database column and used for tracking highhand in the cache
   public highHandRank = 0;
 

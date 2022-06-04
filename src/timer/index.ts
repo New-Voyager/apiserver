@@ -68,6 +68,49 @@ export async function cancelTimer(
   }
 }
 
+export async function startTimerWithPayload(payload: any, expAt: Date) {
+  if (process.env.NOTIFY_GAME_SERVER !== '1') {
+    return;
+  }
+
+  if (!notifyGameServer) {
+    return;
+  }
+
+  // time in seconds
+  const expSeconds = Math.round(expAt.getTime() / 1000);
+  const timerUrl = getTimerUrl();
+  const payloadData = {
+    payload: JSON.stringify(payload),
+  };
+  const startTimerUrl = `${timerUrl}/start-timer?timeout-at=${expSeconds}`;
+  const resp = await axios.post(startTimerUrl, payloadData, {timeout: 3000});
+  if (resp.status !== 200) {
+    logger.error(`Failed to start a timer: ${startTimerUrl}`);
+    throw new Error(`Failed to start a timer: ${startTimerUrl}`);
+  }
+}
+
+export async function cancelTimerWithPayload(payload: any) {
+  if (process.env.NOTIFY_GAME_SERVER !== '1') {
+    return;
+  }
+  if (!notifyGameServer) {
+    return;
+  }
+  const payloadData = {
+    payload: JSON.stringify(payload),
+  };
+  // time in seconds
+  const timerUrl = getTimerUrl();
+  const cancelTimerUrl = `${timerUrl}/cancel-timer`;
+  const resp = await axios.post(cancelTimerUrl, payloadData, {timeout: 3000});
+  if (resp.status !== 200) {
+    logger.error(`Failed to cancel a timer: ${cancelTimerUrl}`);
+    throw new Error(`Failed to cancel a timer: ${cancelTimerUrl}`);
+  }
+}
+
 async function restartBuyinTimers() {
   // Look into the db and find out what are the active games. PokerGame game_status = 2.
   // Among the active games which players have the buyInExpAt or breakExpAt that is NOT null.
@@ -160,7 +203,7 @@ export async function restartTimers(req: any, resp: any) {
   resp.status(200).send(JSON.stringify({status: 'OK'}));
 }
 
-function sleep(ms: number) {
+export function sleep(ms: number) {
   return new Promise(resolve => {
     setTimeout(resolve, ms);
   });
