@@ -2,21 +2,45 @@
   "extends": "./node_modules/gts/tsconfig-google.json",
   "compilerOptions": {
     "rootDir": ".",
-    "lib": ["DOM","esnext.bigint"],
+    "lib": [
+      "DOM",
+      "esnext.bigint"
+    ],
     "outDir": "build",
     "sourceMap": true,
-    "noImplicitAny": false,  
-    "resolveJsonModule": true,               /* Raise error on expressions and declarations with an implied 'any' type. */
-    "esModuleInterop": true,                   /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
+    "noImplicitAny": false,
+    "resolveJsonModule": true, /* Raise error on expressions and declarations with an implied 'any' type. */
+    "esModuleInterop": true, /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
     /* Experimental Options */
-    "experimentalDecorators": true,        /* Enables experimental support for ES7 decorators. */
-    "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
+    "experimentalDecorators": true, /* Enables experimental support for ES7 decorators. */
+    "emitDecoratorMetadata": true, /* Enables experimental support for emitting type metadata for decorators. */
     "baseUrl": "./",
     "paths": {
-      "@src/*": ["src/*"],
+      "@src/*": [
+        "src/*"
+      ],
     }
   },
-  
+  "watchOptions": {
+    // Use native file system events for files and directories
+    "watchFile": "useFsEvents",
+    "watchDirectory": "useFsEvents",
+    // Poll files for updates more frequently
+    // when they're updated a lot.
+    "fallbackPolling": "dynamicPriority",
+    // Don't coalesce watch notification
+    "synchronousWatchDirectory": true,
+    // Finally, two additional settings for reducing the amount of possible
+    // files to track  work from these directories
+    "excludeDirectories": [
+      "**/node_modules",
+      "_build",
+      "utils"
+    ],
+    "excludeFiles": [
+      "build/fileWhichChangesOften.ts"
+    ]
+  },
   "include": [
     "*.ts",
     "src/**/*.ts",

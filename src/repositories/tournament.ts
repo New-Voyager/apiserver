@@ -56,6 +56,7 @@ interface Table {
   tableNo: number;
   players: Array<TournamentPlayer>;
   tableServer: string;
+  handNum: number;
 }
 export enum TournamentPlayingStatus {
   REGISTERED,
@@ -167,7 +168,7 @@ class TournamentRepositoryImpl {
   }
 
   public getTableGameCode(tournamentId: number, tableNo: number): string {
-    return `tournament-${tournamentId}-${tableNo}`;
+    return `t-${tournamentId}-${tableNo}`;
   }
 
   public getTableGameId(tournamentId: number, tableNo: number): number {
@@ -178,7 +179,7 @@ class TournamentRepositoryImpl {
     let levels = new Array<TournamentLevel>();
     let smallBlind = 10;
     let anteStart = 25;
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= 5; i++) {
       let ante = 0;
       let bigBlind = smallBlind * 2;
       if (i <= 5) {
@@ -190,7 +191,7 @@ class TournamentRepositoryImpl {
         level: i,
         smallBlind: smallBlind,
         bigBlind: bigBlind,
-        ante: ante,
+        ante: 0, // ante,
       });
       smallBlind = bigBlind;
     }
@@ -484,6 +485,7 @@ class TournamentRepositoryImpl {
         table = {
           tableNo: data.tables.length + 1,
           players: [],
+          handNum: 1,
           tableServer: '', // set the table server here
         };
         // host the table in the game server
@@ -646,7 +648,7 @@ class TournamentRepositoryImpl {
       bb: bb * 100,
       ante: ante * 100,
       game_type: GameType.HOLDEM,
-      hand_num: 1,
+      hand_num: table.handNum,
       result_pause_time: 3,
       max_players: 6,
       action_time: 15,
@@ -884,6 +886,7 @@ class TournamentRepositoryImpl {
         }
       }
       table.players = updatedTable;
+      table.handNum = table.handNum + 1;
       tournament.data = JSON.stringify(data);
       tournament = await tournamentRepo.save(tournament);
 

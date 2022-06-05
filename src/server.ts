@@ -1,7 +1,7 @@
-import { ApolloServer } from 'apollo-server-express';
-import { fileLoader, mergeTypes } from 'merge-graphql-schemas';
-import { merge } from 'lodash';
-import { authorize } from '@src/middlewares/authorization';
+import {ApolloServer} from 'apollo-server-express';
+import {fileLoader, mergeTypes} from 'merge-graphql-schemas';
+import {merge} from 'lodash';
+import {authorize} from '@src/middlewares/authorization';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import {
@@ -12,14 +12,14 @@ import {
 import bodyParser from 'body-parser';
 const GQL_PORT = 9501;
 const INTERNAL_PORT = 9502;
-import { getLogger } from '@src/utils/log';
-import { initializeGameServer } from './gameserver';
-import { initdb, seed } from './initdb';
-import { Firebase, getAppSettings } from './firebase';
-import { Nats } from './nats';
-import { initializeRedis } from './cache';
-import { addExternalRoutes, addInternalRoutes } from './routes';
-import { DigitalOcean } from './digitalocean';
+import {getLogger} from '@src/utils/log';
+import {initializeGameServer} from './gameserver';
+import {initdb, seed} from './initdb';
+import {Firebase, getAppSettings} from './firebase';
+import {Nats} from './nats';
+import {initializeRedis} from './cache';
+import {addExternalRoutes, addInternalRoutes} from './routes';
+import {DigitalOcean} from './digitalocean';
 export enum RunProfile {
   DEV,
   TEST,
@@ -28,7 +28,7 @@ export enum RunProfile {
 }
 
 const logger = getLogger('server');
-const requestContext = async ({ req }) => {
+const requestContext = async ({req}) => {
   const ctx = {
     req: req,
   };
@@ -51,7 +51,7 @@ function setPgConversion() {
   });
 }
 
-export function getApolloServer(options?: { intTest?: boolean }): ApolloServer {
+export function getApolloServer(options?: {intTest?: boolean}): ApolloServer {
   const allTypes = new Array<string>();
 
   const gqlDirs = [
@@ -64,11 +64,11 @@ export function getApolloServer(options?: { intTest?: boolean }): ApolloServer {
   }
 
   for (const gqlDir of gqlDirs) {
-    const types: Array<string> = fileLoader(gqlDir, { recursive: true });
+    const types: Array<string> = fileLoader(gqlDir, {recursive: true});
     allTypes.push(...types);
   }
 
-  const typeDefs = mergeTypes(allTypes, { all: true });
+  const typeDefs = mergeTypes(allTypes, {all: true});
 
   let resolvers = {};
   let extensions = ['.js'];
@@ -99,8 +99,8 @@ export function getApolloServer(options?: { intTest?: boolean }): ApolloServer {
     plugins: [
       playGround
         ? ApolloServerPluginLandingPageGraphQLPlayground({
-          // options
-        })
+            // options
+          })
         : ApolloServerPluginLandingPageDisabled(),
     ],
   });
@@ -128,7 +128,7 @@ function mergeResolverDir(
 
 export async function start(
   initializeFirebase: boolean,
-  options?: { intTest?: boolean }
+  options?: {intTest?: boolean}
 ): Promise<[any, any, any]> {
   logger.debug('In start method');
 
@@ -235,7 +235,7 @@ export async function start(
 
     logger.info('Initializing GraphQL server');
     await apolloServer.start();
-    apolloServer.applyMiddleware({ app: externalApp });
+    apolloServer.applyMiddleware({app: externalApp});
 
     addExternalRoutes(externalApp);
     externalServer = externalApp.listen(
@@ -272,7 +272,7 @@ export async function start(
 }
 
 async function readyCheck(req: any, resp: any) {
-  resp.status(200).send(JSON.stringify({ status: 'OK' }));
+  resp.status(200).send(JSON.stringify({status: 'OK'}));
 }
 
 // returns nats urls
@@ -281,13 +281,13 @@ async function natsUrls(req: any, resp: any) {
   if (process.env.DEBUG_NATS_URL) {
     natsUrl = process.env.DEBUG_NATS_URL;
   }
-  resp.status(200).send(JSON.stringify({ urls: natsUrl }));
+  resp.status(200).send(JSON.stringify({urls: natsUrl}));
 }
 
 // returns all assets from the firebase
 async function getAssets(req: any, resp: any) {
   const assets = await Firebase.getAllAssets();
-  resp.status(200).send(JSON.stringify({ assets: assets }));
+  resp.status(200).send(JSON.stringify({assets: assets}));
 }
 
 async function initializeNats() {
