@@ -63,6 +63,7 @@
       "console": "internalConsole",
       "env": {
         "NATS_URL": "nats://192.168.0.187:4222",
+        "EXTERNAL_NATS_URL": "nats://10.0.0.181:4222",
         "EXTERNAL_ENDPOINTS": "1",
         "INTERNAL_ENDPOINTS": "1",
         "STORE_HAND_ANALYSIS": "1",
