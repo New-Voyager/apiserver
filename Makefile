@@ -127,6 +127,7 @@ debug: watch-localhost-debug
 
 .PHONY: watch-localhost-debug
 watch-localhost-debug: export NATS_URL=$(LOCAL_NATS_URL)
+watch-localhost-debug: export EXTERNAL_NATS_URL=$(LOCAL_NATS_URL)
 watch-localhost-debug: export POSTGRES_HOST=$(LOCAL_POSTGRES_HOST)
 watch-localhost-debug:
 	npm run watch-localhost-debug
