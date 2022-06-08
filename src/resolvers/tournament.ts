@@ -160,6 +160,8 @@ async function getTournamentTableInfo(
   ret.clientAliveChannel = Nats.getClientAliveChannel(
     tournamentTableInfo.gameCode
   );
+  ret.tournamentChannel =
+    TournamentRepository.getTournamentChannel(tournamentId);
 
   /*
   hard code some values here for now

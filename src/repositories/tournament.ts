@@ -1,12 +1,12 @@
-import { Tournament } from '@src/entity/game/tournament';
-import { errToStr, getLogger } from '@src/utils/log';
-import { EntityManager, Repository } from 'typeorm';
-import { Cache } from '@src/cache';
-import { getGameRepository } from '.';
-import { sleep, startTimerWithPayload } from '@src/timer';
-import { Nats } from '@src/nats';
-import { GameServerRepository } from './gameserver';
-import { GameType } from '@src/entity/types';
+import {Tournament} from '@src/entity/game/tournament';
+import {errToStr, getLogger} from '@src/utils/log';
+import {EntityManager, Repository} from 'typeorm';
+import {Cache} from '@src/cache';
+import {getGameRepository} from '.';
+import {sleep, startTimerWithPayload} from '@src/timer';
+import {Nats} from '@src/nats';
+import {GameServerRepository} from './gameserver';
+import {GameType} from '@src/entity/types';
 
 const logger = getLogger('tournaments');
 const apiCallbackHost = 'localhost:9001';
@@ -57,6 +57,7 @@ interface Table {
   players: Array<TournamentPlayer>;
   tableServer: string;
   handNum: number;
+  isActive: boolean;
 }
 export enum TournamentPlayingStatus {
   REGISTERED,
@@ -76,6 +77,7 @@ interface TournamentPlayer {
   tableNo: number;
   seatNo: number;
   status: TournamentPlayingStatus;
+  timesMoved: 0;
 }
 
 /*
@@ -109,6 +111,7 @@ interface TournamentData {
   registeredPlayers: Array<TournamentPlayer>;
   playersInTournament: Array<TournamentPlayer>;
   tableServerId: number; // all the tournament tables are on this server
+  balanced: boolean;
 }
 
 interface TournamentLevel {
@@ -137,10 +140,11 @@ interface Queue {
 }
 class TournamentRepositoryImpl {
   private initialized: boolean = false;
-  private cachedEncryptionKeys: { [key: string]: string } = {};
-  private currentTournamentLevel: { [key: number]: number } = {};
-  private tournamentLevelData: { [key: number]: Array<TournamentLevel> } = {};
-  private processQueue: { [key: number]: Queue } = {};
+  private cachedEncryptionKeys: {[key: string]: string} = {};
+  private currentTournamentLevel: {[key: number]: number} = {};
+  private currentTournamentLevelStartedAt: {[key: number]: Date} = {};
+  private tournamentLevelData: {[key: number]: Array<TournamentLevel>} = {};
+  private processQueue: {[key: number]: Queue} = {};
 
   public async initialize(serverHost?: string) {
     if (this.initialized) {
@@ -177,7 +181,7 @@ class TournamentRepositoryImpl {
 
   public getTurboLevels(): Array<TournamentLevel> {
     let levels = new Array<TournamentLevel>();
-    let smallBlind = 10;
+    let smallBlind = 200;
     let anteStart = 25;
     for (let i = 1; i <= 5; i++) {
       let ante = 0;
@@ -246,6 +250,7 @@ class TournamentRepositoryImpl {
         tableNo: player.tableNo,
         isBot: player.isBot,
         status: player.status,
+        timesMoved: 0,
       });
     }
     return ret;
@@ -259,7 +264,7 @@ class TournamentRepositoryImpl {
   ): Promise<number> {
     try {
       const tableServer = await GameServerRepository.getNextGameServer();
-      const startingChips = 5000;
+      const startingChips = 1000;
       const data: TournamentData = {
         id: 0,
         name: tournamentName,
@@ -267,7 +272,7 @@ class TournamentRepositoryImpl {
         maxPlayers: 100,
         activePlayers: 0,
         maxPlayersInTable: 6,
-        levelTime: 10, // seconds
+        levelTime: 30, // seconds
         currentLevel: -1,
         levels: this.getTurboLevels(),
         tables: [],
@@ -276,6 +281,7 @@ class TournamentRepositoryImpl {
         startTime: startTime,
         startingChips: startingChips * 100,
         tableServerId: tableServer.id,
+        balanced: true,
       };
       let tournamentRepo: Repository<Tournament>;
       if (transactionManager) {
@@ -310,7 +316,7 @@ class TournamentRepositoryImpl {
       const player = await Cache.getPlayer(playerUuid);
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({ id: tournamentId });
+      const tournament = await tournamentRepo.findOne({id: tournamentId});
       if (tournament) {
         const data = JSON.parse(tournament.data);
         const playerData = data.registeredPlayers.find(
@@ -345,7 +351,7 @@ class TournamentRepositoryImpl {
     try {
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({ id: tournamentId });
+      const tournament = await tournamentRepo.findOne({id: tournamentId});
       if (tournament) {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
@@ -470,7 +476,7 @@ class TournamentRepositoryImpl {
       );
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({ id: tournamentId });
+      const tournament = await tournamentRepo.findOne({id: tournamentId});
       if (tournament) {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
@@ -489,7 +495,8 @@ class TournamentRepositoryImpl {
           tableNo: data.tables.length + 1,
           players: [],
           handNum: 1,
-          tableServer: '', // set the table server here
+          tableServer: '',
+          isActive: true, // set the table server here
         };
         // host the table in the game server
         this.hostTable(data, table.tableNo, table.tableServer);
@@ -505,6 +512,7 @@ class TournamentRepositoryImpl {
         tableNo: table.tableNo,
         seatNo: table.players.length + 1,
         status: TournamentPlayingStatus.PLAYING,
+        timesMoved: 0,
       };
       table.players.push(seatPlayer);
       data.activePlayers += 1;
@@ -688,11 +696,33 @@ class TournamentRepositoryImpl {
       seats: seats,
       hand_details: handDetails,
     };
+    logger.info(`1 Running hand num: ${table.handNum} table: ${tableNo}`);
+    if (table.handNum === 1) {
+      // send level changed information
+      let currentLevelNo = this.currentTournamentLevel[tournamentId];
+      let nextLevelNo = this.currentTournamentLevel[tournamentId] + 1;
+      let currentLevel: any;
+      let nextLevel: any;
 
+      for (let i = 0; i < data.levels.length; i++) {
+        level = data.levels[i];
+        if (level.level === currentLevelNo) {
+          currentLevel = level;
+        }
+        if (level.level === nextLevelNo) {
+          nextLevel = level;
+        }
+      }
+      this.currentTournamentLevelStartedAt[tournamentId] = new Date();
+      //Nats.tournamentLevelChanged(tournamentId, currentLevel, nextLevel, data.levelTime);
+    }
+    logger.info(`2 Running hand num: ${table.handNum} table: ${tableNo}`);
     gameServerRpc.runHand(handInfo, (err, value) => {
       if (err) {
         logger.error(
-          `Running hand on tournament: ${tournamentId} table: ${tableNo} failed`
+          `Running hand on tournament: ${tournamentId} table: ${tableNo} failed. Error: ${errToStr(
+            err
+          )}`
         );
       } else {
         // successfully hosted the table
@@ -707,7 +737,7 @@ class TournamentRepositoryImpl {
     try {
       // call bot-runner to register bots to the system and let them register for the tournament
       // now bots are listening on tournament channel
-    } catch (err) { }
+    } catch (err) {}
   }
 
   public async startTournament(tournamentId: number) {
@@ -715,7 +745,7 @@ class TournamentRepositoryImpl {
       // bots will join the tournament here
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      let tournament = await tournamentRepo.findOne({ id: tournamentId });
+      let tournament = await tournamentRepo.findOne({id: tournamentId});
       if (tournament) {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
@@ -734,7 +764,7 @@ class TournamentRepositoryImpl {
       }
 
       // get data again from the db
-      tournament = await tournamentRepo.findOne({ id: tournamentId });
+      tournament = await tournamentRepo.findOne({id: tournamentId});
       if (!tournament) {
         throw new Error(`Tournament ${tournamentId} is not found`);
       }
@@ -746,7 +776,7 @@ class TournamentRepositoryImpl {
       await tournamentRepo.save(tournament);
 
       // bots should play the first hand
-    } catch (err) { }
+    } catch (err) {}
   }
 
   private async startLevelTimer(tournamentId: number, timeOutSecs: number) {
@@ -770,7 +800,7 @@ class TournamentRepositoryImpl {
       const tournamentId = payload.tournamentId;
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      let tournament = await tournamentRepo.findOne({ id: tournamentId });
+      let tournament = await tournamentRepo.findOne({id: tournamentId});
       if (tournament) {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
@@ -779,13 +809,14 @@ class TournamentRepositoryImpl {
 
       // continue only if there are players in the tournament
       if (data.tables[0].players.length > 1) {
-        let currentLevelNo = this.currentTournamentLevel[tournamentId];
-        if (currentLevelNo < this.tournamentLevelData[tournamentId].length) {
-          let currentLevel: TournamentLevel =
-            this.tournamentLevelData[tournamentId][currentLevelNo];
+        let prevLevelNo = this.currentTournamentLevel[tournamentId];
+        if (prevLevelNo < this.tournamentLevelData[tournamentId].length) {
+          let prevLevel: TournamentLevel =
+            this.tournamentLevelData[tournamentId][prevLevelNo];
           let levels: Array<TournamentLevel> =
             this.tournamentLevelData[tournamentId];
-          currentLevelNo++;
+          let currentLevel: any;
+          let currentLevelNo = prevLevelNo + 1;
           for (let i = 0; i < levels.length; i++) {
             let level = levels[i];
             if (level.level === currentLevelNo) {
@@ -796,7 +827,23 @@ class TournamentRepositoryImpl {
               break;
             }
           }
-          this.currentTournamentLevel[tournamentId] = currentLevel.level;
+          if (
+            currentLevel.level !== this.currentTournamentLevel[tournamentId]
+          ) {
+            // level changed
+            this.currentTournamentLevel[tournamentId] = currentLevel.level;
+            let nextLevel;
+            if (currentLevelNo < levels.length + 1) {
+              nextLevel = levels[currentLevelNo + 1];
+            }
+            this.currentTournamentLevelStartedAt[tournamentId] = new Date();
+            Nats.tournamentLevelChanged(
+              tournamentId,
+              currentLevel,
+              nextLevel,
+              data.levelTime
+            );
+          }
 
           // kick off the next level
           await this.startLevelTimer(tournamentId, data.levelTime);
@@ -856,7 +903,7 @@ class TournamentRepositoryImpl {
       logger.info(`${playerStack}`);
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      let tournament = await tournamentRepo.findOne({ id: tournamentId });
+      let tournament = await tournamentRepo.findOne({id: tournamentId});
       if (tournament) {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
@@ -868,7 +915,8 @@ class TournamentRepositoryImpl {
           `Table ${tableNo} is not found in tournament ${tournamentId}`
         );
       }
-      const updatedTable = new Array<TournamentPlayer>();
+      let playerBusted = false;
+      let updatedTable = new Array<TournamentPlayer>();
       // remove the players who had lost all the stacks
       for (const seatNo of Object.keys(players)) {
         const player = players[seatNo];
@@ -880,6 +928,7 @@ class TournamentRepositoryImpl {
               logger.info(
                 `Tournament: ${tournamentId} tableNo: ${tableNo} Player: ${playerInTable.playerName} is busted`
               );
+              playerBusted = true;
             } else {
               playerInTable.stack = player.balance.after;
               updatedTable.push(playerInTable);
@@ -889,10 +938,25 @@ class TournamentRepositoryImpl {
       }
       table.players = updatedTable;
       table.handNum = table.handNum + 1;
+
+      // start tournament level timer
+      if (playerBusted) {
+        data.balanced = false;
+      }
       tournament.data = JSON.stringify(data);
       tournament = await tournamentRepo.save(tournament);
 
-      // start tournament level timer
+      if (!data.balanced) {
+        // balance the table
+        const data = await this.balanceTable(tournamentId, table.tableNo);
+        if (data) {
+          updatedTable = [];
+          const table = data.tables.find(t => t.tableNo === tableNo);
+          if (table) {
+            updatedTable = table.players;
+          }
+        }
+      }
 
       if (updatedTable.length > 1) {
         // run the next hand
@@ -902,7 +966,252 @@ class TournamentRepositoryImpl {
           `Tournament: ${tournamentId} tableNo: ${tableNo} Player: ${updatedTable[0].playerName} is the winner.`
         );
       }
-    } catch (err) { }
+    } catch (err) {}
+  }
+
+  private async balanceTable(
+    tournamentId: number,
+    currentTableNo: number
+  ): Promise<TournamentData | null> {
+    try {
+      logger.info(`Balancing table ${tournamentId} ${currentTableNo}`);
+      let tournamentRepo: Repository<Tournament>;
+      tournamentRepo = getGameRepository(Tournament);
+      let tournament = await tournamentRepo.findOne({id: tournamentId});
+      if (tournament) {
+      } else {
+        throw new Error(`Tournament ${tournamentId} is not found`);
+      }
+      let data = JSON.parse(tournament.data) as TournamentData;
+      let currentTable = data.tables.find(t => t.tableNo === currentTableNo);
+
+      // check whether we can remove the current table
+      let currentTablePlayers: Array<TournamentPlayer> = [];
+      if (currentTable && currentTable.players) {
+        currentTablePlayers = currentTable.players;
+      }
+
+      if (!currentTable) {
+        return data;
+      }
+      // get active tables
+      let activeTables = 0;
+      for (const table of data.tables) {
+        if (table.isActive) {
+          activeTables++;
+        }
+      }
+
+      // get total active players
+      let totalActivePlayers = 0;
+      for (const table of data.tables) {
+        totalActivePlayers += table.players.length;
+      }
+      let tablesRequired = Math.floor(
+        totalActivePlayers / data.maxPlayersInTable
+      );
+      if (totalActivePlayers % data.maxPlayersInTable !== 0) {
+        tablesRequired++;
+      }
+      logger.info(
+        `===========================================================`
+      );
+      logger.info(
+        `Active tables: ${activeTables} totalActivePlayers: ${totalActivePlayers} tablesRequired: ${tablesRequired} currentTableNo: ${currentTableNo} currentTable players: ${currentTable.players.length}`
+      );
+      for (const table of data.tables) {
+        logger.info(
+          `Tournament: ${data.id} Table: ${table.tableNo} Players count: ${table.players.length} isActive: ${table.isActive}`
+        );
+      }
+      logger.info(
+        `===========================================================`
+      );
+
+      if (activeTables === 1) {
+        // balanced
+        data.balanced = true;
+        tournament.data = JSON.stringify(data);
+        tournament = await tournamentRepo.save(tournament);
+        return data;
+      }
+
+      let playersPerTable = Math.floor(totalActivePlayers / tablesRequired);
+      if (totalActivePlayers % tablesRequired !== 0) {
+        playersPerTable++;
+      }
+      if (
+        currentTablePlayers.length == playersPerTable ||
+        currentTablePlayers.length == playersPerTable + 1 ||
+        currentTablePlayers.length == playersPerTable - 1
+      ) {
+        let balanced = true;
+        // does any other table has less players
+        for (const table of data.tables) {
+          if (table.isActive && table.tableNo !== currentTableNo) {
+            if (table.players.length < playersPerTable) {
+              balanced = false;
+              break;
+            }
+          }
+        }
+
+        if (balanced) {
+          // nothing to do
+          data.balanced = true;
+          tournament.data = JSON.stringify(data);
+          tournament = await tournamentRepo.save(tournament);
+          return data;
+        }
+      }
+
+      if (tablesRequired <= data.tables.length) {
+        // choose the players to move
+        let playersBeingMoved = new Array<TournamentPlayer | undefined>();
+        let playersToMove = 0;
+        if (currentTablePlayers.length > playersPerTable) {
+          // we may need to move some players to other tables
+          playersToMove = currentTablePlayers.length - playersPerTable;
+        } else {
+          // can you move all the players to other tables
+          let availableOpenSeats = 0;
+          for (const table of data.tables) {
+            if (table.tableNo !== currentTableNo) {
+              availableOpenSeats +=
+                data.maxPlayersInTable - table.players.length;
+            }
+          }
+
+          if (availableOpenSeats >= currentTablePlayers.length) {
+            logger.info(`Table: ${currentTableNo} can be removed`);
+            // all the players can be moved to other tables
+            playersToMove = currentTablePlayers.length;
+          }
+        }
+        // move the players to other tables
+        while (playersToMove > 0) {
+          playersToMove--;
+          playersBeingMoved.push(currentTablePlayers.pop());
+        }
+
+        // these players are staying
+        currentTable.players = currentTablePlayers;
+        if (currentTablePlayers.length) {
+        } else {
+          logger.info(
+            `Table ${currentTableNo} has ${currentTablePlayers.length} players and table is inactive`
+          );
+          currentTable.isActive = false;
+        }
+
+        // find the tables with seats available
+        let tablesWithSeats = new Array<number>();
+        for (const table of data.tables) {
+          if (table.tableNo !== currentTableNo) {
+            if (!table.isActive) {
+              continue;
+            }
+            if (table.players.length < playersPerTable) {
+              tablesWithSeats.push(table.tableNo);
+            }
+          }
+        }
+        tablesWithSeats.sort();
+
+        let lastUsedTable: number = -1;
+        while (playersBeingMoved.length > 0) {
+          const player = playersBeingMoved.pop();
+          if (player) {
+            // pick the next table after the lastone used
+
+            let nextTabletoMove: number = 0;
+            if (lastUsedTable === -1) {
+              nextTabletoMove = tablesWithSeats[0];
+            } else {
+              let foundLastTable = false;
+              for (let i = 0; i < tablesWithSeats.length; i++) {
+                if (foundLastTable) {
+                  nextTabletoMove = tablesWithSeats[i];
+                  break;
+                }
+
+                if (tablesWithSeats[i] === lastUsedTable) {
+                  foundLastTable = true;
+                  continue;
+                }
+              }
+              if (nextTabletoMove === 0) {
+                nextTabletoMove = tablesWithSeats[0];
+              }
+            }
+            lastUsedTable = nextTabletoMove;
+            for (const table of data.tables) {
+              if (table.tableNo === nextTabletoMove) {
+                // move to open seat in this table
+                const takenSeats = table.players.map(e => e.seatNo);
+                for (
+                  let seatNo = 1;
+                  seatNo <= data.maxPlayersInTable;
+                  seatNo++
+                ) {
+                  if (!takenSeats.includes(seatNo)) {
+                    player.seatNo = seatNo;
+                    table.players.push(player);
+                    break;
+                  }
+                }
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      // check to see whether we balanced the table
+      data.balanced = true;
+      let activeTablesAfter = 0;
+      for (const table of data.tables) {
+        if (table.isActive) {
+          activeTablesAfter++;
+          if (
+            table.players.length == playersPerTable ||
+            table.players.length == playersPerTable + 1 ||
+            table.players.length == playersPerTable - 1
+          ) {
+            // nothing to do
+          } else {
+            data.balanced = false;
+            break;
+          }
+        }
+      }
+      let removedTables = activeTables - activeTablesAfter;
+      logger.info(
+        `Tournament: ${tournamentId} tableNo: ${currentTableNo} is balanced: ${data.balanced}`
+      );
+      tournament.data = JSON.stringify(data);
+      tournament = await tournamentRepo.save(tournament);
+
+      logger.info(
+        `=================  Balanced: ${data.balanced} ==================================`
+      );
+      logger.info(
+        `Active tables before: ${activeTables} after: ${activeTablesAfter} removed: ${removedTables}`
+      );
+      for (const table of data.tables) {
+        logger.info(
+          `Tournament: ${data.id} Table: ${table.tableNo} Players count: ${table.players.length} isActive: ${table.isActive}`
+        );
+      }
+      logger.info(
+        `===========================================================`
+      );
+
+      return data;
+    } catch (err) {
+      logger.error(`Failed to balance table ${currentTableNo}`);
+      return null;
+    }
   }
 }
 

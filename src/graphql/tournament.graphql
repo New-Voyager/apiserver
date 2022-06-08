@@ -72,6 +72,7 @@ type TournamentGameInfo {
   handToPlayerTextChannel: String
   gameChatChannel: String
   clientAliveChannel: String
+  tournamentChannel: String
 
   # livekit information
   livekitUrl: String

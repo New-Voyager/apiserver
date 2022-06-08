@@ -1020,6 +1020,39 @@ class NatsClass {
     this.sendMessage(subject, messageStr);
   }
 
+  public tournamentLevelChanged(
+    tournamentId: number,
+    level: any,
+    nextLevel: any,
+    levelTime: number,
+    messageId?: string
+  ) {
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message: any = {
+      type: 'LEVEL_CHANGED',
+      tournamentId: tournamentId,
+      level: level.level,
+      sb: level.smallBlind,
+      bb: level.bigBlind,
+      ante: level.ante,
+    };
+
+    if (nextLevel) {
+      message.nextLevel = nextLevel.level;
+      message.nextSb = nextLevel.smallBlind;
+      message.nextBb = nextLevel.bigBlind;
+      message.nextAnte = nextLevel.ante;
+      message.nextLevelTime = levelTime;
+    }
+
+    const messageStr = JSON.stringify(message);
+    const subject = TournamentRepository.getTournamentChannel(tournamentId);
+    this.sendMessage(subject, messageStr);
+  }
+
   public tournamentSetPlayerTable(
     tournamentId: number,
     playerId: number,
@@ -1038,6 +1071,37 @@ class NatsClass {
       playerId: playerId,
       playerUuid: playerUuid,
       tableNo: tableNo,
+      seatNo: seatNo,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = TournamentRepository.getTournamentChannel(tournamentId);
+    this.sendMessage(subject, messageStr);
+  }
+
+  tournamentPlayerMoved(
+    tournamentId: number,
+    currentTableNo: number,
+    newTableNo: number,
+    playerId: number,
+    playerName: string,
+    playerUuid: string,
+    stack: number,
+    seatNo: number,
+    messageId?: string
+  ) {
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message = {
+      type: 'PLAYER_MOVED_TABLE',
+      tournamentId: tournamentId,
+      playerId: playerId,
+      currentTableNo: currentTableNo,
+      playerUuid: playerUuid,
+      newTableNo: newTableNo,
+      playerName: playerName,
+      stack: stack,
       seatNo: seatNo,
     };
     const messageStr = JSON.stringify(message);

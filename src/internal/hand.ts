@@ -111,7 +111,15 @@ class HandServerAPIs {
     resp.status(200).send({
       status: 'OK',
     });
-    TournamentRepository.saveTournamentHand(tournamentId, tableNo, req.body);
+    TournamentRepository.saveTournamentHand(
+      tournamentId,
+      tableNo,
+      req.body
+    ).catch(err => {
+      logger.warn(
+        `Failed to process tournament hand ${tournamentId} table ${tableNo}`
+      );
+    });
   }
 
   public async saveHandBinary(req: any, resp: any) {
