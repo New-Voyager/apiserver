@@ -1094,7 +1094,7 @@ class NatsClass {
     }
 
     const message = {
-      type: 'PLAYER_MOVED_TABLE',
+      type: 'TOURNAMENT_PLAYER_MOVED_TABLE',
       tournamentId: tournamentId,
       playerId: playerId,
       currentTableNo: currentTableNo,
