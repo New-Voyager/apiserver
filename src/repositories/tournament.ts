@@ -210,7 +210,7 @@ class TournamentRepositoryImpl {
         level: i,
         smallBlind: smallBlind,
         bigBlind: bigBlind,
-        ante: 0, // ante,
+        ante: ante,
       });
       smallBlind = bigBlind;
     }
@@ -292,7 +292,7 @@ class TournamentRepositoryImpl {
         maxPlayers: 100,
         activePlayers: 0,
         maxPlayersInTable: 6,
-        levelTime: 30, // seconds
+        levelTime: 10, // seconds
         currentLevel: -1,
         levels: this.getTurboLevels(),
         tables: [],
@@ -815,7 +815,11 @@ class TournamentRepositoryImpl {
       `Active tables: ${activeTables} totalActivePlayers: ${totalActivePlayers} Total chips: ${data.totalChips} total chips on the tournament: ${totalChipsOnTheTournament}`
     );
     for (const table of data.tables) {
+      if (!table.isActive) {
+        continue;
+      }
       let playersStack = '';
+
       for (const player of table.players) {
         playersStack =
           playersStack +
@@ -1086,34 +1090,12 @@ class TournamentRepositoryImpl {
           data,
           table.tableNo
         );
-        // if (tournamentData) {
-        //   updatedTable = [];
-        //   const table = tournamentData.tables.find(t => t.tableNo === tableNo);
-        //   if (table) {
-        //     updatedTable = table.players;
-        //   }
-        // }
         this.printTournamentStats(data);
       } else {
         // this.printTournamentStats(data);
       }
 
-      // calculate chips on the table with updated players
-      // let chipsOnThisTable = 0;
-      // if (tournamentData) {
-      //   let table = tournamentData.tables.find(t => t.tableNo === tableNo);
-      //   if (table) {
-      //     for (const players of table?.players) {
-      //       chipsOnThisTable += players.stack;
-      //     }
-      //   }
-      //   if (chipsOnTheTable !== chipsOnThisTable) {
-      //     logger.info(
-      //       `Chips on this table: ${tableNo} has changed. ${chipsOnTheTable} -> ${chipsOnThisTable}`
-      //     );
-      //   }
-      // }
-
+      let resumeTables = new Array<number>();
       if (tournamentData) {
         table = tournamentData.tables.find(t => t.tableNo === tableNo);
         if (table) {
@@ -1122,7 +1104,6 @@ class TournamentRepositoryImpl {
             table.paused = true;
           }
         }
-        let resumeTables = new Array<number>();
         // resume other paused tables if they have enough players
         for (const table of data.tables) {
           if (table.paused) {
@@ -1133,15 +1114,6 @@ class TournamentRepositoryImpl {
                 resumeTables.push(table.tableNo);
               }
             }
-          }
-        }
-        if (resumeTables.length > 0) {
-          tournament.data = JSON.stringify(data);
-          tournament = await tournamentRepo.save(tournament);
-
-          for (const tableNo of resumeTables) {
-            logger.info(`Resuming table: ${tableNo}`);
-            await this.runHand(tournamentId, tableNo);
           }
         }
       }
@@ -1163,6 +1135,15 @@ class TournamentRepositoryImpl {
           player.seatNo
         );
       }
+
+      // if we need to resume some of the paused tables, do now
+      if (resumeTables.length > 0) {
+        for (const tableNo of resumeTables) {
+          logger.info(`Resuming table: ${tableNo}`);
+          await this.runHand(tournamentId, tableNo);
+        }
+      }
+
       table = tournamentData.tables.find(t => t.tableNo === tableNo);
       if (table) {
         if (table.players.length > 1) {
@@ -1177,16 +1158,60 @@ class TournamentRepositoryImpl {
     } catch (err) {
     } finally {
       let totalChipsOnTheTournament = 0;
+      let activeTables = 0;
+      let totalActivePlayers = 0;
+      let currentLevel: TournamentLevel | undefined;
       if (data) {
         for (const table of data.tables) {
           for (const player of table.players) {
             totalChipsOnTheTournament += player.stack;
           }
         }
+        // get active tables
+        for (const table of data.tables) {
+          if (table.isActive) {
+            activeTables++;
+          }
+        }
+        // get total active players
+        for (const table of data.tables) {
+          totalActivePlayers += table.players.length;
+        }
+        let currentLevelNo = this.currentTournamentLevel[tournamentId];
+        currentLevel = data.levels.find(l => l.level === currentLevelNo);
       }
+
+      // id:, table: activeTables: [], balanced:, totalChips: totalChipsInTournament:, remainingPlayers:, currentLevel:, sb, bb, ante
       logger.info(
-        `======== Tournament: ${tournamentId} TableNo: ${tableNo} Save Hand done Balanced: ${data?.balanced} totalChips: ${data?.totalChips} Chips in the tournament: ${totalChipsOnTheTournament} ========`
+        `======== Tournament: ${tournamentId} Current TableNo: ${tableNo} Save Hand done `
       );
+      // if final table print stats
+      if (activeTables === 1) {
+        if (data) {
+          this.printTournamentStats(data);
+        }
+      }
+
+      logger.info(
+        `======== Tournament: ${tournamentId} Active Players: ${totalActivePlayers} ActiveTables: ${activeTables} Balanced: ${data?.balanced} Expected Chips: ${data?.totalChips} Chips: ${totalChipsOnTheTournament} Blinds: ${currentLevel?.smallBlind}/${currentLevel?.bigBlind} (${currentLevel?.ante})========`
+      );
+
+      // if we have only one table and one player and it is paused
+      // we have a winner
+      if (data) {
+        if (activeTables === 1 && totalActivePlayers === 1) {
+          // get total active players
+          for (const table of data.tables) {
+            if (table.isActive) {
+              const winner = table.players[0];
+              logger.info(
+                `*********** Tournament: ${tournamentId} Winner: ${winner.playerName} ${winner.stack} ***********`
+              );
+              break;
+            }
+          }
+        }
+      }
     }
   }
 
