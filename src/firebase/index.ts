@@ -968,6 +968,7 @@ export interface AppSettings {
   gameCoinsPerBlock: number;
   compressHandData: boolean;
   ipGpsCheckInterval: number;
+  appUrl: string;
 }
 
 // get from firebase and update periodically
@@ -989,6 +990,7 @@ export function resetAppSettingsTest() {
     notifyHostTimeWindow: 2 * 60 * 60,
     compressHandData: false,
     ipGpsCheckInterval: 15 * 60,
+    appUrl: 'https://app.pokerclub.app',
   };
   return settings;
 }
@@ -1004,6 +1006,7 @@ export function resetAppSettings() {
     notifyHostTimeWindow: 10 * 60,
     compressHandData: false,
     ipGpsCheckInterval: 15 * 60,
+    appUrl: 'https://app.pokerclub.app',
   };
   return settings;
 }

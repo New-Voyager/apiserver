@@ -21,7 +21,7 @@ export async function sendRecoveryCode(
 }
 
 // async..await is not allowed in global scope, must use a wrapper
-async function sendEmail(
+export async function sendEmail(
   to: string,
   from: string,
   subject: string,
@@ -56,3 +56,4 @@ async function sendEmail(
     }
   });
 }
+
