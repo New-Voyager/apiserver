@@ -69,6 +69,7 @@ interface Table {
   handNum: number;
   isActive: boolean;
   chipsOnTheTable: number;
+  paused: boolean; // table may be paused if there are not enough players
 }
 export enum TournamentPlayingStatus {
   REGISTERED,
@@ -518,6 +519,7 @@ class TournamentRepositoryImpl {
           tableServer: '',
           isActive: true, // set the table server here
           chipsOnTheTable: 0,
+          paused: false,
         };
         // host the table in the game server
         this.hostTable(data, table.tableNo, table.tableServer);
@@ -769,6 +771,66 @@ class TournamentRepositoryImpl {
     } catch (err) {}
   }
 
+  private printTournamentStats(data: TournamentData) {
+    // get active tables
+    let activeTables = 0;
+    for (const table of data.tables) {
+      if (table.isActive) {
+        activeTables++;
+      }
+    }
+    // get total active players
+    let totalActivePlayers = 0;
+    for (const table of data.tables) {
+      totalActivePlayers += table.players.length;
+    }
+    let tablesRequired = Math.floor(
+      totalActivePlayers / data.maxPlayersInTable
+    );
+    if (totalActivePlayers % data.maxPlayersInTable !== 0) {
+      tablesRequired++;
+    }
+    let totalChipsOnTheTournament = 0;
+    for (const table of data.tables) {
+      for (const player of table.players) {
+        totalChipsOnTheTournament += player.stack;
+      }
+    }
+    if (totalChipsOnTheTournament !== data.totalChips) {
+      logger.info(
+        `ALERT: Total chips: ${data.totalChips} total chips in the tournament now: ${totalChipsOnTheTournament} Missing chips`
+      );
+    }
+
+    totalChipsOnTheTournament = 0;
+    for (const table of data.tables) {
+      for (const player of table.players) {
+        totalChipsOnTheTournament += player.stack;
+      }
+    }
+    logger.info(
+      `============================  Tournament stats: ${data.id} Balanced: ${data.balanced} ============================`
+    );
+    logger.info(
+      `Active tables: ${activeTables} totalActivePlayers: ${totalActivePlayers} Total chips: ${data.totalChips} total chips on the tournament: ${totalChipsOnTheTournament}`
+    );
+    for (const table of data.tables) {
+      let playersStack = '';
+      for (const player of table.players) {
+        playersStack =
+          playersStack +
+          ` ${player.playerName}:${player.playerId} ${player.stack}`;
+      }
+
+      logger.info(
+        `[Table: ${table.tableNo}] Players count: ${table.players.length} isActive: ${table.isActive}, Paused: ${table.paused} ${playersStack}`
+      );
+    }
+    logger.info(
+      `========================================================================`
+    );
+  }
+
   public async startTournament(tournamentId: number) {
     try {
       // bots will join the tournament here
@@ -911,6 +973,7 @@ class TournamentRepositoryImpl {
     tableNo: number,
     result: any
   ) {
+    let data: TournamentData | null = null;
     try {
       // logger.info(
       //   `Result from Tournament: ${tournamentId} tableNo: ${tableNo}`
@@ -932,7 +995,7 @@ class TournamentRepositoryImpl {
           );
         }
       }
-      logger.info(`${playerStack}`);
+      // logger.info(`${tournamentId}:${tableNo} ${playerStack}`);
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
       let tournament = await tournamentRepo.findOne({id: tournamentId});
@@ -940,7 +1003,7 @@ class TournamentRepositoryImpl {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
       }
-      let data = JSON.parse(tournament.data) as TournamentData;
+      data = JSON.parse(tournament.data) as TournamentData;
       let table = data.tables.find(t => t.tableNo === tableNo);
       if (!table) {
         throw new Error(
@@ -984,16 +1047,24 @@ class TournamentRepositoryImpl {
           }
         }
       }
-      updatedTable = [];
       let bustedPlayerIds = bustedPlayers.map(e => e.playerId);
-      // skip busted players
-      for (const player of table.players) {
-        if (bustedPlayerIds.indexOf(player.playerId) === -1) {
-          updatedTable.push(player);
+      if (bustedPlayerIds.length > 0) {
+        updatedTable = [];
+        logger.info(`Before removing busted players`);
+        // print tournament stats before removing busted players
+        // this.printTournamentStats(data);
+
+        // skip busted players
+        for (const player of table.players) {
+          if (bustedPlayerIds.indexOf(player.playerId) === -1) {
+            updatedTable.push(player);
+          }
         }
+        table.players = updatedTable;
+        logger.info(`After removing busted players ${bustedPlayerIds}`);
+        // this.printTournamentStats(data);
       }
 
-      table.players = updatedTable;
       table.handNum = table.handNum + 1;
       let chipsOnTheTableBefore = table.chipsOnTheTable;
       let chipsOnTheTable = 0;
@@ -1002,80 +1073,130 @@ class TournamentRepositoryImpl {
       }
       table.chipsOnTheTable = chipsOnTheTable;
 
-      logger.info(
-        `Table no: ${table.tableNo} chipsOnTheTableBefore: ${chipsOnTheTableBefore} chipsOnTheTable: ${chipsOnTheTable} playerStack: ${playersStack}`
-      );
-      if (chipsOnTheTable !== chipsOnTheTableBefore) {
-        logger.error(
-          `***************************** Table no: ${table.tableNo} chips don't match. chipsOnTheTableBefore: ${chipsOnTheTableBefore} chipsOnTheTable: ${chipsOnTheTable} ******`
-        );
-      }
-
       // start tournament level timer
       if (playerBusted) {
         data.balanced = false;
       }
-      tournament.data = JSON.stringify(data);
-      tournament = await tournamentRepo.save(tournament);
       let tournamentData: TournamentData | null = data;
+      let movedPlayers: Array<TableMove> = [];
       if (!data.balanced) {
+        this.printTournamentStats(data);
         // balance the table
-        tournamentData = await this.balanceTable(tournamentId, table.tableNo);
-        if (tournamentData) {
-          updatedTable = [];
-          const table = tournamentData.tables.find(t => t.tableNo === tableNo);
-          if (table) {
-            updatedTable = table.players;
-          }
-        }
+        [tournamentData, movedPlayers] = await this.balanceTable(
+          data,
+          table.tableNo
+        );
+        // if (tournamentData) {
+        //   updatedTable = [];
+        //   const table = tournamentData.tables.find(t => t.tableNo === tableNo);
+        //   if (table) {
+        //     updatedTable = table.players;
+        //   }
+        // }
+        this.printTournamentStats(data);
+      } else {
+        // this.printTournamentStats(data);
       }
 
       // calculate chips on the table with updated players
-      let chipsOnThisTable = 0;
+      // let chipsOnThisTable = 0;
+      // if (tournamentData) {
+      //   let table = tournamentData.tables.find(t => t.tableNo === tableNo);
+      //   if (table) {
+      //     for (const players of table?.players) {
+      //       chipsOnThisTable += players.stack;
+      //     }
+      //   }
+      //   if (chipsOnTheTable !== chipsOnThisTable) {
+      //     logger.info(
+      //       `Chips on this table: ${tableNo} has changed. ${chipsOnTheTable} -> ${chipsOnThisTable}`
+      //     );
+      //   }
+      // }
+
       if (tournamentData) {
-        let table = tournamentData.tables.find(t => t.tableNo === tableNo);
+        table = tournamentData.tables.find(t => t.tableNo === tableNo);
         if (table) {
-          for (const players of table?.players) {
-            chipsOnThisTable += players.stack;
+          if (table.players.length === 1) {
+            // this player should be moved to another table or players from other table should move here
+            table.paused = true;
           }
         }
-        if (chipsOnTheTable !== chipsOnThisTable) {
+        let resumeTables = new Array<number>();
+        // resume other paused tables if they have enough players
+        for (const table of data.tables) {
+          if (table.paused) {
+            if (table.isActive) {
+              if (table.players.length >= 2) {
+                // resume table
+                table.paused = false;
+                resumeTables.push(table.tableNo);
+              }
+            }
+          }
+        }
+        if (resumeTables.length > 0) {
+          tournament.data = JSON.stringify(data);
+          tournament = await tournamentRepo.save(tournament);
+
+          for (const tableNo of resumeTables) {
+            logger.info(`Resuming table: ${tableNo}`);
+            await this.runHand(tournamentId, tableNo);
+          }
+        }
+      }
+      tournament.data = JSON.stringify(tournamentData);
+      tournament = await tournamentRepo.save(tournament);
+      data = tournamentData;
+
+      // there is a race condition here, the player may move to another table before subscribing to the messages
+      // send NATS message to moved players
+      for (const player of movedPlayers) {
+        Nats.tournamentPlayerMoved(
+          tournamentId,
+          player.oldTableNo,
+          player.newTableNo,
+          player.playerId,
+          player.playerName,
+          player.playerUuid,
+          player.stack,
+          player.seatNo
+        );
+      }
+      table = tournamentData.tables.find(t => t.tableNo === tableNo);
+      if (table) {
+        if (table.players.length > 1) {
+          // run the next hand
+          await this.runHand(tournamentId, table.tableNo);
+        } else {
           logger.info(
-            `Chips on this table: ${tableNo} has changed. ${chipsOnTheTable} -> ${chipsOnThisTable}`
+            `Tournament: ${tournamentId} tableNo: ${tableNo} Player: ${updatedTable[0].playerName} is the winner Stack: ${updatedTable[0].stack}.`
           );
         }
       }
-
-      if (updatedTable.length > 1) {
-        // run the next hand
-        await this.runHand(tournamentId, table.tableNo);
-      } else {
-        logger.info(
-          `Tournament: ${tournamentId} tableNo: ${tableNo} Player: ${updatedTable[0].playerName} is the winner Stack: ${updatedTable[0].stack}.`
-        );
-      }
     } catch (err) {
     } finally {
+      let totalChipsOnTheTournament = 0;
+      if (data) {
+        for (const table of data.tables) {
+          for (const player of table.players) {
+            totalChipsOnTheTournament += player.stack;
+          }
+        }
+      }
       logger.info(
-        `====================================== Tournament: ${tournamentId} TableNo: ${tableNo} Save Hand done ======================================`
+        `======== Tournament: ${tournamentId} TableNo: ${tableNo} Save Hand done Balanced: ${data?.balanced} totalChips: ${data?.totalChips} Chips in the tournament: ${totalChipsOnTheTournament} ========`
       );
     }
   }
 
-  private async balanceTable(
-    tournamentId: number,
+  private balanceTable(
+    data: TournamentData,
     currentTableNo: number
-  ): Promise<TournamentData | null> {
+  ): [TournamentData, Array<TableMove>] {
+    const tournamentId = data.id;
+    let movedPlayers = new Array<TableMove>();
     try {
-      logger.info(`Balancing table ${tournamentId} ${currentTableNo}`);
-      let tournamentRepo: Repository<Tournament>;
-      tournamentRepo = getGameRepository(Tournament);
-      let tournament = await tournamentRepo.findOne({id: tournamentId});
-      if (tournament) {
-      } else {
-        throw new Error(`Tournament ${tournamentId} is not found`);
-      }
-      let data = JSON.parse(tournament.data) as TournamentData;
       let currentTable = data.tables.find(t => t.tableNo === currentTableNo);
 
       // check whether we can remove the current table
@@ -1085,7 +1206,7 @@ class TournamentRepositoryImpl {
       }
 
       if (!currentTable) {
-        return data;
+        return [data, movedPlayers];
       }
       // get active tables
       let activeTables = 0;
@@ -1094,7 +1215,6 @@ class TournamentRepositoryImpl {
           activeTables++;
         }
       }
-      let movedPlayers = new Array<TableMove>();
       // get total active players
       let totalActivePlayers = 0;
       for (const table of data.tables) {
@@ -1112,11 +1232,6 @@ class TournamentRepositoryImpl {
           totalChipsOnTheTournament += player.stack;
         }
       }
-      if (totalChipsOnTheTournament !== data.totalChips) {
-        logger.info(
-          `ALERT: Total chips: ${data.totalChips} total chips in the tournament now: ${totalChipsOnTheTournament} Missing chips`
-        );
-      }
 
       totalChipsOnTheTournament = 0;
       for (const table of data.tables) {
@@ -1127,26 +1242,12 @@ class TournamentRepositoryImpl {
       logger.info(
         `  ---------- Balance table started: Tournament: ${tournamentId} tableNo: ${currentTableNo} ----------`
       );
-      logger.info(
-        `Active tables: ${activeTables} totalActivePlayers: ${totalActivePlayers} tablesRequired: ${tablesRequired} currentTableNo: ${currentTableNo} currentTable players: ${currentTable.players.length}`
-      );
-      logger.info(
-        `Total chips: ${data.totalChips} total chips on the table: ${totalChipsOnTheTournament}`
-      );
-
-      for (const table of data.tables) {
-        logger.info(
-          `Tournament: ${data.id} Table: ${table.tableNo} Players count: ${table.players.length} isActive: ${table.isActive}`
-        );
-      }
 
       if (activeTables === 1) {
         logger.info(`Only one final table is active. No need to balance`);
         // balanced
         data.balanced = true;
-        tournament.data = JSON.stringify(data);
-        tournament = await tournamentRepo.save(tournament);
-        return data;
+        return [data, movedPlayers];
       }
 
       let playersPerTable = Math.floor(totalActivePlayers / tablesRequired);
@@ -1175,6 +1276,13 @@ class TournamentRepositoryImpl {
           currentTableNo,
           currentTable
         );
+        let playerNames = new Array<string>();
+        for (const player of playersBeingMoved) {
+          if (player) {
+            playerNames.push(`${player.playerName}:${player.playerId}`);
+          }
+        }
+        logger.info(`Players being moved: ${playerNames.join(',')}`);
 
         // move players to other tables
         movedPlayers = this.movePlayers(
@@ -1215,48 +1323,14 @@ class TournamentRepositoryImpl {
             data.balanced = false;
             break;
           }
-          logger.info(`Table: ${table.tableNo} is active`);
         } else {
-          logger.info(`Table: ${table.tableNo} is inactive`);
         }
       }
-      let removedTables = activeTables - activeTablesAfter;
 
-      tournament.data = JSON.stringify(data);
-      tournament = await tournamentRepo.save(tournament);
-
-      // there is a race condition here, the player may move to another table before subscribing to the messages
-      // send NATS message to moved players
-      for (const player of movedPlayers) {
-        Nats.tournamentPlayerMoved(
-          tournamentId,
-          currentTableNo,
-          player.newTableNo,
-          player.playerId,
-          player.playerName,
-          player.playerUuid,
-          player.stack,
-          player.seatNo
-        );
-      }
-
-      logger.info(
-        `Active tables before: ${activeTables} after: ${activeTablesAfter} removed: ${removedTables} balanced: ${data.balanced}`
-      );
-      logger.info(
-        `Total chips: ${data.totalChips} total chips on the table: ${totalChipsOnTheTournament}`
-      );
-
-      for (const table of data.tables) {
-        logger.info(
-          `Tournament: ${data.id} Table: ${table.tableNo} Players count: ${table.players.length} isActive: ${table.isActive}`
-        );
-      }
-
-      return data;
+      return [data, movedPlayers];
     } catch (err) {
       logger.error(`Failed to balance table ${currentTableNo}`);
-      return null;
+      return [data, movedPlayers];
     } finally {
       logger.info(
         `  ---------- Balance table started: Tournament: ${tournamentId} tableNo: ${currentTableNo} ENDED ----------`
@@ -1280,6 +1354,10 @@ class TournamentRepositoryImpl {
       // can you move all the players to other tables
       let availableOpenSeats = 0;
       for (const table of data.tables) {
+        // skip inactive tables
+        if (!table.isActive) {
+          continue;
+        }
         if (table.tableNo !== currentTableNo) {
           availableOpenSeats += data.maxPlayersInTable - table.players.length;
         }
@@ -1302,19 +1380,15 @@ class TournamentRepositoryImpl {
     return playersBeingMoved;
   }
 
-  private movePlayers(
-    tournamentId: number,
+  private tablesWithSeats(
     tables: Table[],
-    currentTableNo: number,
-    playersPerTable: number,
-    maxPlayersInTable: number,
-    playersBeingMoved: Array<TournamentPlayer | undefined>
-  ): Array<TableMove> {
-    const ret = new Array<TableMove>();
+    skipTableNo: number,
+    playersPerTable: number
+  ): Array<number> {
     // find the tables with seats available
     let tablesWithSeats = new Array<number>();
     for (const table of tables) {
-      if (table.tableNo !== currentTableNo) {
+      if (table.tableNo !== skipTableNo) {
         if (!table.isActive) {
           continue;
         }
@@ -1324,15 +1398,32 @@ class TournamentRepositoryImpl {
       }
     }
     tablesWithSeats.sort();
+    return tablesWithSeats;
+  }
 
+  private movePlayers(
+    tournamentId: number,
+    tables: Table[],
+    currentTableNo: number,
+    playersPerTable: number,
+    maxPlayersInTable: number,
+    playersBeingMoved: Array<TournamentPlayer | undefined>
+  ): Array<TableMove> {
+    const ret = new Array<TableMove>();
     let lastUsedTable: number = -1;
     while (playersBeingMoved.length > 0) {
       const player = playersBeingMoved.pop();
       if (player) {
         // pick the next table after the lastone used
-
+        logger.info(`Moving player ${player.playerName} to a new table`);
         let nextTabletoMove: number = 0;
-        if (lastUsedTable === -1) {
+        const tablesWithSeats = this.tablesWithSeats(
+          tables,
+          currentTableNo,
+          playersPerTable
+        );
+
+        if (lastUsedTable === -1 || tablesWithSeats.length === 1) {
           nextTabletoMove = tablesWithSeats[0];
         } else {
           let foundLastTable = false;
@@ -1360,6 +1451,9 @@ class TournamentRepositoryImpl {
               if (!takenSeats.includes(seatNo)) {
                 player.seatNo = seatNo;
                 table.players.push(player);
+                logger.info(
+                  `Player ${player.playerName} is being moved to table ${table.tableNo}`
+                );
 
                 // player is moved
                 ret.push({
