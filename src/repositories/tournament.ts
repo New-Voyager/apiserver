@@ -108,7 +108,7 @@ type TournamentInfo {
   tournamentChannel: String!
 }
 */
-interface TournamentData {
+export interface TournamentData {
   id: number;
   startingChips: number;
   name: string;
@@ -314,10 +314,13 @@ class TournamentRepositoryImpl {
       tournament.data = JSON.stringify(data);
       tournament.maxPlayersInTable = 6;
       tournament = await tournamentRepo.save(tournament);
+      await Cache.getTournamentData(tournament.id, true);
+
       data.id = tournament.id;
       tournament.data = JSON.stringify(data);
       tournament.tableServer = ''; // assign table server here
       tournament = await tournamentRepo.save(tournament);
+      await Cache.getTournamentData(tournament.id, true);
 
       this.processQueue[tournament.id] = {
         processing: false,
@@ -356,6 +359,7 @@ class TournamentRepositoryImpl {
           tournament.data = JSON.stringify(data);
           await tournamentRepo.save(tournament);
           // publish new player information to tournament channel
+          await Cache.getTournamentData(tournament.id, true);
         }
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
@@ -370,14 +374,16 @@ class TournamentRepositoryImpl {
 
   public async getTournamentData(tournamentId: number): Promise<any | null> {
     try {
-      let tournamentRepo: Repository<Tournament>;
-      tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({id: tournamentId});
-      if (tournament) {
-      } else {
-        throw new Error(`Tournament ${tournamentId} is not found`);
-      }
-      return JSON.parse(tournament.data);
+      const data = Cache.getTournamentData(tournamentId);
+      return data;
+      // let tournamentRepo: Repository<Tournament>;
+      // tournamentRepo = getGameRepository(Tournament);
+      // const tournament = await tournamentRepo.findOne({ id: tournamentId });
+      // if (tournament) {
+      // } else {
+      //   throw new Error(`Tournament ${tournamentId} is not found`);
+      // }
+      // return JSON.parse(tournament.data);
     } catch (err) {
       logger.error(
         `Failed to get tournement info: ${tournamentId}: ${errToStr(err)}`
@@ -558,6 +564,8 @@ class TournamentRepositoryImpl {
 
       tournament.data = JSON.stringify(data);
       await tournamentRepo.save(tournament);
+      await Cache.getTournamentData(tournament.id, true);
+
       const gameCode = `t${tournamentId}-${table.tableNo}`;
       // publish that the player has joined to tournament channel, send the table info
       Nats.playerJoinedTournament(
@@ -850,6 +858,7 @@ class TournamentRepositoryImpl {
       data.playersInTournament = [];
       tournament.data = JSON.stringify(data);
       await tournamentRepo.save(tournament);
+      await Cache.getTournamentData(tournamentId, true);
 
       for (const registeredPlayer of data.registeredPlayers) {
         if (registeredPlayer.isBot) {
@@ -869,6 +878,7 @@ class TournamentRepositoryImpl {
       this.currentTournamentLevel[tournamentId] = 1;
       this.tournamentLevelData[tournamentId] = data.levels;
       await tournamentRepo.save(tournament);
+      await Cache.getTournamentData(tournamentId, true);
 
       // bots should play the first hand
     } catch (err) {}
@@ -1119,6 +1129,7 @@ class TournamentRepositoryImpl {
       }
       tournament.data = JSON.stringify(tournamentData);
       tournament = await tournamentRepo.save(tournament);
+      await Cache.getTournamentData(tournamentId, true);
       data = tournamentData;
 
       // there is a race condition here, the player may move to another table before subscribing to the messages

@@ -34,6 +34,8 @@ import {PlayersInGameRepository} from '@src/repositories/playersingame';
 import {HighRankStats} from '@src/types';
 import {StatsRepository} from '@src/repositories/stats';
 import {ClubRepository, NotificationSettings} from '@src/repositories/club';
+import {TournamentData} from '@src/repositories/tournament';
+import {Tournament} from '@src/entity/game/tournament';
 
 const logger = getLogger('cache');
 
@@ -900,6 +902,30 @@ class GameCache {
     }
     await this.setCache(key, JSON.stringify(highRankStats));
     return highRankStats;
+  }
+
+  public async getTournamentData(
+    tournamentId: number,
+    update = false
+  ): Promise<TournamentData | null> {
+    const getResp = await this.getCache(`tournamentCache-${tournamentId}`);
+    if (getResp.success && getResp.data && !update) {
+      return JSON.parse(getResp.data) as TournamentData;
+    } else {
+      let tournamentRepo: Repository<Tournament>;
+      tournamentRepo = getGameRepository(Tournament);
+      const tournament = await tournamentRepo.findOne({id: tournamentId});
+      if (tournament) {
+        await this.setCache(
+          `tournamentCache-${tournamentId}`,
+          tournament.data,
+          300
+        );
+        return JSON.parse(tournament.data) as TournamentData;
+      } else {
+        return null;
+      }
+    }
   }
 }
 
