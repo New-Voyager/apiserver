@@ -197,8 +197,8 @@ class TournamentRepositoryImpl {
   public getTurboLevels(): Array<TournamentLevel> {
     let levels = new Array<TournamentLevel>();
     let smallBlind = 200;
-    let anteStart = 25;
-    for (let i = 1; i <= 5; i++) {
+    let anteStart = 200;
+    for (let i = 1; i <= 20; i++) {
       let ante = 0;
       let bigBlind = smallBlind * 2;
       if (i <= 5) {
