@@ -58,6 +58,7 @@ message HandInfo {
     uint64 game_id = 4;
     repeated Seat seats = 5;
     HandDetails hand_details = 6;
+    string tournament_url = 7;
 }
 
 message RunHandResult {

@@ -728,6 +728,7 @@ class TournamentRepositoryImpl {
       } 
     */
     let handInfo: any = {
+      tournament_url: process.env['TOURNAMENT_URL'],
       tournament_id: tournamentId,
       table_no: table.tableNo,
       game_code: TournamentRepository.getTableGameCode(tournamentId, tableNo),
