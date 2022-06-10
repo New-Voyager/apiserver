@@ -173,11 +173,11 @@ class TournamentRepositoryImpl {
       }
       const url = new URL(gameServer.url);
       serverHost = url.host;
-      serverHost = 'localhost';
     }
     const rpcPort = 9000;
     const server = `${serverHost}:${rpcPort}`;
     const client = new tableService(server, grpc.credentials.createInsecure());
+    logger.info(`Game server GRPC URL: ${server}`);
     gameServerRpc = client;
     //gameServerRpc = new TableServiceClient(server, {});
   }
