@@ -8,6 +8,7 @@ services:
     hostname: gameserver
     ports:
       - 8080:8080
+      - 9000:9000
     depends_on:
       - nats
     environment:
@@ -107,8 +108,7 @@ services:
       POSTGRES_PASSWORD: game
       POSTGRES_DB: game
       ENABLE_ENCRYPTION: 1
-    volumes:
-      - ../botrunner_scripts:/app/botrunner_scripts
+      LOG_LEVEL: debug
 
   timer:
     image: ${TIMER_IMAGE}
