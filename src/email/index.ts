@@ -1,10 +1,10 @@
 'use strict';
 
-import {errToStr, getLogger} from '@src/utils/log';
+import { errToStr, getLogger } from '@src/utils/log';
 
 const nodemailer = require('nodemailer');
 const account = 'contact.poker.clubapp@gmail.com';
-const password = 'Poker!234';
+const password = 'qtskemecvlgoryqn';
 const logger = getLogger('email');
 export async function sendRecoveryCode(
   to: string,
@@ -25,7 +25,8 @@ export async function sendEmail(
   to: string,
   from: string,
   subject: string,
-  body: string
+  body: string,
+  bodyHtml?: string
 ) {
   var nodemailer = require('nodemailer');
   var smtpTransport = require('nodemailer-smtp-transport');
@@ -41,12 +42,17 @@ export async function sendEmail(
     })
   );
 
-  var mailOptions = {
+  var mailOptions: any = {
     from: `"Poker Club App" ${from}`,
     to: to,
     subject: subject,
     text: body,
   };
+  if (bodyHtml) {
+    mailOptions.html = bodyHtml;
+  } else {
+    mailOptions.text = body;
+  }
 
   transporter.sendMail(mailOptions, function (error, info) {
     if (error) {

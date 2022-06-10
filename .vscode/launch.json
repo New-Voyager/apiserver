@@ -62,8 +62,9 @@
       "outputCapture": "std",
       "console": "internalConsole",
       "env": {
-        "EXTERNAL_NATS_URL": "nats://192.168.1.100:4222",
-        "NATS_URL": "nats://192.168.1.100:4222",
+        "EXTERNAL_NATS_URL": "nats://192.168.40.34:4222",
+        "NATS_URL": "nats://192.168.40.34:4222",
+        "TOURNAMENT_URL": "http://192.168.40.34:9502",
         "EXTERNAL_ENDPOINTS": "1",
         "INTERNAL_ENDPOINTS": "1",
         "STORE_HAND_ANALYSIS": "1",
