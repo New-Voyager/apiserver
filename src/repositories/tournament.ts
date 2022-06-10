@@ -172,7 +172,7 @@ class TournamentRepositoryImpl {
         throw new Error(`No game server is available`);
       }
       const url = new URL(gameServer.url);
-      serverHost = url.host;
+      serverHost = url.hostname;
     }
     const rpcPort = 9000;
     const server = `${serverHost}:${rpcPort}`;
