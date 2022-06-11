@@ -46,9 +46,6 @@ const resolvers: any = {
     cancelTournament: async (parent, args, ctx, info) => {
       return cancelTournament(ctx.req.playerId, args.tournamentId);
     },
-    seatBotsInTournament: async (parent, args, ctx, info) => {
-      return seatBotsInTournament(ctx.req.playerId, args.tournamentId, 0);
-    },
   },
 };
 
@@ -108,18 +105,6 @@ async function registerTournament(
   }
 
   await TournamentRepository.registerTournament(playerUuid, tournamentId);
-  return true;
-}
-
-async function seatBotsInTournament(
-  playerUuid: string,
-  tournamentId: number,
-  botCount: number
-): Promise<boolean> {
-  if (!botCount) {
-    botCount = 9;
-  }
-  await TournamentRepository.seatBotsInTournament(tournamentId, botCount);
   return true;
 }
 
