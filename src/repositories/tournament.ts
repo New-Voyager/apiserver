@@ -180,6 +180,7 @@ class TournamentRepositoryImpl {
     logger.info(`Game server GRPC URL: ${server}`);
     gameServerRpc = client;
     //gameServerRpc = new TableServiceClient(server, {});
+    this.initialized = true;
   }
 
   public getTournamentChannel(tournamentId: number): string {
