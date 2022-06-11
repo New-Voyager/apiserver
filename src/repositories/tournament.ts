@@ -180,6 +180,7 @@ class TournamentRepositoryImpl {
     logger.info(`Game server GRPC URL: ${server}`);
     gameServerRpc = client;
     //gameServerRpc = new TableServiceClient(server, {});
+    this.initialized = true;
   }
 
   public getTournamentChannel(tournamentId: number): string {
@@ -875,7 +876,13 @@ class TournamentRepositoryImpl {
       await Cache.getTournamentData(tournamentId, true);
 
       // bots should play the first hand
-    } catch (err) {}
+    } catch (err) {
+      logger.error(
+        `Could not start tournament. tournamentId: ${tournamentId}, err: ${errToStr(
+          err
+        )}`
+      );
+    }
   }
 
   private async startLevelTimer(tournamentId: number, timeOutSecs: number) {
@@ -1482,7 +1489,7 @@ class TournamentRepositoryImpl {
                 player.seatNo = seatNo;
                 table.players.push(player);
                 logger.info(
-                  `Player ${player.playerName} is being moved to table ${table.tableNo}`
+                  `Player ${player.playerName} (id: ${player.playerId}) is being moved table ${player.tableNo} => ${table.tableNo}`
                 );
 
                 // player is moved
