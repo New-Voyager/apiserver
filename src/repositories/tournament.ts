@@ -263,12 +263,12 @@ class TournamentRepositoryImpl {
         playerName: player.playerName,
         playerUuid: player.playerUuid,
         stack: player.stack,
-        isSittingOut: false,
+        isSittingOut: player.isSittingOut,
         seatNo: player.seatNo,
         tableNo: player.tableNo,
         isBot: player.isBot,
         status: player.status,
-        timesMoved: 0,
+        timesMoved: player.timesMoved,
         stackBeforeHand: player.stack,
       });
     }
