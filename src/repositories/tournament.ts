@@ -876,7 +876,13 @@ class TournamentRepositoryImpl {
       await Cache.getTournamentData(tournamentId, true);
 
       // bots should play the first hand
-    } catch (err) {}
+    } catch (err) {
+      logger.error(
+        `Could not start tournament. tournamentId: ${tournamentId}, err: ${errToStr(
+          err
+        )}`
+      );
+    }
   }
 
   private async startLevelTimer(tournamentId: number, timeOutSecs: number) {
