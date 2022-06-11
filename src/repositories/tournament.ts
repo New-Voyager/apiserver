@@ -1489,7 +1489,7 @@ class TournamentRepositoryImpl {
                 player.seatNo = seatNo;
                 table.players.push(player);
                 logger.info(
-                  `Player ${player.playerName} is being moved to table ${table.tableNo}`
+                  `Player ${player.playerName} (id: ${player.playerId}) is being moved table ${player.tableNo} => ${table.tableNo}`
                 );
 
                 // player is moved
