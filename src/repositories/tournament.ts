@@ -773,13 +773,6 @@ class TournamentRepositoryImpl {
     });
   }
 
-  public async seatBotsInTournament(tournamentId: number, botCount: number) {
-    try {
-      // call bot-runner to register bots to the system and let them register for the tournament
-      // now bots are listening on tournament channel
-    } catch (err) {}
-  }
-
   private printTournamentStats(data: TournamentData) {
     // get active tables
     let activeTables = 0;

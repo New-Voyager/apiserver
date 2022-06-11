@@ -92,5 +92,4 @@ type Mutation {
   startTournament(tournamentId: Int!): Boolean!
   joinTournament(tournamentId: Int!): Boolean!
   cancelTournament(tournamentId: Int!): Boolean!
-  seatBotsInTournament(tournamentId: Int!): Boolean!
 }
