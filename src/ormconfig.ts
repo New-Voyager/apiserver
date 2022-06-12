@@ -148,21 +148,26 @@ let configs: any = {
   debug: {
     name: 'debug',
     type: 'postgres',
-    host: debugHost,
-    port: debugPort,
-    username: debugUser,
-    password: debugPassword,
-    database: debugDB,
+    host: process.env[pgHostKey],
+    port: process.env[pgPortKey],
+    username: process.env[pgUserKey],
+    password: process.env[pgPasswordKey],
+    database: 'debug',
+    // host: debugHost,
+    // port: debugPort,
+    // username: debugUser,
+    // password: debugPassword,
+    // database: debugDB,
     logging: false,
     cache: true,
     synchronize: true,
     bigNumberStrings: false,
-    ssl: true,
-    extra: {
-      ssl: {
-        rejectUnauthorized: false,
-      },
-    },
+    // ssl: true,
+    // extra: {
+    //   ssl: {
+    //     rejectUnauthorized: false,
+    //   },
+    // },
     entities: debugEntities,
   },
   // test: {
@@ -254,6 +259,9 @@ if (process.env.NODE_ENV === 'test') {
 
     configs.history.ssl = true;
     configs.history.extra = extra;
+
+    configs.debug.ssl = true;
+    configs.debug.extra = extra;
   }
 }
 //export let default: any = configs.defaults;
