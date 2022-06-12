@@ -377,7 +377,8 @@ describe('Table Balancing', () => {
     expect(table1Before.players.length).toBe(4);
     expect(table2Before.players.length).toBe(2);
 
-    const [resultData, movedPlayers] = balanceTable(data, 2);
+    const currentTableNo = 2;
+    const [resultData, movedPlayers] = balanceTable(data, currentTableNo);
 
     const [table1After, table2After] = resultData.tables;
     expect(table1After.players.length).toBe(6);
