@@ -74,6 +74,12 @@ export class Club {
   @Column({name: 'show_game_result', default: true})
   public showGameResult!: boolean;
 
+  @Column({name: 'report_email_address', default: ''})
+  public reportingEmailAddress!: string;
+
+  @Column({name: 'email_reports', default: false})
+  public emailReports!: string;
+
   @Column({name: 'invitation_code', nullable: true})
   public invitationCode!: string;
 
@@ -96,7 +102,7 @@ export class ClubMember {
   @JoinColumn({name: 'player_id'})
   public player!: Player;
 
-  @Column({name: 'disply_name', default: '', nullable: true})
+  @Column({name: 'display_name', default: '', nullable: true})
   public displayName!: string;
 
   @Column({name: 'status', type: 'int'})
