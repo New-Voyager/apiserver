@@ -74,6 +74,10 @@ tests: run-redis run-nats run-pg
 unit-tests:
 	timeout $(UNIT_TEST_TIMEOUT) npm run unit-tests
 
+.PHONY: unit-test-specific
+unit-test-specific:
+	timeout $(UNIT_TEST_TIMEOUT) npm run unit-test-specific --testfile $(TESTFILE)
+
 .PHONY: tests-local
 tests-local: export NATS_URL=http://localhost:4222
 tests-local: run-redis run-nats
