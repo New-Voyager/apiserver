@@ -457,7 +457,9 @@ class TournamentRepositoryImpl {
       for (const table of data.tables) {
         logger.info('Run a first hand');
         this.runHand(data.id, table.tableNo).catch(err => {
-          logger.error(`Running hand failed`);
+          logger.error(
+            `Running hand failed table ${table.tableNo} err: ${errToStr(err)}`
+          );
         });
       }
     }
@@ -567,7 +569,7 @@ class TournamentRepositoryImpl {
       await tournamentRepo.save(tournament);
       await Cache.getTournamentData(tournament.id, true);
 
-      const gameCode = `t${tournamentId}-${table.tableNo}`;
+      const gameCode = `t-${tournamentId}-${table.tableNo}`;
       // publish that the player has joined to tournament channel, send the table info
       Nats.playerJoinedTournament(
         tournamentId,
@@ -896,7 +898,9 @@ class TournamentRepositoryImpl {
       nextTimeOut
     ).catch(err => {
       logger.error(
-        `Failed to start timer for level timeout ${tournamentId} ${err}`
+        `Failed to start timer for level timeout ${tournamentId} err: ${errToStr(
+          err
+        )}`
       );
     });
   }
@@ -1011,8 +1015,8 @@ class TournamentRepositoryImpl {
         }
       }
       // logger.info(`${tournamentId}:${tableNo} ${playerStack}`);
-      let tournamentRepo: Repository<Tournament>;
-      tournamentRepo = getGameRepository(Tournament);
+      const tournamentRepo: Repository<Tournament> =
+        getGameRepository(Tournament);
       let tournament = await tournamentRepo.findOne({id: tournamentId});
       if (tournament) {
       } else {
@@ -1025,10 +1029,8 @@ class TournamentRepositoryImpl {
           `Table ${tableNo} is not found in tournament ${tournamentId}`
         );
       }
-      let playerBusted = false;
+
       let updatedTable = new Array<TournamentPlayer>();
-      let playeresBustedCount = 0;
-      let bustedPlayersStack = 0;
 
       let playersStack = '';
       for (const player of table.players) {
@@ -1051,9 +1053,6 @@ class TournamentRepositoryImpl {
               logger.info(
                 `Tournament: ${tournamentId} tableNo: ${tableNo} Player: ${playerInTable.playerName} is busted`
               );
-              playerBusted = true;
-              playeresBustedCount++;
-              bustedPlayersStack += playerInTable.stackBeforeHand;
               bustedPlayers.push(playerInTable);
             } else {
               updatedTable.push(playerInTable);
@@ -1062,6 +1061,8 @@ class TournamentRepositoryImpl {
           }
         }
       }
+      const anyPlayerBusted = bustedPlayers.length > 0;
+
       let bustedPlayerIds = bustedPlayers.map(e => e.playerId);
       if (bustedPlayerIds.length > 0) {
         updatedTable = [];
@@ -1081,7 +1082,6 @@ class TournamentRepositoryImpl {
       }
 
       table.handNum = table.handNum + 1;
-      let chipsOnTheTableBefore = table.chipsOnTheTable;
       let chipsOnTheTable = 0;
       for (const player of table.players) {
         chipsOnTheTable += player.stack;
@@ -1089,7 +1089,7 @@ class TournamentRepositoryImpl {
       table.chipsOnTheTable = chipsOnTheTable;
 
       // start tournament level timer
-      if (playerBusted) {
+      if (anyPlayerBusted) {
         data.balanced = false;
       }
       let tournamentData: TournamentData | null = data;
@@ -1149,6 +1149,12 @@ class TournamentRepositoryImpl {
       }
 
       // if we need to resume some of the paused tables, do now
+      /*
+        If some tables were paused due to not enough players, then we may have moved players from another table to the paused table. We need to resume the tables again
+        Let us say there are 5 players in table 3, every went all-in and only one survived
+        this table has only one player. The other tables are full, so we cannot move this player anywhere
+        When the next table (table 1) save hand arrives, we will move players from that table to table 3 and resume
+      */
       if (resumeTables.length > 0) {
         for (const tableNo of resumeTables) {
           logger.info(`Resuming table: ${tableNo}`);
@@ -1168,6 +1174,11 @@ class TournamentRepositoryImpl {
         }
       }
     } catch (err) {
+      logger.error(
+        `Error saving tournament hand tournament ${tournamentId} table ${tableNo} result ${JSON.stringify(
+          result
+        )} err ${errToStr(err)}`
+      );
     } finally {
       let totalChipsOnTheTournament = 0;
       let activeTables = 0;
