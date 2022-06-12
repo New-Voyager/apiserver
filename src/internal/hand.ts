@@ -97,14 +97,18 @@ class HandServerAPIs {
     if (!tournamentId) {
       const res = {error: 'Invalid tournament id'};
       resp.status(500).send(JSON.stringify(res));
-      logger.error(`Finished saveHand endpoint game ${tournamentId} 500`);
+      logger.error(
+        `Finished saveTournamentHand endpoint tournament ${tournamentId} 500`
+      );
       return;
     }
     const tableNo = parseInt(req.params.tableNo, 10);
     if (!tableNo) {
       const res = {error: 'Invalid table number'};
       resp.status(500).send(JSON.stringify(res));
-      logger.error(`Finished saveHand endpoint game ${tableNo} 500`);
+      logger.error(
+        `Finished saveTournamentHand endpoint tournament ${tournamentId} table ${tableNo} 500`
+      );
       return;
     }
     //logger.info(JSON.stringify(req.body));
