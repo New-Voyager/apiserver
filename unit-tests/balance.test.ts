@@ -383,5 +383,10 @@ describe('Table Balancing', () => {
     const [table1After, table2After] = resultData.tables;
     expect(table1After.players.length).toBe(6);
     expect(table2After.players.length).toBe(0);
+
+    expect(movedPlayers.length).toBe(2);
+    movedPlayers.sort((p1, p2) => (p1.playerName > p2.playerName) ? 1 : -1);
+    expect(movedPlayers[0]).toMatchObject({playerName: "Maryjane", oldTableNo: 2, newTableNo: 1, stack: 100000});
+    expect(movedPlayers[1]).toMatchObject({playerName: "Reyna", oldTableNo: 2, newTableNo: 1, stack: 500000});
   });
 });
