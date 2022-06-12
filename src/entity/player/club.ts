@@ -65,7 +65,7 @@ export class Club {
   @Column({name: 'show_highrank_stats', default: true})
   public showHighRankStats!: boolean;
 
-  @Column({name: 'track_member_credit', default: false})
+  @Column({name: 'track_member_credit', default: true})
   public trackMemberCredit!: boolean;
 
   @Column({name: 'credit_tracking_enabled', default: false})

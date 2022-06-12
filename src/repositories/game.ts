@@ -1181,10 +1181,10 @@ class GameRepositoryImpl {
     }
 
     const host = await Cache.getPlayer(game.hostUuid);
-    if (!host.bot || !clubOwnedByBot) {
-      // consume game coins
-      await AppCoinRepository.consumeGameCoins(game);
-    }
+    // if (!host.bot || !clubOwnedByBot) {
+    //   // consume game coins
+    //   await AppCoinRepository.consumeGameCoins(game);
+    // }
 
     // update game history
     await HistoryRepository.updateGameNum(gameId, gameNum);

@@ -182,6 +182,12 @@ class AppCoinRepositoryImpl {
         if (existingRow == null) {
           return 0;
         } else {
+          // NOTE: Enable coins later
+          const settings = getAppSettings();
+          if (!settings.useAppCoins) {
+            return existingRow.totalCoinsAvailable;
+          }
+
           let totalCoinsAvailable =
             existingRow.totalCoinsAvailable - coinsConsumed;
           if (totalCoinsAvailable < 0) {

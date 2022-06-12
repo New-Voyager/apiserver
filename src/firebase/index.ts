@@ -970,6 +970,7 @@ export interface AppSettings {
   gameCoinsPerBlock: number;
   compressHandData: boolean;
   ipGpsCheckInterval: number;
+  useAppCoins: boolean;
 }
 
 // get from firebase and update periodically
@@ -984,13 +985,14 @@ export function resetAppSettingsTest() {
   settings = {
     maxClubCount: 5, // each user can create upto 25 clubs
     newUserFreeCoins: 10,
-    clubHostFreeCoins: 0,
+    clubHostFreeCoins: 25,
     consumeTime: 1 * 60, // every 1 minutes
     coinsAlertNotifyTime: 30, // every 30 seconds
     gameCoinsPerBlock: 5, // 5 coins per 1 minutes
     notifyHostTimeWindow: 2 * 60 * 60,
     compressHandData: false,
     ipGpsCheckInterval: 15 * 60,
+    useAppCoins: false,
   };
   return settings;
 }
@@ -998,14 +1000,15 @@ export function resetAppSettingsTest() {
 export function resetAppSettings() {
   settings = {
     maxClubCount: 20,
-    newUserFreeCoins: 100,
-    clubHostFreeCoins: 100,
+    newUserFreeCoins: 10,
+    clubHostFreeCoins: 25,
     consumeTime: 30 * 60, // every 30 minutes
     coinsAlertNotifyTime: 15 * 60,
     gameCoinsPerBlock: 5, // 5 coins per 30 minutes
     notifyHostTimeWindow: 10 * 60,
     compressHandData: false,
     ipGpsCheckInterval: 15 * 60,
+    useAppCoins: false,
   };
   return settings;
 }
