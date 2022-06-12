@@ -896,7 +896,9 @@ class TournamentRepositoryImpl {
       nextTimeOut
     ).catch(err => {
       logger.error(
-        `Failed to start timer for level timeout ${tournamentId} ${err}`
+        `Failed to start timer for level timeout ${tournamentId} err: ${errToStr(
+          err
+        )}`
       );
     });
   }
