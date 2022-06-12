@@ -449,7 +449,9 @@ class FirebaseClass {
           playerId: player.id,
           firebaseToken: player.firebaseToken,
         },
-      ]);
+      ]).catch(err => {
+        logger.error(`Failed to send credit update message`);
+      });
     } catch (err) {
       logger.error(`Sending to device group failed. ${errToStr(err)}`);
     }

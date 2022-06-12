@@ -4,26 +4,26 @@ import {
   PokerGameSettings,
   PokerGameUpdates,
 } from '@src/entity/game/game';
-import {getGameManager} from '.';
-import {Cache} from '@src/cache/index';
+import { getGameManager } from '.';
+import { Cache } from '@src/cache/index';
 import {
   BombPotInterval,
   GameType,
   PlayerStatus,
   TableStatus,
 } from '@src/entity/types';
-import {GameRepository} from './game';
-import {errToStr, getLogger} from '@src/utils/log';
-import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {markDealerChoiceNextHand} from './pendingupdates';
-import {NewHandInfo, PlayerInSeat} from './types';
-import {GameSettingsRepository} from './gamesettings';
-import {PlayersInGameRepository} from './playersingame';
-import {GameUpdatesRepository} from './gameupdates';
-import {EntityManager} from 'typeorm';
+import { GameRepository } from './game';
+import { errToStr, getLogger } from '@src/utils/log';
+import { PlayerGameTracker } from '@src/entity/game/player_game_tracker';
+import { markDealerChoiceNextHand } from './pendingupdates';
+import { NewHandInfo, PlayerInSeat } from './types';
+import { GameSettingsRepository } from './gamesettings';
+import { PlayersInGameRepository } from './playersingame';
+import { GameUpdatesRepository } from './gameupdates';
+import { EntityManager } from 'typeorm';
 import _ from 'lodash';
-import {GameNotFoundError} from '@src/errors';
-import {HighRankStats} from '@src/types';
+import { GameNotFoundError } from '@src/errors';
+import { HighRankStats } from '@src/types';
 
 const logger = getLogger('repositories::nexthand');
 
@@ -88,12 +88,14 @@ class MoveToNextHand {
   private gameUpdate: PokerGameUpdates | null;
   private buttonPassedDealer: boolean;
   private nextGameType: GameType;
-  private playersInSeats: {[key: number]: PlayerGameTracker | null};
-  private playersInThisHand: {[key: number]: PlayerGameTracker | null};
+  private playersInSeats: { [key: number]: PlayerGameTracker | null };
+  private playersInThisHand: { [key: number]: PlayerGameTracker | null };
   private bombPotThisHand: boolean;
   private missedBlinds: Array<number>;
   private postedBlinds: Array<number>;
   private passedOrbit: boolean;
+  private headsup: boolean;
+  private activePlayersCount: number;
 
   constructor(game: PokerGame, handNum: number) {
     this.game = game;
@@ -111,6 +113,8 @@ class MoveToNextHand {
     this.passedOrbit = false;
     this.playersInSeats = {};
     this.postedBlinds = new Array<number>();
+    this.headsup = false;
+    this.activePlayersCount = 0;
   }
 
   public getGameCode(): string {
@@ -172,7 +176,7 @@ class MoveToNextHand {
         // reset posted blind next field
         await playerGameRepo.update(
           {
-            game: {id: this.game.id},
+            game: { id: this.game.id },
           },
           {
             postedBlindNextHand: false,
@@ -203,6 +207,21 @@ class MoveToNextHand {
         logger.debug(
           `MoveToNextHand.move Previous hand: [${playerInSeatsInPrevHand.toString()}] Current hand: [${occupiedSeats.toString()}]`
         );
+        // how many active players in the game
+        let activePlayers = 0;
+        for (const occupiedSeat of occupiedSeats) {
+          if (occupiedSeat) {
+            activePlayers++;
+          }
+        }
+        this.activePlayersCount = activePlayers;
+        this.headsup = false;
+        let headsup = false;
+        if (activePlayers == 2) {
+          // headsup
+          headsup = true;
+          this.headsup = true;
+        }
         // determine button position
         this.determineButtonPos(playerInSeatsInPrevHand, takenSeats);
 
@@ -302,18 +321,15 @@ class MoveToNextHand {
     );
     for (const player of playerInSeats) {
       logger.debug(
-        `Seat: ${player.seatNo} Player: ${player.playerName} inhand: ${
-          player.inHandNextHand
-        } status: ${PlayerStatus[player.status]} missedBlind: ${
-          player.missedBlind
+        `Seat: ${player.seatNo} Player: ${player.playerName} inhand: ${player.inHandNextHand
+        } status: ${PlayerStatus[player.status]} missedBlind: ${player.missedBlind
         } postedBlind: ${player.postedBlind}`
       );
     }
 
     this.gameUpdate = await GameUpdatesRepository.get(this.game.gameCode, true);
     logger.debug(
-      `[${gameLogPrefix(game)}] Hand Num: ${this.gameUpdate.handNum} Button: ${
-        this.gameUpdate.buttonPos
+      `[${gameLogPrefix(game)}] Hand Num: ${this.gameUpdate.handNum} Button: ${this.gameUpdate.buttonPos
       } SB: ${this.gameUpdate.sbPos} BB: ${this.gameUpdate.bbPos}`
     );
   }
@@ -334,7 +350,7 @@ class MoveToNextHand {
         for (const seatNo of this.missedBlinds) {
           await playerGameTrackerRepo.update(
             {
-              game: {id: this.game.id},
+              game: { id: this.game.id },
               seatNo: seatNo,
             },
             {
@@ -372,7 +388,7 @@ class MoveToNextHand {
         // this player is in the hand
         await playerGameTrackerRepo.update(
           {
-            game: {id: this.game.id},
+            game: { id: this.game.id },
             playerId: player.playerId,
           },
           {
@@ -445,12 +461,18 @@ class MoveToNextHand {
     //          dead button = false;
     let orbitPos = this.gameUpdate.orbitPos;
     let buttonPos = this.gameUpdate.buttonPos;
+
     if (this.gameUpdate.calculateButtonPos) {
       if (this.handNum === 1) {
         buttonPos = 1;
       } else {
         const oldButtonPos = buttonPos;
         buttonPos = this.gameUpdate.sbPos;
+
+        if (this.headsup) {
+          // last hand's bigblind will be the button
+          buttonPos = this.gameUpdate.bbPos;
+        }
 
         // if old button position 7, 8, 9 and now it is 2
         // then we passed seat no 1
@@ -480,8 +502,7 @@ class MoveToNextHand {
           logger.debug(
             `[${gameLogPrefix(
               this.game
-            )}] DealerChoice: buttonPos: ${buttonPos} oldButtonPos: ${oldButtonPos} orbitPos: ${orbitPos} passedOrbit: ${
-              this.passedOrbit
+            )}] DealerChoice: buttonPos: ${buttonPos} oldButtonPos: ${oldButtonPos} orbitPos: ${orbitPos} passedOrbit: ${this.passedOrbit
             }`
           );
         }
@@ -507,29 +528,36 @@ class MoveToNextHand {
     if (!this.gameUpdate) {
       throw new Error(`Game code: ${this.game.gameCode} not found`);
     }
+
+
+
     // seat numbers that missed the blinds
     const missedBlinds = new Array<number>();
     let sbPos = this.gameUpdate.bbPos;
-    if (this.handNum === 1 || !this.gameUpdate.calculateButtonPos) {
-      let maxPlayers = this.game.maxPlayers;
+    if (this.headsup) {
       sbPos = this.buttonPos;
-      while (maxPlayers > 0) {
-        sbPos++;
-        if (sbPos > this.game.maxPlayers) {
-          sbPos = 1;
-        }
-
-        if (occupiedSeats[sbPos] !== 0) {
-          break;
-        }
-        maxPlayers--;
-      }
     } else {
-      const playerSeat = takenSeats[sbPos];
-      if (playerSeat) {
-        if (playerSeat.missedBlind && !playerSeat.postedBlind) {
-          // dead small
-          this.playersInThisHand[sbPos] = null;
+      if (this.handNum === 1 || !this.gameUpdate.calculateButtonPos) {
+        let maxPlayers = this.game.maxPlayers;
+        sbPos = this.buttonPos;
+        while (maxPlayers > 0) {
+          sbPos++;
+          if (sbPos > this.game.maxPlayers) {
+            sbPos = 1;
+          }
+
+          if (occupiedSeats[sbPos] !== 0) {
+            break;
+          }
+          maxPlayers--;
+        }
+      } else {
+        const playerSeat = takenSeats[sbPos];
+        if (playerSeat) {
+          if (playerSeat.missedBlind && !playerSeat.postedBlind) {
+            // dead small
+            this.playersInThisHand[sbPos] = null;
+          }
         }
       }
     }
@@ -669,7 +697,7 @@ class MoveToNextHand {
 
     logger.debug(`${this.game.gameCode}: ${this.handNum} Bomb pot this hand`);
 
-    const playersInBombPot: {[key: number]: PlayerGameTracker | null} = {};
+    const playersInBombPot: { [key: number]: PlayerGameTracker | null } = {};
     const takenSeats = _.keyBy(this.playersInSeats, 'seatNo');
 
     // if we are doing bomb pot this hand,
@@ -919,10 +947,8 @@ export class NextHandProcess {
         }
 
         logger.info(
-          `[${gameLogPrefix(game)}] Next Hand:HandNum: ${
-            gameUpdate.handNum
-          } SB: ${gameUpdate.sbPos} BB: ${gameUpdate.bbPos} Button: ${
-            gameUpdate.buttonPos
+          `[${gameLogPrefix(game)}] Next Hand:HandNum: ${gameUpdate.handNum
+          } SB: ${gameUpdate.sbPos} BB: ${gameUpdate.bbPos} Button: ${gameUpdate.buttonPos
           }`
         );
         let highRankStats: HighRankStats = {
