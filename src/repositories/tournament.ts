@@ -567,7 +567,7 @@ class TournamentRepositoryImpl {
       await tournamentRepo.save(tournament);
       await Cache.getTournamentData(tournament.id, true);
 
-      const gameCode = `t${tournamentId}-${table.tableNo}`;
+      const gameCode = `t-${tournamentId}-${table.tableNo}`;
       // publish that the player has joined to tournament channel, send the table info
       Nats.playerJoinedTournament(
         tournamentId,
