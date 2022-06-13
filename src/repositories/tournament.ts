@@ -7,7 +7,7 @@ import {sleep, startTimerWithPayload} from '@src/timer';
 import {Nats} from '@src/nats';
 import {GameServerRepository} from './gameserver';
 import {GameType} from '@src/entity/types';
-import {balanceTable} from './balance';
+import {balanceTable, Table} from './balance';
 
 const logger = getLogger('tournaments');
 const apiCallbackHost = 'localhost:9001';
@@ -63,15 +63,6 @@ var packageDefinition = protoLoader.loadSync(PROTO_PATH, options);
 var packageDef = grpc.loadPackageDefinition(packageDefinition);
 const tableService = packageDef.rpc.TableService;
 
-interface Table {
-  tableNo: number;
-  players: Array<TournamentPlayer>;
-  tableServer: string;
-  handNum: number;
-  isActive: boolean;
-  chipsOnTheTable: number;
-  paused: boolean; // table may be paused if there are not enough players
-}
 export enum TournamentPlayingStatus {
   REGISTERED,
   JOINED,
@@ -530,6 +521,10 @@ class TournamentRepositoryImpl {
           isActive: true, // set the table server here
           chipsOnTheTable: 0,
           paused: false,
+          prevHandSeats: [],
+          buttonPos: -1,
+          smallBlindPos: -1,
+          bigBlindPos: -1,
         };
         // host the table in the game server
         this.hostTable(data, table.tableNo, table.tableServer);
@@ -594,6 +589,28 @@ class TournamentRepositoryImpl {
       );
       throw err;
     }
+  }
+
+  private getNextActiveSeat(
+    data: TournamentData,
+    tableNo: number,
+    occupiedSeats: Array<number>,
+    startingSeatNo: number
+  ) {
+    let found = false;
+    let seatNo = startingSeatNo;
+    seatNo++;
+
+    for (let i = 0; i <= data.maxPlayersInTable; i++) {
+      if (seatNo > data.maxPlayersInTable) {
+        seatNo = 1;
+      }
+      if (occupiedSeats[seatNo]) {
+        return seatNo;
+      }
+      seatNo++;
+    }
+    return -1;
   }
 
   private async runHand(tournamentId: number, tableNo: number) {
@@ -693,11 +710,56 @@ class TournamentRepositoryImpl {
         break;
       }
     }
+    let occupiedSeats = new Array<number>();
+    for (let seatNo = 0; seatNo <= data.maxPlayersInTable; seatNo++) {
+      let found = false;
+      for (const player of table.players) {
+        if (player.seatNo === seatNo) {
+          occupiedSeats.push(player.playerId);
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        occupiedSeats.push(0);
+      }
+    }
+
+    let buttonPos = table.buttonPos;
+    let smallBlindPos = table.smallBlindPos;
+    let bigBlindPos = table.bigBlindPos;
+    if (table.handNum === 1) {
+      // first hand
+      // determine random button position
+      let playerIdx = Math.round(Math.random() * 1000) % table.players.length;
+      buttonPos = table.players[playerIdx].seatNo;
+      smallBlindPos = this.getNextActiveSeat(
+        data,
+        tableNo,
+        occupiedSeats,
+        buttonPos
+      );
+    } else {
+      buttonPos = table.smallBlindPos;
+      smallBlindPos = table.bigBlindPos;
+    }
+
+    if (table.players.length === 2) {
+      smallBlindPos = buttonPos;
+    }
+    table.smallBlindPos = smallBlindPos;
+    table.buttonPos = buttonPos;
+    table.bigBlindPos = this.getNextActiveSeat(
+      data,
+      tableNo,
+      occupiedSeats,
+      smallBlindPos
+    );
 
     let handDetails: any = {
-      button_pos: 1,
-      sb_pos: 2,
-      bb_pos: 3,
+      button_pos: table.buttonPos,
+      sb_pos: table.smallBlindPos,
+      bb_pos: table.bigBlindPos,
       sb: sb * 100,
       bb: bb * 100,
       ante: ante * 100,
@@ -708,18 +770,15 @@ class TournamentRepositoryImpl {
       action_time: 15,
     };
 
+    logger.info(
+      `Table: ${table.tableNo} Hand ${table.handNum} button: ${table.buttonPos} sb: ${table.smallBlindPos} bb: ${table.bigBlindPos}`
+    );
+
     // based on the number of players set up sb and bb
     const numPlayers = table.players.length;
-    if (numPlayers <= 2) {
-      // only two players left, button is big blind
-      handDetails.button_pos = table.players[0].seatNo;
-      handDetails.sb_pos = handDetails.button_pos;
-      handDetails.bb_pos = table.players[1].seatNo;
-    } else {
-      handDetails.button_pos = table.players[0].seatNo;
-      handDetails.sb_pos = table.players[1].seatNo;
-      handDetails.bb_pos = table.players[2].seatNo;
-    }
+    handDetails.button_pos = table.buttonPos;
+    handDetails.sb_pos = table.smallBlindPos;
+    handDetails.bb_pos = table.bigBlindPos;
 
     /*
       message HandInfo {
@@ -775,6 +834,18 @@ class TournamentRepositoryImpl {
         );
       }
     });
+
+    // save the tournament state
+    let tournamentRepo: Repository<Tournament>;
+    tournamentRepo = getGameRepository(Tournament);
+    let tournament = await tournamentRepo.findOne({id: tournamentId});
+    if (tournament) {
+    } else {
+      throw new Error(`Tournament ${tournamentId} is not found`);
+    }
+    const dataStr = JSON.stringify(data);
+    tournament.data = dataStr;
+    await tournamentRepo.save(tournament);
   }
 
   private printTournamentStats(data: TournamentData) {

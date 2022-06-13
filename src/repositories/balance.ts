@@ -12,7 +12,7 @@ interface TableMove {
   seatNo: number;
 }
 
-interface Table {
+export interface Table {
   tableNo: number;
   players: Array<TournamentPlayer>;
   tableServer: string;
@@ -20,7 +20,16 @@ interface Table {
   isActive: boolean;
   chipsOnTheTable: number;
   paused: boolean; // table may be paused if there are not enough players
+
+  // this array is maxPlayersPerTable + 1 (Dealer seat)
+  // this is used for tracking which players were sitting on the table in the last hand
+  // used for determining small blind, big blind and button pos
+  prevHandSeats: Array<number>;
+  buttonPos: number;
+  smallBlindPos: number;
+  bigBlindPos: number;
 }
+
 export enum TournamentPlayingStatus {
   REGISTERED,
   JOINED,
