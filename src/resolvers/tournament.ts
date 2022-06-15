@@ -1,9 +1,10 @@
 import {Nats} from '@src/nats';
 import {TournamentRepository} from '@src/repositories/tournament';
 import {Cache} from '@src/cache/index';
-import {TournamentPlayingStatus} from '@src/repositories/tournament';
 import {ChipUnit, GameStatus, GameType, TableStatus} from '@src/entity/types';
 import {centsToChips} from '@src/utils';
+import {TournamentPlayingStatus} from '@src/repositories/balance';
+import {sleep} from '@src/timer';
 
 const resolvers: any = {
   Query: {
@@ -46,6 +47,12 @@ const resolvers: any = {
     cancelTournament: async (parent, args, ctx, info) => {
       return cancelTournament(ctx.req.playerId, args.tournamentId);
     },
+    kickoffTournament: async (parent, args, ctx, info) => {
+      return kickoffTournament(ctx.req.playerId, args.tournamentId);
+    },
+    triggerAboutToStartTournament: async (parent, args, ctx, info) => {
+      return triggerAboutToStartTournament(ctx.req.playerId, args.tournamentId);
+    },
   },
 };
 
@@ -74,9 +81,50 @@ async function scheduleTournament(
 async function joinTournament(
   playerUuid: string,
   tournamentId: number
-): Promise<boolean> {
+): Promise<any> {
   await TournamentRepository.joinTournament(playerUuid, tournamentId);
-  return true;
+  // get tournament info after I joined
+  let retries = 5;
+  while (retries > 0) {
+    const data = await Cache.getTournamentData(tournamentId);
+    if (data) {
+      // check for my table
+      for (const table of data.tables) {
+        for (const player of table.players) {
+          if (player.playerUuid === playerUuid) {
+            // found the player
+            const tournamentTableInfo =
+              await TournamentRepository.getTournamentTableInfo(
+                tournamentId,
+                table.tableNo
+              );
+            const ret = translateTournamentTableInfo(
+              tournamentId,
+              table.tableNo,
+              tournamentTableInfo
+            );
+            ret.handToPlayerChannel = Nats.getPlayerHandChannel(
+              tournamentTableInfo.gameCode,
+              player.playerId
+            );
+            ret.handToPlayerTextChannel = Nats.getPlayerHandTextChannel(
+              tournamentTableInfo.gameCode,
+              player.playerId
+            );
+            ret.playing = true;
+            ret.gameID = TournamentRepository.getTableGameId(
+              tournamentId,
+              table.tableNo
+            );
+            return ret;
+          }
+        }
+      }
+    }
+    retries--;
+    await sleep(500);
+  }
+  throw new Error(`Player did not join the tournament`);
 }
 
 async function startTournament(
@@ -84,6 +132,22 @@ async function startTournament(
   tournamentId: number
 ): Promise<boolean> {
   await TournamentRepository.startTournament(tournamentId);
+  return true;
+}
+
+async function kickoffTournament(
+  playerUuid: string,
+  tournamentId: number
+): Promise<boolean> {
+  await TournamentRepository.kickoffTournament(tournamentId);
+  return true;
+}
+
+async function triggerAboutToStartTournament(
+  playerUuid: string,
+  tournamentId: number
+): Promise<boolean> {
+  await TournamentRepository.triggerAboutToStartTournament(tournamentId);
   return true;
 }
 
@@ -112,17 +176,14 @@ export function getResolvers() {
   return resolvers;
 }
 
-async function getTournamentTableInfo(
-  playerUuid: string,
+function translateTournamentTableInfo(
   tournamentId: number,
-  tableNo: number
-): Promise<any> {
-  const player = await Cache.getPlayer(playerUuid);
-  const tournamentTableInfo = await TournamentRepository.getTournamentTableInfo(
-    tournamentId,
-    tableNo
-  );
+  tableNo: number,
+  tournamentTableInfo: any
+): any {
   const ret = tournamentTableInfo as any;
+  ret.tableNo = tableNo;
+  ret.tournamentId = tournamentId;
   for (const player of ret.players) {
     player.status = TournamentPlayingStatus[player.status];
     player.stack = centsToChips(player.stack);
@@ -133,14 +194,6 @@ async function getTournamentTableInfo(
     tournamentTableInfo.gameCode
   );
   ret.handToAllChannel = Nats.getHandToAllChannel(tournamentTableInfo.gameCode);
-  ret.handToPlayerChannel = Nats.getPlayerHandChannel(
-    tournamentTableInfo.gameCode,
-    player.id
-  );
-  ret.handToPlayerTextChannel = Nats.getPlayerHandTextChannel(
-    tournamentTableInfo.gameCode,
-    player.id
-  );
   ret.gameChatChannel = Nats.getChatChannel(tournamentTableInfo.gameCode);
   ret.clientAliveChannel = Nats.getClientAliveChannel(
     tournamentTableInfo.gameCode
@@ -157,6 +210,32 @@ async function getTournamentTableInfo(
   ret.chipUnit = ChipUnit[ChipUnit.DOLLAR];
   ret.status = GameStatus[GameStatus.ACTIVE];
   ret.tableStatus = TableStatus[TableStatus.GAME_RUNNING];
+  return ret;
+}
+
+async function getTournamentTableInfo(
+  playerUuid: string,
+  tournamentId: number,
+  tableNo: number
+): Promise<any> {
+  const player = await Cache.getPlayer(playerUuid);
+  const tournamentTableInfo = await TournamentRepository.getTournamentTableInfo(
+    tournamentId,
+    tableNo
+  );
+  const ret = translateTournamentTableInfo(
+    tournamentId,
+    tableNo,
+    tournamentTableInfo
+  );
+  ret.handToPlayerChannel = Nats.getPlayerHandChannel(
+    tournamentTableInfo.gameCode,
+    player.id
+  );
+  ret.handToPlayerTextChannel = Nats.getPlayerHandTextChannel(
+    tournamentTableInfo.gameCode,
+    player.id
+  );
   ret.gameID = TournamentRepository.getTableGameId(tournamentId, tableNo);
 
   return ret;

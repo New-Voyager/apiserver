@@ -1020,6 +1020,20 @@ class NatsClass {
     this.sendMessage(subject, messageStr);
   }
 
+  public tournamentAboutToStart(tournamentId: number, messageId?: string) {
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message = {
+      type: 'TOURNAMENT_ABOUT_TO_START',
+      tournamentId: tournamentId,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = TournamentRepository.getTournamentChannel(tournamentId);
+    this.sendMessage(subject, messageStr);
+  }
+
   public tournamentLevelChanged(
     tournamentId: number,
     level: any,

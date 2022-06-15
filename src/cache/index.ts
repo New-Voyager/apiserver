@@ -34,8 +34,8 @@ import {PlayersInGameRepository} from '@src/repositories/playersingame';
 import {HighRankStats} from '@src/types';
 import {StatsRepository} from '@src/repositories/stats';
 import {ClubRepository, NotificationSettings} from '@src/repositories/club';
-import {TournamentData} from '@src/repositories/tournament';
 import {Tournament} from '@src/entity/game/tournament';
+import {TournamentData} from '@src/repositories/balance';
 
 const logger = getLogger('cache');
 

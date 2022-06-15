@@ -1,8 +1,9 @@
+import {GameType} from '@src/entity/types';
 import {errToStr, getLogger} from '@src/utils/log';
 
 const logger = getLogger('balance');
 
-interface TableMove {
+export interface TableMove {
   newTableNo: number;
   oldTableNo: number;
   playerId: number;
@@ -38,7 +39,7 @@ export enum TournamentPlayingStatus {
   SITTING_OUT,
 }
 
-interface TournamentPlayer {
+export interface TournamentPlayer {
   playerId: number;
   playerName: string;
   playerUuid: string;
@@ -70,15 +71,28 @@ export interface TournamentData {
   tableServerId: number; // all the tournament tables are on this server
   balanced: boolean;
   totalChips: number;
+  status: TournamentStatus;
 }
 
-interface TournamentLevel {
+export interface TournamentLevel {
   level: number;
   smallBlind: number;
   bigBlind: number;
   ante: number;
 }
 
+export interface TournamentTableInfo {
+  gameCode: string;
+  gameType: GameType;
+  smallBlind: number;
+  bigBlind: number;
+  ante: number;
+  players: Array<TournamentPlayer>;
+  level: number;
+  nextLevel: number;
+  nextLevelTimeInSecs: number;
+  chipsOnTheTable: number;
+}
 export function balanceTable(
   data: TournamentData,
   currentTableNo: number
@@ -361,4 +375,74 @@ function movePlayers(
     }
   }
   return ret;
+}
+
+export enum TournamentLevelType {
+  STANDARD,
+  TURBO,
+  SUPER_TURBO,
+}
+
+export enum TournamentStatus {
+  SCHEDULED,
+  ABOUT_TO_START,
+  RUNNING,
+  ENDED,
+  CANCELLED,
+}
+
+export function getLevelData(
+  levelType: TournamentLevelType
+): Array<TournamentLevel> {
+  let standardLevels = new Array<TournamentLevel>();
+  let bigBlind = 200;
+  let bigBlindIncrement = 0;
+  let ante = 0;
+  let anteIncrement = 0;
+  for (let level = 1; level <= 80; level++) {
+    if (level == 5) {
+      ante = 5;
+      anteIncrement = 5;
+      bigBlindIncrement = 20;
+    }
+
+    if (level == 10) {
+      anteIncrement = 10;
+      bigBlindIncrement = 100;
+    }
+
+    if (level == 15) {
+      anteIncrement = 20;
+      bigBlindIncrement = 200;
+    }
+
+    if (level == 20) {
+      anteIncrement = 40;
+      bigBlindIncrement = 500;
+    }
+
+    if (level == 30) {
+      anteIncrement = 60;
+      bigBlindIncrement = 1000;
+    }
+
+    if (level == 40) {
+      anteIncrement = 100;
+      bigBlindIncrement = 2000;
+    }
+
+    if (level == 50) {
+      anteIncrement = 500;
+      bigBlindIncrement = 5000;
+    }
+    standardLevels.push({
+      level: level,
+      ante: ante,
+      smallBlind: bigBlind / 2,
+      bigBlind: bigBlind,
+    });
+    ante += anteIncrement;
+    bigBlind += bigBlindIncrement;
+  }
+  return standardLevels;
 }

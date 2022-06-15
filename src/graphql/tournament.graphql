@@ -5,6 +5,7 @@ input TournamentCreateInput {
   minPlayers: Int
   maxPlayers: Int
   maxPlayersInTable: Int!
+  levelType: TournamentLevelType
 }
 
 enum TournamentPlayingStatus {
@@ -13,6 +14,20 @@ enum TournamentPlayingStatus {
   PLAYING,
   BUSTED_OUT,
   SITTING_OUT,
+}
+
+enum TournamentStatus {
+  SCHEDULED,
+  ABOUT_TO_START,
+  RUNNING,
+  ENDED,
+  CANCELLED,
+}
+
+enum TournamentLevelType {
+  STANDARD,
+  TURBO,
+  SUPER_TURBO,
 }
 
 type TournamentPlayer {
@@ -41,9 +56,13 @@ type TournamentInfo {
   players: [TournamentPlayer!]
   tables: [TournamentTable!]
   tournamentChannel: String!
+  status: TournamentStatus!
+  myTableNo: Int
 }
 
 type TournamentGameInfo {
+  tournamentId: Int!
+  tableNo: Int!
   gameID: Int!
   gameCode: String!
   gameType: GameType
@@ -63,6 +82,8 @@ type TournamentGameInfo {
   level: Int!
   nextLevel: Int
   nextLevelTimeInSecs: Int    # next level time in seconds
+
+  playing: Boolean    # if true, the player is playing
 
   # NATS channels
   gameToPlayerChannel: String
@@ -90,6 +111,8 @@ type Mutation {
   registerTournament(playerUuid: String, tournamentId: Int!): Boolean!
   unregisterTournament(tournamentId: Int!): Boolean!
   startTournament(tournamentId: Int!): Boolean!
-  joinTournament(tournamentId: Int!): Boolean!
+  joinTournament(tournamentId: Int!): TournamentGameInfo!
+  kickoffTournament(tournamentId: Int!): Boolean!
   cancelTournament(tournamentId: Int!): Boolean!
+  triggerAboutToStartTournament(tournamentId: Int!): Boolean
 }

@@ -1,13 +1,25 @@
 import {Tournament} from '@src/entity/game/tournament';
 import {errToStr, getLogger} from '@src/utils/log';
-import {DataTypeNotSupportedError, EntityManager, Repository} from 'typeorm';
+import {EntityManager, Repository} from 'typeorm';
 import {Cache} from '@src/cache';
 import {getGameRepository} from '.';
 import {sleep, startTimerWithPayload} from '@src/timer';
 import {Nats} from '@src/nats';
 import {GameServerRepository} from './gameserver';
 import {GameType} from '@src/entity/types';
-import {balanceTable, Table} from './balance';
+import {
+  balanceTable,
+  getLevelData,
+  Table,
+  TableMove,
+  TournamentData,
+  TournamentLevel,
+  TournamentLevelType,
+  TournamentPlayer,
+  TournamentPlayingStatus,
+  TournamentStatus,
+  TournamentTableInfo,
+} from './balance';
 
 const logger = getLogger('tournaments');
 const apiCallbackHost = 'localhost:9001';
@@ -22,36 +34,6 @@ interface QueueItem {
   payload: any;
 }
 
-interface TableMove {
-  newTableNo: number;
-  oldTableNo: number;
-  playerId: number;
-  playerUuid: string;
-  playerName: string;
-  stack: number;
-  seatNo: number;
-}
-
-/****
- * Tournament messages
- * TOURNAMENT_SCHEDULED
- *  When a tournament is scheduled, this message is sent in the tournament channel.
- * TOURNAMENT_WILL_START
- *  When the tournament starts in 5 minutes, this message is sent in the tournament channel.
- * TOURNAMENT_STARTED
- *  When the tournament is kicked off, this message is sent in the tournament channel.
- * TOURNAMENT_TABLE_READY
- *  When a table is ready and setup, this message is sent in the tournament channel.
- *  The client will getTournamentTableInfo() and QUERY_CURRENT_HAND to get the current hand info
- * TOURNAMENT_PLAYER_MOVED
- *  When a player is moved from one table to another, this message is sent in the tournament channel.
- *  The affected player will call getTournamentTableInfo() and QUERY_CURRENT_HAND to display the current hand in the table.
- * TOURNAMENT_PLAYER_LEFT
- *  When a player leaves the tournament (busted), this message is sent in the tournament channel.
- * TOURNAMENT_LEVEL_CHANGED
- *  Whne a tournament level is changed, this message is sent in the tournament channel.
- */
-
 const options = {
   keepCase: true,
   enums: String,
@@ -63,82 +45,18 @@ var packageDefinition = protoLoader.loadSync(PROTO_PATH, options);
 var packageDef = grpc.loadPackageDefinition(packageDefinition);
 const tableService = packageDef.rpc.TableService;
 
-export enum TournamentPlayingStatus {
-  REGISTERED,
-  JOINED,
-  PLAYING,
-  BUSTED_OUT,
-  SITTING_OUT,
-}
-
-interface TournamentPlayer {
-  playerId: number;
-  playerName: string;
-  playerUuid: string;
-  stack: number;
-  isSittingOut: boolean;
-  isBot: boolean;
-  tableNo: number;
-  seatNo: number;
-  status: TournamentPlayingStatus;
-  timesMoved: 0;
-  stackBeforeHand: number;
-}
-
 /*
 
-type TournamentInfo {
-  id: ID!
-  name: String!
-  startTime: DateTime!
-  startingChips: Float!
-  minPlayers: Int
-  maxPlayers: Int
-  maxPlayersInTable: Int!
-  players: [TournamentPlayer!]
-  tables: [TournamentTable!]
-  tournamentChannel: String!
-}
+Tournament Name
+Description
+Structure
+    Standard
+    Turbo
+    Deep Stack
+Players Per Table
+Max Rebuys
+Level Timeout
 */
-export interface TournamentData {
-  id: number;
-  startingChips: number;
-  name: string;
-  currentLevel: number; // -1 = not started
-  levelTime: number;
-  activePlayers: number;
-  levels: Array<TournamentLevel>;
-  startTime: Date;
-  minPlayers: number;
-  maxPlayers: number;
-  maxPlayersInTable: number;
-  tables: Array<Table>;
-  registeredPlayers: Array<TournamentPlayer>;
-  playersInTournament: Array<TournamentPlayer>;
-  tableServerId: number; // all the tournament tables are on this server
-  balanced: boolean;
-  totalChips: number;
-}
-
-interface TournamentLevel {
-  level: number;
-  smallBlind: number;
-  bigBlind: number;
-  ante: number;
-}
-
-interface TournamentTableInfo {
-  gameCode: string;
-  gameType: GameType;
-  smallBlind: number;
-  bigBlind: number;
-  ante: number;
-  players: Array<TournamentPlayer>;
-  level: number;
-  nextLevel: number;
-  nextLevelTimeInSecs: number;
-  chipsOnTheTable: number;
-}
 
 let gameServerRpc: any;
 interface Queue {
@@ -223,7 +141,7 @@ class TournamentRepositoryImpl {
       players: [],
       level: 1,
       nextLevel: 2,
-      nextLevelTimeInSecs: 30,
+      nextLevelTimeInSecs: 10,
       chipsOnTheTable: 0,
     };
     const data = await this.getTournamentData(tournamentId);
@@ -287,7 +205,7 @@ class TournamentRepositoryImpl {
         maxPlayersInTable: 6,
         levelTime: 10, // seconds
         currentLevel: -1,
-        levels: this.getTurboLevels(),
+        levels: getLevelData(TournamentLevelType.STANDARD),
         tables: [],
         registeredPlayers: [],
         playersInTournament: [],
@@ -296,6 +214,7 @@ class TournamentRepositoryImpl {
         tableServerId: tableServer.id,
         balanced: true,
         totalChips: 0,
+        status: TournamentStatus.SCHEDULED,
       };
       let tournamentRepo: Repository<Tournament>;
       if (transactionManager) {
@@ -327,8 +246,40 @@ class TournamentRepositoryImpl {
       throw err;
     }
   }
-
   public async registerTournament(playerUuid: string, tournamentId: number) {
+    const queue = this.processQueue[tournamentId];
+    const item: QueueItem = {
+      type: 'PLAYER_REG',
+      payload: {
+        playerUuid: playerUuid,
+      },
+    };
+
+    queue.items.push(item);
+    await this.processQueueItem(tournamentId).catch(err => {
+      logger.error(`Failed to process queue item. ${JSON.stringify(item)}`);
+    });
+  }
+
+  public async kickoffTournament(tournamentId: number) {
+    const queue = this.processQueue[tournamentId];
+    const item: QueueItem = {
+      type: 'KICKOFF_TOURNAMENT',
+      payload: {
+        tournamentId: tournamentId,
+      },
+    };
+
+    queue.items.push(item);
+    this.processQueueItem(tournamentId).catch(err => {
+      logger.error(`Failed to process queue item. ${JSON.stringify(item)}`);
+    });
+  }
+
+  public async registerTournamentInternal(
+    playerUuid: string,
+    tournamentId: number
+  ) {
     try {
       const player = await Cache.getPlayer(playerUuid);
       let tournamentRepo: Repository<Tournament>;
@@ -424,7 +375,7 @@ class TournamentRepositoryImpl {
   public async joinTournament(playerUuid: string, tournamentId: number) {
     const queue = this.processQueue[tournamentId];
     const item: QueueItem = {
-      type: 'PLAYER_REG',
+      type: 'PLAYER_JOIN',
       payload: {
         playerUuid: playerUuid,
       },
@@ -436,14 +387,27 @@ class TournamentRepositoryImpl {
     });
   }
 
-  private async kickOffTournament(data: TournamentData) {
-    if (data.activePlayers === data.registeredPlayers.length) {
-      logger.info('Waiting for bot players to take the seats');
-      await sleep(5000);
+  private async kickoffTournamentInternal(tournamentId: number) {
+    try {
+      const data = await Cache.getTournamentData(tournamentId);
+      if (!data) {
+        throw new Error(`Tournament ${tournamentId} is not found`);
+      }
       // start the level timer
       logger.info('Starting the level timer');
       await this.startLevelTimer(data.id, data.levelTime);
       Nats.tournamentStarted(data.id);
+      let tournamentRepo: Repository<Tournament>;
+      tournamentRepo = getGameRepository(Tournament);
+      const tournament = await tournamentRepo.findOne({id: tournamentId});
+      if (!tournament) {
+        throw new Error(`Tournament ${tournamentId} not found`);
+      }
+      data.status = TournamentStatus.RUNNING;
+      tournament.data = JSON.stringify(data);
+      await tournamentRepo.save(tournament);
+      // reload cache
+      await Cache.getTournamentData(tournament.id, true);
 
       // start the first hand
       for (const table of data.tables) {
@@ -454,6 +418,15 @@ class TournamentRepositoryImpl {
           );
         });
       }
+
+      // if (data.activePlayers === data.registeredPlayers.length) {
+      //   logger.info('Waiting for bot players to take the seats');
+      //   await sleep(5000);
+      // }
+    } catch (err) {
+      logger.error(
+        `Kickoff tournament failed: ${tournamentId}: ${errToStr(err)}`
+      );
     }
   }
   private async processQueueItem(tournamentId: number) {
@@ -466,6 +439,11 @@ class TournamentRepositoryImpl {
       const item = queue.items.shift();
       if (item) {
         if (item.type === 'PLAYER_REG') {
+          await this.registerTournamentInternal(
+            item.payload.playerUuid,
+            tournamentId
+          );
+        } else if (item.type === 'PLAYER_JOIN') {
           await this.joinTournamentQueueItem(
             item.payload.playerUuid,
             tournamentId
@@ -476,6 +454,10 @@ class TournamentRepositoryImpl {
             item.payload.tableNo,
             item.payload.result
           );
+        } else if (item.type === 'KICKOFF_TOURNAMENT') {
+          await this.kickoffTournamentInternal(tournamentId);
+        } else if (item.type === 'ABOUT_TO_START_TOURNAMENT') {
+          await this.triggerAboutToStartTournamentInternal(tournamentId);
         }
       }
     } catch (err) {
@@ -582,7 +564,7 @@ class TournamentRepositoryImpl {
         seatPlayer.seatNo
       );
 
-      await this.kickOffTournament(data);
+      // await this.kickOffTournament(data);
     } catch (err) {
       logger.error(
         `Failed to get tournement info: ${tournamentId}: ${errToStr(err)}`
@@ -1039,6 +1021,7 @@ class TournamentRepositoryImpl {
       );
     }
   }
+
   public async saveTournamentHand(
     tournamentId: number,
     tableNo: number,
@@ -1307,6 +1290,56 @@ class TournamentRepositoryImpl {
           }
         }
       }
+    }
+  }
+
+  public async triggerAboutToStartTournament(tournamentId: number) {
+    const queue = this.processQueue[tournamentId];
+    const item: QueueItem = {
+      type: 'ABOUT_TO_START_TOURNAMENT',
+      payload: {
+        tournamentId: tournamentId,
+      },
+    };
+
+    queue.items.push(item);
+    await this.processQueueItem(tournamentId).catch(err => {
+      logger.error(`Failed to process queue item. ${JSON.stringify(item)}`);
+    });
+  }
+
+  public async triggerAboutToStartTournamentInternal(tournamentId: number) {
+    try {
+      logger.info(`Tournament is about to start: ${tournamentId}`);
+      // bots will join the tournament here
+      const data = await Cache.getTournamentData(tournamentId);
+      if (!data) {
+        throw new Error(`Tournament ${tournamentId} not found`);
+      }
+
+      this.currentTournamentLevel[tournamentId] = 1;
+      this.tournamentLevelData[tournamentId] = data.levels;
+      // send NATS message to all the players
+      Nats.tournamentAboutToStart(data.id);
+      let tournamentRepo: Repository<Tournament>;
+      tournamentRepo = getGameRepository(Tournament);
+      const tournament = await tournamentRepo.findOne({id: tournamentId});
+      if (!tournament) {
+        throw new Error(`Tournament ${tournamentId} not found`);
+      }
+      data.status = TournamentStatus.ABOUT_TO_START;
+      tournament.data = JSON.stringify(data);
+      await tournamentRepo.save(tournament);
+
+      logger.info(
+        `Sent messages to players to join tournament ${tournamentId}`
+      );
+    } catch (err) {
+      logger.error(
+        `Could not start tournament. tournamentId: ${tournamentId}, err: ${errToStr(
+          err
+        )}`
+      );
     }
   }
 }

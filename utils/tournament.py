@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import time
 from requests import head, post
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
@@ -42,7 +43,7 @@ print(tournament_id)
 register_bots_url = f'{bot_url}register-tournament'
 data = {
     'tournamentId': tournament_id,
-    'botCount': 6
+    'botCount': 30
 }
 resp = post(register_bots_url, json=data)
 print(resp.text)
@@ -56,8 +57,8 @@ else:
 # start tournament
 query = gql(
     """
-      mutation startTournament($tournamentId: Int!) {
-        startTournament(tournamentId:$tournamentId)
+      mutation triggerAboutToStartTournament($tournamentId: Int!) {
+        triggerAboutToStartTournament(tournamentId:$tournamentId)
       }
     """)
 variables = {
@@ -65,8 +66,28 @@ variables = {
 }
 result = client.execute(query, variable_values=variables)
 print(result)
-if result['startTournament']:
-    print(f'Tournament {tournament_id} started')
+if result['triggerAboutToStartTournament']:
+    print(f'Tournament {tournament_id} is about to start')
 
+print('Waiting 5 seconds for bots to join tournament')
+time.sleep(5)
+
+# kick off tournament
+query = gql(
+    """
+      mutation kickoffTournament($tournamentId: Int!) {
+        kickoffTournament(tournamentId:$tournamentId)
+      }
+    """)
+variables = {
+    "tournamentId": tournament_id
+}
+result = client.execute(query, variable_values=variables)
+print(result)
+
+print('Tournament is kicked off')
+
+# loop here and monitor tournament and print output
+print('Monitoring tournament')
 # monitor the tournament progress
-print(f'tournament game: t-{tournament_id}-1')
+# print(f'tournament game: t-{tournament_id}-1')
