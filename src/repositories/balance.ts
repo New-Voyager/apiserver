@@ -396,14 +396,14 @@ export function getLevelData(
 ): Array<TournamentLevel> {
   let standardLevels = new Array<TournamentLevel>();
   let bigBlind = 200;
-  let bigBlindIncrement = 0;
+  let bigBlindIncrement = 20;
   let ante = 0;
   let anteIncrement = 0;
   for (let level = 1; level <= 80; level++) {
     if (level == 5) {
       ante = 5;
       anteIncrement = 5;
-      bigBlindIncrement = 20;
+      bigBlindIncrement = 50;
     }
 
     if (level == 10) {
@@ -434,6 +434,11 @@ export function getLevelData(
     if (level == 50) {
       anteIncrement = 500;
       bigBlindIncrement = 5000;
+    }
+
+    if (level > 50) {
+      anteIncrement *= 2;
+      bigBlindIncrement *= 2;
     }
     standardLevels.push({
       level: level,

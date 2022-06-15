@@ -105,29 +105,6 @@ class TournamentRepositoryImpl {
     return (tournamentId << 16) | tableNo;
   }
 
-  public getTurboLevels(): Array<TournamentLevel> {
-    let levels = new Array<TournamentLevel>();
-    let smallBlind = 200;
-    let anteStart = 200;
-    for (let i = 1; i <= 20; i++) {
-      let ante = 0;
-      let bigBlind = smallBlind * 2;
-      if (i <= 5) {
-        ante = 0;
-      } else {
-        ante = (i - 5) * anteStart;
-      }
-      levels.push({
-        level: i,
-        smallBlind: smallBlind,
-        bigBlind: bigBlind,
-        ante: ante,
-      });
-      smallBlind = bigBlind;
-    }
-    return levels;
-  }
-
   public async getTournamentTableInfo(
     tournamentId: number,
     tableNo: number
@@ -412,11 +389,12 @@ class TournamentRepositoryImpl {
       // start the first hand
       for (const table of data.tables) {
         logger.info('Run a first hand');
-        this.runHand(data.id, table.tableNo).catch(err => {
-          logger.error(
-            `Running hand failed table ${table.tableNo} err: ${errToStr(err)}`
-          );
-        });
+        await this.runHand(data.id, table.tableNo);
+        // .catch(err => {
+        //   logger.error(
+        //     `Running hand failed table ${table.tableNo} err: ${errToStr(err)}`
+        //   );
+        // });
       }
 
       // if (data.activePlayers === data.registeredPlayers.length) {
@@ -801,6 +779,12 @@ class TournamentRepositoryImpl {
       this.currentTournamentLevelStartedAt[tournamentId] = new Date();
       //Nats.tournamentLevelChanged(tournamentId, currentLevel, nextLevel, data.levelTime);
     }
+    const currentLevelData =
+      data.levels[this.currentTournamentLevel[tournamentId]];
+    logger.info(
+      `============================  Tournament stats: ${data.id} Balanced: ${data.balanced} Level: ${currentLevelData.level} ${currentLevelData.smallBlind}/${currentLevelData.bigBlind} (${currentLevelData.ante})============================`
+    );
+
     // logger.info(`2 Running hand num: ${table.handNum} table: ${tableNo}`);
     gameServerRpc.runHand(handInfo, (err, value) => {
       if (err) {
@@ -828,6 +812,7 @@ class TournamentRepositoryImpl {
     const dataStr = JSON.stringify(data);
     tournament.data = dataStr;
     await tournamentRepo.save(tournament);
+    await Cache.getTournamentData(tournamentId, true);
   }
 
   private printTournamentStats(data: TournamentData) {
@@ -867,8 +852,10 @@ class TournamentRepositoryImpl {
         totalChipsOnTheTournament += player.stack;
       }
     }
+    const level = this.currentTournamentLevel[data.id];
+    const currentLevel = data.levels[level];
     logger.info(
-      `============================  Tournament stats: ${data.id} Balanced: ${data.balanced} ============================`
+      `============================  Tournament stats: ${data.id} Balanced: ${data.balanced} Level: ${level} ${currentLevel.smallBlind}/${currentLevel.bigBlind} (${currentLevel.ante})============================`
     );
     logger.info(
       `Active tables: ${activeTables} totalActivePlayers: ${totalActivePlayers} Total chips: ${data.totalChips} total chips on the tournament: ${totalChipsOnTheTournament}`
@@ -961,59 +948,56 @@ class TournamentRepositoryImpl {
 
   public async handleLevelTimeout(payload: any) {
     try {
-      const tournamentId = payload.tournamentId;
-      let tournamentRepo: Repository<Tournament>;
-      tournamentRepo = getGameRepository(Tournament);
-      let tournament = await tournamentRepo.findOne({id: tournamentId});
-      if (tournament) {
-      } else {
-        throw new Error(`Tournament ${tournamentId} is not found`);
-      }
-      let data = JSON.parse(tournament.data) as TournamentData;
+      const data = await Cache.getTournamentData(payload.tournamentId);
+      let activePlayers = 0;
+      if (data) {
+        const tournamentId = data.id;
+        for (const table of data.tables) {
+          activePlayers += table.players.length;
+        }
 
-      // continue only if there are players in the tournament
-      if (data.tables[0].players.length > 1) {
-        let prevLevelNo = this.currentTournamentLevel[tournamentId];
-        if (prevLevelNo < this.tournamentLevelData[tournamentId].length) {
-          let prevLevel: TournamentLevel =
-            this.tournamentLevelData[tournamentId][prevLevelNo];
-          let levels: Array<TournamentLevel> =
-            this.tournamentLevelData[tournamentId];
-          let currentLevel: any;
-          let currentLevelNo = prevLevelNo + 1;
-          for (let i = 0; i < levels.length; i++) {
-            let level = levels[i];
-            if (level.level === currentLevelNo) {
-              currentLevel = level;
-              logger.info(
-                `******* Starting next level sb: ${level.smallBlind} bb: ${level.bigBlind} ante: ${level.ante} *******`
+        if (activePlayers >= 2) {
+          let prevLevelNo = this.currentTournamentLevel[tournamentId];
+          if (prevLevelNo < this.tournamentLevelData[tournamentId].length) {
+            let prevLevel: TournamentLevel =
+              this.tournamentLevelData[tournamentId][prevLevelNo];
+            let levels: Array<TournamentLevel> =
+              this.tournamentLevelData[tournamentId];
+            let currentLevel: any;
+            let currentLevelNo = prevLevelNo + 1;
+            for (let i = 0; i < levels.length; i++) {
+              let level = levels[i];
+              if (level.level === currentLevelNo) {
+                currentLevel = level;
+                logger.info(
+                  `******* Starting next level sb: ${level.smallBlind} bb: ${level.bigBlind} ante: ${level.ante} *******`
+                );
+                break;
+              }
+            }
+            if (
+              currentLevel.level !== this.currentTournamentLevel[tournamentId]
+            ) {
+              // level changed
+              this.currentTournamentLevel[tournamentId] = currentLevel.level;
+              let nextLevel;
+              if (currentLevelNo < levels.length + 1) {
+                nextLevel = levels[currentLevelNo + 1];
+              }
+              this.currentTournamentLevelStartedAt[tournamentId] = new Date();
+              Nats.tournamentLevelChanged(
+                tournamentId,
+                currentLevel,
+                nextLevel,
+                data.levelTime
               );
-              break;
             }
-          }
-          if (
-            currentLevel.level !== this.currentTournamentLevel[tournamentId]
-          ) {
-            // level changed
-            this.currentTournamentLevel[tournamentId] = currentLevel.level;
-            let nextLevel;
-            if (currentLevelNo < levels.length + 1) {
-              nextLevel = levels[currentLevelNo + 1];
-            }
-            this.currentTournamentLevelStartedAt[tournamentId] = new Date();
-            Nats.tournamentLevelChanged(
-              tournamentId,
-              currentLevel,
-              nextLevel,
-              data.levelTime
-            );
-          }
 
-          // kick off the next level
-          await this.startLevelTimer(tournamentId, data.levelTime);
+            // kick off the next level
+            await this.startLevelTimer(tournamentId, data.levelTime);
+          }
         }
       }
-
       // send a NATS notification here
     } catch (err) {
       logger.error(
@@ -1105,9 +1089,9 @@ class TournamentRepositoryImpl {
             playerInTable.stackBeforeHand = playerInTable.stack;
             if (playerInTable.stack === 0) {
               // remove the player from the table
-              logger.info(
-                `Tournament: ${tournamentId} tableNo: ${tableNo} Player: ${playerInTable.playerName} is busted`
-              );
+              // logger.info(
+              //   `Tournament: ${tournamentId} tableNo: ${tableNo} Player: ${playerInTable.playerName} is busted`
+              // );
               bustedPlayers.push(playerInTable);
             } else {
               updatedTable.push(playerInTable);
@@ -1223,9 +1207,9 @@ class TournamentRepositoryImpl {
           // run the next hand
           await this.runHand(tournamentId, table.tableNo);
         } else {
-          logger.info(
-            `Tournament: ${tournamentId} tableNo: ${tableNo} Player: ${updatedTable[0].playerName} is the winner Stack: ${updatedTable[0].stack}.`
-          );
+          // logger.info(
+          //   `Tournament: ${tournamentId} tableNo: ${tableNo} Player: ${updatedTable[0].playerName} is the winner Stack: ${updatedTable[0].stack}.`
+          // );
         }
       }
     } catch (err) {
