@@ -186,12 +186,14 @@ class TournamentRepositoryImpl {
         tables: [],
         registeredPlayers: [],
         playersInTournament: [],
-        startTime: startTime,
+        scheduledStartTime: startTime,
         startingChips: startingChips * 100,
         tableServerId: tableServer.id,
         balanced: true,
         totalChips: 0,
         status: TournamentStatus.SCHEDULED,
+        startTime: null,
+        endTime: null,
       };
       let tournamentRepo: Repository<Tournament>;
       if (transactionManager) {
@@ -381,6 +383,7 @@ class TournamentRepositoryImpl {
         throw new Error(`Tournament ${tournamentId} not found`);
       }
       data.status = TournamentStatus.RUNNING;
+      data.startTime = new Date(Date.now());
       tournament.data = JSON.stringify(data);
       await tournamentRepo.save(tournament);
       // reload cache
@@ -485,6 +488,8 @@ class TournamentRepositoryImpl {
           buttonPos: -1,
           smallBlindPos: -1,
           bigBlindPos: -1,
+          lastHandStartTime: null,
+          lastHandSaveTime: null,
         };
         // host the table in the game server
         this.hostTable(data, table.tableNo, table.tableServer);
@@ -784,6 +789,7 @@ class TournamentRepositoryImpl {
     logger.info(
       `============================  Tournament stats: ${data.id} Balanced: ${data.balanced} Level: ${currentLevelData.level} ${currentLevelData.smallBlind}/${currentLevelData.bigBlind} (${currentLevelData.ante})============================`
     );
+    table.lastHandStartTime = new Date(Date.now());
 
     // logger.info(`2 Running hand num: ${table.handNum} table: ${tableNo}`);
     gameServerRpc.runHand(handInfo, (err, value) => {
@@ -872,8 +878,16 @@ class TournamentRepositoryImpl {
           ` ${player.playerName}:${player.playerId} ${player.stack}`;
       }
 
+      let tableActivity = '';
+      if (table.lastHandSaveTime) {
+        tableActivity = `lastHandSaveTime: ${table.lastHandSaveTime}`;
+      }
+      if (table.lastHandStartTime) {
+        tableActivity =
+          tableActivity + ` lastHandStartTime: ${table.lastHandStartTime}`;
+      }
       logger.info(
-        `[Table: ${table.tableNo}] Players count: ${table.players.length} isActive: ${table.isActive}, Paused: ${table.paused} ${playersStack}`
+        `[Table: ${table.tableNo}] Players count: ${table.players.length} isActive: ${table.isActive}, Paused: ${table.paused} ${playersStack} handNum: ${table.handNum} ${tableActivity}`
       );
     }
     logger.info(
@@ -995,6 +1009,7 @@ class TournamentRepositoryImpl {
 
             // kick off the next level
             await this.startLevelTimer(tournamentId, data.levelTime);
+            this.printTournamentStats(data);
           }
         }
       }
@@ -1167,6 +1182,10 @@ class TournamentRepositoryImpl {
           }
         }
       }
+      if (table) {
+        table.lastHandSaveTime = new Date(Date.now());
+      }
+
       tournament.data = JSON.stringify(tournamentData);
       tournament = await tournamentRepo.save(tournament);
       await Cache.getTournamentData(tournamentId, true);
@@ -1269,6 +1288,15 @@ class TournamentRepositoryImpl {
               logger.info(
                 `*********** Tournament: ${tournamentId} Winner: ${winner.playerName} ${winner.stack} ***********`
               );
+              if (data.startTime) {
+                data.endTime = new Date(Date.now());
+                let duration =
+                  data.endTime.valueOf() - data.startTime.valueOf();
+                let durationInSecs = Math.round(duration / 1000);
+                logger.info(
+                  `*********** Tournament: ${tournamentId} run time: ${durationInSecs} seconds ***********`
+                );
+              }
               break;
             }
           }

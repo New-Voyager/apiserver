@@ -29,6 +29,9 @@ export interface Table {
   buttonPos: number;
   smallBlindPos: number;
   bigBlindPos: number;
+
+  lastHandStartTime: Date | null;
+  lastHandSaveTime: Date | null;
 }
 
 export enum TournamentPlayingStatus {
@@ -61,7 +64,7 @@ export interface TournamentData {
   levelTime: number;
   activePlayers: number;
   levels: Array<TournamentLevel>;
-  startTime: Date;
+  scheduledStartTime: Date;
   minPlayers: number;
   maxPlayers: number;
   maxPlayersInTable: number;
@@ -72,6 +75,8 @@ export interface TournamentData {
   balanced: boolean;
   totalChips: number;
   status: TournamentStatus;
+  startTime: Date | null;
+  endTime: Date | null;
 }
 
 export interface TournamentLevel {
