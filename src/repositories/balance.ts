@@ -42,6 +42,9 @@ export enum TournamentPlayingStatus {
   SITTING_OUT,
 }
 
+// # tournament stats (player: rank, busted_order, how many hands played, how many times moved, duration, chipsBeforeBusted, largestStack, lowStack)
+// # busted_order: 1, 2, 3 as the player goes out of the tournament
+// # rank order: active players are ranked by their chips, busted players are ranked by reverse busted_order
 export interface TournamentPlayer {
   playerId: number;
   playerName: string;
@@ -52,8 +55,35 @@ export interface TournamentPlayer {
   tableNo: number;
   seatNo: number;
   status: TournamentPlayingStatus;
+  startTime: Date;
   timesMoved: 0;
   stackBeforeHand: number;
+  bustedOrder: number; //1 is the first player to burst out, 2 is the second, 3 is the third, and so on
+  stackBeforeBusted: number;
+  bustedTime: Date | null;
+  handsPlayed: number;
+  duration: number;
+  largestStack: number;
+  lowStack: number;
+  bustedLevel: number;
+}
+
+export interface TournamentPlayerRank {
+  playerId: number;
+  playerName: string;
+  playerUuid: string;
+  stackBeforeBusted: number;
+  handsPlayed: number;
+  duration: number;
+  largestStack: number;
+  lowStack: number;
+  rank: number;
+  bustedLevel: number;
+  bustedTime: Date | null;
+}
+
+export interface TournamentResult {
+  ranks: Array<TournamentPlayerRank>;
 }
 
 export interface TournamentData {
@@ -71,6 +101,7 @@ export interface TournamentData {
   tables: Array<Table>;
   registeredPlayers: Array<TournamentPlayer>;
   playersInTournament: Array<TournamentPlayer>;
+  bustedPlayers: Array<TournamentPlayer>;
   tableServerId: number; // all the tournament tables are on this server
   balanced: boolean;
   totalChips: number;
@@ -78,6 +109,8 @@ export interface TournamentData {
   startTime: Date | null;
   endTime: Date | null;
   timeTakenToBalance: number;
+  result: TournamentResult;
+  bustedOrder: number;
 }
 
 export interface TournamentLevel {
@@ -361,7 +394,7 @@ function movePlayers(
               logger.info(
                 `Player ${player.playerName} (id: ${player.playerId}) is being moved table ${player.tableNo} => ${table.tableNo}`
               );
-
+              player.timesMoved++;
               // player is moved
               ret.push({
                 playerId: player.playerId,

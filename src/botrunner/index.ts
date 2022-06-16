@@ -31,3 +31,18 @@ export async function fillSeats(
     );
   }
 }
+
+export async function endBotTournament(tournamentId: number) {
+  const url = `${getBotRunnerUrl()}/end-tournament?tournament-id=${tournamentId}`;
+  try {
+    const resp = await axios.post(url);
+    if (resp.status !== 200) {
+      logger.error(`Failed to end tournament ${tournamentId}`);
+      //   throw new Error(
+      //     `Failed to end tournament ${tournamentId}`
+      //   );
+    }
+  } catch (err) {
+    logger.error(`Failed to end bot tournaments`);
+  }
+}

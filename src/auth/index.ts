@@ -5,6 +5,7 @@ import {PlayerRepository} from '@src/repositories/player';
 import {UserRegistrationPayload} from '@src/types';
 import {errToStr, getLogger} from '@src/utils/log';
 import {LocationCheck} from '@src/repositories/locationcheck';
+import {Cache} from '@src/cache/index';
 
 const logger = getLogger('auth');
 const JWT_EXPIRY_DAYS = 3;
@@ -324,6 +325,7 @@ export async function newlogin(req: any, resp: any) {
 
     // update last active date
     await PlayerRepository.updateLastActiveDate(player.uuid, appVersion);
+    await Cache.getPlayer(player.uuid, true);
     resp.contentType('application/json');
     resp.status(200).send(JSON.stringify(response));
   } catch (err) {
@@ -415,6 +417,8 @@ export async function loginUsingRecoveryCode(req: any, resp: any) {
       id: player.id,
       jwt: jwt,
     };
+    await Cache.getPlayer(player.uuid, true);
+
     resp.status(200).send(JSON.stringify(response));
   } catch (err) {
     logger.error(
@@ -524,6 +528,7 @@ export async function loginBot(req: any, resp: any) {
         id: player.id,
         jwt: jwt,
       };
+      await Cache.getPlayer(player.uuid, true);
       resp.status(200).send(JSON.stringify(response));
     } catch (err) {
       logger.error(`Failed to login bot ${botName}. ${errToStr(err)}`);
@@ -583,6 +588,7 @@ export async function loginPlayer(req: any, resp: any) {
         id: player.id,
         jwt: jwt,
       };
+      await Cache.getPlayer(player.uuid, true);
       resp.status(200).send(JSON.stringify(response));
     } catch (err) {
       logger.error(`Failed to login player ${playerId}. ${errToStr(err)}`);

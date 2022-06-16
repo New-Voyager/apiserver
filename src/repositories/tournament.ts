@@ -16,10 +16,13 @@ import {
   TournamentLevel,
   TournamentLevelType,
   TournamentPlayer,
+  TournamentPlayerRank,
   TournamentPlayingStatus,
   TournamentStatus,
   TournamentTableInfo,
 } from './balance';
+import _ from 'lodash';
+import {endBotTournament} from '@src/botrunner';
 
 const logger = getLogger('tournaments');
 const apiCallbackHost = 'localhost:9001';
@@ -57,6 +60,13 @@ Players Per Table
 Max Rebuys
 Level Timeout
 */
+
+// # bots should unsubscribe and leave the tournament
+// # tournament status (SCHEDULED, RUNNING, ENDED)
+// # tournament result (ranks)
+// # tournament stats (player: rank, busted_order, how many hands played, how many times moved, duration, chipsBeforeBusted, largestStack, lowStack)
+// # busted_order: 1, 2, 3 as the player goes out of the tournament
+// # rank order: active players are ranked by their chips, busted players are ranked by reverse busted_order
 
 let gameServerRpc: any;
 interface Queue {
@@ -158,6 +168,15 @@ class TournamentRepositoryImpl {
         status: player.status,
         timesMoved: player.timesMoved,
         stackBeforeHand: player.stack,
+        stackBeforeBusted: player.stack,
+        handsPlayed: 0,
+        duration: 0,
+        largestStack: 0,
+        lowStack: 0,
+        bustedOrder: -1,
+        startTime: new Date(Date.now()),
+        bustedLevel: 0,
+        bustedTime: null,
       });
     }
     ret.chipsOnTheTable = chipsOnTheTable;
@@ -186,6 +205,7 @@ class TournamentRepositoryImpl {
         tables: [],
         registeredPlayers: [],
         playersInTournament: [],
+        bustedPlayers: [],
         scheduledStartTime: startTime,
         startingChips: startingChips * 100,
         tableServerId: tableServer.id,
@@ -195,6 +215,10 @@ class TournamentRepositoryImpl {
         startTime: null,
         endTime: null,
         timeTakenToBalance: 0,
+        result: {
+          ranks: [],
+        },
+        bustedOrder: 0,
       };
       let tournamentRepo: Repository<Tournament>;
       if (transactionManager) {
@@ -456,10 +480,18 @@ class TournamentRepositoryImpl {
     playerUuid: string,
     tournamentId: number
   ) {
+    const player = await Cache.getPlayer(playerUuid);
     try {
       logger.info(
-        `Joining tournament: ${tournamentId} playerUuid: ${playerUuid}`
+        `Joining tournament: ${tournamentId} playerUuid: ${playerUuid} id: ${player.id} name: ${player.name}`
       );
+      if (player.name === 'Alison') {
+        const updatedCache = await Cache.getPlayer(playerUuid, true);
+        logger.info(
+          `Alison: Joining tournament: ${tournamentId} playerUuid: ${updatedCache.uuid} id: ${updatedCache.id} name: ${updatedCache.name}`
+        );
+        logger.info(`Alison is joining the tournament`);
+      }
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
       const tournament = await tournamentRepo.findOne({id: tournamentId});
@@ -467,7 +499,6 @@ class TournamentRepositoryImpl {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
       }
-      const player = await Cache.getPlayer(playerUuid);
 
       const data = JSON.parse(tournament.data) as TournamentData;
 
@@ -508,6 +539,15 @@ class TournamentRepositoryImpl {
         status: TournamentPlayingStatus.PLAYING,
         timesMoved: 0,
         stackBeforeHand: data.startingChips,
+        stackBeforeBusted: data.startingChips,
+        handsPlayed: 0,
+        duration: 0,
+        largestStack: 0,
+        lowStack: 0,
+        bustedOrder: -1,
+        startTime: new Date(Date.now()),
+        bustedLevel: 0,
+        bustedTime: null,
       };
       data.totalChips += data.startingChips;
       table.players.push(seatPlayer);
@@ -681,6 +721,7 @@ class TournamentRepositoryImpl {
       let found = false;
       for (const player of table.players) {
         if (player.seatNo === seatNo) {
+          player.bustedLevel = currentLevel;
           occupiedSeats.push(player.playerId);
           found = true;
           break;
@@ -986,7 +1027,7 @@ class TournamentRepositoryImpl {
               if (level.level === currentLevelNo) {
                 currentLevel = level;
                 logger.info(
-                  `******* Starting next level sb: ${level.smallBlind} bb: ${level.bigBlind} ante: ${level.ante} *******`
+                  `******* Starting next level ${level.level} sb: ${level.smallBlind} bb: ${level.bigBlind} ante: ${level.ante} *******`
                 );
                 break;
               }
@@ -1096,6 +1137,7 @@ class TournamentRepositoryImpl {
       }
 
       let bustedPlayers = new Array<TournamentPlayer>();
+      const bustedTime = new Date(Date.now());
       // remove the players who had lost all the stacks from the result
       for (const seatNo of Object.keys(players)) {
         const player = players[seatNo];
@@ -1103,13 +1145,18 @@ class TournamentRepositoryImpl {
         for (const playerInTable of table.players) {
           if (playerInTable.playerId === playerId) {
             playerInTable.stack = player.balance.after;
-            playerInTable.stackBeforeHand = playerInTable.stack;
+            playerInTable.stackBeforeHand = player.balance.before;
             if (playerInTable.stack === 0) {
               // remove the player from the table
               // logger.info(
               //   `Tournament: ${tournamentId} tableNo: ${tableNo} Player: ${playerInTable.playerName} is busted`
               // );
               bustedPlayers.push(playerInTable);
+              data.bustedOrder++;
+              playerInTable.bustedOrder = data.bustedOrder;
+              playerInTable.stackBeforeBusted = playerInTable.stackBeforeHand;
+              playerInTable.bustedTime = bustedTime;
+              data.bustedPlayers.push(playerInTable);
             } else {
               updatedTable.push(playerInTable);
             }
@@ -1182,6 +1229,9 @@ class TournamentRepositoryImpl {
                 // resume table
                 table.paused = false;
                 resumeTables.push(table.tableNo);
+              } else if (table.players.length == 1) {
+                // move the players from this table
+                balanceTable(data, table.tableNo);
               }
             }
           }
@@ -1286,29 +1336,116 @@ class TournamentRepositoryImpl {
       // we have a winner
       if (data) {
         if (activeTables === 1 && totalActivePlayers === 1) {
-          // get total active players
-          for (const table of data.tables) {
-            if (table.isActive) {
-              const winner = table.players[0];
-              logger.info(
-                `*********** Tournament: ${tournamentId} Winner: ${winner.playerName} ${winner.stack} ***********`
-              );
-              if (data.startTime) {
-                data.endTime = new Date(Date.now());
-                let duration =
-                  data.endTime.valueOf() -
-                  Date.parse(data.startTime.toString()).valueOf();
-                let durationInSecs = Math.round(duration / 1000);
-                logger.info(
-                  `*********** Tournament: ${tournamentId} run time: ${durationInSecs} seconds Balancing time: ${data.timeTakenToBalance}ms ***********`
-                );
-              }
-              break;
-            }
-          }
+          this.tournamentEnded(data);
         }
       }
     }
+  }
+
+  private async tournamentEnded(data: TournamentData) {
+    const tournamentId = data.id;
+    let winner: TournamentPlayer | null = null;
+    await endBotTournament(tournamentId);
+    // get total active players
+    for (const table of data.tables) {
+      if (table.isActive) {
+        winner = table.players[0];
+        logger.info(
+          `*********** Tournament: ${tournamentId} Winner: ${winner.playerName} ${winner.stack} ***********`
+        );
+        if (data.startTime) {
+          data.endTime = new Date(Date.now());
+          let duration =
+            data.endTime.valueOf() -
+            Date.parse(data.startTime.toString()).valueOf();
+          let durationInSecs = Math.round(duration / 1000);
+          logger.info(
+            `*********** Tournament: ${tournamentId} run time: ${durationInSecs} seconds Balancing time: ${data.timeTakenToBalance}ms ***********`
+          );
+        }
+        break;
+      }
+    }
+    data.status = TournamentStatus.ENDED;
+
+    // update the ranks
+    //const bustedPlayers = _.filter(data.playersInTournament, p => p.stack !== -1);
+    const bustedRankOrder = _.orderBy(
+      data.bustedPlayers,
+      ['bustedOrder'],
+      'desc'
+    );
+    const rankedPlayers = new Array<TournamentPlayerRank>();
+
+    /*
+    export interface TournamentPlayerRank {
+        playerId: number;
+        playerName: string;
+        playerUuid: string;
+        stackBeforeBusted: number;
+        handsPlayed: number;
+        duration: number;
+        largestStack: number;
+        lowStack: number;
+        rank: number;
+      }
+    */
+    let rank = 1;
+    if (winner) {
+      rankedPlayers.push({
+        playerId: winner.playerId,
+        playerName: winner.playerName,
+        playerUuid: winner.playerUuid,
+        stackBeforeBusted: 0,
+        handsPlayed: 0,
+        duration: 0,
+        largestStack: winner.stack,
+        lowStack: 0,
+        rank: rank,
+        bustedLevel: -1,
+        bustedTime: null,
+      });
+    }
+
+    for (const bustedPlayer of bustedRankOrder) {
+      rank++;
+      rankedPlayers.push({
+        playerId: bustedPlayer.playerId,
+        playerName: bustedPlayer.playerName,
+        playerUuid: bustedPlayer.playerUuid,
+        stackBeforeBusted: bustedPlayer.stackBeforeBusted,
+        handsPlayed: 0,
+        duration: 0,
+        largestStack: 0,
+        lowStack: 0,
+        rank: rank,
+        bustedLevel: bustedPlayer.bustedLevel,
+        bustedTime: bustedPlayer.bustedTime,
+      });
+    }
+    data.result.ranks = rankedPlayers;
+    logger.info(`*********** Tournament: ${tournamentId} Result ***********`);
+    for (const rank of rankedPlayers) {
+      let bustedTime = 'Not busted';
+      if (rank.bustedTime) {
+        bustedTime = new Date(rank.bustedTime.toString()).toISOString();
+      }
+      logger.info(
+        `rank: ${rank.rank} player: ${rank.playerName} stack: ${rank.stackBeforeBusted} Last level: ${rank.bustedLevel} bustedTime: ${bustedTime} ***********`
+      );
+    }
+    logger.info(`*********** Tournament: ${tournamentId} ***********`);
+
+    // update results
+    let tournamentRepo: Repository<Tournament>;
+    tournamentRepo = getGameRepository(Tournament);
+    const tournament = await tournamentRepo.findOne({id: tournamentId});
+    if (!tournament) {
+      throw new Error(`Tournament ${tournamentId} not found`);
+    }
+    tournament.data = JSON.stringify(data);
+    await tournamentRepo.save(tournament);
+    await Cache.getTournamentData(tournamentId, true);
   }
 
   public async triggerAboutToStartTournament(tournamentId: number) {

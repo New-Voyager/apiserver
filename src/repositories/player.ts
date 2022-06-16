@@ -444,6 +444,7 @@ class PlayerRepositoryImpl {
     player.appVersion = register.appVersion;
     await repository.save(player);
     await StatsRepository.newPlayerHandStats(player);
+    await Cache.getPlayer(player.uuid, true);
     if (newUser) {
       await AppCoinRepository.newUser(player);
     }
