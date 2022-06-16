@@ -15,7 +15,8 @@ transport = AIOHTTPTransport(
     url="http://localhost:9501/graphql", headers=headers)
 
 # Create a GraphQL client using the defined transport
-client = Client(transport=transport, fetch_schema_from_transport=True)
+client = Client(transport=transport,
+                fetch_schema_from_transport=True, execute_timeout=300)
 
 # Provide a GraphQL query
 query = gql(
@@ -43,9 +44,9 @@ print(tournament_id)
 register_bots_url = f'{bot_url}register-tournament'
 data = {
     'tournamentId': tournament_id,
-    'botCount': 36
+    'botCount': 300
 }
-resp = post(register_bots_url, json=data)
+resp = post(register_bots_url, json=data, timeout=300)
 print(resp.text)
 
 if resp.status_code == 200:

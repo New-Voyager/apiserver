@@ -77,6 +77,7 @@ export interface TournamentData {
   status: TournamentStatus;
   startTime: Date | null;
   endTime: Date | null;
+  timeTakenToBalance: number;
 }
 
 export interface TournamentLevel {
@@ -400,48 +401,48 @@ export function getLevelData(
   levelType: TournamentLevelType
 ): Array<TournamentLevel> {
   let standardLevels = new Array<TournamentLevel>();
-  let bigBlind = 200;
-  let bigBlindIncrement = 20;
+  let bigBlind = 500;
+  let bigBlindIncrement = 1000;
   let ante = 0;
-  let anteIncrement = 0;
+  let anteIncrement = 10;
   for (let level = 1; level <= 80; level++) {
     if (level == 5) {
       ante = 5;
-      anteIncrement = 5;
-      bigBlindIncrement = 50;
-    }
-
-    if (level == 10) {
-      anteIncrement = 10;
-      bigBlindIncrement = 100;
-    }
-
-    if (level == 15) {
-      anteIncrement = 20;
-      bigBlindIncrement = 200;
-    }
-
-    if (level == 20) {
-      anteIncrement = 40;
+      anteIncrement = 50;
       bigBlindIncrement = 500;
     }
 
-    if (level == 30) {
-      anteIncrement = 60;
+    if (level == 7) {
+      anteIncrement = 100;
       bigBlindIncrement = 1000;
     }
 
-    if (level == 40) {
-      anteIncrement = 100;
+    if (level == 10) {
+      anteIncrement = 200;
       bigBlindIncrement = 2000;
     }
 
-    if (level == 50) {
-      anteIncrement = 500;
+    if (level == 15) {
+      anteIncrement = 400;
       bigBlindIncrement = 5000;
     }
 
-    if (level > 50) {
+    if (level == 20) {
+      anteIncrement = 600;
+      bigBlindIncrement = 10000;
+    }
+
+    if (level == 25) {
+      anteIncrement = 1000;
+      bigBlindIncrement = 20000;
+    }
+
+    if (level == 30) {
+      anteIncrement = 5000;
+      bigBlindIncrement = 50000;
+    }
+
+    if (level > 30) {
       anteIncrement *= 2;
       bigBlindIncrement *= 2;
     }

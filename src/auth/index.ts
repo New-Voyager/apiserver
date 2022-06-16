@@ -210,16 +210,18 @@ export async function signup(req: any, resp: any) {
       //   logger.info(`body: ${JSON.stringify(req.body)}`);
       // }
     }
-    const geodata = LocationCheck.getCity(req.userIp);
-    if (geodata) {
-      await PlayerRepository.updatePlayerGeoData(
-        player.uuid,
-        geodata.continent,
-        geodata.country,
-        geodata.state,
-        geodata.city,
-        geodata.postalCode
-      );
+    if (!player.bot) {
+      const geodata = LocationCheck.getCity(req.userIp);
+      if (geodata) {
+        await PlayerRepository.updatePlayerGeoData(
+          player.uuid,
+          geodata.continent,
+          geodata.country,
+          geodata.state,
+          geodata.city,
+          geodata.postalCode
+        );
+      }
     }
   } catch (err) {}
 

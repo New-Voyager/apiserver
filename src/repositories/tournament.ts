@@ -194,6 +194,7 @@ class TournamentRepositoryImpl {
         status: TournamentStatus.SCHEDULED,
         startTime: null,
         endTime: null,
+        timeTakenToBalance: 0,
       };
       let tournamentRepo: Repository<Tournament>;
       if (transactionManager) {
@@ -860,8 +861,9 @@ class TournamentRepositoryImpl {
     }
     const level = this.currentTournamentLevel[data.id];
     const currentLevel = data.levels[level];
+
     logger.info(
-      `============================  Tournament stats: ${data.id} Balanced: ${data.balanced} Level: ${level} ${currentLevel.smallBlind}/${currentLevel.bigBlind} (${currentLevel.ante})============================`
+      `============================  Tournament stats: ${data.id} Balanced: ${data.balanced} Level: ${level} ${currentLevel.smallBlind}/${currentLevel.bigBlind} (${currentLevel.ante}) Balancing time: ${data.timeTakenToBalance}ms ============================`
     );
     logger.info(
       `Active tables: ${activeTables} totalActivePlayers: ${totalActivePlayers} Total chips: ${data.totalChips} total chips on the tournament: ${totalChipsOnTheTournament}`
@@ -1009,7 +1011,7 @@ class TournamentRepositoryImpl {
 
             // kick off the next level
             await this.startLevelTimer(tournamentId, data.levelTime);
-            this.printTournamentStats(data);
+            // this.printTournamentStats(data);
           }
         }
       }
@@ -1150,11 +1152,14 @@ class TournamentRepositoryImpl {
       let movedPlayers: Array<TableMove> = [];
       if (!data.balanced) {
         this.printTournamentStats(data);
+        const startTime = Date.now();
         // balance the table
         [tournamentData, movedPlayers] = await balanceTable(
           data,
           table.tableNo
         );
+        const endTime = Date.now();
+        data.timeTakenToBalance += endTime - startTime;
         this.printTournamentStats(data);
       } else {
         // this.printTournamentStats(data);
@@ -1291,10 +1296,11 @@ class TournamentRepositoryImpl {
               if (data.startTime) {
                 data.endTime = new Date(Date.now());
                 let duration =
-                  data.endTime.valueOf() - data.startTime.valueOf();
+                  data.endTime.valueOf() -
+                  Date.parse(data.startTime.toString()).valueOf();
                 let durationInSecs = Math.round(duration / 1000);
                 logger.info(
-                  `*********** Tournament: ${tournamentId} run time: ${durationInSecs} seconds ***********`
+                  `*********** Tournament: ${tournamentId} run time: ${durationInSecs} seconds Balancing time: ${data.timeTakenToBalance}ms ***********`
                 );
               }
               break;
