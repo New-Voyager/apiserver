@@ -44,7 +44,7 @@ print(tournament_id)
 register_bots_url = f'{bot_url}register-tournament'
 data = {
     'tournamentId': tournament_id,
-    'botCount': 6
+    'botCount': 18
 }
 resp = post(register_bots_url, json=data, timeout=600)
 print(resp.text)

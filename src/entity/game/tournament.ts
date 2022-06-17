@@ -1,3 +1,4 @@
+import {TournamentStatus} from '@src/repositories/balance';
 import {Column, Entity, PrimaryGeneratedColumn} from 'typeorm';
 import {DbAwareCreateDateColumn, DbAwareUpdateDateColumn} from '../dbaware';
 
@@ -15,6 +16,9 @@ export class Tournament {
 
   @Column({name: 'max_players', default: 9})
   public maxPlayersInTable!: number;
+
+  @Column({name: 'status', nullable: true, default: TournamentStatus.UNKNOWN})
+  public status!: TournamentStatus;
 
   /**
    * DB insert time.

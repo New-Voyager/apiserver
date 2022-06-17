@@ -6,6 +6,25 @@ input TournamentCreateInput {
   maxPlayers: Int
   maxPlayersInTable: Int!
   levelType: TournamentLevelType
+  fillWithBots: Boolean
+  levelTime: Int
+}
+
+type TournamentListItem {
+  tournamentId: Int!
+  name: String!
+  startTime: DateTime
+  startingChips: Float
+  minPlayers: Int
+  maxPlayers: Int
+  maxPlayersInTable: Int
+  levelType: TournamentLevelType
+  fillWithBots: Boolean
+  status: TournamentStatus
+  registeredPlayersCount: Int
+  botsCount: Int
+  activePlayersCount: Int
+  createdBy: String
 }
 
 enum TournamentPlayingStatus {
@@ -17,6 +36,7 @@ enum TournamentPlayingStatus {
 }
 
 enum TournamentStatus {
+  UNKNOWN,
   SCHEDULED,
   ABOUT_TO_START,
   RUNNING,
@@ -104,6 +124,7 @@ type Query {
   getTournamentInfo(tournamentId: Int!): TournamentInfo!
   getTournamentTableInfo(tournamentId: Int!, tableNo: Int!): TournamentGameInfo!
   getTournamentGameInfo(gameCode: String!): TournamentGameInfo!
+  getActiveTournaments(clubCode: String): [TournamentListItem!]
 }
 
 type Mutation {
@@ -115,4 +136,5 @@ type Mutation {
   kickoffTournament(tournamentId: Int!): Boolean!
   cancelTournament(tournamentId: Int!): Boolean!
   triggerAboutToStartTournament(tournamentId: Int!): Boolean
+  fillBotsTournament(tournamentId: Int!): Boolean
 }

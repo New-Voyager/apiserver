@@ -111,6 +111,7 @@ export interface TournamentData {
   timeTakenToBalance: number;
   result: TournamentResult;
   bustedOrder: number;
+  fillWithBots: boolean;
 }
 
 export interface TournamentLevel {
@@ -423,11 +424,29 @@ export enum TournamentLevelType {
 }
 
 export enum TournamentStatus {
+  UNKNOWN,
   SCHEDULED,
   ABOUT_TO_START,
   RUNNING,
   ENDED,
   CANCELLED,
+}
+
+export interface TournamentListItem {
+  tournamentId: number;
+  name: string;
+  startTime: Date | null;
+  startingChips: number;
+  minPlayers: number;
+  maxPlayers: number;
+  maxPlayersInTable: number;
+  levelType: TournamentLevelType;
+  fillWithBots: boolean;
+  status: TournamentStatus;
+  registeredPlayersCount: number;
+  botsCount: number;
+  activePlayersCount: number;
+  createdBy: string;
 }
 
 export function getLevelData(

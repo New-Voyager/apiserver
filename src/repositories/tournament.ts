@@ -15,6 +15,7 @@ import {
   TournamentData,
   TournamentLevel,
   TournamentLevelType,
+  TournamentListItem,
   TournamentPlayer,
   TournamentPlayerRank,
   TournamentPlayingStatus,
@@ -22,7 +23,7 @@ import {
   TournamentTableInfo,
 } from './balance';
 import _ from 'lodash';
-import {endBotTournament} from '@src/botrunner';
+import {endBotTournament, registerBotsTournament} from '@src/botrunner';
 
 const logger = getLogger('tournaments');
 const apiCallbackHost = 'localhost:9001';
@@ -184,29 +185,31 @@ class TournamentRepositoryImpl {
   }
 
   public async scheduleTournament(
-    tournamentName: string,
-    clubCode: string,
-    startTime: Date,
+    input: any,
     transactionManager?: EntityManager
   ): Promise<number> {
     try {
       const tableServer = await GameServerRepository.getNextGameServer();
       const startingChips = 1000;
+      let levelTime = 30;
+      if (input.levelTime) {
+        levelTime = input.levelTime;
+      }
       const data: TournamentData = {
         id: 0,
-        name: tournamentName,
-        minPlayers: 2,
-        maxPlayers: 100,
+        name: input.name,
+        minPlayers: input.minPlayers,
+        maxPlayers: input.maxPlayers,
         activePlayers: 0,
-        maxPlayersInTable: 6,
-        levelTime: 10, // seconds
+        maxPlayersInTable: input.maxPlayersInTable,
+        levelTime: levelTime, // seconds
         currentLevel: -1,
         levels: getLevelData(TournamentLevelType.STANDARD),
         tables: [],
         registeredPlayers: [],
         playersInTournament: [],
         bustedPlayers: [],
-        scheduledStartTime: startTime,
+        scheduledStartTime: new Date(Date.now()),
         startingChips: startingChips * 100,
         tableServerId: tableServer.id,
         balanced: true,
@@ -219,6 +222,7 @@ class TournamentRepositoryImpl {
           ranks: [],
         },
         bustedOrder: 0,
+        fillWithBots: input.fillWithBots,
       };
       let tournamentRepo: Repository<Tournament>;
       if (transactionManager) {
@@ -228,7 +232,8 @@ class TournamentRepositoryImpl {
       }
       let tournament = new Tournament();
       tournament.data = JSON.stringify(data);
-      tournament.maxPlayersInTable = 6;
+      tournament.maxPlayersInTable = input.maxPlayersInTable;
+      tournament.status = TournamentStatus.SCHEDULED;
       tournament = await tournamentRepo.save(tournament);
       await Cache.getTournamentData(tournament.id, true);
 
@@ -266,6 +271,12 @@ class TournamentRepositoryImpl {
   }
 
   public async kickoffTournament(tournamentId: number) {
+    if (!this.processQueue[tournamentId]) {
+      this.processQueue[tournamentId] = {
+        processing: false,
+        items: [],
+      };
+    }
     const queue = this.processQueue[tournamentId];
     const item: QueueItem = {
       type: 'KICKOFF_TOURNAMENT',
@@ -278,6 +289,19 @@ class TournamentRepositoryImpl {
     this.processQueueItem(tournamentId).catch(err => {
       logger.error(`Failed to process queue item. ${JSON.stringify(item)}`);
     });
+  }
+
+  public async fillBotsTournament(tournamentId: number) {
+    let tournamentRepo: Repository<Tournament>;
+    tournamentRepo = getGameRepository(Tournament);
+    const tournament = await tournamentRepo.findOne({id: tournamentId});
+    if (tournament) {
+      const data: TournamentData = JSON.parse(tournament.data);
+      const botCount = data.maxPlayers - data.registeredPlayers.length;
+      logger.info(`Registering ${botCount} in tournament: ${tournamentId}`);
+      await registerBotsTournament(tournamentId, botCount);
+      logger.info(`Bots registered in tournament: ${tournamentId}`);
+    }
   }
 
   public async registerTournamentInternal(
@@ -410,6 +434,7 @@ class TournamentRepositoryImpl {
       data.status = TournamentStatus.RUNNING;
       data.startTime = new Date(Date.now());
       tournament.data = JSON.stringify(data);
+      tournament.status = TournamentStatus.RUNNING;
       await tournamentRepo.save(tournament);
       // reload cache
       await Cache.getTournamentData(tournament.id, true);
@@ -861,6 +886,15 @@ class TournamentRepositoryImpl {
     tournament.data = dataStr;
     await tournamentRepo.save(tournament);
     await Cache.getTournamentData(tournamentId, true);
+  }
+
+  private getActivePlayersCount(data: TournamentData) {
+    // get total active players
+    let totalActivePlayers = 0;
+    for (const table of data.tables) {
+      totalActivePlayers += table.players.length;
+    }
+    return totalActivePlayers;
   }
 
   private printTournamentStats(data: TournamentData) {
@@ -1444,11 +1478,19 @@ class TournamentRepositoryImpl {
       throw new Error(`Tournament ${tournamentId} not found`);
     }
     tournament.data = JSON.stringify(data);
+    tournament.status = TournamentStatus.ENDED;
     await tournamentRepo.save(tournament);
     await Cache.getTournamentData(tournamentId, true);
   }
 
   public async triggerAboutToStartTournament(tournamentId: number) {
+    if (!this.processQueue[tournamentId]) {
+      this.processQueue[tournamentId] = {
+        processing: false,
+        items: [],
+      };
+    }
+
     const queue = this.processQueue[tournamentId];
     const item: QueueItem = {
       type: 'ABOUT_TO_START_TOURNAMENT',
@@ -1496,6 +1538,51 @@ class TournamentRepositoryImpl {
         )}`
       );
     }
+  }
+
+  public async getActiveTournaments(
+    playerUuid: string,
+    clubCode: string | undefined
+  ) {
+    const ret = new Array<TournamentListItem>();
+    const tournamentRepo = getGameRepository(Tournament);
+    const tournaments = await tournamentRepo.find({
+      where: [
+        {status: TournamentStatus.SCHEDULED},
+        {status: TournamentStatus.RUNNING},
+      ],
+    });
+    for (const tournament of tournaments) {
+      const data: TournamentData = JSON.parse(tournament.data);
+      let startTime = new Date(Date.now());
+      if (data.startTime) {
+        startTime = new Date(data.startTime.toString());
+      }
+      /*  status: TournamentStatus;
+  registeredPlayersCount: number;
+  botsCount: number;
+  activePlayersCount: number;
+  createdBy: string;
+  */
+      const item: TournamentListItem = {
+        tournamentId: tournament.id,
+        name: data.name,
+        startTime: startTime,
+        startingChips: data.startingChips,
+        minPlayers: data.minPlayers,
+        maxPlayers: data.maxPlayers,
+        maxPlayersInTable: data.maxPlayersInTable,
+        levelType: TournamentLevelType.STANDARD,
+        fillWithBots: data.fillWithBots,
+        status: tournament.status,
+        registeredPlayersCount: data.registeredPlayers.length,
+        botsCount: 0,
+        activePlayersCount: this.getActivePlayersCount(data),
+        createdBy: 'POC',
+      };
+      ret.push(item);
+    }
+    return ret;
   }
 }
 

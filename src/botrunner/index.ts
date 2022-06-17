@@ -46,3 +46,27 @@ export async function endBotTournament(tournamentId: number) {
     logger.error(`Failed to end bot tournaments`);
   }
 }
+
+export async function registerBotsTournament(
+  tournamentId: number,
+  botCount: number
+) {
+  const url = `${getBotRunnerUrl()}/register-tournament`;
+  const data = {
+    tournamentId: tournamentId,
+    botCount: botCount,
+  };
+  try {
+    const resp = await axios.post(url, data, {
+      timeout: 180 * 1000,
+    });
+    if (resp.status !== 200) {
+      logger.error(`Failed to register bots to the tournament ${tournamentId}`);
+      //   throw new Error(
+      //     `Failed to end tournament ${tournamentId}`
+      //   );
+    }
+  } catch (err) {
+    logger.error(`Failed to end bot tournaments`);
+  }
+}

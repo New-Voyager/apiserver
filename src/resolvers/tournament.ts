@@ -3,8 +3,15 @@ import {TournamentRepository} from '@src/repositories/tournament';
 import {Cache} from '@src/cache/index';
 import {ChipUnit, GameStatus, GameType, TableStatus} from '@src/entity/types';
 import {centsToChips} from '@src/utils';
-import {TournamentPlayingStatus} from '@src/repositories/balance';
+import {
+  TournamentLevelType,
+  TournamentListItem,
+  TournamentPlayingStatus,
+  TournamentStatus,
+} from '@src/repositories/balance';
 import {sleep} from '@src/timer';
+import {getLogger} from '@src/utils/log';
+const logger = getLogger('resolvers::tournament');
 
 const resolvers: any = {
   Query: {
@@ -20,6 +27,9 @@ const resolvers: any = {
     },
     getTournamentGameInfo: async (parent, args, ctx, info) => {
       return getTournamentGameInfo(ctx.req.playerId, args.gameCode);
+    },
+    getActiveTournaments: async (parent, args, ctx, info) => {
+      return getActiveTournaments(ctx.req.playerId, args.clubCode);
     },
   },
 
@@ -53,6 +63,9 @@ const resolvers: any = {
     triggerAboutToStartTournament: async (parent, args, ctx, info) => {
       return triggerAboutToStartTournament(ctx.req.playerId, args.tournamentId);
     },
+    fillBotsTournament: async (parent, args, ctx, info) => {
+      return fillBotsTournament(ctx.req.playerId, args.tournamentId);
+    },
   },
 };
 
@@ -70,11 +83,7 @@ async function scheduleTournament(
   playerUuid: string,
   input: any
 ): Promise<number> {
-  const ret = await TournamentRepository.scheduleTournament(
-    input.name,
-    '',
-    input.starTime
-  );
+  const ret = await TournamentRepository.scheduleTournament(input);
   return ret;
 }
 
@@ -252,4 +261,33 @@ async function getTournamentGameInfo(
   const tournamentId = parseInt(toks[1]);
   const tableNo = parseInt(toks[2]);
   return getTournamentTableInfo(playerUuid, tournamentId, tableNo);
+}
+
+async function getActiveTournaments(
+  playerUuid: string,
+  clubCode: string
+): Promise<any> {
+  const tournaments: Array<TournamentListItem> =
+    await TournamentRepository.getActiveTournaments(playerUuid, clubCode);
+  const ret: Array<any> = [];
+  for (const item of tournaments) {
+    const itemRet: any = item as any;
+    itemRet.levelType = TournamentLevelType[item.levelType];
+    itemRet.status = TournamentStatus[item.status];
+    itemRet.startingChips = centsToChips(item.startingChips);
+    ret.push(itemRet);
+  }
+  return ret;
+}
+
+async function fillBotsTournament(
+  playerUuid: string,
+  tournamentId: number
+): Promise<boolean> {
+  try {
+    await TournamentRepository.fillBotsTournament(tournamentId);
+  } catch (err) {
+    logger.error(`Failed to fill tournament ${tournamentId} with bots`);
+  }
+  return true;
 }
