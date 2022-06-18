@@ -73,10 +73,22 @@ message TableHandResult {
 	uint32 hand_no = 3;
 }
 
+message PlayerMovedTableInput {
+    uint32 tournament_id = 10;
+    uint32 old_table_no = 20;
+    uint32 new_table_no = 30;
+    uint32 new_table_seat_no = 31;
+    string game_code = 40;
+    uint64 game_id = 50;
+    uint64 player_id = 60;
+    string game_info = 70;
+}
+
 service TableService {
     rpc HostTable(HostTableInfo) returns (Result) {}
     rpc TerimateTable(TerminateTableInfo) returns (Result) {}
     rpc RunHand(HandInfo) returns (RunHandResult) {}
+    rpc PlayerMovedTable(PlayerMovedTableInput) returns (Result) {}
 }
 
 

@@ -1293,6 +1293,37 @@ class TournamentRepositoryImpl {
           player.stack,
           player.seatNo
         );
+        const playerMovedPayload = {
+          tournament_id: tournamentData.id,
+          old_table_no: player.oldTableNo,
+          new_table_no: player.newTableNo,
+          new_table_seat_no: player.seatNo,
+          game_code: this.getTableGameCode(
+            tournamentData.id,
+            player.oldTableNo
+          ),
+          game_id: this.getTableGameId(tournamentData.id, player.oldTableNo),
+          player_id: player.playerId,
+          game_info: `{"gameCode": ${this.getTableGameCode(
+            tournamentData.id,
+            player.oldTableNo
+          )}}`,
+        };
+        logger.info(
+          `Moving player table: ${JSON.stringify(playerMovedPayload)}`
+        );
+        gameServerRpc.playerMovedTable(playerMovedPayload, (err, value) => {
+          if (err) {
+            logger.error(
+              `moving player table tournament: ${tournamentData?.id} table: ${player.oldTableNo}=>${player.newTableNo} failed`
+            );
+          } else {
+            // successfully moved the table
+            logger.info(
+              `moving player table tournament: ${tournamentData?.id} table: ${player.oldTableNo}=>${player.newTableNo} succeeded`
+            );
+          }
+        });
       }
 
       // if we need to resume some of the paused tables, do now
