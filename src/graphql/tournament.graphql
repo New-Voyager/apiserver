@@ -76,6 +76,7 @@ type TournamentInfo {
   players: [TournamentPlayer!]
   tables: [TournamentTable!]
   tournamentChannel: String!
+  privateChannel: String!
   status: TournamentStatus!
   myTableNo: Int
 }

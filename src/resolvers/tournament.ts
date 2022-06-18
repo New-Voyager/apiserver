@@ -76,6 +76,13 @@ async function getTournamentInfo(
   const ret = await TournamentRepository.getTournamentData(tournamentId);
   ret.tournamentChannel =
     TournamentRepository.getTournamentChannel(tournamentId);
+  const player = await Cache.getPlayer(playerUuid);
+  if (player) {
+    ret.privateChannel = TournamentRepository.getPrivateChannel(
+      tournamentId,
+      player.id
+    );
+  }
   return ret;
 }
 

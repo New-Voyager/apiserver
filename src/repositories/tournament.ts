@@ -108,6 +108,10 @@ class TournamentRepositoryImpl {
     return `tournament-${tournamentId}`;
   }
 
+  public getPrivateChannel(tournamentId: number, playerId: number): string {
+    return `tournament.${tournamentId}.player.${playerId}`;
+  }
+
   public getTableGameCode(tournamentId: number, tableNo: number): string {
     return `t-${tournamentId}-${tableNo}`;
   }
