@@ -19,6 +19,7 @@ import {getAppSettings} from '@src/firebase';
 import {centsToChips} from '@src/utils';
 import {TableUpdateReserveSeat} from '../const';
 import {TournamentRepository} from '@src/repositories/tournament';
+import {TournamentData} from '@src/repositories/balance';
 
 const logger = getLogger('nats');
 
@@ -1067,6 +1068,27 @@ class NatsClass {
     this.sendMessage(subject, messageStr);
   }
 
+  public tournamentUpdate(
+    tournamentId: number,
+    data: TournamentData,
+    messageId?: string
+  ) {
+    if (!messageId) {
+      messageId = uuidv4();
+    }
+
+    const message: any = {
+      type: 'TOURNAMENT_UPDATE',
+      tournamentId: tournamentId,
+      registeredPlayersCount: data.registeredPlayers.length,
+      playersCount: data.playersInTournament.length,
+      startTime: data.startTime?.toISOString(),
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = TournamentRepository.getTournamentChannel(tournamentId);
+    this.sendMessage(subject, messageStr);
+  }
+
   public tournamentSetPlayerTable(
     tournamentId: number,
     playerId: number,
@@ -1094,7 +1116,8 @@ class NatsClass {
 
   tournamentPlayerMoved(
     tournamentId: number,
-    currentTableNo: number,
+    oldTableNo: number,
+    oldSeatNo: number,
     newTableNo: number,
     playerId: number,
     playerName: string,
@@ -1111,7 +1134,8 @@ class NatsClass {
       type: 'TOURNAMENT_PLAYER_MOVED_TABLE',
       tournamentId: tournamentId,
       playerId: playerId,
-      currentTableNo: currentTableNo,
+      oldTableNo: oldTableNo,
+      oldSeatNo: oldSeatNo,
       playerUuid: playerUuid,
       newTableNo: newTableNo,
       playerName: playerName,

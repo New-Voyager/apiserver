@@ -238,6 +238,7 @@ class TournamentRepositoryImpl {
       tournament.data = JSON.stringify(data);
       tournament.maxPlayersInTable = input.maxPlayersInTable;
       tournament.status = TournamentStatus.SCHEDULED;
+      tournament.botsCount = input.botsCount || 0;
       tournament = await tournamentRepo.save(tournament);
       await Cache.getTournamentData(tournament.id, true);
 
@@ -318,7 +319,7 @@ class TournamentRepositoryImpl {
       tournamentRepo = getGameRepository(Tournament);
       const tournament = await tournamentRepo.findOne({id: tournamentId});
       if (tournament) {
-        const data = JSON.parse(tournament.data);
+        let data = JSON.parse(tournament.data);
         const playerData = data.registeredPlayers.find(
           p => p.playerUuid === playerUuid
         );
@@ -331,12 +332,15 @@ class TournamentRepositoryImpl {
             isSittingOut: false,
             isBot: player.bot,
             tableNo: 0,
+            status: TournamentPlayingStatus.REGISTERED,
           });
           tournament.data = JSON.stringify(data);
           await tournamentRepo.save(tournament);
           // publish new player information to tournament channel
           await Cache.getTournamentData(tournament.id, true);
         }
+        let tournamentData = Cache.getTournamentData(tournament.id);
+        Nats.tournamentUpdate(tournamentId, data);
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
       }
@@ -1290,6 +1294,7 @@ class TournamentRepositoryImpl {
         Nats.tournamentPlayerMoved(
           tournamentId,
           player.oldTableNo,
+          player.oldSeatNo,
           player.newTableNo,
           player.playerId,
           player.playerName,

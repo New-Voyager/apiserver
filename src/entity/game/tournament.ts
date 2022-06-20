@@ -17,6 +17,9 @@ export class Tournament {
   @Column({name: 'max_players', default: 9})
   public maxPlayersInTable!: number;
 
+  @Column({name: 'bots_count', default: 0})
+  public botsCount!: number;
+
   @Column({name: 'status', nullable: true, default: TournamentStatus.UNKNOWN})
   public status!: TournamentStatus;
 

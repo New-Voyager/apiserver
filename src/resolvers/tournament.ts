@@ -6,6 +6,7 @@ import {centsToChips} from '@src/utils';
 import {
   TournamentLevelType,
   TournamentListItem,
+  TournamentPlayer,
   TournamentPlayingStatus,
   TournamentStatus,
 } from '@src/repositories/balance';
@@ -74,6 +75,25 @@ async function getTournamentInfo(
   tournamentId: number
 ): Promise<any> {
   const ret = await TournamentRepository.getTournamentData(tournamentId);
+
+  let registeredPlayers = new Array<TournamentPlayer>();
+  // return registered players
+  if (ret.playersInTournament && ret.playersInTournament.length > 0) {
+    const playersInTournament = ret.playersInTournament.map(e => e.playerId);
+    for (const registeredPlayer of ret.registeredPlayers) {
+      if (playersInTournament.indexOf(registeredPlayer.playerId) === -1) {
+        registeredPlayers.push(registeredPlayer);
+      }
+    }
+    ret.registeredPlayers = registeredPlayers;
+  }
+  for (const player of ret.registeredPlayers) {
+    player.status = TournamentPlayingStatus[player.status];
+  }
+  for (const player of ret.playersInTournament) {
+    player.status = TournamentPlayingStatus[player.status];
+  }
+
   ret.tournamentChannel =
     TournamentRepository.getTournamentChannel(tournamentId);
   const player = await Cache.getPlayer(playerUuid);

@@ -6,6 +6,7 @@ const logger = getLogger('balance');
 export interface TableMove {
   newTableNo: number;
   oldTableNo: number;
+  oldSeatNo: number;
   playerId: number;
   playerUuid: string;
   playerName: string;
@@ -399,9 +400,10 @@ function movePlayers(
               // player is moved
               ret.push({
                 playerId: player.playerId,
+                oldSeatNo: player.seatNo,
+                oldTableNo: currentTableNo,
                 newTableNo: table.tableNo,
                 seatNo: seatNo,
-                oldTableNo: currentTableNo,
                 playerName: player.playerName,
                 stack: player.stack,
                 playerUuid: player.playerUuid,

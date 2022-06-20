@@ -74,6 +74,7 @@ type TournamentInfo {
   maxPlayers: Int
   maxPlayersInTable: Int!
   players: [TournamentPlayer!]
+  registeredPlayers: [TournamentPlayer!]
   tables: [TournamentTable!]
   tournamentChannel: String!
   privateChannel: String!
@@ -120,6 +121,7 @@ type TournamentGameInfo {
   livekitUrl: String
   livekitToken: String
 }
+
 
 type Query {
   getTournamentInfo(tournamentId: Int!): TournamentInfo!
