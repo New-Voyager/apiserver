@@ -1,5 +1,5 @@
-import {GameType} from '@src/entity/types';
-import {errToStr, getLogger} from '@src/utils/log';
+import { GameType } from '@src/entity/types';
+import { errToStr, getLogger } from '@src/utils/log';
 
 const logger = getLogger('balance');
 
@@ -455,25 +455,30 @@ export function getLevelData(
   levelType: TournamentLevelType
 ): Array<TournamentLevel> {
   let standardLevels = new Array<TournamentLevel>();
-  let bigBlind = 500;
+  let bigBlind = 20;
   let bigBlindIncrement = 10;
   let ante = 0;
   let anteIncrement = 10;
   for (let level = 1; level <= 80; level++) {
     if (level == 5) {
       ante = 5;
-      anteIncrement = 5;
-      bigBlindIncrement = 20;
+      anteIncrement = 10;
+      bigBlind = 50;
+      //bigBlindIncrement = 20;
     }
 
     if (level == 7) {
-      anteIncrement = 10;
-      bigBlindIncrement = 25;
+      ante = 20;
+      anteIncrement = 20;
+      bigBlind = 100;
+      //bigBlindIncrement = 25;
     }
 
     if (level == 10) {
-      anteIncrement = 20;
-      bigBlindIncrement = 50;
+      ante = 50;
+      anteIncrement = 50;
+      bigBlind = 500;
+      bigBlindIncrement = 100;
     }
 
     // if (level == 15) {
