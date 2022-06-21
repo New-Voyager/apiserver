@@ -93,7 +93,7 @@ async function getTournamentInfo(
   for (const player of ret.playersInTournament) {
     player.status = TournamentPlayingStatus[player.status];
   }
-
+  ret.status = TournamentStatus[ret.status];
   ret.tournamentChannel =
     TournamentRepository.getTournamentChannel(tournamentId);
   const player = await Cache.getPlayer(playerUuid);

@@ -304,7 +304,7 @@ class TournamentRepositoryImpl {
       const data: TournamentData = JSON.parse(tournament.data);
       const botCount = data.maxPlayers - data.registeredPlayers.length;
       logger.info(`Registering ${botCount} in tournament: ${tournamentId}`);
-      await registerBotsTournament(tournamentId, botCount);
+      await registerBotsTournament(tournamentId, tournament.botsCount);
       logger.info(`Bots registered in tournament: ${tournamentId}`);
     }
   }
@@ -441,6 +441,7 @@ class TournamentRepositoryImpl {
       }
       data.status = TournamentStatus.RUNNING;
       data.startTime = new Date(Date.now());
+      tournament.status = TournamentStatus.RUNNING;
       tournament.data = JSON.stringify(data);
       tournament.status = TournamentStatus.RUNNING;
       await tournamentRepo.save(tournament);
@@ -602,7 +603,7 @@ class TournamentRepositoryImpl {
 
       tournament.data = JSON.stringify(data);
       await tournamentRepo.save(tournament);
-      await Cache.getTournamentData(tournament.id, true);
+      const updatedData = await Cache.getTournamentData(tournament.id, true);
 
       const gameCode = `t-${tournamentId}-${table.tableNo}`;
       // publish that the player has joined to tournament channel, send the table info
@@ -620,6 +621,10 @@ class TournamentRepositoryImpl {
         seatPlayer.tableNo,
         seatPlayer.seatNo
       );
+
+      if (updatedData) {
+        Nats.tournamentUpdate(tournamentId, updatedData);
+      }
 
       // await this.kickOffTournament(data);
     } catch (err) {
@@ -1566,7 +1571,12 @@ class TournamentRepositoryImpl {
       }
       data.status = TournamentStatus.ABOUT_TO_START;
       tournament.data = JSON.stringify(data);
+      tournament.status = TournamentStatus.ABOUT_TO_START;
       await tournamentRepo.save(tournament);
+      const updatedData = await Cache.getTournamentData(tournamentId, true);
+      if (updatedData) {
+        Nats.tournamentUpdate(tournamentId, updatedData);
+      }
 
       logger.info(
         `Sent messages to players to join tournament ${tournamentId}`
@@ -1590,6 +1600,7 @@ class TournamentRepositoryImpl {
       where: [
         {status: TournamentStatus.SCHEDULED},
         {status: TournamentStatus.RUNNING},
+        {status: TournamentStatus.ABOUT_TO_START},
       ],
     });
     for (const tournament of tournaments) {

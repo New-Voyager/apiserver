@@ -456,50 +456,50 @@ export function getLevelData(
 ): Array<TournamentLevel> {
   let standardLevels = new Array<TournamentLevel>();
   let bigBlind = 500;
-  let bigBlindIncrement = 1000;
+  let bigBlindIncrement = 10;
   let ante = 0;
   let anteIncrement = 10;
   for (let level = 1; level <= 80; level++) {
     if (level == 5) {
       ante = 5;
-      anteIncrement = 50;
-      bigBlindIncrement = 500;
+      anteIncrement = 5;
+      bigBlindIncrement = 20;
     }
 
     if (level == 7) {
-      anteIncrement = 100;
-      bigBlindIncrement = 1000;
+      anteIncrement = 10;
+      bigBlindIncrement = 25;
     }
 
     if (level == 10) {
-      anteIncrement = 200;
-      bigBlindIncrement = 2000;
+      anteIncrement = 20;
+      bigBlindIncrement = 50;
     }
 
-    if (level == 15) {
-      anteIncrement = 400;
-      bigBlindIncrement = 5000;
-    }
+    // if (level == 15) {
+    //   anteIncrement = 400;
+    //   bigBlindIncrement = 5000;
+    // }
 
-    if (level == 20) {
-      anteIncrement = 600;
-      bigBlindIncrement = 10000;
-    }
+    // if (level == 20) {
+    //   anteIncrement = 600;
+    //   bigBlindIncrement = 10000;
+    // }
 
-    if (level == 25) {
-      anteIncrement = 1000;
-      bigBlindIncrement = 20000;
-    }
+    // if (level == 25) {
+    //   anteIncrement = 1000;
+    //   bigBlindIncrement = 20000;
+    // }
 
-    if (level == 30) {
-      anteIncrement = 5000;
-      bigBlindIncrement = 50000;
-    }
+    // if (level == 30) {
+    //   anteIncrement = 5000;
+    //   bigBlindIncrement = 50000;
+    // }
 
-    if (level > 30) {
-      anteIncrement *= 2;
-      bigBlindIncrement *= 2;
-    }
+    // if (level > 30) {
+    //   anteIncrement *= 2;
+    //   bigBlindIncrement *= 2;
+    // }
     standardLevels.push({
       level: level,
       ante: ante,

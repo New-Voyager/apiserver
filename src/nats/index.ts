@@ -19,7 +19,7 @@ import {getAppSettings} from '@src/firebase';
 import {centsToChips} from '@src/utils';
 import {TableUpdateReserveSeat} from '../const';
 import {TournamentRepository} from '@src/repositories/tournament';
-import {TournamentData} from '@src/repositories/balance';
+import {TournamentData, TournamentStatus} from '@src/repositories/balance';
 
 const logger = getLogger('nats');
 
@@ -1083,6 +1083,7 @@ class NatsClass {
       registeredPlayersCount: data.registeredPlayers.length,
       playersCount: data.playersInTournament.length,
       startTime: data.startTime?.toISOString(),
+      status: TournamentStatus[data.status],
     };
     const messageStr = JSON.stringify(message);
     const subject = TournamentRepository.getTournamentChannel(tournamentId);
