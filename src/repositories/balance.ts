@@ -1,5 +1,5 @@
-import { GameType } from '@src/entity/types';
-import { errToStr, getLogger } from '@src/utils/log';
+import {GameType} from '@src/entity/types';
+import {errToStr, getLogger} from '@src/utils/log';
 
 const logger = getLogger('balance');
 
@@ -226,7 +226,7 @@ export function balanceTable(
           playerNames.push(`${player.playerName}:${player.playerId}`);
         }
       }
-      logger.info(`Players being moved: ${playerNames.join(',')}`);
+      logger.info(`1 Players being moved: ${playerNames.join(',')}`);
 
       // move players to other tables
       movedPlayers = movePlayers(
@@ -236,6 +236,43 @@ export function balanceTable(
         data.maxPlayersInTable,
         playersBeingMoved
       );
+
+      if (currentTablePlayers.length) {
+      } else {
+        logger.info(
+          `Table ${currentTableNo} has ${currentTablePlayers.length} players and table is inactive`
+        );
+        currentTable.isActive = false;
+      }
+    } else {
+      // current table is not balanced, so we need to remove this table or
+      // move some players to another table
+      // choose the players to move
+      let playersBeingMoved = determinePlayersToMove2(
+        currentTablePlayers,
+        playersPerTable,
+        data,
+        currentTableNo,
+        currentTable
+      );
+      if (playersBeingMoved.length >= 1) {
+        let playerNames = new Array<string>();
+        for (const player of playersBeingMoved) {
+          if (player) {
+            playerNames.push(`${player.playerName}:${player.playerId}`);
+          }
+        }
+        logger.info(`2 Players being moved: ${playerNames.join(',')}`);
+
+        // move players to other tables
+        movedPlayers = movePlayers(
+          data.tables,
+          currentTableNo,
+          playersPerTable,
+          data.maxPlayersInTable,
+          playersBeingMoved
+        );
+      }
 
       if (currentTablePlayers.length) {
       } else {
@@ -310,6 +347,72 @@ function determinePlayersToMove(
       logger.info(`Table: ${currentTableNo} can be removed`);
       // all the players can be moved to other tables
       playersToMove = currentTablePlayers.length;
+    }
+  }
+
+  // move the players to other tables
+  while (playersToMove > 0) {
+    playersToMove--;
+    playersBeingMoved.push(currentTablePlayers.pop());
+  }
+  // these players are staying
+  currentTable.players = currentTablePlayers;
+  return playersBeingMoved;
+}
+
+/**
+ * determinePlayersToMove2: Used when current table has balance number of players, but other tables may have less players
+ * For example, 6, 6, 4 scenario
+ * The current table is 2, and we can move one player from this table to table 3
+ *
+ * @param currentTablePlayers
+ * @param playersPerTable
+ * @param data
+ * @param currentTableNo
+ * @param currentTable
+ * @returns
+ */
+function determinePlayersToMove2(
+  currentTablePlayers: TournamentPlayer[],
+  playersPerTable: number,
+  data: TournamentData,
+  currentTableNo: number,
+  currentTable: Table
+): Array<TournamentPlayer | undefined> {
+  let playersBeingMoved = new Array<TournamentPlayer | undefined>();
+  let playersToMove = 0;
+
+  // check another table that has less than optimal number of players
+  let chosenTable: Table | undefined;
+  for (const table of data.tables) {
+    if (table.tableNo == currentTableNo) {
+      continue;
+    }
+    // skip inactive tables
+    if (!table.isActive) {
+      continue;
+    }
+
+    if (table.players.length <= playersPerTable - 2) {
+      chosenTable = table;
+    }
+  }
+  if (chosenTable) {
+    // we chose a table
+    const openSeatsInCurrentTable =
+      data.maxPlayersInTable - currentTable.players.length;
+    const openSeatsInOtherTable =
+      data.maxPlayersInTable - chosenTable.players.length;
+    logger.info(
+      `Chosen table to move players: ${chosenTable.tableNo} currentTableNo: ${currentTableNo} openSeatsInCurrentTable: ${openSeatsInCurrentTable} openSeatsInOtherTable: ${openSeatsInOtherTable}`
+    );
+
+    if (openSeatsInOtherTable - openSeatsInCurrentTable >= 2) {
+      // we can move players from current table to other table
+      // how many players?
+      playersToMove = Math.floor(
+        (openSeatsInOtherTable - openSeatsInCurrentTable) / 2
+      );
     }
   }
 
