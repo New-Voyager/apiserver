@@ -218,7 +218,7 @@ export function balanceTable(
       let playersBeingMoved = determinePlayersToMove(
         playersPerTable,
         data,
-        currentTable,
+        currentTable
       );
       let playerNames = new Array<string>();
       for (const player of playersBeingMoved) {
@@ -355,7 +355,10 @@ function determinePlayersToMove(
       for (const player of currentTable.players) {
         if (player.seatNo == moveSeat) {
           playersBeingMoved.push(player);
-          currentTable.players = _.filter(currentTable.players, e => e.seatNo != moveSeat);
+          currentTable.players = _.filter(
+            currentTable.players,
+            e => e.seatNo != moveSeat
+          );
           break;
         }
       }
@@ -461,7 +464,6 @@ function getTablesWithSeats(
   return tablesWithSeats;
 }
 
-
 function getTablesWithSeatsRank(
   data: TournamentData,
   tables: Table[],
@@ -484,14 +486,20 @@ function getTablesWithSeatsRank(
         let availableSeats = playersPerTable - table.players.length;
         let rank = 1;
         while (availableSeats > 0) {
-          nextSeatPos = getNextActiveSeat(data, occupiedSeats, nextSeatPos);
-          tablesWithSeats.push({
-            tableNo: table.tableNo,
-            seatNo: nextSeatPos,
-            rank: rank,
-            taken: false,
-          });
-          rank++
+          nextSeatPos = getNextOpenSeat(data, occupiedSeats, nextSeatPos);
+          logger.info(
+            `Table: ${table.tableNo} occupiedSeats: ${occupiedSeats} openSeat: ${nextSeatPos} rank: ${rank}`
+          );
+
+          if (nextSeatPos != -1) {
+            tablesWithSeats.push({
+              tableNo: table.tableNo,
+              seatNo: nextSeatPos,
+              rank: rank,
+              taken: false,
+            });
+            rank++;
+          }
           availableSeats--;
         }
       }
@@ -501,7 +509,11 @@ function getTablesWithSeatsRank(
   return tablesWithSeats;
 }
 
-function getOpenSeat(seatWithRank: AvailableSeatRank[], rank: number, options?: { lower?: bool, greater?: bool }): AvailableSeatRank | undefined {
+function getOpenSeat(
+  seatWithRank: AvailableSeatRank[],
+  rank: number,
+  options?: { lower?: bool; greater?: bool }
+): AvailableSeatRank | undefined {
   let ret: AvailableSeatRank | undefined;
   if (!options) {
     // find a seat with same rank
@@ -546,7 +558,12 @@ function movePlayers(
   let rank = 1;
   while (playersBeingMoved.length > 0) {
     const player = playersBeingMoved.pop();
-    const seatsWithPlayers = getTablesWithSeatsRank(data, data.tables, currentTableNo, playersPerTable);
+    const seatsWithPlayers = getTablesWithSeatsRank(
+      data,
+      data.tables,
+      currentTableNo,
+      playersPerTable
+    );
     if (player) {
       // find a seat with the same rank
       let openSeat = getOpenSeat(seatsWithPlayers, rank);
@@ -567,15 +584,22 @@ function movePlayers(
 
       if (openSeat) {
         // pick the next table after the lastone used
-        logger.info(`Moving player ${player.playerName} [${player.tableNo}: ${player.seatNo}] to a new table: [${openSeat.tableNo}:${openSeat.seatNo}]`);
+        logger.info(
+          `Moving player ${player.playerName} [${player.tableNo}: ${player.seatNo}] to a new table: [${openSeat.tableNo}:${openSeat.seatNo}]`
+        );
         let oldSeatNo = player.seatNo;
         let oldTableNo = player.tableNo;
         player.tableNo = openSeat.tableNo;
         player.seatNo = openSeat.seatNo;
         openSeat.taken = true;
-        let tableToMove = _.find(data.tables, e => e.tableNo == openSeat?.tableNo);
+        let tableToMove = _.find(
+          data.tables,
+          e => e.tableNo == openSeat?.tableNo
+        );
         if (tableToMove) {
-          logger.info(`******* Moving player ${player.playerName} [${player.tableNo}: ${player.seatNo}] to a new table: [${openSeat.tableNo}:${openSeat.seatNo}]`);
+          logger.info(
+            `******* Moving player ${player.playerName} [${player.tableNo}: ${player.seatNo}] to a new table: [${openSeat.tableNo}:${openSeat.seatNo}]`
+          );
           tableToMove.players.push(player);
           // player is moved
           ret.push({
@@ -588,82 +612,6 @@ function movePlayers(
             stack: player.stack,
             playerUuid: player.playerUuid,
           });
-        }
-      }
-    }
-  }
-  return ret;
-}
-
-
-function movePlayers3(
-  tables: Table[],
-  currentTableNo: number,
-  playersPerTable: number,
-  maxPlayersInTable: number,
-  playersBeingMoved: Array<TournamentPlayer | undefined>
-): Array<TableMove> {
-  const ret = new Array<TableMove>();
-  let lastUsedTable: number = -1;
-  while (playersBeingMoved.length > 0) {
-    const player = playersBeingMoved.pop();
-    if (player) {
-      // pick the next table after the lastone used
-      logger.info(`Moving player ${player.playerName} to a new table`);
-      let nextTabletoMove: number = 0;
-      const tablesWithSeats = getTablesWithSeats(
-        tables,
-        currentTableNo,
-        playersPerTable
-      );
-
-      if (lastUsedTable === -1 || tablesWithSeats.length === 1) {
-        nextTabletoMove = tablesWithSeats[0];
-      } else {
-        let foundLastTable = false;
-        for (let i = 0; i < tablesWithSeats.length; i++) {
-          if (foundLastTable) {
-            nextTabletoMove = tablesWithSeats[i];
-            break;
-          }
-
-          if (tablesWithSeats[i] === lastUsedTable) {
-            foundLastTable = true;
-            continue;
-          }
-        }
-        if (nextTabletoMove === 0) {
-          nextTabletoMove = tablesWithSeats[0];
-        }
-      }
-      lastUsedTable = nextTabletoMove;
-      for (const table of tables) {
-        if (table.tableNo === nextTabletoMove) {
-          // move to open seat in this table
-          const takenSeats = table.players.map(e => e.seatNo);
-          for (let seatNo = 1; seatNo <= maxPlayersInTable; seatNo++) {
-            if (!takenSeats.includes(seatNo)) {
-              player.seatNo = seatNo;
-              table.players.push(player);
-              logger.info(
-                `Player ${player.playerName} (id: ${player.playerId}) is being moved table ${player.tableNo} => ${table.tableNo}`
-              );
-              player.timesMoved++;
-              // player is moved
-              ret.push({
-                playerId: player.playerId,
-                oldSeatNo: player.seatNo,
-                oldTableNo: currentTableNo,
-                newTableNo: table.tableNo,
-                seatNo: seatNo,
-                playerName: player.playerName,
-                stack: player.stack,
-                playerUuid: player.playerUuid,
-              });
-              break;
-            }
-          }
-          break;
         }
       }
     }
@@ -707,22 +655,22 @@ export function getLevelData(
   levelType: TournamentLevelType
 ): Array<TournamentLevel> {
   let standardLevels = new Array<TournamentLevel>();
-  let bigBlind = 300;
-  let bigBlindIncrement = 100;
+  let bigBlind = 500;
+  let bigBlindIncrement = 200;
   let ante = 0;
   let anteIncrement = 10;
   for (let level = 1; level <= 80; level++) {
     if (level == 5) {
       ante = 200;
-      anteIncrement = 100;
+      anteIncrement = 500;
       bigBlind = 1000;
-      //bigBlindIncrement = 20;
+      bigBlindIncrement = 500;
     }
 
     if (level == 7) {
       ante = 500;
       anteIncrement = 200;
-      bigBlind = 2000;
+      bigBlind = 5000;
       bigBlindIncrement = 500;
     }
 
@@ -790,7 +738,27 @@ export function getNextActiveSeat(
   return -1;
 }
 
-function getOccupiedSeats(data: TournamentData, table: Table): Array<number> {
+export function getNextOpenSeat(
+  data: TournamentData,
+  occupiedSeats: Array<number>,
+  startingSeatNo: number
+) {
+  let seatNo = startingSeatNo;
+  seatNo++;
+
+  for (let i = 1; i <= data.maxPlayersInTable; i++) {
+    if (seatNo > data.maxPlayersInTable) {
+      seatNo = 1;
+    }
+    if (!occupiedSeats[seatNo]) {
+      return seatNo;
+    }
+    seatNo++;
+  }
+  return -1;
+}
+
+function getOccupiedSeats(data: TournamentData, table: Table): any {
   let occupiedSeats = new Array<number>();
   for (let seatNo = 0; seatNo <= data.maxPlayersInTable; seatNo++) {
     let found = false;

@@ -1,14 +1,14 @@
-import { PokerGame } from '@src/entity/game/game';
-import { Player } from '@src/entity/player/player';
-import { errToStr, getLogger } from '@src/utils/log';
+import {PokerGame} from '@src/entity/game/game';
+import {Player} from '@src/entity/player/player';
+import {errToStr, getLogger} from '@src/utils/log';
 import * as firebase from 'firebase-admin';
-import { ServiceAccount } from 'firebase-admin';
+import {ServiceAccount} from 'firebase-admin';
 
-import { getRunProfile, getRunProfileStr, RunProfile } from '@src/server';
-import { Club } from '@src/entity/player/club';
-import { default as axios } from 'axios';
-import { GoogleAuth } from 'google-auth-library';
-import { threadId } from 'worker_threads';
+import {getRunProfile, getRunProfileStr, RunProfile} from '@src/server';
+import {Club} from '@src/entity/player/club';
+import {default as axios} from 'axios';
+import {GoogleAuth} from 'google-auth-library';
+import {threadId} from 'worker_threads';
 import {
   AnnouncementLevel,
   AnnouncementType,
@@ -16,21 +16,21 @@ import {
   CreditUpdateType,
   GameType,
 } from '@src/entity/types';
-import { ClubRepository } from '@src/repositories/club';
+import {ClubRepository} from '@src/repositories/club';
 import _ from 'lodash';
-import { PlayerRepository } from '@src/repositories/player';
-import { Cache } from '@src/cache';
-import { Announcement } from '@src/entity/player/announcements';
-import { FirebaseToken } from '@src/repositories/types';
-import { centsToChips } from '@src/utils';
-import { Livekit } from '@src/livekit';
-import { playersGameTrackerById } from '@src/resolvers/playersingame';
+import {PlayerRepository} from '@src/repositories/player';
+import {Cache} from '@src/cache';
+import {Announcement} from '@src/entity/player/announcements';
+import {FirebaseToken} from '@src/repositories/types';
+import {centsToChips} from '@src/utils';
+import {Livekit} from '@src/livekit';
+import {playersGameTrackerById} from '@src/resolvers/playersingame';
 
 //import {default as google} from 'googleapis';
 let MESSAGE_BATCH_SIZE = 100;
 
 const fs = require('fs');
-const { google } = require('googleapis');
+const {google} = require('googleapis');
 
 const DEV_FCM_API_KEY =
   'AAAAEcBqsEo:APA91bFkBAQryNKEy9r28_FR9T2bFRmULouNucAFK4DvEfODAKH-40jzjlaWN0kcQckqKNUSuDYC0vROKwXgQqYiGjhldBgbDbDdI4SOep8meNtnsKcbkUPDRO6ctv9L4KPHyVsM3Nyl';
@@ -106,7 +106,7 @@ class FirebaseClass {
     privacyPolicyUpdatedDate: new Date(Date.now()),
   };
 
-  constructor() { }
+  constructor() {}
 
   private async getAccessToken(): Promise<string | null | undefined> {
     const auth = new GoogleAuth({
@@ -369,7 +369,8 @@ class FirebaseClass {
       ClubNotificationType.CLUB_ANNOUNCEMENT
     ).catch(err => {
       logger.error(
-        `Failed to send club firebase message: ${club.clubCode
+        `Failed to send club firebase message: ${
+          club.clubCode
         }, err: ${errToStr(err)}`
       );
     });
@@ -410,7 +411,8 @@ class FirebaseClass {
     this.sendClubMsg(club, message, ClubNotificationType.NEW_GAME).catch(
       err => {
         logger.error(
-          `Failed to send club firebase message: ${club.clubCode
+          `Failed to send club firebase message: ${
+            club.clubCode
           }, err: ${errToStr(err)}`
         );
       }
@@ -467,7 +469,8 @@ class FirebaseClass {
     };
     this.sendClubMsg(club, message, ClubNotificationType.NONE).catch(err => {
       logger.error(
-        `Failed to send club firebase message. Club: ${club.clubCode
+        `Failed to send club firebase message. Club: ${
+          club.clubCode
         }, type: ${msgType}, err: ${errToStr(err)}`
       );
     });
@@ -523,7 +526,8 @@ class FirebaseClass {
     this.sendClubMsg(club, message, ClubNotificationType.CLUB_CHAT).catch(
       err => {
         logger.error(
-          `Failed to send club firebase message: ${club.clubCode
+          `Failed to send club firebase message: ${
+            club.clubCode
           }, err: ${errToStr(err)}`
         );
       }
@@ -1010,4 +1014,4 @@ export function resetAppSettings() {
   return settings;
 }
 const Firebase = new FirebaseClass();
-export { Firebase };
+export {Firebase};
