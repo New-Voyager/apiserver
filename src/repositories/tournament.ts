@@ -1,15 +1,16 @@
-import {Tournament} from '@src/entity/game/tournament';
-import {errToStr, getLogger} from '@src/utils/log';
-import {EntityManager, Repository} from 'typeorm';
-import {Cache} from '@src/cache';
-import {getGameRepository} from '.';
-import {sleep, startTimerWithPayload} from '@src/timer';
-import {Nats} from '@src/nats';
-import {GameServerRepository} from './gameserver';
-import {GameType} from '@src/entity/types';
+import { Tournament } from '@src/entity/game/tournament';
+import { errToStr, getLogger } from '@src/utils/log';
+import { EntityManager, Repository } from 'typeorm';
+import { Cache } from '@src/cache';
+import { getGameRepository } from '.';
+import { sleep, startTimerWithPayload } from '@src/timer';
+import { Nats } from '@src/nats';
+import { GameServerRepository } from './gameserver';
+import { GameType } from '@src/entity/types';
 import {
   balanceTable,
   getLevelData,
+  getNextActiveSeat,
   Table,
   TableMove,
   TournamentData,
@@ -23,7 +24,7 @@ import {
   TournamentTableInfo,
 } from './balance';
 import _ from 'lodash';
-import {endBotTournament, registerBotsTournament} from '@src/botrunner';
+import { endBotTournament, registerBotsTournament } from '@src/botrunner';
 
 const logger = getLogger('tournaments');
 const apiCallbackHost = 'localhost:9001';
@@ -76,11 +77,11 @@ interface Queue {
 }
 class TournamentRepositoryImpl {
   private initialized: boolean = false;
-  private cachedEncryptionKeys: {[key: string]: string} = {};
-  private currentTournamentLevel: {[key: number]: number} = {};
-  private currentTournamentLevelStartedAt: {[key: number]: Date} = {};
-  private tournamentLevelData: {[key: number]: Array<TournamentLevel>} = {};
-  private processQueue: {[key: number]: Queue} = {};
+  private cachedEncryptionKeys: { [key: string]: string } = {};
+  private currentTournamentLevel: { [key: number]: number } = {};
+  private currentTournamentLevelStartedAt: { [key: number]: Date } = {};
+  private tournamentLevelData: { [key: number]: Array<TournamentLevel> } = {};
+  private processQueue: { [key: number]: Queue } = {};
 
   public async initialize(serverHost?: string) {
     if (this.initialized) {
@@ -299,7 +300,7 @@ class TournamentRepositoryImpl {
   public async fillBotsTournament(tournamentId: number) {
     let tournamentRepo: Repository<Tournament>;
     tournamentRepo = getGameRepository(Tournament);
-    const tournament = await tournamentRepo.findOne({id: tournamentId});
+    const tournament = await tournamentRepo.findOne({ id: tournamentId });
     if (tournament) {
       const data: TournamentData = JSON.parse(tournament.data);
       const botCount = data.maxPlayers - data.registeredPlayers.length;
@@ -317,7 +318,7 @@ class TournamentRepositoryImpl {
       const player = await Cache.getPlayer(playerUuid);
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({id: tournamentId});
+      const tournament = await tournamentRepo.findOne({ id: tournamentId });
       if (tournament) {
         let data = JSON.parse(tournament.data);
         const playerData = data.registeredPlayers.find(
@@ -346,7 +347,7 @@ class TournamentRepositoryImpl {
       }
     } catch (err) {
       logger.error(
-        `Failed to register for tournement: ${tournamentId}: ${errToStr(err)}`
+        `Failed to register for tournament: ${tournamentId}: ${errToStr(err)}`
       );
       throw err;
     }
@@ -435,7 +436,7 @@ class TournamentRepositoryImpl {
       Nats.tournamentStarted(data.id);
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({id: tournamentId});
+      const tournament = await tournamentRepo.findOne({ id: tournamentId });
       if (!tournament) {
         throw new Error(`Tournament ${tournamentId} not found`);
       }
@@ -528,7 +529,7 @@ class TournamentRepositoryImpl {
       }
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({id: tournamentId});
+      const tournament = await tournamentRepo.findOne({ id: tournamentId });
       if (tournament) {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
@@ -635,28 +636,6 @@ class TournamentRepositoryImpl {
     }
   }
 
-  private getNextActiveSeat(
-    data: TournamentData,
-    tableNo: number,
-    occupiedSeats: Array<number>,
-    startingSeatNo: number
-  ) {
-    let found = false;
-    let seatNo = startingSeatNo;
-    seatNo++;
-
-    for (let i = 0; i <= data.maxPlayersInTable; i++) {
-      if (seatNo > data.maxPlayersInTable) {
-        seatNo = 1;
-      }
-      if (occupiedSeats[seatNo]) {
-        return seatNo;
-      }
-      seatNo++;
-    }
-    return -1;
-  }
-
   private async runHand(tournamentId: number, tableNo: number) {
     const data: TournamentData = await this.getTournamentData(tournamentId);
     if (!data) {
@@ -714,6 +693,7 @@ class TournamentRepositoryImpl {
         open_seat: false,
         encryption_key: encryptionKey,
       };
+      logger.info(`Table: ${table.tableNo} playerUuid: ${player.playerUuid} name: ${player.playerName} key: ${encryptionKey}`);
       seats[player.seatNo] = seat;
     }
 
@@ -778,9 +758,8 @@ class TournamentRepositoryImpl {
       // determine random button position
       let playerIdx = Math.round(Math.random() * 1000) % table.players.length;
       buttonPos = table.players[playerIdx].seatNo;
-      smallBlindPos = this.getNextActiveSeat(
+      smallBlindPos = getNextActiveSeat(
         data,
-        tableNo,
         occupiedSeats,
         buttonPos
       );
@@ -794,9 +773,8 @@ class TournamentRepositoryImpl {
     }
     table.smallBlindPos = smallBlindPos;
     table.buttonPos = buttonPos;
-    table.bigBlindPos = this.getNextActiveSeat(
+    table.bigBlindPos = getNextActiveSeat(
       data,
-      tableNo,
       occupiedSeats,
       smallBlindPos
     );
@@ -890,7 +868,7 @@ class TournamentRepositoryImpl {
     // save the tournament state
     let tournamentRepo: Repository<Tournament>;
     tournamentRepo = getGameRepository(Tournament);
-    let tournament = await tournamentRepo.findOne({id: tournamentId});
+    let tournament = await tournamentRepo.findOne({ id: tournamentId });
     if (tournament) {
     } else {
       throw new Error(`Tournament ${tournamentId} is not found`);
@@ -965,7 +943,7 @@ class TournamentRepositoryImpl {
       for (const player of table.players) {
         playersStack =
           playersStack +
-          ` ${player.playerName}:${player.playerId} ${player.stack}`;
+          ` ${player.playerName}:${player.playerId}:${player.seatNo} ${player.stack}`;
       }
 
       let tableActivity = '';
@@ -990,7 +968,7 @@ class TournamentRepositoryImpl {
       // bots will join the tournament here
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      let tournament = await tournamentRepo.findOne({id: tournamentId});
+      let tournament = await tournamentRepo.findOne({ id: tournamentId });
       if (tournament) {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
@@ -1010,7 +988,7 @@ class TournamentRepositoryImpl {
       }
 
       // get data again from the db
-      tournament = await tournamentRepo.findOne({id: tournamentId});
+      tournament = await tournamentRepo.findOne({ id: tournamentId });
       if (!tournament) {
         throw new Error(`Tournament ${tournamentId} is not found`);
       }
@@ -1161,7 +1139,7 @@ class TournamentRepositoryImpl {
       // logger.info(`${tournamentId}:${tableNo} ${playerStack}`);
       const tournamentRepo: Repository<Tournament> =
         getGameRepository(Tournament);
-      let tournament = await tournamentRepo.findOne({id: tournamentId});
+      let tournament = await tournamentRepo.findOne({ id: tournamentId });
       if (tournament) {
       } else {
         throw new Error(`Tournament ${tournamentId} is not found`);
@@ -1329,12 +1307,12 @@ class TournamentRepositoryImpl {
         gameServerRpc.playerMovedTable(playerMovedPayload, (err, value) => {
           if (err) {
             logger.error(
-              `moving player table tournament: ${tournamentData?.id} table: ${player.oldTableNo}=>${player.newTableNo} failed`
+              `moving player table tournament: ${tournamentData?.id} player: ${player.playerName} table: ${player.oldTableNo}:${player.oldSeatNo}=>${player.newTableNo}:${player.seatNo} failed`
             );
           } else {
             // successfully moved the table
             logger.info(
-              `moving player table tournament: ${tournamentData?.id} table: ${player.oldTableNo}=>${player.newTableNo} succeeded`
+              `moving player table tournament: ${tournamentData?.id} player: ${player.playerName}:${player.playerId} table: ${player.oldTableNo}:${player.oldSeatNo}=>${player.newTableNo}:${player.seatNo} succeeded`
             );
           }
         });
@@ -1518,7 +1496,7 @@ class TournamentRepositoryImpl {
     // update results
     let tournamentRepo: Repository<Tournament>;
     tournamentRepo = getGameRepository(Tournament);
-    const tournament = await tournamentRepo.findOne({id: tournamentId});
+    const tournament = await tournamentRepo.findOne({ id: tournamentId });
     if (!tournament) {
       throw new Error(`Tournament ${tournamentId} not found`);
     }
@@ -1565,7 +1543,7 @@ class TournamentRepositoryImpl {
       Nats.tournamentAboutToStart(data.id);
       let tournamentRepo: Repository<Tournament>;
       tournamentRepo = getGameRepository(Tournament);
-      const tournament = await tournamentRepo.findOne({id: tournamentId});
+      const tournament = await tournamentRepo.findOne({ id: tournamentId });
       if (!tournament) {
         throw new Error(`Tournament ${tournamentId} not found`);
       }
@@ -1598,9 +1576,9 @@ class TournamentRepositoryImpl {
     const tournamentRepo = getGameRepository(Tournament);
     const tournaments = await tournamentRepo.find({
       where: [
-        {status: TournamentStatus.SCHEDULED},
-        {status: TournamentStatus.RUNNING},
-        {status: TournamentStatus.ABOUT_TO_START},
+        { status: TournamentStatus.SCHEDULED },
+        { status: TournamentStatus.RUNNING },
+        { status: TournamentStatus.ABOUT_TO_START },
       ],
     });
     for (const tournament of tournaments) {
