@@ -126,7 +126,8 @@ class FirebaseClass {
   }
 
   public async init() {
-    const runProfile = getRunProfile();
+    let runProfile = getRunProfile();
+    //runProfile = RunProfile.PROD;
     let serviceAccountFile = '';
     let clientConfigFile = '';
     const configDir = `${__dirname}/../google-services`;
@@ -188,7 +189,7 @@ class FirebaseClass {
         logger.info(`Message id: ${e}`);
       })
       .catch(e => {
-        logger.error(`Sending message failed`);
+        logger.error(`Sending message failed. Error: ${e.toString()}`);
       });
   }
 

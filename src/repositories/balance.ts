@@ -1,5 +1,7 @@
 import {GameType} from '@src/entity/types';
 import {errToStr, getLogger} from '@src/utils/log';
+import {bool} from 'aws-sdk/clients/signer';
+import _ from 'lodash';
 
 const logger = getLogger('balance');
 
@@ -13,6 +15,51 @@ export interface TableMove {
   stack: number;
   seatNo: number;
 }
+
+export interface BlindStruct {
+  level: number;
+  bb: number;
+  ante: number;
+}
+
+const defaultStruct: Array<BlindStruct> = [
+  {level: 1, bb: 20, ante: 0},
+  {level: 2, bb: 50, ante: 0},
+  {level: 3, bb: 100, ante: 0},
+  {level: 4, bb: 150, ante: 0},
+  {level: 5, bb: 200, ante: 0},
+  {level: 6, bb: 250, ante: 0},
+  {level: 7, bb: 300, ante: 0},
+  {level: 8, bb: 400, ante: 0},
+  {level: 9, bb: 500, ante: 0},
+  {level: 10, bb: 600, ante: 0},
+  {level: 11, bb: 800, ante: 0},
+  {level: 12, bb: 1000, ante: 200},
+  {level: 13, bb: 1200, ante: 240},
+  {level: 14, bb: 1400, ante: 280},
+  {level: 15, bb: 1600, ante: 320},
+  {level: 16, bb: 2000, ante: 400},
+  {level: 17, bb: 3000, ante: 600},
+  {level: 18, bb: 4000, ante: 800},
+  {level: 19, bb: 6000, ante: 1200},
+  {level: 20, bb: 8000, ante: 1600},
+  {level: 21, bb: 10000, ante: 2000},
+  {level: 22, bb: 12000, ante: 2400},
+  {level: 23, bb: 15000, ante: 3000},
+  {level: 24, bb: 20000, ante: 4000},
+  {level: 25, bb: 30000, ante: 6000},
+  {level: 26, bb: 40000, ante: 8000},
+  {level: 27, bb: 60000, ante: 12000},
+  {level: 28, bb: 80000, ante: 16000},
+  {level: 29, bb: 100000, ante: 20000},
+  {level: 30, bb: 120000, ante: 24000},
+  {level: 31, bb: 200000, ante: 40000},
+  {level: 32, bb: 300000, ante: 60000},
+  {level: 33, bb: 400000, ante: 80000},
+  {level: 34, bb: 600000, ante: 120000},
+  {level: 35, bb: 800000, ante: 160000},
+  {level: 36, bb: 1000000, ante: 200000},
+];
 
 export interface Table {
   tableNo: number;
@@ -94,6 +141,7 @@ export interface TournamentData {
   currentLevel: number; // -1 = not started
   levelTime: number;
   activePlayers: number;
+  handNum: number; // unique hand number for the entire tournament
   levels: Array<TournamentLevel>;
   scheduledStartTime: Date;
   minPlayers: number;
@@ -214,10 +262,8 @@ export function balanceTable(
       // move some players to another table
       // choose the players to move
       let playersBeingMoved = determinePlayersToMove(
-        currentTablePlayers,
         playersPerTable,
         data,
-        currentTableNo,
         currentTable
       );
       let playerNames = new Array<string>();
@@ -230,10 +276,9 @@ export function balanceTable(
 
       // move players to other tables
       movedPlayers = movePlayers(
-        data.tables,
+        data,
         currentTableNo,
         playersPerTable,
-        data.maxPlayersInTable,
         playersBeingMoved
       );
 
@@ -249,10 +294,8 @@ export function balanceTable(
       // move some players to another table
       // choose the players to move
       let playersBeingMoved = determinePlayersToMove2(
-        currentTablePlayers,
         playersPerTable,
         data,
-        currentTableNo,
         currentTable
       );
       if (playersBeingMoved.length >= 1) {
@@ -266,10 +309,9 @@ export function balanceTable(
 
         // move players to other tables
         movedPlayers = movePlayers(
-          data.tables,
+          data,
           currentTableNo,
           playersPerTable,
-          data.maxPlayersInTable,
           playersBeingMoved
         );
       }
@@ -319,17 +361,15 @@ export function balanceTable(
 }
 
 function determinePlayersToMove(
-  currentTablePlayers: TournamentPlayer[],
   playersPerTable: number,
   data: TournamentData,
-  currentTableNo: number,
   currentTable: Table
 ): Array<TournamentPlayer | undefined> {
   let playersBeingMoved = new Array<TournamentPlayer | undefined>();
   let playersToMove = 0;
-  if (currentTablePlayers.length > playersPerTable) {
+  if (currentTable.players.length > playersPerTable) {
     // we may need to move some players to other tables
-    playersToMove = currentTablePlayers.length - playersPerTable;
+    playersToMove = currentTable.players.length - playersPerTable;
   } else {
     // can you move all the players to other tables
     let availableOpenSeats = 0;
@@ -338,25 +378,41 @@ function determinePlayersToMove(
       if (!table.isActive) {
         continue;
       }
-      if (table.tableNo !== currentTableNo) {
+      if (table.tableNo !== currentTable.tableNo) {
         availableOpenSeats += data.maxPlayersInTable - table.players.length;
       }
     }
 
-    if (availableOpenSeats >= currentTablePlayers.length) {
-      logger.info(`Table: ${currentTableNo} can be removed`);
+    if (availableOpenSeats >= currentTable.players.length) {
+      logger.info(`Table: ${currentTable.tableNo} can be removed`);
       // all the players can be moved to other tables
-      playersToMove = currentTablePlayers.length;
+      playersToMove = currentTable.players.length;
     }
   }
 
   // move the players to other tables
-  while (playersToMove > 0) {
-    playersToMove--;
-    playersBeingMoved.push(currentTablePlayers.pop());
+  if (playersToMove > 0) {
+    // start from the player who would be big blind next hand
+    let occupiedSeats = getOccupiedSeats(data, currentTable);
+    let moveSeat = currentTable.bigBlindPos;
+    while (playersToMove > 0) {
+      playersToMove--;
+      moveSeat = getNextActiveSeat(data, occupiedSeats, moveSeat);
+      for (const player of currentTable.players) {
+        if (player.seatNo == moveSeat) {
+          playersBeingMoved.push(player);
+          currentTable.players = _.filter(
+            currentTable.players,
+            e => e.seatNo != moveSeat
+          );
+          break;
+        }
+      }
+    }
+    if (currentTable.players.length === 0) {
+      currentTable.isActive = false;
+    }
   }
-  // these players are staying
-  currentTable.players = currentTablePlayers;
   return playersBeingMoved;
 }
 
@@ -365,18 +421,14 @@ function determinePlayersToMove(
  * For example, 6, 6, 4 scenario
  * The current table is 2, and we can move one player from this table to table 3
  *
- * @param currentTablePlayers
  * @param playersPerTable
  * @param data
- * @param currentTableNo
  * @param currentTable
  * @returns
  */
 function determinePlayersToMove2(
-  currentTablePlayers: TournamentPlayer[],
   playersPerTable: number,
   data: TournamentData,
-  currentTableNo: number,
   currentTable: Table
 ): Array<TournamentPlayer | undefined> {
   let playersBeingMoved = new Array<TournamentPlayer | undefined>();
@@ -385,7 +437,7 @@ function determinePlayersToMove2(
   // check another table that has less than optimal number of players
   let chosenTable: Table | undefined;
   for (const table of data.tables) {
-    if (table.tableNo == currentTableNo) {
+    if (table.tableNo == currentTable.tableNo) {
       continue;
     }
     // skip inactive tables
@@ -404,7 +456,7 @@ function determinePlayersToMove2(
     const openSeatsInOtherTable =
       data.maxPlayersInTable - chosenTable.players.length;
     logger.info(
-      `Chosen table to move players: ${chosenTable.tableNo} currentTableNo: ${currentTableNo} openSeatsInCurrentTable: ${openSeatsInCurrentTable} openSeatsInOtherTable: ${openSeatsInOtherTable}`
+      `Chosen table to move players: ${chosenTable.tableNo} currentTableNo: ${currentTable.tableNo} openSeatsInCurrentTable: ${openSeatsInCurrentTable} openSeatsInOtherTable: ${openSeatsInOtherTable}`
     );
 
     if (openSeatsInOtherTable - openSeatsInCurrentTable >= 2) {
@@ -419,11 +471,22 @@ function determinePlayersToMove2(
   // move the players to other tables
   while (playersToMove > 0) {
     playersToMove--;
-    playersBeingMoved.push(currentTablePlayers.pop());
+    playersBeingMoved.push(currentTable.players.pop());
   }
   // these players are staying
-  currentTable.players = currentTablePlayers;
   return playersBeingMoved;
+}
+
+/*
+Available seat in another table to move a player
+The rank is 1 if the seat is the next blind, rank increases in that order in each table
+We will try to sit the players based on the rank.
+*/
+interface AvailableSeatRank {
+  tableNo: number;
+  seatNo: number;
+  rank: number;
+  taken: bool;
 }
 
 function getTablesWithSeats(
@@ -447,74 +510,154 @@ function getTablesWithSeats(
   return tablesWithSeats;
 }
 
-function movePlayers(
+function getTablesWithSeatsRank(
+  data: TournamentData,
   tables: Table[],
+  skipTableNo: number,
+  playersPerTable: number
+): Array<AvailableSeatRank> {
+  // find the tables with seats available
+  let tablesWithSeats = new Array<AvailableSeatRank>();
+  for (const table of tables) {
+    if (table.tableNo !== skipTableNo) {
+      if (!table.isActive) {
+        continue;
+      }
+      if (table.players.length < playersPerTable) {
+        // there are seats available in this table
+        let occupiedSeats = getOccupiedSeats(data, table);
+
+        // find the next bigblind seat pos
+        let nextSeatPos: number = table.bigBlindPos;
+        let availableSeats = playersPerTable - table.players.length;
+        let rank = 1;
+        while (availableSeats > 0) {
+          nextSeatPos = getNextOpenSeat(data, occupiedSeats, nextSeatPos);
+          logger.info(
+            `Table Open Seat Rank: ${table.tableNo} occupiedSeats: ${occupiedSeats} openSeat: ${nextSeatPos} bigBlindPos: ${table.bigBlindPos} rank: ${rank}`
+          );
+
+          if (nextSeatPos != -1) {
+            tablesWithSeats.push({
+              tableNo: table.tableNo,
+              seatNo: nextSeatPos,
+              rank: rank,
+              taken: false,
+            });
+            rank++;
+          }
+          availableSeats--;
+        }
+      }
+    }
+  }
+  tablesWithSeats.sort();
+  return tablesWithSeats;
+}
+
+function getOpenSeat(
+  seatWithRank: AvailableSeatRank[],
+  rank: number,
+  options?: {lower?: bool; greater?: bool}
+): AvailableSeatRank | undefined {
+  let ret: AvailableSeatRank | undefined;
+  if (!options) {
+    // find a seat with same rank
+    for (const seat of seatWithRank) {
+      if (seat.taken) {
+        continue;
+      }
+      if (rank == 0) {
+        ret = seat;
+        break;
+      }
+      if (seat.rank == rank) {
+        ret = seat;
+        break;
+      }
+    }
+  } else {
+    for (const seat of seatWithRank) {
+      if (seat.taken) {
+        continue;
+      }
+      if (options.lower && seat.rank < rank) {
+        ret = seat;
+        break;
+      } else if (options.greater && seat.rank > rank) {
+        ret = seat;
+        break;
+      }
+    }
+  }
+  return ret;
+}
+
+function movePlayers(
+  data: TournamentData,
   currentTableNo: number,
   playersPerTable: number,
-  maxPlayersInTable: number,
   playersBeingMoved: Array<TournamentPlayer | undefined>
 ): Array<TableMove> {
   const ret = new Array<TableMove>();
   let lastUsedTable: number = -1;
+  let rank = 1;
   while (playersBeingMoved.length > 0) {
     const player = playersBeingMoved.pop();
+    const seatsWithPlayers = getTablesWithSeatsRank(
+      data,
+      data.tables,
+      currentTableNo,
+      playersPerTable
+    );
     if (player) {
-      // pick the next table after the lastone used
-      logger.info(`Moving player ${player.playerName} to a new table`);
-      let nextTabletoMove: number = 0;
-      const tablesWithSeats = getTablesWithSeats(
-        tables,
-        currentTableNo,
-        playersPerTable
-      );
-
-      if (lastUsedTable === -1 || tablesWithSeats.length === 1) {
-        nextTabletoMove = tablesWithSeats[0];
-      } else {
-        let foundLastTable = false;
-        for (let i = 0; i < tablesWithSeats.length; i++) {
-          if (foundLastTable) {
-            nextTabletoMove = tablesWithSeats[i];
-            break;
-          }
-
-          if (tablesWithSeats[i] === lastUsedTable) {
-            foundLastTable = true;
-            continue;
-          }
-        }
-        if (nextTabletoMove === 0) {
-          nextTabletoMove = tablesWithSeats[0];
-        }
+      // find a seat with the same rank
+      let openSeat = getOpenSeat(seatsWithPlayers, rank);
+      if (!openSeat) {
+        openSeat = getOpenSeat(seatsWithPlayers, rank, {lower: true});
       }
-      lastUsedTable = nextTabletoMove;
-      for (const table of tables) {
-        if (table.tableNo === nextTabletoMove) {
-          // move to open seat in this table
-          const takenSeats = table.players.map(e => e.seatNo);
-          for (let seatNo = 1; seatNo <= maxPlayersInTable; seatNo++) {
-            if (!takenSeats.includes(seatNo)) {
-              player.seatNo = seatNo;
-              table.players.push(player);
-              logger.info(
-                `Player ${player.playerName} (id: ${player.playerId}) is being moved table ${player.tableNo} => ${table.tableNo}`
-              );
-              player.timesMoved++;
-              // player is moved
-              ret.push({
-                playerId: player.playerId,
-                oldSeatNo: player.seatNo,
-                oldTableNo: currentTableNo,
-                newTableNo: table.tableNo,
-                seatNo: seatNo,
-                playerName: player.playerName,
-                stack: player.stack,
-                playerUuid: player.playerUuid,
-              });
-              break;
-            }
-          }
-          break;
+      if (!openSeat) {
+        openSeat = getOpenSeat(seatsWithPlayers, rank, {greater: true});
+      }
+      if (!openSeat) {
+        // get next available seat
+        openSeat = getOpenSeat(seatsWithPlayers, 0);
+      }
+      if (openSeat) {
+        openSeat.taken = true;
+      }
+      rank++;
+
+      if (openSeat) {
+        // pick the next table after the lastone used
+        logger.info(
+          `Moving player ${player.playerName} [${player.tableNo}: ${player.seatNo}] to a new table: [${openSeat.tableNo}:${openSeat.seatNo}]`
+        );
+        let oldSeatNo = player.seatNo;
+        let oldTableNo = player.tableNo;
+        player.tableNo = openSeat.tableNo;
+        player.seatNo = openSeat.seatNo;
+        openSeat.taken = true;
+        let tableToMove = _.find(
+          data.tables,
+          e => e.tableNo == openSeat?.tableNo
+        );
+        if (tableToMove) {
+          logger.info(
+            `******* Moving player ${player.playerName} [${player.tableNo}: ${player.seatNo}] to a new table: [${openSeat.tableNo}:${openSeat.seatNo}]`
+          );
+          tableToMove.players.push(player);
+          // player is moved
+          ret.push({
+            playerId: player.playerId,
+            oldSeatNo: oldSeatNo,
+            oldTableNo: oldTableNo,
+            newTableNo: tableToMove.tableNo,
+            seatNo: openSeat.seatNo,
+            playerName: player.playerName,
+            stack: player.stack,
+            playerUuid: player.playerUuid,
+          });
         }
       }
     }
@@ -558,64 +701,72 @@ export function getLevelData(
   levelType: TournamentLevelType
 ): Array<TournamentLevel> {
   let standardLevels = new Array<TournamentLevel>();
-  let bigBlind = 20;
-  let bigBlindIncrement = 10;
-  let ante = 0;
-  let anteIncrement = 10;
-  for (let level = 1; level <= 80; level++) {
-    if (level == 5) {
-      ante = 5;
-      anteIncrement = 10;
-      bigBlind = 50;
-      //bigBlindIncrement = 20;
-    }
-
-    if (level == 7) {
-      ante = 20;
-      anteIncrement = 20;
-      bigBlind = 100;
-      //bigBlindIncrement = 25;
-    }
-
-    if (level == 10) {
-      ante = 50;
-      anteIncrement = 50;
-      bigBlind = 500;
-      bigBlindIncrement = 100;
-    }
-
-    // if (level == 15) {
-    //   anteIncrement = 400;
-    //   bigBlindIncrement = 5000;
-    // }
-
-    // if (level == 20) {
-    //   anteIncrement = 600;
-    //   bigBlindIncrement = 10000;
-    // }
-
-    // if (level == 25) {
-    //   anteIncrement = 1000;
-    //   bigBlindIncrement = 20000;
-    // }
-
-    // if (level == 30) {
-    //   anteIncrement = 5000;
-    //   bigBlindIncrement = 50000;
-    // }
-
-    // if (level > 30) {
-    //   anteIncrement *= 2;
-    //   bigBlindIncrement *= 2;
-    // }
+  for (const level of defaultStruct) {
     standardLevels.push({
-      level: level,
-      ante: ante,
-      smallBlind: bigBlind / 2,
-      bigBlind: bigBlind,
+      smallBlind: level.bb / 2,
+      bigBlind: level.bb,
+      ante: level.ante,
+      level: level.level,
     });
-    ante += anteIncrement;
-    bigBlind += bigBlindIncrement;
   }
   return standardLevels;
+}
+
+export function getNextActiveSeat(
+  data: TournamentData,
+  occupiedSeats: Array<number>,
+  startingSeatNo: number
+) {
+  let found = false;
+  let seatNo = startingSeatNo;
+  seatNo++;
+
+  for (let i = 0; i <= data.maxPlayersInTable; i++) {
+    if (seatNo > data.maxPlayersInTable) {
+      seatNo = 1;
+    }
+    if (occupiedSeats[seatNo]) {
+      return seatNo;
+    }
+    seatNo++;
+  }
+  return -1;
+}
+
+export function getNextOpenSeat(
+  data: TournamentData,
+  occupiedSeats: Array<number>,
+  startingSeatNo: number
+) {
+  let seatNo = startingSeatNo;
+  seatNo++;
+
+  for (let i = 1; i <= data.maxPlayersInTable; i++) {
+    if (seatNo > data.maxPlayersInTable) {
+      seatNo = 1;
+    }
+    if (!occupiedSeats[seatNo]) {
+      return seatNo;
+    }
+    seatNo++;
+  }
+  return -1;
+}
+
+function getOccupiedSeats(data: TournamentData, table: Table): any {
+  let occupiedSeats = new Array<number>();
+  for (let seatNo = 0; seatNo <= data.maxPlayersInTable; seatNo++) {
+    let found = false;
+    for (const player of table.players) {
+      if (player.seatNo === seatNo) {
+        occupiedSeats.push(player.playerId);
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      occupiedSeats.push(0);
+    }
+  }
+  return occupiedSeats;
 }

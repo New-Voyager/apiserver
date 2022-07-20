@@ -10,6 +10,7 @@ import {GameType} from '@src/entity/types';
 import {
   balanceTable,
   getLevelData,
+  getNextActiveSeat,
   Table,
   TableMove,
   TournamentData,
@@ -195,7 +196,7 @@ class TournamentRepositoryImpl {
     try {
       const tableServer = await GameServerRepository.getNextGameServer();
       const startingChips = 1000;
-      let levelTime = 30;
+      let levelTime = 20;
       if (input.levelTime) {
         levelTime = input.levelTime;
       }
@@ -208,6 +209,7 @@ class TournamentRepositoryImpl {
         maxPlayersInTable: input.maxPlayersInTable,
         levelTime: levelTime, // seconds
         currentLevel: -1,
+        handNum: 0,
         levels: getLevelData(TournamentLevelType.STANDARD),
         tables: [],
         registeredPlayers: [],
@@ -346,7 +348,7 @@ class TournamentRepositoryImpl {
       }
     } catch (err) {
       logger.error(
-        `Failed to register for tournement: ${tournamentId}: ${errToStr(err)}`
+        `Failed to register for tournament: ${tournamentId}: ${errToStr(err)}`
       );
       throw err;
     }
@@ -356,14 +358,6 @@ class TournamentRepositoryImpl {
     try {
       const data = Cache.getTournamentData(tournamentId);
       return data;
-      // let tournamentRepo: Repository<Tournament>;
-      // tournamentRepo = getGameRepository(Tournament);
-      // const tournament = await tournamentRepo.findOne({ id: tournamentId });
-      // if (tournament) {
-      // } else {
-      //   throw new Error(`Tournament ${tournamentId} is not found`);
-      // }
-      // return JSON.parse(tournament.data);
     } catch (err) {
       logger.error(
         `Failed to get tournement info: ${tournamentId}: ${errToStr(err)}`
@@ -635,28 +629,6 @@ class TournamentRepositoryImpl {
     }
   }
 
-  private getNextActiveSeat(
-    data: TournamentData,
-    tableNo: number,
-    occupiedSeats: Array<number>,
-    startingSeatNo: number
-  ) {
-    let found = false;
-    let seatNo = startingSeatNo;
-    seatNo++;
-
-    for (let i = 0; i <= data.maxPlayersInTable; i++) {
-      if (seatNo > data.maxPlayersInTable) {
-        seatNo = 1;
-      }
-      if (occupiedSeats[seatNo]) {
-        return seatNo;
-      }
-      seatNo++;
-    }
-    return -1;
-  }
-
   private async runHand(tournamentId: number, tableNo: number) {
     const data: TournamentData = await this.getTournamentData(tournamentId);
     if (!data) {
@@ -714,6 +686,9 @@ class TournamentRepositoryImpl {
         open_seat: false,
         encryption_key: encryptionKey,
       };
+      // logger.info(
+      //   `Table: ${table.tableNo} playerUuid: ${player.playerUuid} name: ${player.playerName} key: ${encryptionKey}`
+      // );
       seats[player.seatNo] = seat;
     }
 
@@ -778,12 +753,7 @@ class TournamentRepositoryImpl {
       // determine random button position
       let playerIdx = Math.round(Math.random() * 1000) % table.players.length;
       buttonPos = table.players[playerIdx].seatNo;
-      smallBlindPos = this.getNextActiveSeat(
-        data,
-        tableNo,
-        occupiedSeats,
-        buttonPos
-      );
+      smallBlindPos = getNextActiveSeat(data, occupiedSeats, buttonPos);
     } else {
       buttonPos = table.smallBlindPos;
       smallBlindPos = table.bigBlindPos;
@@ -794,12 +764,8 @@ class TournamentRepositoryImpl {
     }
     table.smallBlindPos = smallBlindPos;
     table.buttonPos = buttonPos;
-    table.bigBlindPos = this.getNextActiveSeat(
-      data,
-      tableNo,
-      occupiedSeats,
-      smallBlindPos
-    );
+    table.bigBlindPos = getNextActiveSeat(data, occupiedSeats, smallBlindPos);
+    data.handNum++;
 
     let handDetails: any = {
       button_pos: table.buttonPos,
@@ -809,14 +775,14 @@ class TournamentRepositoryImpl {
       bb: bb * 100,
       ante: ante * 100,
       game_type: GameType.HOLDEM,
-      hand_num: table.handNum,
+      hand_num: data.handNum,
       result_pause_time: 3,
-      max_players: 6,
-      action_time: 15,
+      max_players: 9,
+      action_time: 10,
     };
 
     logger.info(
-      `Table: ${table.tableNo} Hand ${table.handNum} button: ${table.buttonPos} sb: ${table.smallBlindPos} bb: ${table.bigBlindPos}`
+      `NEW HAND: Table: ${table.tableNo} Hand ${data.handNum} button: ${table.buttonPos} sb: ${table.smallBlindPos} bb: ${table.bigBlindPos}`
     );
 
     // based on the number of players set up sb and bb
@@ -965,7 +931,7 @@ class TournamentRepositoryImpl {
       for (const player of table.players) {
         playersStack =
           playersStack +
-          ` ${player.playerName}:${player.playerId} ${player.stack}`;
+          ` ${player.playerName}:${player.playerId}:${player.seatNo} ${player.stack}`;
       }
 
       let tableActivity = '';
@@ -1323,19 +1289,19 @@ class TournamentRepositoryImpl {
             player.oldTableNo
           )}}`,
         };
-        logger.info(
-          `Moving player table: ${JSON.stringify(playerMovedPayload)}`
-        );
+        // logger.info(
+        //   `Moving player table: ${JSON.stringify(playerMovedPayload)}`
+        // );
         gameServerRpc.playerMovedTable(playerMovedPayload, (err, value) => {
           if (err) {
             logger.error(
-              `moving player table tournament: ${tournamentData?.id} table: ${player.oldTableNo}=>${player.newTableNo} failed`
+              `moving player table tournament: ${tournamentData?.id} player: ${player.playerName} table: ${player.oldTableNo}:${player.oldSeatNo}=>${player.newTableNo}:${player.seatNo} failed`
             );
           } else {
             // successfully moved the table
-            logger.info(
-              `moving player table tournament: ${tournamentData?.id} table: ${player.oldTableNo}=>${player.newTableNo} succeeded`
-            );
+            // logger.info(
+            //   `moving player table tournament: ${tournamentData?.id} player: ${player.playerName}:${player.playerId} table: ${player.oldTableNo}:${player.oldSeatNo}=>${player.newTableNo}:${player.seatNo} succeeded`
+            // );
           }
         });
       }
@@ -1448,7 +1414,6 @@ class TournamentRepositoryImpl {
     data.status = TournamentStatus.ENDED;
 
     // update the ranks
-    //const bustedPlayers = _.filter(data.playersInTournament, p => p.stack !== -1);
     const bustedRankOrder = _.orderBy(
       data.bustedPlayers,
       ['bustedOrder'],
@@ -1456,19 +1421,6 @@ class TournamentRepositoryImpl {
     );
     const rankedPlayers = new Array<TournamentPlayerRank>();
 
-    /*
-    export interface TournamentPlayerRank {
-        playerId: number;
-        playerName: string;
-        playerUuid: string;
-        stackBeforeBusted: number;
-        handsPlayed: number;
-        duration: number;
-        largestStack: number;
-        lowStack: number;
-        rank: number;
-      }
-    */
     let rank = 1;
     if (winner) {
       rankedPlayers.push({
@@ -1609,12 +1561,7 @@ class TournamentRepositoryImpl {
       if (data.startTime) {
         startTime = new Date(data.startTime.toString());
       }
-      /*  status: TournamentStatus;
-  registeredPlayersCount: number;
-  botsCount: number;
-  activePlayersCount: number;
-  createdBy: string;
-  */
+
       const item: TournamentListItem = {
         tournamentId: tournament.id,
         name: data.name,
