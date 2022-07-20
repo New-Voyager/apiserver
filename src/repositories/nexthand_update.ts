@@ -6,6 +6,7 @@ import {
   GameStatus,
   NextHandUpdate,
   PlayerStatus,
+  TableStatus,
 } from '@src/entity/types';
 import {Nats} from '@src/nats';
 import {cancelTimer} from '@src/timer';
@@ -42,6 +43,8 @@ class NextHandUpdatesRepositoryImpl {
 
     if (
       game.status === GameStatus.ACTIVE &&
+      (game.tableStatus == TableStatus.GAME_RUNNING ||
+        game.tableStatus === TableStatus.HOST_SEATCHANGE_IN_PROGRESS) &&
       playerInGame.status === PlayerStatus.PLAYING
     ) {
       const nextHandUpdate = await nextHandUpdatesRepository.findOne({

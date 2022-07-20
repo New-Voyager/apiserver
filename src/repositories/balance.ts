@@ -1,6 +1,6 @@
-import { GameType } from '@src/entity/types';
-import { errToStr, getLogger } from '@src/utils/log';
-import { bool } from 'aws-sdk/clients/signer';
+import {GameType} from '@src/entity/types';
+import {errToStr, getLogger} from '@src/utils/log';
+import {bool} from 'aws-sdk/clients/signer';
 import _ from 'lodash';
 
 const logger = getLogger('balance');
@@ -15,6 +15,51 @@ export interface TableMove {
   stack: number;
   seatNo: number;
 }
+
+export interface BlindStruct {
+  level: number;
+  bb: number;
+  ante: number;
+}
+
+const defaultStruct: Array<BlindStruct> = [
+  {level: 1, bb: 20, ante: 0},
+  {level: 2, bb: 50, ante: 0},
+  {level: 3, bb: 100, ante: 0},
+  {level: 4, bb: 150, ante: 0},
+  {level: 5, bb: 200, ante: 0},
+  {level: 6, bb: 250, ante: 0},
+  {level: 7, bb: 300, ante: 0},
+  {level: 8, bb: 400, ante: 0},
+  {level: 9, bb: 500, ante: 0},
+  {level: 10, bb: 600, ante: 0},
+  {level: 11, bb: 800, ante: 0},
+  {level: 12, bb: 1000, ante: 200},
+  {level: 13, bb: 1200, ante: 240},
+  {level: 14, bb: 1400, ante: 280},
+  {level: 15, bb: 1600, ante: 320},
+  {level: 16, bb: 2000, ante: 400},
+  {level: 17, bb: 3000, ante: 600},
+  {level: 18, bb: 4000, ante: 800},
+  {level: 19, bb: 6000, ante: 1200},
+  {level: 20, bb: 8000, ante: 1600},
+  {level: 21, bb: 10000, ante: 2000},
+  {level: 22, bb: 12000, ante: 2400},
+  {level: 23, bb: 15000, ante: 3000},
+  {level: 24, bb: 20000, ante: 4000},
+  {level: 25, bb: 30000, ante: 6000},
+  {level: 26, bb: 40000, ante: 8000},
+  {level: 27, bb: 60000, ante: 12000},
+  {level: 28, bb: 80000, ante: 16000},
+  {level: 29, bb: 100000, ante: 20000},
+  {level: 30, bb: 120000, ante: 24000},
+  {level: 31, bb: 200000, ante: 40000},
+  {level: 32, bb: 300000, ante: 60000},
+  {level: 33, bb: 400000, ante: 80000},
+  {level: 34, bb: 600000, ante: 120000},
+  {level: 35, bb: 800000, ante: 160000},
+  {level: 36, bb: 1000000, ante: 200000},
+];
 
 export interface Table {
   tableNo: number;
@@ -96,6 +141,7 @@ export interface TournamentData {
   currentLevel: number; // -1 = not started
   levelTime: number;
   activePlayers: number;
+  handNum: number; // unique hand number for the entire tournament
   levels: Array<TournamentLevel>;
   scheduledStartTime: Date;
   minPlayers: number;
@@ -488,7 +534,7 @@ function getTablesWithSeatsRank(
         while (availableSeats > 0) {
           nextSeatPos = getNextOpenSeat(data, occupiedSeats, nextSeatPos);
           logger.info(
-            `Table: ${table.tableNo} occupiedSeats: ${occupiedSeats} openSeat: ${nextSeatPos} rank: ${rank}`
+            `Table Open Seat Rank: ${table.tableNo} occupiedSeats: ${occupiedSeats} openSeat: ${nextSeatPos} bigBlindPos: ${table.bigBlindPos} rank: ${rank}`
           );
 
           if (nextSeatPos != -1) {
@@ -512,7 +558,7 @@ function getTablesWithSeatsRank(
 function getOpenSeat(
   seatWithRank: AvailableSeatRank[],
   rank: number,
-  options?: { lower?: bool; greater?: bool }
+  options?: {lower?: bool; greater?: bool}
 ): AvailableSeatRank | undefined {
   let ret: AvailableSeatRank | undefined;
   if (!options) {
@@ -568,10 +614,10 @@ function movePlayers(
       // find a seat with the same rank
       let openSeat = getOpenSeat(seatsWithPlayers, rank);
       if (!openSeat) {
-        openSeat = getOpenSeat(seatsWithPlayers, rank, { lower: true });
+        openSeat = getOpenSeat(seatsWithPlayers, rank, {lower: true});
       }
       if (!openSeat) {
-        openSeat = getOpenSeat(seatsWithPlayers, rank, { greater: true });
+        openSeat = getOpenSeat(seatsWithPlayers, rank, {greater: true});
       }
       if (!openSeat) {
         // get next available seat
@@ -655,64 +701,13 @@ export function getLevelData(
   levelType: TournamentLevelType
 ): Array<TournamentLevel> {
   let standardLevels = new Array<TournamentLevel>();
-  let bigBlind = 500;
-  let bigBlindIncrement = 200;
-  let ante = 0;
-  let anteIncrement = 10;
-  for (let level = 1; level <= 80; level++) {
-    if (level == 5) {
-      ante = 200;
-      anteIncrement = 500;
-      bigBlind = 1000;
-      bigBlindIncrement = 500;
-    }
-
-    if (level == 7) {
-      ante = 500;
-      anteIncrement = 200;
-      bigBlind = 5000;
-      bigBlindIncrement = 500;
-    }
-
-    if (level == 10) {
-      ante = 500;
-      anteIncrement = 500;
-      bigBlind = 5000;
-      bigBlindIncrement = 1000;
-    }
-
-    // if (level == 15) {
-    //   anteIncrement = 400;
-    //   bigBlindIncrement = 5000;
-    // }
-
-    // if (level == 20) {
-    //   anteIncrement = 600;
-    //   bigBlindIncrement = 10000;
-    // }
-
-    // if (level == 25) {
-    //   anteIncrement = 1000;
-    //   bigBlindIncrement = 20000;
-    // }
-
-    // if (level == 30) {
-    //   anteIncrement = 5000;
-    //   bigBlindIncrement = 50000;
-    // }
-
-    // if (level > 30) {
-    //   anteIncrement *= 2;
-    //   bigBlindIncrement *= 2;
-    // }
+  for (const level of defaultStruct) {
     standardLevels.push({
-      level: level,
-      ante: ante,
-      smallBlind: bigBlind / 2,
-      bigBlind: bigBlind,
+      smallBlind: level.bb / 2,
+      bigBlind: level.bb,
+      ante: level.ante,
+      level: level.level,
     });
-    ante += anteIncrement;
-    bigBlind += bigBlindIncrement;
   }
   return standardLevels;
 }

@@ -196,7 +196,7 @@ class TournamentRepositoryImpl {
     try {
       const tableServer = await GameServerRepository.getNextGameServer();
       const startingChips = 1000;
-      let levelTime = 30;
+      let levelTime = 20;
       if (input.levelTime) {
         levelTime = input.levelTime;
       }
@@ -209,6 +209,7 @@ class TournamentRepositoryImpl {
         maxPlayersInTable: input.maxPlayersInTable,
         levelTime: levelTime, // seconds
         currentLevel: -1,
+        handNum: 0,
         levels: getLevelData(TournamentLevelType.STANDARD),
         tables: [],
         registeredPlayers: [],
@@ -685,9 +686,9 @@ class TournamentRepositoryImpl {
         open_seat: false,
         encryption_key: encryptionKey,
       };
-      logger.info(
-        `Table: ${table.tableNo} playerUuid: ${player.playerUuid} name: ${player.playerName} key: ${encryptionKey}`
-      );
+      // logger.info(
+      //   `Table: ${table.tableNo} playerUuid: ${player.playerUuid} name: ${player.playerName} key: ${encryptionKey}`
+      // );
       seats[player.seatNo] = seat;
     }
 
@@ -764,6 +765,7 @@ class TournamentRepositoryImpl {
     table.smallBlindPos = smallBlindPos;
     table.buttonPos = buttonPos;
     table.bigBlindPos = getNextActiveSeat(data, occupiedSeats, smallBlindPos);
+    data.handNum++;
 
     let handDetails: any = {
       button_pos: table.buttonPos,
@@ -773,14 +775,14 @@ class TournamentRepositoryImpl {
       bb: bb * 100,
       ante: ante * 100,
       game_type: GameType.HOLDEM,
-      hand_num: table.handNum,
+      hand_num: data.handNum,
       result_pause_time: 3,
-      max_players: 6,
-      action_time: 15,
+      max_players: 9,
+      action_time: 10,
     };
 
     logger.info(
-      `Table: ${table.tableNo} Hand ${table.handNum} button: ${table.buttonPos} sb: ${table.smallBlindPos} bb: ${table.bigBlindPos}`
+      `NEW HAND: Table: ${table.tableNo} Hand ${data.handNum} button: ${table.buttonPos} sb: ${table.smallBlindPos} bb: ${table.bigBlindPos}`
     );
 
     // based on the number of players set up sb and bb
@@ -1287,9 +1289,9 @@ class TournamentRepositoryImpl {
             player.oldTableNo
           )}}`,
         };
-        logger.info(
-          `Moving player table: ${JSON.stringify(playerMovedPayload)}`
-        );
+        // logger.info(
+        //   `Moving player table: ${JSON.stringify(playerMovedPayload)}`
+        // );
         gameServerRpc.playerMovedTable(playerMovedPayload, (err, value) => {
           if (err) {
             logger.error(
@@ -1297,9 +1299,9 @@ class TournamentRepositoryImpl {
             );
           } else {
             // successfully moved the table
-            logger.info(
-              `moving player table tournament: ${tournamentData?.id} player: ${player.playerName}:${player.playerId} table: ${player.oldTableNo}:${player.oldSeatNo}=>${player.newTableNo}:${player.seatNo} succeeded`
-            );
+            // logger.info(
+            //   `moving player table tournament: ${tournamentData?.id} player: ${player.playerName}:${player.playerId} table: ${player.oldTableNo}:${player.oldSeatNo}=>${player.newTableNo}:${player.seatNo} succeeded`
+            // );
           }
         });
       }

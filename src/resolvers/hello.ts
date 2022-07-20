@@ -1,10 +1,10 @@
-import { sendRecoveryCode } from '@src/email';
-import { Firebase } from '@src/firebase';
-import { Nats } from '@src/nats';
-import { PlayerRepository } from '@src/repositories/player';
-import { getLogger } from '@src/utils/log';
-import { v4 as uuidv4 } from 'uuid';
-import { loggers } from 'winston';
+import {sendRecoveryCode} from '@src/email';
+import {Firebase} from '@src/firebase';
+import {Nats} from '@src/nats';
+import {PlayerRepository} from '@src/repositories/player';
+import {getLogger} from '@src/utils/log';
+import {v4 as uuidv4} from 'uuid';
+import {loggers} from 'winston';
 const logger = getLogger('resolvers::hello');
 async function sendTestMessage(playerId: string) {
   const player = await PlayerRepository.getPlayerById(playerId);
@@ -12,7 +12,11 @@ async function sendTestMessage(playerId: string) {
     throw new Error(`Player ${playerId} is not found`);
   }
 
-  Firebase.sendMessage(player.firebaseToken, { message: 'test', requestId: uuidv4(), type: 'TEST_PUSH' }).catch(e => {
+  Firebase.sendMessage(player.firebaseToken, {
+    message: 'test',
+    requestId: uuidv4(),
+    type: 'TEST_PUSH',
+  }).catch(e => {
     logger.error(`Sending firebase message failed. Error: ${e.message}`);
   });
 }
