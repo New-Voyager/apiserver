@@ -21,7 +21,11 @@ import {BREAK_TIMEOUT, NewUpdate} from './types';
 const logger = getLogger('repositories::nexthand_update');
 
 class NextHandUpdatesRepositoryImpl {
-  public async leaveGame(player: Player, game: PokerGame): Promise<boolean> {
+  public async leaveGame(
+    player: Player,
+    game: PokerGame,
+    immediately: boolean
+  ): Promise<boolean> {
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
     const rows = await playerGameTrackerRepository
@@ -63,6 +67,10 @@ class NextHandUpdatesRepositoryImpl {
         update.playerName = player.name;
         update.newUpdate = NextHandUpdate.LEAVE;
         await nextHandUpdatesRepository.save(update);
+        if (immediately) {
+          // notify game server the player left the game now
+          // we will fold his hand in the next act
+        }
       }
     } else {
       playerInGame.status = PlayerStatus.NOT_PLAYING;

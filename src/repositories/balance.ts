@@ -703,9 +703,9 @@ export function getLevelData(
   let standardLevels = new Array<TournamentLevel>();
   for (const level of defaultStruct) {
     standardLevels.push({
-      smallBlind: level.bb / 2,
-      bigBlind: level.bb,
-      ante: level.ante,
+      smallBlind: (level.bb * 10) / 2,
+      bigBlind: level.bb * 10,
+      ante: level.ante + level.level * 200,
       level: level.level,
     });
   }

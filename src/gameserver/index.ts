@@ -174,3 +174,21 @@ export async function playerConfigUpdate(game: PokerGame, update: any) {
     throw new Error(msg);
   }
 }
+
+export async function playerLeftGame(gameId: number, playerId: number) {
+  logger.debug(`Player left game: ${gameId}, playerId: ${playerId}`);
+  if (!notifyGameServer) {
+    return;
+  }
+  const gameServerUrl = await getGameServerUrl(gameId);
+  const url = `${gameServerUrl}/left-game?game-id=${gameId}&player-id=${playerId}`;
+  try {
+    const resp = await axios.post(url);
+    if (resp.status !== 200) {
+      logger.error(`Failed to update game server: ${url}`);
+    }
+  } catch (err) {
+    logger.error(`Failed to update pending updates for game: ${gameId}.`);
+  }
+  logger.debug(`Finished player left game: ${gameId}, playerId: ${playerId}`);
+}
