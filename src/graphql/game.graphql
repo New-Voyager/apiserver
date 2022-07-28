@@ -639,7 +639,7 @@ type Mutation {
   startGame(gameCode: String!): GameStatus!
   takeBreak(gameCode: String!): Boolean!
   sitBack(gameCode: String!, location: LocationInput): SitBackResponse
-  leaveGame(gameCode: String!): Boolean!
+  leaveGame(gameCode: String!, immediately: Boolean): Boolean!
   pauseGame(gameCode: String!): GameStatus!
   endGame(gameCode: String!): GameStatus!
   resumeGame(gameCode: String!): GameStatus!

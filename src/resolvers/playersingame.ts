@@ -88,7 +88,7 @@ const resolvers: any = {
       return ret;
     },
     leaveGame: async (parent, args, ctx, info) => {
-      return leaveGame(ctx.req.playerId, args.gameCode);
+      return leaveGame(ctx.req.playerId, args.gameCode, args.immediately);
     },
     kickOut: async (parent, args, ctx, info) => {
       return kickOutPlayer(ctx.req.playerId, args.gameCode, args.playerUuid);
@@ -985,7 +985,11 @@ export async function setBuyInLimit(
   }
 }
 
-export async function leaveGame(playerUuid: string, gameCode: string) {
+export async function leaveGame(
+  playerUuid: string,
+  gameCode: string,
+  immediately: boolean
+) {
   if (!playerUuid) {
     throw new Error('Unauthorized');
   }
@@ -1014,7 +1018,11 @@ export async function leaveGame(playerUuid: string, gameCode: string) {
         player.name
       } is leaving game`
     );
-    const status = await NextHandUpdatesRepository.leaveGame(player, game);
+    const status = await NextHandUpdatesRepository.leaveGame(
+      player,
+      game,
+      immediately
+    );
     return status;
   } catch (err) {
     logger.error(
