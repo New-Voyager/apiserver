@@ -53,7 +53,7 @@ class NotificationAPIs {
         const player = await Cache.getPlayerById(payload['playerId']);
         const messageId = uuidv4();
         if (game && player) {
-          // await Nats.yourTurnMessage(game.gameCode, game.gameType, player, messageId);
+          await Nats.yourTurnMessage(game.gameCode, game.gameType, player, messageId);
           await Firebase.sendYourTurnMessage(game.gameCode, GameType[game.gameType], player, 'It is your turn', messageId);
         }
       }

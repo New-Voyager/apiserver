@@ -143,8 +143,9 @@ class FirebaseClass {
       );
       return;
     }
-    serviceAccountFile = `${configDir}/prod-poker-club-app.json`;
-    clientConfigFile = `${configDir}/client-config-prod.json`;
+    // Enable this to debug firebase message with prod server
+    // serviceAccountFile = `${configDir}/prod-poker-club-app.json`;
+    // clientConfigFile = `${configDir}/client-config-prod.json`;
 
     logger.info(`Using ${serviceAccountFile} to initialize firebase`);
     const serviceAccount = JSON.parse(
