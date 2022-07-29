@@ -1,11 +1,11 @@
 import fileUpload from 'express-fileupload';
-import {GameServerAPI} from './internal/gameserver';
-import {HandServerAPI} from './internal/hand';
-import {GameAPI} from './internal/game';
-import {AdminAPI} from './internal/admin';
-import {UserAPI} from './internal/user';
-import {MetricsAPI} from './internal/metrics';
-import {timerCallback, timerGenericCallback} from './repositories/timer';
+import { GameServerAPI } from './internal/gameserver';
+import { HandServerAPI } from './internal/hand';
+import { GameAPI } from './internal/game';
+import { AdminAPI } from './internal/admin';
+import { UserAPI } from './internal/user';
+import { MetricsAPI } from './internal/metrics';
+import { timerCallback, timerGenericCallback } from './repositories/timer';
 import {
   buyBotCoins,
   generateBotScript,
@@ -14,7 +14,7 @@ import {
   setServerSettings,
   updateButtonPos,
 } from './internal/bot';
-import {restartTimers} from '@src/timer';
+import { restartTimers } from '@src/timer';
 import {
   getRecoveryCode,
   login,
@@ -24,8 +24,8 @@ import {
   newlogin,
   signup,
 } from './auth';
-import {DevRepository} from './repositories/dev';
-import {Firebase} from './firebase';
+import { DevRepository } from './repositories/dev';
+import { Firebase } from './firebase';
 import {
   createAnnouncement,
   createInviteCode,
@@ -33,18 +33,19 @@ import {
   deleteAll,
   getAllPromotion,
 } from './admin';
-import {AdminRepository} from './repositories/admin';
-import {errToStr, getLogger} from '@src/utils/log';
-import {DigitalOcean} from './digitalocean';
-import express, {response} from 'express';
-import {PlayerRepository} from './repositories/player';
-import {ClubRepository} from './repositories/club';
-import {getRunProfile, RunProfile} from './server';
-import {authReq} from './middlewares/authorization';
-import {Club} from './entity/player/club';
-import {Player} from './entity/player/player';
-import {LocationCheck} from './repositories/locationcheck';
-import {Cache} from '@src/cache';
+import { AdminRepository } from './repositories/admin';
+import { errToStr, getLogger } from '@src/utils/log';
+import { DigitalOcean } from './digitalocean';
+import express, { response } from 'express';
+import { PlayerRepository } from './repositories/player';
+import { ClubRepository } from './repositories/club';
+import { getRunProfile, RunProfile } from './server';
+import { authReq } from './middlewares/authorization';
+import { Club } from './entity/player/club';
+import { Player } from './entity/player/player';
+import { LocationCheck } from './repositories/locationcheck';
+import { Cache } from '@src/cache';
+import { NotificationAPI } from './internal/notification';
 
 const logger = getLogger('routes');
 
@@ -80,7 +81,7 @@ export function addExternalRoutes(app: any) {
 
   // upload endpoints
   app.use(fileUpload());
-  app.use(express.urlencoded({extended: true}));
+  app.use(express.urlencoded({ extended: true }));
 
   app.post('/upload', uploadPic);
 }
@@ -110,7 +111,7 @@ async function uploadPic(req: any, res: any) {
           PlayerRepository.updatePic(playerId, url)
             .then(v => {
               // update url
-              return res.status(200).send({status: 'OK', url: url});
+              return res.status(200).send({ status: 'OK', url: url });
             })
             .catch(err => {
               return res.status(400).send('Failed to update picture.');
@@ -144,7 +145,7 @@ async function uploadPic(req: any, res: any) {
           ClubRepository.updatePic(clubCode, url)
             .then(v => {
               // update url
-              return res.status(200).send({status: 'OK', url: url});
+              return res.status(200).send({ status: 'OK', url: url });
             })
             .catch(err => {
               return res.status(400).send('Failed to update picture.');
@@ -260,6 +261,10 @@ export function addInternalRoutes(app: any) {
   app.post('/admin/data-retention', AdminAPI.dataRetention);
   app.get('/admin/hand-analysis/:gameCode', AdminAPI.handAnalysis);
 
+  // notification apis
+  app.post('/internal/send-notification', NotificationAPI.sendNotification);
+
+
   // Yong: I added this endpoint to test how unhandled rejections behave.
   app.get('/test/crashAsync', crashAsync);
   app.post('/test/ipLocation/:ip', ipLocation);
@@ -271,13 +276,13 @@ async function natsUrls(req: any, resp: any) {
   if (process.env.EXTERNAL_NATS_URL) {
     natsUrl = process.env.EXTERNAL_NATS_URL;
   }
-  resp.status(200).send(JSON.stringify({urls: natsUrl}));
+  resp.status(200).send(JSON.stringify({ urls: natsUrl }));
 }
 
 // returns all assets from the firebase
 async function getAssets(req: any, resp: any) {
   const assets = await Firebase.getAllAssets();
-  resp.status(200).send(JSON.stringify({assets: assets}));
+  resp.status(200).send(JSON.stringify({ assets: assets }));
 }
 
 // returns app information from the firebase
@@ -293,25 +298,25 @@ async function getFirebaseSettings(req: any, resp: any) {
 }
 
 async function readyCheck(req: any, resp: any) {
-  resp.status(200).send(JSON.stringify({status: 'OK'}));
+  resp.status(200).send(JSON.stringify({ status: 'OK' }));
 }
 
 async function livenessCheck(req: any, resp: any) {
   try {
     await AdminRepository.checkDbTransaction();
-    resp.status(200).json({status: 'OK'});
+    resp.status(200).json({ status: 'OK' });
   } catch (err) {
     logger.error(`DB transaction check failed: ${errToStr(err)}`);
-    resp.status(500).json({error: errToStr(err)});
+    resp.status(500).json({ error: errToStr(err) });
   }
 }
 
 async function crashAsync(req: any, resp: any) {
   try {
     await doCrashAsync();
-    resp.status(200).send(JSON.stringify({status: 'OK'}));
+    resp.status(200).send(JSON.stringify({ status: 'OK' }));
   } catch (err) {
-    resp.status(500).send(JSON.stringify({error: errToStr(err)}));
+    resp.status(500).send(JSON.stringify({ error: errToStr(err) }));
   }
 }
 
@@ -325,6 +330,6 @@ async function ipLocation(req: any, resp: any) {
     const city = LocationCheck.getCity(ip);
     resp.status(200).json(city);
   } catch (err) {
-    resp.status(500).json({error: errToStr(err)});
+    resp.status(500).json({ error: errToStr(err) });
   }
 }

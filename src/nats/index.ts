@@ -1,25 +1,25 @@
-import {PokerGame, PokerGameSettings} from '@src/entity/game/game';
-import {Player} from '@src/entity/player/player';
+import { PokerGame, PokerGameSettings } from '@src/entity/game/game';
+import { Player } from '@src/entity/player/player';
 import {
   GameStatus,
   GameType,
   PlayerStatus,
   TableStatus,
 } from '@src/entity/types';
-import {HighHandWinner, NewUpdate} from '@src/repositories/types';
-import {errToStr, getLogger} from '@src/utils/log';
+import { HighHandWinner, NewUpdate } from '@src/repositories/types';
+import { errToStr, getLogger } from '@src/utils/log';
 import * as nats from 'nats';
-import {v4 as uuidv4} from 'uuid';
-import {Cache} from '@src/cache';
-import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
+import { v4 as uuidv4 } from 'uuid';
+import { Cache } from '@src/cache';
+import { PlayerGameTracker } from '@src/entity/game/player_game_tracker';
 import * as Constants from '../const';
-import {SeatMove, SeatUpdate} from '@src/types';
-import {SageMakerFeatureStoreRuntime} from 'aws-sdk';
-import {getAppSettings} from '@src/firebase';
-import {centsToChips} from '@src/utils';
-import {TableUpdateReserveSeat} from '../const';
-import {TournamentRepository} from '@src/repositories/tournament';
-import {TournamentData, TournamentStatus} from '@src/repositories/balance';
+import { SeatMove, SeatUpdate } from '@src/types';
+import { SageMakerFeatureStoreRuntime } from 'aws-sdk';
+import { getAppSettings } from '@src/firebase';
+import { centsToChips } from '@src/utils';
+import { TableUpdateReserveSeat } from '../const';
+import { TournamentRepository } from '@src/repositories/tournament';
+import { TournamentData, TournamentStatus } from '@src/repositories/balance';
 
 const logger = getLogger('nats');
 
@@ -183,6 +183,29 @@ class NatsClass {
     }
   }
 
+  public yourTurnMessage(
+    gameCode: string,
+    gameType: GameType,
+    player: Player,
+    messageId: string
+  ) {
+    /*
+    {
+      "type": "YOUR_TURN",
+      "gameCode": "ABCDE",
+      "gameType": "HOLDEM"
+    }
+    */
+    const message: any = {
+      type: 'YOUR_TURN',
+      gameCode: gameCode,
+      gameType: GameType[gameType],
+      requestId: messageId,
+    };
+    const messageStr = JSON.stringify(message);
+    const subject = this.getPlayerChannel(player);
+    this.sendMessage(subject, messageStr);
+  }
   /*
     Used for sending an update to the app to refresh the club screen.
     changed: What changed in the club
@@ -1226,4 +1249,4 @@ class NatsClass {
 }
 
 const Nats = new NatsClass();
-export {Nats};
+export { Nats };
