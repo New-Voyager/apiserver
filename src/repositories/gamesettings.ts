@@ -1,11 +1,11 @@
-import {PokerGame, PokerGameSettings} from '@src/entity/game/game';
-import {EntityManager, getRepository, Repository} from 'typeorm';
-import {Cache} from '@src/cache/index';
-import {getGameRepository} from '.';
-import {getLogger} from '@src/utils/log';
-import {JanusSession} from '@src/janus';
-import {Nats} from '@src/nats';
-import {BombPotInterval, BuyInApprovalLimit, GameType} from '@src/entity/types';
+import { PokerGame, PokerGameSettings } from '@src/entity/game/game';
+import { EntityManager, getRepository, Repository } from 'typeorm';
+import { Cache } from '@src/cache/index';
+import { getGameRepository } from '.';
+import { getLogger } from '@src/utils/log';
+import { JanusSession } from '@src/janus';
+import { Nats } from '@src/nats';
+import { BombPotInterval, BuyInApprovalLimit, GameType } from '@src/entity/types';
 
 const logger = getLogger('repositories::gamesettings');
 class GameSettingsRepositoryImpl {
@@ -222,6 +222,66 @@ class GameSettingsRepositoryImpl {
       }
     }
     const gameSettingsUpdated = await Cache.getGameSettings(gameCode, true);
+
+    // if settings in game changed, change the game object
+    if (input.actionTime !== undefined ||
+      input.gameType !== undefined ||
+      input.rakePercentage !== undefined ||
+      input.rakeCap !== undefined) {
+      // update game repo
+      const gameProps: any = {};
+      if (input.actionTime !== undefined) {
+        gameProps.actionTime = input.actionTime;
+      }
+
+      if (input.gameType !== undefined) {
+        let gameType = GameType.UNKNOWN;
+        const type = input.gameType.toString();
+        if (type === GameType[GameType.HOLDEM]) {
+          gameType = GameType.HOLDEM;
+        } else if (type === GameType[GameType.PLO]) {
+          gameType = GameType.PLO;
+        } else if (type === GameType[GameType.FIVE_CARD_PLO]) {
+          gameType = GameType.FIVE_CARD_PLO;
+        } else if (type === GameType[GameType.SIX_CARD_PLO]) {
+          gameType = GameType.SIX_CARD_PLO;
+        } else if (type === GameType[GameType.PLO_HILO]) {
+          gameType = GameType.PLO_HILO;
+        } else if (type === GameType[GameType.FIVE_CARD_PLO_HILO]) {
+          gameType = GameType.FIVE_CARD_PLO_HILO;
+        } else if (type === GameType[GameType.SIX_CARD_PLO_HILO]) {
+          gameType = GameType.SIX_CARD_PLO_HILO;
+        } else if (type === GameType[GameType.DEALER_CHOICE]) {
+          gameType = GameType.DEALER_CHOICE;
+        } else if (type === GameType[GameType.ROE]) {
+          gameType = GameType.ROE;
+        }
+
+        if (gameType !== GameType.UNKNOWN) {
+          gameProps.gameType = gameType;
+        }
+      }
+
+      if (input.rakePercentage !== undefined) {
+        gameProps.rakePercentage = input.rakePercentage;
+      }
+
+      if (input.rakeCap !== undefined) {
+        gameProps.rakeCap = input.rakeCap;
+      }
+
+      if (Object.keys(gameProps).length > 0) {
+        const gameRepo = getGameRepository(PokerGame);
+        await gameRepo.update(
+          {
+            gameCode: gameCode,
+          },
+          gameProps
+        );
+        const gameUpdated = await Cache.getGame(gameCode, true);
+      }
+    }
+
     Nats.gameSettingsChanged(game, gameSettingsUpdated.nextHandBombPot);
     logger.info(JSON.stringify(gameSettingsUpdated));
   }

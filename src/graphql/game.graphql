@@ -444,6 +444,11 @@ input GameSettingsUpdateInput {
 
   showResult: Boolean
   dealerChoiceOrbit: Boolean
+
+  actionTime: Int
+  gameType: GameType
+  rakePercentage: Float
+  rakeCap: Float
 }
 
 input GameConfigUpdateInput {
