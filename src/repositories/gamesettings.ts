@@ -6,6 +6,7 @@ import { getLogger } from '@src/utils/log';
 import { JanusSession } from '@src/janus';
 import { Nats } from '@src/nats';
 import { BombPotInterval, BuyInApprovalLimit, GameType } from '@src/entity/types';
+import { chipsToCents } from '@src/utils';
 
 const logger = getLogger('repositories::gamesettings');
 class GameSettingsRepositoryImpl {
@@ -267,7 +268,7 @@ class GameSettingsRepositoryImpl {
       }
 
       if (input.rakeCap !== undefined) {
-        gameProps.rakeCap = input.rakeCap;
+        gameProps.rakeCap = chipsToCents(input.rakeCap);
       }
 
       if (Object.keys(gameProps).length > 0) {
