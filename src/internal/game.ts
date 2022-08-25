@@ -1,19 +1,20 @@
-import {GameStatus, GameType, TableStatus} from '@src/entity/types';
-import {GameRepository} from '@src/repositories/game';
-import {processPendingUpdates} from '@src/repositories/pendingupdates';
-import {errToStr, getLogger} from '@src/utils/log';
-import {Cache} from '@src/cache/index';
-import {PokerGame} from '@src/entity/game/game';
-import {PlayerStatus} from '@src/entity/types';
+import { GameStatus, GameType, TableStatus } from '@src/entity/types';
+import { GameRepository } from '@src/repositories/game';
+import { processPendingUpdates } from '@src/repositories/pendingupdates';
+import { errToStr, getLogger } from '@src/utils/log';
+import { Cache } from '@src/cache/index';
+import { PokerGame } from '@src/entity/game/game';
+import { PlayerStatus } from '@src/entity/types';
 import _ from 'lodash';
-import {delay} from '@src/utils';
-import {getGameManager, getGameRepository} from '@src/repositories';
-import {GameReward} from '@src/entity/game/reward';
-import {NextHandProcess} from '@src/repositories/nexthand';
-import {GameSettingsRepository} from '@src/repositories/gamesettings';
-import {PlayersInGameRepository} from '@src/repositories/playersingame';
-import {Aggregation} from '@src/repositories/aggregate';
-import {GameNotFoundError} from '@src/errors';
+import { delay } from '@src/utils';
+import { getGameManager, getGameRepository } from '@src/repositories';
+import { GameReward } from '@src/entity/game/reward';
+import { NextHandProcess } from '@src/repositories/nexthand';
+import { GameSettingsRepository } from '@src/repositories/gamesettings';
+import { PlayersInGameRepository } from '@src/repositories/playersingame';
+import { Aggregation } from '@src/repositories/aggregate';
+import { GameNotFoundError } from '@src/errors';
+import { resumeGame } from '@src/gameserver';
 
 const logger = getLogger('internal::game');
 
@@ -24,66 +25,66 @@ class GameAPIs {
   public async updatePlayerGameState(req: any, resp: any) {
     const gameID = req.body.gameId;
     if (!gameID) {
-      const res = {error: 'Invalid game id'};
+      const res = { error: 'Invalid game id' };
       resp.status(500).send(JSON.stringify(res));
       return;
     }
     const gameStatus = req.body.status;
     if (!gameStatus) {
-      const res = {error: 'Invalid game status'};
+      const res = { error: 'Invalid game status' };
       resp.status(500).send(JSON.stringify(res));
       return;
     }
     const playerID = req.body.playerId;
     if (!playerID) {
-      const res = {error: 'Invalid player id'};
+      const res = { error: 'Invalid player id' };
       resp.status(500).send(JSON.stringify(res));
       return;
     }
     try {
       await GameRepository.markPlayerGameState(playerID, gameID, gameStatus);
-      resp.status(200).send({status: 'OK'});
+      resp.status(200).send({ status: 'OK' });
     } catch (err) {
       logger.error(
         `Error while updating player game state for game ${gameID}, player ${playerID}: ${errToStr(
           err
         )}`
       );
-      resp.status(500).send({error: errToStr(err)});
+      resp.status(500).send({ error: errToStr(err) });
     }
   }
 
   public async updateGameStatus(req: any, resp: any) {
     const gameID = req.body.gameId;
     if (!gameID) {
-      const res = {error: 'Invalid game id'};
+      const res = { error: 'Invalid game id' };
       resp.status(500).send(JSON.stringify(res));
       return;
     }
     const gameStatus = req.body.status;
     if (!gameStatus) {
-      const res = {error: 'Invalid game status'};
+      const res = { error: 'Invalid game status' };
       resp.status(500).send(JSON.stringify(res));
       return;
     }
 
     try {
       await GameRepository.markGameStatus(gameID, gameStatus);
-      resp.status(200).send({status: 'OK'});
+      resp.status(200).send({ status: 'OK' });
     } catch (err) {
       logger.error(
         `Error while updating game status for game ${gameID} to ${gameStatus}: ${errToStr(
           err
         )}`
       );
-      resp.status(500).send({error: errToStr(err)});
+      resp.status(500).send({ error: errToStr(err) });
     }
   }
 
   public async updateTableStatus(req: any, resp: any) {
     const gameID = req.body.gameId;
     if (!gameID) {
-      const res = {error: 'Invalid game id'};
+      const res = { error: 'Invalid game id' };
       resp.status(500).send(JSON.stringify(res));
       return;
     }
@@ -94,91 +95,102 @@ class GameAPIs {
       tableStatus = TableStatus[req.body.status] as unknown as TableStatus;
     }
     if (!tableStatus) {
-      const res = {error: 'Invalid table status'};
+      const res = { error: 'Invalid table status' };
       resp.status(500).send(JSON.stringify(res));
       return;
     }
 
     try {
       await GameRepository.markTableStatus(gameID, tableStatus);
-      resp.status(200).send({status: 'OK'});
+      resp.status(200).send({ status: 'OK' });
     } catch (err) {
       logger.error(
         `Error while updating table status for game ${gameID} to ${tableStatus}: ${errToStr(
           err
         )}`
       );
-      resp.status(500).send(JSON.stringify({error: errToStr(err)}));
+      resp.status(500).send(JSON.stringify({ error: errToStr(err) }));
     }
   }
 
   public async anyPendingUpdates(req: any, resp: any) {
     const gameID = req.params.gameId;
     if (!gameID) {
-      const res = {error: 'Invalid game id'};
+      const res = { error: 'Invalid game id' };
       resp.status(500).send(JSON.stringify(res));
       return;
     }
     try {
       const pendingUpdates = await GameRepository.anyPendingUpdates(gameID);
-      resp.status(200).send({pendingUpdates: pendingUpdates});
+      resp.status(200).send({ pendingUpdates: pendingUpdates });
     } catch (err) {
       logger.error(
         `Error while checking for any pending updates for game ${gameID}: ${errToStr(
           err
         )}`
       );
-      resp.status(500).send(JSON.stringify({error: errToStr(err)}));
+      resp.status(500).send(JSON.stringify({ error: errToStr(err) }));
     }
   }
 
   public async processPendingUpdates(req: any, resp: any) {
     const gameIDStr = req.params.gameId;
     if (!gameIDStr) {
-      const res = {error: 'Invalid game id'};
+      const res = { error: 'Invalid game id' };
       resp.status(500).send(JSON.stringify(res));
       return;
     }
     const gameID = parseInt(gameIDStr);
     if (!gameID) {
-      const res = {error: `Invalid game id ${gameIDStr}`};
+      const res = { error: `Invalid game id ${gameIDStr}` };
       resp.status(500).send(JSON.stringify(res));
       return;
     }
     try {
       await processPendingUpdates(gameID);
-      resp.status(200).send({status: 'OK'});
+      resp.status(200).send({ status: 'OK' });
     } catch (err) {
       logger.error(
         `Error while processing pending updates for game ${gameID}: ${errToStr(
           err
         )}`
       );
-      resp.status(500).send(JSON.stringify({error: errToStr(err)}));
+      resp.status(500).send(JSON.stringify({ error: errToStr(err) }));
+
+      // just resume the game
+      logger.info(`Resuming game ${gameID}`);
+      resumeGame(gameID).then((v) => {
+        logger.info(`Resuming game ${gameID} successful`);
+      }).catch((err) => {
+        logger.error(
+          `Error resuming game ${gameID}: ${errToStr(
+            err
+          )}`);
+      });
     }
   }
 
   public async getGame(req: any, resp: any) {
     const clubID = req.params.clubID;
     if (!clubID) {
-      const res = {error: 'Invalid club id'};
+      const res = { error: 'Invalid club id' };
       resp.status(500).send(JSON.stringify(res));
       return;
     }
     const gameNum = req.params.gameNum;
     if (!gameNum) {
-      const res = {error: 'Invalid game num'};
+      const res = { error: 'Invalid game num' };
       resp.status(500).send(JSON.stringify(res));
       return;
     }
 
-    resp.status(200).send({status: 'OK'});
+    resp.status(200).send({ status: 'OK' });
   }
 
   public async getGameInfo(req: any, resp: any) {
     const gameCode = req.params.gameCode;
     if (!gameCode) {
-      const res = {error: 'Invalid game code'};
+      const res = { error: 'Invalid game code' };
       resp.status(500).send(JSON.stringify(res));
       return;
     }
@@ -279,7 +291,7 @@ class GameAPIs {
           )}`
         );
         if (retryCount === 0) {
-          resp.status(500).send(JSON.stringify({error: errToStr(err)}));
+          resp.status(500).send(JSON.stringify({ error: errToStr(err) }));
           return;
         }
       }
@@ -290,22 +302,22 @@ class GameAPIs {
   public async startGame(req: any, resp: any) {
     const clubID = parseInt(req.param('club-id'));
     if (!clubID) {
-      const res = {error: 'Invalid club id'};
+      const res = { error: 'Invalid club id' };
       resp.status(500).send(JSON.stringify(res));
       return;
     }
     const gameID = parseInt(req.param('game-id'));
     if (!gameID) {
-      const res = {error: 'Invalid game id'};
+      const res = { error: 'Invalid game id' };
       resp.status(500).send(JSON.stringify(res));
       return;
     }
     try {
       await GameRepository.markGameStatus(gameID, GameStatus.ACTIVE);
-      resp.status(200).send({status: 'OK'});
+      resp.status(200).send({ status: 'OK' });
     } catch (err) {
       logger.error(`Error while starting game ${gameID}: ${errToStr(err)}`);
-      resp.status(500).send({error: errToStr(err)});
+      resp.status(500).send({ error: errToStr(err) });
     }
   }
 
@@ -345,7 +357,7 @@ class GameAPIs {
       logger.error(
         `Error while moving game ${gameCode} to next hand: ${errToStr(err)}`
       );
-      resp.status(500).send({error: errToStr(err)});
+      resp.status(500).send({ error: errToStr(err) });
     }
   }
 
@@ -365,7 +377,7 @@ class GameAPIs {
   public async getNextHandInfo(req: any, resp: any) {
     const gameCode = req.params.gameCode;
     if (!gameCode) {
-      const res = {error: 'Invalid game code'};
+      const res = { error: 'Invalid game code' };
       resp.status(500).send(JSON.stringify(res));
       return;
     }
@@ -381,7 +393,7 @@ class GameAPIs {
           err
         )}`
       );
-      resp.status(500).send({error: errToStr(err)});
+      resp.status(500).send({ error: errToStr(err) });
     }
   }
 
@@ -391,7 +403,7 @@ class GameAPIs {
       resp.status(200).send(JSON.stringify(ret));
     } catch (err) {
       logger.error(`Error while aggregating game data: ${errToStr(err)}`);
-      resp.status(500).send({error: errToStr(err)});
+      resp.status(500).send({ error: errToStr(err) });
     }
   }
 
@@ -411,7 +423,7 @@ class GameAPIs {
   public async endExpiredGames(req: any, resp: any) {
     try {
       const res = await GameRepository.endExpireGames();
-      resp.status(200).send(JSON.stringify({expired: res.numExpired}));
+      resp.status(200).send(JSON.stringify({ expired: res.numExpired }));
     } catch (err) {
       logger.error(`Unable to end all expired games: ${errToStr(err)}`);
       const response = {
@@ -425,7 +437,7 @@ class GameAPIs {
     try {
       const gameCode = req.params.gameCode;
       if (!gameCode) {
-        const res = {error: `Invalid game code: ${gameCode}`};
+        const res = { error: `Invalid game code: ${gameCode}` };
         resp.status(500).json(res);
         return;
       }
@@ -437,7 +449,7 @@ class GameAPIs {
       );
 
       const res = await GameRepository.endGameInternal(gameCode, force);
-      resp.status(200).json({status: GameStatus[res]});
+      resp.status(200).json({ status: GameStatus[res] });
     } catch (err) {
       logger.error(`Unable to end game: ${errToStr(err)}`);
       const response = {
