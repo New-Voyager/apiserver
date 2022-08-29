@@ -45,6 +45,7 @@ import {
 } from '@src/entity/player/club';
 import { ClubRepository } from './club';
 import { Nats } from '@src/nats';
+import { centsToChips } from '@src/utils';
 
 const BATCH_SIZE = 10;
 const logger = getLogger('repositories::aggregate');
@@ -556,9 +557,9 @@ class AggregationImpl {
         messageJson['type'] = 'CT';
         messageJson['sub-type'] = 'CHANGE';
         messageJson['notes'] = 'Credits updated';
-        messageJson['amount'] = amount;
-        messageJson['credits'] = newCredit;
-        messageJson['oldCredits'] = oldCredits;
+        messageJson['amount'] = centsToChips(amount);
+        messageJson['credits'] = centsToChips(newCredit);
+        messageJson['oldCredits'] = centsToChips(oldCredits);
         message = JSON.stringify(messageJson);
 
         const messageId = uuidv4();
