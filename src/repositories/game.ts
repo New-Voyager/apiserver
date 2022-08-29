@@ -1,6 +1,6 @@
 import * as crypto from 'crypto';
-import {v4 as uuidv4} from 'uuid';
-import {In, Repository, EntityManager, Not} from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
+import { In, Repository, EntityManager, Not } from 'typeorm';
 import {
   gameLogPrefix,
   NextHandUpdates,
@@ -19,30 +19,30 @@ import {
   CreditUpdateType,
   ChipUnit,
 } from '@src/entity/types';
-import {GameServer} from '@src/entity/game/gameserver';
-import {errToStr, getLogger} from '@src/utils/log';
-import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
+import { GameServer } from '@src/entity/game/gameserver';
+import { errToStr, getLogger } from '@src/utils/log';
+import { PlayerGameTracker } from '@src/entity/game/player_game_tracker';
 import {
   getGameCodeForClub,
   getGameCodeForPlayer,
   getGameCodeForLobby,
 } from '@src/utils/uniqueid';
-import {publishNewGame, resumeGame, endGame} from '@src/gameserver';
-import {startTimer, cancelTimer} from '@src/timer';
-import {fixQuery, getDistanceInMeters} from '@src/utils';
-import {WaitListMgmt} from './waitlist';
-import {Reward} from '@src/entity/player/reward';
-import {ClubUpdateType, DEALER_CHOICE_TIMEOUT} from './types';
-import {Cache} from '@src/cache/index';
-import {StatsRepository} from './stats';
-import {utcTime} from '@src/utils';
+import { publishNewGame, resumeGame, endGame } from '@src/gameserver';
+import { startTimer, cancelTimer } from '@src/timer';
+import { fixQuery, getDistanceInMeters } from '@src/utils';
+import { WaitListMgmt } from './waitlist';
+import { Reward } from '@src/entity/player/reward';
+import { ClubUpdateType, DEALER_CHOICE_TIMEOUT } from './types';
+import { Cache } from '@src/cache/index';
+import { StatsRepository } from './stats';
+import { utcTime } from '@src/utils';
 import _ from 'lodash';
-import {HandHistory} from '@src/entity/history/hand';
-import {Player, PlayerNotes} from '@src/entity/player/player';
-import {Club, ClubMember, CreditTracking} from '@src/entity/player/club';
-import {PlayerGameStats} from '@src/entity/history/stats';
-import {HistoryRepository} from './history';
-import {GameHistory} from '@src/entity/history/game';
+import { HandHistory } from '@src/entity/history/hand';
+import { Player, PlayerNotes } from '@src/entity/player/player';
+import { Club, ClubMember, CreditTracking } from '@src/entity/player/club';
+import { PlayerGameStats } from '@src/entity/history/stats';
+import { HistoryRepository } from './history';
+import { GameHistory } from '@src/entity/history/game';
 import {
   getGameConnection,
   getGameManager,
@@ -51,27 +51,26 @@ import {
   getUserConnection,
   getUserRepository,
 } from '.';
-import {GameReward, GameRewardTracking} from '@src/entity/game/reward';
-import {ClubRepository} from './club';
-import {LocationCheck} from './locationcheck';
-import {Nats} from '@src/nats';
-import {GameSettingsRepository} from './gamesettings';
-import {PlayersInGameRepository} from './playersingame';
-import {GameUpdatesRepository} from './gameupdates';
-import {GameServerRepository} from './gameserver';
-import {GameCodeRepository} from './gamecode';
-import {PlayersInGame} from '@src/entity/history/player';
-import {schedulePostProcessing} from '@src/scheduler';
-import {getRunProfile, notifyScheduler, RunProfile} from '@src/server';
-import {NextHandUpdatesRepository} from './nexthand_update';
-import {processPendingUpdates} from './pendingupdates';
-import {AppCoinRepository} from './appcoin';
-import {GameNotFoundError, SeatReservedError} from '@src/errors';
-import {Firebase} from '@src/firebase';
-import {ClubMessageRepository} from './clubmessage';
-import {Livekit} from '@src/livekit';
-import {createPlayer} from '@src/resolvers/player';
-import {startGame} from '@src/resolvers/game';
+import { GameReward, GameRewardTracking } from '@src/entity/game/reward';
+import { ClubRepository } from './club';
+import { LocationCheck } from './locationcheck';
+import { Nats } from '@src/nats';
+import { GameSettingsRepository } from './gamesettings';
+import { PlayersInGameRepository } from './playersingame';
+import { GameUpdatesRepository } from './gameupdates';
+import { GameServerRepository } from './gameserver';
+import { GameCodeRepository } from './gamecode';
+import { schedulePostProcessing } from '@src/scheduler';
+import { getRunProfile, notifyScheduler, RunProfile } from '@src/server';
+import { NextHandUpdatesRepository } from './nexthand_update';
+import { processPendingUpdates } from './pendingupdates';
+import { AppCoinRepository } from './appcoin';
+import { GameNotFoundError, SeatReservedError } from '@src/errors';
+import { Firebase } from '@src/firebase';
+import { ClubMessageRepository } from './clubmessage';
+import { Livekit } from '@src/livekit';
+import { createPlayer } from '@src/resolvers/player';
+import { startGame } from '@src/resolvers/game';
 const logger = getLogger('repositories::game');
 
 class GameRepositoryImpl {
@@ -119,7 +118,7 @@ class GameRepositoryImpl {
       const roeGames = input.roeGames.toString();
       input['roeGames'] = roeGames;
     }
-    const game: PokerGame = {...input} as PokerGame;
+    const game: PokerGame = { ...input } as PokerGame;
     game.gameType = gameType;
 
     if (game.demoGame) {
@@ -239,7 +238,7 @@ class GameRepositoryImpl {
               if (rewardId === 0) {
                 continue;
               }
-              const reward = await rewardRepository.findOne({id: rewardId});
+              const reward = await rewardRepository.findOne({ id: rewardId });
               if (!reward) {
                 throw new Error(`Reward: ${rewardId} is not found`);
               }
@@ -298,8 +297,7 @@ class GameRepositoryImpl {
             const gameInput = game as any;
             gameInput.rewardTrackingIds = rewardTrackingIds;
             logger.info(
-              `Game server ${gameServer.url.toString()} is requested to host ${
-                game.gameCode
+              `Game server ${gameServer.url.toString()} is requested to host ${game.gameCode
               }`
             );
             tableStatus = await publishNewGame(gameInput, gameServer, false);
@@ -320,7 +318,7 @@ class GameRepositoryImpl {
             {
               id: game.id,
             },
-            {tableStatus: tableStatus}
+            { tableStatus: tableStatus }
           );
         }
       });
@@ -361,19 +359,19 @@ class GameRepositoryImpl {
     }
 
     // get game by id (testing only)
-    const game = await repository.findOne({where: {gameCode: gameCode}});
+    const game = await repository.findOne({ where: { gameCode: gameCode } });
     return game;
   }
 
   public async getGameCountByClubId(clubId: number): Promise<number> {
     const repository = getGameRepository(PokerGame);
-    const count = await repository.count({where: {clubId: clubId}});
+    const count = await repository.count({ where: { clubId: clubId } });
     return count;
   }
 
   public async getGameCountByPlayerId(playerId: number): Promise<number> {
     const repository = getGameRepository(PokerGame);
-    const count = await repository.count({where: {hostId: playerId}});
+    const count = await repository.count({ where: { hostId: playerId } });
     return count;
   }
 
@@ -565,7 +563,7 @@ class GameRepositoryImpl {
         player = await Cache.getPlayer('system');
       } catch (err) {
         const playerID = await createPlayer({
-          player: {name: 'system', deviceId: 'system', page: {count: 20}},
+          player: { name: 'system', deviceId: 'system', page: { count: 20 } },
         });
         player = await Cache.getPlayer('system');
       }
@@ -612,7 +610,7 @@ class GameRepositoryImpl {
       if (!forceKillExpired) {
         const nextHandRepo = getGameRepository(NextHandUpdates);
         const endGameReq = await nextHandRepo.findOne({
-          game: {id: game.id},
+          game: { id: game.id },
           newUpdate: NextHandUpdate.END_GAME,
         });
 
@@ -642,10 +640,8 @@ class GameRepositoryImpl {
       ) {
         // the game will be stopped in the next hand
         logger.info(
-          `Ending expired game next hand. Game: ${game.id}/${
-            game.gameCode
-          }, started at: ${game.startedAt.toISOString()}, game length: ${
-            game.gameLength
+          `Ending expired game next hand. Game: ${game.id}/${game.gameCode
+          }, started at: ${game.startedAt.toISOString()}, game length: ${game.gameLength
           }, expired at: ${normalExpireAt.toISOString()}`
         );
         await NextHandUpdatesRepository.expireGameNextHand(game.id);
@@ -654,18 +650,14 @@ class GameRepositoryImpl {
       } else {
         if (forceKillExpired) {
           logger.info(
-            `Attempting to kill expired game. Game: ${game.id}/${
-              game.gameCode
-            }, started at: ${game.startedAt.toISOString()}, game length: ${
-              game.gameLength
+            `Attempting to kill expired game. Game: ${game.id}/${game.gameCode
+            }, started at: ${game.startedAt.toISOString()}, game length: ${game.gameLength
             }, minutes since expired: ${minutesSinceExpired}, grace period: ${killLimit} minutes`
           );
         } else if (forceKillStuck) {
           logger.info(
-            `Attempting to kill stuck game. Game: ${game.id}/${
-              game.gameCode
-            }, started at: ${game.startedAt.toISOString()}, game length: ${
-              game.gameLength
+            `Attempting to kill stuck game. Game: ${game.id}/${game.gameCode
+            }, started at: ${game.startedAt.toISOString()}, game length: ${game.gameLength
             }, minutes since stuck: ${minutesSinceEndGameReq}, grace period: ${killLimit} minutes`
           );
         } else {
@@ -681,7 +673,7 @@ class GameRepositoryImpl {
       }
       numExpired++;
     }
-    return {numExpired: numExpired};
+    return { numExpired: numExpired };
   }
 
   public async endGameInternal(
@@ -691,7 +683,7 @@ class GameRepositoryImpl {
     const game: PokerGame | undefined = await getGameRepository(
       PokerGame
     ).findOne({
-      where: {gameCode: gameCode},
+      where: { gameCode: gameCode },
     });
     if (!game) {
       throw new Error(`Cannot find game ${gameCode}`);
@@ -724,7 +716,7 @@ class GameRepositoryImpl {
     // get number of players in the seats
     const count = await playerGameTrackerRepo.count({
       where: {
-        game: {id: game.id},
+        game: { id: game.id },
         status: In([
           PlayerStatus.PLAYING,
           PlayerStatus.IN_BREAK,
@@ -733,7 +725,7 @@ class GameRepositoryImpl {
       },
     });
 
-    const gameUpdateProps: any = {playersInSeats: count};
+    const gameUpdateProps: any = { playersInSeats: count };
     gameUpdateProps[`seat${seatNo}`] = SeatStatus.OCCUPIED;
     await gameSeatInfoRepo.update(
       {
@@ -765,7 +757,7 @@ class GameRepositoryImpl {
     // get number of players in the seats
     const count = await playerGameTrackerRepo.count({
       where: {
-        game: {id: game.id},
+        game: { id: game.id },
         status: In([
           PlayerStatus.PLAYING,
           PlayerStatus.IN_BREAK,
@@ -774,7 +766,7 @@ class GameRepositoryImpl {
       },
     });
 
-    const gameSeatInfoProps: any = {playersInSeats: count};
+    const gameSeatInfoProps: any = { playersInSeats: count };
     gameSeatInfoProps[`seat${seatNo}`] = SeatStatus.OPEN;
     await gameSeatInfoRepo.update(
       {
@@ -801,7 +793,7 @@ class GameRepositoryImpl {
         const gameSeatInfoRepo =
           transactionEntityManager.getRepository(PokerGameSeatInfo);
 
-        const gameSeatInfo = await gameSeatInfoRepo.findOne({gameID: game.id});
+        const gameSeatInfo = await gameSeatInfoRepo.findOne({ gameID: game.id });
         if (!gameSeatInfo) {
           logger.error(`Game status is not found for game: ${game.gameCode}`);
           throw new Error(
@@ -817,7 +809,7 @@ class GameRepositoryImpl {
         const nextHandUpdatesRepo =
           transactionEntityManager.getRepository(NextHandUpdates);
         const row = await nextHandUpdatesRepo.findOne({
-          game: {id: game.id},
+          game: { id: game.id },
           newSeat: seatNo,
         });
         if (row) {
@@ -868,8 +860,9 @@ class GameRepositoryImpl {
         //logger.info(`Perf: Calling join game query`);
         const playerInSeat = await playerGameTrackerRepository.findOne({
           where: {
-            game: {id: game.id},
+            game: { id: game.id },
             seatNo: seatNo,
+            active: true
           },
         });
 
@@ -909,13 +902,13 @@ class GameRepositoryImpl {
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.findOne({
       where: {
-        game: {id: game.id},
+        game: { id: game.id },
         playerId: player.id,
       },
     });
     const allPlayers = await playerGameTrackerRepository.find({
       where: {
-        game: {id: game.id},
+        game: { id: game.id },
       },
     });
 
@@ -932,7 +925,7 @@ class GameRepositoryImpl {
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepository.find({
       where: {
-        game: {id: game.id},
+        game: { id: game.id },
       },
     });
 
@@ -951,8 +944,7 @@ class GameRepositoryImpl {
     transactionEntityManager?: EntityManager
   ): Promise<void> {
     logger.info(
-      `[${gameLogPrefix(game)}] Restarting game. Game status: ${
-        GameStatus[game.status]
+      `[${gameLogPrefix(game)}] Restarting game. Game status: ${GameStatus[game.status]
       }`
     );
     if (game.status !== GameStatus.ACTIVE) {
@@ -969,7 +961,7 @@ class GameRepositoryImpl {
     const playingCount = await playerGameTrackerRepository
       .createQueryBuilder()
       .where({
-        game: {id: game.id},
+        game: { id: game.id },
         status: PlayerStatus.PLAYING,
       })
       .getCount();
@@ -984,7 +976,7 @@ class GameRepositoryImpl {
         }
         const rows = await gameRepo
           .createQueryBuilder()
-          .where({id: game.id})
+          .where({ id: game.id })
           .select('game_status', 'status')
           .addSelect('table_status', 'tableStatus')
           .execute();
@@ -1007,7 +999,7 @@ class GameRepositoryImpl {
                 .set({
                   tableStatus: newTableStatus,
                 })
-                .where('id = :id', {id: game.id})
+                .where('id = :id', { id: game.id })
                 .execute();
 
               await Cache.getGame(
@@ -1062,7 +1054,7 @@ class GameRepositoryImpl {
     const rows = await playerGameTrackerRepository
       .createQueryBuilder()
       .where({
-        game: {id: gameId},
+        game: { id: gameId },
         playerId: playerId,
       })
       .select('status')
@@ -1103,7 +1095,7 @@ class GameRepositoryImpl {
     const rows = await playerGameTrackerRepository
       .createQueryBuilder()
       .where({
-        game: {id: gameId},
+        game: { id: gameId },
         playerId: playerId,
       })
       .select('status')
@@ -1122,7 +1114,7 @@ class GameRepositoryImpl {
       .createQueryBuilder()
       .update()
       .where({
-        game: {id: gameId},
+        game: { id: gameId },
         playerId: playerId,
       })
       .set({
@@ -1197,7 +1189,7 @@ class GameRepositoryImpl {
     forced: boolean
   ): Promise<GameStatus> {
     const repository = getGameRepository(PokerGame);
-    const game = await repository.findOne({where: {id: gameId}});
+    const game = await repository.findOne({ where: { id: gameId } });
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
     }
@@ -1205,7 +1197,7 @@ class GameRepositoryImpl {
     // update session time
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const players = await playerGameTrackerRepository.find({
-      game: {id: game.id},
+      game: { id: game.id },
     });
 
     for (const playerInGame of players) {
@@ -1238,7 +1230,7 @@ class GameRepositoryImpl {
       .set({
         endReason: endReason,
       })
-      .where('id = :id', {id: gameId})
+      .where('id = :id', { id: gameId })
       .execute();
 
     const updatedGame = await Cache.getGame(game.gameCode, true);
@@ -1292,7 +1284,7 @@ class GameRepositoryImpl {
     forced?: boolean
   ) {
     const repository = getGameRepository(PokerGame);
-    let game = await repository.findOne({where: {id: gameId}});
+    let game = await repository.findOne({ where: { id: gameId } });
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
     }
@@ -1312,7 +1304,7 @@ class GameRepositoryImpl {
       .createQueryBuilder()
       .update(PokerGame)
       .set(values)
-      .where('id = :id', {id: gameId})
+      .where('id = :id', { id: gameId })
       .execute();
 
     if (status === GameStatus.PAUSED) {
@@ -1378,7 +1370,7 @@ class GameRepositoryImpl {
         const playingCount = await playerGameTrackerRepository
           .createQueryBuilder()
           .where({
-            game: {id: game.id},
+            game: { id: game.id },
             status: PlayerStatus.PLAYING,
           })
           .getCount();
@@ -1391,7 +1383,7 @@ class GameRepositoryImpl {
               tableStatus: TableStatus.NOT_ENOUGH_PLAYERS,
               gameStarted: true,
             })
-            .where('id = :id', {id: gameId})
+            .where('id = :id', { id: gameId })
             .execute();
         } else {
           await getGameConnection()
@@ -1401,7 +1393,7 @@ class GameRepositoryImpl {
               tableStatus: TableStatus.GAME_RUNNING,
               gameStarted: true,
             })
-            .where('id = :id', {id: gameId})
+            .where('id = :id', { id: gameId })
             .execute();
           game.tableStatus = TableStatus.GAME_RUNNING;
 
@@ -1434,7 +1426,7 @@ class GameRepositoryImpl {
 
   public async markTableStatus(gameId: number, status: TableStatus) {
     const repository = getGameRepository(PokerGame);
-    const game = await repository.findOne({where: {id: gameId}});
+    const game = await repository.findOne({ where: { id: gameId } });
     if (!game) {
       throw new Error(`Game: ${gameId} is not found`);
     }
@@ -1443,8 +1435,8 @@ class GameRepositoryImpl {
     await getGameConnection()
       .createQueryBuilder()
       .update(PokerGame)
-      .set({tableStatus: status})
-      .where('id = :id', {id: gameId})
+      .set({ tableStatus: status })
+      .where('id = :id', { id: gameId })
       .execute();
     // update cached game
     await Cache.getGame(game.gameCode, true /** update */);
@@ -1501,20 +1493,20 @@ class GameRepositoryImpl {
     await getGameManager().transaction(async transactionEntityManager => {
       if (gameCode) {
         const gameRepo = transactionEntityManager.getRepository(PokerGame);
-        const game = await gameRepo.findOne({gameCode: gameCode});
+        const game = await gameRepo.findOne({ gameCode: gameCode });
         if (!game) {
           throw new Error(`Game ${gameCode} is not found`);
         }
         await transactionEntityManager
           .getRepository(PlayerGameTracker)
-          .delete({game: {id: game.id}});
-        await getHistoryRepository(PlayerGameStats).delete({gameId: game.id});
+          .delete({ game: { id: game.id } });
+        await getHistoryRepository(PlayerGameStats).delete({ gameId: game.id });
         await transactionEntityManager
           .getRepository(NextHandUpdates)
-          .delete({game: {id: game.id}});
+          .delete({ game: { id: game.id } });
 
         if (!includeGame) {
-          await gameRepo.delete({id: game.id});
+          await gameRepo.delete({ id: game.id });
         }
       } else {
         await transactionEntityManager
@@ -1595,7 +1587,7 @@ class GameRepositoryImpl {
   public async updateAudioConfDisabled(gameCode: string) {
     const gameSettingsRepo = getGameRepository(PokerGameSettings);
     await gameSettingsRepo.update(
-      {gameCode: gameCode},
+      { gameCode: gameCode },
       {
         audioConfEnabled: false,
       }
@@ -1609,7 +1601,7 @@ class GameRepositoryImpl {
     // get number of players in the seats
     const count = await playerGameTrackerRepo.count({
       where: {
-        game: {id: gameID},
+        game: { id: gameID },
         status: PlayerStatus.PLAYING,
         stack: Not(0),
       },
@@ -1655,7 +1647,7 @@ class GameRepositoryImpl {
     }
 
     const playersInDb = await gameTrackerRepo.find({
-      game: {id: game.id},
+      game: { id: game.id },
     });
 
     const players = new Array<any>();
@@ -1705,7 +1697,7 @@ class GameRepositoryImpl {
     const repository = getHistoryRepository(GameHistory);
 
     // get game by id (testing only)
-    const gameHistory = await repository.findOne({where: {gameId: gameId}});
+    const gameHistory = await repository.findOne({ where: { gameId: gameId } });
     return gameHistory;
   }
 
@@ -1751,8 +1743,8 @@ class GameRepositoryImpl {
     const notes = await notesRepo.find({
       relations: ['player', 'notesToPlayer'],
       where: {
-        player: {id: player.id},
-        notesToPlayer: {id: In(playerIds)},
+        player: { id: player.id },
+        notesToPlayer: { id: In(playerIds) },
       },
     });
     if (!notes) {
@@ -1808,10 +1800,8 @@ class GameRepositoryImpl {
       }
 
       logger.info(
-        `Ending Game ${game.gameCode}. game.status: ${
-          GameStatus[game.status]
-        }, game.tableStatus: ${
-          TableStatus[game.tableStatus]
+        `Ending Game ${game.gameCode}. game.status: ${GameStatus[game.status]
+        }, game.tableStatus: ${TableStatus[game.tableStatus]
         }, force: ${force}, reason: ${GameEndReason[endReason]}`
       );
 
@@ -1840,8 +1830,7 @@ class GameRepositoryImpl {
         playerUuid = player.uuid;
       }
       logger.error(
-        `Error while ending game. playerId: ${playerUuid}, gameCode: ${
-          game.gameCode
+        `Error while ending game. playerId: ${playerUuid}, gameCode: ${game.gameCode
         }: ${errToStr(err)}`
       );
       throw err;
@@ -1863,7 +1852,7 @@ class GameRepositoryImpl {
     }
     const playersRepo = getGameRepository(PlayerGameTracker);
     const player = await playersRepo.findOne({
-      game: {id: game.id},
+      game: { id: game.id },
       playerUuid: playerUuid,
     });
     if (player) {

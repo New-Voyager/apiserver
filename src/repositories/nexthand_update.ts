@@ -1,6 +1,6 @@
-import {NextHandUpdates, PokerGame} from '@src/entity/game/game';
-import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {Player} from '@src/entity/player/player';
+import { NextHandUpdates, PokerGame } from '@src/entity/game/game';
+import { PlayerGameTracker } from '@src/entity/game/player_game_tracker';
+import { Player } from '@src/entity/player/player';
 import {
   GameEndReason,
   GameStatus,
@@ -8,16 +8,17 @@ import {
   PlayerStatus,
   TableStatus,
 } from '@src/entity/types';
-import {playerLeftGame} from '@src/gameserver';
-import {Nats} from '@src/nats';
-import {cancelTimer} from '@src/timer';
-import {fixQuery} from '@src/utils';
-import {errToStr, getLogger} from '@src/utils/log';
-import {getGameConnection, getGameManager, getGameRepository} from '.';
-import {GameRepository} from './game';
-import {GameSettingsRepository} from './gamesettings';
-import {LocationCheck} from './locationcheck';
-import {BREAK_TIMEOUT, NewUpdate} from './types';
+import { playerLeftGame } from '@src/gameserver';
+import { Nats } from '@src/nats';
+import { cancelTimer } from '@src/timer';
+import { fixQuery } from '@src/utils';
+import { errToStr, getLogger } from '@src/utils/log';
+import { getGameConnection, getGameManager, getGameRepository } from '.';
+import { GameRepository } from './game';
+import { GameSettingsRepository } from './gamesettings';
+import { LocationCheck } from './locationcheck';
+import { PlayersInGameRepository } from './playersingame';
+import { BREAK_TIMEOUT, NewUpdate } from './types';
 
 const logger = getLogger('repositories::nexthand_update');
 
@@ -32,7 +33,7 @@ class NextHandUpdatesRepositoryImpl {
     const rows = await playerGameTrackerRepository
       .createQueryBuilder()
       .where({
-        game: {id: game.id},
+        game: { id: game.id },
         playerId: player.id,
       })
       .select('status')
@@ -54,7 +55,7 @@ class NextHandUpdatesRepositoryImpl {
     ) {
       const nextHandUpdate = await nextHandUpdatesRepository.findOne({
         where: {
-          game: {id: game.id},
+          game: { id: game.id },
           playerId: player.id,
           newUpdate: NextHandUpdate.LEAVE,
         },
@@ -81,35 +82,36 @@ class NextHandUpdatesRepositoryImpl {
         }
       }
     } else {
-      playerInGame.status = PlayerStatus.NOT_PLAYING;
-      const seatNo = playerInGame.seatNo;
-      playerInGame.seatNo = 0;
-      const setProps: any = {
-        status: PlayerStatus.NOT_PLAYING,
-        seatNo: 0,
-      };
+      await PlayersInGameRepository.leaveGame(playerGameTrackerRepository, game, player.id);
+      // playerInGame.status = PlayerStatus.NOT_PLAYING;
+      // const seatNo = playerInGame.seatNo;
+      // playerInGame.seatNo = 0;
+      // const setProps: any = {
+      //   status: PlayerStatus.NOT_PLAYING,
+      //   seatNo: 0,
+      // };
 
-      if (playerInGame.satAt) {
-        const satAt = new Date(Date.parse(playerInGame.satAt.toString()));
-        // calculate session time
-        let sessionTime = playerInGame.sessionTime;
-        const currentSessionTime = new Date().getTime() - satAt.getTime();
-        const roundSeconds = Math.round(currentSessionTime / 1000);
-        sessionTime = sessionTime + roundSeconds;
-        setProps.satAt = undefined;
-        setProps.sessionTime = sessionTime;
-      }
-      await playerGameTrackerRepository.update(
-        {
-          game: {id: game.id},
-          playerId: player.id,
-        },
-        setProps
-      );
+      // if (playerInGame.satAt) {
+      //   const satAt = new Date(Date.parse(playerInGame.satAt.toString()));
+      //   // calculate session time
+      //   let sessionTime = playerInGame.sessionTime;
+      //   const currentSessionTime = new Date().getTime() - satAt.getTime();
+      //   const roundSeconds = Math.round(currentSessionTime / 1000);
+      //   sessionTime = sessionTime + roundSeconds;
+      //   setProps.satAt = undefined;
+      //   setProps.sessionTime = sessionTime;
+      // }
+      // await playerGameTrackerRepository.update(
+      //   {
+      //     game: {id: game.id},
+      //     playerId: player.id,
+      //   },
+      //   setProps
+      // );
 
-      if (seatNo !== 0) {
-        await GameRepository.seatOpened(game, seatNo);
-      }
+      // if (seatNo !== 0) {
+      //   await GameRepository.seatOpened(game, seatNo);
+      // }
 
       // playerLeftGame(game, player, seatNo);
     }
@@ -130,7 +132,7 @@ class NextHandUpdatesRepositoryImpl {
       const rows = await playerGameTrackerRepository
         .createQueryBuilder()
         .where({
-          game: {id: game.id},
+          game: { id: game.id },
           playerId: player.id,
         })
         .select('stack')
@@ -190,14 +192,14 @@ class NextHandUpdatesRepositoryImpl {
       );
       const nextHandUpdate = await nextHandUpdatesRepository.findOne({
         where: {
-          game: {id: game.id},
+          game: { id: game.id },
           playerId: player.id,
           newUpdate: NextHandUpdate.TAKE_BREAK,
         },
       });
 
       if (nextHandUpdate) {
-        await nextHandUpdatesRepository.delete({id: nextHandUpdate.id});
+        await nextHandUpdatesRepository.delete({ id: nextHandUpdate.id });
       }
     });
     await GameRepository.restartGameIfNeeded(game, true, false);

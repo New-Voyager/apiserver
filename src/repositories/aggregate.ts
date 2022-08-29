@@ -1,4 +1,4 @@
-import {Cache} from '@src/cache';
+import { Cache } from '@src/cache';
 
 import {
   getDebugRepository,
@@ -10,18 +10,17 @@ import {
   getHistoryRepository,
   getUserManager,
 } from '.';
-import {GameHistory} from '@src/entity/history/game';
-import {PlayerGameStats} from '@src/entity/history/stats';
-import {HandHistory} from '@src/entity/history/hand';
-import {CreditUpdateType, GameStatus} from '@src/entity/types';
-import {PlayersInGame} from '@src/entity/history/player';
-import {getLogger, errToStr} from '@src/utils/log';
-import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {StatsRepository} from './stats';
-import * as lz from 'lzutf8';
+import { GameHistory } from '@src/entity/history/game';
+import { PlayerGameStats } from '@src/entity/history/stats';
+import { HandHistory } from '@src/entity/history/hand';
+import { CreditUpdateType, GameStatus } from '@src/entity/types';
+import { PlayersInGame } from '@src/entity/history/player';
+import { getLogger, errToStr } from '@src/utils/log';
+import { PlayerGameTracker } from '@src/entity/game/player_game_tracker';
+import { StatsRepository } from './stats';
 import * as zlib from 'zlib';
-import {DigitalOcean} from '@src/digitalocean';
-import {getGameCodeForClub} from '@src/utils/uniqueid';
+import { v4 as uuidv4 } from 'uuid';
+import { DigitalOcean } from '@src/digitalocean';
 import {
   NextHandUpdates,
   PokerGame,
@@ -33,24 +32,25 @@ import {
   HostSeatChangeProcess,
   PlayerSeatChangeProcess,
 } from '@src/entity/game/seatchange';
-import {HighHand} from '@src/entity/game/reward';
-import {EntityManager, UpdateResult} from 'typeorm';
-import {getRunProfile, getStoreHandAnalysis, RunProfile} from '@src/server';
-import {AdminRepository} from './admin';
-import {HandAnalysis} from '@src/entity/debug/handanalyze';
-import {GameRepository} from './game';
+import { HighHand } from '@src/entity/game/reward';
+import { EntityManager, UpdateResult } from 'typeorm';
+import { getRunProfile, getStoreHandAnalysis, RunProfile } from '@src/server';
+import { AdminRepository } from './admin';
+import { HandAnalysis } from '@src/entity/debug/handanalyze';
+import { GameRepository } from './game';
 import {
   ClubMember,
   CreditTracking,
   MemberTipsTracking,
 } from '@src/entity/player/club';
-import {ClubRepository} from './club';
+import { ClubRepository } from './club';
+import { Nats } from '@src/nats';
 
 const BATCH_SIZE = 10;
 const logger = getLogger('repositories::aggregate');
 
 class AggregationImpl {
-  constructor() {}
+  constructor() { }
   private async aggregateHandStats(handHistory: HandHistory, playerStats: any) {
     let playersHandStats = JSON.parse(handHistory.playersStats);
     for (const key in playersHandStats.playerRound) {
@@ -311,8 +311,7 @@ class AggregationImpl {
 
       const gameEnd = Date.now();
       logger.info(
-        `Game results for game aggregated: ${game.gameId}:${
-          game.gameCode
+        `Game results for game aggregated: ${game.gameId}:${game.gameCode
         }. Time taken: ${gameEnd - gameStart} ms.`
       );
 
@@ -330,7 +329,7 @@ class AggregationImpl {
       try {
         // save hand analysis data
         await this.saveHandAnalysis(game.gameCode, handDataLink);
-      } catch (err) {}
+      } catch (err) { }
     }
 
     const more = allGames.length > processedGameIds.length;
@@ -413,11 +412,15 @@ class AggregationImpl {
     const tipUpdates = new Array();
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     const players = await playerGameTrackerRepository.find({
-      game: {id: game.id},
+      game: { id: game.id },
     });
 
     await getUserManager().transaction(async tranManager => {
       for (const playerInGame of players) {
+        if (playerInGame.creditsSettled) {
+          // players credit is already settled
+          continue;
+        }
         const playerUuid = playerInGame.playerUuid;
         const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
         if (clubMember) {
@@ -434,10 +437,8 @@ class AggregationImpl {
             );
           } catch (err) {
             logger.error(
-              `Could not update club member credit after game. club: ${
-                game.clubCode
-              }, member ID: ${clubMember.id}, game: ${
-                game.gameCode
+              `Could not update club member credit after game. club: ${game.clubCode
+              }, member ID: ${clubMember.id}, game: ${game.gameCode
               }: ${errToStr(err)}`
             );
             continue;
@@ -466,6 +467,14 @@ class AggregationImpl {
           tipUpdates.push(
             tranManager.getRepository(MemberTipsTracking).save(tipTrack)
           );
+
+          await playerGameTrackerRepository.update({
+            game: { id: game.id },
+            playerId: playerInGame.playerId,
+            sessionNo: playerInGame.sessionNo,
+          }, {
+            creditsSettled: true,
+          });
         } else {
           logger.error(
             `Could not find club member in cache while updating credit tracker. club: ${game.clubCode}, player: ${playerUuid}`
@@ -495,6 +504,82 @@ class AggregationImpl {
     );
   }
 
+  public async settlePlayerCredits(game: PokerGame, playerInGame: PlayerGameTracker) {  // settles player credits after the game ends
+    await getUserManager().transaction(async tranManager => {
+      const playerUuid = playerInGame.playerUuid;
+      const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
+      if (clubMember) {
+        // update result
+        const amount = playerInGame.stack;
+        let newCredit: number;
+        let oldCredits = clubMember.availableCredit;
+        try {
+          newCredit = await ClubRepository.updateCredit(
+            playerUuid,
+            game.clubCode,
+            amount,
+            tranManager
+          );
+        } catch (err) {
+          logger.error(
+            `Could not update club member credit after game. club: ${game.clubCode
+            }, member ID: ${clubMember.id}, game: ${game.gameCode
+            }: ${errToStr(err)}`
+          );
+          return;
+        }
+
+        const ct = new CreditTracking();
+        ct.clubId = game.clubId;
+        ct.playerId = playerInGame.playerId;
+        ct.updateType = CreditUpdateType.GAME_RESULT;
+        ct.gameCode = game.gameCode;
+        ct.amount = amount;
+        ct.updatedCredits = newCredit;
+        ct.tips = playerInGame.rakePaid;
+        await tranManager.getRepository(CreditTracking).save(ct);
+
+        // update tips information
+        const tipTrack = new MemberTipsTracking();
+        tipTrack.clubId = game.clubId;
+        tipTrack.playerId = playerInGame.playerId;
+        tipTrack.gameEndedAt = game.endedAt;
+        tipTrack.gameCode = game.gameCode;
+        tipTrack.numberOfHands = playerInGame.noHandsPlayed;
+        tipTrack.tipsPaid = playerInGame.rakePaid;
+        tipTrack.buyin = playerInGame.buyIn;
+        tipTrack.profit = playerInGame.stack - playerInGame.buyIn;
+        await tranManager.getRepository(MemberTipsTracking).save(tipTrack);
+
+        let messageJson: any = {};
+        let message: string = '';
+        messageJson['type'] = 'CT';
+        messageJson['sub-type'] = 'CHANGE';
+        messageJson['notes'] = 'Credits updated';
+        messageJson['amount'] = amount;
+        messageJson['credits'] = newCredit;
+        messageJson['oldCredits'] = oldCredits;
+        message = JSON.stringify(messageJson);
+
+        const messageId = uuidv4();
+        const club = await Cache.getClub(game.clubCode);
+        // send a NATS message to player
+        Nats.sendCreditMessage(
+          club.clubCode,
+          club.name,
+          clubMember.player,
+          message,
+          messageId
+        );
+      } else {
+        logger.error(
+          `Could not find club member in cache while updating credit tracker. club: ${game.clubCode}, player: ${playerUuid}`
+        );
+      }
+    });
+
+  }
+
   private async removeLiveGamesData(gameCode: string) {
     await getGameManager().transaction(async transManager => {
       const game = await Cache.getGame(gameCode, true);
@@ -502,22 +587,22 @@ class AggregationImpl {
         return;
       }
       await transManager.getRepository(NextHandUpdates).delete({
-        game: {id: game.id},
+        game: { id: game.id },
       });
-      await transManager.delete(PokerGameSeatInfo, {gameCode: gameCode});
-      await transManager.delete(PokerGameUpdates, {gameCode: gameCode});
-      await transManager.delete(HighHand, {gameId: game.id});
-      await transManager.delete(HostSeatChangeProcess, {gameCode: gameCode});
-      await transManager.delete(PlayerSeatChangeProcess, {gameCode: gameCode});
-      await transManager.delete(PokerGameSettings, {gameCode: gameCode});
+      await transManager.delete(PokerGameSeatInfo, { gameCode: gameCode });
+      await transManager.delete(PokerGameUpdates, { gameCode: gameCode });
+      await transManager.delete(HighHand, { gameId: game.id });
+      await transManager.delete(HostSeatChangeProcess, { gameCode: gameCode });
+      await transManager.delete(PlayerSeatChangeProcess, { gameCode: gameCode });
+      await transManager.delete(PokerGameSettings, { gameCode: gameCode });
 
       const gameRepo = transManager.getRepository(PokerGame);
       const playerGameTrackerRepo =
         transManager.getRepository(PlayerGameTracker);
       await playerGameTrackerRepo.delete({
-        game: {id: game.id},
+        game: { id: game.id },
       });
-      await gameRepo.delete({id: game.id});
+      await gameRepo.delete({ id: game.id });
       await Cache.removeGame(gameCode);
     });
   }

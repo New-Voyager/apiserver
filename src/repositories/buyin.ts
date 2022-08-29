@@ -5,11 +5,11 @@ import {
   LessThanOrEqual,
   UpdateResult,
 } from 'typeorm';
-import {v4 as uuidv4} from 'uuid';
-import {getLogger} from '@src/utils/log';
-import {Cache} from '@src/cache';
-import {Player} from '@src/entity/player/player';
-import {gameLogPrefix, NextHandUpdates, PokerGame} from '@src/entity/game/game';
+import { v4 as uuidv4 } from 'uuid';
+import { getLogger } from '@src/utils/log';
+import { Cache } from '@src/cache';
+import { Player } from '@src/entity/player/player';
+import { gameLogPrefix, NextHandUpdates, PokerGame } from '@src/entity/game/game';
 import {
   ApprovalStatus,
   ApprovalType,
@@ -19,9 +19,9 @@ import {
   NextHandUpdate,
   PlayerStatus,
 } from '@src/entity/types';
-import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {GameRepository} from './game';
-import {startTimer, cancelTimer} from '@src/timer';
+import { PlayerGameTracker } from '@src/entity/game/player_game_tracker';
+import { GameRepository } from './game';
+import { startTimer, cancelTimer } from '@src/timer';
 import {
   BuyInResponse,
   BUYIN_APPROVAL_TIMEOUT,
@@ -29,11 +29,11 @@ import {
   NewUpdate,
   RELOAD_APPROVAL_TIMEOUT,
 } from './types';
-import {Club, ClubMember} from '@src/entity/player/club';
-import {buyInRequest, pendingApprovalsForClubData} from '@src/types';
-import {chipsToCents, fixQuery} from '@src/utils';
-import {Firebase} from '@src/firebase';
-import {PlayerRepository} from './player';
+import { Club, ClubMember } from '@src/entity/player/club';
+import { buyInRequest, pendingApprovalsForClubData } from '@src/types';
+import { chipsToCents, fixQuery } from '@src/utils';
+import { Firebase } from '@src/firebase';
+import { PlayerRepository } from './player';
 import {
   getGameConnection,
   getGameManager,
@@ -41,9 +41,9 @@ import {
   getUserConnection,
   getUserRepository,
 } from '.';
-import {Nats} from '@src/nats';
-import {PlayersInGameRepository} from './playersingame';
-import {ClubRepository} from './club';
+import { Nats } from '@src/nats';
+import { PlayersInGameRepository } from './playersingame';
+import { ClubRepository } from './club';
 
 const logger = getLogger('repositories::buyin');
 
@@ -80,7 +80,7 @@ export class BuyIn {
     const repo = transactionEntityManager.getRepository(PlayerGameTracker);
     await repo.update(
       {
-        game: {id: this.game.id},
+        game: { id: this.game.id },
         playerId: this.player.id,
       },
       {
@@ -304,8 +304,9 @@ export class BuyIn {
           transactionEntityManager.getRepository(PlayerGameTracker);
         logger.info('buyin request');
         const playerInGame = await playerGameTrackerRepository.findOne({
-          game: {id: this.game.id},
+          game: { id: this.game.id },
           playerId: this.player.id,
+          active: true,
         });
         if (!playerInGame) {
           logger.error(
@@ -337,7 +338,7 @@ export class BuyIn {
           );
           await playerGameTrackerRepository.update(
             {
-              game: {id: this.game.id},
+              game: { id: this.game.id },
               playerId: this.player.id,
             },
             {
@@ -358,7 +359,7 @@ export class BuyIn {
 
             // get current stack
             const updated = await playerGameTrackerRepository.findOne({
-              game: {id: this.game.id},
+              game: { id: this.game.id },
               playerId: this.player.id,
             });
             if (!updated) {
@@ -447,8 +448,9 @@ export class BuyIn {
             newUpdate = NewUpdate.NEW_BUYIN;
             // get current stack
             const updated = await playerGameTrackerRepository.findOne({
-              game: {id: this.game.id},
+              game: { id: this.game.id },
               playerId: this.player.id,
+              active: true,
             });
             if (!updated) {
               throw new Error('Unable to get the updated row');
@@ -638,9 +640,9 @@ export class BuyIn {
       from poker_game g  
       join next_hand_updates nhu on nhu.game_id = g.id and nhu.new_update in (
         ${[
-          NextHandUpdate.WAIT_BUYIN_APPROVAL,
-          NextHandUpdate.WAIT_RELOAD_APPROVAL,
-        ]}
+        NextHandUpdate.WAIT_BUYIN_APPROVAL,
+        NextHandUpdate.WAIT_RELOAD_APPROVAL,
+      ]}
       )
       where g.id = ${this.game.id}`;
 
@@ -687,7 +689,7 @@ export class BuyIn {
             const pendingUpdatesRepo =
               transactionEntityManager.getRepository(NextHandUpdates);
             const buyInRequest = await pendingUpdatesRepo.findOne({
-              game: {id: this.game.id},
+              game: { id: this.game.id },
               playerId: this.player.id,
               newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
             });
@@ -699,7 +701,7 @@ export class BuyIn {
             const playerInGameRepo =
               transactionEntityManager.getRepository(PlayerGameTracker);
             const playerInGame = await playerInGameRepo.findOne({
-              game: {id: this.game.id},
+              game: { id: this.game.id },
               playerId: this.player.id,
             });
             if (!playerInGame) {
@@ -713,7 +715,7 @@ export class BuyIn {
 
             // remove row from NextHandUpdates table
             await pendingUpdatesRepo.delete({
-              game: {id: this.game.id},
+              game: { id: this.game.id },
               playerId: this.player.id,
               newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
             });
@@ -733,7 +735,7 @@ export class BuyIn {
             const pendingUpdatesRepo =
               transactionEntityManager.getRepository(NextHandUpdates);
             const buyInRequest = await pendingUpdatesRepo.findOne({
-              game: {id: this.game.id},
+              game: { id: this.game.id },
               playerId: this.player.id,
               newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
             });
@@ -745,7 +747,7 @@ export class BuyIn {
             const playerInGameRepo =
               transactionEntityManager.getRepository(PlayerGameTracker);
             const playerInGame = await playerInGameRepo.findOne({
-              game: {id: this.game.id},
+              game: { id: this.game.id },
               playerId: this.player.id,
             });
             if (!playerInGame) {
@@ -754,7 +756,7 @@ export class BuyIn {
 
             // remove row from NextHandUpdates table
             await pendingUpdatesRepo.delete({
-              game: {id: this.game.id},
+              game: { id: this.game.id },
               playerId: this.player.id,
               newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
             });
@@ -809,7 +811,7 @@ export class BuyIn {
         newUpdate: newStatus,
       })
       .where({
-        game: {id: this.game.id},
+        game: { id: this.game.id },
         playerId: this.player.id,
         newUpdate: oldStatus,
       })
@@ -844,7 +846,7 @@ export class BuyIn {
     // find the player
     const playerInSeat = await playerGameTrackerRepository.findOne({
       where: {
-        game: {id: this.game.id},
+        game: { id: this.game.id },
         playerId: this.player.id,
       },
     });
@@ -863,7 +865,7 @@ export class BuyIn {
       // mark the player as not playing
       const result: UpdateResult = await playerGameTrackerRepository.update(
         {
-          game: {id: this.game.id},
+          game: { id: this.game.id },
           playerId: this.player.id,
           status: In([
             PlayerStatus.WAIT_FOR_BUYIN,
@@ -900,7 +902,7 @@ export class BuyIn {
       // delete the row in pending updates table
       const pendingUpdatesRepo = getGameRepository(NextHandUpdates);
       await pendingUpdatesRepo.delete({
-        game: {id: this.game.id},
+        game: { id: this.game.id },
         playerId: this.player.id,
         newUpdate: NextHandUpdate.WAIT_BUYIN_APPROVAL,
       });
@@ -932,7 +934,7 @@ export class BuyIn {
       const playerGameTrackerRepo =
         transactionEntityManager.getRepository(PlayerGameTracker);
       const emptyStackPlayers = await playerGameTrackerRepo.find({
-        game: {id: game.id},
+        game: { id: game.id },
         status: PlayerStatus.PLAYING,
         stack: LessThanOrEqual(game.ante),
       });

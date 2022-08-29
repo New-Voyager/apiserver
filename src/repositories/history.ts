@@ -1,29 +1,29 @@
-import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
-import {PokerGame, PokerGameSettings} from '@src/entity/game/game';
-import {GameHistory} from '@src/entity/history/game';
-import {HighHandHistory} from '@src/entity/history/hand';
-import {PlayersInGame} from '@src/entity/history/player';
-import {Cache} from '@src/cache/index';
+import { PlayerGameTracker } from '@src/entity/game/player_game_tracker';
+import { PokerGame, PokerGameSettings } from '@src/entity/game/game';
+import { GameHistory } from '@src/entity/history/game';
+import { HighHandHistory } from '@src/entity/history/hand';
+import { PlayersInGame } from '@src/entity/history/player';
+import { Cache } from '@src/cache/index';
 import {
   getGameRepository,
   getHistoryConnection,
   getHistoryManager,
   getHistoryRepository,
 } from '.';
-import {HighHand} from '@src/entity/game/reward';
-import {Club, ClubMember} from '@src/entity/player/club';
-import {ClubRepository} from './club';
-import {In, IsNull, Not} from 'typeorm';
+import { HighHand } from '@src/entity/game/reward';
+import { Club, ClubMember } from '@src/entity/player/club';
+import { ClubRepository } from './club';
+import { In, IsNull, Not } from 'typeorm';
 import _ from 'lodash';
-import {Player} from '@src/entity/player/player';
-import {ChipUnit, GameEndReason, GameStatus, GameType} from '@src/entity/types';
-import {stat, Stats} from 'fs';
-import {StatsRepository} from './stats';
-import {GameNotFoundError} from '@src/errors';
-import {fixQuery} from '@src/utils';
+import { Player } from '@src/entity/player/player';
+import { ChipUnit, GameEndReason, GameStatus, GameType } from '@src/entity/types';
+import { stat, Stats } from 'fs';
+import { StatsRepository } from './stats';
+import { GameNotFoundError } from '@src/errors';
+import { fixQuery } from '@src/utils';
 
 class HistoryRepositoryImpl {
-  constructor() {}
+  constructor() { }
 
   public async updateGameNum(gameId: number, gameNum) {
     await getHistoryRepository(GameHistory).update(
@@ -92,7 +92,7 @@ class HistoryRepositoryImpl {
         .createQueryBuilder()
         .update(GameHistory)
         .set(values)
-        .where('gameId = :gameId', {gameId: game.id})
+        .where('gameId = :gameId', { gameId: game.id })
         .execute();
 
       const playersInGameRepo =
@@ -100,12 +100,24 @@ class HistoryRepositoryImpl {
       const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
       const players = await playerGameTrackerRepo.find({
         where: {
-          game: {id: game.id},
+          game: { id: game.id },
         },
       });
 
       for (const player of players) {
-        const playersInGame = new PlayersInGame();
+        let playerInGameRow = await playersInGameRepo.find({
+          gameId: game.id,
+          playerId: player.id,
+          sessionNo: player.sessionNo,
+        });
+
+        let playersInGame: PlayersInGame;
+        if (playerInGameRow.length == 0) {
+          playersInGame = new PlayersInGame();
+        } else {
+          playersInGame = playerInGameRow[0];
+        }
+
         playersInGame.buyIn = player.buyIn;
         playersInGame.handStack = player.handStack;
         playersInGame.leftAt = player.leftAt;
@@ -120,6 +132,10 @@ class HistoryRepositoryImpl {
         playersInGame.rakePaid = player.rakePaid;
         playersInGame.status = player.status;
         playersInGame.stack = player.stack;
+        playersInGame.sessionNo = player.sessionNo;
+        playersInGame.sessionStartTime = player.sessionStartTime;
+        playersInGame.sessionLeftTime = player.sessionLeftTime;
+        playersInGame.creditsSettled = player.creditsSettled;
 
         await playersInGameRepo.save(playersInGame);
       }
@@ -325,7 +341,7 @@ class HistoryRepositoryImpl {
 
   public async getPlayersInGame(gameId: number): Promise<PlayersInGame[]> {
     const playersInGameRepo = await getHistoryRepository(PlayersInGame);
-    const playersInGame = playersInGameRepo.find({where: {gameId: gameId}});
+    const playersInGame = playersInGameRepo.find({ where: { gameId: gameId } });
     return playersInGame;
   }
 
@@ -334,7 +350,7 @@ class HistoryRepositoryImpl {
     playerId: number
   ): Promise<any> {
     const gameRepo = getHistoryRepository(GameHistory);
-    const game = await gameRepo.findOne({gameCode: gameCode});
+    const game = await gameRepo.findOne({ gameCode: gameCode });
     let completedGame: any;
     if (game) {
       let gameData: any = {
@@ -484,19 +500,19 @@ class HistoryRepositoryImpl {
     gameCode: string
   ): Promise<GameHistory | undefined> {
     const gameRepo = getHistoryRepository(GameHistory);
-    const game = await gameRepo.findOne({gameCode: gameCode});
+    const game = await gameRepo.findOne({ gameCode: gameCode });
     return game;
   }
 
   public async getGameResultTable(gameCode: string): Promise<Array<any>> {
     const gameRepo = getHistoryRepository(GameHistory);
-    const game = await gameRepo.findOne({gameCode: gameCode});
+    const game = await gameRepo.findOne({ gameCode: gameCode });
     if (!game) {
       return [];
     }
     const gameResults = new Array<any>();
     const playersRepo = getHistoryRepository(PlayersInGame);
-    const players = await playersRepo.find({gameId: game.gameId});
+    const players = await playersRepo.find({ gameId: game.gameId });
     for (const player of players) {
       const gameResult = {
         sessionTime: player.sessionTime,
