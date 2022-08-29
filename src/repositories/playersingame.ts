@@ -7,40 +7,44 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
+import { PlayerGameTracker } from '@src/entity/game/player_game_tracker';
 import {
   getGameManager,
   getGameRepository,
   getHistoryRepository,
   getUserRepository,
 } from '.';
-import {errToStr, getLogger} from '@src/utils/log';
+import { errToStr, getLogger } from '@src/utils/log';
 import {
+  gameLogPrefix,
   NextHandUpdates,
   PokerGame,
   PokerGameSeatInfo,
   PokerGameSettings,
 } from '@src/entity/game/game';
-import {Player} from '@src/entity/player/player';
-import {Cache} from '@src/cache';
+import { Player } from '@src/entity/player/player';
+import { Cache } from '@src/cache';
 import {
+  CreditUpdateType,
   GameStatus,
   NextHandUpdate,
   PlayerStatus,
   TableStatus,
 } from '@src/entity/types';
-import {Nats} from '@src/nats';
-import {startTimer} from '@src/timer';
-import {centsToChips, chipsToCents, utcTime} from '@src/utils';
+import { Nats } from '@src/nats';
+import { startTimer } from '@src/timer';
+import { centsToChips, chipsToCents, utcTime } from '@src/utils';
 import _ from 'lodash';
-import {BUYIN_TIMEOUT, GamePlayerSettings} from './types';
-import {getAgoraToken} from '@src/3rdparty/agora';
-import {HandHistory} from '@src/entity/history/hand';
-import {ClubMember, ClubMemberStat} from '@src/entity/player/club';
-import {StatsRepository} from './stats';
-import {GameRepository} from './game';
-import {TakeBreak} from './takebreak';
-import {PlayersInGame} from '@src/entity/history/player';
+import { BUYIN_TIMEOUT, GamePlayerSettings } from './types';
+import { getAgoraToken } from '@src/3rdparty/agora';
+import { HandHistory } from '@src/entity/history/hand';
+import { ClubMember, ClubMemberStat } from '@src/entity/player/club';
+import { StatsRepository } from './stats';
+import { GameRepository } from './game';
+import { TakeBreak } from './takebreak';
+import { PlayersInGame } from '@src/entity/history/player';
+import { Aggregation } from './aggregate';
+import { ClubRepository } from './club';
 
 const logger = getLogger('players_in_game');
 
@@ -57,7 +61,7 @@ class PlayersInGameRepositoryImpl {
       playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     }
     let resp = await playerGameTrackerRepo.find({
-      game: {id: gameId},
+      game: { id: gameId },
       seatNo: Not(IsNull()),
     });
     resp = _.filter(resp, e => e.seatNo != 0);
@@ -78,7 +82,7 @@ class PlayersInGameRepositoryImpl {
     }
     logger.info('getSeatInfo');
     const resp = await playerGameTrackerRepo.findOne({
-      game: {id: gameId},
+      game: { id: gameId },
       seatNo: seatNo,
     });
     return resp;
@@ -97,7 +101,7 @@ class PlayersInGameRepositoryImpl {
       playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     }
     const resp = await playerGameTrackerRepo.findOne({
-      game: {id: game.id},
+      game: { id: game.id },
       playerId: player.id,
     });
     return resp;
@@ -111,7 +115,7 @@ class PlayersInGameRepositoryImpl {
     const repo = getGameRepository(PlayerGameTracker);
     const resp = await repo.find({
       playerId: player.id,
-      game: {id: game.id},
+      game: { id: game.id },
     });
     if (resp.length === 0) {
       return null;
@@ -137,7 +141,7 @@ class PlayersInGameRepositoryImpl {
       );
       const playerInGame = await playerGameTrackerRepository.findOne({
         where: {
-          game: {id: game.id},
+          game: { id: game.id },
           playerId: player.id,
         },
       });
@@ -155,7 +159,7 @@ class PlayersInGameRepositoryImpl {
         // we can mark the user as KICKED_OUT from the player game tracker
         await playerGameTrackerRepository.update(
           {
-            game: {id: game.id},
+            game: { id: game.id },
             playerId: player.id,
           },
           {
@@ -165,7 +169,7 @@ class PlayersInGameRepositoryImpl {
         );
         const count = await playerGameTrackerRepository.count({
           where: {
-            game: {id: game.id},
+            game: { id: game.id },
             status: PlayerStatus.PLAYING,
           },
         });
@@ -176,7 +180,7 @@ class PlayersInGameRepositoryImpl {
           {
             gameID: game.id,
           },
-          {playersInSeats: count}
+          { playersInSeats: count }
         );
         Nats.playerKickedOut(game, player, playerInGame.seatNo);
       } else {
@@ -223,7 +227,7 @@ class PlayersInGameRepositoryImpl {
       );
       const playerInGame = await playerGameTrackerRepository.findOne({
         where: {
-          game: {id: game.id},
+          game: { id: game.id },
           playerId: player.id,
         },
       });
@@ -235,7 +239,7 @@ class PlayersInGameRepositoryImpl {
 
       await playerGameTrackerRepository.update(
         {
-          game: {id: game.id},
+          game: { id: game.id },
           playerId: player.id,
         },
         {
@@ -312,7 +316,7 @@ class PlayersInGameRepositoryImpl {
     const rows = await playerGameTrackerRepository
       .createQueryBuilder()
       .where({
-        game: {id: game.id},
+        game: { id: game.id },
         playerId: player.id,
       })
       .select('audio_token')
@@ -340,7 +344,7 @@ class PlayersInGameRepositoryImpl {
         // update the record
         await playerGameTrackerRepository.update(
           {
-            game: {id: game.id},
+            game: { id: game.id },
             playerId: player.id,
           },
           {
@@ -393,14 +397,14 @@ class PlayersInGameRepositoryImpl {
       );
 
       const row = await playerGameTrackerRepo.findOne({
-        game: {id: game.id},
+        game: { id: game.id },
         playerId: player.id,
       });
       const updatesObject: any = updates as any;
       if (row !== null) {
         await playerGameTrackerRepo.update(
           {
-            game: {id: game.id},
+            game: { id: game.id },
             playerId: player.id,
           },
           updatesObject
@@ -426,7 +430,7 @@ class PlayersInGameRepositoryImpl {
   ): Promise<GamePlayerSettings> {
     const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     const playerInGame = await playerGameTrackerRepo.findOne({
-      game: {id: game.id},
+      game: { id: game.id },
       playerId: player.id,
     });
     if (!playerInGame) {
@@ -507,7 +511,7 @@ class PlayersInGameRepositoryImpl {
     setProps.buyInExpAt = exp;
     await playerGameTrackerRepository.update(
       {
-        game: {id: game.id},
+        game: { id: game.id },
         playerId: playerId,
       },
       setProps
@@ -529,7 +533,7 @@ class PlayersInGameRepositoryImpl {
         inHandNextHand: false,
       },
       {
-        game: {id: game.id},
+        game: { id: game.id },
       }
     );
   }
@@ -548,13 +552,13 @@ class PlayersInGameRepositoryImpl {
       }
       // update session time
       const playerInGame = await playerGameRepo.find({
-        game: {id: game.id},
+        game: { id: game.id },
       });
       // walk through the hand history and collect big win hands for each player
       const playerBigWinLoss = {};
       const hands = await getHistoryRepository(HandHistory).find({
-        where: {gameId: game.id},
-        order: {handNum: 'ASC'},
+        where: { gameId: game.id },
+        order: { handNum: 'ASC' },
       });
 
       // determine big win/loss hands
@@ -597,7 +601,7 @@ class PlayersInGameRepositoryImpl {
         const result = await playerGameRepo.update(
           {
             playerId: playerId,
-            game: {id: game.id},
+            game: { id: game.id },
           },
           {
             bigWin: playerBigWinLoss[playerIdStr].bigWin,
@@ -615,7 +619,7 @@ class PlayersInGameRepositoryImpl {
       if (game.clubCode) {
         // update club member balance
         const playerChips = await playerGameRepo.find({
-          where: {game: {id: game.id}},
+          where: { game: { id: game.id } },
         });
 
         for (const playerChip of playerChips) {
@@ -675,11 +679,16 @@ class PlayersInGameRepositoryImpl {
     }
     // if this player has already played this game before, we should have his record
     let playerInGame = await playerGameTrackerRepository.findOne({
-      game: {id: game.id},
+      game: { id: game.id },
       playerId: player.id,
+      active: true,
     });
     let newPlayer = false;
+    let considerNewBuyin = false;
     if (playerInGame) {
+      if (playerInGame.status != PlayerStatus.IN_BREAK) {
+        considerNewBuyin = true;
+      }
       playerInGame.seatNo = seatNo;
       playerInGame.playerIp = ip;
       if (location) {
@@ -706,6 +715,10 @@ class PlayersInGameRepositoryImpl {
       playerInGame.runItTwiceEnabled = gameSettings.runItTwiceAllowed;
       playerInGame.muckLosingHand = game.muckLosingHand;
       playerInGame.playerIp = ip;
+      playerInGame.sessionStartTime = new Date(Date.now());
+      playerInGame.sessionNo = 1;
+      playerInGame.active = true;
+
       if (location) {
         playerInGame.playerLocation = `${location.lat},${location.long}`;
       }
@@ -768,8 +781,9 @@ class PlayersInGameRepositoryImpl {
 
     await playerGameTrackerRepository.update(
       {
-        game: {id: game.id},
+        game: { id: game.id },
         playerId: player.id,
+        active: true
       },
       {
         seatNo: seatNo,
@@ -806,6 +820,17 @@ class PlayersInGameRepositoryImpl {
             }
           );
         }
+
+        if (considerNewBuyin) {
+          // update credit history
+          await ClubRepository.updateCreditAndTracker(
+            player,
+            game.clubCode,
+            -playerInGame.stack,
+            CreditUpdateType.BUYIN,
+            game.gameCode
+          );
+        }
       }
     } catch (err) {
       // ignore this error (not critical)
@@ -824,7 +849,7 @@ class PlayersInGameRepositoryImpl {
       );
     }
     const updatedPlayer = await playerGameTrackerRepository.findOne({
-      game: {id: game.id},
+      game: { id: game.id },
       playerId: player.id,
     });
     if (!updatedPlayer) {
@@ -838,7 +863,7 @@ class PlayersInGameRepositoryImpl {
   ): Promise<Array<PlayersInGame> | undefined> {
     const playersInGameRepo = getHistoryRepository(PlayersInGame);
     const playersInGame = await playersInGameRepo.find({
-      where: {gameId: gameId},
+      where: { gameId: gameId },
     });
     return playersInGame;
   }
@@ -848,7 +873,7 @@ class PlayersInGameRepositoryImpl {
   ): Promise<Array<PlayerGameTracker> | undefined> {
     const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     const playerGameTracker = await playerGameTrackerRepo.find({
-      where: {game: {id: gameId}},
+      where: { game: { id: gameId } },
     });
     return playerGameTracker;
   }
@@ -858,14 +883,14 @@ class PlayersInGameRepositoryImpl {
     const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     const playerGameTracker = await playerGameTrackerRepo.findOne({
       where: {
-        game: {id: game.id},
+        game: { id: game.id },
         playerId: player.id,
       },
     });
     if (playerGameTracker) {
       await playerGameTrackerRepo.update(
         {
-          game: {id: game.id},
+          game: { id: game.id },
           playerId: player.id,
         },
         {
@@ -890,14 +915,14 @@ class PlayersInGameRepositoryImpl {
     const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     const playerGameTracker = await playerGameTrackerRepo.findOne({
       where: {
-        game: {id: game.id},
+        game: { id: game.id },
         playerId: player.id,
       },
     });
     if (playerGameTracker) {
       await playerGameTrackerRepo.update(
         {
-          game: {id: game.id},
+          game: { id: game.id },
           playerId: player.id,
         },
         {
@@ -914,14 +939,14 @@ class PlayersInGameRepositoryImpl {
     const playerGameTrackerRepo = getGameRepository(PlayerGameTracker);
     const playerGameTracker = await playerGameTrackerRepo.findOne({
       where: {
-        game: {id: game.id},
+        game: { id: game.id },
         playerId: player.id,
       },
     });
     if (playerGameTracker) {
       await playerGameTrackerRepo.update(
         {
-          game: {id: game.id},
+          game: { id: game.id },
           playerId: player.id,
         },
         {
@@ -930,6 +955,77 @@ class PlayersInGameRepositoryImpl {
       );
       await Cache.getAutoReloadPlayers(game.id, true);
     }
+  }
+
+  public async leaveGame(
+    playerGameTrackerRepository: Repository<PlayerGameTracker>,
+    game: PokerGame,
+    playerId: number,
+  ): Promise<number> {
+
+    const playerInGame = await playerGameTrackerRepository.findOne({
+      where: {
+        game: { id: game.id },
+        playerId: playerId,
+        active: true,
+      },
+    });
+    if (!playerInGame) {
+      return 0;
+    }
+    logger.error(`[${gameLogPrefix(game)}] Player ${playerInGame.playerName} (${playerInGame.playerId}) is left the session: ${playerInGame.sessionNo}`);
+    const player = await Cache.getPlayerById(playerId);
+    const openedSeat = playerInGame.seatNo;
+
+    let sessionTime = playerInGame.sessionTime;
+
+    if (playerInGame.sessionStartTime) {
+      // calculate session time
+      const satAt = new Date(Date.parse(playerInGame.sessionStartTime.toString()));
+      const currentSessionTime = new Date().getTime() - satAt.getTime();
+      const roundSeconds = Math.round(currentSessionTime / 1000);
+      sessionTime = sessionTime + roundSeconds;
+    }
+    logger.info(
+      `[${gameLogPrefix(game)}] ${player.uuid}/${player.name
+      } left the game. Session time: ${sessionTime}`
+    );
+
+
+    let settled = false;
+    // update club credits
+    if (game.clubCode) {
+      try {
+        await Aggregation.settlePlayerCredits(game, playerInGame);
+        settled = true;
+      } catch (err) {
+        logger.error(`[${gameLogPrefix(game)}] Failed to settle credits for player: ${playerInGame.playerName} (${playerInGame.playerId})`);
+      }
+    }
+
+    await playerGameTrackerRepository.update(
+      {
+        game: { id: game.id },
+        playerId: playerId,
+        active: true,
+      },
+      {
+        satAt: undefined,
+        sessionTime: sessionTime,
+        sessionLeftTime: new Date(Date.now()),
+        status: PlayerStatus.LEFT,
+        seatNo: 0,
+        creditsSettled: settled,
+      }
+    );
+    // do updates that are necessary
+    await GameRepository.seatOpened(game, openedSeat);
+
+    if (playerInGame) {
+      // notify game server, player is kicked out
+      Nats.playerLeftGame(game, player, playerInGame.seatNo);
+    }
+    return openedSeat;
   }
 }
 
