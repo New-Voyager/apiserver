@@ -1,27 +1,28 @@
-import {PlayerGameTracker} from '@src/entity/game/player_game_tracker';
+import { PlayerGameTracker } from '@src/entity/game/player_game_tracker';
 import {
   gameLogPrefix,
   NextHandUpdates,
   PokerGame,
   PokerGameUpdates,
 } from '@src/entity/game/game';
-import {Player} from '@src/entity/player/player';
+import { Player } from '@src/entity/player/player';
 import {
   GameStatus,
   NextHandUpdate,
   PlayerStatus,
   TableStatus,
 } from '@src/entity/types';
-import {startTimer} from '@src/timer';
-import {utcTime} from '@src/utils';
-import {errToStr, getLogger} from '@src/utils/log';
-import {EntityManager, Repository} from 'typeorm';
-import {BREAK_TIMEOUT, NewUpdate} from './types';
-import {Cache} from '@src/cache/index';
-import {getGameRepository} from '.';
-import {GameRepository} from './game';
-import {Nats} from '@src/nats';
-import {GameUpdatesRepository} from './gameupdates';
+import { startTimer } from '@src/timer';
+import { utcTime } from '@src/utils';
+import { errToStr, getLogger } from '@src/utils/log';
+import { EntityManager, Repository } from 'typeorm';
+import { BREAK_TIMEOUT, NewUpdate } from './types';
+import { Cache } from '@src/cache/index';
+import { getGameRepository } from '.';
+import { GameRepository } from './game';
+import { Nats } from '@src/nats';
+import { GameUpdatesRepository } from './gameupdates';
+import { PlayersInGameRepository } from './playersingame';
 const logger = getLogger('repositories::takebreak');
 
 export class TakeBreak {
@@ -46,7 +47,7 @@ export class TakeBreak {
       nextHandUpdatesRepository = getGameRepository(NextHandUpdates);
     }
     const rows = await playerGameTrackerRepository.findOne({
-      game: {id: this.game.id},
+      game: { id: this.game.id },
       playerId: this.player.id,
     });
     if (!rows) {
@@ -76,7 +77,7 @@ export class TakeBreak {
       playerInGame.status = PlayerStatus.IN_BREAK;
       playerGameTrackerRepository.update(
         {
-          game: {id: this.game.id},
+          game: { id: this.game.id },
           playerId: this.player.id,
         },
         {
@@ -112,7 +113,7 @@ export class TakeBreak {
     const rows = await playerGameTrackerRepository
       .createQueryBuilder()
       .where({
-        game: {id: this.game.id},
+        game: { id: this.game.id },
         playerId: this.player.id,
       })
       .select('status')
@@ -126,7 +127,7 @@ export class TakeBreak {
     await this.startTimer(playerGameTrackerRepository);
     if (update) {
       const pendingUpdatesRepo = getGameRepository(NextHandUpdates);
-      await pendingUpdatesRepo.delete({id: update.id});
+      await pendingUpdatesRepo.delete({ id: update.id });
     }
 
     // update the clients with new status
@@ -143,7 +144,7 @@ export class TakeBreak {
     const playingCount = await playerGameTrackerRepository
       .createQueryBuilder()
       .where({
-        game: {id: this.game.id},
+        game: { id: this.game.id },
         status: PlayerStatus.PLAYING,
       })
       .getCount();
@@ -184,14 +185,13 @@ export class TakeBreak {
     breakTimeExpAt.setSeconds(breakTimeExpAt.getSeconds() + timeoutInSeconds);
     const exp = utcTime(breakTimeExpAt);
     logger.debug(
-      `Player ${
-        this.player.name
+      `Player ${this.player.name
       } is taking a break. Now: ${now.toISOString()} Timer expires at ${exp.toISOString()}`
     );
 
     await playerGameTrackerRepository.update(
       {
-        game: {id: this.game.id},
+        game: { id: this.game.id },
         playerId: this.player.id,
       },
       {
@@ -208,8 +208,7 @@ export class TakeBreak {
       breakTimeExpAt
     ).catch(e => {
       logger.error(
-        `[${gameLogPrefix(this.game)}] Starting break timer failed. Error: ${
-          e.message
+        `[${gameLogPrefix(this.game)}] Starting break timer failed. Error: ${e.message
         }`
       );
     });
@@ -219,13 +218,12 @@ export class TakeBreak {
     const now = new Date();
     const nowUtc = utcTime(now);
     logger.debug(
-      `Player ${
-        this.player.name
+      `Player ${this.player.name
       } break time expired. Current time: ${nowUtc.toISOString()}`
     );
     const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
     let rows = await playerGameTrackerRepository.findOne({
-      game: {id: this.game.id},
+      game: { id: this.game.id },
       playerId: this.player.id,
     });
     if (!rows) {
@@ -233,22 +231,14 @@ export class TakeBreak {
     }
     const seatNo = rows.seatNo;
 
-    await playerGameTrackerRepository.update(
-      {
-        game: {id: this.game.id},
-        playerId: this.player.id,
-      },
-      {
-        status: PlayerStatus.NOT_PLAYING,
-        seatNo: 0,
-      }
+    await PlayersInGameRepository.leaveGame(
+      playerGameTrackerRepository,
+      this.game,
+      this.player.id,
     );
 
-    // do updates that are necessary
-    await GameRepository.seatOpened(this.game, seatNo);
-
     rows = await playerGameTrackerRepository.findOne({
-      game: {id: this.game.id},
+      game: { id: this.game.id },
       playerId: this.player.id,
     });
     if (!rows) {

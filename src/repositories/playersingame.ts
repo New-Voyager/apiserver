@@ -686,9 +686,14 @@ class PlayersInGameRepositoryImpl {
     let newPlayer = false;
     let considerNewBuyin = false;
     if (playerInGame) {
-      if (playerInGame.status != PlayerStatus.IN_BREAK) {
-        considerNewBuyin = true;
+      if (playerInGame.creditsSettled) {
+        considerNewBuyin = false;
+      } else {
+        if (playerInGame.status != PlayerStatus.IN_BREAK) {
+          considerNewBuyin = true;
+        }
       }
+
       playerInGame.seatNo = seatNo;
       playerInGame.playerIp = ip;
       if (location) {
@@ -994,14 +999,14 @@ class PlayersInGameRepositoryImpl {
 
     let settled = false;
     // update club credits
-    if (game.clubCode) {
-      try {
-        await Aggregation.settlePlayerCredits(game, playerInGame);
-        settled = true;
-      } catch (err) {
-        logger.error(`[${gameLogPrefix(game)}] Failed to settle credits for player: ${playerInGame.playerName} (${playerInGame.playerId})`);
-      }
-    }
+    // if (game.clubCode) {
+    //   try {
+    //     await Aggregation.settlePlayerCredits(game, playerInGame);
+    //     settled = true;
+    //   } catch (err) {
+    //     logger.error(`[${gameLogPrefix(game)}] Failed to settle credits for player: ${playerInGame.playerName} (${playerInGame.playerId})`);
+    //   }
+    // }
 
     await playerGameTrackerRepository.update(
       {
