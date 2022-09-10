@@ -505,12 +505,12 @@ class AggregationImpl {
     );
   }
 
-  public async settlePlayerCredits(game: PokerGame, playerInGame: PlayerGameTracker) {  // settles player credits after the game ends
+  public async settlePlayerCreditsOld(game: PokerGame, playerInGame: PlayerGameTracker) {  // settles player credits after the game ends
     // handle this later
     return;
   }
 
-  public async settlePlayerCreditsOld(game: PokerGame, playerInGame: PlayerGameTracker) {  // settles player credits after the game ends
+  public async settlePlayerCredits(game: PokerGame, playerInGame: PlayerGameTracker) {  // settles player credits after the game ends
     await getUserManager().transaction(async tranManager => {
       const playerUuid = playerInGame.playerUuid;
       const clubMember = await Cache.getClubMember(playerUuid, game.clubCode);
