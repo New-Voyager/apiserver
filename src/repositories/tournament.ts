@@ -1069,7 +1069,7 @@ class TournamentRepositoryImpl {
               this.currentTournamentLevel[tournamentId] = currentLevel.level;
               let nextLevel;
               if (currentLevelNo < levels.length + 1) {
-                nextLevel = levels[currentLevelNo + 1];
+                nextLevel = levels[currentLevel.level];
               }
               this.currentTournamentLevelStartedAt[tournamentId] = new Date();
               Nats.tournamentLevelChanged(
