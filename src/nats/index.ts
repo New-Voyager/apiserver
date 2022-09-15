@@ -1070,7 +1070,7 @@ class NatsClass {
     }
 
     const message: any = {
-      type: 'LEVEL_CHANGED',
+      type: 'TOURNAMENT_LEVEL_CHANGED',
       tournamentId: tournamentId,
       level: level.level,
       sb: level.smallBlind,

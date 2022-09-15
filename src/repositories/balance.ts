@@ -1,6 +1,6 @@
-import {GameType} from '@src/entity/types';
-import {errToStr, getLogger} from '@src/utils/log';
-import {bool} from 'aws-sdk/clients/signer';
+import { GameType } from '@src/entity/types';
+import { errToStr, getLogger } from '@src/utils/log';
+import { bool } from 'aws-sdk/clients/signer';
 import _ from 'lodash';
 
 const logger = getLogger('balance');
@@ -23,42 +23,42 @@ export interface BlindStruct {
 }
 
 const defaultStruct: Array<BlindStruct> = [
-  {level: 1, bb: 20, ante: 0},
-  {level: 2, bb: 50, ante: 0},
-  {level: 3, bb: 100, ante: 0},
-  {level: 4, bb: 150, ante: 0},
-  {level: 5, bb: 200, ante: 0},
-  {level: 6, bb: 250, ante: 0},
-  {level: 7, bb: 300, ante: 0},
-  {level: 8, bb: 400, ante: 0},
-  {level: 9, bb: 500, ante: 0},
-  {level: 10, bb: 600, ante: 0},
-  {level: 11, bb: 800, ante: 0},
-  {level: 12, bb: 1000, ante: 200},
-  {level: 13, bb: 1200, ante: 240},
-  {level: 14, bb: 1400, ante: 280},
-  {level: 15, bb: 1600, ante: 320},
-  {level: 16, bb: 2000, ante: 400},
-  {level: 17, bb: 3000, ante: 600},
-  {level: 18, bb: 4000, ante: 800},
-  {level: 19, bb: 6000, ante: 1200},
-  {level: 20, bb: 8000, ante: 1600},
-  {level: 21, bb: 10000, ante: 2000},
-  {level: 22, bb: 12000, ante: 2400},
-  {level: 23, bb: 15000, ante: 3000},
-  {level: 24, bb: 20000, ante: 4000},
-  {level: 25, bb: 30000, ante: 6000},
-  {level: 26, bb: 40000, ante: 8000},
-  {level: 27, bb: 60000, ante: 12000},
-  {level: 28, bb: 80000, ante: 16000},
-  {level: 29, bb: 100000, ante: 20000},
-  {level: 30, bb: 120000, ante: 24000},
-  {level: 31, bb: 200000, ante: 40000},
-  {level: 32, bb: 300000, ante: 60000},
-  {level: 33, bb: 400000, ante: 80000},
-  {level: 34, bb: 600000, ante: 120000},
-  {level: 35, bb: 800000, ante: 160000},
-  {level: 36, bb: 1000000, ante: 200000},
+  { level: 1, bb: 20, ante: 10 },
+  { level: 2, bb: 50, ante: 10 },
+  { level: 3, bb: 100, ante: 10 },
+  { level: 4, bb: 150, ante: 20 },
+  { level: 5, bb: 200, ante: 30 },
+  { level: 6, bb: 250, ante: 40 },
+  { level: 7, bb: 300, ante: 50 },
+  { level: 8, bb: 400, ante: 60 },
+  { level: 9, bb: 500, ante: 70 },
+  { level: 10, bb: 600, ante: 80 },
+  { level: 11, bb: 800, ante: 90 },
+  { level: 12, bb: 1000, ante: 200 },
+  { level: 13, bb: 1200, ante: 240 },
+  { level: 14, bb: 1400, ante: 280 },
+  { level: 15, bb: 1600, ante: 320 },
+  { level: 16, bb: 2000, ante: 400 },
+  { level: 17, bb: 3000, ante: 600 },
+  { level: 18, bb: 4000, ante: 800 },
+  { level: 19, bb: 6000, ante: 1200 },
+  { level: 20, bb: 8000, ante: 1600 },
+  { level: 21, bb: 10000, ante: 2000 },
+  { level: 22, bb: 12000, ante: 2400 },
+  { level: 23, bb: 15000, ante: 3000 },
+  { level: 24, bb: 20000, ante: 4000 },
+  { level: 25, bb: 30000, ante: 6000 },
+  { level: 26, bb: 40000, ante: 8000 },
+  { level: 27, bb: 60000, ante: 12000 },
+  { level: 28, bb: 80000, ante: 16000 },
+  { level: 29, bb: 100000, ante: 20000 },
+  { level: 30, bb: 120000, ante: 24000 },
+  { level: 31, bb: 200000, ante: 40000 },
+  { level: 32, bb: 300000, ante: 60000 },
+  { level: 33, bb: 400000, ante: 80000 },
+  { level: 34, bb: 600000, ante: 120000 },
+  { level: 35, bb: 800000, ante: 160000 },
+  { level: 36, bb: 1000000, ante: 200000 },
 ];
 
 export interface Table {
@@ -180,8 +180,12 @@ export interface TournamentTableInfo {
   level: number;
   nextLevel: number;
   nextLevelTimeInSecs: number;
+  nextSB: number;
+  nextBB: number;
+  nextAnte: number;
   chipsOnTheTable: number;
 }
+
 export function balanceTable(
   data: TournamentData,
   currentTableNo: number
@@ -558,7 +562,7 @@ function getTablesWithSeatsRank(
 function getOpenSeat(
   seatWithRank: AvailableSeatRank[],
   rank: number,
-  options?: {lower?: bool; greater?: bool}
+  options?: { lower?: bool; greater?: bool }
 ): AvailableSeatRank | undefined {
   let ret: AvailableSeatRank | undefined;
   if (!options) {
@@ -614,10 +618,10 @@ function movePlayers(
       // find a seat with the same rank
       let openSeat = getOpenSeat(seatsWithPlayers, rank);
       if (!openSeat) {
-        openSeat = getOpenSeat(seatsWithPlayers, rank, {lower: true});
+        openSeat = getOpenSeat(seatsWithPlayers, rank, { lower: true });
       }
       if (!openSeat) {
-        openSeat = getOpenSeat(seatsWithPlayers, rank, {greater: true});
+        openSeat = getOpenSeat(seatsWithPlayers, rank, { greater: true });
       }
       if (!openSeat) {
         // get next available seat
@@ -702,12 +706,19 @@ export function getLevelData(
 ): Array<TournamentLevel> {
   let standardLevels = new Array<TournamentLevel>();
   for (const level of defaultStruct) {
+    // standardLevels.push({
+    //   smallBlind: (level.bb * 10) / 2,
+    //   bigBlind: level.bb * 10,
+    //   ante: level.ante + level.level * 200,
+    //   level: level.level,
+    // });
     standardLevels.push({
-      smallBlind: (level.bb * 10) / 2,
-      bigBlind: level.bb * 10,
-      ante: level.ante + level.level * 200,
+      smallBlind: level.bb / 2,
+      bigBlind: level.bb,
+      ante: level.ante,
       level: level.level,
     });
+
   }
   return standardLevels;
 }

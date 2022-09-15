@@ -105,6 +105,9 @@ type TournamentGameInfo {
   level: Int!
   nextLevel: Int
   nextLevelTimeInSecs: Int    # next level time in seconds
+  nextSB: Float
+  nextBB: Float
+  nextAnte: Float
 
   playing: Boolean    # if true, the player is playing
 

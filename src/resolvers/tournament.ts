@@ -1,8 +1,8 @@
-import {Nats} from '@src/nats';
-import {TournamentRepository} from '@src/repositories/tournament';
-import {Cache} from '@src/cache/index';
-import {ChipUnit, GameStatus, GameType, TableStatus} from '@src/entity/types';
-import {centsToChips} from '@src/utils';
+import { Nats } from '@src/nats';
+import { TournamentRepository } from '@src/repositories/tournament';
+import { Cache } from '@src/cache/index';
+import { ChipUnit, GameStatus, GameType, TableStatus } from '@src/entity/types';
+import { centsToChips } from '@src/utils';
 import {
   TournamentLevelType,
   TournamentListItem,
@@ -10,8 +10,8 @@ import {
   TournamentPlayingStatus,
   TournamentStatus,
 } from '@src/repositories/balance';
-import {sleep} from '@src/timer';
-import {getLogger} from '@src/utils/log';
+import { sleep } from '@src/timer';
+import { getLogger } from '@src/utils/log';
 const logger = getLogger('resolvers::tournament');
 
 const resolvers: any = {
@@ -280,6 +280,7 @@ async function getTournamentTableInfo(
     player.id
   );
   ret.gameID = TournamentRepository.getTableGameId(tournamentId, tableNo);
+
 
   return ret;
 }
