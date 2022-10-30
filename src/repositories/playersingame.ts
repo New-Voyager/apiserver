@@ -1032,6 +1032,49 @@ class PlayersInGameRepositoryImpl {
     }
     return openedSeat;
   }
+
+  public async disconnectedFromGame(
+    game: PokerGame,
+    player: Player,
+  ): Promise<boolean> {
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+
+    await playerGameTrackerRepository
+      .createQueryBuilder()
+      .update()
+      .set({
+        disconnectCount: () => 'disconnect_count + 1',
+      })
+      .where({
+        game: { id: game.id },
+        playerId: player.id,
+      })
+      .execute();
+
+    // update history table as well
+
+    return true;
+  }
+
+  public async refreshGame(
+    game: PokerGame,
+    player: Player,
+  ): Promise<boolean> {
+    const playerGameTrackerRepository = getGameRepository(PlayerGameTracker);
+
+    await playerGameTrackerRepository
+      .createQueryBuilder()
+      .update()
+      .set({
+        refreshCount: () => 'refresh_count + 1',
+      })
+      .where({
+        game: { id: game.id },
+        playerId: player.id,
+      })
+      .execute();
+    return true;
+  }
 }
 
 export const PlayersInGameRepository = new PlayersInGameRepositoryImpl();

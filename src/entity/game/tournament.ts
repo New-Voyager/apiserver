@@ -1,27 +1,37 @@
-import {TournamentStatus} from '@src/repositories/balance';
-import {Column, Entity, PrimaryGeneratedColumn} from 'typeorm';
-import {DbAwareCreateDateColumn, DbAwareUpdateDateColumn} from '../dbaware';
+import { TournamentStatus } from '@src/repositories/balance';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { DbAwareColumn, DbAwareCreateDateColumn, DbAwareUpdateDateColumn } from '../dbaware';
 
-@Entity({name: 'tournaments'})
+@Entity({ name: 'tournaments' })
 export class Tournament {
   @PrimaryGeneratedColumn()
   public id!: number;
 
   // json field that stores tournament data
-  @Column({name: 'data', nullable: false, default: '{}'})
+  @Column({ name: 'data', nullable: false, default: '{}' })
   public data!: string;
 
-  @Column({name: 'table_server', nullable: false, default: ''})
+  @Column({ name: 'table_server', nullable: false, default: '' })
   public tableServer!: string;
 
-  @Column({name: 'max_players', default: 9})
+  @Column({ name: 'max_players', default: 9 })
   public maxPlayersInTable!: number;
 
-  @Column({name: 'bots_count', default: 0})
+  @Column({ name: 'bots_count', default: 0 })
   public botsCount!: number;
 
-  @Column({name: 'status', nullable: true, default: TournamentStatus.UNKNOWN})
+  @Column({ name: 'status', nullable: true, default: TournamentStatus.UNKNOWN })
   public status!: TournamentStatus;
+
+  @Column({ name: 'about_to_notification', default: 60 })   // send a notification before schedule time
+  public aboutToNotificationTime!: number;
+
+  @DbAwareColumn({
+    name: 'scheduled_at',
+    type: 'timestamp',
+    nullable: true
+  })
+  public scheduledAt!: Date;
 
   /**
    * DB insert time.

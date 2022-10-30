@@ -77,4 +77,10 @@ export class PlayersInGame {
     nullable: true,
   })
   public leftAt!: Date;
+
+  @Column({ name: 'disconnect_count', type: 'int', default: 0 })
+  public disconnectCount!: number;
+
+  @Column({ name: 'refresh_count', type: 'int', default: 0 })
+  public refreshCount!: number;
 }

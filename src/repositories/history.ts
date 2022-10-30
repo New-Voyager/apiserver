@@ -136,7 +136,8 @@ class HistoryRepositoryImpl {
         playersInGame.sessionStartTime = player.sessionStartTime;
         playersInGame.sessionLeftTime = player.sessionLeftTime;
         playersInGame.creditsSettled = player.creditsSettled;
-
+        playersInGame.disconnectCount = player.disconnectCount;
+        playersInGame.refreshCount = player.refreshCount;
         await playersInGameRepo.save(playersInGame);
       }
 

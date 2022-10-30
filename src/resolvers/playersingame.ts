@@ -1,27 +1,27 @@
-import {GameRepository} from '@src/repositories/game';
-import {BuyInApprovalLimit, GameType, PlayerStatus} from '@src/entity/types';
-import {getLogger, errToStr} from '@src/utils/log';
-import {Cache} from '@src/cache/index';
-import {default as _} from 'lodash';
-import {BuyIn} from '@src/repositories/buyin';
-import {ApolloError} from 'apollo-server-express';
-import {BuyInResponse, SitBackResponse} from '@src/repositories/types';
-import {TakeBreak} from '@src/repositories/takebreak';
-import {Player} from '@src/entity/player/player';
-import {Reload} from '@src/repositories/reload';
-import {PlayersInGameRepository} from '@src/repositories/playersingame';
-import {NextHandUpdatesRepository} from '@src/repositories/nexthand_update';
+import { GameRepository } from '@src/repositories/game';
+import { BuyInApprovalLimit, GameType, PlayerStatus } from '@src/entity/types';
+import { getLogger, errToStr } from '@src/utils/log';
+import { Cache } from '@src/cache/index';
+import { default as _ } from 'lodash';
+import { BuyIn } from '@src/repositories/buyin';
+import { ApolloError } from 'apollo-server-express';
+import { BuyInResponse, SitBackResponse } from '@src/repositories/types';
+import { TakeBreak } from '@src/repositories/takebreak';
+import { Player } from '@src/entity/player/player';
+import { Reload } from '@src/repositories/reload';
+import { PlayersInGameRepository } from '@src/repositories/playersingame';
+import { NextHandUpdatesRepository } from '@src/repositories/nexthand_update';
 import {
   Errors,
   GameNotFoundError,
   GenericError,
   UnauthorizedError,
 } from '@src/errors';
-import {gameLogPrefix} from '@src/entity/game/game';
-import {HistoryRepository} from '@src/repositories/history';
-import {centsToChips, chipsToCents} from '@src/utils';
-import {LocationCheck} from '@src/repositories/locationcheck';
-import {PlayerRepository} from '@src/repositories/player';
+import { gameLogPrefix } from '@src/entity/game/game';
+import { HistoryRepository } from '@src/repositories/history';
+import { centsToChips, chipsToCents } from '@src/utils';
+import { LocationCheck } from '@src/repositories/locationcheck';
+import { PlayerRepository } from '@src/repositories/player';
 
 const logger = getLogger('resolvers::players_in_game');
 
@@ -126,6 +126,12 @@ const resolvers: any = {
     },
     autoReloadOff: async (parent, args, ctx, info) => {
       return autoReloadOff(ctx.req.playerId, args.gameCode);
+    },
+    disconnectedFromGame: async (parent, args, ctx, info) => {
+      return disconnectedFromGame(ctx.req.playerId, args.gameCode);
+    },
+    refreshGame: async (parent, args, ctx, info) => {
+      return refreshGame(ctx.req.playerId, args.gameCode);
     },
   },
 };
@@ -360,8 +366,7 @@ export async function joinGame(
       location = locationCheck.location;
     }
     logger.info(
-      `${gameLogPrefix(game)} Player: ${player.uuid}/${
-        player.name
+      `${gameLogPrefix(game)} Player: ${player.uuid}/${player.name
       } is joining seat ${seatNo}. Ip: ${ip} location: ${JSON.stringify(
         location
       )}`
@@ -476,8 +481,7 @@ export async function takeSeat(
       await Cache.updatePlayerLocation(player.uuid, location, ip);
     }
     logger.info(
-      `[${gameLogPrefix(game)}] Player: ${player.uuid}/${
-        player.name
+      `[${gameLogPrefix(game)}] Player: ${player.uuid}/${player.name
       } is taking seat ${seatNo}. Ip: ${ip} location: ${JSON.stringify(
         location
       )}`
@@ -491,8 +495,7 @@ export async function takeSeat(
       location
     );
     logger.info(
-      `${gameLogPrefix(game)} Player: ${player.uuid}/${player.name} isBot: ${
-        player.bot
+      `${gameLogPrefix(game)} Player: ${player.uuid}/${player.name} isBot: ${player.bot
       } has taken seat ${seatNo}. Ip: ${ip} location: ${JSON.stringify(
         location
       )}`
@@ -562,8 +565,7 @@ export async function buyIn(
     }
     const player = await Cache.getPlayer(playerUuid);
     logger.info(
-      `${gameLogPrefix(game)} Player: ${player.uuid}/${
-        player.name
+      `${gameLogPrefix(game)} Player: ${player.uuid}/${player.name
       } is buying for ${chips}`
     );
 
@@ -657,8 +659,7 @@ export async function reload(
 
     const player = await Cache.getPlayer(playerUuid);
     logger.info(
-      `${gameLogPrefix(game)} Player: ${player.uuid}/${
-        player.name
+      `${gameLogPrefix(game)} Player: ${player.uuid}/${player.name
       } is reloading for ${chips}`
     );
 
@@ -709,8 +710,7 @@ export async function takeBreak(playerUuid: string, gameCode: string) {
     const player = await Cache.getPlayer(playerUuid);
     const now = new Date();
     logger.info(
-      `${gameLogPrefix(game)} Player: ${player.uuid}/${
-        player.name
+      `${gameLogPrefix(game)} Player: ${player.uuid}/${player.name
       } is taking break at ${now.toISOString()}`
     );
 
@@ -764,8 +764,7 @@ export async function sitBack(
       location = locationCheck.location;
     }
     logger.info(
-      `${gameLogPrefix(game)} Player: ${player.uuid}/${
-        player.name
+      `${gameLogPrefix(game)} Player: ${player.uuid}/${player.name
       } sits back. Ip: ${ip} location: ${JSON.stringify(location)}`
     );
 
@@ -851,8 +850,7 @@ export async function kickOutPlayer(
 
     const player = await Cache.getPlayer(kickedOutPlayer);
     logger.info(
-      `${gameLogPrefix(game)} Player: ${player.uuid}/${
-        player.name
+      `${gameLogPrefix(game)} Player: ${player.uuid}/${player.name
       } is being kicked out`
     );
     await PlayersInGameRepository.kickOutPlayer(gameCode, player);
@@ -920,8 +918,7 @@ export async function sitOutPlayer(
 
     const player = await Cache.getPlayer(sitOutPlayer);
     logger.info(
-      `${gameLogPrefix(game)} Player: ${player.uuid}/${
-        player.name
+      `${gameLogPrefix(game)} Player: ${player.uuid}/${player.name
       } is being sit out by admin`
     );
     await PlayersInGameRepository.sitOutPlayer(gameCode, player);
@@ -1014,8 +1011,7 @@ export async function leaveGame(
     }
     const player = await Cache.getPlayer(playerUuid);
     logger.info(
-      `${gameLogPrefix(game)} Player: ${player.uuid}/${
-        player.name
+      `${gameLogPrefix(game)} Player: ${player.uuid}/${player.name
       } is leaving game`
     );
     const status = await NextHandUpdatesRepository.leaveGame(
@@ -1179,3 +1175,76 @@ export async function autoReloadOff(
     );
   }
 }
+
+
+export async function disconnectedFromGame(
+  playerUuid: string,
+  gameCode: string,
+) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await GameRepository.getGameByCode(gameCode);
+
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+    const player = await Cache.getPlayer(playerUuid);
+    logger.info(
+      `${gameLogPrefix(game)} Player: ${player.uuid}/${player.name
+      } is disconnected from game`
+    );
+
+    await PlayersInGameRepository.disconnectedFromGame(
+      game,
+      player,
+    );
+    return true;
+  } catch (err) {
+    logger.error(
+      `Error updating disconnect status. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToStr(
+        err
+      )}`
+    );
+    return false;
+  }
+}
+
+
+export async function refreshGame(
+  playerUuid: string,
+  gameCode: string,
+) {
+  if (!playerUuid) {
+    throw new Error('Unauthorized');
+  }
+  try {
+    // get game using game code
+    const game = await GameRepository.getGameByCode(gameCode);
+
+    if (!game) {
+      throw new Error(`Game ${gameCode} is not found`);
+    }
+    const player = await Cache.getPlayer(playerUuid);
+    logger.info(
+      `${gameLogPrefix(game)} Player: ${player.uuid}/${player.name
+      } is disconnected from game`
+    );
+
+    await PlayersInGameRepository.refreshGame(
+      game,
+      player,
+    );
+    return true;
+  } catch (err) {
+    logger.error(
+      `Error updating refresh status. playerUuid: ${playerUuid}, gameCode: ${gameCode}: ${errToStr(
+        err
+      )}`
+    );
+    return false;
+  }
+}
+

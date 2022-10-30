@@ -239,4 +239,11 @@ export class PlayerGameTracker {
 
   @Column({ name: 'reload_to', type: 'decimal', default: 0 })
   public reloadTo!: number;
+
+  @Column({ name: 'disconnect_count', type: 'int', default: 0 })
+  public disconnectCount!: number;
+
+  @Column({ name: 'refresh_count', type: 'int', default: 0 })
+  public refreshCount!: number;
+
 }

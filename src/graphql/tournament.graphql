@@ -9,6 +9,7 @@ input TournamentCreateInput {
   fillWithBots: Boolean
   levelTime: Int
   botsCount: Int
+  scheduledAt: DateTime
 }
 
 type TournamentListItem {
@@ -26,6 +27,7 @@ type TournamentListItem {
   botsCount: Int
   activePlayersCount: Int
   createdBy: String
+  scheduledAt: DateTime
 }
 
 enum TournamentPlayingStatus {
@@ -81,6 +83,8 @@ type TournamentInfo {
   privateChannel: String!
   status: TournamentStatus!
   myTableNo: Int
+  scheduledAt: DateTime
+  startedAt: DateTime
 }
 
 type TournamentGameInfo {

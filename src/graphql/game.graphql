@@ -657,6 +657,8 @@ type Mutation {
   declineWaitlistSeat(gameCode: String!): Boolean
   switchSeat(gameCode: String!, seatNo: Int!): PlayerGameStatus!
   assignHost(gameCode: String!, playerUuid: String, playerId: Int): Boolean!
+  disconnectedFromGame(gameCode: String!): Boolean!
+  refreshGame(gameCode: String!): Boolean!
   
   # seat change APIs
   requestSeatChange(gameCode: String!, cancel: Boolean): DateTime!
